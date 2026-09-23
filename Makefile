@@ -8,10 +8,12 @@ setup:
 	go mod download
 
 generate:
+	go run ./scripts/generate_path_unicode.go
 	$(PYTHON) scripts/generate_envelopes.py
 	$(PYTHON) scripts/generate_schema_ids.py
 
 test:
+	go run ./scripts/generate_path_unicode.go -check
 	$(PYTHON) scripts/generate_envelopes.py --check
 	$(PYTHON) scripts/generate_schema_ids.py --check
 	go test ./...

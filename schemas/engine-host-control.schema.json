@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-host-control:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "api_version": {
+      "const": "operator.dev/engine-pipe/v1alpha1"
+    },
+    "kind": {
+      "enum": [
+        "bootstrap",
+        "initialize",
+        "admission_open",
+        "terminate"
+      ]
+    },
+    "seq": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+    },
+    "campaign_id": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    },
+    "launch_id": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    },
+    "run_revision": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+    },
+    "body": {}
+  },
+  "required": [
+    "api_version",
+    "kind",
+    "seq",
+    "campaign_id",
+    "launch_id",
+    "run_revision",
+    "body"
+  ],
+  "oneOf": [
+    {
+      "properties": {
+        "kind": {
+          "const": "bootstrap"
+        },
+        "body": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "container_id": {
+              "type": "string",
+              "minLength": 64,
+              "maxLength": 64,
+              "pattern": "^[0-9a-f]{64}$",
+              "not": {
+                "pattern": "[\\r\\n]"
+              }
+            },
+            "contract": {
+              "$ref": "urn:operator:schema:startup-common:v1alpha1#/$defs/contract"
+            },
+            "release": {
+              "$ref": "urn:operator:schema:startup-common:v1alpha1#/$defs/release"
+            },
+            "runtime_profile": {
+              "const": "operator-container/v1"
+            },
+            "host_platform": {
+              "enum": [
+                "linux/amd64",
+                "linux/arm64",
+                "darwin/amd64",
+                "darwin/arm64"
+              ]
+            },
+            "transport": {
+              "enum": [
+                "fifo",
+                "spool"
+              ]
+            },
+            "run_manifest_digest": {
+              "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+            },
+            "timeout_ms": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 60000
+            }
+          },
+          "required": [
+            "container_id",
+            "contract",
+            "release",
+            "runtime_profile",
+            "host_platform",
+            "transport",
+            "run_manifest_digest",
+            "timeout_ms"
+          ]
+        }
+      }
+    },
+    {
+      "properties": {
+        "kind": {
+          "const": "initialize"
+        },
+        "body": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "input_tree": {
+              "$ref": "urn:operator:schema:startup-common:v1alpha1#/$defs/input_descriptor"
+            },
+            "skill_set": {
+              "$ref": "urn:operator:schema:startup-common:v1alpha1#/$defs/skill_set_descriptor"
+            },
+            "binding": {
+              "$ref": "urn:operator:schema:conclusion-binding:v1alpha1"
+            },
+            "engine_context_object_digest": {
+              "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+            },
+            "timeout_ms": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 60000
+            }
+          },
+          "required": [
+            "input_tree",
+            "skill_set",
+            "binding",
+            "engine_context_object_digest",
+            "timeout_ms"
+          ]
+        }
+      }
+    },
+    {
+      "properties": {
+        "kind": {
+          "const": "admission_open"
+        },
+        "body": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "binding": {
+              "$ref": "urn:operator:schema:conclusion-binding:v1alpha1"
+            },
+            "operations": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 64,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^engine[.][a-z_]+$",
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              },
+              "uniqueItems": true
+            },
+            "limits": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "harness": {
+                  "$ref": "urn:operator:schema:harness-loop-limits:v1alpha1"
+                },
+                "campaign": {
+                  "$ref": "urn:operator:schema:remaining-limits:v1alpha1"
+                }
+              },
+              "required": [
+                "harness",
+                "campaign"
+              ]
+            },
+            "remaining_limits": {
+              "$ref": "urn:operator:schema:remaining-limits:v1alpha1"
+            }
+          },
+          "required": [
+            "binding",
+            "operations",
+            "limits",
+            "remaining_limits"
+          ]
+        }
+      }
+    },
+    {
+      "properties": {
+        "kind": {
+          "const": "terminate"
+        },
+        "body": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "reason": {
+              "enum": [
+                "user-request",
+                "deadline-exceeded",
+                "protocol-error",
+                "containment-failure",
+                "resource-limit",
+                "host-error",
+                "target-failure",
+                "runtime-interrupted",
+                "campaign-stopped"
+              ]
+            },
+            "stop_receipt": {
+              "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+            },
+            "exit_required": {
+              "const": true
+            }
+          },
+          "required": [
+            "reason",
+            "exit_required"
+          ]
+        }
+      }
+    }
+  ]
+}

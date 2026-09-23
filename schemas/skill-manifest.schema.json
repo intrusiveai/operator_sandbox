@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:skill-manifest:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "api_version": {
+      "const": "operator.dev/skill-manifest/v1alpha1"
+    },
+    "skill_id": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024
+    },
+    "entrypoint": {
+      "const": "SKILL.md"
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1024,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "$ref": "urn:operator:schema:startup-common:v1alpha1#/$defs/relative_path"
+          },
+          "media_type": {
+            "enum": [
+              "text/markdown",
+              "text/plain",
+              "application/json",
+              "application/yaml",
+              "text/yaml"
+            ]
+          },
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1048576
+          },
+          "digest": {
+            "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+          }
+        },
+        "required": [
+          "path",
+          "media_type",
+          "size_bytes",
+          "digest"
+        ]
+      }
+    }
+  },
+  "required": [
+    "api_version",
+    "skill_id",
+    "name",
+    "description",
+    "entrypoint",
+    "files"
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:skill-set-manifest:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "api_version": {
+      "const": "operator.dev/skill-set-manifest/v1alpha1"
+    },
+    "loader_schema": {
+      "const": "operator.dev/instruction-skill-loader/v1alpha1"
+    },
+    "loader_digest": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+    },
+    "loading_digest": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+    },
+    "skills": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "skill_id": {
+            "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+          },
+          "bundle_digest": {
+            "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+          },
+          "manifest": {
+            "$ref": "urn:operator:schema:startup-common:v1alpha1#/$defs/skill_descriptor"
+          }
+        },
+        "required": [
+          "skill_id",
+          "bundle_digest",
+          "manifest"
+        ]
+      }
+    }
+  },
+  "required": [
+    "api_version",
+    "loader_schema",
+    "loader_digest",
+    "loading_digest",
+    "skills"
+  ]
+}

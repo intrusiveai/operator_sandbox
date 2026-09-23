@@ -22,8 +22,10 @@ The generated [request](engine-pipe-request.schema.json) and
 exact bodies. `make generate` regenerates envelopes and schema-ID constants;
 `make test` rejects stale generated files. No unknown operation or untyped forwarding
 path is accepted. Model generation will join the registry when its closed schemas and
-fixtures are implemented; startup, input/skill manifests and provider codecs remain
-required publication work. Records and conclusion content are defined in the
+fixtures are implemented. [Startup and manifest metadata](STARTUP_MANIFEST_CONTRACT.md)
+now have schemas and shared validation; EngineContext content, prompt provenance,
+provider codecs and runtime gates remain publication/implementation work.
+Records and conclusion content are defined in the
 [assessment contract](ASSESSMENT_CONTRACT.md).
 
 Every ordinary message carries the common version, kind, sequence, campaign,

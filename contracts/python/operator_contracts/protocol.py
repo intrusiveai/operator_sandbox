@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .validation import Catalog, ContractError, ORDINARY_LIMIT
 from .assessment import check_record, validate_conclusion, validate_completion
+from . import startup
 from .schema_ids import (
     ENGINE_PIPE_REQUEST_SCHEMA, ENGINE_PIPE_RESPONSE_SCHEMA, OPERATION_REGISTRY_SCHEMA,
 )
@@ -69,6 +70,27 @@ class Protocol:
     def operations(self):
         """Return a copy so consumers cannot mutate installed dispatch metadata."""
         return deepcopy(list(self._operations.values()))
+
+    def validate_control(self, direction, raw):
+        return startup.validate_control(self, direction, raw)
+
+    def validate_startup(self, messages):
+        return startup.validate_startup(self, messages)
+
+    def validate_input_tree(self, raw):
+        return startup.validate_input_tree(self, raw)
+
+    def validate_skill_manifest(self, raw):
+        return startup.validate_skill_manifest(self, raw)
+
+    def validate_skill_set(self, raw):
+        return startup.validate_skill_set(self, raw)
+
+    def validate_manifest_set(self, tree, skill_set, skills):
+        return startup.validate_manifest_set(self, tree, skill_set, skills)
+
+    def validate_startup_inputs(self, messages, tree, skill_set, skills):
+        return startup.validate_startup_inputs(self, messages, tree, skill_set, skills)
 
     def validate_conclusion(self, raw: bytes):
         return validate_conclusion(self, raw)

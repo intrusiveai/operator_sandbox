@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:startup-common:v1alpha1",
+  "$defs": {
+    "contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "$ref": "urn:operator:schema:conclusion-binding:v1alpha1#/properties/contract_package_version"
+        },
+        "digest": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+        },
+        "catalog_digest": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+        },
+        "operations_digest": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+        }
+      },
+      "required": [
+        "version",
+        "digest",
+        "catalog_digest",
+        "operations_digest"
+      ]
+    },
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "image_digest": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+        },
+        "release_record_digest": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+        }
+      },
+      "required": [
+        "image_digest",
+        "release_record_digest"
+      ]
+    },
+    "input_descriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path_id": {
+          "const": "input-tree"
+        },
+        "schema_id": {
+          "const": "urn:operator:schema:input-tree-manifest:v1alpha1"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8388608
+        },
+        "digest": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+        },
+        "object_digest": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+        }
+      },
+      "required": [
+        "path_id",
+        "schema_id",
+        "size_bytes",
+        "digest",
+        "object_digest"
+      ]
+    },
+    "skill_set_descriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path_id": {
+          "const": "skill-set"
+        },
+        "schema_id": {
+          "const": "urn:operator:schema:skill-set-manifest:v1alpha1"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65536
+        },
+        "digest": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+        },
+        "object_digest": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+        }
+      },
+      "required": [
+        "path_id",
+        "schema_id",
+        "size_bytes",
+        "digest",
+        "object_digest"
+      ]
+    },
+    "skill_descriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "slot": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 15
+        },
+        "schema_id": {
+          "const": "urn:operator:schema:skill-manifest:v1alpha1"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2097152
+        },
+        "digest": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+        },
+        "object_digest": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+        }
+      },
+      "required": [
+        "slot",
+        "schema_id",
+        "size_bytes",
+        "digest",
+        "object_digest"
+      ]
+    },
+    "relative_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024
+    },
+    "schema_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^urn:operator:schema:[a-z0-9-]+:v[0-9]+alpha[0-9]+$",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    }
+  }
+}

@@ -1,7 +1,7 @@
 # Shared validation foundation
 
-This is the validation and ordinary-protocol foundation of `operator-contracts`. It validates the
-41 schemas currently listed in [the catalog](../schemas/catalog.json) in Go and
+This is the validation and protocol foundation of `operator-contracts`. It validates the
+47 schemas currently listed in [the catalog](../schemas/catalog.json) in Go and
 Python. It is a development library, not the published `0.1.0` contract package.
 The authoritative design remains [SHARED_CONTRACT.md](../schemas/SHARED_CONTRACT.md).
 
@@ -22,6 +22,9 @@ The authoritative design remains [SHARED_CONTRACT.md](../schemas/SHARED_CONTRACT
   artifact chunks, snapshot metadata, restore transitions, typed records, errors and graceful stop.
 - Structured conclusions and completion-chain consistency checks, with 74 shared
   cases covering bindings, exact artifact bytes, record/stop receipts and explicit gaps.
+- Startup/control schemas, transcript consistency and input/skill inventories,
+  with 102 shared cases covering startup bindings, manifest bytes, portable paths
+  and declared resource limits. Together, the four suites contain 509 shared cases.
 
 The [ordinary wire contract](../schemas/ORDINARY_WIRE_CONTRACT.md) documents the
 exact implemented fields and distinguishes stateless validation from runtime gates.
@@ -42,7 +45,7 @@ make test
 ```
 
 `make setup` creates `.venv` and downloads dependencies. `make test` checks generated
-schema IDs, runs both byte-vector suites, and runs the existing cleanup, feedback
+schema IDs and Unicode path tables, runs the Go/Python shared fixture suites, and runs the existing cleanup, feedback
 and capability fixture checks. Python runtime dependencies are pinned in
 `python/requirements.lock`; Go dependencies are recorded in `go.mod`/`go.sum`.
 
@@ -100,6 +103,14 @@ chain with the host's expected binding. See [the assessment contract](../schemas
 for fields, byte limits and the caller's required trusted receipt lookups. These
 helpers do not persist records or accept stop.
 
+Use `ValidateControl` / `validate_control` for individual control messages,
+`ValidateStartup` / `validate_startup` for a successful five-message transcript,
+and `ValidateStartupInputs` / `validate_startup_inputs` to check that transcript
+against the complete input and skill manifests. Inventory validators are also
+available separately. See [the startup/manifest contract](../schemas/STARTUP_MANIFEST_CONTRACT.md)
+for fixed descriptor paths, the shared Unicode 15.0 path profile, bounds and
+the distinction between checking inventory metadata and verifying actual files.
+
 ## Remaining stages
 
 Structural validation is one gate. Receipt lookup, operation identity, digests,
@@ -107,8 +118,8 @@ cross-field constraints, authorization, profile filtering and lifecycle rules
 still require semantic validators. Schema `format` annotations are not a substitute
 for those checks. This library is not yet sufficient to admit campaign execution.
 
-Before publishing `0.1.0`, implement the remaining startup/control,
-manifest and model schemas; complete the operation registry;
+Before publishing `0.1.0`, implement the remaining EngineContext, prompt provenance
+and model schemas; define the host-private RunManifest; complete the operation registry;
 canonicalization and identity helpers; typed message bindings; the immutable
 package manifest/digest; and the full shared conformance suite. FIFO/spool codecs
 and fake-broker/fake-harness integration tests are also outstanding. No changes to

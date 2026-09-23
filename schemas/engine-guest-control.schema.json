@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-guest-control:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "api_version": {
+      "const": "operator.dev/engine-pipe/v1alpha1"
+    },
+    "kind": {
+      "enum": [
+        "confinement_ready",
+        "initialized"
+      ]
+    },
+    "seq": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+    },
+    "campaign_id": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    },
+    "launch_id": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    },
+    "run_revision": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+    },
+    "body": {}
+  },
+  "required": [
+    "api_version",
+    "kind",
+    "seq",
+    "campaign_id",
+    "launch_id",
+    "run_revision",
+    "body"
+  ],
+  "oneOf": [
+    {
+      "properties": {
+        "kind": {
+          "const": "confinement_ready"
+        },
+        "body": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "container_id": {
+              "type": "string",
+              "minLength": 64,
+              "maxLength": 64,
+              "pattern": "^[0-9a-f]{64}$",
+              "not": {
+                "pattern": "[\\r\\n]"
+              }
+            },
+            "contract": {
+              "$ref": "urn:operator:schema:startup-common:v1alpha1#/$defs/contract"
+            },
+            "release": {
+              "$ref": "urn:operator:schema:startup-common:v1alpha1#/$defs/release"
+            },
+            "runtime_profile": {
+              "const": "operator-container/v1"
+            },
+            "host_platform": {
+              "enum": [
+                "linux/amd64",
+                "linux/arm64",
+                "darwin/amd64",
+                "darwin/arm64"
+              ]
+            },
+            "transport": {
+              "enum": [
+                "fifo",
+                "spool"
+              ]
+            },
+            "run_manifest_digest": {
+              "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+            }
+          },
+          "required": [
+            "container_id",
+            "contract",
+            "release",
+            "runtime_profile",
+            "host_platform",
+            "transport",
+            "run_manifest_digest"
+          ]
+        }
+      }
+    },
+    {
+      "properties": {
+        "kind": {
+          "const": "initialized"
+        },
+        "body": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "input_tree": {
+              "$ref": "urn:operator:schema:startup-common:v1alpha1#/$defs/input_descriptor"
+            },
+            "skill_set": {
+              "$ref": "urn:operator:schema:startup-common:v1alpha1#/$defs/skill_set_descriptor"
+            },
+            "binding": {
+              "$ref": "urn:operator:schema:conclusion-binding:v1alpha1"
+            },
+            "engine_context_object_digest": {
+              "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+            },
+            "contract": {
+              "$ref": "urn:operator:schema:startup-common:v1alpha1#/$defs/contract"
+            }
+          },
+          "required": [
+            "input_tree",
+            "skill_set",
+            "binding",
+            "engine_context_object_digest",
+            "contract"
+          ]
+        }
+      }
+    }
+  ]
+}

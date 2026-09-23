@@ -1,0 +1,197 @@
+[
+  {
+    "api_version": "operator.dev/engine-pipe/v1alpha1",
+    "kind": "bootstrap",
+    "seq": 0,
+    "campaign_id": "campaign-1",
+    "launch_id": "launch-1",
+    "run_revision": 3,
+    "body": {
+      "container_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "contract": {
+        "version": "0.1.0",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "catalog_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "operations_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "release": {
+        "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "release_record_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "runtime_profile": "operator-container/v1",
+      "host_platform": "linux/amd64",
+      "transport": "fifo",
+      "run_manifest_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "timeout_ms": 60000
+    }
+  },
+  {
+    "api_version": "operator.dev/engine-pipe/v1alpha1",
+    "kind": "confinement_ready",
+    "seq": 0,
+    "campaign_id": "campaign-1",
+    "launch_id": "launch-1",
+    "run_revision": 3,
+    "body": {
+      "container_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "contract": {
+        "version": "0.1.0",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "catalog_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "operations_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "release": {
+        "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "release_record_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "runtime_profile": "operator-container/v1",
+      "host_platform": "linux/amd64",
+      "transport": "fifo",
+      "run_manifest_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  },
+  {
+    "api_version": "operator.dev/engine-pipe/v1alpha1",
+    "kind": "initialize",
+    "seq": 1,
+    "campaign_id": "campaign-1",
+    "launch_id": "launch-1",
+    "run_revision": 3,
+    "body": {
+      "input_tree": {
+        "path_id": "input-tree",
+        "schema_id": "urn:operator:schema:input-tree-manifest:v1alpha1",
+        "size_bytes": 881,
+        "digest": "sha256:347ed05599c386c1247182f3c0963714f428965d2fd46bd91d80df6ab6f46700",
+        "object_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "skill_set": {
+        "path_id": "skill-set",
+        "schema_id": "urn:operator:schema:skill-set-manifest:v1alpha1",
+        "size_bytes": 700,
+        "digest": "sha256:40927ae1cba10e7c37b680cfbf1b5120d4f29f31ea34064e6a12e40b1e24759f",
+        "object_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "binding": {
+        "campaign_id": "campaign-1",
+        "launch_id": "launch-1",
+        "run_revision": 3,
+        "input_tree_digest": "sha256:347ed05599c386c1247182f3c0963714f428965d2fd46bd91d80df6ab6f46700",
+        "engine_context_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "prompt_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "skill_set_digest": "sha256:40927ae1cba10e7c37b680cfbf1b5120d4f29f31ea34064e6a12e40b1e24759f",
+        "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "release_record_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "contract_package_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "contract_package_version": "0.1.0"
+      },
+      "engine_context_object_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "timeout_ms": 60000
+    }
+  },
+  {
+    "api_version": "operator.dev/engine-pipe/v1alpha1",
+    "kind": "initialized",
+    "seq": 1,
+    "campaign_id": "campaign-1",
+    "launch_id": "launch-1",
+    "run_revision": 3,
+    "body": {
+      "input_tree": {
+        "path_id": "input-tree",
+        "schema_id": "urn:operator:schema:input-tree-manifest:v1alpha1",
+        "size_bytes": 881,
+        "digest": "sha256:347ed05599c386c1247182f3c0963714f428965d2fd46bd91d80df6ab6f46700",
+        "object_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "skill_set": {
+        "path_id": "skill-set",
+        "schema_id": "urn:operator:schema:skill-set-manifest:v1alpha1",
+        "size_bytes": 700,
+        "digest": "sha256:40927ae1cba10e7c37b680cfbf1b5120d4f29f31ea34064e6a12e40b1e24759f",
+        "object_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "binding": {
+        "campaign_id": "campaign-1",
+        "launch_id": "launch-1",
+        "run_revision": 3,
+        "input_tree_digest": "sha256:347ed05599c386c1247182f3c0963714f428965d2fd46bd91d80df6ab6f46700",
+        "engine_context_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "prompt_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "skill_set_digest": "sha256:40927ae1cba10e7c37b680cfbf1b5120d4f29f31ea34064e6a12e40b1e24759f",
+        "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "release_record_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "contract_package_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "contract_package_version": "0.1.0"
+      },
+      "engine_context_object_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "contract": {
+        "version": "0.1.0",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "catalog_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "operations_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    }
+  },
+  {
+    "api_version": "operator.dev/engine-pipe/v1alpha1",
+    "kind": "admission_open",
+    "seq": 2,
+    "campaign_id": "campaign-1",
+    "launch_id": "launch-1",
+    "run_revision": 3,
+    "body": {
+      "binding": {
+        "campaign_id": "campaign-1",
+        "launch_id": "launch-1",
+        "run_revision": 3,
+        "input_tree_digest": "sha256:347ed05599c386c1247182f3c0963714f428965d2fd46bd91d80df6ab6f46700",
+        "engine_context_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "prompt_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "skill_set_digest": "sha256:40927ae1cba10e7c37b680cfbf1b5120d4f29f31ea34064e6a12e40b1e24759f",
+        "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "release_record_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "contract_package_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "contract_package_version": "0.1.0"
+      },
+      "operations": [
+        "engine.request_stop"
+      ],
+      "limits": {
+        "harness": {
+          "max_model_turns": 300,
+          "max_tool_calls": 2000,
+          "max_tool_calls_per_response": 16,
+          "max_invalid_tool_calls": 50,
+          "max_consecutive_invalid_tool_calls": 5,
+          "max_read_bytes": 268435456,
+          "max_no_progress_turns": 10
+        },
+        "campaign": {
+          "campaign_time_ms": 0,
+          "attempt_admissions": 0,
+          "model_tokens": 0,
+          "model_turns": 0,
+          "artifact_bytes": 0,
+          "artifact_objects": 0,
+          "snapshot_admissions": 0,
+          "snapshot_bytes": 0,
+          "observation_reads": 0,
+          "observation_bytes": 0
+        }
+      },
+      "remaining_limits": {
+        "campaign_time_ms": 0,
+        "attempt_admissions": 0,
+        "model_tokens": 0,
+        "model_turns": 0,
+        "artifact_bytes": 0,
+        "artifact_objects": 0,
+        "snapshot_admissions": 0,
+        "snapshot_bytes": 0,
+        "observation_reads": 0,
+        "observation_bytes": 0
+      }
+    }
+  }
+]

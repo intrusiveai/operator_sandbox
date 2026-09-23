@@ -23,6 +23,10 @@ const EngineAttemptResultSchema = "urn:operator:schema:engine-attempt-result:v1a
 
 const EngineConclusionSchema = "urn:operator:schema:engine-conclusion:v1alpha2"
 
+const EngineGuestControlSchema = "urn:operator:schema:engine-guest-control:v1alpha1"
+
+const EngineHostControlSchema = "urn:operator:schema:engine-host-control:v1alpha1"
+
 const EngineInjectionDeleteRequestSchema = "urn:operator:schema:engine-injection-delete-request:v1alpha1"
 
 const EngineInjectionDeleteResultSchema = "urn:operator:schema:engine-injection-delete-result:v1alpha1"
@@ -65,6 +69,8 @@ const FeedbackManifestSchema = "urn:operator:schema:feedback-manifest:v1alpha1"
 
 const HarnessLoopLimitsSchema = "urn:operator:schema:harness-loop-limits:v1alpha1"
 
+const InputTreeManifestSchema = "urn:operator:schema:input-tree-manifest:v1alpha1"
+
 const ModelToolNotExecutedResultSchema = "urn:operator:schema:model-tool-not-executed-result:v1alpha1"
 
 const ObservationSelectionSchema = "urn:operator:schema:observation-selection:v1alpha1"
@@ -77,7 +83,13 @@ const RemainingLimitsSchema = "urn:operator:schema:remaining-limits:v1alpha1"
 
 const ScenarioBundleSchema = "urn:operator:schema:scenario-bundle:v1alpha1"
 
+const SkillManifestSchema = "urn:operator:schema:skill-manifest:v1alpha1"
+
+const SkillSetManifestSchema = "urn:operator:schema:skill-set-manifest:v1alpha1"
+
 const SnapshotMetadataSchema = "urn:operator:schema:snapshot-metadata:v1alpha1"
+
+const StartupCommonSchema = "urn:operator:schema:startup-common:v1alpha1"
 
 const TargetCapabilityManifestSchema = "urn:operator:schema:target-capability-manifest:v1alpha1"
 

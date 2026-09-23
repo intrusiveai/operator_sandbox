@@ -22,6 +22,9 @@ shared byte fixtures and generated schema-ID constants. The
 operations, their registry, spool ACK schema and stateless correlation checks.
 The [assessment contract](ASSESSMENT_CONTRACT.md) supplies typed record append,
 conclusion content and completion-chain validation.
+The [startup/manifest stage](STARTUP_MANIFEST_CONTRACT.md) supplies closed control
+messages, successful-transcript checks, bounded input/skill inventories and shared
+raw-descriptor/path validation. Input content and runtime gates remain separate work.
 Complete message bindings/schemas, stateful checks and transport conformance remain outstanding.
 
 ## 1. One owner and one pinned package
@@ -398,6 +401,9 @@ conformance runners before publication.
 
 ## 6. Exact startup exchange
 
+The [startup/manifest contract](STARTUP_MANIFEST_CONTRACT.md) fixes the implemented
+envelope/body fields and validation boundaries for this exchange.
+
 | Order | Direction / control kind | Meaning |
 |---|---|---|
 | 1 | Host: `bootstrap` | Assign campaign/launch/container/initial revision; identify pinned package, engine release, runtime profile, transport (`fifo` or `spool`) and RunManifest; provide bootstrap time limit. No bulk input inventory. |
@@ -419,7 +425,8 @@ resolved by the release rather than caller-chosen paths:
 
 - `input-tree` → `/run/operator/manifests/input-tree.json`
 - `skill-set` → `/run/operator/manifests/skill-set.json`
-- ordered skill-manifest descriptors → fixed children of this manifest directory.
+- ordered skill-manifest slots 0–15 → `skills/0000.json` through `skills/0015.json`
+  beneath this manifest directory.
 
 A descriptor contains path_id (or indexed skill slot), schema ID, raw size/digest
 and canonical object_digest. The package fixes the allowed mapping. Manifests
@@ -439,6 +446,8 @@ relative paths to 1,024 UTF-8 bytes and depth 16. Preserve current data limits:
 4,096 input files/64 MiB excluding separately counted skills; 16 skills/64 MiB
 aggregate; 1,024 files/8 MiB per skill; 1 MiB per ordinary skill/reference file.
 Manifest bytes count against host/guest staging resources in addition to data.
+The [startup/manifest contract](STARTUP_MANIFEST_CONTRACT.md) fixes the portable
+Unicode path profile, sorted inventory rules and exact metadata fields.
 
 EngineContext remains a safe immutable launch projection: input/prompt/skill
 references, capability/model/schema identities, operation registry and initial
@@ -769,7 +778,8 @@ conformance tests remain implementation work.
 The package shape, startup/manifest flow, identity/deadline rules and completion
 semantics and macOS physical spool mapping above are accepted. Remaining work
 is to author the remaining closed
-startup/control, manifest and model schemas and complete
+EngineContext, prompt provenance and model schemas, define the host-private
+RunManifest, and complete
 the operation registry, extend the existing offline
 catalog and Go/Python validation foundation with semantic validators and fixtures;
 port the required existing data contracts; and pass Section 12 conformance before

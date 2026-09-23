@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:input-tree-manifest:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "api_version": {
+      "const": "operator.dev/input-tree-manifest/v1alpha1"
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 4096,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "entry_id": {
+            "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+          },
+          "root_kind": {
+            "const": "input"
+          },
+          "path": {
+            "$ref": "urn:operator:schema:startup-common:v1alpha1#/$defs/relative_path"
+          },
+          "role": {
+            "enum": [
+              "engine-context",
+              "scenario-bundle",
+              "system-prompt",
+              "reference"
+            ]
+          },
+          "media_type": {
+            "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/media_type"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 67108864
+          },
+          "digest": {
+            "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+          },
+          "schema_id": {
+            "$ref": "urn:operator:schema:startup-common:v1alpha1#/$defs/schema_id"
+          }
+        },
+        "required": [
+          "entry_id",
+          "root_kind",
+          "path",
+          "role",
+          "media_type",
+          "size_bytes",
+          "digest"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "role": {
+                  "const": "engine-context"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "path": {
+                  "const": "run-context.json"
+                },
+                "media_type": {
+                  "const": "application/json"
+                },
+                "size_bytes": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 67108864
+                },
+                "schema_id": {
+                  "const": "urn:operator:schema:engine-context:v1alpha1"
+                }
+              },
+              "required": [
+                "schema_id"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "role": {
+                  "const": "scenario-bundle"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "path": {
+                  "const": "scenario-bundle.json"
+                },
+                "media_type": {
+                  "const": "application/json"
+                },
+                "size_bytes": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 4194304
+                },
+                "schema_id": {
+                  "const": "urn:operator:schema:scenario-bundle:v1alpha1"
+                }
+              },
+              "required": [
+                "schema_id"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "role": {
+                  "const": "system-prompt"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "path": {
+                  "const": "system-prompt.txt"
+                },
+                "media_type": {
+                  "const": "text/plain"
+                },
+                "size_bytes": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 131072
+                }
+              },
+              "not": {
+                "required": [
+                  "schema_id"
+                ]
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "role": {
+                  "const": "reference"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "size_bytes": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 1048576
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "required": [
+    "api_version",
+    "entries"
+  ]
+}

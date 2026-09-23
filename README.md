@@ -7,6 +7,8 @@ strict JSON decoders, offline validation of the current schema catalog and share
 conformance vectors. The [ordinary wire contract](schemas/ORDINARY_WIRE_CONTRACT.md)
 adds typed exchanges and stateless validation for 12 operations, plus spool ACKs. The [assessment contract](schemas/ASSESSMENT_CONTRACT.md)
 adds typed records, structured conclusions and completion-chain checks.
+The [startup/manifest contract](schemas/STARTUP_MANIFEST_CONTRACT.md) adds control
+messages, five-message transcript checks and bounded input/skill inventories.
 Run `make setup` then `make test`. Contract publication and
 Operator/Attack Harness runtime implementation remain pending.
 
