@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-spool-ack:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "api_version": {
+      "const": "operator.dev/engine-spool-ack/v1alpha1"
+    },
+    "launch_id": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    },
+    "ordinary_seq": {
+      "anyOf": [
+        {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "control_seq": {
+      "anyOf": [
+        {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "api_version",
+    "launch_id",
+    "ordinary_seq",
+    "control_seq"
+  ]
+}

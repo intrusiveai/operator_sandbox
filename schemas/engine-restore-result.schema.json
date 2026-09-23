@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-restore-result:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "transition_receipt": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    },
+    "previous_run_revision": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+    },
+    "run_revision": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+    },
+    "snapshot": {
+      "$ref": "urn:operator:schema:snapshot-metadata:v1alpha1"
+    },
+    "remaining_limits": {
+      "$ref": "urn:operator:schema:remaining-limits:v1alpha1"
+    },
+    "harness_disposition": {
+      "const": "continue"
+    }
+  },
+  "required": [
+    "transition_receipt",
+    "previous_run_revision",
+    "run_revision",
+    "snapshot",
+    "remaining_limits",
+    "harness_disposition"
+  ],
+  "allOf": [
+    {
+      "properties": {
+        "snapshot": {
+          "properties": {
+            "status": {
+              "const": "ready"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

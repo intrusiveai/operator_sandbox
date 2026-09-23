@@ -4,7 +4,9 @@ Implementation specification, 2026-09-19. No runtime is implemented here.
 
 The [shared validation foundation](contracts/README.md) now provides Go/Python
 strict JSON decoders, offline validation of the current schema catalog and shared
-conformance vectors. Run `make setup` then `make test`. Contract publication and
+conformance vectors. The [ordinary wire contract](schemas/ORDINARY_WIRE_CONTRACT.md)
+adds typed exchanges and stateless validation for 11 operations, plus spool ACKs.
+Run `make setup` then `make test`. Contract publication and
 Operator/Attack Harness runtime implementation remain pending.
 
 Operator accepts structured objectives and optional scenarios from users or external

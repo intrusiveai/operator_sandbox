@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:wire-common:v1alpha1",
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "digest": {
+      "type": "string",
+      "minLength": 71,
+      "maxLength": 71,
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "integer": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "media_type": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "pattern": "^[a-z0-9!#$&^_.+-]+/[a-z0-9!#$&^_.+-]+$",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "finish_reason": {
+      "enum": [
+        "objectives-addressed",
+        "no-useful-next-experiment",
+        "capabilities-exhausted",
+        "budget-limit",
+        "context-limit",
+        "harness-error"
+      ]
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "digest": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16777216
+        },
+        "media_type": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/media_type"
+        },
+        "canonicalization": {
+          "enum": [
+            "raw",
+            "jcs-v1"
+          ]
+        }
+      },
+      "required": [
+        "digest",
+        "size_bytes",
+        "media_type",
+        "canonicalization"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "canonicalization": {
+                "const": "jcs-v1"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "media_type": {
+                "const": "application/json"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "snapshot_handle": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source_session": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+        },
+        "checkpoint_id": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+        }
+      },
+      "required": [
+        "source_session",
+        "checkpoint_id"
+      ]
+    },
+    "base64_part": {
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 349528,
+      "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    }
+  },
+  "description": "Shared scalar and descriptor definitions. Reference $defs; not a top-level wire message."
+}

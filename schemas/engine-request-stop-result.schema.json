@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-request-stop-result:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "status": {
+      "const": "accepted"
+    },
+    "stop_receipt": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    },
+    "execution_admission": {
+      "const": "closed"
+    },
+    "conclusion_state": {
+      "enum": [
+        "committed",
+        "unavailable"
+      ]
+    },
+    "exit_required": {
+      "const": true
+    },
+    "exit_within_ms": {
+      "const": 5000
+    },
+    "finalization_status": {
+      "const": "pending"
+    }
+  },
+  "required": [
+    "status",
+    "stop_receipt",
+    "execution_admission",
+    "conclusion_state",
+    "exit_required",
+    "exit_within_ms",
+    "finalization_status"
+  ]
+}

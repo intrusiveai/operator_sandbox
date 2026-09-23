@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:remaining-limits:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "campaign_time_ms": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+    },
+    "attempt_admissions": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+    },
+    "model_tokens": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+    },
+    "model_turns": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+    },
+    "artifact_bytes": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+    },
+    "artifact_objects": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+    },
+    "snapshot_admissions": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+    },
+    "snapshot_bytes": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+    },
+    "observation_reads": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+    },
+    "observation_bytes": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+    }
+  },
+  "required": [
+    "campaign_time_ms",
+    "attempt_admissions",
+    "model_tokens",
+    "model_turns",
+    "artifact_bytes",
+    "artifact_objects",
+    "snapshot_admissions",
+    "snapshot_bytes",
+    "observation_reads",
+    "observation_bytes"
+  ]
+}

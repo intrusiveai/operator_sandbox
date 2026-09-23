@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:operation-error:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "code": {
+      "enum": [
+        "ACTION_UNAVAILABLE",
+        "ARTIFACT_BUDGET_EXCEEDED",
+        "ARTIFACT_INTEGRITY_FAILED",
+        "CLEANUP_FAILED",
+        "CONCLUSION_INVALID",
+        "DEADLINE_EXCEEDED",
+        "FEEDBACK_BUDGET_EXCEEDED",
+        "IDEMPOTENCY_CONFLICT",
+        "INTERNAL_ERROR",
+        "INVALID_ARGUMENTS",
+        "INVALID_OBSERVATION_READ",
+        "LIMIT_EXCEEDED",
+        "OBSERVATION_INTEGRITY_FAILED",
+        "OBSERVATION_NOT_FOUND",
+        "OBSERVATION_NOT_PERMITTED",
+        "OBSERVATION_RANGE_INVALID",
+        "OUTCOME_UNKNOWN",
+        "POLICY_DENIED",
+        "RESTORE_FAILED",
+        "SNAPSHOT_BUDGET_EXCEEDED",
+        "SNAPSHOT_FAILED",
+        "SNAPSHOT_INCOMPATIBLE",
+        "SNAPSHOT_NOT_FOUND",
+        "STATE_CHANGED",
+        "UNSUPPORTED_CAPABILITY",
+        "UPLOAD_INCOMPLETE",
+        "UPLOAD_NOT_FOUND",
+        "UPLOAD_RANGE_INVALID"
+      ]
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "instance_path": {
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 2048,
+      "pattern": "^(?:/(?:[^~]|~[01])*)*$"
+    },
+    "effect_state": {
+      "enum": [
+        "none",
+        "known",
+        "unknown"
+      ]
+    },
+    "disposition": {
+      "enum": [
+        "correct-and-resubmit",
+        "gap-and-continue",
+        "terminate"
+      ]
+    }
+  },
+  "required": [
+    "code",
+    "message",
+    "effect_state",
+    "disposition"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "effect_state": {
+            "const": "unknown"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "disposition": {
+            "const": "terminate"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "disposition": {
+            "const": "correct-and-resubmit"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "effect_state": {
+            "const": "none"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "code": {
+            "enum": [
+              "OUTCOME_UNKNOWN"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "effect_state": {
+            "const": "unknown"
+          },
+          "disposition": {
+            "const": "terminate"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "code": {
+            "enum": [
+              "ARTIFACT_INTEGRITY_FAILED",
+              "OBSERVATION_INTEGRITY_FAILED",
+              "CLEANUP_FAILED",
+              "RESTORE_FAILED",
+              "INTERNAL_ERROR"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "disposition": {
+            "const": "terminate"
+          }
+        }
+      }
+    }
+  ]
+}

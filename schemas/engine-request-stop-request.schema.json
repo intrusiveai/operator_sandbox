@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-request-stop-request:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "finish_reason": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/finish_reason"
+    },
+    "conclusion": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "state": {
+              "const": "committed"
+            },
+            "artifact_receipt": {
+              "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+            },
+            "record_receipt": {
+              "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+            }
+          },
+          "required": [
+            "state",
+            "artifact_receipt",
+            "record_receipt"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "state": {
+              "const": "unavailable"
+            },
+            "reason": {
+              "enum": [
+                "context-limit",
+                "budget-limit",
+                "local-error",
+                "serialization-failed"
+              ]
+            }
+          },
+          "required": [
+            "state",
+            "reason"
+          ]
+        }
+      ]
+    }
+  },
+  "required": [
+    "finish_reason",
+    "conclusion"
+  ]
+}

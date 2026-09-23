@@ -22,7 +22,7 @@ class ContractsTest(unittest.TestCase):
                     check()
                 else:
                     with self.assertRaises(ContractError): check()
-        self.assertEqual(len(catalog.ids()), 12)
+        self.assertEqual(catalog.ids(), sorted(json.loads((ROOT / "schemas/catalog.json").read_text())))
 
     def test_catalog_is_offline(self):
         for ref in ["https://example.invalid/forbidden.json", "file:///etc/passwd", "urn:missing"]:

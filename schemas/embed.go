@@ -5,5 +5,5 @@ import "embed"
 
 // Files is the checked-in schema source, not the complete release contract package.
 //
-//go:embed catalog.json *.schema.json
+//go:embed catalog.json operations.json *.schema.json
 var Files embed.FS

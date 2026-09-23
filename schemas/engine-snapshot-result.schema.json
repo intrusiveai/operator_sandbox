@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-snapshot-result:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "receipt_id": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    },
+    "snapshot": {
+      "$ref": "urn:operator:schema:snapshot-metadata:v1alpha1"
+    },
+    "remaining_limits": {
+      "$ref": "urn:operator:schema:remaining-limits:v1alpha1"
+    }
+  },
+  "required": [
+    "receipt_id",
+    "snapshot",
+    "remaining_limits"
+  ],
+  "allOf": [
+    {
+      "properties": {
+        "snapshot": {
+          "properties": {
+            "status": {
+              "const": "ready"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

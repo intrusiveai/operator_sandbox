@@ -1,0 +1,4830 @@
+[
+  {
+    "name": "artifact_begin request",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_begin",
+      "timeout_ms": 30000,
+      "body": {
+        "purpose": "payload",
+        "artifact": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "size_bytes": 2,
+          "media_type": "application/json",
+          "canonicalization": "raw"
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "artifact_begin response",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_begin",
+      "timeout_ms": 30000,
+      "body": {
+        "purpose": "payload",
+        "artifact": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "size_bytes": 2,
+          "media_type": "application/json",
+          "canonicalization": "raw"
+        }
+      }
+    },
+    "valid": true,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_begin",
+      "result": {
+        "upload_id": "upload-1",
+        "purpose": "payload",
+        "artifact": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "size_bytes": 2,
+          "media_type": "application/json",
+          "canonicalization": "raw"
+        },
+        "next_offset": 0
+      }
+    }
+  },
+  {
+    "name": "artifact_begin unknown body field",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_begin",
+      "timeout_ms": 30000,
+      "body": {
+        "purpose": "payload",
+        "artifact": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "size_bytes": 2,
+          "media_type": "application/json",
+          "canonicalization": "raw"
+        },
+        "unrecognized": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "artifact_begin unknown result field",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_begin",
+      "timeout_ms": 30000,
+      "body": {
+        "purpose": "payload",
+        "artifact": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "size_bytes": 2,
+          "media_type": "application/json",
+          "canonicalization": "raw"
+        }
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_begin",
+      "result": {
+        "upload_id": "upload-1",
+        "purpose": "payload",
+        "artifact": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "size_bytes": 2,
+          "media_type": "application/json",
+          "canonicalization": "raw"
+        },
+        "next_offset": 0,
+        "unrecognized": true
+      }
+    }
+  },
+  {
+    "name": "artifact_put_part request",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_put_part",
+      "timeout_ms": 30000,
+      "body": {
+        "upload_id": "upload-1",
+        "offset": 0,
+        "content": "e30="
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "artifact_put_part response",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_put_part",
+      "timeout_ms": 30000,
+      "body": {
+        "upload_id": "upload-1",
+        "offset": 0,
+        "content": "e30="
+      }
+    },
+    "valid": true,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_put_part",
+      "result": {
+        "upload_id": "upload-1",
+        "offset": 0,
+        "raw_length": 2,
+        "next_offset": 2
+      }
+    }
+  },
+  {
+    "name": "artifact_put_part unknown body field",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_put_part",
+      "timeout_ms": 30000,
+      "body": {
+        "upload_id": "upload-1",
+        "offset": 0,
+        "content": "e30=",
+        "unrecognized": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "artifact_put_part unknown result field",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_put_part",
+      "timeout_ms": 30000,
+      "body": {
+        "upload_id": "upload-1",
+        "offset": 0,
+        "content": "e30="
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_put_part",
+      "result": {
+        "upload_id": "upload-1",
+        "offset": 0,
+        "raw_length": 2,
+        "next_offset": 2,
+        "unrecognized": true
+      }
+    }
+  },
+  {
+    "name": "artifact_commit request",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_commit",
+      "timeout_ms": 30000,
+      "body": {
+        "upload_id": "upload-1"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "artifact_commit response",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_commit",
+      "timeout_ms": 30000,
+      "body": {
+        "upload_id": "upload-1"
+      }
+    },
+    "valid": true,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_commit",
+      "result": {
+        "upload_id": "upload-1",
+        "artifact_receipt": "artifact-1",
+        "purpose": "payload",
+        "artifact": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "size_bytes": 2,
+          "media_type": "application/json",
+          "canonicalization": "raw"
+        }
+      }
+    }
+  },
+  {
+    "name": "artifact_commit unknown body field",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_commit",
+      "timeout_ms": 30000,
+      "body": {
+        "upload_id": "upload-1",
+        "unrecognized": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "artifact_commit unknown result field",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_commit",
+      "timeout_ms": 30000,
+      "body": {
+        "upload_id": "upload-1"
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_commit",
+      "result": {
+        "upload_id": "upload-1",
+        "artifact_receipt": "artifact-1",
+        "purpose": "payload",
+        "artifact": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "size_bytes": 2,
+          "media_type": "application/json",
+          "canonicalization": "raw"
+        },
+        "unrecognized": true
+      }
+    }
+  },
+  {
+    "name": "attempt_execute request",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.attempt_execute",
+      "timeout_ms": 30000,
+      "body": {
+        "api_version": "operator.dev/engine-attempt-request/v1alpha2",
+        "kind": "EngineAttemptRequest",
+        "request_id": "operation-1",
+        "origin": "exploratory",
+        "thread_id": "thread-1",
+        "attempt_id": "attempt-1",
+        "generation": 1,
+        "attempt_index": 1,
+        "payload": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "size_bytes": 2,
+          "media_type": "application/json",
+          "canonicalization": "raw"
+        },
+        "generator": {
+          "kind": "operator-engine",
+          "release_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "pre_actions": [],
+        "invocation": {
+          "operation_id": "invoke",
+          "input_source": "payload",
+          "media_type": "application/json"
+        },
+        "cleanup": {
+          "delete_actions_after_observation": true
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "attempt_execute response",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.attempt_execute",
+      "timeout_ms": 30000,
+      "body": {
+        "api_version": "operator.dev/engine-attempt-request/v1alpha2",
+        "kind": "EngineAttemptRequest",
+        "request_id": "operation-1",
+        "origin": "exploratory",
+        "thread_id": "thread-1",
+        "attempt_id": "attempt-1",
+        "generation": 1,
+        "attempt_index": 1,
+        "payload": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "size_bytes": 2,
+          "media_type": "application/json",
+          "canonicalization": "raw"
+        },
+        "generator": {
+          "kind": "operator-engine",
+          "release_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "pre_actions": [],
+        "invocation": {
+          "operation_id": "invoke",
+          "input_source": "payload",
+          "media_type": "application/json"
+        },
+        "cleanup": {
+          "delete_actions_after_observation": true
+        }
+      }
+    },
+    "valid": true,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.attempt_execute",
+      "result": {
+        "api_version": "operator.dev/engine-attempt-result/v1alpha2",
+        "kind": "EngineAttemptResult",
+        "request_id": "operation-1",
+        "attempt_id": "attempt-1",
+        "receipt_id": "receipt1",
+        "status": "completed",
+        "stage": "complete",
+        "target_contact": "attempted",
+        "invocation_state": "succeeded",
+        "cleanup_state": "not-needed",
+        "retry_disposition": "do-not-retry",
+        "errors": [],
+        "feedback": {
+          "profile": "black-box",
+          "collection_state": "complete",
+          "boundary": "invocation-completed",
+          "categories": [
+            {
+              "kind": "target_output",
+              "state": "empty"
+            },
+            {
+              "kind": "operation_error",
+              "state": "empty"
+            },
+            {
+              "kind": "injection_delivery",
+              "state": "empty"
+            },
+            {
+              "kind": "oracle_outcome",
+              "state": "empty"
+            }
+          ],
+          "entries": []
+        }
+      }
+    }
+  },
+  {
+    "name": "attempt_execute unknown body field",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.attempt_execute",
+      "timeout_ms": 30000,
+      "body": {
+        "api_version": "operator.dev/engine-attempt-request/v1alpha2",
+        "kind": "EngineAttemptRequest",
+        "request_id": "operation-1",
+        "origin": "exploratory",
+        "thread_id": "thread-1",
+        "attempt_id": "attempt-1",
+        "generation": 1,
+        "attempt_index": 1,
+        "payload": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "size_bytes": 2,
+          "media_type": "application/json",
+          "canonicalization": "raw"
+        },
+        "generator": {
+          "kind": "operator-engine",
+          "release_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "pre_actions": [],
+        "invocation": {
+          "operation_id": "invoke",
+          "input_source": "payload",
+          "media_type": "application/json"
+        },
+        "cleanup": {
+          "delete_actions_after_observation": true
+        },
+        "unrecognized": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "attempt_execute unknown result field",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.attempt_execute",
+      "timeout_ms": 30000,
+      "body": {
+        "api_version": "operator.dev/engine-attempt-request/v1alpha2",
+        "kind": "EngineAttemptRequest",
+        "request_id": "operation-1",
+        "origin": "exploratory",
+        "thread_id": "thread-1",
+        "attempt_id": "attempt-1",
+        "generation": 1,
+        "attempt_index": 1,
+        "payload": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "size_bytes": 2,
+          "media_type": "application/json",
+          "canonicalization": "raw"
+        },
+        "generator": {
+          "kind": "operator-engine",
+          "release_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "pre_actions": [],
+        "invocation": {
+          "operation_id": "invoke",
+          "input_source": "payload",
+          "media_type": "application/json"
+        },
+        "cleanup": {
+          "delete_actions_after_observation": true
+        }
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.attempt_execute",
+      "result": {
+        "api_version": "operator.dev/engine-attempt-result/v1alpha2",
+        "kind": "EngineAttemptResult",
+        "request_id": "operation-1",
+        "attempt_id": "attempt-1",
+        "receipt_id": "receipt1",
+        "status": "completed",
+        "stage": "complete",
+        "target_contact": "attempted",
+        "invocation_state": "succeeded",
+        "cleanup_state": "not-needed",
+        "retry_disposition": "do-not-retry",
+        "errors": [],
+        "feedback": {
+          "profile": "black-box",
+          "collection_state": "complete",
+          "boundary": "invocation-completed",
+          "categories": [
+            {
+              "kind": "target_output",
+              "state": "empty"
+            },
+            {
+              "kind": "operation_error",
+              "state": "empty"
+            },
+            {
+              "kind": "injection_delivery",
+              "state": "empty"
+            },
+            {
+              "kind": "oracle_outcome",
+              "state": "empty"
+            }
+          ],
+          "entries": []
+        },
+        "unrecognized": true
+      }
+    }
+  },
+  {
+    "name": "injection_delete request",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.injection_delete",
+      "timeout_ms": 30000,
+      "body": {
+        "attempt_receipt_id": "attempt-receipt-1",
+        "action_id": "action-1"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "injection_delete response",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.injection_delete",
+      "timeout_ms": 30000,
+      "body": {
+        "attempt_receipt_id": "attempt-receipt-1",
+        "action_id": "action-1"
+      }
+    },
+    "valid": true,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.injection_delete",
+      "result": {
+        "receipt_id": "delete-1",
+        "attempt_receipt_id": "attempt-receipt-1",
+        "action_id": "action-1",
+        "outcome": "deleted"
+      }
+    }
+  },
+  {
+    "name": "injection_delete unknown body field",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.injection_delete",
+      "timeout_ms": 30000,
+      "body": {
+        "attempt_receipt_id": "attempt-receipt-1",
+        "action_id": "action-1",
+        "unrecognized": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "injection_delete unknown result field",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.injection_delete",
+      "timeout_ms": 30000,
+      "body": {
+        "attempt_receipt_id": "attempt-receipt-1",
+        "action_id": "action-1"
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.injection_delete",
+      "result": {
+        "receipt_id": "delete-1",
+        "attempt_receipt_id": "attempt-receipt-1",
+        "action_id": "action-1",
+        "outcome": "deleted",
+        "unrecognized": true
+      }
+    }
+  },
+  {
+    "name": "observation_read request",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.observation_read",
+      "timeout_ms": 30000,
+      "body": {
+        "receipt_id": "receipt-1",
+        "entry_id": "entry-1",
+        "offset": 0,
+        "max_bytes": 262144
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "observation_read response",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.observation_read",
+      "timeout_ms": 30000,
+      "body": {
+        "receipt_id": "receipt-1",
+        "entry_id": "entry-1",
+        "offset": 0,
+        "max_bytes": 262144
+      }
+    },
+    "valid": true,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.observation_read",
+      "result": {
+        "receipt_id": "receipt-1",
+        "entry_id": "entry-1",
+        "offset": 0,
+        "availability": "available",
+        "content": "e30=",
+        "raw_length": 2,
+        "eof": true,
+        "truncated": false,
+        "artifact": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "media_type": "application/json",
+          "size_bytes": 2
+        }
+      }
+    }
+  },
+  {
+    "name": "observation_read unknown body field",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.observation_read",
+      "timeout_ms": 30000,
+      "body": {
+        "receipt_id": "receipt-1",
+        "entry_id": "entry-1",
+        "offset": 0,
+        "max_bytes": 262144,
+        "unrecognized": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "observation_read unknown result field",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.observation_read",
+      "timeout_ms": 30000,
+      "body": {
+        "receipt_id": "receipt-1",
+        "entry_id": "entry-1",
+        "offset": 0,
+        "max_bytes": 262144
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.observation_read",
+      "result": {
+        "receipt_id": "receipt-1",
+        "entry_id": "entry-1",
+        "offset": 0,
+        "availability": "available",
+        "content": "e30=",
+        "raw_length": 2,
+        "eof": true,
+        "truncated": false,
+        "artifact": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "media_type": "application/json",
+          "size_bytes": 2
+        },
+        "unrecognized": true
+      }
+    }
+  },
+  {
+    "name": "snapshot_request request",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": true
+  },
+  {
+    "name": "snapshot_request response",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": true,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "result": {
+        "receipt_id": "snapshot-1",
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "2026-09-23T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        },
+        "remaining_limits": {
+          "campaign_time_ms": 0,
+          "attempt_admissions": 0,
+          "model_tokens": 0,
+          "model_turns": 0,
+          "artifact_bytes": 0,
+          "artifact_objects": 0,
+          "snapshot_admissions": 0,
+          "snapshot_bytes": 0,
+          "observation_reads": 0,
+          "observation_bytes": 0
+        }
+      }
+    }
+  },
+  {
+    "name": "snapshot_request unknown body field",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {
+        "unrecognized": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "snapshot_request unknown result field",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "result": {
+        "receipt_id": "snapshot-1",
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "2026-09-23T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        },
+        "remaining_limits": {
+          "campaign_time_ms": 0,
+          "attempt_admissions": 0,
+          "model_tokens": 0,
+          "model_turns": 0,
+          "artifact_bytes": 0,
+          "artifact_objects": 0,
+          "snapshot_admissions": 0,
+          "snapshot_bytes": 0,
+          "observation_reads": 0,
+          "observation_bytes": 0
+        },
+        "unrecognized": true
+      }
+    }
+  },
+  {
+    "name": "snapshot_list request",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_list",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": true
+  },
+  {
+    "name": "snapshot_list response",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_list",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": true,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_list",
+      "result": {
+        "campaign_id": "campaign-1",
+        "snapshots": [
+          {
+            "campaign_id": "campaign-1",
+            "source_session": "source-1",
+            "checkpoint_id": "checkpoint-1",
+            "label": "",
+            "description": "",
+            "created_at": "2026-09-23T12:00:00Z",
+            "status": "ready",
+            "canonical_size_bytes": 100
+          }
+        ],
+        "offset": 0,
+        "total": 1
+      }
+    }
+  },
+  {
+    "name": "snapshot_list unknown body field",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_list",
+      "timeout_ms": 30000,
+      "body": {
+        "unrecognized": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "snapshot_list unknown result field",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_list",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_list",
+      "result": {
+        "campaign_id": "campaign-1",
+        "snapshots": [
+          {
+            "campaign_id": "campaign-1",
+            "source_session": "source-1",
+            "checkpoint_id": "checkpoint-1",
+            "label": "",
+            "description": "",
+            "created_at": "2026-09-23T12:00:00Z",
+            "status": "ready",
+            "canonical_size_bytes": 100
+          }
+        ],
+        "offset": 0,
+        "total": 1,
+        "unrecognized": true
+      }
+    }
+  },
+  {
+    "name": "snapshot_inspect request",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_inspect",
+      "timeout_ms": 30000,
+      "body": {
+        "source_session": "source-1",
+        "checkpoint_id": "checkpoint-1"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "snapshot_inspect response",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_inspect",
+      "timeout_ms": 30000,
+      "body": {
+        "source_session": "source-1",
+        "checkpoint_id": "checkpoint-1"
+      }
+    },
+    "valid": true,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_inspect",
+      "result": {
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "2026-09-23T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        }
+      }
+    }
+  },
+  {
+    "name": "snapshot_inspect unknown body field",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_inspect",
+      "timeout_ms": 30000,
+      "body": {
+        "source_session": "source-1",
+        "checkpoint_id": "checkpoint-1",
+        "unrecognized": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "snapshot_inspect unknown result field",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_inspect",
+      "timeout_ms": 30000,
+      "body": {
+        "source_session": "source-1",
+        "checkpoint_id": "checkpoint-1"
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_inspect",
+      "result": {
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "2026-09-23T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        },
+        "unrecognized": true
+      }
+    }
+  },
+  {
+    "name": "restore_request request",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.restore_request",
+      "timeout_ms": 30000,
+      "body": {
+        "source_session": "source-1",
+        "checkpoint_id": "checkpoint-1"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "restore_request response",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.restore_request",
+      "timeout_ms": 30000,
+      "body": {
+        "source_session": "source-1",
+        "checkpoint_id": "checkpoint-1"
+      }
+    },
+    "valid": true,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.restore_request",
+      "result": {
+        "transition_receipt": "restore-1",
+        "previous_run_revision": 3,
+        "run_revision": 4,
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "2026-09-23T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        },
+        "remaining_limits": {
+          "campaign_time_ms": 0,
+          "attempt_admissions": 0,
+          "model_tokens": 0,
+          "model_turns": 0,
+          "artifact_bytes": 0,
+          "artifact_objects": 0,
+          "snapshot_admissions": 0,
+          "snapshot_bytes": 0,
+          "observation_reads": 0,
+          "observation_bytes": 0
+        },
+        "harness_disposition": "continue"
+      }
+    }
+  },
+  {
+    "name": "restore_request unknown body field",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.restore_request",
+      "timeout_ms": 30000,
+      "body": {
+        "source_session": "source-1",
+        "checkpoint_id": "checkpoint-1",
+        "unrecognized": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "restore_request unknown result field",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.restore_request",
+      "timeout_ms": 30000,
+      "body": {
+        "source_session": "source-1",
+        "checkpoint_id": "checkpoint-1"
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.restore_request",
+      "result": {
+        "transition_receipt": "restore-1",
+        "previous_run_revision": 3,
+        "run_revision": 4,
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "2026-09-23T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        },
+        "remaining_limits": {
+          "campaign_time_ms": 0,
+          "attempt_admissions": 0,
+          "model_tokens": 0,
+          "model_turns": 0,
+          "artifact_bytes": 0,
+          "artifact_objects": 0,
+          "snapshot_admissions": 0,
+          "snapshot_bytes": 0,
+          "observation_reads": 0,
+          "observation_bytes": 0
+        },
+        "harness_disposition": "continue",
+        "unrecognized": true
+      }
+    }
+  },
+  {
+    "name": "request_stop request",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.request_stop",
+      "timeout_ms": 30000,
+      "body": {
+        "finish_reason": "objectives-addressed",
+        "conclusion": {
+          "state": "committed",
+          "artifact_receipt": "artifact-conclusion-1",
+          "record_receipt": "record-conclusion-1"
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "request_stop response",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.request_stop",
+      "timeout_ms": 30000,
+      "body": {
+        "finish_reason": "objectives-addressed",
+        "conclusion": {
+          "state": "committed",
+          "artifact_receipt": "artifact-conclusion-1",
+          "record_receipt": "record-conclusion-1"
+        }
+      }
+    },
+    "valid": true,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.request_stop",
+      "result": {
+        "status": "accepted",
+        "stop_receipt": "stop-1",
+        "execution_admission": "closed",
+        "conclusion_state": "committed",
+        "exit_required": true,
+        "exit_within_ms": 5000,
+        "finalization_status": "pending"
+      }
+    }
+  },
+  {
+    "name": "request_stop unknown body field",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.request_stop",
+      "timeout_ms": 30000,
+      "body": {
+        "finish_reason": "objectives-addressed",
+        "conclusion": {
+          "state": "committed",
+          "artifact_receipt": "artifact-conclusion-1",
+          "record_receipt": "record-conclusion-1"
+        },
+        "unrecognized": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "request_stop unknown result field",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.request_stop",
+      "timeout_ms": 30000,
+      "body": {
+        "finish_reason": "objectives-addressed",
+        "conclusion": {
+          "state": "committed",
+          "artifact_receipt": "artifact-conclusion-1",
+          "record_receipt": "record-conclusion-1"
+        }
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.request_stop",
+      "result": {
+        "status": "accepted",
+        "stop_receipt": "stop-1",
+        "execution_admission": "closed",
+        "conclusion_state": "committed",
+        "exit_required": true,
+        "exit_within_ms": 5000,
+        "finalization_status": "pending",
+        "unrecognized": true
+      }
+    }
+  },
+  {
+    "name": "missing request api_version",
+    "request": {
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false
+  },
+  {
+    "name": "missing request kind",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false
+  },
+  {
+    "name": "missing request seq",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false
+  },
+  {
+    "name": "missing request campaign_id",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false
+  },
+  {
+    "name": "missing request launch_id",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false
+  },
+  {
+    "name": "missing request run_revision",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false
+  },
+  {
+    "name": "missing request call_id",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false
+  },
+  {
+    "name": "missing request operation_id",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false
+  },
+  {
+    "name": "missing request operation",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false
+  },
+  {
+    "name": "missing request timeout_ms",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "body": {}
+    },
+    "valid": false
+  },
+  {
+    "name": "missing request body",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000
+    },
+    "valid": false
+  },
+  {
+    "name": "response mismatch campaign_id",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "another",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "result": {
+        "receipt_id": "snapshot-1",
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "2026-09-23T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        },
+        "remaining_limits": {
+          "campaign_time_ms": 0,
+          "attempt_admissions": 0,
+          "model_tokens": 0,
+          "model_turns": 0,
+          "artifact_bytes": 0,
+          "artifact_objects": 0,
+          "snapshot_admissions": 0,
+          "snapshot_bytes": 0,
+          "observation_reads": 0,
+          "observation_bytes": 0
+        }
+      }
+    }
+  },
+  {
+    "name": "response mismatch launch_id",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "another",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "result": {
+        "receipt_id": "snapshot-1",
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "2026-09-23T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        },
+        "remaining_limits": {
+          "campaign_time_ms": 0,
+          "attempt_admissions": 0,
+          "model_tokens": 0,
+          "model_turns": 0,
+          "artifact_bytes": 0,
+          "artifact_objects": 0,
+          "snapshot_admissions": 0,
+          "snapshot_bytes": 0,
+          "observation_reads": 0,
+          "observation_bytes": 0
+        }
+      }
+    }
+  },
+  {
+    "name": "response mismatch run_revision",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 4,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "result": {
+        "receipt_id": "snapshot-1",
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "2026-09-23T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        },
+        "remaining_limits": {
+          "campaign_time_ms": 0,
+          "attempt_admissions": 0,
+          "model_tokens": 0,
+          "model_turns": 0,
+          "artifact_bytes": 0,
+          "artifact_objects": 0,
+          "snapshot_admissions": 0,
+          "snapshot_bytes": 0,
+          "observation_reads": 0,
+          "observation_bytes": 0
+        }
+      }
+    }
+  },
+  {
+    "name": "response mismatch call_id",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "another",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "result": {
+        "receipt_id": "snapshot-1",
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "2026-09-23T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        },
+        "remaining_limits": {
+          "campaign_time_ms": 0,
+          "attempt_admissions": 0,
+          "model_tokens": 0,
+          "model_turns": 0,
+          "artifact_bytes": 0,
+          "artifact_objects": 0,
+          "snapshot_admissions": 0,
+          "snapshot_bytes": 0,
+          "observation_reads": 0,
+          "observation_bytes": 0
+        }
+      }
+    }
+  },
+  {
+    "name": "response mismatch operation_id",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "another",
+      "operation": "engine.snapshot_request",
+      "result": {
+        "receipt_id": "snapshot-1",
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "2026-09-23T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        },
+        "remaining_limits": {
+          "campaign_time_ms": 0,
+          "attempt_admissions": 0,
+          "model_tokens": 0,
+          "model_turns": 0,
+          "artifact_bytes": 0,
+          "artifact_objects": 0,
+          "snapshot_admissions": 0,
+          "snapshot_bytes": 0,
+          "observation_reads": 0,
+          "observation_bytes": 0
+        }
+      }
+    }
+  },
+  {
+    "name": "response mismatch operation",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_list",
+      "result": {
+        "receipt_id": "snapshot-1",
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "2026-09-23T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        },
+        "remaining_limits": {
+          "campaign_time_ms": 0,
+          "attempt_admissions": 0,
+          "model_tokens": 0,
+          "model_turns": 0,
+          "artifact_bytes": 0,
+          "artifact_objects": 0,
+          "snapshot_admissions": 0,
+          "snapshot_bytes": 0,
+          "observation_reads": 0,
+          "observation_bytes": 0
+        }
+      }
+    }
+  },
+  {
+    "name": "unknown operation",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.exec",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false
+  },
+  {
+    "name": "unfinished model operation is absent",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.model_generate",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false
+  },
+  {
+    "name": "null body",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": null
+    },
+    "valid": false
+  },
+  {
+    "name": "zero timeout",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 0,
+      "body": {}
+    },
+    "valid": false
+  },
+  {
+    "name": "large requested timeout is host-clamped",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 9007199254740991,
+      "body": {}
+    },
+    "valid": true
+  },
+  {
+    "name": "negative sequence",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": -1,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false
+  },
+  {
+    "name": "unsafe sequence",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 9007199254740992,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false
+  },
+  {
+    "name": "Boolean sequence",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": true,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false
+  },
+  {
+    "name": "wrong request version",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v2",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false
+  },
+  {
+    "name": "request identifier with newline",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1\n",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false
+  },
+  {
+    "name": "snapshot caller cannot supply campaign",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {
+        "campaign_id": "campaign-2"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "snapshot caller cannot supply allowance",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {
+        "maximum_committed_bytes": 1
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "snapshot description UTF8 exactly limit",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {
+        "description": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "snapshot description UTF8 over limit",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {
+        "description": "ééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "snapshot description null",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {
+        "description": null
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "snapshot label too long",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {
+        "label": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "snapshot description silently dropped",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "result": {
+        "receipt_id": "snapshot-1",
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "changed",
+          "created_at": "2026-09-23T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        },
+        "remaining_limits": {
+          "campaign_time_ms": 0,
+          "attempt_admissions": 0,
+          "model_tokens": 0,
+          "model_turns": 0,
+          "artifact_bytes": 0,
+          "artifact_objects": 0,
+          "snapshot_admissions": 0,
+          "snapshot_bytes": 0,
+          "observation_reads": 0,
+          "observation_bytes": 0
+        }
+      }
+    }
+  },
+  {
+    "name": "snapshot foreign campaign",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_inspect",
+      "timeout_ms": 30000,
+      "body": {
+        "source_session": "source-1",
+        "checkpoint_id": "checkpoint-1"
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_inspect",
+      "result": {
+        "snapshot": {
+          "campaign_id": "other",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "2026-09-23T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        }
+      }
+    }
+  },
+  {
+    "name": "snapshot unknown checkpoint",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_inspect",
+      "timeout_ms": 30000,
+      "body": {
+        "source_session": "source-1",
+        "checkpoint_id": "checkpoint-1"
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_inspect",
+      "result": {
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "other",
+          "label": "",
+          "description": "",
+          "created_at": "2026-09-23T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        }
+      }
+    }
+  },
+  {
+    "name": "snapshot invalid date",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_inspect",
+      "timeout_ms": 30000,
+      "body": {
+        "source_session": "source-1",
+        "checkpoint_id": "checkpoint-1"
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_inspect",
+      "result": {
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "2026-02-30T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        }
+      }
+    }
+  },
+  {
+    "name": "snapshot zero year",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_inspect",
+      "timeout_ms": 30000,
+      "body": {
+        "source_session": "source-1",
+        "checkpoint_id": "checkpoint-1"
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_inspect",
+      "result": {
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "0000-01-01T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        }
+      }
+    }
+  },
+  {
+    "name": "snapshot zero-offset timestamp spelling forbidden",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_inspect",
+      "timeout_ms": 30000,
+      "body": {
+        "source_session": "source-1",
+        "checkpoint_id": "checkpoint-1"
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_inspect",
+      "result": {
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "2026-09-23T12:00:00+00:00",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        }
+      }
+    }
+  },
+  {
+    "name": "snapshot nanosecond timestamp",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_inspect",
+      "timeout_ms": 30000,
+      "body": {
+        "source_session": "source-1",
+        "checkpoint_id": "checkpoint-1"
+      }
+    },
+    "valid": true,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_inspect",
+      "result": {
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "2026-09-23T12:00:00.123456789Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        }
+      }
+    }
+  },
+  {
+    "name": "snapshot raw native private field",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_inspect",
+      "timeout_ms": 30000,
+      "body": {
+        "source_session": "source-1",
+        "checkpoint_id": "checkpoint-1"
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_inspect",
+      "result": {
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "2026-09-23T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100,
+          "source_session_id": "native-secret"
+        }
+      }
+    }
+  },
+  {
+    "name": "restore new revision belongs only in result",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.restore_request",
+      "timeout_ms": 30000,
+      "body": {
+        "source_session": "source-1",
+        "checkpoint_id": "checkpoint-1"
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 4,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.restore_request",
+      "result": {
+        "transition_receipt": "restore-1",
+        "previous_run_revision": 3,
+        "run_revision": 4,
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "2026-09-23T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        },
+        "remaining_limits": {
+          "campaign_time_ms": 0,
+          "attempt_admissions": 0,
+          "model_tokens": 0,
+          "model_turns": 0,
+          "artifact_bytes": 0,
+          "artifact_objects": 0,
+          "snapshot_admissions": 0,
+          "snapshot_bytes": 0,
+          "observation_reads": 0,
+          "observation_bytes": 0
+        },
+        "harness_disposition": "continue"
+      }
+    }
+  },
+  {
+    "name": "restore cannot keep old revision",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.restore_request",
+      "timeout_ms": 30000,
+      "body": {
+        "source_session": "source-1",
+        "checkpoint_id": "checkpoint-1"
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.restore_request",
+      "result": {
+        "transition_receipt": "restore-1",
+        "previous_run_revision": 3,
+        "run_revision": 3,
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "2026-09-23T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        },
+        "remaining_limits": {
+          "campaign_time_ms": 0,
+          "attempt_admissions": 0,
+          "model_tokens": 0,
+          "model_turns": 0,
+          "artifact_bytes": 0,
+          "artifact_objects": 0,
+          "snapshot_admissions": 0,
+          "snapshot_bytes": 0,
+          "observation_reads": 0,
+          "observation_bytes": 0
+        },
+        "harness_disposition": "continue"
+      }
+    }
+  },
+  {
+    "name": "restore saved transition requires ledger duplicate check",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.restore_request",
+      "timeout_ms": 30000,
+      "body": {
+        "source_session": "source-1",
+        "checkpoint_id": "checkpoint-1"
+      }
+    },
+    "valid": true,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.restore_request",
+      "result": {
+        "transition_receipt": "restore-1",
+        "previous_run_revision": 2,
+        "run_revision": 3,
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "2026-09-23T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        },
+        "remaining_limits": {
+          "campaign_time_ms": 0,
+          "attempt_admissions": 0,
+          "model_tokens": 0,
+          "model_turns": 0,
+          "artifact_bytes": 0,
+          "artifact_objects": 0,
+          "snapshot_admissions": 0,
+          "snapshot_bytes": 0,
+          "observation_reads": 0,
+          "observation_bytes": 0
+        },
+        "harness_disposition": "continue"
+      }
+    }
+  },
+  {
+    "name": "restore cannot request harness restart",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.restore_request",
+      "timeout_ms": 30000,
+      "body": {
+        "source_session": "source-1",
+        "checkpoint_id": "checkpoint-1"
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.restore_request",
+      "result": {
+        "transition_receipt": "restore-1",
+        "previous_run_revision": 3,
+        "run_revision": 4,
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "2026-09-23T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        },
+        "remaining_limits": {
+          "campaign_time_ms": 0,
+          "attempt_admissions": 0,
+          "model_tokens": 0,
+          "model_turns": 0,
+          "artifact_bytes": 0,
+          "artifact_objects": 0,
+          "snapshot_admissions": 0,
+          "snapshot_bytes": 0,
+          "observation_reads": 0,
+          "observation_bytes": 0
+        },
+        "harness_disposition": "restart"
+      }
+    }
+  },
+  {
+    "name": "restore budget projection is complete",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.restore_request",
+      "timeout_ms": 30000,
+      "body": {
+        "source_session": "source-1",
+        "checkpoint_id": "checkpoint-1"
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.restore_request",
+      "result": {
+        "transition_receipt": "restore-1",
+        "previous_run_revision": 3,
+        "run_revision": 4,
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "2026-09-23T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        },
+        "remaining_limits": {
+          "campaign_time_ms": 0,
+          "attempt_admissions": 0,
+          "model_tokens": 0,
+          "model_turns": 0,
+          "artifact_bytes": 0,
+          "artifact_objects": 0,
+          "snapshot_admissions": 0,
+          "observation_reads": 0,
+          "observation_bytes": 0
+        },
+        "harness_disposition": "continue"
+      }
+    }
+  },
+  {
+    "name": "restore rejects old negative budget",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.restore_request",
+      "timeout_ms": 30000,
+      "body": {
+        "source_session": "source-1",
+        "checkpoint_id": "checkpoint-1"
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.restore_request",
+      "result": {
+        "transition_receipt": "restore-1",
+        "previous_run_revision": 3,
+        "run_revision": 4,
+        "snapshot": {
+          "campaign_id": "campaign-1",
+          "source_session": "source-1",
+          "checkpoint_id": "checkpoint-1",
+          "label": "",
+          "description": "",
+          "created_at": "2026-09-23T12:00:00Z",
+          "status": "ready",
+          "canonical_size_bytes": 100
+        },
+        "remaining_limits": {
+          "campaign_time_ms": 0,
+          "attempt_admissions": 0,
+          "model_tokens": 0,
+          "model_turns": 0,
+          "artifact_bytes": 0,
+          "artifact_objects": 0,
+          "snapshot_admissions": 0,
+          "snapshot_bytes": -1,
+          "observation_reads": 0,
+          "observation_bytes": 0
+        },
+        "harness_disposition": "continue"
+      }
+    }
+  },
+  {
+    "name": "restore forbids replacement metadata",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.restore_request",
+      "timeout_ms": 30000,
+      "body": {
+        "source_session": "source-1",
+        "checkpoint_id": "checkpoint-1",
+        "description": "new description"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "attempt durable ID binding",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.attempt_execute",
+      "timeout_ms": 30000,
+      "body": {
+        "api_version": "operator.dev/engine-attempt-request/v1alpha2",
+        "kind": "EngineAttemptRequest",
+        "request_id": "other",
+        "origin": "exploratory",
+        "thread_id": "thread-1",
+        "attempt_id": "attempt-1",
+        "generation": 1,
+        "attempt_index": 1,
+        "payload": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "size_bytes": 2,
+          "media_type": "application/json",
+          "canonicalization": "raw"
+        },
+        "generator": {
+          "kind": "operator-engine",
+          "release_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "pre_actions": [],
+        "invocation": {
+          "operation_id": "invoke",
+          "input_source": "payload",
+          "media_type": "application/json"
+        },
+        "cleanup": {
+          "delete_actions_after_observation": true
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "attempt result durable ID binding",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.attempt_execute",
+      "timeout_ms": 30000,
+      "body": {
+        "api_version": "operator.dev/engine-attempt-request/v1alpha2",
+        "kind": "EngineAttemptRequest",
+        "request_id": "operation-1",
+        "origin": "exploratory",
+        "thread_id": "thread-1",
+        "attempt_id": "attempt-1",
+        "generation": 1,
+        "attempt_index": 1,
+        "payload": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "size_bytes": 2,
+          "media_type": "application/json",
+          "canonicalization": "raw"
+        },
+        "generator": {
+          "kind": "operator-engine",
+          "release_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "pre_actions": [],
+        "invocation": {
+          "operation_id": "invoke",
+          "input_source": "payload",
+          "media_type": "application/json"
+        },
+        "cleanup": {
+          "delete_actions_after_observation": true
+        }
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.attempt_execute",
+      "result": {
+        "api_version": "operator.dev/engine-attempt-result/v1alpha2",
+        "kind": "EngineAttemptResult",
+        "request_id": "other",
+        "attempt_id": "attempt-1",
+        "receipt_id": "receipt1",
+        "status": "completed",
+        "stage": "complete",
+        "target_contact": "attempted",
+        "invocation_state": "succeeded",
+        "cleanup_state": "not-needed",
+        "retry_disposition": "do-not-retry",
+        "errors": [],
+        "feedback": {
+          "profile": "black-box",
+          "collection_state": "complete",
+          "boundary": "invocation-completed",
+          "categories": [
+            {
+              "kind": "target_output",
+              "state": "empty"
+            },
+            {
+              "kind": "operation_error",
+              "state": "empty"
+            },
+            {
+              "kind": "injection_delivery",
+              "state": "empty"
+            },
+            {
+              "kind": "oracle_outcome",
+              "state": "empty"
+            }
+          ],
+          "entries": []
+        }
+      }
+    }
+  },
+  {
+    "name": "cleanup action correlation",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.injection_delete",
+      "timeout_ms": 30000,
+      "body": {
+        "attempt_receipt_id": "attempt-receipt-1",
+        "action_id": "action-1"
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.injection_delete",
+      "result": {
+        "receipt_id": "delete-1",
+        "attempt_receipt_id": "attempt-receipt-1",
+        "action_id": "other",
+        "outcome": "deleted"
+      }
+    }
+  },
+  {
+    "name": "cleanup absence is success",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.injection_delete",
+      "timeout_ms": 30000,
+      "body": {
+        "attempt_receipt_id": "attempt-receipt-1",
+        "action_id": "action-1"
+      }
+    },
+    "valid": true,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.injection_delete",
+      "result": {
+        "receipt_id": "delete-1",
+        "attempt_receipt_id": "attempt-receipt-1",
+        "action_id": "action-1",
+        "outcome": "already_absent"
+      }
+    }
+  },
+  {
+    "name": "artifact invalid content 'e31='",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_put_part",
+      "timeout_ms": 30000,
+      "body": {
+        "upload_id": "upload-1",
+        "offset": 0,
+        "content": "e31="
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "artifact invalid content 'e30'",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_put_part",
+      "timeout_ms": 30000,
+      "body": {
+        "upload_id": "upload-1",
+        "offset": 0,
+        "content": "e30"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "artifact invalid content 'e30=\\n'",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_put_part",
+      "timeout_ms": 30000,
+      "body": {
+        "upload_id": "upload-1",
+        "offset": 0,
+        "content": "e30=\n"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "artifact invalid content ''",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_put_part",
+      "timeout_ms": 30000,
+      "body": {
+        "upload_id": "upload-1",
+        "offset": 0,
+        "content": ""
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "artifact invalid offset 16777216",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_put_part",
+      "timeout_ms": 30000,
+      "body": {
+        "upload_id": "upload-1",
+        "offset": 16777216,
+        "content": "e30="
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "artifact wrong acknowledged range",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_put_part",
+      "timeout_ms": 30000,
+      "body": {
+        "upload_id": "upload-1",
+        "offset": 0,
+        "content": "e30="
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_put_part",
+      "result": {
+        "upload_id": "upload-1",
+        "offset": 0,
+        "raw_length": 2,
+        "next_offset": 3
+      }
+    }
+  },
+  {
+    "name": "artifact wrong acknowledged upload",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_put_part",
+      "timeout_ms": 30000,
+      "body": {
+        "upload_id": "upload-1",
+        "offset": 0,
+        "content": "e30="
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_put_part",
+      "result": {
+        "upload_id": "other",
+        "offset": 0,
+        "raw_length": 2,
+        "next_offset": 2
+      }
+    }
+  },
+  {
+    "name": "artifact begin cannot change digest",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_begin",
+      "timeout_ms": 30000,
+      "body": {
+        "purpose": "payload",
+        "artifact": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "size_bytes": 2,
+          "media_type": "application/json",
+          "canonicalization": "raw"
+        }
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_begin",
+      "result": {
+        "upload_id": "upload-1",
+        "purpose": "payload",
+        "artifact": {
+          "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "size_bytes": 2,
+          "media_type": "application/json",
+          "canonicalization": "raw"
+        },
+        "next_offset": 0
+      }
+    }
+  },
+  {
+    "name": "artifact size over limit",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_begin",
+      "timeout_ms": 30000,
+      "body": {
+        "purpose": "payload",
+        "artifact": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "size_bytes": 16777217,
+          "media_type": "application/json",
+          "canonicalization": "raw"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "artifact empty object can be committed",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_begin",
+      "timeout_ms": 30000,
+      "body": {
+        "purpose": "payload",
+        "artifact": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "size_bytes": 0,
+          "media_type": "application/json",
+          "canonicalization": "raw"
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "conclusion exact reserved cap",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_begin",
+      "timeout_ms": 30000,
+      "body": {
+        "purpose": "conclusion",
+        "artifact": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "size_bytes": 1048576,
+          "media_type": "application/json",
+          "canonicalization": "raw"
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "conclusion above cap",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.artifact_begin",
+      "timeout_ms": 30000,
+      "body": {
+        "purpose": "conclusion",
+        "artifact": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "size_bytes": 1048577,
+          "media_type": "application/json",
+          "canonicalization": "raw"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "observation noncanonical padding bits",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.observation_read",
+      "timeout_ms": 30000,
+      "body": {
+        "receipt_id": "receipt-1",
+        "entry_id": "entry-1",
+        "offset": 0,
+        "max_bytes": 262144
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.observation_read",
+      "result": {
+        "receipt_id": "receipt-1",
+        "entry_id": "entry-1",
+        "offset": 0,
+        "availability": "available",
+        "content": "e31=",
+        "raw_length": 2,
+        "eof": true,
+        "truncated": false,
+        "artifact": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "media_type": "application/json",
+          "size_bytes": 2
+        }
+      }
+    }
+  },
+  {
+    "name": "observation wrong entry",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.observation_read",
+      "timeout_ms": 30000,
+      "body": {
+        "receipt_id": "receipt-1",
+        "entry_id": "entry-1",
+        "offset": 0,
+        "max_bytes": 262144
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.observation_read",
+      "result": {
+        "receipt_id": "receipt-1",
+        "entry_id": "other",
+        "offset": 0,
+        "availability": "available",
+        "content": "e30=",
+        "raw_length": 2,
+        "eof": true,
+        "truncated": false,
+        "artifact": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "media_type": "application/json",
+          "size_bytes": 2
+        }
+      }
+    }
+  },
+  {
+    "name": "observation wrong byte count",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.observation_read",
+      "timeout_ms": 30000,
+      "body": {
+        "receipt_id": "receipt-1",
+        "entry_id": "entry-1",
+        "offset": 0,
+        "max_bytes": 262144
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.observation_read",
+      "result": {
+        "receipt_id": "receipt-1",
+        "entry_id": "entry-1",
+        "offset": 0,
+        "availability": "available",
+        "content": "e30=",
+        "raw_length": 1,
+        "eof": true,
+        "truncated": false,
+        "artifact": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "media_type": "application/json",
+          "size_bytes": 2
+        }
+      }
+    }
+  },
+  {
+    "name": "observation false EOF",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.observation_read",
+      "timeout_ms": 30000,
+      "body": {
+        "receipt_id": "receipt-1",
+        "entry_id": "entry-1",
+        "offset": 0,
+        "max_bytes": 262144
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.observation_read",
+      "result": {
+        "receipt_id": "receipt-1",
+        "entry_id": "entry-1",
+        "offset": 0,
+        "availability": "available",
+        "content": "e30=",
+        "raw_length": 2,
+        "eof": false,
+        "truncated": false,
+        "artifact": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "media_type": "application/json",
+          "size_bytes": 2
+        }
+      }
+    }
+  },
+  {
+    "name": "observation exceeds requested chunk",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.observation_read",
+      "timeout_ms": 30000,
+      "body": {
+        "receipt_id": "receipt-1",
+        "entry_id": "entry-1",
+        "offset": 0,
+        "max_bytes": 1
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.observation_read",
+      "result": {
+        "receipt_id": "receipt-1",
+        "entry_id": "entry-1",
+        "offset": 0,
+        "availability": "available",
+        "content": "e30=",
+        "raw_length": 2,
+        "eof": true,
+        "truncated": false,
+        "artifact": {
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "media_type": "application/json",
+          "size_bytes": 2
+        }
+      }
+    }
+  },
+  {
+    "name": "snapshot next page",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_list",
+      "timeout_ms": 30000,
+      "body": {
+        "offset": 0,
+        "limit": 1
+      }
+    },
+    "valid": true,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_list",
+      "result": {
+        "campaign_id": "campaign-1",
+        "snapshots": [
+          {
+            "campaign_id": "campaign-1",
+            "source_session": "source-1",
+            "checkpoint_id": "checkpoint-1",
+            "label": "",
+            "description": "",
+            "created_at": "2026-09-23T12:00:00Z",
+            "status": "ready",
+            "canonical_size_bytes": 100
+          }
+        ],
+        "offset": 0,
+        "total": 2,
+        "next_offset": 1
+      }
+    }
+  },
+  {
+    "name": "snapshot broken page next_offset 0",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_list",
+      "timeout_ms": 30000,
+      "body": {
+        "offset": 0,
+        "limit": 1
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_list",
+      "result": {
+        "campaign_id": "campaign-1",
+        "snapshots": [
+          {
+            "campaign_id": "campaign-1",
+            "source_session": "source-1",
+            "checkpoint_id": "checkpoint-1",
+            "label": "",
+            "description": "",
+            "created_at": "2026-09-23T12:00:00Z",
+            "status": "ready",
+            "canonical_size_bytes": 100
+          }
+        ],
+        "offset": 0,
+        "total": 2,
+        "next_offset": 0
+      }
+    }
+  },
+  {
+    "name": "snapshot broken page next_offset <object object at 0x",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_list",
+      "timeout_ms": 30000,
+      "body": {
+        "offset": 0,
+        "limit": 1
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_list",
+      "result": {
+        "campaign_id": "campaign-1",
+        "snapshots": [
+          {
+            "campaign_id": "campaign-1",
+            "source_session": "source-1",
+            "checkpoint_id": "checkpoint-1",
+            "label": "",
+            "description": "",
+            "created_at": "2026-09-23T12:00:00Z",
+            "status": "ready",
+            "canonical_size_bytes": 100
+          }
+        ],
+        "offset": 0,
+        "total": 2
+      }
+    }
+  },
+  {
+    "name": "snapshot broken page snapshots []",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_list",
+      "timeout_ms": 30000,
+      "body": {
+        "offset": 0,
+        "limit": 1
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_list",
+      "result": {
+        "campaign_id": "campaign-1",
+        "snapshots": [],
+        "offset": 0,
+        "total": 2,
+        "next_offset": 1
+      }
+    }
+  },
+  {
+    "name": "snapshot broken page snapshots [{'campaign_id': 'ca",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_list",
+      "timeout_ms": 30000,
+      "body": {
+        "offset": 0,
+        "limit": 1
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_list",
+      "result": {
+        "campaign_id": "campaign-1",
+        "snapshots": [
+          {
+            "campaign_id": "campaign-1",
+            "source_session": "source-1",
+            "checkpoint_id": "checkpoint-1",
+            "label": "",
+            "description": "",
+            "created_at": "2026-09-23T12:00:00Z",
+            "status": "ready",
+            "canonical_size_bytes": 100
+          },
+          {
+            "campaign_id": "campaign-1",
+            "source_session": "source-1",
+            "checkpoint_id": "checkpoint-1",
+            "label": "",
+            "description": "",
+            "created_at": "2026-09-23T12:00:00Z",
+            "status": "ready",
+            "canonical_size_bytes": 100
+          }
+        ],
+        "offset": 0,
+        "total": 2,
+        "next_offset": 1
+      }
+    }
+  },
+  {
+    "name": "snapshot page past end",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_list",
+      "timeout_ms": 30000,
+      "body": {
+        "offset": 100
+      }
+    },
+    "valid": true,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_list",
+      "result": {
+        "campaign_id": "campaign-1",
+        "snapshots": [],
+        "offset": 100,
+        "total": 2
+      }
+    }
+  },
+  {
+    "name": "snapshot filter cannot leak another source",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_list",
+      "timeout_ms": 30000,
+      "body": {
+        "source_session": "other"
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_list",
+      "result": {
+        "campaign_id": "campaign-1",
+        "snapshots": [
+          {
+            "campaign_id": "campaign-1",
+            "source_session": "source-1",
+            "checkpoint_id": "checkpoint-1",
+            "label": "",
+            "description": "",
+            "created_at": "2026-09-23T12:00:00Z",
+            "status": "ready",
+            "canonical_size_bytes": 100
+          }
+        ],
+        "offset": 0,
+        "total": 1
+      }
+    }
+  },
+  {
+    "name": "stop cannot claim finished reporting",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.request_stop",
+      "timeout_ms": 30000,
+      "body": {
+        "finish_reason": "objectives-addressed",
+        "conclusion": {
+          "state": "committed",
+          "artifact_receipt": "artifact-conclusion-1",
+          "record_receipt": "record-conclusion-1"
+        }
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.request_stop",
+      "result": {
+        "status": "accepted",
+        "stop_receipt": "stop-1",
+        "execution_admission": "closed",
+        "conclusion_state": "committed",
+        "exit_required": true,
+        "exit_within_ms": 5000,
+        "finalization_status": "complete"
+      }
+    }
+  },
+  {
+    "name": "stop requires exit",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.request_stop",
+      "timeout_ms": 30000,
+      "body": {
+        "finish_reason": "objectives-addressed",
+        "conclusion": {
+          "state": "committed",
+          "artifact_receipt": "artifact-conclusion-1",
+          "record_receipt": "record-conclusion-1"
+        }
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.request_stop",
+      "result": {
+        "status": "accepted",
+        "stop_receipt": "stop-1",
+        "execution_admission": "closed",
+        "conclusion_state": "committed",
+        "exit_required": false,
+        "exit_within_ms": 5000,
+        "finalization_status": "pending"
+      }
+    }
+  },
+  {
+    "name": "stop conclusion state correlation",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.request_stop",
+      "timeout_ms": 30000,
+      "body": {
+        "finish_reason": "objectives-addressed",
+        "conclusion": {
+          "state": "committed",
+          "artifact_receipt": "artifact-conclusion-1",
+          "record_receipt": "record-conclusion-1"
+        }
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.request_stop",
+      "result": {
+        "status": "accepted",
+        "stop_receipt": "stop-1",
+        "execution_admission": "closed",
+        "conclusion_state": "unavailable",
+        "exit_required": true,
+        "exit_within_ms": 5000,
+        "finalization_status": "pending"
+      }
+    }
+  },
+  {
+    "name": "stop cannot omit record receipt",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.request_stop",
+      "timeout_ms": 30000,
+      "body": {
+        "finish_reason": "objectives-addressed",
+        "conclusion": {
+          "state": "committed",
+          "artifact_receipt": "artifact-conclusion-1"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "stop explicit unavailable conclusion",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.request_stop",
+      "timeout_ms": 30000,
+      "body": {
+        "finish_reason": "context-limit",
+        "conclusion": {
+          "state": "unavailable",
+          "reason": "context-limit"
+        }
+      }
+    },
+    "valid": true,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.request_stop",
+      "result": {
+        "status": "accepted",
+        "stop_receipt": "stop-1",
+        "execution_admission": "closed",
+        "conclusion_state": "unavailable",
+        "exit_required": true,
+        "exit_within_ms": 5000,
+        "finalization_status": "pending"
+      }
+    }
+  },
+  {
+    "name": "error INVALID_ARGUMENTS none correct-and-resubmit",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": true,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "error": {
+        "code": "INVALID_ARGUMENTS",
+        "message": "Bounded error",
+        "effect_state": "none",
+        "disposition": "correct-and-resubmit"
+      }
+    }
+  },
+  {
+    "name": "error OUTCOME_UNKNOWN unknown terminate",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": true,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "error": {
+        "code": "OUTCOME_UNKNOWN",
+        "message": "Bounded error",
+        "effect_state": "unknown",
+        "disposition": "terminate"
+      }
+    }
+  },
+  {
+    "name": "error OUTCOME_UNKNOWN unknown correct-and-resubmit",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "error": {
+        "code": "OUTCOME_UNKNOWN",
+        "message": "Bounded error",
+        "effect_state": "unknown",
+        "disposition": "correct-and-resubmit"
+      }
+    }
+  },
+  {
+    "name": "error OUTCOME_UNKNOWN none terminate",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "error": {
+        "code": "OUTCOME_UNKNOWN",
+        "message": "Bounded error",
+        "effect_state": "none",
+        "disposition": "terminate"
+      }
+    }
+  },
+  {
+    "name": "error NOT_A_CODE none terminate",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "error": {
+        "code": "NOT_A_CODE",
+        "message": "Bounded error",
+        "effect_state": "none",
+        "disposition": "terminate"
+      }
+    }
+  },
+  {
+    "name": "error OBSERVATION_NOT_FOUND none gap-and-continue",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "error": {
+        "code": "OBSERVATION_NOT_FOUND",
+        "message": "Bounded error",
+        "effect_state": "none",
+        "disposition": "gap-and-continue"
+      }
+    }
+  },
+  {
+    "name": "error INVALID_ARGUMENTS known correct-and-resubmit",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "timeout_ms": 30000,
+      "body": {}
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.snapshot_request",
+      "error": {
+        "code": "INVALID_ARGUMENTS",
+        "message": "Bounded error",
+        "effect_state": "known",
+        "disposition": "correct-and-resubmit"
+      }
+    }
+  },
+  {
+    "name": "response result and error are exclusive",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.request_stop",
+      "timeout_ms": 30000,
+      "body": {
+        "finish_reason": "objectives-addressed",
+        "conclusion": {
+          "state": "committed",
+          "artifact_receipt": "artifact-conclusion-1",
+          "record_receipt": "record-conclusion-1"
+        }
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.request_stop",
+      "result": {
+        "status": "accepted",
+        "stop_receipt": "stop-1",
+        "execution_admission": "closed",
+        "conclusion_state": "committed",
+        "exit_required": true,
+        "exit_within_ms": 5000,
+        "finalization_status": "pending"
+      },
+      "error": {
+        "code": "INVALID_ARGUMENTS",
+        "message": "bad",
+        "effect_state": "none",
+        "disposition": "correct-and-resubmit"
+      }
+    }
+  },
+  {
+    "name": "response missing result and error",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.request_stop",
+      "timeout_ms": 30000,
+      "body": {
+        "finish_reason": "objectives-addressed",
+        "conclusion": {
+          "state": "committed",
+          "artifact_receipt": "artifact-conclusion-1",
+          "record_receipt": "record-conclusion-1"
+        }
+      }
+    },
+    "valid": false,
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 7,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.request_stop"
+    }
+  },
+  {
+    "name": "ack initial",
+    "ack": {
+      "api_version": "operator.dev/engine-spool-ack/v1alpha1",
+      "launch_id": "launch-1",
+      "ordinary_seq": null,
+      "control_seq": null
+    },
+    "valid": true
+  },
+  {
+    "name": "ack zero",
+    "ack": {
+      "api_version": "operator.dev/engine-spool-ack/v1alpha1",
+      "launch_id": "launch-1",
+      "ordinary_seq": 0,
+      "control_seq": null
+    },
+    "valid": true
+  },
+  {
+    "name": "ack maximum",
+    "ack": {
+      "api_version": "operator.dev/engine-spool-ack/v1alpha1",
+      "launch_id": "launch-1",
+      "ordinary_seq": null,
+      "control_seq": 9007199254740991
+    },
+    "valid": true
+  },
+  {
+    "name": "ack negative",
+    "ack": {
+      "api_version": "operator.dev/engine-spool-ack/v1alpha1",
+      "launch_id": "launch-1",
+      "ordinary_seq": -1,
+      "control_seq": null
+    },
+    "valid": false
+  },
+  {
+    "name": "ack boolean",
+    "ack": {
+      "api_version": "operator.dev/engine-spool-ack/v1alpha1",
+      "launch_id": "launch-1",
+      "ordinary_seq": true,
+      "control_seq": null
+    },
+    "valid": false
+  },
+  {
+    "name": "ack extra revision",
+    "ack": {
+      "api_version": "operator.dev/engine-spool-ack/v1alpha1",
+      "launch_id": "launch-1",
+      "ordinary_seq": null,
+      "control_seq": null,
+      "run_revision": 1
+    },
+    "valid": false
+  },
+  {
+    "name": "ack fraction",
+    "ack": {
+      "api_version": "operator.dev/engine-spool-ack/v1alpha1",
+      "launch_id": "launch-1",
+      "ordinary_seq": null,
+      "control_seq": 1.5
+    },
+    "valid": false
+  }
+]

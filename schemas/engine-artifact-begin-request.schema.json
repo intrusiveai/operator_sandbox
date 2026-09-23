@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-artifact-begin-request:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "purpose": {
+      "enum": [
+        "payload",
+        "carrier",
+        "conclusion",
+        "supporting-data"
+      ]
+    },
+    "artifact": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/artifact"
+    }
+  },
+  "required": [
+    "purpose",
+    "artifact"
+  ]
+}

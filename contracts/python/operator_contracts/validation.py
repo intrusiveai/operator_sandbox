@@ -4,7 +4,7 @@ import math
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
-from jsonschema import Draft202012Validator, validators, ValidationError, SchemaError
+from jsonschema import Draft202012Validator, ValidationError, SchemaError
 from referencing import Registry, Resource
 from referencing.exceptions import Unresolvable
 
@@ -15,14 +15,6 @@ MAX_SAFE_INTEGER = (1 << 53) - 1
 
 class ContractError(ValueError):
     """Bounded error; never contains submitted values, paths or native diagnostics."""
-
-
-def _integer(checker, value):
-    return not isinstance(value, bool) and (
-        isinstance(value, int) or isinstance(value, Decimal) and value == value.to_integral_value()
-    )
-
-_Validator = validators.extend(Draft202012Validator, type_checker=Draft202012Validator.TYPE_CHECKER.redefine("integer", _integer))
 
 
 def decode(raw: bytes, maximum: int = ORDINARY_LIMIT):
@@ -58,7 +50,10 @@ def decode(raw: bytes, maximum: int = ORDINARY_LIMIT):
                 if any(char in "123456789" for char in mantissa):
                     raise ContractError("invalid contract JSON")
                 return 0
-            return Decimal(text)
+            exact = Decimal(text)
+            # Cross-document $refs may select the standard draft validator.
+            # Represent exact integers as int, never a rounded binary64 float.
+            return int(exact) if exact == exact.to_integral_value() else exact
 
         def bad_constant(_):
             raise ContractError("invalid contract JSON")
@@ -114,7 +109,7 @@ class Catalog:
                     elif isinstance(node, list):
                         for child in node: references(child)
                 references(schema)
-            self._validators = {uri: _Validator(schema, registry=registry) for uri, schema in documents.items()}
+            self._validators = {uri: Draft202012Validator(schema, registry=registry) for uri, schema in documents.items()}
         except (OSError, ValueError, TypeError, AttributeError, Unresolvable, SchemaError) as error:
             raise ContractError("invalid installed contract catalog") from None
 
@@ -124,6 +119,12 @@ class Catalog:
     def validate(self, schema_id: str, raw: bytes, maximum: int = ORDINARY_LIMIT):
         if schema_id not in self._validators: raise ContractError("invalid installed contract catalog")
         value = decode(raw, maximum)
+        self.validate_value(schema_id, value)
+        return value
+
+    def validate_value(self, schema_id: str, value):
+        """Validate an already strictly decoded value; not a raw-wire entry point."""
+        if schema_id not in self._validators: raise ContractError("invalid installed contract catalog")
         try:
             self._validators[schema_id].validate(value)
         except (ValidationError, Unresolvable):

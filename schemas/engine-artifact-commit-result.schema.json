@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-artifact-commit-result:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "upload_id": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    },
+    "artifact_receipt": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    },
+    "purpose": {
+      "enum": [
+        "payload",
+        "carrier",
+        "conclusion",
+        "supporting-data"
+      ]
+    },
+    "artifact": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/artifact"
+    }
+  },
+  "required": [
+    "upload_id",
+    "artifact_receipt",
+    "purpose",
+    "artifact"
+  ]
+}

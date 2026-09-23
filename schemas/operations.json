@@ -1,0 +1,318 @@
+{
+  "api_version": "operator.dev/operation-registry/v1alpha1",
+  "operations": [
+    {
+      "name": "engine.artifact_begin",
+      "request_schema": "urn:operator:schema:engine-artifact-begin-request:v1alpha1",
+      "result_schema": "urn:operator:schema:engine-artifact-begin-result:v1alpha1",
+      "error_schema": "urn:operator:schema:operation-error:v1alpha1",
+      "error_codes": [
+        "ARTIFACT_BUDGET_EXCEEDED",
+        "DEADLINE_EXCEEDED",
+        "IDEMPOTENCY_CONFLICT",
+        "INTERNAL_ERROR",
+        "INVALID_ARGUMENTS",
+        "LIMIT_EXCEEDED",
+        "OUTCOME_UNKNOWN",
+        "POLICY_DENIED",
+        "STATE_CHANGED",
+        "UNSUPPORTED_CAPABILITY"
+      ],
+      "lifecycle_states": [
+        "admitted",
+        "finalizing"
+      ],
+      "finalization_rule": "conclusion-only",
+      "timeout_ms": 30000,
+      "max_request_bytes": 4194304,
+      "max_result_bytes": 4194304,
+      "effect": "artifact-write",
+      "receipt_policy": "durable"
+    },
+    {
+      "name": "engine.artifact_commit",
+      "request_schema": "urn:operator:schema:engine-artifact-commit-request:v1alpha1",
+      "result_schema": "urn:operator:schema:engine-artifact-commit-result:v1alpha1",
+      "error_schema": "urn:operator:schema:operation-error:v1alpha1",
+      "error_codes": [
+        "ARTIFACT_INTEGRITY_FAILED",
+        "DEADLINE_EXCEEDED",
+        "IDEMPOTENCY_CONFLICT",
+        "INTERNAL_ERROR",
+        "INVALID_ARGUMENTS",
+        "LIMIT_EXCEEDED",
+        "OUTCOME_UNKNOWN",
+        "POLICY_DENIED",
+        "STATE_CHANGED",
+        "UNSUPPORTED_CAPABILITY",
+        "UPLOAD_INCOMPLETE",
+        "UPLOAD_NOT_FOUND"
+      ],
+      "lifecycle_states": [
+        "admitted",
+        "finalizing"
+      ],
+      "finalization_rule": "conclusion-only",
+      "timeout_ms": 30000,
+      "max_request_bytes": 4194304,
+      "max_result_bytes": 4194304,
+      "effect": "artifact-write",
+      "receipt_policy": "durable"
+    },
+    {
+      "name": "engine.artifact_put_part",
+      "request_schema": "urn:operator:schema:engine-artifact-put-part-request:v1alpha1",
+      "result_schema": "urn:operator:schema:engine-artifact-put-part-result:v1alpha1",
+      "error_schema": "urn:operator:schema:operation-error:v1alpha1",
+      "error_codes": [
+        "ARTIFACT_INTEGRITY_FAILED",
+        "DEADLINE_EXCEEDED",
+        "IDEMPOTENCY_CONFLICT",
+        "INTERNAL_ERROR",
+        "INVALID_ARGUMENTS",
+        "LIMIT_EXCEEDED",
+        "OUTCOME_UNKNOWN",
+        "POLICY_DENIED",
+        "STATE_CHANGED",
+        "UNSUPPORTED_CAPABILITY",
+        "UPLOAD_NOT_FOUND",
+        "UPLOAD_RANGE_INVALID"
+      ],
+      "lifecycle_states": [
+        "admitted",
+        "finalizing"
+      ],
+      "finalization_rule": "conclusion-only",
+      "timeout_ms": 30000,
+      "max_request_bytes": 4194304,
+      "max_result_bytes": 4194304,
+      "effect": "artifact-write",
+      "receipt_policy": "durable"
+    },
+    {
+      "name": "engine.attempt_execute",
+      "request_schema": "urn:operator:schema:engine-attempt-request:v1alpha2",
+      "result_schema": "urn:operator:schema:engine-attempt-result:v1alpha2",
+      "error_schema": "urn:operator:schema:operation-error:v1alpha1",
+      "error_codes": [
+        "DEADLINE_EXCEEDED",
+        "IDEMPOTENCY_CONFLICT",
+        "INTERNAL_ERROR",
+        "INVALID_ARGUMENTS",
+        "LIMIT_EXCEEDED",
+        "OUTCOME_UNKNOWN",
+        "POLICY_DENIED",
+        "STATE_CHANGED",
+        "UNSUPPORTED_CAPABILITY"
+      ],
+      "lifecycle_states": [
+        "admitted"
+      ],
+      "finalization_rule": "denied",
+      "timeout_ms": 30000,
+      "max_request_bytes": 4194304,
+      "max_result_bytes": 4194304,
+      "effect": "target-write",
+      "receipt_policy": "durable"
+    },
+    {
+      "name": "engine.injection_delete",
+      "request_schema": "urn:operator:schema:engine-injection-delete-request:v1alpha1",
+      "result_schema": "urn:operator:schema:engine-injection-delete-result:v1alpha1",
+      "error_schema": "urn:operator:schema:operation-error:v1alpha1",
+      "error_codes": [
+        "ACTION_UNAVAILABLE",
+        "CLEANUP_FAILED",
+        "DEADLINE_EXCEEDED",
+        "IDEMPOTENCY_CONFLICT",
+        "INTERNAL_ERROR",
+        "INVALID_ARGUMENTS",
+        "LIMIT_EXCEEDED",
+        "OUTCOME_UNKNOWN",
+        "POLICY_DENIED",
+        "STATE_CHANGED",
+        "UNSUPPORTED_CAPABILITY"
+      ],
+      "lifecycle_states": [
+        "admitted"
+      ],
+      "finalization_rule": "denied",
+      "timeout_ms": 30000,
+      "max_request_bytes": 4194304,
+      "max_result_bytes": 4194304,
+      "effect": "target-write",
+      "receipt_policy": "durable"
+    },
+    {
+      "name": "engine.observation_read",
+      "request_schema": "urn:operator:schema:engine-observation-read-request:v1alpha1",
+      "result_schema": "urn:operator:schema:engine-observation-read-result:v1alpha1",
+      "error_schema": "urn:operator:schema:operation-error:v1alpha1",
+      "error_codes": [
+        "DEADLINE_EXCEEDED",
+        "FEEDBACK_BUDGET_EXCEEDED",
+        "IDEMPOTENCY_CONFLICT",
+        "INTERNAL_ERROR",
+        "INVALID_ARGUMENTS",
+        "INVALID_OBSERVATION_READ",
+        "LIMIT_EXCEEDED",
+        "OBSERVATION_INTEGRITY_FAILED",
+        "OBSERVATION_NOT_FOUND",
+        "OBSERVATION_NOT_PERMITTED",
+        "OBSERVATION_RANGE_INVALID",
+        "OUTCOME_UNKNOWN",
+        "POLICY_DENIED",
+        "STATE_CHANGED",
+        "UNSUPPORTED_CAPABILITY"
+      ],
+      "lifecycle_states": [
+        "admitted"
+      ],
+      "finalization_rule": "denied",
+      "timeout_ms": 30000,
+      "max_request_bytes": 4194304,
+      "max_result_bytes": 4194304,
+      "effect": "read",
+      "receipt_policy": "none"
+    },
+    {
+      "name": "engine.request_stop",
+      "request_schema": "urn:operator:schema:engine-request-stop-request:v1alpha1",
+      "result_schema": "urn:operator:schema:engine-request-stop-result:v1alpha1",
+      "error_schema": "urn:operator:schema:operation-error:v1alpha1",
+      "error_codes": [
+        "CONCLUSION_INVALID",
+        "DEADLINE_EXCEEDED",
+        "IDEMPOTENCY_CONFLICT",
+        "INTERNAL_ERROR",
+        "INVALID_ARGUMENTS",
+        "LIMIT_EXCEEDED",
+        "OUTCOME_UNKNOWN",
+        "POLICY_DENIED",
+        "STATE_CHANGED",
+        "UNSUPPORTED_CAPABILITY"
+      ],
+      "lifecycle_states": [
+        "admitted",
+        "finalizing"
+      ],
+      "finalization_rule": "stop",
+      "timeout_ms": 30000,
+      "max_request_bytes": 4194304,
+      "max_result_bytes": 4194304,
+      "effect": "stop",
+      "receipt_policy": "durable"
+    },
+    {
+      "name": "engine.restore_request",
+      "request_schema": "urn:operator:schema:engine-restore-request:v1alpha1",
+      "result_schema": "urn:operator:schema:engine-restore-result:v1alpha1",
+      "error_schema": "urn:operator:schema:operation-error:v1alpha1",
+      "error_codes": [
+        "DEADLINE_EXCEEDED",
+        "IDEMPOTENCY_CONFLICT",
+        "INTERNAL_ERROR",
+        "INVALID_ARGUMENTS",
+        "LIMIT_EXCEEDED",
+        "OUTCOME_UNKNOWN",
+        "POLICY_DENIED",
+        "RESTORE_FAILED",
+        "SNAPSHOT_INCOMPATIBLE",
+        "SNAPSHOT_NOT_FOUND",
+        "STATE_CHANGED",
+        "UNSUPPORTED_CAPABILITY"
+      ],
+      "lifecycle_states": [
+        "admitted"
+      ],
+      "finalization_rule": "denied",
+      "timeout_ms": 300000,
+      "max_request_bytes": 4194304,
+      "max_result_bytes": 4194304,
+      "effect": "target-write",
+      "receipt_policy": "durable"
+    },
+    {
+      "name": "engine.snapshot_inspect",
+      "request_schema": "urn:operator:schema:engine-snapshot-inspect-request:v1alpha1",
+      "result_schema": "urn:operator:schema:engine-snapshot-inspect-result:v1alpha1",
+      "error_schema": "urn:operator:schema:operation-error:v1alpha1",
+      "error_codes": [
+        "DEADLINE_EXCEEDED",
+        "IDEMPOTENCY_CONFLICT",
+        "INTERNAL_ERROR",
+        "INVALID_ARGUMENTS",
+        "LIMIT_EXCEEDED",
+        "OUTCOME_UNKNOWN",
+        "POLICY_DENIED",
+        "SNAPSHOT_NOT_FOUND",
+        "STATE_CHANGED",
+        "UNSUPPORTED_CAPABILITY"
+      ],
+      "lifecycle_states": [
+        "admitted"
+      ],
+      "finalization_rule": "denied",
+      "timeout_ms": 30000,
+      "max_request_bytes": 4194304,
+      "max_result_bytes": 4194304,
+      "effect": "read",
+      "receipt_policy": "none"
+    },
+    {
+      "name": "engine.snapshot_list",
+      "request_schema": "urn:operator:schema:engine-snapshot-list-request:v1alpha1",
+      "result_schema": "urn:operator:schema:engine-snapshot-list-result:v1alpha1",
+      "error_schema": "urn:operator:schema:operation-error:v1alpha1",
+      "error_codes": [
+        "DEADLINE_EXCEEDED",
+        "IDEMPOTENCY_CONFLICT",
+        "INTERNAL_ERROR",
+        "INVALID_ARGUMENTS",
+        "LIMIT_EXCEEDED",
+        "OUTCOME_UNKNOWN",
+        "POLICY_DENIED",
+        "SNAPSHOT_NOT_FOUND",
+        "STATE_CHANGED",
+        "UNSUPPORTED_CAPABILITY"
+      ],
+      "lifecycle_states": [
+        "admitted"
+      ],
+      "finalization_rule": "denied",
+      "timeout_ms": 30000,
+      "max_request_bytes": 4194304,
+      "max_result_bytes": 4194304,
+      "effect": "read",
+      "receipt_policy": "none"
+    },
+    {
+      "name": "engine.snapshot_request",
+      "request_schema": "urn:operator:schema:engine-snapshot-request:v1alpha1",
+      "result_schema": "urn:operator:schema:engine-snapshot-result:v1alpha1",
+      "error_schema": "urn:operator:schema:operation-error:v1alpha1",
+      "error_codes": [
+        "DEADLINE_EXCEEDED",
+        "IDEMPOTENCY_CONFLICT",
+        "INTERNAL_ERROR",
+        "INVALID_ARGUMENTS",
+        "LIMIT_EXCEEDED",
+        "OUTCOME_UNKNOWN",
+        "POLICY_DENIED",
+        "SNAPSHOT_BUDGET_EXCEEDED",
+        "SNAPSHOT_FAILED",
+        "STATE_CHANGED",
+        "UNSUPPORTED_CAPABILITY"
+      ],
+      "lifecycle_states": [
+        "admitted"
+      ],
+      "finalization_rule": "denied",
+      "timeout_ms": 300000,
+      "max_request_bytes": 4194304,
+      "max_result_bytes": 4194304,
+      "effect": "target-write",
+      "receipt_policy": "durable"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 # Shared validation foundation
 
-This is the first implementation stage of `operator-contracts`. It validates the
-12 schemas currently listed in [the catalog](../schemas/catalog.json) in Go and
+This is the validation and ordinary-protocol foundation of `operator-contracts`. It validates the
+36 schemas currently listed in [the catalog](../schemas/catalog.json) in Go and
 Python. It is a development library, not the published `0.1.0` contract package.
 The authoritative design remains [SHARED_CONTRACT.md](../schemas/SHARED_CONTRACT.md).
 
@@ -15,8 +15,14 @@ The authoritative design remains [SHARED_CONTRACT.md](../schemas/SHARED_CONTRACT
 - Offline Draft 2020-12 validation against an explicit installed schema catalog.
   Missing resources, unknown schema IDs and references outside the catalog fail.
 - Go-embedded schemas and generated Go/Python schema-ID constants.
-- One set of 151 accepted/rejected byte vectors used by both language runners,
+- One set of 154 accepted/rejected byte vectors used by both language runners,
   plus tests for unavailable external references and invalid catalog inventories.
+- Typed ordinary envelopes generated from an 11-operation registry, spool ACK
+  validation, and 141 shared protocol cases covering request/result correlation,
+  artifact chunks, snapshot metadata, restore transitions, errors and graceful stop.
+
+The [ordinary wire contract](../schemas/ORDINARY_WIRE_CONTRACT.md) documents the
+exact implemented fields and distinguishes stateless validation from runtime gates.
 
 Schemas use portable `\xHH` regex escapes for control characters. Constrained
 single-line fields also reject CR/LF explicitly, avoiding differences in how
@@ -38,7 +44,7 @@ schema IDs, runs both byte-vector suites, and runs the existing cleanup, feedbac
 and capability fixture checks. Python runtime dependencies are pinned in
 `python/requirements.lock`; Go dependencies are recorded in `go.mod`/`go.sum`.
 
-After changing `schemas/catalog.json`, run `make generate`. Both languages use
+After changing `schemas/catalog.json` or `schemas/operations.json`, run `make generate`. Both languages use
 the catalog as the authority for schema identity; generated constants are a
 convenience, not a second registry.
 
@@ -72,12 +78,19 @@ catalog = Catalog(Path("schemas"))
 value = catalog.validate(ENGINE_OBSERVATION_READ_REQUEST_SCHEMA, raw_bytes, ORDINARY_LIMIT)
 ```
 
-Decoded numbers retain exact decimal values (`Decimal`, with zero normalized to
-integer zero). This prevents near-integer fractions from satisfying integer
+Decoded numbers retain exact values (`int` for exact integers and `Decimal` for
+fractions, with zero normalized to integer zero). This prevents near-integer fractions from satisfying integer
 schemas through floating-point rounding. Both decoders reject nonfinite values,
 nonzero values that underflow binary64, and integer-valued binary64 numbers beyond
 the safe integer range. Neither decoder performs canonicalization. Do not serialize
 these values with a generic JSON encoder and assume the result is `jcs-v1`.
+
+For ordinary exchanges, use `contracts.LoadProtocol(schemas.Files)` in Go or
+`Protocol(Path("schemas"))` in Python. Validate request bytes with `ValidateRequest`
+or `validate_request`; validate correlated replies by passing request and response
+bytes to `ValidateResponse` or `validate_response`. These entry points enforce
+the additional consistency rules described in the ordinary wire contract. The
+lower-level catalog API performs structural validation only.
 
 ## Remaining stages
 
@@ -86,8 +99,8 @@ cross-field constraints, authorization, profile filtering and lifecycle rules
 still require semantic validators. Schema `format` annotations are not a substitute
 for those checks. This library is not yet sufficient to admit campaign execution.
 
-Before publishing `0.1.0`, implement the remaining startup/envelope/control,
-manifest, artifact, model, conclusion and stop schemas; the operation registry;
+Before publishing `0.1.0`, implement the remaining startup/control,
+manifest, model, record and conclusion-content schemas; complete the operation registry;
 canonicalization and identity helpers; typed message bindings; the immutable
 package manifest/digest; and the full shared conformance suite. FIFO/spool codecs
 and fake-broker/fake-harness integration tests are also outstanding. No changes to

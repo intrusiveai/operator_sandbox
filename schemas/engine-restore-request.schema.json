@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-restore-request:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "source_session": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    },
+    "checkpoint_id": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    }
+  },
+  "required": [
+    "source_session",
+    "checkpoint_id"
+  ]
+}

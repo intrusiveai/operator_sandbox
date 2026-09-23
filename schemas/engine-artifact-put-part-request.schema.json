@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-artifact-put-part-request:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "upload_id": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    },
+    "offset": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 16777216
+    },
+    "content": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/base64_part"
+    }
+  },
+  "required": [
+    "upload_id",
+    "offset",
+    "content"
+  ]
+}

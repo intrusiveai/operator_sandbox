@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-artifact-commit-request:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "upload_id": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    }
+  },
+  "required": [
+    "upload_id"
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-snapshot-list-result:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "campaign_id": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    },
+    "snapshots": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "$ref": "urn:operator:schema:snapshot-metadata:v1alpha1"
+      }
+    },
+    "offset": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+    },
+    "total": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+    },
+    "next_offset": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+    }
+  },
+  "required": [
+    "campaign_id",
+    "snapshots",
+    "offset",
+    "total"
+  ]
+}

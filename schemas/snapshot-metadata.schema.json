@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:snapshot-metadata:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "campaign_id": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    },
+    "source_session": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    },
+    "checkpoint_id": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    },
+    "parent": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/snapshot_handle"
+    },
+    "label": {
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 256
+    },
+    "description": {
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 4096
+    },
+    "created_at": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 30,
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:[.][0-9]{1,9})?Z$",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "status": {
+      "enum": [
+        "ready",
+        "unavailable"
+      ]
+    },
+    "canonical_size_bytes": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+    }
+  },
+  "required": [
+    "campaign_id",
+    "source_session",
+    "checkpoint_id",
+    "label",
+    "description",
+    "created_at",
+    "status",
+    "canonical_size_bytes"
+  ]
+}

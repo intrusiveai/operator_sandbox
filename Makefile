@@ -8,9 +8,11 @@ setup:
 	go mod download
 
 generate:
+	$(PYTHON) scripts/generate_envelopes.py
 	$(PYTHON) scripts/generate_schema_ids.py
 
 test:
+	$(PYTHON) scripts/generate_envelopes.py --check
 	$(PYTHON) scripts/generate_schema_ids.py --check
 	go test ./...
 	PYTHONPATH=contracts/python $(PYTHON) -m unittest discover -s contracts/python/tests -v

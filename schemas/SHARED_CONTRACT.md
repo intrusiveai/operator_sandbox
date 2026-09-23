@@ -17,8 +17,10 @@ this does not complete the remaining package publication or runtime gates.
 
 The [validation foundation](../contracts/README.md) implements strict JSON decoding
 and offline structural validation of the current catalog in Go and Python, with
-shared byte fixtures and generated schema-ID constants. Typed message bindings,
-complete schemas, semantic checks and transport conformance remain outstanding.
+shared byte fixtures and generated schema-ID constants. The
+[ordinary protocol stage](ORDINARY_WIRE_CONTRACT.md) adds typed envelopes for 11
+operations, their registry, spool ACK schema and stateless correlation checks.
+Complete message bindings/schemas, stateful checks and transport conformance remain outstanding.
 
 ## 1. One owner and one pinned package
 
@@ -462,6 +464,12 @@ inventory and content identities, not an archive-specific guest ABI.
 
 ## 8. One closed operation registry
 
+The current [ordinary wire implementation](ORDINARY_WIRE_CONTRACT.md) fixes concrete
+artifact, snapshot, restore and stop fields and binds the existing attempt/cleanup/
+feedback schemas. Model and record families remain required additions before
+publication. The checked-in registry is a development subset, not the complete
+released tool catalog.
+
 `operations.json` binds each operation name to exact request/result/error schema
 IDs, permitted lifecycle states, timeout and size ceilings, effect classification
 and receipt policy. Both tool catalog generation and broker dispatch use it.
@@ -508,6 +516,12 @@ binding once before responding. The guest adopts the new revision before its nex
 ordinary request. Neither endpoint resets sequences, manifests, cumulative IDs,
 budgets or adaptive context. Duplicate transition results cannot advance twice.
 Native session ID/revision routing remains an adapter responsibility.
+
+For a recorded duplicate, the result retains the original transition revisions.
+The response envelope still echoes the current correlated exchange. Runtime
+validation must distinguish that saved transition from a first-time transition
+using the operation record; a stateless comparison against current caller
+attribution must not deny a legitimate saved result or apply it twice.
 
 Host control messages are independently ordered and can overtake ordinary channel
 bytes. A terminate message therefore acts on the launch regardless of revision;
@@ -752,7 +766,8 @@ conformance tests remain implementation work.
 The package shape, startup/manifest flow, identity/deadline rules and completion
 semantics and macOS physical spool mapping above are accepted. Remaining work
 is to author the remaining closed
-schemas (including the spool ACK) and operation registry, extend the existing offline
+startup/control, manifest, model, record and conclusion-content schemas and complete
+the operation registry, extend the existing offline
 catalog and Go/Python validation foundation with semantic validators and fixtures;
 port the required existing data contracts; and pass Section 12 conformance before
 publishing package `0.1.0`. Do not substitute approval of this document for that

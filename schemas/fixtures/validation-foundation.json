@@ -1055,5 +1055,26 @@
     "maximum_bytes": 4194304,
     "schema": "urn:operator:schema:model-tool-not-executed-result:v1alpha1",
     "valid": false
+  },
+  {
+    "name": "cross-schema exact integer 1e0",
+    "raw_base64": "eyJzb3VyY2Vfc2Vzc2lvbiI6InNvdXJjZS0xIiwibGltaXQiOjFlMH0=",
+    "maximum_bytes": 4194304,
+    "schema": "urn:operator:schema:engine-snapshot-list-request:v1alpha1",
+    "valid": true
+  },
+  {
+    "name": "cross-schema exact integer 1.0000000000000000000000001",
+    "raw_base64": "eyJzb3VyY2Vfc2Vzc2lvbiI6InNvdXJjZS0xIiwibGltaXQiOjEuMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMX0=",
+    "maximum_bytes": 4194304,
+    "schema": "urn:operator:schema:engine-snapshot-list-request:v1alpha1",
+    "valid": false
+  },
+  {
+    "name": "cross-schema exact integer 9007199254740991",
+    "raw_base64": "eyJzb3VyY2Vfc2Vzc2lvbiI6InNvdXJjZS0xIiwibGltaXQiOjkwMDcxOTkyNTQ3NDA5OTF9",
+    "maximum_bytes": 4194304,
+    "schema": "urn:operator:schema:engine-snapshot-list-request:v1alpha1",
+    "valid": false
   }
 ]
