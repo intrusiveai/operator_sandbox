@@ -11,6 +11,8 @@ The [startup/manifest contract](schemas/STARTUP_MANIFEST_CONTRACT.md) adds contr
 messages, five-message transcript checks and bounded input/skill inventories.
 The [input-content contract](schemas/ENGINE_INPUT_CONTRACT.md) adds immutable
 EngineContext, prompt composition/provenance and launch input-byte validation.
+The [canonical identity contract](schemas/CANONICAL_IDENTITY_CONTRACT.md) adds
+matching Go/Python canonical JSON, launch digest and artifact-content checks.
 Run `make setup` then `make test`. Contract publication and
 Operator/Attack Harness runtime implementation remain pending.
 

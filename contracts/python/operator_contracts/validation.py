@@ -83,6 +83,8 @@ class Catalog:
         try:
             entries = decode((directory / "catalog.json").read_bytes())
             if not isinstance(entries, dict) or not entries: raise ContractError("invalid installed contract catalog")
+            from .canonical import _object_digest
+            self._digest = _object_digest(entries, ORDINARY_LIMIT)
             documents, seen = {}, set()
             registry = Registry(retrieve=_offline)
             for uri, name in entries.items():

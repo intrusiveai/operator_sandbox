@@ -27,6 +27,8 @@ messages, successful-transcript checks, bounded input/skill inventories and shar
 raw-descriptor/path validation. The [input-content stage](ENGINE_INPUT_CONTRACT.md)
 adds EngineContext, prompt provenance/composition and launch byte consistency.
 Runtime gates remain separate work.
+The [canonical identity stage](CANONICAL_IDENTITY_CONTRACT.md) implements `jcs-v1`,
+raw/canonical digest helpers, canonical launch bindings and artifact-content checks.
 Complete message bindings/schemas, stateful checks and transport conformance remain outstanding.
 
 ## 1. One owner and one pinned package
@@ -151,6 +153,10 @@ Golden vectors must pin exact canonical UTF-8 bytes as well as expected hashes,
 including Unicode, escapes, numeric boundaries, property order, absent/null fields
 and nested provider data where allowed. Default Go/Python JSON serialization is
 not the cross-language digest contract.
+The [implemented identity contract](CANONICAL_IDENTITY_CONTRACT.md) fixes the
+serialization profile, exact preimages and validation APIs. Schema checks precede
+binary64 canonicalization. Package authenticity and native source verification
+remain independent of these object-digest checks.
 
 For effectful operations, duplicate identity binds campaign, operation name,
 durable operation ID, canonical body and the original effect target recorded by

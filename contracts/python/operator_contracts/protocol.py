@@ -7,7 +7,8 @@ from pathlib import Path
 
 from .validation import Catalog, ContractError, ORDINARY_LIMIT
 from .assessment import check_record, validate_conclusion, validate_completion
-from . import startup, inputs
+from . import startup, inputs, identity
+from .canonical import _object_digest
 from .schema_ids import (
     ENGINE_PIPE_REQUEST_SCHEMA, ENGINE_PIPE_RESPONSE_SCHEMA, OPERATION_REGISTRY_SCHEMA,
 )
@@ -57,6 +58,7 @@ class Protocol:
                 OPERATION_REGISTRY_SCHEMA, (Path(directory) / "operations.json").read_bytes()
             )
             names = [item["name"] for item in registry["operations"]]
+            self._operations_digest = _object_digest(registry, ORDINARY_LIMIT)
             if names != sorted(set(names)):
                 raise ContractError("invalid installed contract catalog")
             for operation in registry["operations"]:
@@ -70,6 +72,15 @@ class Protocol:
     def operations(self):
         """Return a copy so consumers cannot mutate installed dispatch metadata."""
         return deepcopy(list(self._operations.values()))
+
+    def registry_digests(self):
+        return {"catalog_digest": self._catalog._digest, "operations_digest": self._operations_digest}
+
+    def validate_launch_identities(self, messages, tree, skill_set, skills, context, bundle, prompt):
+        return identity.validate_launch_identities(self, messages, tree, skill_set, skills, context, bundle, prompt)
+
+    def validate_artifact_content(self, begin_request, content):
+        return identity.validate_artifact_content(self, begin_request, content)
 
     def validate_prompt_provenance(self, raw):
         return inputs.validate_prompt_provenance(self, raw)

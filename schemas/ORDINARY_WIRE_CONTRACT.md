@@ -75,8 +75,10 @@ objects need no parts. Commit verifies completeness, original declaration, raw
 digest and any claimed canonical form before publishing an immutable receipt.
 
 The validators implement per-message limits, base64 checks, chunk arithmetic and
-request/result correlation. Upload storage, contiguous-offset tracking, declaration
-lookup at commit, canonicalization and digest verification remain runtime work.
+request/result correlation. The [identity validation layer](CANONICAL_IDENTITY_CONTRACT.md)
+adds complete artifact size/digest and claimed canonical-form checks. Upload
+storage, contiguous-offset tracking, trusted declaration lookup at commit and
+durable publication remain runtime work.
 
 ## Snapshots and remaining limits
 

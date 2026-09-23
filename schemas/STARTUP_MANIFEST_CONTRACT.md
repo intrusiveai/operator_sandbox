@@ -129,8 +129,10 @@ the host RunManifest bytes without exposing its private contents. Initial bindin
 Skill `bundle_digest` identifies the selected published bundle. `loader_digest`
 pins its loading implementation. `loading_digest` is the canonical digest of the
 SkillSetManifest object with only `loading_digest` omitted; the descriptor's
-`object_digest` covers the complete object. Canonical computation, bundle/loader
-verification and publication signatures remain subsequent implementation work.
+`object_digest` covers the complete object. The
+[canonical identity contract](CANONICAL_IDENTITY_CONTRACT.md) implements these
+computations and launch checks. Bundle/loader authenticity and publication
+signatures remain subsequent implementation work.
 
 The shared library exposes matching Go / Python entry points:
 
@@ -150,9 +152,10 @@ digests, install confinement, enforce live deadlines or establish host attestati
 The runtime must use bounded reads, reject links/undeclared files, verify actual
 file sizes/hashes and passive skill content, enforce read-only mounts and gates,
 and maintain live transport sequences. Guest echoes never replace those checks.
-The input-content stage implements EngineContext and prompt provenance; host-private
-RunManifest, model codec contracts, canonical identity helpers and transport/runtime
-qualification remain outstanding.
+The input-content stage implements EngineContext and prompt provenance. The
+canonical identity stage adds digest verification through its separate API;
+host-private RunManifest, model codec contracts, package verification and
+transport/runtime qualification remain outstanding.
 
 Both language runners consume the same 102 cases in
 [startup-manifests.json](fixtures/startup-manifests.json), including oversized-frame

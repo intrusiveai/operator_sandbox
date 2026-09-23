@@ -34,8 +34,9 @@ type Operation struct {
 // Protocol checks ordinary message structure and stateless correlations. Admission,
 // sequence tracking, deduplication and durable effects belong to the runtime.
 type Protocol struct {
-	catalog    *Catalog
-	operations map[string]Operation
+	catalog          *Catalog
+	operations       map[string]Operation
+	operationsDigest string
 }
 
 // ValidateAck checks syntax and size. Launch matching and monotonic positions
@@ -62,6 +63,10 @@ func LoadProtocol(files fs.FS) (*Protocol, error) {
 		return nil, ErrCatalog
 	}
 	result := &Protocol{catalog: catalog, operations: map[string]Operation{}}
+	result.operationsDigest, err = objectDigest(value, OrdinaryLimit)
+	if err != nil {
+		return nil, ErrCatalog
+	}
 	previous := ""
 	for _, entry := range value.(map[string]any)["operations"].([]any) {
 		fields := entry.(map[string]any)

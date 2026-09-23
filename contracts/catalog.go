@@ -17,7 +17,10 @@ type offlineLoader struct{}
 
 func (offlineLoader) Load(string) (any, error) { return nil, ErrCatalog }
 
-type Catalog struct{ schemas map[string]*jsonschema.Schema }
+type Catalog struct {
+	schemas map[string]*jsonschema.Schema
+	digest  string
+}
 
 // LoadCatalog loads only resources explicitly listed in an installed, trusted
 // schema filesystem. It never fetches network/file references outside that catalog.
@@ -32,6 +35,10 @@ func LoadCatalog(files fs.FS) (*Catalog, error) {
 	}
 	entries, ok := value.(map[string]any)
 	if !ok || len(entries) == 0 {
+		return nil, ErrCatalog
+	}
+	digest, err := objectDigest(value, OrdinaryLimit)
+	if err != nil {
 		return nil, ErrCatalog
 	}
 	compiler := jsonschema.NewCompiler()
@@ -62,7 +69,7 @@ func LoadCatalog(files fs.FS) (*Catalog, error) {
 		}
 		ids = append(ids, id)
 	}
-	result := &Catalog{schemas: map[string]*jsonschema.Schema{}}
+	result := &Catalog{schemas: map[string]*jsonschema.Schema{}, digest: digest}
 	sort.Strings(ids)
 	for _, id := range ids {
 		schema, err := compiler.Compile(id)

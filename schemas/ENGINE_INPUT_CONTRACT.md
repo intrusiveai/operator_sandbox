@@ -3,7 +3,8 @@
 This document defines the implemented launch-input schemas and Go/Python validation.
 It supplements [startup/manifests](STARTUP_MANIFEST_CONTRACT.md) and the
 [shared contract](SHARED_CONTRACT.md). Runtime preparation, provider codecs,
-canonical identity verification and contract package publication remain separate work.
+contract package publication remain separate work. Canonical verification is
+implemented by the additional [identity validation layer](CANONICAL_IDENTITY_CONTRACT.md).
 
 ## EngineContext
 
@@ -145,6 +146,9 @@ contents, canonical object/projection/package digests, signatures, source-bound
 capability admission or actual model support. Immutable staging, bounded no-follow
 reads, provenance verification against release assets and all live host gates remain
 required runtime work. Structural validity alone does not admit a campaign.
+Use `ValidateLaunchIdentities` / `validate_launch_identities` to add canonical
+object/projection and installed catalog/registry checks to the content API;
+package authenticity and source-bound capability admission remain separate gates.
 
 The shared [input fixtures](fixtures/engine-inputs.json) cover 90 cases in both
 languages, including source-byte preservation, launch mismatches, references and

@@ -26,8 +26,10 @@ The authoritative design remains [SHARED_CONTRACT.md](../schemas/SHARED_CONTRACT
   with 102 shared cases covering startup bindings, manifest bytes, portable paths
   and declared resource limits.
 - Immutable EngineContext and prompt provenance, exact prompt composition and
-  launch input-byte checks, with 90 shared cases. Together, the five suites
-  contain 599 shared cases.
+  launch input-byte checks, with 90 shared cases.
+- Canonical JSON/raw digest helpers, canonical launch identity checks and artifact
+  content verification, with 306 canonicalization and 21 identity cases. The
+  complete shared total is now 926 cases; the schema catalog remains at 49 entries.
 
 The [ordinary wire contract](../schemas/ORDINARY_WIRE_CONTRACT.md) documents the
 exact implemented fields and distinguishes stateless validation from runtime gates.
@@ -92,6 +94,8 @@ schemas through floating-point rounding. Both decoders reject nonfinite values,
 nonzero values that underflow binary64, and integer-valued binary64 numbers beyond
 the safe integer range. Neither decoder performs canonicalization. Do not serialize
 these values with a generic JSON encoder and assume the result is `jcs-v1`.
+Use `Canonicalize` / `canonicalize` on original bytes after the relevant schema
+checks; the helper applies the shared binary64/UTF-16 serialization rules.
 
 For ordinary exchanges, use `contracts.LoadProtocol(schemas.Files)` in Go or
 `Protocol(Path("schemas"))` in Python. Validate request bytes with `ValidateRequest`
@@ -121,6 +125,14 @@ manifests to actual context, bundle and effective prompt bytes. See
 [the input contract](../schemas/ENGINE_INPUT_CONTRACT.md) for provenance fields,
 reference/omission rules, safe model metadata and remaining runtime checks.
 
+Use `ValidateLaunchIdentities` / `validate_launch_identities` to extend launch-content
+checks with canonical manifest/context/skill/capability identities and installed
+catalog/registry pins. `ValidateArtifactContent` / `validate_artifact_content` checks
+complete upload bytes against their original artifact-begin request, including
+already-canonical `jcs-v1` content. See the
+[canonical identity contract](../schemas/CANONICAL_IDENTITY_CONTRACT.md) for exact
+preimages, helper APIs, fixture regeneration and the remaining trust checks.
+
 ## Remaining stages
 
 Structural validation is one gate. Receipt lookup, operation identity, digests,
@@ -130,7 +142,7 @@ for those checks. This library is not yet sufficient to admit campaign execution
 
 Before publishing `0.1.0`, implement the remaining model request/result schemas
 and codec profiles; define the host-private RunManifest; complete the operation registry;
-canonicalization and identity helpers; typed message bindings; the immutable
+remaining package/native identity verification; typed message bindings; the immutable
 package manifest/digest; and the full shared conformance suite. FIFO/spool codecs
 and fake-broker/fake-harness integration tests are also outstanding. No changes to
 Interceptor's native API are needed for this foundation.
