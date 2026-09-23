@@ -7,7 +7,7 @@ from pathlib import Path
 
 from .validation import Catalog, ContractError, ORDINARY_LIMIT
 from .assessment import check_record, validate_conclusion, validate_completion
-from . import startup, inputs, identity
+from . import startup, inputs, identity, transport
 from .canonical import _object_digest
 from .schema_ids import (
     ENGINE_PIPE_REQUEST_SCHEMA, ENGINE_PIPE_RESPONSE_SCHEMA, OPERATION_REGISTRY_SCHEMA,
@@ -88,6 +88,21 @@ class Protocol:
     def operations(self):
         """Return a copy so consumers cannot mutate installed dispatch metadata."""
         return deepcopy(list(self._operations.values()))
+
+    def validate_lane_message(self, lane, raw):
+        return transport.validate_lane_message(self, lane, raw)
+
+    def encode_frame(self, lane, raw):
+        return transport.encode_frame(self, lane, raw)
+
+    def new_frame_decoder(self, lane):
+        return transport.FrameDecoder(self, lane)
+
+    def new_transport_state(self, role, campaign, launch):
+        return transport.TransportState(self, role, campaign, launch)
+
+    def validate_spool_message(self, lane, name, raw):
+        return transport.validate_spool_message(self, lane, name, raw)
 
     def package_identity(self):
         return dict(self._package_identity) if self._package_identity is not None else None
@@ -184,20 +199,28 @@ class Protocol:
             _description(body)
         return message
 
-    def validate_response(self, request: bytes, response: bytes):
-        req = self.validate_request(request)
-        message = self._catalog.validate(ENGINE_PIPE_RESPONSE_SCHEMA, response)
-        for field in ("campaign_id", "launch_id", "run_revision", "call_id", "operation_id", "operation"):
-            _require(message[field] == req[field])
-        operation = self._operations[req["operation"]]
-        if len(response) > operation["max_result_bytes"]:
+    def _validate_response_envelope(self, raw):
+        message = self._catalog.validate(ENGINE_PIPE_RESPONSE_SCHEMA, raw)
+        _require(message["operation"] in self._operations)
+        operation = self._operations[message["operation"]]
+        if len(raw) > operation["max_result_bytes"]:
             raise ContractError("contract encoding limit exceeded")
         if "error" in message:
             self._check_registered(operation, "error_schema", message["error"])
             _require(message["error"]["code"] in operation["error_codes"])
+        else:
+            self._check_registered(operation, "result_schema", message["result"])
+        return message
+
+    def validate_response(self, request: bytes, response: bytes):
+        req = self.validate_request(request)
+        message = self._validate_response_envelope(response)
+        for field in ("campaign_id", "launch_id", "run_revision", "call_id", "operation_id", "operation"):
+            _require(message[field] == req[field])
+        operation = self._operations[req["operation"]]
+        if "error" in message:
             return message
         result, body, name = message["result"], req["body"], req["operation"]
-        self._check_registered(operation, "result_schema", result)
         if name == "engine.record_append":
             _require(result["record_kind"] == body["record_kind"])
             for field in ("campaign_id", "launch_id"):

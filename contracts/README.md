@@ -28,11 +28,12 @@ The authoritative design remains [SHARED_CONTRACT.md](../schemas/SHARED_CONTRACT
 - Immutable EngineContext and prompt provenance, exact prompt composition and
   launch input-byte checks, with 90 shared cases.
 - Canonical JSON/raw digest helpers, canonical launch identity checks and artifact
-  content verification, with 306 canonicalization and 21 identity cases. The
-  canonical identity suites contain 327 cases.
+  content verification, with 306 canonicalization and 21 identity cases.
 - Package manifest construction, exact payload verification and loading from frozen
-  verified bytes, with 39 shared cases and real-catalog loader tests. The total is
-  now 965 shared cases across all suites.
+  verified bytes, with 39 shared cases and real-catalog loader tests.
+- Incremental FIFO framing, spool names/lane validation, launch-wide sequence
+  tracking and cumulative consumption ACKs, with 73 shared cases. The full total
+  is now 1,038 shared cases; the schema catalog remains at 50 entries.
 
 The [ordinary wire contract](../schemas/ORDINARY_WIRE_CONTRACT.md) documents the
 exact implemented fields and distinguishes stateless validation from runtime gates.
@@ -143,6 +144,12 @@ before loading the catalog/registry and retains the package pin for launch check
 See [package integrity](../schemas/PACKAGE_INTEGRITY_CONTRACT.md) for bounds, the
 fixed payload layout and the distinction between byte integrity and release readiness.
 
+Use `EncodeFrame` / `encode_frame` and `NewFrameDecoder` / `new_frame_decoder` for
+bounded FIFO messages. `NewTransportState` / `new_transport_state` tracks lane
+direction, campaign/launch sequences and consumption ACK positions across restores.
+See the [transport codec contract](../schemas/TRANSPORT_CODEC_CONTRACT.md) for
+spool filename helpers, API use and the required queue/deadline/runtime integration.
+
 ## Remaining stages
 
 Structural validation is one gate. Receipt lookup, operation identity, digests,
@@ -154,6 +161,7 @@ Before publishing `0.1.0`, implement the remaining model request/result schemas
 and codec profiles; define the host-private RunManifest; complete the operation registry,
 native identity verification, typed message bindings, distribution/install tooling
 and the full shared conformance suite. Package manifest/digest verification is
-implemented, but publication remains gated on that work. FIFO/spool codecs
-and fake-broker/fake-harness integration tests are also outstanding. No changes to
+implemented, but publication remains gated on that work. Message framing and
+sequence/ACK checks are implemented; actual FIFO/spool I/O, queues, timers and
+fake-broker/fake-harness integration tests are outstanding. No changes to
 Interceptor's native API are needed for this foundation.

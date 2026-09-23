@@ -15,6 +15,8 @@ The [canonical identity contract](schemas/CANONICAL_IDENTITY_CONTRACT.md) adds
 matching Go/Python canonical JSON, launch digest and artifact-content checks.
 The [package integrity contract](schemas/PACKAGE_INTEGRITY_CONTRACT.md) adds manifest
 construction, exact payload verification and loading against a trusted package pin.
+The [transport codec contract](schemas/TRANSPORT_CODEC_CONTRACT.md) adds bounded
+FIFO framing, spool names, lane sequence tracking and consumption ACK checks.
 Run `make setup` then `make test`. Contract publication and
 Operator/Attack Harness runtime implementation remain pending.
 

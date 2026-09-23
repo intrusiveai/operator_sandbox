@@ -163,36 +163,20 @@ func (p *Protocol) ValidateResponse(request, response []byte) (map[string]any, e
 	if err != nil {
 		return nil, err
 	}
-	value, err := p.catalog.Validate(EnginePipeResponseSchema, response, OrdinaryLimit)
+	message, err := p.validateResponseEnvelope(response)
 	if err != nil {
 		return nil, err
 	}
-	message := value.(map[string]any)
 	for _, key := range []string{"campaign_id", "launch_id", "run_revision", "call_id", "operation_id", "operation"} {
 		if !same(req[key], message[key]) {
 			return nil, ErrProtocol
 		}
 	}
 	op := p.operations[req["operation"].(string)]
-	if len(response) > op.MaxResultBytes {
-		return nil, ErrLimit
-	}
-	if failure, found := message["error"]; found {
-		if p.catalog.schemas[op.ErrorSchema].Validate(failure) != nil {
-			return nil, ErrSchema
-		}
-		code := failure.(map[string]any)["code"].(string)
-		for _, allowed := range op.ErrorCodes {
-			if code == allowed {
-				return message, nil
-			}
-		}
-		return nil, ErrProtocol
+	if _, found := message["error"]; found {
+		return message, nil
 	}
 	result := message["result"].(map[string]any)
-	if p.catalog.schemas[op.ResultSchema].Validate(result) != nil {
-		return nil, ErrSchema
-	}
 	body := req["body"].(map[string]any)
 	valid := true
 	switch op.Name {
@@ -322,4 +306,36 @@ func listOK(body, result map[string]any, campaign any) bool {
 		return len(items) > 0 && hasNext && number(next) == end
 	}
 	return !hasNext
+}
+
+// validateResponseEnvelope checks everything independent of the original request.
+func (p *Protocol) validateResponseEnvelope(raw []byte) (map[string]any, error) {
+	value, err := p.catalog.Validate(EnginePipeResponseSchema, raw, OrdinaryLimit)
+	if err != nil {
+		return nil, err
+	}
+	message := value.(map[string]any)
+	op, ok := p.operations[message["operation"].(string)]
+	if !ok {
+		return nil, ErrCatalog
+	}
+	if len(raw) > op.MaxResultBytes {
+		return nil, ErrLimit
+	}
+	if failure, found := message["error"]; found {
+		if p.catalog.schemas[op.ErrorSchema].Validate(failure) != nil {
+			return nil, ErrSchema
+		}
+		code := failure.(map[string]any)["code"].(string)
+		for _, allowed := range op.ErrorCodes {
+			if code == allowed {
+				return message, nil
+			}
+		}
+		return nil, ErrProtocol
+	}
+	if p.catalog.schemas[op.ResultSchema].Validate(message["result"]) != nil {
+		return nil, ErrSchema
+	}
+	return message, nil
 }

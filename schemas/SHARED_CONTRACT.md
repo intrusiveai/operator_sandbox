@@ -32,6 +32,9 @@ raw/canonical digest helpers, canonical launch bindings and artifact-content che
 The [package integrity stage](PACKAGE_INTEGRITY_CONTRACT.md) adds the closed package
 manifest, deterministic construction, payload verification and a loader that retains
 the verified version/digest. Package publication and runtime qualification remain pending.
+The [transport codec stage](TRANSPORT_CODEC_CONTRACT.md) implements bounded FIFO
+frames, spool naming, lane validation, consecutive sequences and cumulative ACK
+checks. Physical I/O, queues, scheduling and deadlines remain runtime work.
 Complete message bindings/schemas, stateful checks and transport conformance remain outstanding.
 
 ## 1. One owner and one pinned package
@@ -171,6 +174,9 @@ never retried by the harness with a new ID. Read calls are separately bounded an
 charged for returned bytes/requests, including repeated reads.
 
 ## 4. Pipe envelope and channels
+
+The [transport codec contract](TRANSPORT_CODEC_CONTRACT.md) documents the matching
+Go/Python helpers and their integration boundary for the rules in this section.
 
 Use four logical channels: ordinary request/response and host/guest control.
 The [guest transport contract](../GUEST_CONTAINER_SPEC.md#4-non-network-transport-and-launch-identity)
