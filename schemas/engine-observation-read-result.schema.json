@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-observation-read-result:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "entry_id",
+    "availability",
+    "offset",
+    "content",
+    "raw_length",
+    "eof",
+    "truncated"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "entry_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "availability": {
+      "enum": [
+        "available",
+        "unavailable"
+      ]
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "offset": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "content": {
+      "type": "string",
+      "contentEncoding": "base64",
+      "maxLength": 349528
+    },
+    "raw_length": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 262144
+    },
+    "eof": {
+      "type": "boolean"
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "digest",
+        "size_bytes",
+        "media_type"
+      ],
+      "properties": {
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16777216
+        },
+        "media_type": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      }
+    },
+    "truncated": {
+      "type": "boolean"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "availability": {
+            "const": "available"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "artifact"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "availability": {
+            "const": "unavailable"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "content": {
+            "const": ""
+          },
+          "raw_length": {
+            "const": 0
+          },
+          "eof": {
+            "const": false
+          }
+        }
+      }
+    }
+  ]
+}

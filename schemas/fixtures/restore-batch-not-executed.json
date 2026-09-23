@@ -1,0 +1,192 @@
+[
+  {
+    "name": "skipped after restore",
+    "schema": "urn:operator:schema:model-tool-not-executed-result:v1alpha1",
+    "valid": true,
+    "instance": {
+      "status": "not_executed",
+      "code": "TARGET_REVISION_CHANGED",
+      "effect_state": "none",
+      "message": "Not executed: target revision changed. Choose the next action using the restore result.",
+      "previous_run_revision": 3,
+      "run_revision": 4,
+      "transition_receipt": "transition-04"
+    }
+  },
+  {
+    "name": "missing status",
+    "schema": "urn:operator:schema:model-tool-not-executed-result:v1alpha1",
+    "valid": false,
+    "instance": {
+      "code": "TARGET_REVISION_CHANGED",
+      "effect_state": "none",
+      "message": "Not executed: target revision changed. Choose the next action using the restore result.",
+      "previous_run_revision": 3,
+      "run_revision": 4,
+      "transition_receipt": "transition-04"
+    }
+  },
+  {
+    "name": "missing code",
+    "schema": "urn:operator:schema:model-tool-not-executed-result:v1alpha1",
+    "valid": false,
+    "instance": {
+      "status": "not_executed",
+      "effect_state": "none",
+      "message": "Not executed: target revision changed. Choose the next action using the restore result.",
+      "previous_run_revision": 3,
+      "run_revision": 4,
+      "transition_receipt": "transition-04"
+    }
+  },
+  {
+    "name": "missing effect_state",
+    "schema": "urn:operator:schema:model-tool-not-executed-result:v1alpha1",
+    "valid": false,
+    "instance": {
+      "status": "not_executed",
+      "code": "TARGET_REVISION_CHANGED",
+      "message": "Not executed: target revision changed. Choose the next action using the restore result.",
+      "previous_run_revision": 3,
+      "run_revision": 4,
+      "transition_receipt": "transition-04"
+    }
+  },
+  {
+    "name": "missing message",
+    "schema": "urn:operator:schema:model-tool-not-executed-result:v1alpha1",
+    "valid": false,
+    "instance": {
+      "status": "not_executed",
+      "code": "TARGET_REVISION_CHANGED",
+      "effect_state": "none",
+      "previous_run_revision": 3,
+      "run_revision": 4,
+      "transition_receipt": "transition-04"
+    }
+  },
+  {
+    "name": "missing previous_run_revision",
+    "schema": "urn:operator:schema:model-tool-not-executed-result:v1alpha1",
+    "valid": false,
+    "instance": {
+      "status": "not_executed",
+      "code": "TARGET_REVISION_CHANGED",
+      "effect_state": "none",
+      "message": "Not executed: target revision changed. Choose the next action using the restore result.",
+      "run_revision": 4,
+      "transition_receipt": "transition-04"
+    }
+  },
+  {
+    "name": "missing run_revision",
+    "schema": "urn:operator:schema:model-tool-not-executed-result:v1alpha1",
+    "valid": false,
+    "instance": {
+      "status": "not_executed",
+      "code": "TARGET_REVISION_CHANGED",
+      "effect_state": "none",
+      "message": "Not executed: target revision changed. Choose the next action using the restore result.",
+      "previous_run_revision": 3,
+      "transition_receipt": "transition-04"
+    }
+  },
+  {
+    "name": "missing transition_receipt",
+    "schema": "urn:operator:schema:model-tool-not-executed-result:v1alpha1",
+    "valid": false,
+    "instance": {
+      "status": "not_executed",
+      "code": "TARGET_REVISION_CHANGED",
+      "effect_state": "none",
+      "message": "Not executed: target revision changed. Choose the next action using the restore result.",
+      "previous_run_revision": 3,
+      "run_revision": 4
+    }
+  },
+  {
+    "name": "invalid status",
+    "schema": "urn:operator:schema:model-tool-not-executed-result:v1alpha1",
+    "valid": false,
+    "instance": {
+      "status": "completed",
+      "code": "TARGET_REVISION_CHANGED",
+      "effect_state": "none",
+      "message": "Not executed: target revision changed. Choose the next action using the restore result.",
+      "previous_run_revision": 3,
+      "run_revision": 4,
+      "transition_receipt": "transition-04"
+    }
+  },
+  {
+    "name": "invalid effect_state",
+    "schema": "urn:operator:schema:model-tool-not-executed-result:v1alpha1",
+    "valid": false,
+    "instance": {
+      "status": "not_executed",
+      "code": "TARGET_REVISION_CHANGED",
+      "effect_state": "unknown",
+      "message": "Not executed: target revision changed. Choose the next action using the restore result.",
+      "previous_run_revision": 3,
+      "run_revision": 4,
+      "transition_receipt": "transition-04"
+    }
+  },
+  {
+    "name": "invalid run_revision",
+    "schema": "urn:operator:schema:model-tool-not-executed-result:v1alpha1",
+    "valid": false,
+    "instance": {
+      "status": "not_executed",
+      "code": "TARGET_REVISION_CHANGED",
+      "effect_state": "none",
+      "message": "Not executed: target revision changed. Choose the next action using the restore result.",
+      "previous_run_revision": 3,
+      "run_revision": 0,
+      "transition_receipt": "transition-04"
+    }
+  },
+  {
+    "name": "invalid run_revision",
+    "schema": "urn:operator:schema:model-tool-not-executed-result:v1alpha1",
+    "valid": false,
+    "instance": {
+      "status": "not_executed",
+      "code": "TARGET_REVISION_CHANGED",
+      "effect_state": "none",
+      "message": "Not executed: target revision changed. Choose the next action using the restore result.",
+      "previous_run_revision": 3,
+      "run_revision": 1.5,
+      "transition_receipt": "transition-04"
+    }
+  },
+  {
+    "name": "invalid transition_receipt",
+    "schema": "urn:operator:schema:model-tool-not-executed-result:v1alpha1",
+    "valid": false,
+    "instance": {
+      "status": "not_executed",
+      "code": "TARGET_REVISION_CHANGED",
+      "effect_state": "none",
+      "message": "Not executed: target revision changed. Choose the next action using the restore result.",
+      "previous_run_revision": 3,
+      "run_revision": 4,
+      "transition_receipt": ""
+    }
+  },
+  {
+    "name": "invalid receipt_id",
+    "schema": "urn:operator:schema:model-tool-not-executed-result:v1alpha1",
+    "valid": false,
+    "instance": {
+      "status": "not_executed",
+      "code": "TARGET_REVISION_CHANGED",
+      "effect_state": "none",
+      "message": "Not executed: target revision changed. Choose the next action using the restore result.",
+      "previous_run_revision": 3,
+      "run_revision": 4,
+      "transition_receipt": "transition-04",
+      "receipt_id": "fabricated-native-receipt"
+    }
+  }
+]

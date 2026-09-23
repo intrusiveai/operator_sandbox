@@ -1,0 +1,273 @@
+[
+  {
+    "name": "known action",
+    "schema": "urn:operator:schema:engine-injection-delete-request:v1alpha1",
+    "valid": true,
+    "instance": {
+      "attempt_receipt_id": "attempt-receipt-07",
+      "action_id": "replace-ticket"
+    }
+  },
+  {
+    "name": "deleted",
+    "schema": "urn:operator:schema:engine-injection-delete-result:v1alpha1",
+    "valid": true,
+    "instance": {
+      "receipt_id": "cleanup-receipt-08",
+      "attempt_receipt_id": "attempt-receipt-07",
+      "action_id": "replace-ticket",
+      "outcome": "deleted"
+    }
+  },
+  {
+    "name": "already absent",
+    "schema": "urn:operator:schema:engine-injection-delete-result:v1alpha1",
+    "valid": true,
+    "instance": {
+      "receipt_id": "cleanup-receipt-08",
+      "attempt_receipt_id": "attempt-receipt-07",
+      "action_id": "replace-ticket",
+      "outcome": "already_absent"
+    }
+  },
+  {
+    "name": "missing attempt_receipt_id",
+    "schema": "urn:operator:schema:engine-injection-delete-request:v1alpha1",
+    "valid": false,
+    "instance": {
+      "action_id": "replace-ticket"
+    }
+  },
+  {
+    "name": "invalid attempt_receipt_id ",
+    "schema": "urn:operator:schema:engine-injection-delete-request:v1alpha1",
+    "valid": false,
+    "instance": {
+      "attempt_receipt_id": "",
+      "action_id": "replace-ticket"
+    }
+  },
+  {
+    "name": "invalid attempt_receipt_id None",
+    "schema": "urn:operator:schema:engine-injection-delete-request:v1alpha1",
+    "valid": false,
+    "instance": {
+      "attempt_receipt_id": null,
+      "action_id": "replace-ticket"
+    }
+  },
+  {
+    "name": "invalid attempt_receipt_id a/b",
+    "schema": "urn:operator:schema:engine-injection-delete-request:v1alpha1",
+    "valid": false,
+    "instance": {
+      "attempt_receipt_id": "a/b",
+      "action_id": "replace-ticket"
+    }
+  },
+  {
+    "name": "invalid attempt_receipt_id aaaaaaaaaa",
+    "schema": "urn:operator:schema:engine-injection-delete-request:v1alpha1",
+    "valid": false,
+    "instance": {
+      "attempt_receipt_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "action_id": "replace-ticket"
+    }
+  },
+  {
+    "name": "invalid attempt_receipt_id 123",
+    "schema": "urn:operator:schema:engine-injection-delete-request:v1alpha1",
+    "valid": false,
+    "instance": {
+      "attempt_receipt_id": 123,
+      "action_id": "replace-ticket"
+    }
+  },
+  {
+    "name": "missing action_id",
+    "schema": "urn:operator:schema:engine-injection-delete-request:v1alpha1",
+    "valid": false,
+    "instance": {
+      "attempt_receipt_id": "attempt-receipt-07"
+    }
+  },
+  {
+    "name": "invalid action_id ",
+    "schema": "urn:operator:schema:engine-injection-delete-request:v1alpha1",
+    "valid": false,
+    "instance": {
+      "attempt_receipt_id": "attempt-receipt-07",
+      "action_id": ""
+    }
+  },
+  {
+    "name": "invalid action_id None",
+    "schema": "urn:operator:schema:engine-injection-delete-request:v1alpha1",
+    "valid": false,
+    "instance": {
+      "attempt_receipt_id": "attempt-receipt-07",
+      "action_id": null
+    }
+  },
+  {
+    "name": "invalid action_id a/b",
+    "schema": "urn:operator:schema:engine-injection-delete-request:v1alpha1",
+    "valid": false,
+    "instance": {
+      "attempt_receipt_id": "attempt-receipt-07",
+      "action_id": "a/b"
+    }
+  },
+  {
+    "name": "invalid action_id aaaaaaaaaa",
+    "schema": "urn:operator:schema:engine-injection-delete-request:v1alpha1",
+    "valid": false,
+    "instance": {
+      "attempt_receipt_id": "attempt-receipt-07",
+      "action_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  },
+  {
+    "name": "invalid action_id 123",
+    "schema": "urn:operator:schema:engine-injection-delete-request:v1alpha1",
+    "valid": false,
+    "instance": {
+      "attempt_receipt_id": "attempt-receipt-07",
+      "action_id": 123
+    }
+  },
+  {
+    "name": "reject override injection_id",
+    "schema": "urn:operator:schema:engine-injection-delete-request:v1alpha1",
+    "valid": false,
+    "instance": {
+      "attempt_receipt_id": "attempt-receipt-07",
+      "action_id": "replace-ticket",
+      "injection_id": "override"
+    }
+  },
+  {
+    "name": "reject override campaign_id",
+    "schema": "urn:operator:schema:engine-injection-delete-request:v1alpha1",
+    "valid": false,
+    "instance": {
+      "attempt_receipt_id": "attempt-receipt-07",
+      "action_id": "replace-ticket",
+      "campaign_id": "override"
+    }
+  },
+  {
+    "name": "reject override session_id",
+    "schema": "urn:operator:schema:engine-injection-delete-request:v1alpha1",
+    "valid": false,
+    "instance": {
+      "attempt_receipt_id": "attempt-receipt-07",
+      "action_id": "replace-ticket",
+      "session_id": "override"
+    }
+  },
+  {
+    "name": "reject override run_revision",
+    "schema": "urn:operator:schema:engine-injection-delete-request:v1alpha1",
+    "valid": false,
+    "instance": {
+      "attempt_receipt_id": "attempt-receipt-07",
+      "action_id": "replace-ticket",
+      "run_revision": "override"
+    }
+  },
+  {
+    "name": "reject override request_id",
+    "schema": "urn:operator:schema:engine-injection-delete-request:v1alpha1",
+    "valid": false,
+    "instance": {
+      "attempt_receipt_id": "attempt-receipt-07",
+      "action_id": "replace-ticket",
+      "request_id": "override"
+    }
+  },
+  {
+    "name": "reject override actions",
+    "schema": "urn:operator:schema:engine-injection-delete-request:v1alpha1",
+    "valid": false,
+    "instance": {
+      "attempt_receipt_id": "attempt-receipt-07",
+      "action_id": "replace-ticket",
+      "actions": "override"
+    }
+  },
+  {
+    "name": "reject bulk",
+    "schema": "urn:operator:schema:engine-injection-delete-request:v1alpha1",
+    "valid": false,
+    "instance": [
+      {
+        "attempt_receipt_id": "attempt-receipt-07",
+        "action_id": "replace-ticket"
+      }
+    ]
+  },
+  {
+    "name": "result missing receipt_id",
+    "schema": "urn:operator:schema:engine-injection-delete-result:v1alpha1",
+    "valid": false,
+    "instance": {
+      "attempt_receipt_id": "attempt-receipt-07",
+      "action_id": "replace-ticket",
+      "outcome": "deleted"
+    }
+  },
+  {
+    "name": "result missing attempt_receipt_id",
+    "schema": "urn:operator:schema:engine-injection-delete-result:v1alpha1",
+    "valid": false,
+    "instance": {
+      "receipt_id": "cleanup-receipt-08",
+      "action_id": "replace-ticket",
+      "outcome": "deleted"
+    }
+  },
+  {
+    "name": "result missing action_id",
+    "schema": "urn:operator:schema:engine-injection-delete-result:v1alpha1",
+    "valid": false,
+    "instance": {
+      "receipt_id": "cleanup-receipt-08",
+      "attempt_receipt_id": "attempt-receipt-07",
+      "outcome": "deleted"
+    }
+  },
+  {
+    "name": "result missing outcome",
+    "schema": "urn:operator:schema:engine-injection-delete-result:v1alpha1",
+    "valid": false,
+    "instance": {
+      "receipt_id": "cleanup-receipt-08",
+      "attempt_receipt_id": "attempt-receipt-07",
+      "action_id": "replace-ticket"
+    }
+  },
+  {
+    "name": "no unknown success",
+    "schema": "urn:operator:schema:engine-injection-delete-result:v1alpha1",
+    "valid": false,
+    "instance": {
+      "receipt_id": "cleanup-receipt-08",
+      "attempt_receipt_id": "attempt-receipt-07",
+      "action_id": "replace-ticket",
+      "outcome": "unknown"
+    }
+  },
+  {
+    "name": "no native id exposure",
+    "schema": "urn:operator:schema:engine-injection-delete-result:v1alpha1",
+    "valid": false,
+    "instance": {
+      "receipt_id": "cleanup-receipt-08",
+      "attempt_receipt_id": "attempt-receipt-07",
+      "action_id": "replace-ticket",
+      "outcome": "deleted",
+      "injection_id": "native-id"
+    }
+  }
+]

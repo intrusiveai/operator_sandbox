@@ -1,0 +1,707 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:target-capability-manifest:v1alpha1",
+  "title": "target-capability-manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "operator.dev/target-capability-manifest/v1alpha1"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "adapter": {
+          "const": "interceptor/v1"
+        },
+        "schema_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "capability_source_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        "raw_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        }
+      },
+      "required": [
+        "adapter",
+        "schema_version",
+        "capability_source_digest",
+        "raw_digest"
+      ]
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "target_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        "adapter": {
+          "const": "interceptor/v1"
+        },
+        "operations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "ref": {
+                "type": "string",
+                "maxLength": 256,
+                "pattern": "^operation:[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              },
+              "operation_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              },
+              "delivery_status": {
+                "enum": [
+                  "described",
+                  "missing-input-contract"
+                ]
+              },
+              "maximum_input_bytes": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "delivery": {
+                "$ref": "#/$defs/delivery"
+              }
+            },
+            "required": [
+              "ref",
+              "operation_id",
+              "delivery_status"
+            ],
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "delivery_status": {
+                      "const": "described"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "delivery",
+                    "maximum_input_bytes"
+                  ]
+                },
+                "else": {
+                  "not": {
+                    "required": [
+                      "delivery"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "maxItems": 256,
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "ref": {
+                "type": "string",
+                "maxLength": 256,
+                "pattern": "^action:[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              },
+              "action_type": {
+                "const": "interceptor.injection/v1alpha1"
+              },
+              "surface": {
+                "enum": [
+                  "model_tool_result",
+                  "service_response",
+                  "mcp_tool_result",
+                  "environment_state"
+                ]
+              },
+              "scopes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128,
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                "maxItems": 256,
+                "minItems": 0,
+                "uniqueItems": true
+              },
+              "placements": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128,
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                "maxItems": 256,
+                "minItems": 0,
+                "uniqueItems": true
+              },
+              "selector_fields": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128,
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                "maxItems": 256,
+                "minItems": 0,
+                "uniqueItems": true
+              },
+              "carriers": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128,
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                "maxItems": 256,
+                "minItems": 0,
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "ref",
+              "action_type",
+              "surface",
+              "scopes",
+              "placements",
+              "selector_fields",
+              "carriers"
+            ]
+          },
+          "maxItems": 256,
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "ref": {
+                "type": "string",
+                "maxLength": 256,
+                "pattern": "^service:[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              },
+              "service_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              },
+              "kind": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              },
+              "role": {
+                "enum": [
+                  "environment",
+                  "identity",
+                  "attacker"
+                ]
+              },
+              "transports": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128,
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                "maxItems": 256,
+                "minItems": 0,
+                "uniqueItems": true
+              },
+              "injection_surfaces": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128,
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                "maxItems": 256,
+                "minItems": 0,
+                "uniqueItems": true
+              },
+              "implementation": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              },
+              "response_mode": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              },
+              "mcp": {
+                "type": "boolean"
+              },
+              "endpoints": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128,
+                      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                      "not": {
+                        "pattern": "[\\r\\n]"
+                      }
+                    },
+                    "kind": {
+                      "enum": [
+                        "http-route",
+                        "mcp-tool"
+                      ]
+                    },
+                    "method": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 32
+                    },
+                    "path": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 4096
+                    },
+                    "collection": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128,
+                      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                      "not": {
+                        "pattern": "[\\r\\n]"
+                      }
+                    },
+                    "delivery": {
+                      "$ref": "#/$defs/delivery"
+                    },
+                    "injection_root": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128
+                    },
+                    "output_pointer": {
+                      "type": "string",
+                      "minLength": 0,
+                      "maxLength": 2048
+                    },
+                    "maximum_request_bytes": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "injection_root",
+                    "maximum_request_bytes"
+                  ]
+                },
+                "maxItems": 256,
+                "minItems": 0,
+                "uniqueItems": true
+              },
+              "creatable_collections": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "collection": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 128,
+                      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                      "not": {
+                        "pattern": "[\\r\\n]"
+                      }
+                    },
+                    "max_resources": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "collection",
+                    "max_resources"
+                  ]
+                },
+                "maxItems": 256,
+                "minItems": 0,
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "ref",
+              "service_id",
+              "kind",
+              "role",
+              "transports",
+              "injection_surfaces"
+            ]
+          },
+          "maxItems": 256,
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "file_namespaces": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "ref": {
+                "type": "string",
+                "maxLength": 256,
+                "pattern": "^file_namespace:[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              },
+              "namespace_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              },
+              "allow_create": {
+                "type": "boolean"
+              },
+              "max_files": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "max_file_bytes": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "ref",
+              "namespace_id",
+              "allow_create"
+            ]
+          },
+          "maxItems": 256,
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "evidence_classes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "ref": {
+                "type": "string",
+                "maxLength": 256,
+                "pattern": "^evidence:[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              },
+              "feedback_kind": {
+                "enum": [
+                  "target_output",
+                  "operation_error",
+                  "injection_delivery",
+                  "oracle_outcome"
+                ]
+              },
+              "profiles": {
+                "type": "array",
+                "items": {
+                  "enum": [
+                    "black-box",
+                    "diagnostic",
+                    "oracle-assisted"
+                  ]
+                },
+                "maxItems": 3,
+                "minItems": 1,
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "ref",
+              "feedback_kind",
+              "profiles"
+            ]
+          },
+          "maxItems": 256,
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "const": "feature:snapshots"
+          },
+          "maxItems": 256,
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "feedback_profiles": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "black-box",
+              "diagnostic",
+              "oracle-assisted"
+            ]
+          },
+          "maxItems": 3,
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "target_id",
+        "adapter",
+        "operations",
+        "actions",
+        "services",
+        "file_namespaces",
+        "evidence_classes",
+        "features",
+        "feedback_profiles"
+      ]
+    },
+    "capability_projection_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "source",
+    "capabilities",
+    "capability_projection_digest"
+  ],
+  "$defs": {
+    "delivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "input": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "media_type": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "encoding": {
+              "enum": [
+                "json",
+                "utf8",
+                "bytes"
+              ]
+            },
+            "max_bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2097152
+            },
+            "basis": {
+              "enum": [
+                "provider-declared",
+                "source-derived",
+                "observed",
+                "synthetic",
+                "unknown"
+              ]
+            },
+            "schema": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "media_type",
+            "encoding",
+            "max_bytes",
+            "basis"
+          ]
+        },
+        "output": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "media_type": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "encoding": {
+              "enum": [
+                "json",
+                "utf8",
+                "bytes"
+              ]
+            },
+            "max_bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2097152
+            },
+            "basis": {
+              "enum": [
+                "provider-declared",
+                "source-derived",
+                "observed",
+                "synthetic",
+                "unknown"
+              ]
+            },
+            "schema": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "media_type",
+            "encoding",
+            "max_bytes",
+            "basis"
+          ]
+        },
+        "examples": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              },
+              "input": {},
+              "output": {}
+            },
+            "required": [
+              "id",
+              "input",
+              "output"
+            ]
+          },
+          "maxItems": 8,
+          "minItems": 0,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "description",
+        "input",
+        "output"
+      ]
+    }
+  }
+}

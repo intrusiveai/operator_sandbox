@@ -1,0 +1,23 @@
+package adaptive
+
+import (
+ "encoding/json"
+ "os"
+ "testing"
+)
+
+// Copy this test into internal/adaptive in a disposable Interceptor checkout.
+// Run it alongside TestDeliveryExampleNativeFixtureAndVerification so the input
+// is also verified against the sealed example and the actual native exporter.
+func TestCaptureOperatorNativeDigestInput(t *testing.T) {
+ raw, err := os.ReadFile("testdata/capability-delivery.json")
+ if err != nil { t.Fatal(err) }
+ var source CapabilityManifest
+ if err := json.Unmarshal(raw, &source); err != nil { t.Fatal(err) }
+ source.Digest = ""
+ preimage, err := json.Marshal(source)
+ if err != nil { t.Fatal(err) }
+ destination := os.Getenv("OPERATOR_NATIVE_PREIMAGE")
+ if destination == "" { t.Fatal("OPERATOR_NATIVE_PREIMAGE is required") }
+ if err := os.WriteFile(destination, preimage, 0600); err != nil { t.Fatal(err) }
+}

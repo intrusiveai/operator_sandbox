@@ -1,0 +1,423 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-attempt-result:v1alpha2",
+  "title": "EngineAttemptResult",
+  "description": "Correlated execution or validation outcome, not proof of successful exploitation. Large target output/observations remain authorized artifact references.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "api_version",
+    "kind",
+    "status",
+    "stage",
+    "target_contact",
+    "invocation_state",
+    "cleanup_state",
+    "retry_disposition",
+    "errors"
+  ],
+  "properties": {
+    "api_version": {
+      "const": "operator.dev/engine-attempt-result/v1alpha2"
+    },
+    "kind": {
+      "const": "EngineAttemptResult"
+    },
+    "request_id": {
+      "$ref": "#/$defs/id",
+      "description": "Omitted when the rejected arguments do not contain a syntactically valid request ID. The native call_id still correlates the tool exchange."
+    },
+    "attempt_id": {
+      "$ref": "#/$defs/id"
+    },
+    "receipt_id": {
+      "$ref": "#/$defs/id",
+      "description": "Opaque host record identity only; never target authority or a native worker-ownership/administrative receipt."
+    },
+    "status": {
+      "enum": [
+        "rejected",
+        "completed",
+        "failed",
+        "unknown"
+      ]
+    },
+    "stage": {
+      "enum": [
+        "guest-validation",
+        "host-validation",
+        "translation",
+        "delivery",
+        "observation",
+        "cleanup",
+        "complete"
+      ]
+    },
+    "target_contact": {
+      "enum": [
+        "none",
+        "attempted",
+        "unknown"
+      ],
+      "description": "Includes setup and target-side registration, not just application invocation."
+    },
+    "invocation_state": {
+      "enum": [
+        "not-dispatched",
+        "succeeded",
+        "failed",
+        "unknown"
+      ]
+    },
+    "cleanup_state": {
+      "enum": [
+        "not-needed",
+        "not-requested",
+        "completed",
+        "failed",
+        "unknown"
+      ]
+    },
+    "retry_disposition": {
+      "enum": [
+        "correct-and-resubmit",
+        "do-not-retry",
+        "host-reconciliation-required"
+      ]
+    },
+    "target_output": {
+      "$ref": "#/$defs/output"
+    },
+    "observations": {
+      "type": "array",
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/output"
+      }
+    },
+    "errors": {
+      "type": "array",
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/error"
+      }
+    },
+    "feedback": {
+      "$ref": "urn:operator:schema:feedback-manifest:v1alpha1"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "rejected"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "stage": {
+            "enum": [
+              "guest-validation",
+              "host-validation",
+              "translation"
+            ]
+          },
+          "target_contact": {
+            "const": "none"
+          },
+          "invocation_state": {
+            "const": "not-dispatched"
+          },
+          "cleanup_state": {
+            "const": "not-needed"
+          },
+          "retry_disposition": {
+            "enum": [
+              "correct-and-resubmit",
+              "do-not-retry"
+            ]
+          },
+          "errors": {
+            "minItems": 1
+          }
+        },
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "target_output"
+              ]
+            },
+            {
+              "required": [
+                "observations"
+              ]
+            },
+            {
+              "required": [
+                "feedback"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "completed"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "request_id",
+          "attempt_id",
+          "receipt_id",
+          "feedback"
+        ],
+        "properties": {
+          "stage": {
+            "const": "complete"
+          },
+          "target_contact": {
+            "const": "attempted"
+          },
+          "invocation_state": {
+            "const": "succeeded"
+          },
+          "cleanup_state": {
+            "enum": [
+              "not-needed",
+              "not-requested",
+              "completed"
+            ]
+          },
+          "retry_disposition": {
+            "const": "do-not-retry"
+          },
+          "errors": {
+            "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "failed",
+              "unknown"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "request_id",
+          "attempt_id",
+          "receipt_id"
+        ],
+        "properties": {
+          "stage": {
+            "enum": [
+              "translation",
+              "delivery",
+              "observation",
+              "cleanup"
+            ]
+          },
+          "errors": {
+            "minItems": 1
+          },
+          "retry_disposition": {
+            "enum": [
+              "do-not-retry",
+              "host-reconciliation-required"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "unknown"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "retry_disposition": {
+            "const": "host-reconciliation-required"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "target_contact": {
+                "const": "unknown"
+              }
+            }
+          },
+          {
+            "properties": {
+              "invocation_state": {
+                "const": "unknown"
+              }
+            }
+          },
+          {
+            "properties": {
+              "cleanup_state": {
+                "const": "unknown"
+              }
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "const": "unknown"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "target_contact": {
+            "const": "none"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "invocation_state": {
+            "const": "not-dispatched"
+          },
+          "cleanup_state": {
+            "const": "not-needed"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "digest": {
+      "type": "string",
+      "minLength": 71,
+      "maxLength": 71,
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_digest",
+        "size_bytes",
+        "media_type"
+      ],
+      "properties": {
+        "artifact_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16777216
+        },
+        "media_type": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[a-z0-9!#$&^_.+-]+/[a-z0-9!#$&^_.+-]+$",
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "instance_path",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "enum": [
+            "INVALID_ARGUMENTS",
+            "LIMIT_EXCEEDED",
+            "UNKNOWN_FIELD",
+            "UNSUPPORTED_CAPABILITY",
+            "INVALID_SELECTOR",
+            "PAYLOAD_FORMAT",
+            "ARTIFACT_UNAVAILABLE",
+            "ARTIFACT_MISMATCH",
+            "LINEAGE_INVALID",
+            "BINDING_MISMATCH",
+            "POLICY_DENIED",
+            "IDEMPOTENCY_CONFLICT",
+            "STATE_CHANGED",
+            "TRANSLATION_FAILED",
+            "DELIVERY_FAILED",
+            "OBSERVATION_UNAVAILABLE",
+            "CLEANUP_FAILED",
+            "OUTCOME_UNKNOWN",
+            "INTERNAL_ERROR"
+          ]
+        },
+        "instance_path": {
+          "type": "string",
+          "maxLength": 2048,
+          "pattern": "^(?:/(?:[^~/\\x00-\\x1f\\x7f]|~[01])*)*$",
+          "description": "RFC 6901 pointer into submitted arguments; empty for a whole-request failure.",
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "description": "Bounded product-authored diagnostic; never echo payload, secret, native route or private path."
+        },
+        "schema_path": {
+          "type": "string",
+          "maxLength": 2048,
+          "pattern": "^(?:/(?:[^~/\\x00-\\x1f\\x7f]|~[01])*)*$",
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        }
+      }
+    }
+  }
+}

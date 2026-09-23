@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:observation-selection:v1alpha1",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode"
+      ],
+      "properties": {
+        "mode": {
+          "const": "all-permitted"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "kinds"
+      ],
+      "properties": {
+        "mode": {
+          "const": "selected"
+        },
+        "kinds": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "target_output",
+              "operation_error",
+              "injection_delivery",
+              "oracle_outcome"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

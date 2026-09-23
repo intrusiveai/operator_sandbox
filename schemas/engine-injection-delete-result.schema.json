@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-injection-delete-result:v1alpha1",
+  "title": "EngineInjectionDeleteResult",
+  "description": "One known action in the currently bound target. Campaign and effect identity come from the shared envelope. See INJECTION_CLEANUP_CONTRACT.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "attempt_receipt_id",
+    "action_id",
+    "outcome"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "description": "Host-issued receipt for this cleanup operation.",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "attempt_receipt_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "action_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "outcome": {
+      "enum": [
+        "deleted",
+        "already_absent"
+      ]
+    }
+  }
+}

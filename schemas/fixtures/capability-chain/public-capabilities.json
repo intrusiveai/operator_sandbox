@@ -1,0 +1,324 @@
+{
+  "schema_version": "operator.dev/target-capability-manifest/v1alpha1",
+  "source": {
+    "adapter": "interceptor/v1",
+    "schema_version": "interceptor.dev/capability-manifest/v1alpha2",
+    "capability_source_digest": "sha256:3d623d0b9e6efeff7ee442f68c4439d5c4ec586f0864ac31c1a7d2bb7cd88511",
+    "raw_digest": "sha256:4e22ac4ac3f02629ec06879c19b62532fd14819a0c5ae31fd94c9d1fed426900"
+  },
+  "capabilities": {
+    "target_id": "delivery-example",
+    "adapter": "interceptor/v1",
+    "operations": [
+      {
+        "ref": "operation:invoke",
+        "operation_id": "invoke",
+        "delivery_status": "described",
+        "maximum_input_bytes": 65536,
+        "delivery": {
+          "description": "Submit a task to the synthetic agent",
+          "input": {
+            "media_type": "application/json",
+            "encoding": "json",
+            "max_bytes": 65536,
+            "basis": "synthetic",
+            "schema": {
+              "additionalProperties": false,
+              "properties": {
+                "query": {
+                  "description": "Task text for the agent",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "query"
+              ],
+              "type": "object"
+            }
+          },
+          "output": {
+            "media_type": "application/json",
+            "encoding": "json",
+            "max_bytes": 65536,
+            "basis": "unknown"
+          },
+          "examples": [
+            {
+              "id": "benign",
+              "input": {
+                "query": "Summarize ticket T-1"
+              },
+              "output": {
+                "answer": "Illustrative summary"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "actions": [
+      {
+        "ref": "action:injection:environment_state",
+        "action_type": "interceptor.injection/v1alpha1",
+        "surface": "environment_state",
+        "scopes": [
+          "next_turn",
+          "once",
+          "standing"
+        ],
+        "placements": [
+          "append",
+          "insert",
+          "merge",
+          "prepend",
+          "replace"
+        ],
+        "selector_fields": [
+          "collection",
+          "file_namespace",
+          "key",
+          "path",
+          "relative_path",
+          "service",
+          "turn_id"
+        ],
+        "carriers": [
+          "managed_service_state",
+          "mutable_file"
+        ]
+      },
+      {
+        "ref": "action:injection:mcp_tool_result",
+        "action_type": "interceptor.injection/v1alpha1",
+        "surface": "mcp_tool_result",
+        "scopes": [
+          "once",
+          "standing"
+        ],
+        "placements": [
+          "append",
+          "insert",
+          "merge",
+          "prepend",
+          "replace"
+        ],
+        "selector_fields": [
+          "arguments_contain",
+          "arguments_equal",
+          "arguments_json_pointer",
+          "call_ordinal",
+          "service",
+          "tool_name",
+          "turn_id"
+        ],
+        "carriers": [
+          "mcp_tools_call_result"
+        ]
+      },
+      {
+        "ref": "action:injection:model_tool_result",
+        "action_type": "interceptor.injection/v1alpha1",
+        "surface": "model_tool_result",
+        "scopes": [
+          "next_turn",
+          "once",
+          "standing"
+        ],
+        "placements": [
+          "append",
+          "insert",
+          "merge",
+          "prepend",
+          "replace"
+        ],
+        "selector_fields": [
+          "arguments_contain",
+          "arguments_equal",
+          "arguments_json_pointer",
+          "call_ordinal",
+          "tool_name",
+          "turn_id"
+        ],
+        "carriers": [
+          "model_client_tool_result"
+        ]
+      },
+      {
+        "ref": "action:injection:service_response",
+        "action_type": "interceptor.injection/v1alpha1",
+        "surface": "service_response",
+        "scopes": [
+          "once",
+          "standing"
+        ],
+        "placements": [
+          "append",
+          "insert",
+          "merge",
+          "prepend",
+          "replace"
+        ],
+        "selector_fields": [
+          "call_ordinal",
+          "headers_equal",
+          "method",
+          "path",
+          "query_equal",
+          "request_body_contain",
+          "request_body_equal",
+          "request_body_json_pointer",
+          "service",
+          "turn_id"
+        ],
+        "carriers": [
+          "dynamic_attacker_sink_response",
+          "managed_http_response"
+        ]
+      }
+    ],
+    "services": [
+      {
+        "ref": "service:tickets",
+        "service_id": "tickets",
+        "injection_surfaces": [
+          "environment_state",
+          "mcp_tool_result",
+          "service_response"
+        ],
+        "kind": "mcp_http",
+        "role": "environment",
+        "transports": [
+          "http"
+        ],
+        "implementation": "generic",
+        "mcp": true,
+        "endpoints": [
+          {
+            "id": "get_ticket",
+            "kind": "mcp-tool",
+            "collection": "tickets",
+            "delivery": {
+              "description": "Read a synthetic ticket record",
+              "input": {
+                "media_type": "application/json",
+                "encoding": "json",
+                "max_bytes": 1048576,
+                "basis": "synthetic",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "description": "Ticket key",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "type": "object"
+                }
+              },
+              "output": {
+                "media_type": "application/json",
+                "encoding": "json",
+                "max_bytes": 1048576,
+                "basis": "synthetic",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "description": {
+                      "description": "Benign customer-supplied ticket text",
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "description",
+                    "status"
+                  ],
+                  "type": "object"
+                }
+              },
+              "examples": [
+                {
+                  "id": "benign",
+                  "input": {
+                    "id": "T-1"
+                  },
+                  "output": {
+                    "description": "An illustrative ticket",
+                    "id": "T-1",
+                    "status": "open"
+                  }
+                }
+              ]
+            },
+            "injection_root": "mcp-tool-result",
+            "output_pointer": "/structuredContent",
+            "maximum_request_bytes": 1048576
+          },
+          {
+            "id": "search_notes",
+            "kind": "mcp-tool",
+            "delivery": {
+              "description": "Search synthetic notes; output structure is not guaranteed",
+              "input": {
+                "media_type": "application/json",
+                "encoding": "json",
+                "max_bytes": 1048576,
+                "basis": "observed",
+                "schema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                }
+              },
+              "output": {
+                "media_type": "application/json",
+                "encoding": "json",
+                "max_bytes": 1048576,
+                "basis": "unknown"
+              }
+            },
+            "injection_root": "mcp-tool-result",
+            "output_pointer": "/structuredContent",
+            "maximum_request_bytes": 1048576
+          }
+        ]
+      }
+    ],
+    "file_namespaces": [
+      {
+        "ref": "file_namespace:records",
+        "namespace_id": "records",
+        "allow_create": false
+      }
+    ],
+    "evidence_classes": [
+      {
+        "ref": "evidence:target_output",
+        "feedback_kind": "target_output",
+        "profiles": [
+          "black-box"
+        ]
+      }
+    ],
+    "features": [],
+    "feedback_profiles": [
+      "black-box"
+    ]
+  },
+  "capability_projection_digest": "sha256:c35a54f77e1625f629071f6c29a7025a36e0f802eb980d1e7ff2e3dd15fedeca"
+}

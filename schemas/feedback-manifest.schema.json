@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:feedback-manifest:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile",
+    "collection_state",
+    "boundary",
+    "categories",
+    "entries"
+  ],
+  "properties": {
+    "profile": {
+      "description": "Effective harness profile ceiling after native, bundle and host narrowing; not the native Interceptor session profile. Category states also reflect host kind restrictions and attempt selection.",
+      "enum": [
+        "black-box",
+        "diagnostic",
+        "oracle-assisted"
+      ]
+    },
+    "collection_state": {
+      "enum": [
+        "complete",
+        "partial"
+      ]
+    },
+    "boundary": {
+      "const": "invocation-completed"
+    },
+    "categories": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "state"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "target_output",
+              "operation_error",
+              "injection_delivery",
+              "oracle_outcome"
+            ]
+          },
+          "state": {
+            "enum": [
+              "available",
+              "empty",
+              "withheld",
+              "not_requested",
+              "unavailable",
+              "partial"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        }
+      }
+    },
+    "entries": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "entry_id",
+          "kind",
+          "visibility",
+          "source",
+          "assurance",
+          "availability",
+          "truncated"
+        ],
+        "properties": {
+          "entry_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "not": {
+              "pattern": "[\\r\\n]"
+            }
+          },
+          "kind": {
+            "enum": [
+              "target_output",
+              "operation_error",
+              "injection_delivery",
+              "oracle_outcome"
+            ]
+          },
+          "visibility": {
+            "enum": [
+              "target_visible",
+              "harness_visible"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "assurance": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "availability": {
+            "enum": [
+              "available",
+              "unavailable"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "artifact": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "digest",
+              "size_bytes",
+              "media_type"
+            ],
+            "properties": {
+              "digest": {
+                "type": "string",
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              },
+              "size_bytes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 16777216
+              },
+              "media_type": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              }
+            }
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "original_size_bytes": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "availability": {
+                  "const": "available"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "artifact"
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}

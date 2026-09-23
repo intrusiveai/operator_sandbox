@@ -1,0 +1,848 @@
+{
+  "description": "Adapter conformance vectors, not wire envelopes. null native_observation_selection means omit the field and skip collection. For nonempty selections, assume each collected native category is empty with no entries. No required bundle feedback capability is asserted in these cases.",
+  "cases": [
+    {
+      "name": "black-box--black-box",
+      "input": {
+        "native_profile": "black-box",
+        "requested_profile": "black-box"
+      },
+      "expected": {
+        "native_attempt_profile": "black-box",
+        "native_observation_selection": {
+          "mode": "selected",
+          "kinds": [
+            "target_output"
+          ]
+        },
+        "collect_native_feedback": true,
+        "allowed_kinds": [
+          "target_output"
+        ],
+        "feedback": {
+          "profile": "black-box",
+          "collection_state": "complete",
+          "boundary": "invocation-completed",
+          "categories": [
+            {
+              "kind": "target_output",
+              "state": "empty"
+            },
+            {
+              "kind": "operation_error",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            },
+            {
+              "kind": "injection_delivery",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            },
+            {
+              "kind": "oracle_outcome",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            }
+          ],
+          "entries": []
+        }
+      }
+    },
+    {
+      "name": "black-box--diagnostic",
+      "input": {
+        "native_profile": "black-box",
+        "requested_profile": "diagnostic"
+      },
+      "expected": {
+        "native_attempt_profile": "black-box",
+        "native_observation_selection": {
+          "mode": "selected",
+          "kinds": [
+            "target_output"
+          ]
+        },
+        "collect_native_feedback": true,
+        "allowed_kinds": [
+          "target_output"
+        ],
+        "feedback": {
+          "profile": "black-box",
+          "collection_state": "complete",
+          "boundary": "invocation-completed",
+          "categories": [
+            {
+              "kind": "target_output",
+              "state": "empty"
+            },
+            {
+              "kind": "operation_error",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            },
+            {
+              "kind": "injection_delivery",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            },
+            {
+              "kind": "oracle_outcome",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            }
+          ],
+          "entries": []
+        }
+      }
+    },
+    {
+      "name": "black-box--oracle-assisted",
+      "input": {
+        "native_profile": "black-box",
+        "requested_profile": "oracle-assisted"
+      },
+      "expected": {
+        "native_attempt_profile": "black-box",
+        "native_observation_selection": {
+          "mode": "selected",
+          "kinds": [
+            "target_output"
+          ]
+        },
+        "collect_native_feedback": true,
+        "allowed_kinds": [
+          "target_output"
+        ],
+        "feedback": {
+          "profile": "black-box",
+          "collection_state": "complete",
+          "boundary": "invocation-completed",
+          "categories": [
+            {
+              "kind": "target_output",
+              "state": "empty"
+            },
+            {
+              "kind": "operation_error",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            },
+            {
+              "kind": "injection_delivery",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            },
+            {
+              "kind": "oracle_outcome",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            }
+          ],
+          "entries": []
+        }
+      }
+    },
+    {
+      "name": "diagnostic--black-box",
+      "input": {
+        "native_profile": "diagnostic",
+        "requested_profile": "black-box"
+      },
+      "expected": {
+        "native_attempt_profile": "diagnostic",
+        "native_observation_selection": {
+          "mode": "selected",
+          "kinds": [
+            "target_output"
+          ]
+        },
+        "collect_native_feedback": true,
+        "allowed_kinds": [
+          "target_output"
+        ],
+        "feedback": {
+          "profile": "black-box",
+          "collection_state": "complete",
+          "boundary": "invocation-completed",
+          "categories": [
+            {
+              "kind": "target_output",
+              "state": "empty"
+            },
+            {
+              "kind": "operation_error",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            },
+            {
+              "kind": "injection_delivery",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            },
+            {
+              "kind": "oracle_outcome",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            }
+          ],
+          "entries": []
+        }
+      }
+    },
+    {
+      "name": "diagnostic--diagnostic",
+      "input": {
+        "native_profile": "diagnostic",
+        "requested_profile": "diagnostic"
+      },
+      "expected": {
+        "native_attempt_profile": "diagnostic",
+        "native_observation_selection": {
+          "mode": "selected",
+          "kinds": [
+            "target_output",
+            "operation_error",
+            "injection_delivery"
+          ]
+        },
+        "collect_native_feedback": true,
+        "allowed_kinds": [
+          "target_output",
+          "operation_error",
+          "injection_delivery"
+        ],
+        "feedback": {
+          "profile": "diagnostic",
+          "collection_state": "complete",
+          "boundary": "invocation-completed",
+          "categories": [
+            {
+              "kind": "target_output",
+              "state": "empty"
+            },
+            {
+              "kind": "operation_error",
+              "state": "empty"
+            },
+            {
+              "kind": "injection_delivery",
+              "state": "empty"
+            },
+            {
+              "kind": "oracle_outcome",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            }
+          ],
+          "entries": []
+        }
+      }
+    },
+    {
+      "name": "diagnostic--oracle-assisted",
+      "input": {
+        "native_profile": "diagnostic",
+        "requested_profile": "oracle-assisted"
+      },
+      "expected": {
+        "native_attempt_profile": "diagnostic",
+        "native_observation_selection": {
+          "mode": "selected",
+          "kinds": [
+            "target_output",
+            "operation_error",
+            "injection_delivery"
+          ]
+        },
+        "collect_native_feedback": true,
+        "allowed_kinds": [
+          "target_output",
+          "operation_error",
+          "injection_delivery"
+        ],
+        "feedback": {
+          "profile": "diagnostic",
+          "collection_state": "complete",
+          "boundary": "invocation-completed",
+          "categories": [
+            {
+              "kind": "target_output",
+              "state": "empty"
+            },
+            {
+              "kind": "operation_error",
+              "state": "empty"
+            },
+            {
+              "kind": "injection_delivery",
+              "state": "empty"
+            },
+            {
+              "kind": "oracle_outcome",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            }
+          ],
+          "entries": []
+        }
+      }
+    },
+    {
+      "name": "oracle-assisted--black-box",
+      "input": {
+        "native_profile": "oracle-assisted",
+        "requested_profile": "black-box"
+      },
+      "expected": {
+        "native_attempt_profile": "oracle-assisted",
+        "native_observation_selection": {
+          "mode": "selected",
+          "kinds": [
+            "target_output"
+          ]
+        },
+        "collect_native_feedback": true,
+        "allowed_kinds": [
+          "target_output"
+        ],
+        "feedback": {
+          "profile": "black-box",
+          "collection_state": "complete",
+          "boundary": "invocation-completed",
+          "categories": [
+            {
+              "kind": "target_output",
+              "state": "empty"
+            },
+            {
+              "kind": "operation_error",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            },
+            {
+              "kind": "injection_delivery",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            },
+            {
+              "kind": "oracle_outcome",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            }
+          ],
+          "entries": []
+        }
+      }
+    },
+    {
+      "name": "oracle-assisted--diagnostic",
+      "input": {
+        "native_profile": "oracle-assisted",
+        "requested_profile": "diagnostic"
+      },
+      "expected": {
+        "native_attempt_profile": "oracle-assisted",
+        "native_observation_selection": {
+          "mode": "selected",
+          "kinds": [
+            "target_output",
+            "operation_error",
+            "injection_delivery"
+          ]
+        },
+        "collect_native_feedback": true,
+        "allowed_kinds": [
+          "target_output",
+          "operation_error",
+          "injection_delivery"
+        ],
+        "feedback": {
+          "profile": "diagnostic",
+          "collection_state": "complete",
+          "boundary": "invocation-completed",
+          "categories": [
+            {
+              "kind": "target_output",
+              "state": "empty"
+            },
+            {
+              "kind": "operation_error",
+              "state": "empty"
+            },
+            {
+              "kind": "injection_delivery",
+              "state": "empty"
+            },
+            {
+              "kind": "oracle_outcome",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            }
+          ],
+          "entries": []
+        }
+      }
+    },
+    {
+      "name": "oracle-assisted--oracle-assisted",
+      "input": {
+        "native_profile": "oracle-assisted",
+        "requested_profile": "oracle-assisted"
+      },
+      "expected": {
+        "native_attempt_profile": "oracle-assisted",
+        "native_observation_selection": {
+          "mode": "selected",
+          "kinds": [
+            "target_output",
+            "operation_error",
+            "injection_delivery",
+            "oracle_outcome"
+          ]
+        },
+        "collect_native_feedback": true,
+        "allowed_kinds": [
+          "target_output",
+          "operation_error",
+          "injection_delivery",
+          "oracle_outcome"
+        ],
+        "feedback": {
+          "profile": "oracle-assisted",
+          "collection_state": "complete",
+          "boundary": "invocation-completed",
+          "categories": [
+            {
+              "kind": "target_output",
+              "state": "empty"
+            },
+            {
+              "kind": "operation_error",
+              "state": "empty"
+            },
+            {
+              "kind": "injection_delivery",
+              "state": "empty"
+            },
+            {
+              "kind": "oracle_outcome",
+              "state": "empty"
+            }
+          ],
+          "entries": []
+        }
+      }
+    },
+    {
+      "name": "explicit-all-permitted",
+      "input": {
+        "native_profile": "diagnostic",
+        "requested_profile": "black-box",
+        "observation_selection": {
+          "mode": "all-permitted"
+        }
+      },
+      "expected": {
+        "native_attempt_profile": "diagnostic",
+        "native_observation_selection": {
+          "mode": "selected",
+          "kinds": [
+            "target_output"
+          ]
+        },
+        "collect_native_feedback": true,
+        "allowed_kinds": [
+          "target_output"
+        ],
+        "feedback": {
+          "profile": "black-box",
+          "collection_state": "complete",
+          "boundary": "invocation-completed",
+          "categories": [
+            {
+              "kind": "target_output",
+              "state": "empty"
+            },
+            {
+              "kind": "operation_error",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            },
+            {
+              "kind": "injection_delivery",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            },
+            {
+              "kind": "oracle_outcome",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            }
+          ],
+          "entries": []
+        }
+      }
+    },
+    {
+      "name": "selected-subset",
+      "input": {
+        "native_profile": "diagnostic",
+        "requested_profile": "diagnostic",
+        "observation_selection": {
+          "mode": "selected",
+          "kinds": [
+            "injection_delivery"
+          ]
+        }
+      },
+      "expected": {
+        "native_attempt_profile": "diagnostic",
+        "native_observation_selection": {
+          "mode": "selected",
+          "kinds": [
+            "injection_delivery"
+          ]
+        },
+        "collect_native_feedback": true,
+        "allowed_kinds": [
+          "target_output",
+          "operation_error",
+          "injection_delivery"
+        ],
+        "feedback": {
+          "profile": "diagnostic",
+          "collection_state": "complete",
+          "boundary": "invocation-completed",
+          "categories": [
+            {
+              "kind": "target_output",
+              "state": "not_requested",
+              "reason": "selection"
+            },
+            {
+              "kind": "operation_error",
+              "state": "not_requested",
+              "reason": "selection"
+            },
+            {
+              "kind": "injection_delivery",
+              "state": "empty"
+            },
+            {
+              "kind": "oracle_outcome",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            }
+          ],
+          "entries": []
+        }
+      }
+    },
+    {
+      "name": "mixed-allowed-and-withheld",
+      "input": {
+        "native_profile": "diagnostic",
+        "requested_profile": "black-box",
+        "observation_selection": {
+          "mode": "selected",
+          "kinds": [
+            "oracle_outcome",
+            "target_output"
+          ]
+        }
+      },
+      "expected": {
+        "native_attempt_profile": "diagnostic",
+        "native_observation_selection": {
+          "mode": "selected",
+          "kinds": [
+            "target_output"
+          ]
+        },
+        "collect_native_feedback": true,
+        "allowed_kinds": [
+          "target_output"
+        ],
+        "feedback": {
+          "profile": "black-box",
+          "collection_state": "complete",
+          "boundary": "invocation-completed",
+          "categories": [
+            {
+              "kind": "target_output",
+              "state": "empty"
+            },
+            {
+              "kind": "operation_error",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            },
+            {
+              "kind": "injection_delivery",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            },
+            {
+              "kind": "oracle_outcome",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            }
+          ],
+          "entries": []
+        }
+      }
+    },
+    {
+      "name": "only-withheld-selected",
+      "input": {
+        "native_profile": "diagnostic",
+        "requested_profile": "black-box",
+        "observation_selection": {
+          "mode": "selected",
+          "kinds": [
+            "injection_delivery"
+          ]
+        }
+      },
+      "expected": {
+        "native_attempt_profile": "diagnostic",
+        "native_observation_selection": null,
+        "collect_native_feedback": false,
+        "allowed_kinds": [
+          "target_output"
+        ],
+        "feedback": {
+          "profile": "black-box",
+          "collection_state": "complete",
+          "boundary": "invocation-completed",
+          "categories": [
+            {
+              "kind": "target_output",
+              "state": "not_requested",
+              "reason": "selection"
+            },
+            {
+              "kind": "operation_error",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            },
+            {
+              "kind": "injection_delivery",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            },
+            {
+              "kind": "oracle_outcome",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            }
+          ],
+          "entries": []
+        }
+      }
+    },
+    {
+      "name": "host-profile-ceiling",
+      "input": {
+        "native_profile": "oracle-assisted",
+        "requested_profile": "oracle-assisted",
+        "host_profile_ceiling": "diagnostic"
+      },
+      "expected": {
+        "native_attempt_profile": "oracle-assisted",
+        "native_observation_selection": {
+          "mode": "selected",
+          "kinds": [
+            "target_output",
+            "operation_error",
+            "injection_delivery"
+          ]
+        },
+        "collect_native_feedback": true,
+        "allowed_kinds": [
+          "target_output",
+          "operation_error",
+          "injection_delivery"
+        ],
+        "feedback": {
+          "profile": "diagnostic",
+          "collection_state": "complete",
+          "boundary": "invocation-completed",
+          "categories": [
+            {
+              "kind": "target_output",
+              "state": "empty"
+            },
+            {
+              "kind": "operation_error",
+              "state": "empty"
+            },
+            {
+              "kind": "injection_delivery",
+              "state": "empty"
+            },
+            {
+              "kind": "oracle_outcome",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            }
+          ],
+          "entries": []
+        }
+      }
+    },
+    {
+      "name": "host-kind-allowlist",
+      "input": {
+        "native_profile": "oracle-assisted",
+        "requested_profile": "diagnostic",
+        "host_allowed_kinds": [
+          "injection_delivery",
+          "target_output"
+        ]
+      },
+      "expected": {
+        "native_attempt_profile": "oracle-assisted",
+        "native_observation_selection": {
+          "mode": "selected",
+          "kinds": [
+            "target_output",
+            "injection_delivery"
+          ]
+        },
+        "collect_native_feedback": true,
+        "allowed_kinds": [
+          "target_output",
+          "injection_delivery"
+        ],
+        "feedback": {
+          "profile": "diagnostic",
+          "collection_state": "complete",
+          "boundary": "invocation-completed",
+          "categories": [
+            {
+              "kind": "target_output",
+              "state": "empty"
+            },
+            {
+              "kind": "operation_error",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            },
+            {
+              "kind": "injection_delivery",
+              "state": "empty"
+            },
+            {
+              "kind": "oracle_outcome",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            }
+          ],
+          "entries": []
+        }
+      }
+    },
+    {
+      "name": "host-empty-allowlist",
+      "input": {
+        "native_profile": "diagnostic",
+        "requested_profile": "diagnostic",
+        "host_allowed_kinds": []
+      },
+      "expected": {
+        "native_attempt_profile": "diagnostic",
+        "native_observation_selection": null,
+        "collect_native_feedback": false,
+        "allowed_kinds": [],
+        "feedback": {
+          "profile": "diagnostic",
+          "collection_state": "complete",
+          "boundary": "invocation-completed",
+          "categories": [
+            {
+              "kind": "target_output",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            },
+            {
+              "kind": "operation_error",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            },
+            {
+              "kind": "injection_delivery",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            },
+            {
+              "kind": "oracle_outcome",
+              "state": "withheld",
+              "reason": "effective_feedback_policy"
+            }
+          ],
+          "entries": []
+        }
+      }
+    },
+    {
+      "name": "canonical-kind-order",
+      "input": {
+        "native_profile": "oracle-assisted",
+        "requested_profile": "oracle-assisted",
+        "observation_selection": {
+          "mode": "selected",
+          "kinds": [
+            "oracle_outcome",
+            "injection_delivery",
+            "operation_error",
+            "target_output"
+          ]
+        }
+      },
+      "expected": {
+        "native_attempt_profile": "oracle-assisted",
+        "native_observation_selection": {
+          "mode": "selected",
+          "kinds": [
+            "target_output",
+            "operation_error",
+            "injection_delivery",
+            "oracle_outcome"
+          ]
+        },
+        "collect_native_feedback": true,
+        "allowed_kinds": [
+          "target_output",
+          "operation_error",
+          "injection_delivery",
+          "oracle_outcome"
+        ],
+        "feedback": {
+          "profile": "oracle-assisted",
+          "collection_state": "complete",
+          "boundary": "invocation-completed",
+          "categories": [
+            {
+              "kind": "target_output",
+              "state": "empty"
+            },
+            {
+              "kind": "operation_error",
+              "state": "empty"
+            },
+            {
+              "kind": "injection_delivery",
+              "state": "empty"
+            },
+            {
+              "kind": "oracle_outcome",
+              "state": "empty"
+            }
+          ],
+          "entries": []
+        }
+      }
+    }
+  ]
+}

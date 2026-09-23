@@ -1,0 +1,724 @@
+[
+  {
+    "name": "resolved defaults",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": true,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "positive overrides",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": true,
+    "instance": {
+      "max_model_turns": 1,
+      "max_tool_calls": 1,
+      "max_tool_calls_per_response": 1,
+      "max_invalid_tool_calls": 1,
+      "max_consecutive_invalid_tool_calls": 1,
+      "max_read_bytes": 1,
+      "max_no_progress_turns": 1
+    }
+  },
+  {
+    "name": "max_model_turns zero",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 0,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_model_turns negative",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": -1,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_model_turns null",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": null,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_model_turns boolean",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": true,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_model_turns fraction",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 1.5,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_model_turns overflow",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 9007199254740992,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "missing max_model_turns",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls zero",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 0,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls negative",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": -1,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls null",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": null,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls boolean",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": true,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls fraction",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 1.5,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls overflow",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 9007199254740992,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "missing max_tool_calls",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls_per_response zero",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 0,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls_per_response negative",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": -1,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls_per_response null",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": null,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls_per_response boolean",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": true,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls_per_response fraction",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 1.5,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls_per_response overflow",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 9007199254740992,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "missing max_tool_calls_per_response",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_invalid_tool_calls zero",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 0,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_invalid_tool_calls negative",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": -1,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_invalid_tool_calls null",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": null,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_invalid_tool_calls boolean",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": true,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_invalid_tool_calls fraction",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 1.5,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_invalid_tool_calls overflow",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 9007199254740992,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "missing max_invalid_tool_calls",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_consecutive_invalid_tool_calls zero",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 0,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_consecutive_invalid_tool_calls negative",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": -1,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_consecutive_invalid_tool_calls null",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": null,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_consecutive_invalid_tool_calls boolean",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": true,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_consecutive_invalid_tool_calls fraction",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 1.5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_consecutive_invalid_tool_calls overflow",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 9007199254740992,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "missing max_consecutive_invalid_tool_calls",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_read_bytes zero",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 0,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_read_bytes negative",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": -1,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_read_bytes null",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": null,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_read_bytes boolean",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": true,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_read_bytes fraction",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 1.5,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_read_bytes overflow",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 9007199254740992,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "missing max_read_bytes",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_no_progress_turns zero",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 0
+    }
+  },
+  {
+    "name": "max_no_progress_turns negative",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": -1
+    }
+  },
+  {
+    "name": "max_no_progress_turns null",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": null
+    }
+  },
+  {
+    "name": "max_no_progress_turns boolean",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": true
+    }
+  },
+  {
+    "name": "max_no_progress_turns fraction",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 1.5
+    }
+  },
+  {
+    "name": "max_no_progress_turns overflow",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 9007199254740992
+    }
+  },
+  {
+    "name": "missing max_no_progress_turns",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456
+    }
+  },
+  {
+    "name": "unknown override",
+    "schema": "urn:operator:schema:harness-loop-limits:v1alpha1",
+    "valid": false,
+    "instance": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10,
+      "unlimited": true
+    }
+  }
+]

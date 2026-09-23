@@ -1,0 +1,892 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-attempt-request:v1alpha2",
+  "title": "EngineAttemptRequest",
+  "description": "Complete structural draft for one harness-selected attempt. Artifact bytes, live capabilities, ownership and cross-field equality require the semantic checks in ATTEMPT_TOOL_CONTRACT.md. No schema defaults or coercion.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "api_version",
+    "kind",
+    "request_id",
+    "origin",
+    "thread_id",
+    "attempt_id",
+    "generation",
+    "attempt_index",
+    "payload",
+    "generator",
+    "pre_actions",
+    "invocation",
+    "cleanup"
+  ],
+  "properties": {
+    "api_version": {
+      "const": "operator.dev/engine-attempt-request/v1alpha2"
+    },
+    "kind": {
+      "const": "EngineAttemptRequest"
+    },
+    "request_id": {
+      "$ref": "#/$defs/id",
+      "description": "Trusted wrapper-assigned durable submission identity within the campaign, equal to envelope operation_id; omitted from the model-facing projection. Never reuse for changed content."
+    },
+    "origin": {
+      "enum": [
+        "scenario",
+        "exploratory"
+      ]
+    },
+    "scenario_id": {
+      "$ref": "#/$defs/id",
+      "description": "Required only for scenario origin; provenance, not tactical authorization."
+    },
+    "thread_id": {
+      "$ref": "#/$defs/id"
+    },
+    "attempt_id": {
+      "$ref": "#/$defs/id",
+      "description": "Trusted wrapper-assigned attempt identity, omitted from the model-facing projection. Corrections after rejection receive a fresh ID; exact duplicates preserve it."
+    },
+    "parent_attempt_id": {
+      "$ref": "#/$defs/id"
+    },
+    "generation": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "attempt_index": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991,
+      "description": "Trusted wrapper-allocated campaign submission index. Gaps after rejection are valid; corrections get new indices, exact duplicates retain them and restores never reset the allocator. Not an execution-budget counter. See HARNESS_EXECUTION_RULES.md."
+    },
+    "payload": {
+      "$ref": "#/$defs/artifact",
+      "description": "Already committed attack content. For Interceptor injection it is canonical JSON, including a JSON string for text insertion."
+    },
+    "carrier": {
+      "$ref": "#/$defs/artifact",
+      "description": "Optional distinct invocation input/benign trigger; required when input_source is carrier."
+    },
+    "generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "release_digest"
+      ],
+      "properties": {
+        "kind": {
+          "const": "operator-engine"
+        },
+        "release_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "strategy_provenance_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "description": "Guest assertion, never used to select or translate an operation."
+    },
+    "technique_refs": {
+      "type": "array",
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
+    },
+    "pre_actions": {
+      "type": "array",
+      "maxItems": 16,
+      "uniqueItems": true,
+      "description": "Explicit ordered setup; empty for targets without setup support. Action IDs must also be unique independently of object equality.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "action_id",
+          "action_type",
+          "parameters"
+        ],
+        "properties": {
+          "action_id": {
+            "$ref": "#/$defs/id"
+          },
+          "action_type": {
+            "const": "interceptor.injection/v1alpha1"
+          },
+          "parameters": {
+            "$ref": "#/$defs/injection"
+          }
+        }
+      }
+    },
+    "invocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation_id",
+        "input_source",
+        "media_type"
+      ],
+      "properties": {
+        "operation_id": {
+          "$ref": "#/$defs/id",
+          "description": "Effective capability operation ID, not a URL, native broker operation or host command."
+        },
+        "input_source": {
+          "enum": [
+            "payload",
+            "carrier"
+          ]
+        },
+        "media_type": {
+          "$ref": "#/$defs/mediaType"
+        },
+        "caller_principal_id": {
+          "$ref": "#/$defs/id",
+          "description": "Only when explicitly exposed by the effective target contract; never inferred."
+        }
+      }
+    },
+    "cleanup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "delete_actions_after_observation"
+      ],
+      "properties": {
+        "delete_actions_after_observation": {
+          "type": "boolean",
+          "description": "True also requests bounded cleanup of known-created actions after partial failure. False never overrides mandatory lifecycle cleanup. False retains known-created actions for later engine.injection_delete using the attempt result receipt_id and pre_actions action_id; removal does not undo prior application effects."
+        }
+      }
+    },
+    "observation_selection": {
+      "$ref": "urn:operator:schema:observation-selection:v1alpha1",
+      "description": "Omission means all-permitted; profile and host policy still limit feedback."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "origin": {
+            "const": "scenario"
+          }
+        },
+        "required": [
+          "origin"
+        ]
+      },
+      "then": {
+        "required": [
+          "scenario_id"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "scenario_id"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "parent_attempt_id"
+        ]
+      },
+      "then": {
+        "properties": {
+          "generation": {
+            "minimum": 2
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "generation": {
+            "const": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "invocation": {
+            "properties": {
+              "input_source": {
+                "const": "carrier"
+              }
+            },
+            "required": [
+              "input_source"
+            ]
+          }
+        },
+        "required": [
+          "invocation"
+        ]
+      },
+      "then": {
+        "required": [
+          "carrier"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "pre_actions": {
+            "minItems": 1
+          }
+        },
+        "required": [
+          "pre_actions"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "properties": {
+              "media_type": {
+                "const": "application/json"
+              },
+              "canonicalization": {
+                "const": "jcs-v1"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "minLength": 71,
+      "maxLength": 71,
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "mediaType": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "pattern": "^[a-z0-9!#$&^_.+-]+/[a-z0-9!#$&^_.+-]+$",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "digest",
+        "size_bytes",
+        "media_type",
+        "canonicalization"
+      ],
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16777216
+        },
+        "media_type": {
+          "$ref": "#/$defs/mediaType"
+        },
+        "canonicalization": {
+          "enum": [
+            "raw",
+            "jcs-v1"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "canonicalization": {
+                "const": "jcs-v1"
+              }
+            },
+            "required": [
+              "canonicalization"
+            ]
+          },
+          "then": {
+            "properties": {
+              "media_type": {
+                "const": "application/json"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "pointer": {
+      "type": "string",
+      "maxLength": 2048,
+      "pattern": "^(?:/(?:[^~/\\x00-\\x1f\\x7f]|~[01])*)*$",
+      "description": "RFC 6901 JSON Pointer; empty string selects the whole value.",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "ordinal": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 10,
+      "pattern": "^(first|every|[1-9][0-9]{0,9})$",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "logicalPath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "pattern": "^/[^?#\\\\\\x00-\\x1f\\x7f]*$",
+      "description": "Logical managed-service request path only, not a host path or dispatch route. Semantic validator enforces clean form and permitted selector scope.",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "pattern": "^[^/\\\\\\x00-\\x1f\\x7f][^\\\\\\x00-\\x1f\\x7f]*$",
+      "description": "Within one declared file namespace. Reject dot segments, empty segments and noncanonical paths in code.",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "shortText": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "contains": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024
+    },
+    "predicates": {
+      "type": "object",
+      "maxProperties": 16,
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128,
+        "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+        "not": {
+          "pattern": "[\\r\\n]"
+        }
+      },
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 1024,
+        "pattern": "^[^\\x00-\\x1f\\x7f]*$",
+        "not": {
+          "pattern": "[\\r\\n]"
+        }
+      }
+    },
+    "json0": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        {
+          "type": "string",
+          "maxLength": 1024
+        }
+      ]
+    },
+    "json1": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/json0"
+        },
+        {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "$ref": "#/$defs/json0"
+          }
+        },
+        {
+          "type": "object",
+          "maxProperties": 16,
+          "propertyNames": {
+            "maxLength": 128
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/json0"
+          }
+        }
+      ]
+    },
+    "json2": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/json0"
+        },
+        {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "$ref": "#/$defs/json1"
+          }
+        },
+        {
+          "type": "object",
+          "maxProperties": 16,
+          "propertyNames": {
+            "maxLength": 128
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/json1"
+          }
+        }
+      ]
+    },
+    "json3": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/json0"
+        },
+        {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "$ref": "#/$defs/json2"
+          }
+        },
+        {
+          "type": "object",
+          "maxProperties": 16,
+          "propertyNames": {
+            "maxLength": 128
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/json2"
+          }
+        }
+      ]
+    },
+    "modelSelector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tool_name",
+        "call_ordinal"
+      ],
+      "properties": {
+        "tool_name": {
+          "$ref": "#/$defs/shortText"
+        },
+        "call_ordinal": {
+          "$ref": "#/$defs/ordinal"
+        },
+        "arguments_pointer": {
+          "$ref": "#/$defs/pointer"
+        },
+        "arguments_equal": {
+          "$ref": "#/$defs/json3"
+        },
+        "arguments_contain": {
+          "$ref": "#/$defs/contains"
+        },
+        "turn_id": {
+          "$ref": "#/$defs/id"
+        }
+      }
+    },
+    "mcpSelector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "service",
+        "tool_name",
+        "call_ordinal"
+      ],
+      "properties": {
+        "service": {
+          "$ref": "#/$defs/id"
+        },
+        "tool_name": {
+          "$ref": "#/$defs/shortText"
+        },
+        "call_ordinal": {
+          "$ref": "#/$defs/ordinal"
+        },
+        "arguments_pointer": {
+          "$ref": "#/$defs/pointer"
+        },
+        "arguments_equal": {
+          "$ref": "#/$defs/json3"
+        },
+        "arguments_contain": {
+          "$ref": "#/$defs/contains"
+        }
+      }
+    },
+    "httpSelector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "service",
+        "call_ordinal"
+      ],
+      "properties": {
+        "service": {
+          "$ref": "#/$defs/id"
+        },
+        "call_ordinal": {
+          "$ref": "#/$defs/ordinal"
+        },
+        "method": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16,
+          "pattern": "^[A-Z]+$",
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        "path": {
+          "$ref": "#/$defs/logicalPath"
+        },
+        "query_equal": {
+          "$ref": "#/$defs/predicates"
+        },
+        "headers_equal": {
+          "$ref": "#/$defs/predicates",
+          "description": "Case-insensitive security/routing-header denylist and duplicate normalization checked in code."
+        },
+        "request_body_pointer": {
+          "$ref": "#/$defs/pointer"
+        },
+        "request_body_equal": {
+          "$ref": "#/$defs/json3"
+        },
+        "request_body_contain": {
+          "$ref": "#/$defs/contains"
+        }
+      }
+    },
+    "stateSelector": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "service",
+            "collection",
+            "key"
+          ],
+          "properties": {
+            "service": {
+              "$ref": "#/$defs/id"
+            },
+            "collection": {
+              "$ref": "#/$defs/shortText"
+            },
+            "key": {
+              "$ref": "#/$defs/shortText"
+            },
+            "turn_id": {
+              "$ref": "#/$defs/id"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "file_namespace",
+            "relative_path"
+          ],
+          "properties": {
+            "file_namespace": {
+              "$ref": "#/$defs/id"
+            },
+            "relative_path": {
+              "$ref": "#/$defs/relativePath"
+            },
+            "turn_id": {
+              "$ref": "#/$defs/id"
+            }
+          }
+        }
+      ]
+    },
+    "placement": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "operation",
+            "pointer"
+          ],
+          "properties": {
+            "operation": {
+              "enum": [
+                "replace",
+                "prepend_text",
+                "append_text"
+              ]
+            },
+            "pointer": {
+              "$ref": "#/$defs/pointer"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "operation",
+            "pointer",
+            "index"
+          ],
+          "properties": {
+            "operation": {
+              "const": "insert_array"
+            },
+            "pointer": {
+              "$ref": "#/$defs/pointer"
+            },
+            "index": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "operation",
+            "pointer",
+            "allowed_fields"
+          ],
+          "properties": {
+            "operation": {
+              "const": "merge_object"
+            },
+            "pointer": {
+              "$ref": "#/$defs/pointer"
+            },
+            "allowed_fields": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 64,
+              "uniqueItems": true,
+              "items": {
+                "$ref": "#/$defs/shortText"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "injection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "surface",
+        "mode",
+        "scope",
+        "selector",
+        "placement",
+        "payload_digest"
+      ],
+      "properties": {
+        "surface": {
+          "enum": [
+            "model_tool_result",
+            "service_response",
+            "mcp_tool_result",
+            "environment_state"
+          ]
+        },
+        "mode": {
+          "enum": [
+            "simulation",
+            "fidelity"
+          ]
+        },
+        "scope": {
+          "enum": [
+            "once",
+            "next_turn",
+            "standing"
+          ]
+        },
+        "selector": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/modelSelector"
+            },
+            {
+              "$ref": "#/$defs/mcpSelector"
+            },
+            {
+              "$ref": "#/$defs/httpSelector"
+            },
+            {
+              "$ref": "#/$defs/stateSelector"
+            }
+          ]
+        },
+        "placement": {
+          "$ref": "#/$defs/placement"
+        },
+        "payload_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "surface": {
+              "const": "model_tool_result"
+            },
+            "mode": {
+              "const": "simulation"
+            },
+            "selector": {
+              "$ref": "#/$defs/modelSelector"
+            }
+          }
+        },
+        {
+          "properties": {
+            "surface": {
+              "const": "service_response"
+            },
+            "mode": {
+              "const": "simulation"
+            },
+            "scope": {
+              "enum": [
+                "once",
+                "standing"
+              ]
+            },
+            "selector": {
+              "$ref": "#/$defs/httpSelector"
+            },
+            "placement": {
+              "properties": {
+                "operation": {
+                  "enum": [
+                    "replace",
+                    "prepend_text",
+                    "append_text",
+                    "merge_object"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "surface": {
+              "const": "mcp_tool_result"
+            },
+            "mode": {
+              "const": "simulation"
+            },
+            "scope": {
+              "enum": [
+                "once",
+                "standing"
+              ]
+            },
+            "selector": {
+              "$ref": "#/$defs/mcpSelector"
+            },
+            "placement": {
+              "properties": {
+                "operation": {
+                  "enum": [
+                    "replace",
+                    "prepend_text",
+                    "append_text",
+                    "merge_object"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "surface": {
+              "const": "environment_state"
+            },
+            "mode": {
+              "const": "fidelity"
+            },
+            "selector": {
+              "$ref": "#/$defs/stateSelector"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:model-tool-not-executed-result:v1alpha1",
+  "title": "ModelToolNotExecutedResult",
+  "description": "Local dispatcher result for a call skipped after successful restore. Provider wrapper correlates the original tool-call ID. Revisions/receipt must match the restore result and new revision must be greater (semantic checks). Not an engine operation or attempt result.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "code",
+    "effect_state",
+    "message",
+    "previous_run_revision",
+    "run_revision",
+    "transition_receipt"
+  ],
+  "properties": {
+    "status": {
+      "const": "not_executed"
+    },
+    "code": {
+      "const": "TARGET_REVISION_CHANGED"
+    },
+    "effect_state": {
+      "const": "none"
+    },
+    "message": {
+      "const": "Not executed: target revision changed. Choose the next action using the restore result."
+    },
+    "previous_run_revision": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "run_revision": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "transition_receipt": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    }
+  }
+}

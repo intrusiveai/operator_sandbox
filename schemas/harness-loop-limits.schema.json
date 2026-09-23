@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:harness-loop-limits:v1alpha1",
+  "title": "HarnessLoopLimits",
+  "description": "Complete effective EngineContext.limits.harness after administrator default resolution and policy narrowing. See HARNESS_EXECUTION_RULES.md for accounting and defaults; no implicit schema coercion/defaults.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "max_model_turns",
+    "max_tool_calls",
+    "max_tool_calls_per_response",
+    "max_invalid_tool_calls",
+    "max_consecutive_invalid_tool_calls",
+    "max_read_bytes",
+    "max_no_progress_turns"
+  ],
+  "properties": {
+    "max_model_turns": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991,
+      "description": "Administrator omission selects 300 before effective-limit publication."
+    },
+    "max_tool_calls": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991,
+      "description": "Administrator omission selects 2000 before effective-limit publication."
+    },
+    "max_tool_calls_per_response": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991,
+      "description": "Administrator omission selects 16 before effective-limit publication."
+    },
+    "max_invalid_tool_calls": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991,
+      "description": "Administrator omission selects 50 before effective-limit publication."
+    },
+    "max_consecutive_invalid_tool_calls": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991,
+      "description": "Administrator omission selects 5 before effective-limit publication."
+    },
+    "max_read_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991,
+      "description": "Administrator omission selects 268435456 before effective-limit publication."
+    },
+    "max_no_progress_turns": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991,
+      "description": "Administrator omission selects 10 before effective-limit publication."
+    }
+  }
+}

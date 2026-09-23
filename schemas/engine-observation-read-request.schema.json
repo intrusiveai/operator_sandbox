@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-observation-read-request:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "entry_id",
+    "offset",
+    "max_bytes"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "entry_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "offset": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "max_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 262144
+    }
+  }
+}

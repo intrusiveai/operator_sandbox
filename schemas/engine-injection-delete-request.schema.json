@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-injection-delete-request:v1alpha1",
+  "title": "EngineInjectionDeleteRequest",
+  "description": "One known action in the currently bound target. Campaign and effect identity come from the shared envelope. See INJECTION_CLEANUP_CONTRACT.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "attempt_receipt_id",
+    "action_id"
+  ],
+  "properties": {
+    "attempt_receipt_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "description": "Host-issued attempt receipt from this campaign; may precede the current revision.",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "action_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "description": "Exact pre_actions action_id in that recorded attempt.",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    }
+  }
+}
