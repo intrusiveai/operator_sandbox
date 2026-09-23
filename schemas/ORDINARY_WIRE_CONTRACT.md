@@ -6,9 +6,9 @@ It does not publish package `0.1.0` or claim a working broker or harness runtime
 
 ## Registry and envelopes
 
-[operations.json](operations.json) is the source for 11 ordinary operations:
+[operations.json](operations.json) is the source for 12 ordinary operations:
 artifact begin/part/commit, attempt execution, injection deletion, observation
-read, snapshot create/list/inspect, restore and graceful stop. Each entry identifies
+read, typed record append, snapshot create/list/inspect, restore and graceful stop. Each entry identifies
 request/result/error schemas, allowed error codes, lifecycle states, finalization
 restrictions, timeout ceiling, encoded request/result ceilings, effect kind and
 receipt policy. Native Interceptor operation names and schemas stay in its adapter.
@@ -21,14 +21,16 @@ The generated [request](engine-pipe-request.schema.json) and
 [response](engine-pipe-response.schema.json) envelopes bind operation names to those
 exact bodies. `make generate` regenerates envelopes and schema-ID constants;
 `make test` rejects stale generated files. No unknown operation or untyped forwarding
-path is accepted. Model generation and record append will join the registry when
-their closed schemas and fixtures are implemented; startup, input/skill manifests,
-records, conclusion content and provider codecs remain required publication work.
+path is accepted. Model generation will join the registry when its closed schemas and
+fixtures are implemented; startup, input/skill manifests and provider codecs remain
+required publication work. Records and conclusion content are defined in the
+[assessment contract](ASSESSMENT_CONTRACT.md).
 
 Every ordinary message carries the common version, kind, sequence, campaign,
 launch, revision, call ID, durable operation ID and operation name. Requests add
 positive `timeout_ms` and `body`. Responses contain exactly one `result` or `error`.
-Both encoded envelopes are limited to 4 MiB. Sequences are independent in each
+The global ceiling is 4 MiB per encoded envelope; record append narrows its
+request and response ceilings to 64 KiB. Sequences are independent in each
 direction; a response sequence need not equal the request sequence.
 
 The response echoes the request's campaign, launch, revision, call ID, operation
@@ -41,8 +43,7 @@ encoding error. Snapshot creation/restore have 300-second ceilings; other operat
 in this stage have 30-second ceilings. Every deadline is host-monotonic.
 
 Only admitted execution permits normal work. Finalization admits artifact operations
-for the reserved conclusion and stop; the later record operation must admit the
-conclusion record. For part/commit, determine purpose from the host's saved upload
+for the reserved conclusion, the conclusion record and stop. For part/commit, determine purpose from the host's saved upload
 record. The guest cannot relabel an existing upload. Registry metadata does not
 replace runtime policy checks or authorize startup dispatch.
 
@@ -150,8 +151,9 @@ Graceful stop uses the exact [request](engine-request-stop-request.schema.json) 
 Committed and unavailable conclusion variants are closed and exclusive. The result
 must repeat the conclusion state, close execution admission and require exit within
 5,000 ms, with finalization still pending. The runtime must verify committed receipts
-and matching finish reason before accepting stop. This stage does not implement the
-conclusion artifact's internal content schema or the conclusion record operation.
+and matching finish reason before accepting stop. The [assessment stage](ASSESSMENT_CONTRACT.md) implements conclusion content,
+record append and completion-chain consistency checks; runtime receipt lookup and
+durable stop acceptance remain outstanding.
 
 [Spool ACK](engine-spool-ack.schema.json) syntax is also implemented with a 1,024-byte
 ceiling. Initial null and zero positions remain distinct. The transport must still

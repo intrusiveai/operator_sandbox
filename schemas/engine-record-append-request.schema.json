@@ -1,0 +1,343 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-record-append-request:v1alpha1",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "record_kind": {
+          "const": "hypothesis"
+        },
+        "record": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "hypothesis_id": {
+              "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+            },
+            "objective_refs": {
+              "type": "array",
+              "maxItems": 32,
+              "items": {
+                "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+              },
+              "uniqueItems": true
+            },
+            "provenance": {
+              "$ref": "urn:operator:schema:assessment-common:v1alpha1#/$defs/provenance"
+            },
+            "statement": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            "assumptions": {
+              "type": "array",
+              "maxItems": 16,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1024
+              }
+            },
+            "surface_ref": {
+              "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+            },
+            "predicted_observations": {
+              "type": "array",
+              "maxItems": 16,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1024
+              }
+            },
+            "record_refs": {
+              "type": "array",
+              "maxItems": 32,
+              "items": {
+                "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+              },
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "hypothesis_id",
+            "objective_refs",
+            "provenance",
+            "statement",
+            "assumptions",
+            "predicted_observations",
+            "record_refs"
+          ]
+        }
+      },
+      "required": [
+        "record_kind",
+        "record"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "record_kind": {
+          "const": "progress"
+        },
+        "record": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "summary": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            "decision": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            "objective_refs": {
+              "type": "array",
+              "maxItems": 32,
+              "items": {
+                "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+              },
+              "uniqueItems": true
+            },
+            "hypothesis_refs": {
+              "type": "array",
+              "maxItems": 32,
+              "items": {
+                "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+              },
+              "uniqueItems": true
+            },
+            "attempt_receipt_refs": {
+              "type": "array",
+              "maxItems": 32,
+              "items": {
+                "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+              },
+              "uniqueItems": true
+            },
+            "observation_refs": {
+              "type": "array",
+              "maxItems": 32,
+              "items": {
+                "$ref": "urn:operator:schema:assessment-common:v1alpha1#/$defs/observation_ref"
+              }
+            },
+            "record_refs": {
+              "type": "array",
+              "maxItems": 32,
+              "items": {
+                "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+              },
+              "uniqueItems": true
+            },
+            "assessment": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "interpretation",
+                "confidence",
+                "assurance",
+                "summary",
+                "gaps"
+              ],
+              "properties": {
+                "interpretation": {
+                  "enum": [
+                    "supported",
+                    "inconclusive",
+                    "not-observed"
+                  ]
+                },
+                "confidence": {
+                  "enum": [
+                    "low",
+                    "medium",
+                    "high"
+                  ]
+                },
+                "assurance": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "summary": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4096
+                },
+                "gaps": {
+                  "type": "array",
+                  "maxItems": 16,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1024
+                  }
+                }
+              }
+            }
+          },
+          "required": [
+            "summary",
+            "objective_refs",
+            "hypothesis_refs",
+            "attempt_receipt_refs",
+            "observation_refs",
+            "record_refs"
+          ],
+          "allOf": [
+            {
+              "if": {
+                "required": [
+                  "assessment"
+                ],
+                "properties": {
+                  "assessment": {
+                    "properties": {
+                      "interpretation": {
+                        "const": "supported"
+                      }
+                    }
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "observation_refs": {
+                    "minItems": 1
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "record_kind",
+        "record"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "record_kind": {
+          "const": "lineage"
+        },
+        "record": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "hypothesis_id": {
+              "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+            },
+            "attempt_receipt_id": {
+              "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+            },
+            "parent_attempt_receipt_id": {
+              "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+            },
+            "mutation_summary": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            "record_refs": {
+              "type": "array",
+              "maxItems": 32,
+              "items": {
+                "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+              },
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "hypothesis_id",
+            "attempt_receipt_id",
+            "mutation_summary",
+            "record_refs"
+          ]
+        }
+      },
+      "required": [
+        "record_kind",
+        "record"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "record_kind": {
+          "const": "coverage"
+        },
+        "record": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "entries": {
+              "type": "array",
+              "maxItems": 100,
+              "items": {
+                "$ref": "urn:operator:schema:assessment-common:v1alpha1#/$defs/coverage_entry"
+              }
+            },
+            "record_refs": {
+              "type": "array",
+              "maxItems": 32,
+              "items": {
+                "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+              },
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "entries",
+            "record_refs"
+          ]
+        }
+      },
+      "required": [
+        "record_kind",
+        "record"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "record_kind": {
+          "const": "conclusion"
+        },
+        "record": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "artifact_receipt": {
+              "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+            },
+            "finish_reason": {
+              "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/finish_reason"
+            }
+          },
+          "required": [
+            "artifact_receipt",
+            "finish_reason"
+          ]
+        }
+      },
+      "required": [
+        "record_kind",
+        "record"
+      ]
+    }
+  ]
+}

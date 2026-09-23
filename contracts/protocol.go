@@ -129,6 +129,8 @@ func (p *Protocol) ValidateRequest(raw []byte) (map[string]any, error) {
 	body := message["body"].(map[string]any)
 	valid := true
 	switch op.Name {
+	case "engine.record_append":
+		valid = recordOK(body)
 	case "engine.attempt_execute":
 		valid = same(body["request_id"], message["operation_id"])
 	case "engine.artifact_begin":
@@ -188,6 +190,9 @@ func (p *Protocol) ValidateResponse(request, response []byte) (map[string]any, e
 	body := req["body"].(map[string]any)
 	valid := true
 	switch op.Name {
+	case "engine.record_append":
+		attribution := result["attribution"].(map[string]any)
+		valid = same(result["record_kind"], body["record_kind"]) && same(attribution["campaign_id"], req["campaign_id"]) && same(attribution["launch_id"], req["launch_id"])
 	case "engine.artifact_begin":
 		valid = same(result["purpose"], body["purpose"]) && sameArtifact(result["artifact"], body["artifact"])
 	case "engine.artifact_put_part":

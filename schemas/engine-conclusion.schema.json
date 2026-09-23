@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-conclusion:v1alpha2",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "api_version": {
+      "const": "operator.dev/engine-conclusion/v1alpha2"
+    },
+    "kind": {
+      "const": "EngineConclusion"
+    },
+    "binding": {
+      "$ref": "urn:operator:schema:conclusion-binding:v1alpha1"
+    },
+    "status": {
+      "enum": [
+        "completed",
+        "partial",
+        "failed"
+      ]
+    },
+    "finish_reason": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/finish_reason"
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8192
+    },
+    "objectives": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "$ref": "urn:operator:schema:assessment-common:v1alpha1#/$defs/objective"
+      }
+    },
+    "hypotheses": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "$ref": "urn:operator:schema:assessment-common:v1alpha1#/$defs/hypothesis"
+      }
+    },
+    "claims": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "$ref": "urn:operator:schema:assessment-common:v1alpha1#/$defs/claim"
+      }
+    },
+    "coverage": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "$ref": "urn:operator:schema:assessment-common:v1alpha1#/$defs/coverage_entry"
+      }
+    },
+    "uncertainties": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "$ref": "urn:operator:schema:assessment-common:v1alpha1#/$defs/uncertainty"
+      }
+    },
+    "record_refs": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+      },
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "api_version",
+    "kind",
+    "binding",
+    "status",
+    "finish_reason",
+    "summary",
+    "objectives",
+    "hypotheses",
+    "claims",
+    "coverage",
+    "uncertainties",
+    "record_refs"
+  ]
+}

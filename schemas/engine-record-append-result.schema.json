@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-record-append-result:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "receipt_id": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    },
+    "record_kind": {
+      "$ref": "urn:operator:schema:assessment-common:v1alpha1#/$defs/record_kind"
+    },
+    "assertion_origin": {
+      "const": "harness"
+    },
+    "attribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "campaign_id": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+        },
+        "launch_id": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+        },
+        "run_revision": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+        }
+      },
+      "required": [
+        "campaign_id",
+        "launch_id",
+        "run_revision"
+      ]
+    }
+  },
+  "required": [
+    "receipt_id",
+    "record_kind",
+    "assertion_origin",
+    "attribution"
+  ]
+}

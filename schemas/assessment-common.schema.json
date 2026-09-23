@@ -1,0 +1,413 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:assessment-common:v1alpha1",
+  "description": "Shared guest-assessment definitions, not a top-level wire message. All asserted interpretations remain non-authoritative.",
+  "$defs": {
+    "byte_range": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "offset": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+        },
+        "length": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "offset",
+        "length"
+      ]
+    },
+    "observation_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "attempt_receipt_id": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+        },
+        "entry_id": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+        },
+        "range": {
+          "$ref": "urn:operator:schema:assessment-common:v1alpha1#/$defs/byte_range"
+        }
+      },
+      "required": [
+        "attempt_receipt_id",
+        "entry_id"
+      ]
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "origin": {
+          "enum": [
+            "scenario",
+            "exploratory"
+          ]
+        },
+        "scenario_id": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+        },
+        "parent_hypothesis_id": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+        }
+      },
+      "required": [
+        "origin"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "origin": {
+                "const": "scenario"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "scenario_id"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "scenario_id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "coverage_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "objective_id": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+        },
+        "hypothesis_id": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+        },
+        "alternative": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "status": {
+          "enum": [
+            "tested",
+            "untested",
+            "partial"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "attempt_receipt_refs": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "objective_id",
+        "status",
+        "reason",
+        "attempt_receipt_refs"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "tested"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "attempt_receipt_refs": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "claim_id": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "interpretation": {
+          "enum": [
+            "supported",
+            "inconclusive",
+            "not-observed"
+          ]
+        },
+        "assurance": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "attempt_receipt_refs": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "observation_refs": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "urn:operator:schema:assessment-common:v1alpha1#/$defs/observation_ref"
+          }
+        },
+        "uncertainty_refs": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "confidence": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        }
+      },
+      "required": [
+        "claim_id",
+        "statement",
+        "interpretation",
+        "assurance",
+        "attempt_receipt_refs",
+        "observation_refs",
+        "uncertainty_refs",
+        "confidence"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "interpretation": {
+                "const": "supported"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "observation_refs": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "objective": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "objective_id": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+        },
+        "outcome": {
+          "enum": [
+            "supported",
+            "inconclusive",
+            "not-observed",
+            "not-tested"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "attempt_receipt_refs": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "record_refs": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "objective_id",
+        "outcome",
+        "summary",
+        "attempt_receipt_refs",
+        "record_refs"
+      ]
+    },
+    "hypothesis": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hypothesis_id": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+        },
+        "objective_refs": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "provenance": {
+          "$ref": "urn:operator:schema:assessment-common:v1alpha1#/$defs/provenance"
+        },
+        "outcome": {
+          "enum": [
+            "supported",
+            "inconclusive",
+            "not-observed",
+            "not-tested"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "attempt_receipt_refs": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "record_refs": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "hypothesis_id",
+        "objective_refs",
+        "provenance",
+        "outcome",
+        "summary",
+        "attempt_receipt_refs",
+        "record_refs"
+      ]
+    },
+    "uncertainty": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "gap_id": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "unresolved-effects",
+            "unavailable-feedback",
+            "truncated-feedback",
+            "unread-input",
+            "summarized-input",
+            "omitted-range",
+            "coverage-limit",
+            "evidence-gap"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "observation_refs": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "urn:operator:schema:assessment-common:v1alpha1#/$defs/observation_ref"
+          }
+        },
+        "input_refs": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "entry_id": {
+                "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+              },
+              "range": {
+                "$ref": "urn:operator:schema:assessment-common:v1alpha1#/$defs/byte_range"
+              }
+            },
+            "required": [
+              "entry_id"
+            ]
+          }
+        },
+        "record_refs": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "gap_id",
+        "kind",
+        "description",
+        "observation_refs",
+        "input_refs",
+        "record_refs"
+      ]
+    },
+    "record_kind": {
+      "enum": [
+        "hypothesis",
+        "progress",
+        "lineage",
+        "coverage",
+        "conclusion"
+      ]
+    }
+  }
+}

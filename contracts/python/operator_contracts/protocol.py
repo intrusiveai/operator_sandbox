@@ -6,6 +6,7 @@ from datetime import datetime
 from pathlib import Path
 
 from .validation import Catalog, ContractError, ORDINARY_LIMIT
+from .assessment import check_record, validate_conclusion, validate_completion
 from .schema_ids import (
     ENGINE_PIPE_REQUEST_SCHEMA, ENGINE_PIPE_RESPONSE_SCHEMA, OPERATION_REGISTRY_SCHEMA,
 )
@@ -69,6 +70,12 @@ class Protocol:
         """Return a copy so consumers cannot mutate installed dispatch metadata."""
         return deepcopy(list(self._operations.values()))
 
+    def validate_conclusion(self, raw: bytes):
+        return validate_conclusion(self, raw)
+
+    def validate_completion(self, **retained_records):
+        return validate_completion(self, **retained_records)
+
     def validate_ack(self, raw: bytes):
         """Syntax/size only; launch and monotonic positions require transport state."""
         return self._catalog.validate("urn:operator:schema:engine-spool-ack:v1alpha1", raw, 1024)
@@ -87,7 +94,9 @@ class Protocol:
         body = message["body"]
         self._check_registered(operation, "request_schema", body)
         name = operation["name"]
-        if name == "engine.attempt_execute":
+        if name == "engine.record_append":
+            check_record(body)
+        elif name == "engine.attempt_execute":
             _require(body["request_id"] == message["operation_id"])
         elif name == "engine.artifact_begin":
             _conclusion_artifact(body)
@@ -112,7 +121,11 @@ class Protocol:
             return message
         result, body, name = message["result"], req["body"], req["operation"]
         self._check_registered(operation, "result_schema", result)
-        if name == "engine.artifact_begin":
+        if name == "engine.record_append":
+            _require(result["record_kind"] == body["record_kind"])
+            for field in ("campaign_id", "launch_id"):
+                _require(result["attribution"][field] == req[field])
+        elif name == "engine.artifact_begin":
             _require(result["purpose"] == body["purpose"] and result["artifact"] == body["artifact"])
         elif name == "engine.artifact_put_part":
             data = _part(body["content"])

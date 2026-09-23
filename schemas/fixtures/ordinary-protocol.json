@@ -4826,5 +4826,1719 @@
       "control_seq": 1.5
     },
     "valid": false
+  },
+  {
+    "name": "record hypothesis request",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "hypothesis",
+        "record": {
+          "hypothesis_id": "hypothesis-1",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "provenance": {
+            "origin": "exploratory"
+          },
+          "statement": "A target response may reveal the tested behavior.",
+          "assumptions": [
+            "A response is observable."
+          ],
+          "predicted_observations": [
+            "A marker in the response."
+          ],
+          "record_refs": []
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "record hypothesis response",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "hypothesis",
+        "record": {
+          "hypothesis_id": "hypothesis-1",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "provenance": {
+            "origin": "exploratory"
+          },
+          "statement": "A target response may reveal the tested behavior.",
+          "assumptions": [
+            "A response is observable."
+          ],
+          "predicted_observations": [
+            "A marker in the response."
+          ],
+          "record_refs": []
+        }
+      }
+    },
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 2,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "result": {
+        "receipt_id": "record-hypothesis",
+        "record_kind": "hypothesis",
+        "assertion_origin": "harness",
+        "attribution": {
+          "campaign_id": "campaign-1",
+          "launch_id": "launch-1",
+          "run_revision": 3
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "record hypothesis request unknown",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "hypothesis",
+        "record": {
+          "hypothesis_id": "hypothesis-1",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "provenance": {
+            "origin": "exploratory"
+          },
+          "statement": "A target response may reveal the tested behavior.",
+          "assumptions": [
+            "A response is observable."
+          ],
+          "predicted_observations": [
+            "A marker in the response."
+          ],
+          "record_refs": []
+        },
+        "unknown": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "record hypothesis response unknown",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "hypothesis",
+        "record": {
+          "hypothesis_id": "hypothesis-1",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "provenance": {
+            "origin": "exploratory"
+          },
+          "statement": "A target response may reveal the tested behavior.",
+          "assumptions": [
+            "A response is observable."
+          ],
+          "predicted_observations": [
+            "A marker in the response."
+          ],
+          "record_refs": []
+        }
+      }
+    },
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 2,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "result": {
+        "receipt_id": "record-hypothesis",
+        "record_kind": "hypothesis",
+        "assertion_origin": "harness",
+        "attribution": {
+          "campaign_id": "campaign-1",
+          "launch_id": "launch-1",
+          "run_revision": 3
+        },
+        "unknown": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "record progress request",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "progress",
+        "record": {
+          "summary": "The target returned a response.",
+          "decision": "Inspect the response before selecting another experiment.",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ],
+          "attempt_receipt_refs": [
+            "attempt-receipt-1"
+          ],
+          "observation_refs": [
+            {
+              "attempt_receipt_id": "attempt-receipt-1",
+              "entry_id": "entry-1",
+              "range": {
+                "offset": 0,
+                "length": 4
+              }
+            }
+          ],
+          "record_refs": [
+            "hypothesis-record-1"
+          ]
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "record progress response",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "progress",
+        "record": {
+          "summary": "The target returned a response.",
+          "decision": "Inspect the response before selecting another experiment.",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ],
+          "attempt_receipt_refs": [
+            "attempt-receipt-1"
+          ],
+          "observation_refs": [
+            {
+              "attempt_receipt_id": "attempt-receipt-1",
+              "entry_id": "entry-1",
+              "range": {
+                "offset": 0,
+                "length": 4
+              }
+            }
+          ],
+          "record_refs": [
+            "hypothesis-record-1"
+          ]
+        }
+      }
+    },
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 2,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "result": {
+        "receipt_id": "record-progress",
+        "record_kind": "progress",
+        "assertion_origin": "harness",
+        "attribution": {
+          "campaign_id": "campaign-1",
+          "launch_id": "launch-1",
+          "run_revision": 3
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "record progress request unknown",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "progress",
+        "record": {
+          "summary": "The target returned a response.",
+          "decision": "Inspect the response before selecting another experiment.",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ],
+          "attempt_receipt_refs": [
+            "attempt-receipt-1"
+          ],
+          "observation_refs": [
+            {
+              "attempt_receipt_id": "attempt-receipt-1",
+              "entry_id": "entry-1",
+              "range": {
+                "offset": 0,
+                "length": 4
+              }
+            }
+          ],
+          "record_refs": [
+            "hypothesis-record-1"
+          ]
+        },
+        "unknown": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "record progress response unknown",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "progress",
+        "record": {
+          "summary": "The target returned a response.",
+          "decision": "Inspect the response before selecting another experiment.",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ],
+          "attempt_receipt_refs": [
+            "attempt-receipt-1"
+          ],
+          "observation_refs": [
+            {
+              "attempt_receipt_id": "attempt-receipt-1",
+              "entry_id": "entry-1",
+              "range": {
+                "offset": 0,
+                "length": 4
+              }
+            }
+          ],
+          "record_refs": [
+            "hypothesis-record-1"
+          ]
+        }
+      }
+    },
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 2,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "result": {
+        "receipt_id": "record-progress",
+        "record_kind": "progress",
+        "assertion_origin": "harness",
+        "attribution": {
+          "campaign_id": "campaign-1",
+          "launch_id": "launch-1",
+          "run_revision": 3
+        },
+        "unknown": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "record lineage request",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "lineage",
+        "record": {
+          "hypothesis_id": "hypothesis-1",
+          "attempt_receipt_id": "attempt-receipt-1",
+          "mutation_summary": "Initial experiment.",
+          "record_refs": [
+            "hypothesis-record-1"
+          ]
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "record lineage response",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "lineage",
+        "record": {
+          "hypothesis_id": "hypothesis-1",
+          "attempt_receipt_id": "attempt-receipt-1",
+          "mutation_summary": "Initial experiment.",
+          "record_refs": [
+            "hypothesis-record-1"
+          ]
+        }
+      }
+    },
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 2,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "result": {
+        "receipt_id": "record-lineage",
+        "record_kind": "lineage",
+        "assertion_origin": "harness",
+        "attribution": {
+          "campaign_id": "campaign-1",
+          "launch_id": "launch-1",
+          "run_revision": 3
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "record lineage request unknown",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "lineage",
+        "record": {
+          "hypothesis_id": "hypothesis-1",
+          "attempt_receipt_id": "attempt-receipt-1",
+          "mutation_summary": "Initial experiment.",
+          "record_refs": [
+            "hypothesis-record-1"
+          ]
+        },
+        "unknown": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "record lineage response unknown",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "lineage",
+        "record": {
+          "hypothesis_id": "hypothesis-1",
+          "attempt_receipt_id": "attempt-receipt-1",
+          "mutation_summary": "Initial experiment.",
+          "record_refs": [
+            "hypothesis-record-1"
+          ]
+        }
+      }
+    },
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 2,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "result": {
+        "receipt_id": "record-lineage",
+        "record_kind": "lineage",
+        "assertion_origin": "harness",
+        "attribution": {
+          "campaign_id": "campaign-1",
+          "launch_id": "launch-1",
+          "run_revision": 3
+        },
+        "unknown": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "record coverage request",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "coverage",
+        "record": {
+          "entries": [
+            {
+              "objective_id": "objective-1",
+              "status": "tested",
+              "reason": "One experiment executed.",
+              "attempt_receipt_refs": [
+                "attempt-receipt-1"
+              ]
+            }
+          ],
+          "record_refs": []
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "record coverage response",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "coverage",
+        "record": {
+          "entries": [
+            {
+              "objective_id": "objective-1",
+              "status": "tested",
+              "reason": "One experiment executed.",
+              "attempt_receipt_refs": [
+                "attempt-receipt-1"
+              ]
+            }
+          ],
+          "record_refs": []
+        }
+      }
+    },
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 2,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "result": {
+        "receipt_id": "record-coverage",
+        "record_kind": "coverage",
+        "assertion_origin": "harness",
+        "attribution": {
+          "campaign_id": "campaign-1",
+          "launch_id": "launch-1",
+          "run_revision": 3
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "record coverage request unknown",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "coverage",
+        "record": {
+          "entries": [
+            {
+              "objective_id": "objective-1",
+              "status": "tested",
+              "reason": "One experiment executed.",
+              "attempt_receipt_refs": [
+                "attempt-receipt-1"
+              ]
+            }
+          ],
+          "record_refs": []
+        },
+        "unknown": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "record coverage response unknown",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "coverage",
+        "record": {
+          "entries": [
+            {
+              "objective_id": "objective-1",
+              "status": "tested",
+              "reason": "One experiment executed.",
+              "attempt_receipt_refs": [
+                "attempt-receipt-1"
+              ]
+            }
+          ],
+          "record_refs": []
+        }
+      }
+    },
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 2,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "result": {
+        "receipt_id": "record-coverage",
+        "record_kind": "coverage",
+        "assertion_origin": "harness",
+        "attribution": {
+          "campaign_id": "campaign-1",
+          "launch_id": "launch-1",
+          "run_revision": 3
+        },
+        "unknown": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "record conclusion request",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "conclusion",
+        "record": {
+          "artifact_receipt": "artifact-conclusion-1",
+          "finish_reason": "objectives-addressed"
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "record conclusion response",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "conclusion",
+        "record": {
+          "artifact_receipt": "artifact-conclusion-1",
+          "finish_reason": "objectives-addressed"
+        }
+      }
+    },
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 2,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "result": {
+        "receipt_id": "record-conclusion",
+        "record_kind": "conclusion",
+        "assertion_origin": "harness",
+        "attribution": {
+          "campaign_id": "campaign-1",
+          "launch_id": "launch-1",
+          "run_revision": 3
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "record conclusion request unknown",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "conclusion",
+        "record": {
+          "artifact_receipt": "artifact-conclusion-1",
+          "finish_reason": "objectives-addressed"
+        },
+        "unknown": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "record conclusion response unknown",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "conclusion",
+        "record": {
+          "artifact_receipt": "artifact-conclusion-1",
+          "finish_reason": "objectives-addressed"
+        }
+      }
+    },
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 2,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "result": {
+        "receipt_id": "record-conclusion",
+        "record_kind": "conclusion",
+        "assertion_origin": "harness",
+        "attribution": {
+          "campaign_id": "campaign-1",
+          "launch_id": "launch-1",
+          "run_revision": 3
+        },
+        "unknown": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "record unknown kind",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "decision",
+        "record": {
+          "summary": "The target returned a response.",
+          "decision": "Inspect the response before selecting another experiment.",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ],
+          "attempt_receipt_refs": [
+            "attempt-receipt-1"
+          ],
+          "observation_refs": [
+            {
+              "attempt_receipt_id": "attempt-receipt-1",
+              "entry_id": "entry-1",
+              "range": {
+                "offset": 0,
+                "length": 4
+              }
+            }
+          ],
+          "record_refs": [
+            "hypothesis-record-1"
+          ]
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "record guest attribution forbidden",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "progress",
+        "record": {
+          "summary": "The target returned a response.",
+          "decision": "Inspect the response before selecting another experiment.",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ],
+          "attempt_receipt_refs": [
+            "attempt-receipt-1"
+          ],
+          "observation_refs": [
+            {
+              "attempt_receipt_id": "attempt-receipt-1",
+              "entry_id": "entry-1",
+              "range": {
+                "offset": 0,
+                "length": 4
+              }
+            }
+          ],
+          "record_refs": [
+            "hypothesis-record-1"
+          ]
+        },
+        "attribution": {
+          "campaign_id": "other"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "record scenario missing ID",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "hypothesis",
+        "record": {
+          "hypothesis_id": "hypothesis-1",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "provenance": {
+            "origin": "scenario"
+          },
+          "statement": "A target response may reveal the tested behavior.",
+          "assumptions": [
+            "A response is observable."
+          ],
+          "predicted_observations": [
+            "A marker in the response."
+          ],
+          "record_refs": []
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "record valid scenario lineage",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "hypothesis",
+        "record": {
+          "hypothesis_id": "hypothesis-1",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "provenance": {
+            "origin": "scenario",
+            "scenario_id": "scenario-1"
+          },
+          "statement": "A target response may reveal the tested behavior.",
+          "assumptions": [
+            "A response is observable."
+          ],
+          "predicted_observations": [
+            "A marker in the response."
+          ],
+          "record_refs": []
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "record exploratory scenario ID forbidden",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "hypothesis",
+        "record": {
+          "hypothesis_id": "hypothesis-1",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "provenance": {
+            "origin": "exploratory",
+            "scenario_id": "scenario-1"
+          },
+          "statement": "A target response may reveal the tested behavior.",
+          "assumptions": [
+            "A response is observable."
+          ],
+          "predicted_observations": [
+            "A marker in the response."
+          ],
+          "record_refs": []
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "record hypothesis self parent",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "hypothesis",
+        "record": {
+          "hypothesis_id": "hypothesis-1",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "provenance": {
+            "origin": "exploratory",
+            "parent_hypothesis_id": "hypothesis-1"
+          },
+          "statement": "A target response may reveal the tested behavior.",
+          "assumptions": [
+            "A response is observable."
+          ],
+          "predicted_observations": [
+            "A marker in the response."
+          ],
+          "record_refs": []
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "record lineage self parent",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "lineage",
+        "record": {
+          "hypothesis_id": "hypothesis-1",
+          "attempt_receipt_id": "attempt-receipt-1",
+          "mutation_summary": "Initial experiment.",
+          "record_refs": [
+            "hypothesis-record-1"
+          ],
+          "parent_attempt_receipt_id": "attempt-receipt-1"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "record coverage needs actual attempt reference",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "coverage",
+        "record": {
+          "entries": [
+            {
+              "objective_id": "objective-1",
+              "status": "tested",
+              "reason": "One experiment executed.",
+              "attempt_receipt_refs": []
+            }
+          ],
+          "record_refs": []
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "record observation must name declared attempt",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "progress",
+        "record": {
+          "summary": "The target returned a response.",
+          "decision": "Inspect the response before selecting another experiment.",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ],
+          "attempt_receipt_refs": [],
+          "observation_refs": [
+            {
+              "attempt_receipt_id": "attempt-receipt-1",
+              "entry_id": "entry-1",
+              "range": {
+                "offset": 0,
+                "length": 4
+              }
+            }
+          ],
+          "record_refs": [
+            "hypothesis-record-1"
+          ]
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "record range overflow",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "progress",
+        "record": {
+          "summary": "The target returned a response.",
+          "decision": "Inspect the response before selecting another experiment.",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ],
+          "attempt_receipt_refs": [
+            "attempt-receipt-1"
+          ],
+          "observation_refs": [
+            {
+              "attempt_receipt_id": "attempt-receipt-1",
+              "entry_id": "entry-1",
+              "range": {
+                "offset": 9007199254740991,
+                "length": 1
+              }
+            }
+          ],
+          "record_refs": [
+            "hypothesis-record-1"
+          ]
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "record zero range",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "progress",
+        "record": {
+          "summary": "The target returned a response.",
+          "decision": "Inspect the response before selecting another experiment.",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ],
+          "attempt_receipt_refs": [
+            "attempt-receipt-1"
+          ],
+          "observation_refs": [
+            {
+              "attempt_receipt_id": "attempt-receipt-1",
+              "entry_id": "entry-1",
+              "range": {
+                "offset": 0,
+                "length": 0
+              }
+            }
+          ],
+          "record_refs": [
+            "hypothesis-record-1"
+          ]
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "record omitted range references whole entry",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "progress",
+        "record": {
+          "summary": "The target returned a response.",
+          "decision": "Inspect the response before selecting another experiment.",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ],
+          "attempt_receipt_refs": [
+            "attempt-receipt-1"
+          ],
+          "observation_refs": [
+            {
+              "attempt_receipt_id": "attempt-receipt-1",
+              "entry_id": "entry-1"
+            }
+          ],
+          "record_refs": [
+            "hypothesis-record-1"
+          ]
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "record old attribution remains readable",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "progress",
+        "record": {
+          "summary": "The target returned a response.",
+          "decision": "Inspect the response before selecting another experiment.",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ],
+          "attempt_receipt_refs": [
+            "attempt-receipt-1"
+          ],
+          "observation_refs": [
+            {
+              "attempt_receipt_id": "attempt-receipt-1",
+              "entry_id": "entry-1",
+              "range": {
+                "offset": 0,
+                "length": 4
+              }
+            }
+          ],
+          "record_refs": [
+            "hypothesis-record-1"
+          ]
+        }
+      }
+    },
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 2,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "result": {
+        "receipt_id": "record-progress",
+        "record_kind": "progress",
+        "assertion_origin": "harness",
+        "attribution": {
+          "campaign_id": "campaign-1",
+          "launch_id": "launch-1",
+          "run_revision": 2
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "record foreign attribution",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "progress",
+        "record": {
+          "summary": "The target returned a response.",
+          "decision": "Inspect the response before selecting another experiment.",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ],
+          "attempt_receipt_refs": [
+            "attempt-receipt-1"
+          ],
+          "observation_refs": [
+            {
+              "attempt_receipt_id": "attempt-receipt-1",
+              "entry_id": "entry-1",
+              "range": {
+                "offset": 0,
+                "length": 4
+              }
+            }
+          ],
+          "record_refs": [
+            "hypothesis-record-1"
+          ]
+        }
+      }
+    },
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 2,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "result": {
+        "receipt_id": "record-progress",
+        "record_kind": "progress",
+        "assertion_origin": "harness",
+        "attribution": {
+          "campaign_id": "other",
+          "launch_id": "launch-1",
+          "run_revision": 3
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "record host truth assertion forbidden",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "progress",
+        "record": {
+          "summary": "The target returned a response.",
+          "decision": "Inspect the response before selecting another experiment.",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ],
+          "attempt_receipt_refs": [
+            "attempt-receipt-1"
+          ],
+          "observation_refs": [
+            {
+              "attempt_receipt_id": "attempt-receipt-1",
+              "entry_id": "entry-1",
+              "range": {
+                "offset": 0,
+                "length": 4
+              }
+            }
+          ],
+          "record_refs": [
+            "hypothesis-record-1"
+          ]
+        }
+      }
+    },
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 2,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "result": {
+        "receipt_id": "record-progress",
+        "record_kind": "progress",
+        "assertion_origin": "host-verified",
+        "attribution": {
+          "campaign_id": "campaign-1",
+          "launch_id": "launch-1",
+          "run_revision": 3
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "record result kind mismatch",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "progress",
+        "record": {
+          "summary": "The target returned a response.",
+          "decision": "Inspect the response before selecting another experiment.",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ],
+          "attempt_receipt_refs": [
+            "attempt-receipt-1"
+          ],
+          "observation_refs": [
+            {
+              "attempt_receipt_id": "attempt-receipt-1",
+              "entry_id": "entry-1",
+              "range": {
+                "offset": 0,
+                "length": 4
+              }
+            }
+          ],
+          "record_refs": [
+            "hypothesis-record-1"
+          ]
+        }
+      }
+    },
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 2,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "result": {
+        "receipt_id": "record-progress",
+        "record_kind": "coverage",
+        "assertion_origin": "harness",
+        "attribution": {
+          "campaign_id": "campaign-1",
+          "launch_id": "launch-1",
+          "run_revision": 3
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "record typed interpretation",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "progress",
+        "record": {
+          "summary": "The target returned a response.",
+          "decision": "Inspect the response before selecting another experiment.",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ],
+          "attempt_receipt_refs": [
+            "attempt-receipt-1"
+          ],
+          "observation_refs": [
+            {
+              "attempt_receipt_id": "attempt-receipt-1",
+              "entry_id": "entry-1",
+              "range": {
+                "offset": 0,
+                "length": 4
+              }
+            }
+          ],
+          "record_refs": [
+            "hypothesis-record-1"
+          ],
+          "assessment": {
+            "interpretation": "supported",
+            "confidence": "medium",
+            "assurance": "external-response",
+            "summary": "The observed marker supports this assessment.",
+            "gaps": [
+              "Internal execution is not visible."
+            ]
+          }
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "record invalid confidence",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-record",
+      "operation_id": "operation-record",
+      "operation": "engine.record_append",
+      "timeout_ms": 30000,
+      "body": {
+        "record_kind": "progress",
+        "record": {
+          "summary": "The target returned a response.",
+          "decision": "Inspect the response before selecting another experiment.",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ],
+          "attempt_receipt_refs": [
+            "attempt-receipt-1"
+          ],
+          "observation_refs": [
+            {
+              "attempt_receipt_id": "attempt-receipt-1",
+              "entry_id": "entry-1",
+              "range": {
+                "offset": 0,
+                "length": 4
+              }
+            }
+          ],
+          "record_refs": [
+            "hypothesis-record-1"
+          ],
+          "assessment": {
+            "interpretation": "inconclusive",
+            "confidence": "certain",
+            "assurance": "external-response",
+            "summary": "Limited observation.",
+            "gaps": []
+          }
+        }
+      }
+    },
+    "valid": false
   }
 ]

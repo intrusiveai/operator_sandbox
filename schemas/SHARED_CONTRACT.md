@@ -18,8 +18,10 @@ this does not complete the remaining package publication or runtime gates.
 The [validation foundation](../contracts/README.md) implements strict JSON decoding
 and offline structural validation of the current catalog in Go and Python, with
 shared byte fixtures and generated schema-ID constants. The
-[ordinary protocol stage](ORDINARY_WIRE_CONTRACT.md) adds typed envelopes for 11
+[ordinary protocol stage](ORDINARY_WIRE_CONTRACT.md) adds typed envelopes for 12
 operations, their registry, spool ACK schema and stateless correlation checks.
+The [assessment contract](ASSESSMENT_CONTRACT.md) supplies typed record append,
+conclusion content and completion-chain validation.
 Complete message bindings/schemas, stateful checks and transport conformance remain outstanding.
 
 ## 1. One owner and one pinned package
@@ -466,7 +468,8 @@ inventory and content identities, not an archive-specific guest ABI.
 
 The current [ordinary wire implementation](ORDINARY_WIRE_CONTRACT.md) fixes concrete
 artifact, snapshot, restore and stop fields and binds the existing attempt/cleanup/
-feedback schemas. Model and record families remain required additions before
+feedback schemas. Typed records and conclusions are defined in the
+[assessment contract](ASSESSMENT_CONTRACT.md). The model family remains required before
 publication. The checked-in registry is a development subset, not the complete
 released tool catalog.
 
@@ -636,8 +639,8 @@ Required groups:
 
 Initial bound: 1 MiB encoded conclusion, 8,192-character summary, 100 claims,
 100 objective/hypothesis entries each, 100 gap entries and 256 record references;
-arrays/text are additionally bounded by total encoded size. Claims retain their
-existing per-field/reference ceilings. Detailed exploration history goes in
+arrays/text are additionally bounded by total encoded size. Claim field/reference ceilings are fixed by the
+[assessment contract](ASSESSMENT_CONTRACT.md). Detailed exploration history goes in
 previously committed records; overflow is explicit partial coverage, not silent
 loss. Validate known references/ranges and campaign membership, not 'truth' of
 model interpretations. No guest claim changes host execution/evidence status.
@@ -766,7 +769,7 @@ conformance tests remain implementation work.
 The package shape, startup/manifest flow, identity/deadline rules and completion
 semantics and macOS physical spool mapping above are accepted. Remaining work
 is to author the remaining closed
-startup/control, manifest, model, record and conclusion-content schemas and complete
+startup/control, manifest and model schemas and complete
 the operation registry, extend the existing offline
 catalog and Go/Python validation foundation with semantic validators and fixtures;
 port the required existing data contracts; and pass Section 12 conformance before

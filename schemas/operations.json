@@ -176,6 +176,35 @@
       "receipt_policy": "none"
     },
     {
+      "name": "engine.record_append",
+      "request_schema": "urn:operator:schema:engine-record-append-request:v1alpha1",
+      "result_schema": "urn:operator:schema:engine-record-append-result:v1alpha1",
+      "error_schema": "urn:operator:schema:operation-error:v1alpha1",
+      "error_codes": [
+        "CONCLUSION_INVALID",
+        "DEADLINE_EXCEEDED",
+        "IDEMPOTENCY_CONFLICT",
+        "INTERNAL_ERROR",
+        "INVALID_ARGUMENTS",
+        "LIMIT_EXCEEDED",
+        "OUTCOME_UNKNOWN",
+        "POLICY_DENIED",
+        "RECORD_REFERENCE_INVALID",
+        "STATE_CHANGED",
+        "UNSUPPORTED_CAPABILITY"
+      ],
+      "lifecycle_states": [
+        "admitted",
+        "finalizing"
+      ],
+      "finalization_rule": "conclusion-only",
+      "timeout_ms": 30000,
+      "max_request_bytes": 65536,
+      "max_result_bytes": 65536,
+      "effect": "record-write",
+      "receipt_policy": "durable"
+    },
+    {
       "name": "engine.request_stop",
       "request_schema": "urn:operator:schema:engine-request-stop-request:v1alpha1",
       "result_schema": "urn:operator:schema:engine-request-stop-result:v1alpha1",

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:conclusion-binding:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "campaign_id": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    },
+    "launch_id": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    },
+    "run_revision": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+    },
+    "input_tree_digest": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+    },
+    "engine_context_digest": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+    },
+    "prompt_digest": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+    },
+    "skill_set_digest": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+    },
+    "image_digest": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+    },
+    "release_record_digest": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+    },
+    "contract_package_digest": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+    },
+    "contract_package_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    }
+  },
+  "required": [
+    "campaign_id",
+    "launch_id",
+    "run_revision",
+    "input_tree_digest",
+    "engine_context_digest",
+    "prompt_digest",
+    "skill_set_digest",
+    "image_digest",
+    "release_record_digest",
+    "contract_package_digest",
+    "contract_package_version"
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "api_version": "operator.dev/engine-conclusion/v1alpha2",
+  "kind": "EngineConclusion",
+  "binding": {
+    "campaign_id": "campaign-1",
+    "launch_id": "launch-1",
+    "run_revision": 3,
+    "input_tree_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "engine_context_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "prompt_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "skill_set_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "release_record_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "contract_package_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "contract_package_version": "0.1.0"
+  },
+  "status": "completed",
+  "finish_reason": "objectives-addressed",
+  "summary": "The experiment produced a limited observation; assessment remains a guest claim.",
+  "objectives": [
+    {
+      "objective_id": "objective-1",
+      "outcome": "inconclusive",
+      "summary": "An experiment addressed this objective.",
+      "attempt_receipt_refs": [
+        "attempt-receipt-1"
+      ],
+      "record_refs": [
+        "hypothesis-record-1"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "hypothesis_id": "hypothesis-1",
+      "objective_refs": [
+        "objective-1"
+      ],
+      "provenance": {
+        "origin": "exploratory"
+      },
+      "outcome": "supported",
+      "summary": "A response marker was observed.",
+      "attempt_receipt_refs": [
+        "attempt-receipt-1"
+      ],
+      "record_refs": [
+        "hypothesis-record-1"
+      ]
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "claim-1",
+      "statement": "The selected response excerpt contains the tested marker.",
+      "interpretation": "supported",
+      "confidence": "medium",
+      "assurance": "external-response",
+      "attempt_receipt_refs": [
+        "attempt-receipt-1"
+      ],
+      "observation_refs": [
+        {
+          "attempt_receipt_id": "attempt-receipt-1",
+          "entry_id": "entry-1",
+          "range": {
+            "offset": 0,
+            "length": 4
+          }
+        }
+      ],
+      "uncertainty_refs": [
+        "gap-1"
+      ]
+    }
+  ],
+  "coverage": [
+    {
+      "objective_id": "objective-1",
+      "status": "tested",
+      "reason": "One experiment executed.",
+      "attempt_receipt_refs": [
+        "attempt-receipt-1"
+      ]
+    }
+  ],
+  "uncertainties": [
+    {
+      "gap_id": "gap-1",
+      "kind": "unavailable-feedback",
+      "description": "No internal target evidence was available.",
+      "observation_refs": [],
+      "input_refs": [],
+      "record_refs": []
+    }
+  ],
+  "record_refs": [
+    "hypothesis-record-1"
+  ]
+}

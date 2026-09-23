@@ -18,16 +18,17 @@
           "name": {
             "enum": [
               "engine.artifact_begin",
-              "engine.artifact_put_part",
               "engine.artifact_commit",
+              "engine.artifact_put_part",
               "engine.attempt_execute",
               "engine.injection_delete",
               "engine.observation_read",
-              "engine.snapshot_request",
-              "engine.snapshot_list",
-              "engine.snapshot_inspect",
+              "engine.record_append",
+              "engine.request_stop",
               "engine.restore_request",
-              "engine.request_stop"
+              "engine.snapshot_inspect",
+              "engine.snapshot_list",
+              "engine.snapshot_request"
             ]
           },
           "request_schema": {
@@ -46,7 +47,7 @@
           "error_codes": {
             "type": "array",
             "minItems": 1,
-            "maxItems": 28,
+            "maxItems": 29,
             "uniqueItems": true,
             "items": {
               "enum": [
@@ -68,6 +69,7 @@
                 "OBSERVATION_RANGE_INVALID",
                 "OUTCOME_UNKNOWN",
                 "POLICY_DENIED",
+                "RECORD_REFERENCE_INVALID",
                 "RESTORE_FAILED",
                 "SNAPSHOT_BUDGET_EXCEEDED",
                 "SNAPSHOT_FAILED",
@@ -120,7 +122,8 @@
               "read",
               "artifact-write",
               "target-write",
-              "stop"
+              "stop",
+              "record-write"
             ]
           },
           "receipt_policy": {

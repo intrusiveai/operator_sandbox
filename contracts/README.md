@@ -1,7 +1,7 @@
 # Shared validation foundation
 
 This is the validation and ordinary-protocol foundation of `operator-contracts`. It validates the
-36 schemas currently listed in [the catalog](../schemas/catalog.json) in Go and
+41 schemas currently listed in [the catalog](../schemas/catalog.json) in Go and
 Python. It is a development library, not the published `0.1.0` contract package.
 The authoritative design remains [SHARED_CONTRACT.md](../schemas/SHARED_CONTRACT.md).
 
@@ -17,9 +17,11 @@ The authoritative design remains [SHARED_CONTRACT.md](../schemas/SHARED_CONTRACT
 - Go-embedded schemas and generated Go/Python schema-ID constants.
 - One set of 154 accepted/rejected byte vectors used by both language runners,
   plus tests for unavailable external references and invalid catalog inventories.
-- Typed ordinary envelopes generated from an 11-operation registry, spool ACK
-  validation, and 141 shared protocol cases covering request/result correlation,
-  artifact chunks, snapshot metadata, restore transitions, errors and graceful stop.
+- Typed ordinary envelopes generated from a 12-operation registry, spool ACK
+  validation, and 179 shared protocol cases covering request/result correlation,
+  artifact chunks, snapshot metadata, restore transitions, typed records, errors and graceful stop.
+- Structured conclusions and completion-chain consistency checks, with 74 shared
+  cases covering bindings, exact artifact bytes, record/stop receipts and explicit gaps.
 
 The [ordinary wire contract](../schemas/ORDINARY_WIRE_CONTRACT.md) documents the
 exact implemented fields and distinguishes stateless validation from runtime gates.
@@ -92,6 +94,12 @@ bytes to `ValidateResponse` or `validate_response`. These entry points enforce
 the additional consistency rules described in the ordinary wire contract. The
 lower-level catalog API performs structural validation only.
 
+Use `ValidateConclusion` / `validate_conclusion` for conclusion content and
+`ValidateCompletion` / `validate_completion` for a retained artifact/record/stop
+chain with the host's expected binding. See [the assessment contract](../schemas/ASSESSMENT_CONTRACT.md)
+for fields, byte limits and the caller's required trusted receipt lookups. These
+helpers do not persist records or accept stop.
+
 ## Remaining stages
 
 Structural validation is one gate. Receipt lookup, operation identity, digests,
@@ -100,7 +108,7 @@ still require semantic validators. Schema `format` annotations are not a substit
 for those checks. This library is not yet sufficient to admit campaign execution.
 
 Before publishing `0.1.0`, implement the remaining startup/control,
-manifest, model, record and conclusion-content schemas; complete the operation registry;
+manifest and model schemas; complete the operation registry;
 canonicalization and identity helpers; typed message bindings; the immutable
 package manifest/digest; and the full shared conformance suite. FIFO/spool codecs
 and fake-broker/fake-harness integration tests are also outstanding. No changes to

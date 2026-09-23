@@ -37,6 +37,7 @@
         "engine.attempt_execute",
         "engine.injection_delete",
         "engine.observation_read",
+        "engine.record_append",
         "engine.request_stop",
         "engine.restore_request",
         "engine.snapshot_inspect",
@@ -122,6 +123,16 @@
         },
         "body": {
           "$ref": "urn:operator:schema:engine-observation-read-request:v1alpha1"
+        }
+      }
+    },
+    {
+      "properties": {
+        "operation": {
+          "const": "engine.record_append"
+        },
+        "body": {
+          "$ref": "urn:operator:schema:engine-record-append-request:v1alpha1"
         }
       }
     },
