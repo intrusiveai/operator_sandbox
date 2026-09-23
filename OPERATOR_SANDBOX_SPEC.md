@@ -260,6 +260,9 @@ with explicit reasons. Host policy secrets and protected evidence are excluded.
 EngineContext contains initial revision identity, input descriptors and fixed paths,
 exact skill inventory, safe target delivery schemas/selectors, model codec and
 permitted features, and remaining limits. Host state independently enforces them.
+The shared [input-content contract](schemas/ENGINE_INPUT_CONTRACT.md) fixes its
+closed schema and cross-file validation, including initial budget narrowing at
+admission and explicit included/omitted reference mappings.
 Hash dependencies are acyclic:
 
 ```text
@@ -399,6 +402,8 @@ between inputs. No hidden prefix, templating, newline normalization or semantic
 approval. Reject invalid UTF-8, NUL, empty/whitespace-only inputs, more than 16
 append files or more than 131,072 effective bytes. Freeze source descriptors,
 mode, base provenance and effective byte digest before acceptance.
+The shared [prompt provenance and composition contract](schemas/ENGINE_INPUT_CONTRACT.md#prompt-provenance-and-composition)
+defines the exact metadata and matching Go/Python composition/validation APIs.
 
 Every model turn uses that exact effective system text and an independently
 supplied fixed tool catalog. Skill/scenario/target text remains identified as

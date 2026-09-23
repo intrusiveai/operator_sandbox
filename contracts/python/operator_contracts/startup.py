@@ -15,6 +15,15 @@ def require(value):
         raise ContractError("contract message consistency check failed")
 
 
+def check_admission(protocol, body):
+    names = body['operations']
+    require(names == sorted(set(names)) and all(name in protocol._operations for name in names))
+    campaign, harness = body['limits']['campaign'], body['limits']['harness']
+    require(all(value <= campaign[key] for key, value in body['remaining_limits'].items()))
+    require(campaign['model_turns'] <= harness['max_model_turns'])
+    require(campaign['observation_bytes'] <= harness['max_read_bytes'])
+
+
 def validate_control(protocol, direction, raw):
     schemas = {"host": ENGINE_HOST_CONTROL_SCHEMA, "guest": ENGINE_GUEST_CONTROL_SCHEMA}
     require(direction in schemas)
@@ -30,12 +39,7 @@ def validate_control(protocol, direction, raw):
             require(body["input_tree"]["digest"] == binding["input_tree_digest"])
             require(body["skill_set"]["digest"] == binding["skill_set_digest"])
         else:
-            names = body["operations"]
-            require(names == sorted(set(names)) and all(name in protocol._operations for name in names))
-            campaign, harness = body["limits"]["campaign"], body["limits"]["harness"]
-            require(all(value <= campaign[key] for key, value in body["remaining_limits"].items()))
-            require(campaign["model_turns"] <= harness["max_model_turns"])
-            require(campaign["observation_bytes"] <= harness["max_read_bytes"])
+            check_admission(protocol, body)
     return message
 
 
@@ -120,13 +124,17 @@ def validate_skill_manifest(protocol, raw):
 
 def validate_skill_set(protocol, raw):
     manifest = protocol._catalog.validate(SKILL_SET_MANIFEST_SCHEMA, raw, CONTROL_LIMIT)
+    check_skill_set(manifest)
+    return manifest
+
+
+def check_skill_set(manifest):
     previous, seen = "", set()
     for index, entry in enumerate(manifest["skills"]):
         identifier, key = entry["skill_id"], folded(entry["skill_id"])
         require(identifier > previous and key not in seen and entry["manifest"]["slot"] == index)
         previous = identifier
         seen.add(key)
-    return manifest
 
 
 def validate_manifest_set(protocol, tree, skill_set, skills):

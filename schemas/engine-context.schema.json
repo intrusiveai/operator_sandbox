@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-context:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "api_version": {
+      "const": "operator.dev/engine-context/v1alpha1"
+    },
+    "campaign_id": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    },
+    "launch_id": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    },
+    "run_revision": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+    },
+    "attempt_index_high_watermark": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+    },
+    "contract": {
+      "$ref": "urn:operator:schema:startup-common:v1alpha1#/$defs/contract"
+    },
+    "release": {
+      "$ref": "urn:operator:schema:startup-common:v1alpha1#/$defs/release"
+    },
+    "scenario_bundle": {
+      "allOf": [
+        {
+          "$ref": "urn:operator:schema:input-tree-manifest:v1alpha1#/properties/entries/items"
+        },
+        {
+          "properties": {
+            "role": {
+              "const": "scenario-bundle"
+            }
+          }
+        }
+      ]
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "allOf": [
+          {
+            "$ref": "urn:operator:schema:input-tree-manifest:v1alpha1#/properties/entries/items"
+          },
+          {
+            "properties": {
+              "role": {
+                "const": "reference"
+              }
+            }
+          }
+        ]
+      },
+      "maxItems": 4000
+    },
+    "artifact_bindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "artifact_id": {
+            "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+          },
+          "entry_id": {
+            "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+          }
+        },
+        "required": [
+          "artifact_id",
+          "entry_id"
+        ]
+      },
+      "maxItems": 4000
+    },
+    "omissions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "artifact_id": {
+            "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          }
+        },
+        "required": [
+          "artifact_id",
+          "reason"
+        ]
+      },
+      "maxItems": 4000
+    },
+    "prompt": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "entry_id": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+        },
+        "provenance": {
+          "$ref": "urn:operator:schema:prompt-provenance:v1alpha1"
+        }
+      },
+      "required": [
+        "entry_id",
+        "provenance"
+      ]
+    },
+    "skills": {
+      "$ref": "urn:operator:schema:skill-set-manifest:v1alpha1"
+    },
+    "target": {
+      "$ref": "urn:operator:schema:target-capability-manifest:v1alpha1"
+    },
+    "feedback": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "profile": {
+          "enum": [
+            "black-box",
+            "diagnostic",
+            "oracle-assisted"
+          ]
+        },
+        "allowed_kinds": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "target_output",
+              "operation_error",
+              "injection_delivery",
+              "oracle_outcome"
+            ]
+          },
+          "maxItems": 4,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "profile",
+        "allowed_kinds"
+      ]
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "codec_id": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+        },
+        "profile_id": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+        },
+        "profile_digest": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+        },
+        "model_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x20\\x7f]+$",
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "text",
+              "function-tools"
+            ]
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "codec_id",
+        "profile_id",
+        "profile_digest",
+        "model_id",
+        "features"
+      ]
+    },
+    "operations": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 64,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128,
+        "pattern": "^engine[.][a-z_]+$",
+        "not": {
+          "pattern": "[\\r\\n]"
+        }
+      },
+      "uniqueItems": true
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "harness": {
+          "$ref": "urn:operator:schema:harness-loop-limits:v1alpha1"
+        },
+        "campaign": {
+          "$ref": "urn:operator:schema:remaining-limits:v1alpha1"
+        }
+      },
+      "required": [
+        "harness",
+        "campaign"
+      ]
+    },
+    "remaining_limits": {
+      "$ref": "urn:operator:schema:remaining-limits:v1alpha1"
+    }
+  },
+  "required": [
+    "api_version",
+    "campaign_id",
+    "launch_id",
+    "run_revision",
+    "attempt_index_high_watermark",
+    "contract",
+    "release",
+    "scenario_bundle",
+    "references",
+    "artifact_bindings",
+    "omissions",
+    "prompt",
+    "skills",
+    "target",
+    "feedback",
+    "model",
+    "operations",
+    "limits",
+    "remaining_limits"
+  ]
+}

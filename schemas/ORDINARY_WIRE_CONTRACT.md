@@ -23,8 +23,9 @@ exact bodies. `make generate` regenerates envelopes and schema-ID constants;
 `make test` rejects stale generated files. No unknown operation or untyped forwarding
 path is accepted. Model generation will join the registry when its closed schemas and
 fixtures are implemented. [Startup and manifest metadata](STARTUP_MANIFEST_CONTRACT.md)
-now have schemas and shared validation; EngineContext content, prompt provenance,
-provider codecs and runtime gates remain publication/implementation work.
+now have schemas and shared validation. [Input content](ENGINE_INPUT_CONTRACT.md)
+adds EngineContext and prompt provenance; provider codecs and runtime gates
+remain publication/implementation work.
 Records and conclusion content are defined in the
 [assessment contract](ASSESSMENT_CONTRACT.md).
 

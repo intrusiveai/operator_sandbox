@@ -23,6 +23,8 @@ const EngineAttemptResultSchema = "urn:operator:schema:engine-attempt-result:v1a
 
 const EngineConclusionSchema = "urn:operator:schema:engine-conclusion:v1alpha2"
 
+const EngineContextSchema = "urn:operator:schema:engine-context:v1alpha1"
+
 const EngineGuestControlSchema = "urn:operator:schema:engine-guest-control:v1alpha1"
 
 const EngineHostControlSchema = "urn:operator:schema:engine-host-control:v1alpha1"
@@ -78,6 +80,8 @@ const ObservationSelectionSchema = "urn:operator:schema:observation-selection:v1
 const OperationErrorSchema = "urn:operator:schema:operation-error:v1alpha1"
 
 const OperationRegistrySchema = "urn:operator:schema:operation-registry:v1alpha1"
+
+const PromptProvenanceSchema = "urn:operator:schema:prompt-provenance:v1alpha1"
 
 const RemainingLimitsSchema = "urn:operator:schema:remaining-limits:v1alpha1"
 

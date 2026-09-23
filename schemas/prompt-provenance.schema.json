@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:prompt-provenance:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "api_version": {
+      "const": "operator.dev/prompt-provenance/v1alpha1"
+    },
+    "mode": {
+      "enum": [
+        "default",
+        "replacement",
+        "extension"
+      ]
+    },
+    "base": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 131072
+        },
+        "digest": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+        }
+      },
+      "required": [
+        "size_bytes",
+        "digest"
+      ]
+    },
+    "replacement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 131072
+        },
+        "digest": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+        }
+      },
+      "required": [
+        "size_bytes",
+        "digest"
+      ]
+    },
+    "appends": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 131072
+          },
+          "digest": {
+            "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+          }
+        },
+        "required": [
+          "size_bytes",
+          "digest"
+        ]
+      },
+      "maxItems": 16
+    },
+    "effective": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 131072
+        },
+        "digest": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+        }
+      },
+      "required": [
+        "size_bytes",
+        "digest"
+      ]
+    }
+  },
+  "required": [
+    "api_version",
+    "mode",
+    "base",
+    "appends",
+    "effective"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "mode": {
+            "const": "default"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "appends": {
+            "maxItems": 0
+          }
+        },
+        "not": {
+          "required": [
+            "replacement"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "mode": {
+            "const": "replacement"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "replacement"
+        ],
+        "properties": {
+          "appends": {
+            "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "mode": {
+            "const": "extension"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "appends": {
+            "minItems": 1
+          }
+        },
+        "not": {
+          "required": [
+            "replacement"
+          ]
+        }
+      }
+    }
+  ]
+}

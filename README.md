@@ -9,6 +9,8 @@ adds typed exchanges and stateless validation for 12 operations, plus spool ACKs
 adds typed records, structured conclusions and completion-chain checks.
 The [startup/manifest contract](schemas/STARTUP_MANIFEST_CONTRACT.md) adds control
 messages, five-message transcript checks and bounded input/skill inventories.
+The [input-content contract](schemas/ENGINE_INPUT_CONTRACT.md) adds immutable
+EngineContext, prompt composition/provenance and launch input-byte validation.
 Run `make setup` then `make test`. Contract publication and
 Operator/Attack Harness runtime implementation remain pending.
 

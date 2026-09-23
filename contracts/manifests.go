@@ -131,6 +131,13 @@ func (p *Protocol) ValidateSkillSet(raw []byte) (map[string]any, error) {
 		return nil, err
 	}
 	m := v.(map[string]any)
+	if err := checkSkillSet(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func checkSkillSet(m map[string]any) error {
 	previous := ""
 	seen := map[string]bool{}
 	for i, item := range m["skills"].([]any) {
@@ -138,12 +145,12 @@ func (p *Protocol) ValidateSkillSet(raw []byte) (map[string]any, error) {
 		id := skill["skill_id"].(string)
 		key := folded(id)
 		if id <= previous || seen[key] || number(skill["manifest"].(map[string]any)["slot"]) != int64(i) {
-			return nil, ErrProtocol
+			return ErrProtocol
 		}
 		previous = id
 		seen[key] = true
 	}
-	return m, nil
+	return nil
 }
 
 // ValidateManifestSet checks inventories and exact per-skill raw descriptors.

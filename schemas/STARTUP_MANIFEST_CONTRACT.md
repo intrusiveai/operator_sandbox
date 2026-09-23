@@ -73,14 +73,15 @@ unique. Exactly one of each core role is required:
 
 | Role | Relative path | Content |
 |---|---|---|
-| `engine-context` | `run-context.json` | JSON, reserved schema ID `urn:operator:schema:engine-context:v1alpha1`. |
+| `engine-context` | `run-context.json` | JSON, schema ID `urn:operator:schema:engine-context:v1alpha1`. |
 | `scenario-bundle` | `scenario-bundle.json` | JSON, existing ScenarioBundle schema, at most 4 MiB. |
 | `system-prompt` | `system-prompt.txt` | Plain text, nonempty, at most 128 KiB. |
 | `reference` | `artifacts/sha256-<raw digest hex>` | Optional reference files, at most 1 MiB each. |
 
-The EngineContext content schema is still outstanding. Reserving its identity in
-an inventory does not add a permissive content schema to the catalog or validate
-its actual bytes. The prompt provenance schema is also outstanding.
+The [input-content contract](ENGINE_INPUT_CONTRACT.md) defines EngineContext and
+inline prompt provenance. Its launch-content validator checks actual supplied
+context, bundle and effective prompt bytes against this inventory; manifest-only
+validation does not check those file contents.
 
 [SkillSetManifest](skill-set-manifest.schema.json) contains `loader_schema`,
 `loader_digest`, `loading_digest` and `skills`. Loader schema is
@@ -149,8 +150,9 @@ digests, install confinement, enforce live deadlines or establish host attestati
 The runtime must use bounded reads, reject links/undeclared files, verify actual
 file sizes/hashes and passive skill content, enforce read-only mounts and gates,
 and maintain live transport sequences. Guest echoes never replace those checks.
-EngineContext, prompt provenance, host-private RunManifest, model codec contracts,
-package identity helpers and transport/runtime qualification remain outstanding.
+The input-content stage implements EngineContext and prompt provenance; host-private
+RunManifest, model codec contracts, canonical identity helpers and transport/runtime
+qualification remain outstanding.
 
 Both language runners consume the same 102 cases in
 [startup-manifests.json](fixtures/startup-manifests.json), including oversized-frame

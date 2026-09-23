@@ -41,27 +41,8 @@ func (p *Protocol) ValidateControl(direction string, raw []byte) (map[string]any
 				return nil, ErrProtocol
 			}
 		} else {
-			previous := ""
-			for _, name := range body["operations"].([]any) {
-				s := name.(string)
-				if s <= previous {
-					return nil, ErrProtocol
-				}
-				if _, ok := p.operations[s]; !ok {
-					return nil, ErrProtocol
-				}
-				previous = s
-			}
-			limits := body["limits"].(map[string]any)
-			campaign := limits["campaign"].(map[string]any)
-			for key, value := range body["remaining_limits"].(map[string]any) {
-				if number(value) > number(campaign[key]) {
-					return nil, ErrProtocol
-				}
-			}
-			harness := limits["harness"].(map[string]any)
-			if number(campaign["model_turns"]) > number(harness["max_model_turns"]) || number(campaign["observation_bytes"]) > number(harness["max_read_bytes"]) {
-				return nil, ErrProtocol
+			if err := p.checkAdmission(body); err != nil {
+				return nil, err
 			}
 		}
 	}

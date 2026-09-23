@@ -24,7 +24,9 @@ The [assessment contract](ASSESSMENT_CONTRACT.md) supplies typed record append,
 conclusion content and completion-chain validation.
 The [startup/manifest stage](STARTUP_MANIFEST_CONTRACT.md) supplies closed control
 messages, successful-transcript checks, bounded input/skill inventories and shared
-raw-descriptor/path validation. Input content and runtime gates remain separate work.
+raw-descriptor/path validation. The [input-content stage](ENGINE_INPUT_CONTRACT.md)
+adds EngineContext, prompt provenance/composition and launch byte consistency.
+Runtime gates remain separate work.
 Complete message bindings/schemas, stateful checks and transport conformance remain outstanding.
 
 ## 1. One owner and one pinned package
@@ -456,6 +458,8 @@ complete ScenarioBundle remains a separate input, not a summary in EngineContext
 The [public objectives/scenarios input](SCENARIO_BUNDLE_CONTRACT.md) specifies the
 producer-neutral content of that existing ScenarioBundle slot, including an empty
 scenario list. Input origin does not alter startup, tool or conclusion semantics.
+The [input-content contract](ENGINE_INPUT_CONTRACT.md) fixes the implemented
+EngineContext and prompt-provenance fields, exact-byte composition and validators.
 The package must provide closed ScenarioBundle/prompt/record schemas under
 explicit catalog IDs; opaque 'any JSON' placeholders are not a published contract.
 
@@ -778,7 +782,7 @@ conformance tests remain implementation work.
 The package shape, startup/manifest flow, identity/deadline rules and completion
 semantics and macOS physical spool mapping above are accepted. Remaining work
 is to author the remaining closed
-EngineContext, prompt provenance and model schemas, define the host-private
+model request/result schemas and codec profiles, define the host-private
 RunManifest, and complete
 the operation registry, extend the existing offline
 catalog and Go/Python validation foundation with semantic validators and fixtures;
