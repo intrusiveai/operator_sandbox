@@ -29,6 +29,9 @@ adds EngineContext, prompt provenance/composition and launch byte consistency.
 Runtime gates remain separate work.
 The [canonical identity stage](CANONICAL_IDENTITY_CONTRACT.md) implements `jcs-v1`,
 raw/canonical digest helpers, canonical launch bindings and artifact-content checks.
+The [package integrity stage](PACKAGE_INTEGRITY_CONTRACT.md) adds the closed package
+manifest, deterministic construction, payload verification and a loader that retains
+the verified version/digest. Package publication and runtime qualification remain pending.
 Complete message bindings/schemas, stateful checks and transport conformance remain outstanding.
 
 ## 1. One owner and one pinned package
@@ -56,15 +59,15 @@ is the canonical digest of that manifest payload. The host-only
 the local Docker image ID and the required Operator/runtime/platform compatibility.
 Operator and the engine consume their installed package copies.
 
-Suggested package layout:
+The [implemented package layout](PACKAGE_INTEGRITY_CONTRACT.md) retains flat schema
+filenames compatible with the offline catalog loader:
 
 ```text
 operator-contracts/
   package.json
   catalog.json
   operations.json
-  schemas/{common,pipe,spool,startup,inputs,skills,artifacts,records,lifecycle}/
-  schemas/{attempt,feedback,conclusion,model}/
+  *.schema.json
   semantics/{encoding,identity,digests,lifecycle,limits}.md
   go/
   python/

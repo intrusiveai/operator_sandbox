@@ -54,9 +54,25 @@ class Protocol:
     def __init__(self, directory: Path):
         self._catalog = Catalog(directory)
         try:
-            registry = self._catalog.validate(
-                OPERATION_REGISTRY_SCHEMA, (Path(directory) / "operations.json").read_bytes()
-            )
+            raw = (Path(directory) / "operations.json").read_bytes()
+        except OSError:
+            raise ContractError("invalid installed contract catalog") from None
+        self._load_registry(raw)
+
+    @classmethod
+    def _from_resources(cls, resources):
+        result = cls.__new__(cls)
+        result._catalog = Catalog._from_resources(resources)
+        try:
+            result._load_registry(resources["operations.json"])
+        except KeyError:
+            raise ContractError("invalid installed contract catalog") from None
+        return result
+
+    def _load_registry(self, raw):
+        self._package_identity = None
+        try:
+            registry = self._catalog.validate(OPERATION_REGISTRY_SCHEMA, raw)
             names = [item["name"] for item in registry["operations"]]
             self._operations_digest = _object_digest(registry, ORDINARY_LIMIT)
             if names != sorted(set(names)):
@@ -72,6 +88,25 @@ class Protocol:
     def operations(self):
         """Return a copy so consumers cannot mutate installed dispatch metadata."""
         return deepcopy(list(self._operations.values()))
+
+    def package_identity(self):
+        return dict(self._package_identity) if self._package_identity is not None else None
+
+    def validate_package_manifest(self, raw):
+        from .package import validate_package_manifest
+        return validate_package_manifest(self, raw)
+
+    def build_package_manifest(self, version, files, profiles):
+        from .package import build_package_manifest
+        return build_package_manifest(self, version, files, profiles)
+
+    def verify_package(self, manifest, files, expected):
+        from .package import verify_package
+        return verify_package(self, manifest, files, expected)
+
+    def load_verified_protocol(self, manifest, files, expected):
+        from .package import load_verified_protocol
+        return load_verified_protocol(self, manifest, files, expected)
 
     def registry_digests(self):
         return {"catalog_digest": self._catalog._digest, "operations_digest": self._operations_digest}

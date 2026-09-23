@@ -1,6 +1,7 @@
 {
   "urn:operator:schema:assessment-common:v1alpha1": "assessment-common.schema.json",
   "urn:operator:schema:conclusion-binding:v1alpha1": "conclusion-binding.schema.json",
+  "urn:operator:schema:contract-package:v1alpha1": "contract-package.schema.json",
   "urn:operator:schema:engine-artifact-begin-request:v1alpha1": "engine-artifact-begin-request.schema.json",
   "urn:operator:schema:engine-artifact-begin-result:v1alpha1": "engine-artifact-begin-result.schema.json",
   "urn:operator:schema:engine-artifact-commit-request:v1alpha1": "engine-artifact-commit-request.schema.json",

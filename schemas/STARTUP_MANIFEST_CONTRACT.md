@@ -154,7 +154,8 @@ file sizes/hashes and passive skill content, enforce read-only mounts and gates,
 and maintain live transport sequences. Guest echoes never replace those checks.
 The input-content stage implements EngineContext and prompt provenance. The
 canonical identity stage adds digest verification through its separate API;
-host-private RunManifest, model codec contracts, package verification and
+the package integrity stage implements verification against a caller-approved pin.
+Host-private RunManifest, model codec contracts, release/distribution tooling and
 transport/runtime qualification remain outstanding.
 
 Both language runners consume the same 102 cases in

@@ -17,6 +17,9 @@ def validate_launch_identities(protocol, messages, tree, skill_set, skills, cont
         require(entry['manifest']['object_digest'] == canonical_digest(raw, 2 << 20))
     c = protocol.validate_engine_context(context)
     require(c['target']['capability_projection_digest'] == _object_digest(c['target']['capabilities'], ENGINE_CONTEXT_LIMIT))
+    pin = protocol.package_identity()
+    if pin is not None:
+        require(c['contract']['version'] == pin['package_version'] and c['contract']['digest'] == pin['package_digest'])
     require(all(c['contract'][key] == digest for key, digest in protocol.registry_digests().items()))
 
 

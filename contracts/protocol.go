@@ -37,6 +37,7 @@ type Protocol struct {
 	catalog          *Catalog
 	operations       map[string]Operation
 	operationsDigest string
+	packageIdentity  *PackageIdentity
 }
 
 // ValidateAck checks syntax and size. Launch matching and monotonic positions

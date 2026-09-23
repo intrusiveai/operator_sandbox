@@ -44,8 +44,8 @@ All digests are lowercase `sha256:<hex>`. Raw and canonical identities are disti
 | Bootstrap `operations_digest` | Canonical complete installed `operations.json`. |
 
 Catalog identity binds the URI-to-file mapping, not the contents of all referenced
-schemas. The future immutable package inventory must separately bind every schema,
-validator/profile and fixture resource. Native Interceptor source digests and OCI
+schemas. The [package inventory](PACKAGE_INTEGRITY_CONTRACT.md) separately binds
+every declared schema, validator/profile and fixture resource. Native Interceptor source digests and OCI
 image identities retain their own recipes; these helpers do not reinterpret them.
 Canonicalizing ScenarioBundle or other schema-defined objects is available through
 the generic helper but does not invent a new wire field for their object identity.
@@ -74,6 +74,8 @@ canonical descriptor, the skill loading digest, the public capability projection
 and the loaded catalog/registry identities. A matching raw digest cannot substitute
 for an incorrect canonical digest. The older content/transcript APIs retain their
 documented scope; callers needing these additional checks must use the identity API.
+When invoked on a protocol returned by the verified package loader, this API also
+requires the launch's package version/digest to match the loaded package pin.
 
 `ValidateArtifactContent` takes the original validated `engine.artifact_begin`
 request from trusted upload state and the complete stored bytes. It verifies

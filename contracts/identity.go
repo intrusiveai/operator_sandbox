@@ -68,6 +68,9 @@ func (p *Protocol) ValidateLaunchIdentities(messages [][]byte, tree, set []byte,
 		return ErrProtocol
 	}
 	contract := c["contract"].(map[string]any)
+	if pin, verified := p.PackageIdentity(); verified && (contract["version"] != pin.Version || contract["digest"] != pin.Digest) {
+		return ErrProtocol
+	}
 	for key, digest := range p.RegistryDigests() {
 		if contract[key] != digest {
 			return ErrProtocol

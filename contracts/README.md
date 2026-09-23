@@ -1,7 +1,7 @@
 # Shared validation foundation
 
 This is the validation and protocol foundation of `operator-contracts`. It validates the
-49 schemas currently listed in [the catalog](../schemas/catalog.json) in Go and
+50 schemas currently listed in [the catalog](../schemas/catalog.json) in Go and
 Python. It is a development library, not the published `0.1.0` contract package.
 The authoritative design remains [SHARED_CONTRACT.md](../schemas/SHARED_CONTRACT.md).
 
@@ -29,7 +29,10 @@ The authoritative design remains [SHARED_CONTRACT.md](../schemas/SHARED_CONTRACT
   launch input-byte checks, with 90 shared cases.
 - Canonical JSON/raw digest helpers, canonical launch identity checks and artifact
   content verification, with 306 canonicalization and 21 identity cases. The
-  complete shared total is now 926 cases; the schema catalog remains at 49 entries.
+  canonical identity suites contain 327 cases.
+- Package manifest construction, exact payload verification and loading from frozen
+  verified bytes, with 39 shared cases and real-catalog loader tests. The total is
+  now 965 shared cases across all suites.
 
 The [ordinary wire contract](../schemas/ORDINARY_WIRE_CONTRACT.md) documents the
 exact implemented fields and distinguishes stateless validation from runtime gates.
@@ -133,6 +136,13 @@ already-canonical `jcs-v1` content. See the
 [canonical identity contract](../schemas/CANONICAL_IDENTITY_CONTRACT.md) for exact
 preimages, helper APIs, fixture regeneration and the remaining trust checks.
 
+Use `BuildPackageManifest` / `build_package_manifest` to inventory explicit frozen
+payloads and `VerifyPackage` / `verify_package` to check them against a trusted
+expected version/digest. `LoadVerifiedProtocol` / `load_verified_protocol` verifies
+before loading the catalog/registry and retains the package pin for launch checks.
+See [package integrity](../schemas/PACKAGE_INTEGRITY_CONTRACT.md) for bounds, the
+fixed payload layout and the distinction between byte integrity and release readiness.
+
 ## Remaining stages
 
 Structural validation is one gate. Receipt lookup, operation identity, digests,
@@ -141,8 +151,9 @@ still require semantic validators. Schema `format` annotations are not a substit
 for those checks. This library is not yet sufficient to admit campaign execution.
 
 Before publishing `0.1.0`, implement the remaining model request/result schemas
-and codec profiles; define the host-private RunManifest; complete the operation registry;
-remaining package/native identity verification; typed message bindings; the immutable
-package manifest/digest; and the full shared conformance suite. FIFO/spool codecs
+and codec profiles; define the host-private RunManifest; complete the operation registry,
+native identity verification, typed message bindings, distribution/install tooling
+and the full shared conformance suite. Package manifest/digest verification is
+implemented, but publication remains gated on that work. FIFO/spool codecs
 and fake-broker/fake-harness integration tests are also outstanding. No changes to
 Interceptor's native API are needed for this foundation.

@@ -2,6 +2,7 @@
 
 ASSESSMENT_COMMON_SCHEMA = "urn:operator:schema:assessment-common:v1alpha1"
 CONCLUSION_BINDING_SCHEMA = "urn:operator:schema:conclusion-binding:v1alpha1"
+CONTRACT_PACKAGE_SCHEMA = "urn:operator:schema:contract-package:v1alpha1"
 ENGINE_ARTIFACT_BEGIN_REQUEST_SCHEMA = "urn:operator:schema:engine-artifact-begin-request:v1alpha1"
 ENGINE_ARTIFACT_BEGIN_RESULT_SCHEMA = "urn:operator:schema:engine-artifact-begin-result:v1alpha1"
 ENGINE_ARTIFACT_COMMIT_REQUEST_SCHEMA = "urn:operator:schema:engine-artifact-commit-request:v1alpha1"

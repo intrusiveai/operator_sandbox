@@ -13,6 +13,8 @@ The [input-content contract](schemas/ENGINE_INPUT_CONTRACT.md) adds immutable
 EngineContext, prompt composition/provenance and launch input-byte validation.
 The [canonical identity contract](schemas/CANONICAL_IDENTITY_CONTRACT.md) adds
 matching Go/Python canonical JSON, launch digest and artifact-content checks.
+The [package integrity contract](schemas/PACKAGE_INTEGRITY_CONTRACT.md) adds manifest
+construction, exact payload verification and loading against a trusted package pin.
 Run `make setup` then `make test`. Contract publication and
 Operator/Attack Harness runtime implementation remain pending.
 

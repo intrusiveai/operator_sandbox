@@ -80,8 +80,17 @@ def _offline(_):
 class Catalog:
     def __init__(self, directory: Path):
         directory = Path(directory)
+        self._load(lambda name: (directory / name).read_bytes())
+
+    @classmethod
+    def _from_resources(cls, resources):
+        result = cls.__new__(cls)
+        result._load(lambda name: resources[name])
+        return result
+
+    def _load(self, read):
         try:
-            entries = decode((directory / "catalog.json").read_bytes())
+            entries = decode(read("catalog.json"))
             if not isinstance(entries, dict) or not entries: raise ContractError("invalid installed contract catalog")
             from .canonical import _object_digest
             self._digest = _object_digest(entries, ORDINARY_LIMIT)
@@ -91,7 +100,7 @@ class Catalog:
                 if not isinstance(name, str) or "/" in name or "\\" in name or name in (".", "..") or not name.endswith(".schema.json") or name in seen:
                     raise ContractError("invalid installed contract catalog")
                 seen.add(name)
-                raw = (directory / name).read_bytes()
+                raw = read(name)
                 schema = decode(raw)
                 if schema.get("$id") != uri or schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
                     raise ContractError("invalid installed contract catalog")
@@ -112,7 +121,7 @@ class Catalog:
                         for child in node: references(child)
                 references(schema)
             self._validators = {uri: Draft202012Validator(schema, registry=registry) for uri, schema in documents.items()}
-        except (OSError, ValueError, TypeError, AttributeError, Unresolvable, SchemaError) as error:
+        except (OSError, KeyError, ValueError, TypeError, AttributeError, Unresolvable, SchemaError) as error:
             raise ContractError("invalid installed contract catalog") from None
 
     def ids(self):

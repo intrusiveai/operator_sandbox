@@ -5,6 +5,8 @@ const AssessmentCommonSchema = "urn:operator:schema:assessment-common:v1alpha1"
 
 const ConclusionBindingSchema = "urn:operator:schema:conclusion-binding:v1alpha1"
 
+const ContractPackageSchema = "urn:operator:schema:contract-package:v1alpha1"
+
 const EngineArtifactBeginRequestSchema = "urn:operator:schema:engine-artifact-begin-request:v1alpha1"
 
 const EngineArtifactBeginResultSchema = "urn:operator:schema:engine-artifact-begin-result:v1alpha1"

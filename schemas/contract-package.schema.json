@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:contract-package:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "api_version": {
+      "const": "operator.dev/contract-package/v1alpha1"
+    },
+    "package_version": {
+      "$ref": "urn:operator:schema:conclusion-binding:v1alpha1#/properties/contract_package_version"
+    },
+    "files": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 4096,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "$ref": "urn:operator:schema:startup-common:v1alpha1#/$defs/relative_path"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 16777216
+          },
+          "digest": {
+            "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+          }
+        },
+        "required": [
+          "path",
+          "size_bytes",
+          "digest"
+        ]
+      }
+    },
+    "catalog": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "const": "catalog.json"
+        },
+        "object_digest": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+        }
+      },
+      "required": [
+        "path",
+        "object_digest"
+      ]
+    },
+    "operations": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "const": "operations.json"
+        },
+        "object_digest": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+        }
+      },
+      "required": [
+        "path",
+        "object_digest"
+      ]
+    },
+    "semantic_profiles": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "profile_id": {
+            "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+          },
+          "path": {
+            "$ref": "urn:operator:schema:startup-common:v1alpha1#/$defs/relative_path"
+          },
+          "digest": {
+            "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+          }
+        },
+        "required": [
+          "profile_id",
+          "path",
+          "digest"
+        ]
+      }
+    }
+  },
+  "required": [
+    "api_version",
+    "package_version",
+    "files",
+    "catalog",
+    "operations",
+    "semantic_profiles"
+  ]
+}
