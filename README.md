@@ -19,6 +19,8 @@ The [transport codec contract](schemas/TRANSPORT_CODEC_CONTRACT.md) adds bounded
 FIFO framing, spool names, lane sequence tracking and consumption ACK checks.
 The [attempt bookkeeping contract](schemas/ATTEMPT_BOOKKEEPING_CONTRACT.md) adds
 campaign attempt allocation, duplicate/admission tracking and unknown-outcome closure.
+The [harness loop accounting contract](schemas/HARNESS_LOOP_ACCOUNTING_CONTRACT.md)
+adds finite-loop limits, read reservations, progress tracking and bounded finalization.
 Run `make setup` then `make test`. Contract publication and
 Operator/Attack Harness runtime implementation remain pending.
 

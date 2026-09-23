@@ -37,7 +37,9 @@ frames, spool naming, lane validation, consecutive sequences and cumulative ACK
 checks. Physical I/O, queues, scheduling and deadlines remain runtime work.
 The [attempt bookkeeping stage](ATTEMPT_BOOKKEEPING_CONTRACT.md) implements
 campaign-wide allocation and in-memory duplicate/admission/result transitions.
-Durable history, dispatch and finite-loop accounting remain runtime work.
+The [loop accounting stage](HARNESS_LOOP_ACCOUNTING_CONTRACT.md) implements
+finite-loop limits, read/progress accounting, batch skipping and bounded finalization.
+Durable history, dispatch, verified event sources and timers remain runtime work.
 Complete message bindings/schemas, stateful checks and transport conformance remain outstanding.
 
 ## 1. One owner and one pinned package
@@ -796,8 +798,9 @@ containment, real-provider behavior or Operator runtime implementation.
 Attempt numbering after rejection and harness-loop defaults/accounting are resolved
 by [Harness execution rules](HARNESS_EXECUTION_RULES.md). Attempt allocation and
 admission transitions have [shared semantic traces](ATTEMPT_BOOKKEEPING_CONTRACT.md);
-durable runtime integration and finite-loop/progress/finalization conformance
-remain implementation work.
+finite-loop/progress/finalization accounting also has
+[shared semantic traces](HARNESS_LOOP_ACCOUNTING_CONTRACT.md). Durable runtime
+integration, timer enforcement and full transport conformance remain implementation work.
 
 The package shape, startup/manifest flow, identity/deadline rules and completion
 semantics and macOS physical spool mapping above are accepted. Remaining work

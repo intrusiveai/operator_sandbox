@@ -1,0 +1,7769 @@
+[
+  {
+    "name": "omitted defaults",
+    "mode": "config",
+    "overrides": "{}",
+    "caps": "{}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_model_turns override above default",
+    "mode": "config",
+    "overrides": "{\"max_model_turns\": 301}",
+    "caps": "{}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 301,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_model_turns policy cap narrows",
+    "mode": "config",
+    "overrides": "{\"max_model_turns\": 301}",
+    "caps": "{\"max_model_turns\": 2}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 2,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_model_turns policy cap cannot enlarge",
+    "mode": "config",
+    "overrides": "{}",
+    "caps": "{\"max_model_turns\": 301}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_model_turns safe maximum",
+    "mode": "config",
+    "overrides": "{\"max_model_turns\": 9007199254740991}",
+    "caps": "{}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 9007199254740991,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_model_turns invalid override 0",
+    "mode": "config",
+    "overrides": "{\"max_model_turns\": 0}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_model_turns invalid override -1",
+    "mode": "config",
+    "overrides": "{\"max_model_turns\": -1}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_model_turns invalid override True",
+    "mode": "config",
+    "overrides": "{\"max_model_turns\": true}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_model_turns invalid override None",
+    "mode": "config",
+    "overrides": "{\"max_model_turns\": null}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_model_turns invalid override 1.5",
+    "mode": "config",
+    "overrides": "{\"max_model_turns\": 1.5}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_model_turns invalid override 9007199254740992",
+    "mode": "config",
+    "overrides": "{\"max_model_turns\": 9007199254740992}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_model_turns invalid cap",
+    "mode": "config",
+    "overrides": "{}",
+    "caps": "{\"max_model_turns\": 0}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls override above default",
+    "mode": "config",
+    "overrides": "{\"max_tool_calls\": 2001}",
+    "caps": "{}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2001,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls policy cap narrows",
+    "mode": "config",
+    "overrides": "{\"max_tool_calls\": 2001}",
+    "caps": "{\"max_tool_calls\": 2}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls policy cap cannot enlarge",
+    "mode": "config",
+    "overrides": "{}",
+    "caps": "{\"max_tool_calls\": 2001}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls safe maximum",
+    "mode": "config",
+    "overrides": "{\"max_tool_calls\": 9007199254740991}",
+    "caps": "{}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 9007199254740991,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls invalid override 0",
+    "mode": "config",
+    "overrides": "{\"max_tool_calls\": 0}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls invalid override -1",
+    "mode": "config",
+    "overrides": "{\"max_tool_calls\": -1}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls invalid override True",
+    "mode": "config",
+    "overrides": "{\"max_tool_calls\": true}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls invalid override None",
+    "mode": "config",
+    "overrides": "{\"max_tool_calls\": null}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls invalid override 1.5",
+    "mode": "config",
+    "overrides": "{\"max_tool_calls\": 1.5}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls invalid override 9007199254740992",
+    "mode": "config",
+    "overrides": "{\"max_tool_calls\": 9007199254740992}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls invalid cap",
+    "mode": "config",
+    "overrides": "{}",
+    "caps": "{\"max_tool_calls\": 0}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls_per_response override above default",
+    "mode": "config",
+    "overrides": "{\"max_tool_calls_per_response\": 17}",
+    "caps": "{}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 17,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls_per_response policy cap narrows",
+    "mode": "config",
+    "overrides": "{\"max_tool_calls_per_response\": 17}",
+    "caps": "{\"max_tool_calls_per_response\": 2}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 2,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls_per_response policy cap cannot enlarge",
+    "mode": "config",
+    "overrides": "{}",
+    "caps": "{\"max_tool_calls_per_response\": 17}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls_per_response safe maximum",
+    "mode": "config",
+    "overrides": "{\"max_tool_calls_per_response\": 9007199254740991}",
+    "caps": "{}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 9007199254740991,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls_per_response invalid override 0",
+    "mode": "config",
+    "overrides": "{\"max_tool_calls_per_response\": 0}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls_per_response invalid override -1",
+    "mode": "config",
+    "overrides": "{\"max_tool_calls_per_response\": -1}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls_per_response invalid override True",
+    "mode": "config",
+    "overrides": "{\"max_tool_calls_per_response\": true}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls_per_response invalid override None",
+    "mode": "config",
+    "overrides": "{\"max_tool_calls_per_response\": null}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls_per_response invalid override 1.5",
+    "mode": "config",
+    "overrides": "{\"max_tool_calls_per_response\": 1.5}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls_per_response invalid override 9007199254740992",
+    "mode": "config",
+    "overrides": "{\"max_tool_calls_per_response\": 9007199254740992}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_tool_calls_per_response invalid cap",
+    "mode": "config",
+    "overrides": "{}",
+    "caps": "{\"max_tool_calls_per_response\": 0}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_invalid_tool_calls override above default",
+    "mode": "config",
+    "overrides": "{\"max_invalid_tool_calls\": 51}",
+    "caps": "{}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 51,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_invalid_tool_calls policy cap narrows",
+    "mode": "config",
+    "overrides": "{\"max_invalid_tool_calls\": 51}",
+    "caps": "{\"max_invalid_tool_calls\": 2}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 2,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_invalid_tool_calls policy cap cannot enlarge",
+    "mode": "config",
+    "overrides": "{}",
+    "caps": "{\"max_invalid_tool_calls\": 51}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_invalid_tool_calls safe maximum",
+    "mode": "config",
+    "overrides": "{\"max_invalid_tool_calls\": 9007199254740991}",
+    "caps": "{}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 9007199254740991,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_invalid_tool_calls invalid override 0",
+    "mode": "config",
+    "overrides": "{\"max_invalid_tool_calls\": 0}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_invalid_tool_calls invalid override -1",
+    "mode": "config",
+    "overrides": "{\"max_invalid_tool_calls\": -1}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_invalid_tool_calls invalid override True",
+    "mode": "config",
+    "overrides": "{\"max_invalid_tool_calls\": true}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_invalid_tool_calls invalid override None",
+    "mode": "config",
+    "overrides": "{\"max_invalid_tool_calls\": null}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_invalid_tool_calls invalid override 1.5",
+    "mode": "config",
+    "overrides": "{\"max_invalid_tool_calls\": 1.5}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_invalid_tool_calls invalid override 9007199254740992",
+    "mode": "config",
+    "overrides": "{\"max_invalid_tool_calls\": 9007199254740992}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_invalid_tool_calls invalid cap",
+    "mode": "config",
+    "overrides": "{}",
+    "caps": "{\"max_invalid_tool_calls\": 0}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_consecutive_invalid_tool_calls override above default",
+    "mode": "config",
+    "overrides": "{\"max_consecutive_invalid_tool_calls\": 6}",
+    "caps": "{}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 6,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_consecutive_invalid_tool_calls policy cap narrows",
+    "mode": "config",
+    "overrides": "{\"max_consecutive_invalid_tool_calls\": 6}",
+    "caps": "{\"max_consecutive_invalid_tool_calls\": 2}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 2,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_consecutive_invalid_tool_calls policy cap cannot enlarge",
+    "mode": "config",
+    "overrides": "{}",
+    "caps": "{\"max_consecutive_invalid_tool_calls\": 6}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_consecutive_invalid_tool_calls safe maximum",
+    "mode": "config",
+    "overrides": "{\"max_consecutive_invalid_tool_calls\": 9007199254740991}",
+    "caps": "{}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 9007199254740991,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_consecutive_invalid_tool_calls invalid override 0",
+    "mode": "config",
+    "overrides": "{\"max_consecutive_invalid_tool_calls\": 0}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_consecutive_invalid_tool_calls invalid override -1",
+    "mode": "config",
+    "overrides": "{\"max_consecutive_invalid_tool_calls\": -1}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_consecutive_invalid_tool_calls invalid override True",
+    "mode": "config",
+    "overrides": "{\"max_consecutive_invalid_tool_calls\": true}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_consecutive_invalid_tool_calls invalid override None",
+    "mode": "config",
+    "overrides": "{\"max_consecutive_invalid_tool_calls\": null}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_consecutive_invalid_tool_calls invalid override 1.5",
+    "mode": "config",
+    "overrides": "{\"max_consecutive_invalid_tool_calls\": 1.5}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_consecutive_invalid_tool_calls invalid override 9007199254740992",
+    "mode": "config",
+    "overrides": "{\"max_consecutive_invalid_tool_calls\": 9007199254740992}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_consecutive_invalid_tool_calls invalid cap",
+    "mode": "config",
+    "overrides": "{}",
+    "caps": "{\"max_consecutive_invalid_tool_calls\": 0}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_read_bytes override above default",
+    "mode": "config",
+    "overrides": "{\"max_read_bytes\": 268435457}",
+    "caps": "{}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435457,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_read_bytes policy cap narrows",
+    "mode": "config",
+    "overrides": "{\"max_read_bytes\": 268435457}",
+    "caps": "{\"max_read_bytes\": 2}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 2,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_read_bytes policy cap cannot enlarge",
+    "mode": "config",
+    "overrides": "{}",
+    "caps": "{\"max_read_bytes\": 268435457}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_read_bytes safe maximum",
+    "mode": "config",
+    "overrides": "{\"max_read_bytes\": 9007199254740991}",
+    "caps": "{}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 9007199254740991,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_read_bytes invalid override 0",
+    "mode": "config",
+    "overrides": "{\"max_read_bytes\": 0}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_read_bytes invalid override -1",
+    "mode": "config",
+    "overrides": "{\"max_read_bytes\": -1}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_read_bytes invalid override True",
+    "mode": "config",
+    "overrides": "{\"max_read_bytes\": true}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_read_bytes invalid override None",
+    "mode": "config",
+    "overrides": "{\"max_read_bytes\": null}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_read_bytes invalid override 1.5",
+    "mode": "config",
+    "overrides": "{\"max_read_bytes\": 1.5}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_read_bytes invalid override 9007199254740992",
+    "mode": "config",
+    "overrides": "{\"max_read_bytes\": 9007199254740992}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_read_bytes invalid cap",
+    "mode": "config",
+    "overrides": "{}",
+    "caps": "{\"max_read_bytes\": 0}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_no_progress_turns override above default",
+    "mode": "config",
+    "overrides": "{\"max_no_progress_turns\": 11}",
+    "caps": "{}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 11
+    }
+  },
+  {
+    "name": "max_no_progress_turns policy cap narrows",
+    "mode": "config",
+    "overrides": "{\"max_no_progress_turns\": 11}",
+    "caps": "{\"max_no_progress_turns\": 2}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 2
+    }
+  },
+  {
+    "name": "max_no_progress_turns policy cap cannot enlarge",
+    "mode": "config",
+    "overrides": "{}",
+    "caps": "{\"max_no_progress_turns\": 11}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_no_progress_turns safe maximum",
+    "mode": "config",
+    "overrides": "{\"max_no_progress_turns\": 9007199254740991}",
+    "caps": "{}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 9007199254740991
+    }
+  },
+  {
+    "name": "max_no_progress_turns invalid override 0",
+    "mode": "config",
+    "overrides": "{\"max_no_progress_turns\": 0}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_no_progress_turns invalid override -1",
+    "mode": "config",
+    "overrides": "{\"max_no_progress_turns\": -1}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_no_progress_turns invalid override True",
+    "mode": "config",
+    "overrides": "{\"max_no_progress_turns\": true}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_no_progress_turns invalid override None",
+    "mode": "config",
+    "overrides": "{\"max_no_progress_turns\": null}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_no_progress_turns invalid override 1.5",
+    "mode": "config",
+    "overrides": "{\"max_no_progress_turns\": 1.5}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_no_progress_turns invalid override 9007199254740992",
+    "mode": "config",
+    "overrides": "{\"max_no_progress_turns\": 9007199254740992}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "max_no_progress_turns invalid cap",
+    "mode": "config",
+    "overrides": "{}",
+    "caps": "{\"max_no_progress_turns\": 0}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "invalid configuration null",
+    "mode": "config",
+    "overrides": "null",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "invalid configuration []",
+    "mode": "config",
+    "overrides": "[]",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "invalid configuration {\"unknown\":1}",
+    "mode": "config",
+    "overrides": "{\"unknown\":1}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "invalid configuration {\"max_model_turns\":1,\"max_model_turns\":2}",
+    "mode": "config",
+    "overrides": "{\"max_model_turns\":1,\"max_model_turns\":2}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "invalid configuration {\"max_model_turns\":1.00000000000000001}",
+    "mode": "config",
+    "overrides": "{\"max_model_turns\":1.00000000000000001}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "invalid configuration {\"max_model_turns\":\"3\"}",
+    "mode": "config",
+    "overrides": "{\"max_model_turns\":\"3\"}",
+    "caps": "{}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "exact integer exponent",
+    "mode": "config",
+    "overrides": "{\"max_model_turns\":1e0}",
+    "caps": "{}",
+    "valid": true,
+    "expected": {
+      "max_model_turns": 1,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "unknown policy field",
+    "mode": "config",
+    "overrides": "{}",
+    "caps": "{\"unexpected\":1}",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "nonobject policy",
+    "mode": "config",
+    "overrides": "{}",
+    "caps": "[]",
+    "valid": false,
+    "expected": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    }
+  },
+  {
+    "name": "last permitted model can finish its batch",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 1,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 1
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "attempt_execute"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "inspect",
+        "expected": {
+          "mode": "exploring",
+          "model_turns": 1,
+          "tool_calls": 1
+        },
+        "error": ""
+      },
+      {
+        "action": "end_turn",
+        "expected": {
+          "mode": "finalizing",
+          "reason": "budget-limit",
+          "no_progress_turns": 1
+        },
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "stopped"
+      }
+    ]
+  },
+  {
+    "name": "last permitted tool finishes and later calls are skipped",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 3
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "inspect",
+        "expected": {
+          "mode": "exploring",
+          "tool_calls": 1,
+          "queued_calls": 2
+        },
+        "error": ""
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "inspect",
+        "expected": {
+          "mode": "finalizing",
+          "reason": "budget-limit",
+          "tool_calls": 2,
+          "invalid_tool_calls": 1,
+          "skipped_calls": 1,
+          "queued_calls": 0
+        },
+        "error": ""
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "stopped",
+        "name": "attempt_execute"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      }
+    ]
+  },
+  {
+    "name": "oversize response executes no prefix",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "accept_response",
+        "expected": {
+          "model_turns": 1,
+          "tool_calls": 0,
+          "skipped_calls": 17,
+          "reason": "budget-limit"
+        },
+        "error": "stopped",
+        "count": 17
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "stopped",
+        "name": "attempt_execute"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      }
+    ]
+  },
+  {
+    "name": "exact batch ceiling allowed",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 2,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {
+          "mode": "exploring",
+          "tool_calls": 2
+        },
+        "error": ""
+      }
+    ]
+  },
+  {
+    "name": "five consecutive invalid calls",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 6
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "inspect",
+        "expected": {
+          "reason": "harness-error",
+          "invalid_tool_calls": 5,
+          "consecutive_invalid_tool_calls": 5,
+          "tool_calls": 5,
+          "skipped_calls": 1
+        },
+        "error": ""
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      }
+    ]
+  },
+  {
+    "name": "fifty cumulative invalid calls despite successes",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 100
+    },
+    "steps": [
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "inspect",
+        "expected": {
+          "reason": "harness-error",
+          "invalid_tool_calls": 50,
+          "consecutive_invalid_tool_calls": 1,
+          "tool_calls": 99,
+          "skipped_calls": 1
+        },
+        "error": ""
+      }
+    ]
+  },
+  {
+    "name": "records preflight rejection and no-tool turns do not reset invalid streak",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 1
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "engine.record_append"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "restore_request"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "preflight-rejected"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 0
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "inspect",
+        "expected": {
+          "invalid_tool_calls": 1,
+          "consecutive_invalid_tool_calls": 1,
+          "no_progress_turns": 3
+        },
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 1
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "inspect",
+        "expected": {
+          "invalid_tool_calls": 1,
+          "consecutive_invalid_tool_calls": 0,
+          "no_progress_turns": 4
+        },
+        "error": ""
+      }
+    ]
+  },
+  {
+    "name": "ten empty or refusal turns stop exploration",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 0
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 0
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 0
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 0
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 0
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 0
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 0
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 0
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 0
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 0
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "inspect",
+        "expected": {
+          "reason": "no-useful-next-experiment",
+          "model_turns": 10,
+          "no_progress_turns": 10
+        },
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "stopped"
+      }
+    ]
+  },
+  {
+    "name": "compaction consumes model turn and gives no progress",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": true
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 0
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "inspect",
+        "expected": {
+          "model_turns": 1,
+          "no_progress_turns": 1,
+          "tool_calls": 0
+        },
+        "error": ""
+      }
+    ]
+  },
+  {
+    "name": "compaction cannot execute returned tools",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": true
+      },
+      {
+        "action": "accept_response",
+        "expected": {
+          "mode": "closed",
+          "reason": "hard-stop",
+          "model_turns": 1,
+          "tool_calls": 0
+        },
+        "error": "protocol",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "name": "known negative experiment counts once; replay not progress",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 0
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 1
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "engine.attempt_execute"
+      },
+      {
+        "action": "experiment",
+        "expected": {},
+        "error": "",
+        "receipt": "receipt-1",
+        "result": true
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {
+          "no_progress_turns": 0
+        },
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 1
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "attempt_execute"
+      },
+      {
+        "action": "experiment",
+        "expected": {},
+        "error": "",
+        "receipt": "receipt-1",
+        "result": false
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {
+          "no_progress_turns": 1
+        },
+        "error": ""
+      }
+    ]
+  },
+  {
+    "name": "first content commitment is progress; duplicates are not",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 0
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 1
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "artifact_commit"
+      },
+      {
+        "action": "payload",
+        "expected": {},
+        "error": "",
+        "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "result": true
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {
+          "no_progress_turns": 0
+        },
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 1
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "artifact_commit"
+      },
+      {
+        "action": "payload",
+        "expected": {},
+        "error": "",
+        "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "result": false
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {
+          "no_progress_turns": 1
+        },
+        "error": ""
+      }
+    ]
+  },
+  {
+    "name": "progress metadata is not a progress event",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 2
+    },
+    "steps": [
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "record_append"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_request"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "record_append"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_request"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "inspect",
+        "expected": {
+          "reason": "no-useful-next-experiment",
+          "no_progress_turns": 2
+        },
+        "error": ""
+      }
+    ]
+  },
+  {
+    "name": "successful restore skips batch without new tool charges",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 3
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "restore_request"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "restored"
+      },
+      {
+        "action": "inspect",
+        "expected": {
+          "tool_calls": 1,
+          "queued_calls": 0,
+          "skipped_calls": 2,
+          "mode": "exploring"
+        },
+        "error": ""
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "protocol",
+        "name": "attempt_execute"
+      },
+      {
+        "action": "end_turn",
+        "expected": {
+          "no_progress_turns": 1
+        },
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 1
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "inspect",
+        "expected": {
+          "model_turns": 2,
+          "tool_calls": 2,
+          "skipped_calls": 0,
+          "no_progress_turns": 2
+        },
+        "error": ""
+      }
+    ]
+  },
+  {
+    "name": "restore preflight rejection allows next tool",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "restore_request"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "preflight-rejected"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "attempt_execute"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "failed"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "inspect",
+        "expected": {
+          "tool_calls": 2,
+          "skipped_calls": 0,
+          "invalid_tool_calls": 0,
+          "no_progress_turns": 1,
+          "mode": "exploring"
+        },
+        "error": ""
+      }
+    ]
+  },
+  {
+    "name": "initial reads charged and cannot be rediscovered for progress",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 0,
+        "size": 4
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 4,
+        "result": true
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 1
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "reference_read"
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 0,
+        "size": 4
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 4,
+        "result": false
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {
+          "read_bytes": 8,
+          "no_progress_turns": 1
+        },
+        "error": ""
+      }
+    ]
+  },
+  {
+    "name": "range unions handle overlap disjointness and bridging",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 1
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "reference_read"
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 0,
+        "size": 4
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 4,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 8,
+        "size": 4
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 4,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 2,
+        "size": 8
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 8,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 0,
+        "size": 12
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 12,
+        "result": false
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {
+          "read_bytes": 28,
+          "no_progress_turns": 0
+        },
+        "error": ""
+      }
+    ]
+  },
+  {
+    "name": "same bytes different verified observation entry are new progress",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 1
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "observation_read"
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 0,
+        "size": 3
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 3,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 0,
+        "size": 3
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 3,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 0,
+        "size": 3
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 3,
+        "result": true
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {
+          "read_bytes": 9,
+          "no_progress_turns": 0
+        },
+        "error": ""
+      }
+    ]
+  },
+  {
+    "name": "EOF and unavailable refund reservations and give no progress",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 8,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 1
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "reference_read"
+      },
+      {
+        "action": "reserve_read",
+        "expected": {
+          "read_bytes": 0,
+          "reserved_read_bytes": 8
+        },
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 0,
+        "size": 8
+      },
+      {
+        "action": "settle_read",
+        "expected": {
+          "read_bytes": 0,
+          "reserved_read_bytes": 0
+        },
+        "error": "",
+        "actual": 0,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 0,
+        "size": 8
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 2,
+        "result": true
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {
+          "read_bytes": 2,
+          "reserved_read_bytes": 0,
+          "mode": "exploring"
+        },
+        "error": ""
+      }
+    ]
+  },
+  {
+    "name": "read ceiling allows last result but skips following calls",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 4,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 2
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "observation_read"
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 0,
+        "size": 4
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 4,
+        "result": true
+      },
+      {
+        "action": "inspect",
+        "expected": {
+          "mode": "finalizing",
+          "reason": "budget-limit",
+          "read_bytes": 4,
+          "skipped_calls": 1
+        },
+        "error": ""
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {
+          "no_progress_turns": 0
+        },
+        "error": ""
+      }
+    ]
+  },
+  {
+    "name": "oversize read is rejected without delivery or truncation",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 4,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 0,
+        "size": 3
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 3,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {
+          "reason": "budget-limit",
+          "read_bytes": 3,
+          "reserved_read_bytes": 0
+        },
+        "error": "stopped",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 3,
+        "size": 2
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "protocol",
+        "actual": 1
+      }
+    ]
+  },
+  {
+    "name": "unknown read closes exploration and retains reservation",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 0,
+        "size": 9
+      },
+      {
+        "action": "hard_stop",
+        "expected": {
+          "mode": "closed",
+          "read_bytes": 0,
+          "reserved_read_bytes": 9
+        },
+        "error": ""
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "protocol",
+        "actual": 0
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "stopped"
+      },
+      {
+        "action": "begin_finalization",
+        "expected": {},
+        "error": "protocol",
+        "now": 0,
+        "deadline": 30000,
+        "remaining": 100
+      }
+    ]
+  },
+  {
+    "name": "forged progress and invalid settlement cannot change accounting",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "experiment",
+        "expected": {},
+        "error": "protocol",
+        "receipt": "fake"
+      },
+      {
+        "action": "payload",
+        "expected": {},
+        "error": "protocol",
+        "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "protocol",
+        "actual": 1
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 0,
+        "size": 4
+      },
+      {
+        "action": "settle_read",
+        "expected": {
+          "read_bytes": 0,
+          "reserved_read_bytes": 4
+        },
+        "error": "protocol",
+        "actual": 5
+      },
+      {
+        "action": "settle_read",
+        "expected": {
+          "read_bytes": 0,
+          "reserved_read_bytes": 0
+        },
+        "error": "",
+        "actual": 0,
+        "result": false
+      }
+    ]
+  },
+  {
+    "name": "ordering errors do not charge extra work",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "protocol",
+        "name": "attempt_execute"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": "protocol"
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {
+          "model_turns": 1
+        },
+        "error": "protocol"
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 1
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "unknown"
+      },
+      {
+        "action": "start_tool",
+        "expected": {
+          "tool_calls": 1
+        },
+        "error": "protocol",
+        "name": "attempt_execute"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "protocol",
+        "outcome": "restored"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": "protocol"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "invalid"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "protocol",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      }
+    ]
+  },
+  {
+    "name": "host budgets narrow and cannot be widened",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "narrow",
+        "expected": {},
+        "error": "",
+        "models": 1,
+        "reads": 4
+      },
+      {
+        "action": "narrow",
+        "expected": {},
+        "error": "",
+        "models": 300,
+        "reads": 1000
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 0
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "inspect",
+        "expected": {
+          "reason": "budget-limit",
+          "model_turns": 1
+        },
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "stopped"
+      }
+    ]
+  },
+  {
+    "name": "zero host model allowance preserves already admitted batch",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 1
+      },
+      {
+        "action": "narrow",
+        "expected": {},
+        "error": "",
+        "models": 0,
+        "reads": 100
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "snapshot_list"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {
+          "reason": "budget-limit",
+          "model_turns": 1,
+          "tool_calls": 1
+        },
+        "error": ""
+      }
+    ]
+  },
+  {
+    "name": "zero host read allowance stops immediately",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "narrow",
+        "expected": {
+          "reason": "budget-limit",
+          "model_turns": 0
+        },
+        "error": "",
+        "models": 10,
+        "reads": 0
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "stopped"
+      }
+    ]
+  },
+  {
+    "name": "full safe integer batch can be skipped without overflow",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 9007199254740991,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 9007199254740991
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "restore_request"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "restored"
+      },
+      {
+        "action": "inspect",
+        "expected": {
+          "skipped_calls": 9007199254740990,
+          "tool_calls": 1
+        },
+        "error": ""
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 9007199254740991
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "restore_request"
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "restored"
+      },
+      {
+        "action": "inspect",
+        "expected": {
+          "skipped_calls": 9007199254740990,
+          "tool_calls": 2
+        },
+        "error": ""
+      },
+      {
+        "action": "end_turn",
+        "expected": {},
+        "error": ""
+      }
+    ]
+  },
+  {
+    "name": "read offset overflow rejected before reservation",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "reserve_read",
+        "expected": {
+          "read_bytes": 0,
+          "reserved_read_bytes": 0
+        },
+        "error": "protocol",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 9007199254740991,
+        "size": 1
+      }
+    ]
+  },
+  {
+    "name": "read range adjacent to safe integer boundary",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 9007199254740990,
+        "size": 1
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 1,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 9007199254740990,
+        "size": 1
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 1,
+        "result": false
+      },
+      {
+        "action": "inspect",
+        "expected": {
+          "read_bytes": 2,
+          "mode": "exploring"
+        },
+        "error": ""
+      }
+    ]
+  },
+  {
+    "name": "mixed read ranges match independent byte-set oracle",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "",
+        "compaction": false
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "",
+        "count": 1
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "",
+        "name": "reference_read"
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 14,
+        "size": 12
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 1,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 22,
+        "size": 5
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 2,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 10,
+        "size": 11
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 7,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 10,
+        "size": 1
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 1,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 0,
+        "size": 10
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 0,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 21,
+        "size": 3
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 3,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 2,
+        "size": 12
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 4,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 1,
+        "size": 11
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 8,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 15,
+        "size": 12
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 1,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 12,
+        "size": 11
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 0,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 0,
+        "size": 12
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 8,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 6,
+        "size": 10
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 8,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 0,
+        "size": 1
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 1,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 4,
+        "size": 9
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 5,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 19,
+        "size": 1
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 0,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 2,
+        "size": 12
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 3,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 13,
+        "size": 7
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 2,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 23,
+        "size": 1
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 1,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 16,
+        "size": 10
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 5,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 12,
+        "size": 10
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 5,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 8,
+        "size": 7
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 3,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 20,
+        "size": 10
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 8,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 20,
+        "size": 5
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 3,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 14,
+        "size": 4
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 0,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 4,
+        "size": 1
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 1,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 17,
+        "size": 9
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 6,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 10,
+        "size": 3
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 2,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 11,
+        "size": 4
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 0,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 2,
+        "size": 7
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 0,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 19,
+        "size": 9
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 1,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 21,
+        "size": 5
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 3,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 23,
+        "size": 5
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 5,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 14,
+        "size": 6
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 5,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 19,
+        "size": 10
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 9,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 17,
+        "size": 4
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 3,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 15,
+        "size": 6
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 1,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 20,
+        "size": 1
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 0,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 19,
+        "size": 11
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 8,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 1,
+        "size": 9
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 2,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 22,
+        "size": 1
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 0,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 6,
+        "size": 12
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 9,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 3,
+        "size": 11
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 8,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 19,
+        "size": 5
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 0,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 3,
+        "size": 10
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 3,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 19,
+        "size": 10
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 7,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 5,
+        "size": 12
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 7,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 23,
+        "size": 8
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 2,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 20,
+        "size": 11
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 6,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 8,
+        "size": 10
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 7,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 16,
+        "size": 2
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 1,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 17,
+        "size": 4
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 0,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 3,
+        "size": 12
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 7,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 9,
+        "size": 1
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 1,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 14,
+        "size": 7
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 7,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 4,
+        "size": 2
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 0,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 6,
+        "size": 7
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 5,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 14,
+        "size": 6
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 3,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 17,
+        "size": 2
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 0,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 19,
+        "size": 1
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 1,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 22,
+        "size": 8
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 8,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 23,
+        "size": 7
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 6,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 4,
+        "size": 6
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 0,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 6,
+        "size": 6
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 5,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 0,
+        "size": 9
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 5,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 21,
+        "size": 12
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 5,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 10,
+        "size": 11
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 2,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 8,
+        "size": 6
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 3,
+        "result": true
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 21,
+        "size": 4
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 3,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 13,
+        "size": 10
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 8,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 14,
+        "size": 8
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 0,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 21,
+        "size": 2
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 1,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 7,
+        "size": 2
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 2,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 9,
+        "size": 8
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 3,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 15,
+        "size": 10
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 9,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 6,
+        "size": 8
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 4,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 10,
+        "size": 2
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 1,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 20,
+        "size": 1
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 0,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 17,
+        "size": 12
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 1,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "content",
+        "source_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "offset": 6,
+        "size": 11
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 7,
+        "result": false
+      },
+      {
+        "action": "reserve_read",
+        "expected": {},
+        "error": "",
+        "source_kind": "observation",
+        "source_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "offset": 8,
+        "size": 10
+      },
+      {
+        "action": "settle_read",
+        "expected": {},
+        "error": "",
+        "actual": 2,
+        "result": false
+      },
+      {
+        "action": "finish_tool",
+        "expected": {},
+        "error": "",
+        "outcome": "success"
+      },
+      {
+        "action": "end_turn",
+        "expected": {
+          "read_bytes": 274,
+          "no_progress_turns": 0
+        },
+        "error": ""
+      }
+    ]
+  },
+  {
+    "name": "host stop with model generation outstanding retains admission",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": ""
+      },
+      {
+        "action": "hard_stop",
+        "expected": {
+          "model_turns": 1,
+          "mode": "closed",
+          "reason": "hard-stop"
+        },
+        "error": ""
+      },
+      {
+        "action": "accept_response",
+        "expected": {},
+        "error": "stopped",
+        "count": 0
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "stopped"
+      }
+    ]
+  },
+  {
+    "name": "finalization exact sixteen requests and no seventeenth",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "stop",
+        "expected": {},
+        "error": "",
+        "reason": "budget-limit"
+      },
+      {
+        "action": "begin_finalization",
+        "expected": {},
+        "error": "",
+        "now": 100,
+        "deadline": 100000,
+        "remaining": 2097152,
+        "final_expected": {
+          "requests": 0,
+          "conclusion_bytes": 0,
+          "deadline_ms": 30100,
+          "closed": false
+        }
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "",
+        "kind": "conclusion-record",
+        "bytes": 0,
+        "now": 100
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "",
+        "kind": "conclusion-record",
+        "bytes": 0,
+        "now": 101
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "",
+        "kind": "conclusion-record",
+        "bytes": 0,
+        "now": 102
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "",
+        "kind": "conclusion-record",
+        "bytes": 0,
+        "now": 103
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "",
+        "kind": "conclusion-record",
+        "bytes": 0,
+        "now": 104
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "",
+        "kind": "conclusion-record",
+        "bytes": 0,
+        "now": 105
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "",
+        "kind": "conclusion-record",
+        "bytes": 0,
+        "now": 106
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "",
+        "kind": "conclusion-record",
+        "bytes": 0,
+        "now": 107
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "",
+        "kind": "conclusion-record",
+        "bytes": 0,
+        "now": 108
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "",
+        "kind": "conclusion-record",
+        "bytes": 0,
+        "now": 109
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "",
+        "kind": "conclusion-record",
+        "bytes": 0,
+        "now": 110
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "",
+        "kind": "conclusion-record",
+        "bytes": 0,
+        "now": 111
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "",
+        "kind": "conclusion-record",
+        "bytes": 0,
+        "now": 112
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "",
+        "kind": "conclusion-record",
+        "bytes": 0,
+        "now": 113
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "",
+        "kind": "conclusion-record",
+        "bytes": 0,
+        "now": 114
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "",
+        "kind": "conclusion-record",
+        "bytes": 0,
+        "now": 115
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "stopped",
+        "kind": "stop",
+        "bytes": 0,
+        "now": 116,
+        "final_expected": {
+          "requests": 16,
+          "conclusion_bytes": 0,
+          "closed": true
+        }
+      }
+    ]
+  },
+  {
+    "name": "finalization exact byte limit still permits record and stop",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "stop",
+        "expected": {},
+        "error": "",
+        "reason": "budget-limit"
+      },
+      {
+        "action": "begin_finalization",
+        "expected": {},
+        "error": "",
+        "now": 100,
+        "deadline": 100000,
+        "remaining": 2097152,
+        "final_expected": {
+          "requests": 0,
+          "conclusion_bytes": 0,
+          "deadline_ms": 30100,
+          "closed": false
+        }
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "",
+        "kind": "conclusion-artifact",
+        "bytes": 2097152,
+        "now": 100
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "",
+        "kind": "conclusion-record",
+        "bytes": 0,
+        "now": 101
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "",
+        "kind": "stop",
+        "bytes": 0,
+        "now": 102,
+        "final_expected": {
+          "requests": 3,
+          "conclusion_bytes": 2097152,
+          "closed": false
+        }
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "stopped",
+        "kind": "conclusion-artifact",
+        "bytes": 1,
+        "now": 103,
+        "final_expected": {
+          "requests": 3,
+          "closed": true
+        }
+      }
+    ]
+  },
+  {
+    "name": "finalization host artifact allowance wins",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "stop",
+        "expected": {},
+        "error": "",
+        "reason": "budget-limit"
+      },
+      {
+        "action": "begin_finalization",
+        "expected": {},
+        "error": "",
+        "now": 100,
+        "deadline": 100000,
+        "remaining": 4,
+        "final_expected": {
+          "requests": 0,
+          "conclusion_bytes": 0,
+          "deadline_ms": 30100,
+          "closed": false
+        }
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "stopped",
+        "kind": "conclusion-artifact",
+        "bytes": 5,
+        "now": 100,
+        "final_expected": {
+          "requests": 0,
+          "conclusion_bytes": 0,
+          "closed": true
+        }
+      }
+    ]
+  },
+  {
+    "name": "zero artifact allowance permits unavailable conclusion stop",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "stop",
+        "expected": {},
+        "error": "",
+        "reason": "budget-limit"
+      },
+      {
+        "action": "begin_finalization",
+        "expected": {},
+        "error": "",
+        "now": 100,
+        "deadline": 100000,
+        "remaining": 0,
+        "final_expected": {
+          "requests": 0,
+          "conclusion_bytes": 0,
+          "deadline_ms": 30100,
+          "closed": false
+        }
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "",
+        "kind": "stop",
+        "bytes": 0,
+        "now": 100,
+        "final_expected": {
+          "requests": 1,
+          "conclusion_bytes": 0,
+          "closed": false
+        }
+      }
+    ]
+  },
+  {
+    "name": "finalization thirty seconds never extends",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "stop",
+        "expected": {},
+        "error": "",
+        "reason": "budget-limit"
+      },
+      {
+        "action": "begin_finalization",
+        "expected": {},
+        "error": "",
+        "now": 100,
+        "deadline": 100000,
+        "remaining": 2097152,
+        "final_expected": {
+          "requests": 0,
+          "conclusion_bytes": 0,
+          "deadline_ms": 30100,
+          "closed": false
+        }
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "",
+        "kind": "conclusion-record",
+        "bytes": 0,
+        "now": 30099
+      },
+      {
+        "action": "check_time",
+        "expected": {},
+        "error": "stopped",
+        "now": 30100,
+        "final_expected": {
+          "deadline_ms": 30100,
+          "closed": true
+        }
+      }
+    ]
+  },
+  {
+    "name": "campaign deadline wins over thirty second allowance",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "stop",
+        "expected": {},
+        "error": "",
+        "reason": "budget-limit"
+      },
+      {
+        "action": "begin_finalization",
+        "expected": {},
+        "error": "",
+        "now": 100,
+        "deadline": 120,
+        "remaining": 2097152,
+        "final_expected": {
+          "requests": 0,
+          "conclusion_bytes": 0,
+          "deadline_ms": 120,
+          "closed": false
+        }
+      },
+      {
+        "action": "check_time",
+        "expected": {},
+        "error": "",
+        "now": 119
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "stopped",
+        "kind": "stop",
+        "bytes": 0,
+        "now": 120,
+        "final_expected": {
+          "requests": 0,
+          "closed": true
+        }
+      }
+    ]
+  },
+  {
+    "name": "expired campaign permits no finalization requests",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "stop",
+        "expected": {},
+        "error": "",
+        "reason": "budget-limit"
+      },
+      {
+        "action": "begin_finalization",
+        "expected": {},
+        "error": "",
+        "now": 100,
+        "deadline": 99,
+        "remaining": 2097152,
+        "final_expected": {
+          "requests": 0,
+          "conclusion_bytes": 0,
+          "deadline_ms": 99,
+          "closed": true
+        }
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "stopped",
+        "kind": "stop",
+        "bytes": 0,
+        "now": 100
+      }
+    ]
+  },
+  {
+    "name": "finalization cannot restart or admit exploration",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "stop",
+        "expected": {},
+        "error": "",
+        "reason": "budget-limit"
+      },
+      {
+        "action": "begin_finalization",
+        "expected": {},
+        "error": "",
+        "now": 100,
+        "deadline": 100000,
+        "remaining": 2097152,
+        "final_expected": {
+          "requests": 0,
+          "conclusion_bytes": 0,
+          "deadline_ms": 30100,
+          "closed": false
+        }
+      },
+      {
+        "action": "begin_finalization",
+        "expected": {},
+        "error": "protocol",
+        "now": 200,
+        "deadline": 100000,
+        "remaining": 2097152
+      },
+      {
+        "action": "begin_model",
+        "expected": {},
+        "error": "stopped"
+      },
+      {
+        "action": "start_tool",
+        "expected": {},
+        "error": "stopped",
+        "name": "attempt_execute"
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "protocol",
+        "kind": "attempt_execute",
+        "bytes": 0,
+        "now": 200,
+        "final_expected": {
+          "requests": 0,
+          "deadline_ms": 30100
+        }
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "protocol",
+        "kind": "stop",
+        "bytes": 1,
+        "now": 200
+      }
+    ]
+  },
+  {
+    "name": "hard stop overrides active finalization",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "stop",
+        "expected": {},
+        "error": "",
+        "reason": "budget-limit"
+      },
+      {
+        "action": "begin_finalization",
+        "expected": {},
+        "error": "",
+        "now": 100,
+        "deadline": 100000,
+        "remaining": 2097152,
+        "final_expected": {
+          "requests": 0,
+          "conclusion_bytes": 0,
+          "deadline_ms": 30100,
+          "closed": false
+        }
+      },
+      {
+        "action": "hard_stop",
+        "expected": {
+          "mode": "closed",
+          "reason": "hard-stop"
+        },
+        "error": "",
+        "final_expected": {
+          "closed": true
+        }
+      },
+      {
+        "action": "charge",
+        "expected": {},
+        "error": "stopped",
+        "kind": "stop",
+        "bytes": 0,
+        "now": 100
+      },
+      {
+        "action": "begin_finalization",
+        "expected": {},
+        "error": "protocol",
+        "now": 101,
+        "deadline": 100000,
+        "remaining": 100
+      }
+    ]
+  },
+  {
+    "name": "monotonic clock reversal closes finalization",
+    "mode": "loop",
+    "limits": {
+      "max_model_turns": 300,
+      "max_tool_calls": 2000,
+      "max_tool_calls_per_response": 16,
+      "max_invalid_tool_calls": 50,
+      "max_consecutive_invalid_tool_calls": 5,
+      "max_read_bytes": 268435456,
+      "max_no_progress_turns": 10
+    },
+    "steps": [
+      {
+        "action": "stop",
+        "expected": {},
+        "error": "",
+        "reason": "budget-limit"
+      },
+      {
+        "action": "begin_finalization",
+        "expected": {},
+        "error": "",
+        "now": 100,
+        "deadline": 100000,
+        "remaining": 2097152,
+        "final_expected": {
+          "requests": 0,
+          "conclusion_bytes": 0,
+          "deadline_ms": 30100,
+          "closed": false
+        }
+      },
+      {
+        "action": "check_time",
+        "expected": {},
+        "error": "protocol",
+        "now": 99,
+        "final_expected": {
+          "closed": true
+        }
+      },
+      {
+        "action": "check_time",
+        "expected": {},
+        "error": "stopped",
+        "now": 100
+      }
+    ]
+  }
+]

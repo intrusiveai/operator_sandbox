@@ -35,7 +35,10 @@ The authoritative design remains [SHARED_CONTRACT.md](../schemas/SHARED_CONTRACT
   tracking and cumulative consumption ACKs, with 73 shared cases.
 - Campaign-wide attempt allocation and an in-memory admission ledger, with 40
   shared traces covering rejection, duplicates, gaps, quotas and unknown outcomes.
-  The full total is now 1,078 shared cases; the schema catalog remains at 50 entries.
+- Harness-loop configuration resolution and campaign accounting, read reservation
+  and novelty tracking, restore batch skipping and bounded finalization, with 129
+  shared cases. The full total is now 1,207 shared cases; the schema catalog remains
+  at 50 entries.
 
 The [ordinary wire contract](../schemas/ORDINARY_WIRE_CONTRACT.md) documents the
 exact implemented fields and distinguishes stateless validation from runtime gates.
@@ -159,6 +162,12 @@ before integration: rejected allocations must be retained, duplicate results
 never permit execution, and host transitions require durable journaling before
 responses or native effects. These helpers perform no persistence or native calls.
 
+Use `ResolveHarnessLimits` / `loop.resolve_harness_limits` to resolve administrator
+defaults and policy caps, then `NewHarnessLoop` / `loop.HarnessLoop` for campaign
+model/tool/read/progress accounting and its one-time finalization budget. See the
+[loop accounting contract](../schemas/HARNESS_LOOP_ACCOUNTING_CONTRACT.md) for
+event ordering, trusted progress sources and required runtime timer/admission gates.
+
 ## Remaining stages
 
 Structural validation is one gate. Receipt lookup, operation identity, digests,
@@ -174,6 +183,6 @@ implemented, but publication remains gated on that work. Message framing and
 sequence/ACK checks are implemented; actual FIFO/spool I/O, queues, timers and
 fake-broker/fake-harness integration tests are outstanding. No changes to
 Interceptor's native API are needed for this foundation.
-Attempt bookkeeping has shared semantic traces; dispatcher integration,
-durable campaign history and finite-loop/progress/finalization accounting remain
-outstanding.
+Attempt bookkeeping and finite-loop/progress/finalization accounting have shared
+semantic traces; dispatcher integration, durable campaign history, event-source
+verification and deadline enforcement remain outstanding.
