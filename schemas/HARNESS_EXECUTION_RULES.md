@@ -1,8 +1,11 @@
 # Harness attempt allocation and loop limits
 
 Status: accepted MVP contract. These rules complete the numbering and finite-loop
-decisions; Operator/Attack Harness implementation and shared Go/Python conformance remain
-pending. They supplement SHARED_CONTRACT.md without a new broker operation.
+decisions. The [attempt bookkeeping helpers](ATTEMPT_BOOKKEEPING_CONTRACT.md)
+implement allocation and in-memory admission transitions with 40 shared Go/Python
+traces. Durable runtime integration and finite-loop/progress/finalization
+conformance remain pending. These rules supplement SHARED_CONTRACT.md without a
+new broker operation.
 
 ## 1. Campaign-wide attempt numbering
 

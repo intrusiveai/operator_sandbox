@@ -1,0 +1,1577 @@
+[
+  {
+    "name": "new campaign and corrected submission",
+    "mode": "allocator",
+    "high_watermark": 0,
+    "steps": [
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 1,
+        "valid": true
+      },
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r2",
+        "attempt_id": "a2",
+        "allocated_index": 2,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "name": "seed and local rejection retain seven",
+    "mode": "allocator",
+    "high_watermark": 6,
+    "steps": [
+      {
+        "action": "allocate",
+        "raw": "{\"missing_fields\":true}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 7,
+        "valid": true
+      },
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r2",
+        "attempt_id": "a2",
+        "allocated_index": 8,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "name": "malformed or nonobject []",
+    "mode": "allocator",
+    "high_watermark": 0,
+    "steps": [
+      {
+        "action": "allocate",
+        "raw": "[]",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 0,
+        "valid": false
+      },
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 1,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "name": "malformed or nonobject null",
+    "mode": "allocator",
+    "high_watermark": 0,
+    "steps": [
+      {
+        "action": "allocate",
+        "raw": "null",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 0,
+        "valid": false
+      },
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 1,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "name": "malformed or nonobject true",
+    "mode": "allocator",
+    "high_watermark": 0,
+    "steps": [
+      {
+        "action": "allocate",
+        "raw": "true",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 0,
+        "valid": false
+      },
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 1,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "name": "malformed or nonobject 1",
+    "mode": "allocator",
+    "high_watermark": 0,
+    "steps": [
+      {
+        "action": "allocate",
+        "raw": "1",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 0,
+        "valid": false
+      },
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 1,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "name": "malformed or nonobject \"args\"",
+    "mode": "allocator",
+    "high_watermark": 0,
+    "steps": [
+      {
+        "action": "allocate",
+        "raw": "\"args\"",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 0,
+        "valid": false
+      },
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 1,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "name": "malformed or nonobject {",
+    "mode": "allocator",
+    "high_watermark": 0,
+    "steps": [
+      {
+        "action": "allocate",
+        "raw": "{",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 0,
+        "valid": false
+      },
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 1,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "name": "malformed or nonobject {}{}",
+    "mode": "allocator",
+    "high_watermark": 0,
+    "steps": [
+      {
+        "action": "allocate",
+        "raw": "{}{}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 0,
+        "valid": false
+      },
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 1,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "name": "malformed or nonobject {\"x\":1,\"x\":2}",
+    "mode": "allocator",
+    "high_watermark": 0,
+    "steps": [
+      {
+        "action": "allocate",
+        "raw": "{\"x\":1,\"x\":2}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 0,
+        "valid": false
+      },
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 1,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "name": "reserved request_id",
+    "mode": "allocator",
+    "high_watermark": 0,
+    "steps": [
+      {
+        "action": "allocate",
+        "raw": "{\"request_id\": null}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 1,
+        "valid": false
+      },
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r2",
+        "attempt_id": "a2",
+        "allocated_index": 2,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "name": "reserved attempt_id",
+    "mode": "allocator",
+    "high_watermark": 0,
+    "steps": [
+      {
+        "action": "allocate",
+        "raw": "{\"attempt_id\": null}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 1,
+        "valid": false
+      },
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r2",
+        "attempt_id": "a2",
+        "allocated_index": 2,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "name": "reserved attempt_index",
+    "mode": "allocator",
+    "high_watermark": 0,
+    "steps": [
+      {
+        "action": "allocate",
+        "raw": "{\"attempt_index\": null}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 1,
+        "valid": false
+      },
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r2",
+        "attempt_id": "a2",
+        "allocated_index": 2,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "name": "invalid generated IDs ('', 'a1')",
+    "mode": "allocator",
+    "high_watermark": 0,
+    "steps": [
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "",
+        "attempt_id": "a1",
+        "allocated_index": 0,
+        "valid": false
+      },
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 1,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "name": "invalid generated IDs ('r1', '')",
+    "mode": "allocator",
+    "high_watermark": 0,
+    "steps": [
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r1",
+        "attempt_id": "",
+        "allocated_index": 0,
+        "valid": false
+      },
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 1,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "name": "invalid generated IDs ('r\\n', 'a1')",
+    "mode": "allocator",
+    "high_watermark": 0,
+    "steps": [
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r\n",
+        "attempt_id": "a1",
+        "allocated_index": 0,
+        "valid": false
+      },
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 1,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "name": "invalid generated IDs ('rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr', 'a1')",
+    "mode": "allocator",
+    "high_watermark": 0,
+    "steps": [
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+        "attempt_id": "a1",
+        "allocated_index": 0,
+        "valid": false
+      },
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 1,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "name": "invalid generated IDs ('r1', '../a')",
+    "mode": "allocator",
+    "high_watermark": 0,
+    "steps": [
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r1",
+        "attempt_id": "../a",
+        "allocated_index": 0,
+        "valid": false
+      },
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 1,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "name": "request ID cannot be allocated twice",
+    "mode": "allocator",
+    "high_watermark": 0,
+    "steps": [
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 1,
+        "valid": true
+      },
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r1",
+        "attempt_id": "a2",
+        "allocated_index": 0,
+        "valid": false
+      },
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r2",
+        "attempt_id": "a2",
+        "allocated_index": 2,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "name": "attempt ID cannot be allocated twice",
+    "mode": "allocator",
+    "high_watermark": 0,
+    "steps": [
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 1,
+        "valid": true
+      },
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r2",
+        "attempt_id": "a1",
+        "allocated_index": 0,
+        "valid": false
+      },
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r2",
+        "attempt_id": "a2",
+        "allocated_index": 2,
+        "valid": true
+      }
+    ]
+  },
+  {
+    "name": "last safe index then exhaustion",
+    "mode": "allocator",
+    "high_watermark": 9007199254740990,
+    "steps": [
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 9007199254740991,
+        "valid": true
+      },
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r2",
+        "attempt_id": "a2",
+        "allocated_index": 0,
+        "valid": false
+      }
+    ]
+  },
+  {
+    "name": "already exhausted",
+    "mode": "allocator",
+    "high_watermark": 9007199254740991,
+    "steps": [
+      {
+        "action": "allocate",
+        "raw": "{}",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "allocated_index": 0,
+        "valid": false
+      }
+    ]
+  },
+  {
+    "name": "reject seven correct eight and replay original result",
+    "mode": "ledger",
+    "high_watermark": 6,
+    "maximum": 100,
+    "steps": [
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 7,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 7,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "resolve",
+        "request_id": "r1",
+        "outcome": "rejected",
+        "result_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "valid": true,
+        "high_watermark": 7,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "admit",
+        "request_id": "r1",
+        "fresh": true,
+        "valid": false,
+        "high_watermark": 7,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r2",
+        "attempt_id": "a2",
+        "attempt_index": 8,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 8,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "admit",
+        "request_id": "r2",
+        "fresh": true,
+        "valid": true,
+        "high_watermark": 8,
+        "admissions": 1,
+        "closed": false
+      },
+      {
+        "action": "resolve",
+        "request_id": "r2",
+        "outcome": "succeeded",
+        "result_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "valid": true,
+        "high_watermark": 8,
+        "admissions": 1,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r2",
+        "attempt_id": "a2",
+        "attempt_index": 8,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": true,
+        "valid": true,
+        "state": "succeeded",
+        "high_watermark": 8,
+        "admissions": 1,
+        "closed": false
+      },
+      {
+        "action": "admit",
+        "request_id": "r2",
+        "fresh": false,
+        "valid": true,
+        "high_watermark": 8,
+        "admissions": 1,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 7,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": true,
+        "valid": true,
+        "state": "rejected",
+        "high_watermark": 8,
+        "admissions": 1,
+        "closed": false
+      }
+    ]
+  },
+  {
+    "name": "pending duplicate never gets a second admission",
+    "mode": "ledger",
+    "high_watermark": 0,
+    "maximum": 100,
+    "steps": [
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 1,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 1,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": true,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "admit",
+        "request_id": "r1",
+        "fresh": true,
+        "valid": true,
+        "high_watermark": 1,
+        "admissions": 1,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 1,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": true,
+        "valid": true,
+        "state": "admitted",
+        "high_watermark": 1,
+        "admissions": 1,
+        "closed": false
+      },
+      {
+        "action": "admit",
+        "request_id": "r1",
+        "fresh": false,
+        "valid": true,
+        "high_watermark": 1,
+        "admissions": 1,
+        "closed": false
+      }
+    ]
+  },
+  {
+    "name": "used request conflicts {'action': 'observe', 'request_id': 'r1', 'attempt_id': 'a1', 'attempt_index': 1, 'identity_digest': 'sha256:2222222222222222222222222222222222222222222222222222222222222222', 'replay': False, 'valid': False, 'state': 'observed'}",
+    "mode": "ledger",
+    "high_watermark": 0,
+    "maximum": 100,
+    "steps": [
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 1,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 1,
+        "identity_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "replay": false,
+        "valid": false,
+        "state": "observed",
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": false
+      }
+    ]
+  },
+  {
+    "name": "used request conflicts {'action': 'observe', 'request_id': 'r1', 'attempt_id': 'a2', 'attempt_index': 1, 'identity_digest': 'sha256:1111111111111111111111111111111111111111111111111111111111111111', 'replay': False, 'valid': False, 'state': 'observed'}",
+    "mode": "ledger",
+    "high_watermark": 0,
+    "maximum": 100,
+    "steps": [
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 1,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a2",
+        "attempt_index": 1,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": false,
+        "state": "observed",
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": false
+      }
+    ]
+  },
+  {
+    "name": "used request conflicts {'action': 'observe', 'request_id': 'r1', 'attempt_id': 'a1', 'attempt_index': 2, 'identity_digest': 'sha256:1111111111111111111111111111111111111111111111111111111111111111', 'replay': False, 'valid': False, 'state': 'observed'}",
+    "mode": "ledger",
+    "high_watermark": 0,
+    "maximum": 100,
+    "steps": [
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 1,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 2,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": false,
+        "state": "observed",
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": false
+      }
+    ]
+  },
+  {
+    "name": "invalid bookkeeping {'action': 'observe', 'request_id': 'r1', 'attempt_id': 'a1', 'attempt_index': 0, 'identity_digest': 'sha256:1111111111111111111111111111111111111111111111111111111111111111', 'replay': False, 'valid': False, 'state': 'observed'}",
+    "mode": "ledger",
+    "high_watermark": 0,
+    "maximum": 100,
+    "steps": [
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 0,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": false,
+        "state": "observed",
+        "high_watermark": 0,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 1,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": false
+      }
+    ]
+  },
+  {
+    "name": "invalid bookkeeping {'action': 'observe', 'request_id': 'r1', 'attempt_id': 'a1', 'attempt_index': -1, 'identity_digest': 'sha256:1111111111111111111111111111111111111111111111111111111111111111', 'replay': False, 'valid': False, 'state': 'observed'}",
+    "mode": "ledger",
+    "high_watermark": 0,
+    "maximum": 100,
+    "steps": [
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": -1,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": false,
+        "state": "observed",
+        "high_watermark": 0,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 1,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": false
+      }
+    ]
+  },
+  {
+    "name": "invalid bookkeeping {'action': 'observe', 'request_id': 'r1', 'attempt_id': 'a1', 'attempt_index': 9007199254740992, 'identity_digest': 'sha256:1111111111111111111111111111111111111111111111111111111111111111', 'replay': False, 'valid': False, 'state': 'observed'}",
+    "mode": "ledger",
+    "high_watermark": 0,
+    "maximum": 100,
+    "steps": [
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 9007199254740992,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": false,
+        "state": "observed",
+        "high_watermark": 0,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 1,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": false
+      }
+    ]
+  },
+  {
+    "name": "invalid bookkeeping {'action': 'observe', 'request_id': '', 'attempt_id': 'a1', 'attempt_index': 1, 'identity_digest': 'sha256:1111111111111111111111111111111111111111111111111111111111111111', 'replay': False, 'valid': False, 'state': 'observed'}",
+    "mode": "ledger",
+    "high_watermark": 0,
+    "maximum": 100,
+    "steps": [
+      {
+        "action": "observe",
+        "request_id": "",
+        "attempt_id": "a1",
+        "attempt_index": 1,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": false,
+        "state": "observed",
+        "high_watermark": 0,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 1,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": false
+      }
+    ]
+  },
+  {
+    "name": "invalid bookkeeping {'action': 'observe', 'request_id': 'r1', 'attempt_id': 'a\\n', 'attempt_index': 1, 'identity_digest': 'sha256:1111111111111111111111111111111111111111111111111111111111111111', 'replay': False, 'valid': False, 'state': 'observed'}",
+    "mode": "ledger",
+    "high_watermark": 0,
+    "maximum": 100,
+    "steps": [
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a\n",
+        "attempt_index": 1,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": false,
+        "state": "observed",
+        "high_watermark": 0,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 1,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": false
+      }
+    ]
+  },
+  {
+    "name": "invalid bookkeeping {'action': 'observe', 'request_id': 'r1', 'attempt_id': 'a1', 'attempt_index': 1, 'identity_digest': 'sha256:bad', 'replay': False, 'valid': False, 'state': 'observed'}",
+    "mode": "ledger",
+    "high_watermark": 0,
+    "maximum": 100,
+    "steps": [
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 1,
+        "identity_digest": "sha256:bad",
+        "replay": false,
+        "valid": false,
+        "state": "observed",
+        "high_watermark": 0,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 1,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": false
+      }
+    ]
+  },
+  {
+    "name": "monotonicity and attempt ID uniqueness",
+    "mode": "ledger",
+    "high_watermark": 0,
+    "maximum": 100,
+    "steps": [
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 3,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 3,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r2",
+        "attempt_id": "a2",
+        "attempt_index": 2,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": false,
+        "state": "observed",
+        "high_watermark": 3,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r2",
+        "attempt_id": "a2",
+        "attempt_index": 3,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": false,
+        "state": "observed",
+        "high_watermark": 3,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r2",
+        "attempt_id": "a1",
+        "attempt_index": 4,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": false,
+        "state": "observed",
+        "high_watermark": 3,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r2",
+        "attempt_id": "a2",
+        "attempt_index": 9,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 9,
+        "admissions": 0,
+        "closed": false
+      }
+    ]
+  },
+  {
+    "name": "local gaps and failed setup do not refund admission",
+    "mode": "ledger",
+    "high_watermark": 0,
+    "maximum": 2,
+    "steps": [
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 99,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 99,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "admit",
+        "request_id": "r1",
+        "fresh": true,
+        "valid": true,
+        "high_watermark": 99,
+        "admissions": 1,
+        "closed": false
+      },
+      {
+        "action": "resolve",
+        "request_id": "r1",
+        "outcome": "failed",
+        "result_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "valid": true,
+        "high_watermark": 99,
+        "admissions": 1,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r2",
+        "attempt_id": "a2",
+        "attempt_index": 101,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 101,
+        "admissions": 1,
+        "closed": false
+      },
+      {
+        "action": "admit",
+        "request_id": "r2",
+        "fresh": true,
+        "valid": true,
+        "high_watermark": 101,
+        "admissions": 2,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r3",
+        "attempt_id": "a3",
+        "attempt_index": 102,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 102,
+        "admissions": 2,
+        "closed": false
+      },
+      {
+        "action": "admit",
+        "request_id": "r3",
+        "fresh": true,
+        "valid": false,
+        "high_watermark": 102,
+        "admissions": 2,
+        "closed": false
+      },
+      {
+        "action": "resolve",
+        "request_id": "r3",
+        "outcome": "rejected",
+        "result_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "valid": true,
+        "high_watermark": 102,
+        "admissions": 2,
+        "closed": false
+      },
+      {
+        "action": "admit",
+        "request_id": "r1",
+        "fresh": false,
+        "valid": true,
+        "high_watermark": 102,
+        "admissions": 2,
+        "closed": false
+      }
+    ]
+  },
+  {
+    "name": "unknown outcome blocks new execution but permits saved lookup",
+    "mode": "ledger",
+    "high_watermark": 0,
+    "maximum": 100,
+    "steps": [
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 1,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "admit",
+        "request_id": "r1",
+        "fresh": true,
+        "valid": true,
+        "high_watermark": 1,
+        "admissions": 1,
+        "closed": false
+      },
+      {
+        "action": "resolve",
+        "request_id": "r1",
+        "outcome": "unknown",
+        "result_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "valid": true,
+        "high_watermark": 1,
+        "admissions": 1,
+        "closed": true
+      },
+      {
+        "action": "resolve",
+        "request_id": "r1",
+        "outcome": "unknown",
+        "result_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "valid": true,
+        "high_watermark": 1,
+        "admissions": 1,
+        "closed": true
+      },
+      {
+        "action": "resolve",
+        "request_id": "r1",
+        "outcome": "succeeded",
+        "result_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "valid": false,
+        "high_watermark": 1,
+        "admissions": 1,
+        "closed": true
+      },
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 1,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": true,
+        "valid": true,
+        "state": "unknown",
+        "high_watermark": 1,
+        "admissions": 1,
+        "closed": true
+      },
+      {
+        "action": "admit",
+        "request_id": "r1",
+        "fresh": true,
+        "valid": false,
+        "high_watermark": 1,
+        "admissions": 1,
+        "closed": true
+      },
+      {
+        "action": "observe",
+        "request_id": "r2",
+        "attempt_id": "a2",
+        "attempt_index": 2,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": false,
+        "state": "observed",
+        "high_watermark": 1,
+        "admissions": 1,
+        "closed": true
+      }
+    ]
+  },
+  {
+    "name": "close prevents pending admission and new submissions",
+    "mode": "ledger",
+    "high_watermark": 0,
+    "maximum": 100,
+    "steps": [
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 1,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "close",
+        "valid": true,
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": true
+      },
+      {
+        "action": "close",
+        "valid": true,
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": true
+      },
+      {
+        "action": "admit",
+        "request_id": "r1",
+        "fresh": true,
+        "valid": false,
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": true
+      },
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 1,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": true,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": true
+      },
+      {
+        "action": "resolve",
+        "request_id": "r1",
+        "outcome": "rejected",
+        "result_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "valid": false,
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": true
+      }
+    ]
+  },
+  {
+    "name": "invalid state transitions preserve ledger",
+    "mode": "ledger",
+    "high_watermark": 0,
+    "maximum": 100,
+    "steps": [
+      {
+        "action": "admit",
+        "request_id": "r1",
+        "fresh": true,
+        "valid": false,
+        "high_watermark": 0,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "resolve",
+        "request_id": "r1",
+        "outcome": "rejected",
+        "result_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "valid": false,
+        "high_watermark": 0,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 1,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "resolve",
+        "request_id": "r1",
+        "outcome": "succeeded",
+        "result_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "valid": false,
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "resolve",
+        "request_id": "r1",
+        "outcome": "unknown",
+        "result_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "valid": false,
+        "high_watermark": 1,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "admit",
+        "request_id": "r1",
+        "fresh": true,
+        "valid": true,
+        "high_watermark": 1,
+        "admissions": 1,
+        "closed": false
+      },
+      {
+        "action": "resolve",
+        "request_id": "r1",
+        "outcome": "rejected",
+        "result_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "valid": false,
+        "high_watermark": 1,
+        "admissions": 1,
+        "closed": false
+      },
+      {
+        "action": "resolve",
+        "request_id": "r1",
+        "outcome": "failed",
+        "result_digest": "bad",
+        "valid": false,
+        "high_watermark": 1,
+        "admissions": 1,
+        "closed": false
+      },
+      {
+        "action": "resolve",
+        "request_id": "r1",
+        "outcome": "failed",
+        "result_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "valid": true,
+        "high_watermark": 1,
+        "admissions": 1,
+        "closed": false
+      },
+      {
+        "action": "resolve",
+        "request_id": "r1",
+        "outcome": "failed",
+        "result_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "valid": true,
+        "high_watermark": 1,
+        "admissions": 1,
+        "closed": false
+      },
+      {
+        "action": "resolve",
+        "request_id": "r1",
+        "outcome": "failed",
+        "result_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "valid": false,
+        "high_watermark": 1,
+        "admissions": 1,
+        "closed": false
+      },
+      {
+        "action": "resolve",
+        "request_id": "r1",
+        "outcome": "succeeded",
+        "result_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "valid": false,
+        "high_watermark": 1,
+        "admissions": 1,
+        "closed": false
+      }
+    ]
+  },
+  {
+    "name": "target restore and skipped calls cannot rewind state",
+    "mode": "ledger",
+    "high_watermark": 0,
+    "maximum": 100,
+    "steps": [
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 7,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 7,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "admit",
+        "request_id": "r1",
+        "fresh": true,
+        "valid": true,
+        "high_watermark": 7,
+        "admissions": 1,
+        "closed": false
+      },
+      {
+        "action": "resolve",
+        "request_id": "r1",
+        "outcome": "succeeded",
+        "result_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "valid": true,
+        "high_watermark": 7,
+        "admissions": 1,
+        "closed": false
+      },
+      {
+        "action": "retain",
+        "valid": true,
+        "high_watermark": 7,
+        "admissions": 1,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r2",
+        "attempt_id": "a2",
+        "attempt_index": 8,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 8,
+        "admissions": 1,
+        "closed": false
+      },
+      {
+        "action": "admit",
+        "request_id": "r2",
+        "fresh": true,
+        "valid": true,
+        "high_watermark": 8,
+        "admissions": 2,
+        "closed": false
+      }
+    ]
+  },
+  {
+    "name": "host at final safe index still serves duplicate",
+    "mode": "ledger",
+    "high_watermark": 9007199254740990,
+    "maximum": 100,
+    "steps": [
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 9007199254740991,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 9007199254740991,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r1",
+        "attempt_id": "a1",
+        "attempt_index": 9007199254740991,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": true,
+        "valid": true,
+        "state": "observed",
+        "high_watermark": 9007199254740991,
+        "admissions": 0,
+        "closed": false
+      },
+      {
+        "action": "observe",
+        "request_id": "r2",
+        "attempt_id": "a2",
+        "attempt_index": 1,
+        "identity_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "replay": false,
+        "valid": false,
+        "state": "observed",
+        "high_watermark": 9007199254740991,
+        "admissions": 0,
+        "closed": false
+      }
+    ]
+  }
+]

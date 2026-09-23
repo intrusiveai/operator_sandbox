@@ -17,6 +17,8 @@ The [package integrity contract](schemas/PACKAGE_INTEGRITY_CONTRACT.md) adds man
 construction, exact payload verification and loading against a trusted package pin.
 The [transport codec contract](schemas/TRANSPORT_CODEC_CONTRACT.md) adds bounded
 FIFO framing, spool names, lane sequence tracking and consumption ACK checks.
+The [attempt bookkeeping contract](schemas/ATTEMPT_BOOKKEEPING_CONTRACT.md) adds
+campaign attempt allocation, duplicate/admission tracking and unknown-outcome closure.
 Run `make setup` then `make test`. Contract publication and
 Operator/Attack Harness runtime implementation remain pending.
 

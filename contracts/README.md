@@ -32,8 +32,10 @@ The authoritative design remains [SHARED_CONTRACT.md](../schemas/SHARED_CONTRACT
 - Package manifest construction, exact payload verification and loading from frozen
   verified bytes, with 39 shared cases and real-catalog loader tests.
 - Incremental FIFO framing, spool names/lane validation, launch-wide sequence
-  tracking and cumulative consumption ACKs, with 73 shared cases. The full total
-  is now 1,038 shared cases; the schema catalog remains at 50 entries.
+  tracking and cumulative consumption ACKs, with 73 shared cases.
+- Campaign-wide attempt allocation and an in-memory admission ledger, with 40
+  shared traces covering rejection, duplicates, gaps, quotas and unknown outcomes.
+  The full total is now 1,078 shared cases; the schema catalog remains at 50 entries.
 
 The [ordinary wire contract](../schemas/ORDINARY_WIRE_CONTRACT.md) documents the
 exact implemented fields and distinguishes stateless validation from runtime gates.
@@ -150,6 +152,13 @@ direction, campaign/launch sequences and consumption ACK positions across restor
 See the [transport codec contract](../schemas/TRANSPORT_CODEC_CONTRACT.md) for
 spool filename helpers, API use and the required queue/deadline/runtime integration.
 
+Use `NewAttemptAllocator` / `attempts.AttemptAllocator` for new dispatched attempt
+numbers and `NewAttemptLedger` / `attempts.AttemptLedger` for submission, duplicate,
+admission and result transitions. See the [attempt bookkeeping contract](../schemas/ATTEMPT_BOOKKEEPING_CONTRACT.md)
+before integration: rejected allocations must be retained, duplicate results
+never permit execution, and host transitions require durable journaling before
+responses or native effects. These helpers perform no persistence or native calls.
+
 ## Remaining stages
 
 Structural validation is one gate. Receipt lookup, operation identity, digests,
@@ -165,3 +174,6 @@ implemented, but publication remains gated on that work. Message framing and
 sequence/ACK checks are implemented; actual FIFO/spool I/O, queues, timers and
 fake-broker/fake-harness integration tests are outstanding. No changes to
 Interceptor's native API are needed for this foundation.
+Attempt bookkeeping has shared semantic traces; dispatcher integration,
+durable campaign history and finite-loop/progress/finalization accounting remain
+outstanding.

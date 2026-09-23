@@ -35,6 +35,9 @@ the verified version/digest. Package publication and runtime qualification remai
 The [transport codec stage](TRANSPORT_CODEC_CONTRACT.md) implements bounded FIFO
 frames, spool naming, lane validation, consecutive sequences and cumulative ACK
 checks. Physical I/O, queues, scheduling and deadlines remain runtime work.
+The [attempt bookkeeping stage](ATTEMPT_BOOKKEEPING_CONTRACT.md) implements
+campaign-wide allocation and in-memory duplicate/admission/result transitions.
+Durable history, dispatch and finite-loop accounting remain runtime work.
 Complete message bindings/schemas, stateful checks and transport conformance remain outstanding.
 
 ## 1. One owner and one pinned package
@@ -791,8 +794,10 @@ containment, real-provider behavior or Operator runtime implementation.
 ## 13. Publication and implementation status
 
 Attempt numbering after rejection and harness-loop defaults/accounting are resolved
-by [Harness execution rules](HARNESS_EXECUTION_RULES.md). Their runtime and semantic
-conformance tests remain implementation work.
+by [Harness execution rules](HARNESS_EXECUTION_RULES.md). Attempt allocation and
+admission transitions have [shared semantic traces](ATTEMPT_BOOKKEEPING_CONTRACT.md);
+durable runtime integration and finite-loop/progress/finalization conformance
+remain implementation work.
 
 The package shape, startup/manifest flow, identity/deadline rules and completion
 semantics and macOS physical spool mapping above are accepted. Remaining work
