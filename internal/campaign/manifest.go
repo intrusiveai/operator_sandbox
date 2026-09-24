@@ -211,10 +211,16 @@ func (b DockerBinding) Validate() error {
 	}
 	// The selected local Unix endpoint is frozen; mutable CLI contexts, TCP/SSH
 	// routing, credentials and environment-derived endpoints cannot be persisted.
-	u, err := url.Parse(b.Endpoint)
+	return ValidateDockerEndpoint(b.Endpoint)
+}
+
+// ValidateDockerEndpoint is shared by initial image preparation and saved bindings.
+// Only an explicit canonical local Unix socket is accepted.
+func ValidateDockerEndpoint(endpoint string) error {
+	u, err := url.Parse(endpoint)
 	if err != nil || u.Scheme != "unix" || u.Host != "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" ||
 		u.RawPath != "" || !strings.HasPrefix(u.Path, "/") || u.Path == "/" || path.Clean(u.Path) != u.Path ||
-		strings.ContainsAny(u.Path, "\x00\r\n") || len(b.Endpoint) > 4096 || b.Endpoint != "unix://"+u.Path {
+		strings.ContainsAny(u.Path, "\x00\r\n") || len(endpoint) > 4096 || endpoint != "unix://"+u.Path {
 		return ErrInvalid
 	}
 	return nil

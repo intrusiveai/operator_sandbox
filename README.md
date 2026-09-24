@@ -36,6 +36,9 @@ after confirmed container exit.
 The [Docker termination stage](docs/DOCKER_TERMINATION.md) adds the initial
 `operatorctl campaign terminate` command, exact daemon/container verification,
 a terminal-fence observer and bounded emergency evidence independent of the journal.
+The [image preparation stage](docs/IMAGE_PREPARATION.md) resolves native local
+image IDs, validates fixed-origin HTTPS release records and supports private cached
+approval with current compatibility checks.
 Run `make setup` then `make test`. Contract publication and
 the remaining Operator/Attack Harness runtime implementation remain pending.
 

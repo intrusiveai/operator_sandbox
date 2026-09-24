@@ -6,6 +6,10 @@ administrative command and a terminal-fence observer. Container creation/start,
 the campaign service and native execution are subsequent stages. Tests use a fake
 Docker executable; real Docker and host-profile qualification remain pending.
 
+The same restricted Docker subprocess wrapper now supports
+[read-only local image preparation](IMAGE_PREPARATION.md). Saved-container
+termination continues to use its recorded endpoint and exact container identity.
+
 ## Administrative command
 
 Build and invoke the initial CLI:

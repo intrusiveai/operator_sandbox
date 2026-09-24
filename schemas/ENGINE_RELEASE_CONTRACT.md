@@ -1,9 +1,15 @@
 # Engine release discovery and compatibility
 
-Status: accepted MVP design, 2026-09-16; implementation and qualification pending.
+Status: accepted MVP design, 2026-09-16; local identity resolution and HTTPS/cache
+validation implemented; launcher integration and qualification pending.
 Operator owns this host-only discovery contract for local Attack Harness images and their
 release approval. The shared host/harness contract separately governs runtime
 messages and data exchange.
+
+The [host image preparation implementation](../docs/IMAGE_PREPARATION.md) provides
+local pinning, strict compatibility checks and atomic caching. Embedded release-file
+inspection, configuration/launcher integration and actual runtime qualification
+remain prerequisites for executing the guest.
 
 ## 1. Local image identity
 

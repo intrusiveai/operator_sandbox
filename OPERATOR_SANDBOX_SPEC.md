@@ -334,6 +334,11 @@ unmet requirement fails startup. The MVP has no automatic cache expiry/revocatio
 polling; the release contract documents administrator eviction and audit retention.
 Image selection and release lookup are host preparation; the guest remains offline.
 
+The [image preparation layer](docs/IMAGE_PREPARATION.md) implements local native
+image resolution, selector/pin rechecks, fixed-origin release lookup and private
+cache validation. Configuration loading, embedded release-file inspection and
+container creation/start remain launcher integration work.
+
 ### 5.1.2 Spool size configuration
 
 The same administrator-owned configuration file accepts:
