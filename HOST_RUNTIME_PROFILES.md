@@ -293,11 +293,14 @@ success claim. Recovery only performs cleanup and reporting; it does not resume
 execution or replay pending operations. Disable automatic container restart.
 Operator additionally treats loss of its Interceptor service as terminal.
 
-Mac Operator defaults use private configuration under
-`~/Library/Application Support/Operator/config` and retained state under
+Mac Operator defaults use the private configuration file
+`~/Library/Application Support/Operator/config/config.yaml` and retained state under
 `~/Library/Application Support/Operator/data`. Resolve the account home and Docker
-endpoint once from trusted installation configuration. Worker and administrator
-CLI must use the same account, configured endpoint and state root. Interceptor
+endpoint once from trusted installation configuration. The default Docker Desktop
+socket is `unix://<home>/.docker/run/docker.sock`; configure other socket locations
+explicitly under the [host configuration contract](docs/HOST_CONFIGURATION.md).
+Worker and administrator CLI use the same account and state root. Cleanup uses
+the saved campaign endpoint even if configuration changes. Interceptor
 retains its documented data-directory configuration under that user's account.
 LaunchAgents require that Docker Desktop is available before explicit run startup.
 

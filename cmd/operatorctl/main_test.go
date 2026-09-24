@@ -13,6 +13,7 @@ import (
 
 	"github.com/intrusive-ai/operator-sandbox/contracts"
 	"github.com/intrusive-ai/operator-sandbox/internal/campaign"
+	"github.com/intrusive-ai/operator-sandbox/internal/hostconfig"
 	"github.com/intrusive-ai/operator-sandbox/internal/termination"
 )
 
@@ -130,6 +131,140 @@ func TestCommandRejectsUnsupportedArguments(t *testing.T) {
 		var out, err bytes.Buffer
 		if code := run(context.Background(), args, &out, &err); code != 2 {
 			t.Fatal(args, code)
+		}
+	}
+}
+
+func configPaths(t *testing.T) hostconfig.Paths {
+	t.Helper()
+	dir := t.TempDir()
+	return hostconfig.Paths{ConfigFile: filepath.Join(dir, "config.yaml"), StateRoot: filepath.Join(dir, "data"), DockerEndpoint: "unix:///default/docker.sock"}
+}
+
+func writeConfig(t *testing.T, name, body string) {
+	t.Helper()
+	if err := os.WriteFile(name, []byte(body), 0600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestConfigCheckIsReadOnly(t *testing.T) {
+	p := configPaths(t)
+	// The executable deliberately does not exist; checking config must not run it,
+	// inspect Docker, validate releases or create the configured state/cache roots.
+	raw := "engine: {image: 'example/attack_harness:dev'}\ndocker: {executable: '/does/not/exist/docker'}\n"
+	writeConfig(t, p.ConfigFile, raw)
+	for _, args := range [][]string{{"config", "check"}, {"config", "check", "--config", p.ConfigFile}} {
+		var out, stderr bytes.Buffer
+		code := runWithDefaults(context.Background(), args, &out, &stderr, p)
+		var result struct {
+			APIVersion string `json:"api_version"`
+			Status     string `json:"status"`
+			hostconfig.Loaded
+		}
+		if err := json.Unmarshal(out.Bytes(), &result); err != nil || code != 0 || result.Status != "valid" || result.APIVersion != "operator.dev/config-check/v1alpha1" || result.Digest != contracts.RawDigest([]byte(raw)) || result.Config.State.Root != p.StateRoot || result.Config.Spool.MaxBytes != 536870912 {
+			t.Fatal(code, out.String(), stderr.String(), err)
+		}
+		if _, err := os.Stat(p.StateRoot); !os.IsNotExist(err) {
+			t.Fatal("check created state", err)
+		}
+	}
+}
+
+func TestTerminationConfigurationAndOverridePrecedence(t *testing.T) {
+	for _, override := range []bool{false, true} {
+		t.Run(map[bool]string{false: "config", true: "override"}[override], func(t *testing.T) {
+			root, b := savedCampaign(t)
+			bin := fakeCLI(t, b)
+			p := configPaths(t)
+			configRoot, configBin := root, bin
+			args := []string{"campaign", "terminate", "--campaign", b.CampaignID, "--config", p.ConfigFile}
+			if override {
+				configRoot, configBin = "/wrong/state", "/wrong/docker"
+				args = append(args, "--state-root", root, "--docker-bin", bin)
+			}
+			// Endpoint differs from the saved campaign. The fake CLI rejects any
+			// command that doesn't use the recorded endpoint and exact container ID.
+			writeConfig(t, p.ConfigFile, "engine: {image: 'example/attack_harness:dev'}\nstate: {root: '"+configRoot+"'}\ndocker: {endpoint: 'unix:///changed/docker.sock', executable: '"+configBin+"'}\n")
+			var out, stderr bytes.Buffer
+			if code := runWithDefaults(context.Background(), args, &out, &stderr, p); code != 0 {
+				t.Fatal(code, out.String(), stderr.String())
+			}
+		})
+	}
+}
+
+func TestTerminationBypassesBrokenDefaultWithExplicitStateRoot(t *testing.T) {
+	root, b := savedCampaign(t)
+	bin := fakeCLI(t, b)
+	p := configPaths(t)
+	writeConfig(t, p.ConfigFile, "not a valid configuration")
+	args := []string{"campaign", "terminate", "--campaign", b.CampaignID, "--state-root", root, "--docker-bin", bin}
+	var out, stderr bytes.Buffer
+	if code := runWithDefaults(context.Background(), args, &out, &stderr, p); code != 0 {
+		t.Fatal(code, out.String(), stderr.String())
+	}
+	// Explicit --config must never be silently ignored, even during recovery.
+	out.Reset()
+	stderr.Reset()
+	if code := runWithDefaults(context.Background(), append(args, "--config", p.ConfigFile), &out, &stderr, p); code != 2 || out.Len() != 0 {
+		t.Fatal(code, out.String(), stderr.String())
+	}
+}
+
+func TestExplicitRecoveryWithoutHostDefaults(t *testing.T) {
+	root, b := savedCampaign(t)
+	bin := fakeCLI(t, b)
+	t.Setenv("HOME", "")
+	var out, stderr bytes.Buffer
+	args := []string{"campaign", "terminate", "--campaign", b.CampaignID, "--state-root", root, "--docker-bin", bin}
+	if code := run(context.Background(), args, &out, &stderr); code != 0 {
+		t.Fatal(code, out.String(), stderr.String())
+	}
+}
+
+func TestDefaultConfigIsUsedAndOnlyAbsencePermitsFallback(t *testing.T) {
+	for _, state := range []string{"valid", "absent", "invalid"} {
+		t.Run(state, func(t *testing.T) {
+			root, b := savedCampaign(t)
+			bin := fakeCLI(t, b)
+			p := configPaths(t)
+			p.StateRoot = root
+			args := []string{"campaign", "terminate", "--campaign", b.CampaignID}
+			switch state {
+			case "valid":
+				p.StateRoot = "/wrong/state"
+				writeConfig(t, p.ConfigFile, "engine: {image: test}\nstate: {root: '"+root+"'}\ndocker: {executable: '"+bin+"'}\n")
+			case "invalid":
+				writeConfig(t, p.ConfigFile, "engine: {unknown: test}")
+				args = append(args, "--docker-bin", bin)
+			case "absent":
+				args = append(args, "--docker-bin", bin)
+			}
+			var out, stderr bytes.Buffer
+			code := runWithDefaults(context.Background(), args, &out, &stderr, p)
+			if state == "invalid" {
+				if code != 2 || out.Len() != 0 || !strings.Contains(stderr.String(), "--state-root") {
+					t.Fatal(code, out.String(), stderr.String())
+				}
+			} else if code != 0 {
+				t.Fatal(code, out.String(), stderr.String())
+			}
+		})
+	}
+}
+
+func TestConfigCommandRejectsMissingFileAndInvalidArguments(t *testing.T) {
+	p := configPaths(t)
+	for _, args := range [][]string{
+		{"config", "check"}, {"config", "check", "--config", ""}, {"config", "check", "extra"}, {"config", "check", "--config", "relative.yaml"},
+		{"campaign", "terminate", "--campaign", "x", "--config", p.ConfigFile},
+		{"campaign", "terminate", "--campaign", "x", "--state-root", ""},
+		{"campaign", "terminate", "--campaign", "x", "--config", ""},
+	} {
+		var out, stderr bytes.Buffer
+		if code := runWithDefaults(context.Background(), args, &out, &stderr, p); code != 2 || out.Len() != 0 {
+			t.Fatal(args, code, out.String(), stderr.String())
 		}
 	}
 }

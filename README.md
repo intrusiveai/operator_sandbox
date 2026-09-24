@@ -39,6 +39,9 @@ a terminal-fence observer and bounded emergency evidence independent of the jour
 The [image preparation stage](docs/IMAGE_PREPARATION.md) resolves native local
 image IDs, validates fixed-origin HTTPS release records and supports private cached
 approval with current compatibility checks.
+The [host configuration stage](docs/HOST_CONFIGURATION.md) adds strict private YAML
+loading, OS-specific local Docker/state defaults, `operatorctl config check` and
+configuration-aware termination with explicit recovery overrides.
 Run `make setup` then `make test`. Contract publication and
 the remaining Operator/Attack Harness runtime implementation remain pending.
 

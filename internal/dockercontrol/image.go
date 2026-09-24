@@ -52,7 +52,7 @@ func (p ImagePin) Validate() error {
 	if err != nil || p.ImagePlatform != platform {
 		return ErrPlatform
 	}
-	if campaign.ValidateDockerEndpoint(p.Endpoint) != nil || !validSelector(p.Selector) || !daemonID.MatchString(p.DaemonID) || !imageDigest.MatchString(p.ImageID) {
+	if campaign.ValidateDockerEndpoint(p.Endpoint) != nil || ValidateImageSelector(p.Selector) != nil || !daemonID.MatchString(p.DaemonID) || !imageDigest.MatchString(p.ImageID) {
 		return ErrImageIdentity
 	}
 	if len(p.RepoDigests) > 128 {
@@ -67,6 +67,17 @@ func (p ImagePin) Validate() error {
 }
 
 func validSelector(s string) bool { return imageSelector.MatchString(s) && !strings.Contains(s, "://") }
+
+// ValidateImageSelector checks administrator input without Docker I/O.
+func ValidateImageSelector(s string) error {
+	if !validSelector(s) {
+		return ErrImageSelector
+	}
+	if _, digest, ok := strings.Cut(s, "@"); ok && !imageDigest.MatchString(digest) {
+		return ErrImageSelector
+	}
+	return nil
+}
 
 const imageFormat = `{"id":{{json .Id}},"os":{{json .Os}},"architecture":{{json .Architecture}},"repo_digests":{{json .RepoDigests}}}`
 
@@ -91,7 +102,7 @@ func (c *Client) ResolveImage(ctx context.Context, endpoint, selector, host stri
 	if err != nil {
 		return pin, err
 	}
-	if c == nil || c.run == nil || campaign.ValidateDockerEndpoint(endpoint) != nil || !validSelector(selector) {
+	if c == nil || c.run == nil || campaign.ValidateDockerEndpoint(endpoint) != nil || ValidateImageSelector(selector) != nil {
 		return pin, ErrImageSelector
 	}
 	ctx, cancel := context.WithTimeout(ctx, ConfirmationTimeout)

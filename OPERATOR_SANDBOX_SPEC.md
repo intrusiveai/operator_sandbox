@@ -336,8 +336,9 @@ Image selection and release lookup are host preparation; the guest remains offli
 
 The [image preparation layer](docs/IMAGE_PREPARATION.md) implements local native
 image resolution, selector/pin rechecks, fixed-origin release lookup and private
-cache validation. Configuration loading, embedded release-file inspection and
-container creation/start remain launcher integration work.
+cache validation. The [host configuration loader](docs/HOST_CONFIGURATION.md)
+implements private YAML loading and read-only CLI validation. Embedded release-file
+inspection and container creation/start remain launcher integration work.
 
 ### 5.1.2 Spool size configuration
 
@@ -1468,6 +1469,14 @@ a filesystem/file-sharing backend that preserves required permissions and name s
 Reject input inventories that cannot be represented without case/Unicode collisions.
 Private host directories/files default to `0700`/`0600`; no implicit configuration
 from the current or target directory is accepted.
+
+The initial [host configuration format](docs/HOST_CONFIGURATION.md) defines the
+exact supported fields, local Docker socket defaults, path/type validation and
+`operatorctl config check` behavior. Loading is read-only and does not establish
+image availability or runtime compatibility. Administrative termination can use an
+explicit state-root override when the default configuration is damaged; it always
+uses the campaign's saved Docker binding rather than the current configuration's
+endpoint. Launch freezes effective settings and their source digest.
 
 The host `engine.image` setting selects local Docker content under Section 5.1.1;
 campaign or guest content cannot override it. Administrators install images and

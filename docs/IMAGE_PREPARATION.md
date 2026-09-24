@@ -8,7 +8,8 @@ remains authoritative. These host-only records do not change the shared wire pac
 
 ## Preparation interface
 
-The future configuration/launcher layer supplies trusted installation settings:
+The [host configuration loader](HOST_CONFIGURATION.md) supplies installation
+settings to the future launcher/preparation command:
 
 - The configured `engine.image` selector and selected local Unix Docker endpoint.
 - The actual host platform and installed `operator-container/v1` policy identity.
@@ -23,8 +24,8 @@ before checking approval. Its `Prepared` result retains both the image pin and a
 immutable copy of the approved response bytes. A cached approval alone cannot
 satisfy a missing local image. Close the client after preparation calls finish.
 
-Full configuration-file loading, installed package/version selection and exposing
-preparation through the campaign CLI remain subsequent integration work. No caller
+Installed package/version selection and exposing preparation through the campaign
+CLI remain subsequent integration work. No caller
 can configure a different release URL or TLS policy through this API.
 
 ## Read-only Docker resolution

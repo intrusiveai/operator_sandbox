@@ -22,12 +22,15 @@ build/operatorctl campaign terminate \
   --reason user-request
 ```
 
-The state-root defaults match the installed host profile: `/var/lib/operator` on
-Linux and `~/Library/Application Support/Operator/data` on macOS. `--state-root`
-selects an explicit absolute installation path. `--docker-bin` optionally selects
-an absolute Docker CLI executable; otherwise its path is resolved once from the
-administrator's `PATH`. These are trusted host settings, never campaign inputs.
-General configuration-file loading and the other CLI commands remain future work.
+The command loads the [installed host configuration](HOST_CONFIGURATION.md), or an
+explicit `--config` file, for `state.root` and `docker.executable`. `--state-root`
+and `--docker-bin` override these settings. An explicit state root without
+`--config` bypasses default configuration for emergency recovery. Otherwise a
+missing default file permits OS defaults; an existing invalid file fails.
+The state-root defaults are `/var/lib/operator` on Linux and
+`~/Library/Application Support/Operator/data` on macOS. An omitted executable is
+resolved once from the administrator's `PATH`. Termination always uses the saved
+campaign endpoint, regardless of the endpoint configured for new campaigns.
 
 Each request receives a random 32-character lowercase hex request ID. An
 administrator may supply `--request-id` to correlate retries. `--reason` is a
@@ -41,7 +44,7 @@ bounded host identifier, not arbitrary text. JSON output uses
 
 Exit status is **0** only for confirmed stopped state with both records committed;
 **1** means unconfirmed termination or incomplete recording; **2** means invalid
-CLI usage. Recording failure can therefore produce a nonzero status even when
+CLI usage or failed configuration loading. Recording failure can therefore produce a nonzero status even when
 Docker exit is confirmed. Failed binding lookup does not fall back to names,
 labels, current contexts or another daemon.
 

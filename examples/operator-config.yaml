@@ -1,0 +1,16 @@
+# Install as a private (0600) file in the documented host configuration directory.
+# Choose an image already available to the local Docker installation.
+engine:
+  image: registry.example.com/intrusive/attack_harness:1.2.3
+
+spool:
+  max_bytes: 536870912
+
+# Optional settings below have OS-specific defaults. See docs/HOST_CONFIGURATION.md.
+# docker:
+#   endpoint: unix:///var/run/docker.sock
+#   executable: /usr/bin/docker
+# state:
+#   root: /var/lib/operator
+# cache:
+#   release_directory: /var/lib/operator/cache/releases
