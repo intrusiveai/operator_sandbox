@@ -100,25 +100,35 @@ func (c *Client) post(ctx context.Context, route string, raw []byte) (Response, 
 	if err != nil || len(raw) > JSONLimit || ctx.Err() != nil {
 		return fail()
 	}
-	var result Response
-	if decodeClosed(raw, &result, []string{"status", "session_revision"}, []string{"body"}) != nil {
+	result, err := decodeResponse(raw)
+	if err != nil {
 		return fail()
 	}
 	expected := result.Status
 	if expected == 204 {
 		expected = 200
 	}
-	if result.Status < 200 || result.Status >= 600 || result.Status >= 300 && result.Status < 400 || response.StatusCode != expected {
+	if response.StatusCode != expected {
 		return fail()
+	}
+	return result, nil
+}
+
+// decodeResponse also validates responses nested in durable operation records.
+// These have no separate HTTP status, but retain the native framing rules.
+func decodeResponse(raw []byte) (Response, error) {
+	var result Response
+	if decodeClosed(raw, &result, []string{"status", "session_revision"}, []string{"body"}) != nil || result.Status < 200 || result.Status >= 600 || result.Status >= 300 && result.Status < 400 {
+		return Response{}, invalidResponse()
 	}
 	// A 204 native operation may omit body; every other response must contain an object.
 	if result.Status != 204 {
 		if _, err := object(result.Body); err != nil {
-			return fail()
+			return Response{}, invalidResponse()
 		}
 	} else if len(result.Body) != 0 && !bytes.Equal(result.Body, []byte("null")) {
 		if _, err := object(result.Body); err != nil {
-			return fail()
+			return Response{}, invalidResponse()
 		}
 	}
 	return result, nil

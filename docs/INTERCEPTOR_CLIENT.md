@@ -1,8 +1,9 @@
 # Native Interceptor client
 
-Status: the initial host-only client is implemented in `internal/interceptor`.
+Status: the host-only client is implemented in `internal/interceptor`.
 It provides campaign attachment, instance status, immutable v1alpha2 operation
-encoding/dispatch and typed closure confirmation. It does not start a campaign or
+encoding/dispatch, typed closure confirmation, lifecycle restore/stop and durable
+operation-record decoding. It does not start a campaign or
 serve as the harness-facing policy broker. Shared Operator/Attack Harness schemas
 and Interceptor's existing API are unchanged.
 
@@ -31,6 +32,9 @@ ceiling. Dialing is bounded to five seconds. The broker must select shorter
 operation-specific deadlines and remaining campaign time before saving the request.
 No method renews a saved native deadline. Expired/canceled requests are refused
 before dispatch; reconciliation uses a fresh `operation.status` request.
+Lifecycle dispatch also uses a saved absolute host deadline, capped at 300 seconds
+per call. Lifecycle record queries have a fresh 30-second deadline. Interceptor's
+admitted lifecycle work continues independently after client disconnection.
 
 The client disables connection reuse and never supplies replayable HTTP bodies or
 idempotency headers. It makes no automatic retries. A closure/status request does
@@ -116,18 +120,80 @@ recorded attribution and need not match the closing caller. A wrapped `{owner: .
 or incomplete acknowledgement is rejected. Admission closure does not establish
 target termination; it also cannot be used as the prelude to a healthy restore.
 
-## Tests and remaining integration
+## Lifecycle and reconciliation
+
+### Restore and confirmed target stop
+
+`PrepareLifecycle(request, deadline)` freezes a `snapshot.restore` or `session.stop`
+command. Persist `Bytes()` and `Deadline()` before calling `ExecuteLifecycle`.
+The absolute host deadline is separate from the native wire, which has no deadline
+field. Reusing a prepared request never renews that deadline; there is no automatic
+retry. Restore accepts a checkpoint ID and optional retained source session ID.
+Stop rejects checkpoint/source fields and uses the instance's attachment stop policy.
+
+`DecodeRestore(response, prepared, priorBinding, priorSession)` checks the fresh
+session, exactly one increment of the authoritative prior binding's run revision,
+the checkpoint/source and metadata parent lineage, campaign, running phase and
+unchanged target environment/application/capability digests and native feedback
+profile. Native session revision can reset independently. Request worker/revision
+are attribution and do not determine the replacement revision or restrict access.
+A replayed result may contain the original worker's attribution.
+
+`DecodeStop(response, prepared)` requires the addressed session and `phase: stopped`.
+This is the native lifecycle stop acknowledgement; an owner closure acknowledgement
+alone is insufficient. Non-200 replies retain their exact native status/code in
+`RemoteError`, including preflight rejection, in-progress and uncertain failures.
+
+These decoders do not adopt a binding, resume work or restart the harness. The host
+broker must validate the source against saved campaign lineage before dispatch,
+reject reuse of any earlier session ID, persist an accepted replacement once, and
+check the same Interceptor instance remains ready at that binding before continuing.
+Known checkpoint preflight rejection can retain the original healthy binding under
+the restore policy. Uncertainty or failure after closure remains terminal; a later
+successful record can support cleanup/reporting but cannot reopen execution.
+
+### Separate operation ledgers
+
+`Client.LifecycleStatus(ctx, prepared)` queries `/v1/status` with the saved campaign
+and lifecycle operation ID. `DecodeLifecycleRecord` validates the original request,
+native command fingerprint, record state and nested response. Fingerprinting follows
+native struct serialization and clears only worker/revision attribution. A running
+lifecycle record contains `202 operation_in_progress`; a completed record contains
+the saved outcome, which can be a rejection or failure. Pass a successful saved
+response through `DecodeRestore` or `DecodeStop` before using its contents.
+
+Native experiment operations use `PrepareOperationStatus(query, original)` followed
+by `Execute` and `DecodeOperationRecord(response, original)`. The query has fresh
+request/operation IDs and a fresh deadline, addresses the original session/campaign,
+and can carry the current worker attribution after a restore. It must not address
+the replacement session to look up the old operation. The decoder checks the full
+original request fingerprint and matching command, exact body digest, deadline and
+native expected revision. Worker/revision differences are accepted as attribution.
+The optional native command fingerprint is checked when present; native owner-body
+normalization is retained separately from the raw body digest.
+
+Native states remain explicit: `running` has the native store's empty response
+(`status: 0`); `completed` has a finished response; `unknown` retains its failure
+response. The placeholder is accepted only inside a running operation record and
+is never an HTTP success. Missing records, running/unknown records and unavailable
+queries cannot establish non-execution or authorize another effect under a new ID.
+No decoder changes the host terminal fence. Record data and raw session metadata
+are protected host audit inputs, not guest-visible payloads.
+
+## Validation and pending integration
 
 Tests use copied native fixtures with [recorded provenance](../internal/interceptor/testdata/README.md),
 controlled responses and a real loopback HTTP test server. They cover exact native
 body encoding, byte freezing, request/response bounds, malformed responses,
 redirect/compression rejection, expiry, native 204 framing, binding mismatches,
 terminal status, original closure attribution and lost replies without automatic
-replay. The loopback server is a protocol test double, not a running Interceptor
+replay. Lifecycle/record tests additionally cover absolute deadlines, source and
+replacement lineage, independent native revisions, cross-worker attribution,
+missing/in-progress/unknown outcomes, changed-command rejection and strict nested
+responses. The loopback server is a protocol test double, not a running Interceptor
 target or a qualification result.
 
-Lifecycle restore/stop and operation-record decoding, snapshot inventory, protected
-evidence streaming, typed experiment bodies/results, capability projection and
+Snapshot inventory, protected evidence streaming, typed experiment bodies/results, capability projection and
 feedback filtering remain adapter work. Durable dispatch/reconciliation, status
 polling, terminal fencing and the campaign CLI still need integration. No command
 in this stage attaches to or mutates a real local target automatically.

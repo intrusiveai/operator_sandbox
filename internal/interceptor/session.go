@@ -70,30 +70,8 @@ func (c *Client) Attach(ctx context.Context, campaign, worker string, allowTarge
 	if decodeClosed(fields["binding"], &body.Binding, []string{"session_id", "worker_instance_id", "run_revision"}, nil) != nil {
 		return Attachment{}, invalidResponse()
 	}
-	var session Session
-	metadata, err := object(body.Session)
-	if err != nil {
-		return Attachment{}, invalidResponse()
-	}
-	projection := map[string]json.RawMessage{}
-	for _, key := range []string{"id", "campaign_id", "operation_api_version", "revision", "phase", "feedback_profile", "environment_digest", "app_digest", "capability_manifest_digest"} {
-		if v, ok := metadata[key]; !ok || bytes.Equal(v, []byte("null")) {
-			return Attachment{}, invalidResponse()
-		} else {
-			projection[key] = v
-		}
-	}
-	// Native metadata is extensible host data. Decode only exact selected keys;
-	// encoding/json's case-insensitive struct matching must not let an unknown
-	// alias override the authoritative lowercase routing field.
-	projected, _ := json.Marshal(projection)
-	if json.Unmarshal(projected, &session) != nil {
-		return Attachment{}, invalidResponse()
-	}
-	if session.ID != body.Binding.SessionID || session.CampaignID != campaign || session.OperationAPIVersion != OperationVersion || session.Phase != "running" || !digest.MatchString(session.EnvironmentDigest) || !digest.MatchString(session.AppDigest) || !digest.MatchString(session.CapabilityManifestDigest) {
-		return Attachment{}, invalidResponse()
-	}
-	if session.FeedbackProfile != "black-box" && session.FeedbackProfile != "diagnostic" && session.FeedbackProfile != "oracle-assisted" {
+	session, err := decodeRunningSession(body.Session)
+	if err != nil || session.ID != body.Binding.SessionID || session.CampaignID != campaign {
 		return Attachment{}, invalidResponse()
 	}
 	caps, err := object(body.Capabilities)
@@ -107,6 +85,32 @@ func (c *Client) Attach(ctx context.Context, campaign, worker string, allowTarge
 		}
 	}
 	return Attachment{campaign, body.Binding, session, body.Evidence, bytes.Clone(body.Session), bytes.Clone(body.Capabilities)}, nil
+}
+
+// decodeRunningSession selects exact routing keys from extensible host metadata.
+// Unknown aliases must not override authoritative lowercase fields.
+func decodeRunningSession(raw []byte) (Session, error) {
+	var session Session
+	metadata, err := object(raw)
+	if err != nil {
+		return Session{}, invalidResponse()
+	}
+	projection := map[string]json.RawMessage{}
+	for _, key := range []string{"id", "campaign_id", "operation_api_version", "revision", "phase", "feedback_profile", "environment_digest", "app_digest", "capability_manifest_digest"} {
+		v, ok := metadata[key]
+		if !ok || bytes.Equal(v, []byte("null")) {
+			return Session{}, invalidResponse()
+		}
+		projection[key] = v
+	}
+	projected, _ := json.Marshal(projection)
+	if json.Unmarshal(projected, &session) != nil || !identifier.MatchString(session.ID) || !identifier.MatchString(session.CampaignID) || session.OperationAPIVersion != OperationVersion || session.Phase != "running" || !digest.MatchString(session.EnvironmentDigest) || !digest.MatchString(session.AppDigest) || !digest.MatchString(session.CapabilityManifestDigest) {
+		return Session{}, invalidResponse()
+	}
+	if session.FeedbackProfile != "black-box" && session.FeedbackProfile != "diagnostic" && session.FeedbackProfile != "oracle-assisted" {
+		return Session{}, invalidResponse()
+	}
+	return session, nil
 }
 
 type Failure struct {
