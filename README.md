@@ -48,6 +48,9 @@ schemas offline and provides `operatorctl contract check`.
 The [immutable input staging layer](docs/INPUT_STAGING.md) copies exact campaign
 input/skill inventories into service-owned read-only trees, checks their bytes and
 layout, and provides verification and cleanup before Docker integration.
+The [native Interceptor client](docs/INTERCEPTOR_CLIENT.md) adds fixed-loopback
+attachment/status, exact v1alpha2 request encoding and closure confirmation,
+with bounded responses and explicit transport uncertainty.
 Run `make setup` then `make test`. Contract publication and
 the remaining Operator/Attack Harness runtime implementation remain pending.
 
