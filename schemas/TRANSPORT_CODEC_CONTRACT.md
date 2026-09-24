@@ -141,3 +141,8 @@ languages additionally test every byte split of a sample frame, maximum sequence
 exhaustion and rejection of oversized headers before payload allocation. Regenerate
 these vectors with `python3 scripts/generate_transport_fixtures.py`; the generator
 uses no production transport helper and introduces no runtime dependency.
+
+The [host transport implementation](../docs/HOST_TRANSPORT.md) now consumes these
+helpers for real FIFO/spool I/O, bounded queues, physical ACK cleanup and deadlines.
+The Python physical peer, complete cross-language runtime exchanges and Docker
+qualification remain separate implementation work.

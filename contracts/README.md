@@ -193,8 +193,10 @@ codec/tool projections; complete the operation registry,
 native identity verification, typed message bindings, distribution/install tooling
 and the full shared conformance suite. Package manifest/digest verification is
 implemented, but publication remains gated on that work. Message framing and
-sequence/ACK checks are implemented; actual FIFO/spool I/O, queues, timers and
-fake-broker/fake-harness integration tests are outstanding. No changes to
+sequence/ACK checks are implemented. The separate
+[host transport layer](../docs/HOST_TRANSPORT.md) implements physical FIFO/spool
+I/O, bounded queues and transport/startup/operation/campaign timers. Python peer
+I/O and full fake-broker/fake-harness integration tests remain outstanding. No changes to
 Interceptor's native API are needed for this foundation.
 Attempt bookkeeping and finite-loop/progress/finalization accounting have shared
 semantic traces. The separate [host persistence foundation](../docs/CAMPAIGN_PERSISTENCE.md)
@@ -202,5 +204,5 @@ now defines the host-private RunManifest and implements durable journal writes a
 recovery inspection. The [durable attempt layer](../docs/DURABLE_ATTEMPT_ADMISSION.md)
 connects attempt counters/results to that journal with audit-capacity reservations,
 free-space checks and a terminal fence. Native dispatch, model/other-operation
-accounting, emergency termination recording, event-source verification and deadline
-enforcement remain outstanding.
+accounting, emergency termination recording, event-source verification and
+progress/finalization timer integration remain outstanding.

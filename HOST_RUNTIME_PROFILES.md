@@ -8,6 +8,11 @@ The [product spec](OPERATOR_SANDBOX_SPEC.md), [guest contract](GUEST_CONTAINER_S
 and [shared message contract](schemas/SHARED_CONTRACT.md) retain their respective
 lifecycle, containment and wire responsibilities.
 
+The [host transport layer](docs/HOST_TRANSPORT.md) implements FIFO/spool pumping,
+bounded queues, deadlines, periodic size checks and confirmed-exit transport cleanup.
+Its local tests do not qualify Docker permissions, confinement, the Python peer or
+independent container termination; those gates below remain open.
+
 ## 1. Supported host scope
 
 | Operator host | Go host platform | Local runtime | Attack Harness image platform | Transport |
@@ -299,7 +304,7 @@ D1 is resolved by Sections 1.1–1.2, D2 by Section 2 and shared contract Sectio
 | ID | Decision | Recommended starting point / constraint |
 |---|---|---|
 | D1 | Confirmed supported versions and MVP containment — resolved | Section 1.1 records the informational version baseline. Section 1.2 selects Docker mounts/permissions and two-stage seccomp; additional filesystem policy, separate user-namespace remapping and a kernel-enforced FIFO reopen ban are not required. |
-| D2 | File-spool protocol — resolved | Atomic sequence-named files, cumulative consumption acknowledgements, producer cleanup, 10 ms polling and five-second transport deadlines. Host-process size checks run every second with configurable `spool.max_bytes` (default 512 MiB); excess triggers Docker termination. Shutdown/startup cleanup removes inactive spools. Implementation and initial feasibility tests remain pending. |
+| D2 | File-spool protocol — resolved | Atomic sequence-named files, cumulative consumption acknowledgements, producer cleanup, 10 ms polling and five-second transport deadlines. Host-process size checks run every second with configurable `spool.max_bytes` (default 512 MiB); excess triggers Docker termination. Shutdown/startup cleanup removes inactive spools. Host transport implementation is available; Docker termination/startup cleanup integration, the Python peer and initial feasibility tests remain pending. |
 | D3 | Host installation, service identity and lifecycle — resolved | Linux starts with systemd. macOS uses the logged-in Docker Desktop user and a per-user LaunchAgent, private Library configuration/state, and `caffeinate -i -w <pid>` during active work and cleanup. Screen lock is allowed; logout, actual sleep and Docker interruption end execution. Recovery is cleanup/reporting only. See Section 3.1. |
 
 Initial feasibility testing verifies immutable input/skill/manifest publication

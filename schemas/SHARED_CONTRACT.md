@@ -34,7 +34,9 @@ manifest, deterministic construction, payload verification and a loader that ret
 the verified version/digest. Package publication and runtime qualification remain pending.
 The [transport codec stage](TRANSPORT_CODEC_CONTRACT.md) implements bounded FIFO
 frames, spool naming, lane validation, consecutive sequences and cumulative ACK
-checks. Physical I/O, queues, scheduling and deadlines remain runtime work.
+checks. The [host transport layer](../docs/HOST_TRANSPORT.md) implements physical
+FIFO/spool I/O, queues and startup/transfer/operation/campaign deadlines. Python
+peer I/O, broker integration and Docker qualification remain runtime work.
 The [attempt bookkeeping stage](ATTEMPT_BOOKKEEPING_CONTRACT.md) implements
 campaign-wide allocation and in-memory duplicate/admission/result transitions.
 The [loop accounting stage](HARNESS_LOOP_ACCOUNTING_CONTRACT.md) implements
@@ -809,7 +811,9 @@ by [Harness execution rules](HARNESS_EXECUTION_RULES.md). Attempt allocation and
 admission transitions have [shared semantic traces](ATTEMPT_BOOKKEEPING_CONTRACT.md);
 finite-loop/progress/finalization accounting also has
 [shared semantic traces](HARNESS_LOOP_ACCOUNTING_CONTRACT.md). Durable runtime
-integration, timer enforcement and full transport conformance remain implementation work.
+integration, progress/finalization timer enforcement and full cross-language
+transport conformance remain implementation work. Host physical transport timers
+are implemented separately in `internal/transport`.
 
 The package shape, startup/manifest flow, identity/deadline rules and completion
 semantics and macOS physical spool mapping above are accepted. Remaining work

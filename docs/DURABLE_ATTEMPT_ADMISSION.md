@@ -172,5 +172,7 @@ dispatch persistence, and abrupt process exit with a dispatched unknown operatio
 
 Remaining runtime work includes the broker's actual transport/envelope audit,
 authorization/native adapter and its step audit, model/other-operation accounting,
-monotonic timers, an emergency termination segment and the Docker termination observer. None of the
+progress/finalization timer integration, an emergency termination segment and the
+Docker termination observer. The [host transport layer](HOST_TRANSPORT.md) now
+supplies FIFO/spool queues and startup/transfer/operation/campaign timers. None of the
 new APIs starts a container or sends a native request.

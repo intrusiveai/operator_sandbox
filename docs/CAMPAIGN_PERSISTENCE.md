@@ -184,6 +184,7 @@ checks filesystem free space and signals a lock-independent terminal fence.
 Before real external dispatch, implement the emergency termination segment,
 remaining operation/accounting integration and the independent Docker kill observer.
 The reservations protect the logical write budget; they do not reserve physical
-disk space against other host writers. The launcher, live
-FIFO/spool I/O, timer scheduler, cleanup/report/purge paths and Attack Harness
-runtime are subsequent stages.
+disk space against other host writers. The [host transport layer](HOST_TRANSPORT.md)
+now implements FIFO/spool I/O, bounded queues, transport/operation deadlines and
+confirmed-exit transport cleanup. The launcher, broker integration, progress/
+finalization timers, report/purge paths and Attack Harness runtime are subsequent stages.

@@ -29,6 +29,10 @@ deadlines, errors, restore results and completion. Operator owns its versioned
 Package publication, Go/Python conformance and runtime implementation remain
 outstanding. MUST denotes a requirement, not proof of implementation.
 
+The [host transport implementation](docs/HOST_TRANSPORT.md) supplies FIFO/spool
+I/O, bounded queues, deadlines and confirmed-exit transport cleanup. Its integration
+with Docker, startup verification and the durable broker remains implementation work.
+
 ## 2. Principal requirements and boundaries
 
 1. Provide one CLI for staged or end-to-end input submission, validation,

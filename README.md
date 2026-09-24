@@ -29,6 +29,9 @@ manifests, exact Docker bindings, durable campaign journals and recovery inspect
 The [durable attempt layer](docs/DURABLE_ATTEMPT_ADMISSION.md) connects submission,
 admission and result bookkeeping to that journal, reserves future audit capacity,
 and exposes a terminal signal independent of the writer lock.
+The [host transport layer](docs/HOST_TRANSPORT.md) adds physical FIFO/spool I/O,
+bounded queues, startup/transfer/operation deadlines, spool size checks and cleanup
+after confirmed container exit.
 Run `make setup` then `make test`. Contract publication and
 the remaining Operator/Attack Harness runtime implementation remain pending.
 
