@@ -1,6 +1,7 @@
 # Operator Sandbox — container design
 
-Implementation specification with shared contracts and initial host persistence.
+Implementation specification with shared contracts, host persistence and transport,
+and independent administrative termination.
 The Docker launcher and campaign execution runtime are not implemented yet.
 
 The [shared validation foundation](contracts/README.md) now provides Go/Python
@@ -32,6 +33,9 @@ and exposes a terminal signal independent of the writer lock.
 The [host transport layer](docs/HOST_TRANSPORT.md) adds physical FIFO/spool I/O,
 bounded queues, startup/transfer/operation deadlines, spool size checks and cleanup
 after confirmed container exit.
+The [Docker termination stage](docs/DOCKER_TERMINATION.md) adds the initial
+`operatorctl campaign terminate` command, exact daemon/container verification,
+a terminal-fence observer and bounded emergency evidence independent of the journal.
 Run `make setup` then `make test`. Contract publication and
 the remaining Operator/Attack Harness runtime implementation remain pending.
 

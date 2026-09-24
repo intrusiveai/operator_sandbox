@@ -51,6 +51,8 @@ recorded Docker container on failure. The transport does not perform Docker call
 or write failure evidence itself. Context cancellation and `Close` signal the fence
 before waiting for the I/O mutex. A blocked filesystem call can still delay the
 pump or handle closure; independent Docker termination must not wait for them.
+The [Docker termination layer](DOCKER_TERMINATION.md) now supplies that observer;
+arming it with the saved binding remains part of launcher integration.
 
 ## Bounds and deadlines
 

@@ -203,6 +203,7 @@ semantic traces. The separate [host persistence foundation](../docs/CAMPAIGN_PER
 now defines the host-private RunManifest and implements durable journal writes and
 recovery inspection. The [durable attempt layer](../docs/DURABLE_ATTEMPT_ADMISSION.md)
 connects attempt counters/results to that journal with audit-capacity reservations,
-free-space checks and a terminal fence. Native dispatch, model/other-operation
-accounting, emergency termination recording, event-source verification and
+free-space checks and a terminal fence. The [Docker termination layer](../docs/DOCKER_TERMINATION.md)
+adds independent stop confirmation, an administrative CLI and bounded emergency
+records. Native dispatch, model/other-operation accounting, launcher/observer integration, event-source verification and
 progress/finalization timer integration remain outstanding.

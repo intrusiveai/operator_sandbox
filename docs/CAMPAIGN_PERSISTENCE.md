@@ -46,8 +46,8 @@ Persist this record before Docker start. An identical save is idempotent; a
 different binding is rejected. Never derive recovery's daemon endpoint from the
 current CLI context or environment. `ReadDockerBinding` works while the campaign
 writer is active, blocked or failed and never acquires its lock or reads journal
-data. The future termination caller must verify the saved daemon ID, exact
-container and labels against Docker. Missing identity is uncertainty.
+data. The [termination client](DOCKER_TERMINATION.md) verifies the saved daemon ID,
+exact container, image and labels against Docker. Missing identity is uncertainty.
 
 Neither the manifest nor the Docker binding changes during a healthy target
 restore. Journal the revision transition and replacement native target binding.
@@ -63,6 +63,9 @@ campaigns/<campaign-id>/
   campaign.json                     # immutable manifest/launch pin
   writer.lock                       # advisory host writer lock
   journal-head.json                 # last committed sequence, hash and byte total
+  termination.lock                 # separate nonblocking emergency-record lock
+  termination-intent.json           # first terminal decision, when requested
+  termination-results.json          # bounded history of Docker stop observations
   launch/
     run-manifest.json
     docker-binding.json             # only after successful Docker create/binding
@@ -181,8 +184,10 @@ Neither substitutes for Docker/transport qualification or a power-loss test.
 The [durable attempt admission layer](DURABLE_ATTEMPT_ADMISSION.md) now persists
 attempt observations/charges/results, reserves their future journal capacity,
 checks filesystem free space and signals a lock-independent terminal fence.
-Before real external dispatch, implement the emergency termination segment,
-remaining operation/accounting integration and the independent Docker kill observer.
+The [Docker termination layer](DOCKER_TERMINATION.md) now supplies the independent
+kill observer and bounded emergency records. Before real external dispatch, wire
+its terminal-state checks and observer into launch/admission and complete the
+remaining operation/accounting integration.
 The reservations protect the logical write budget; they do not reserve physical
 disk space against other host writers. The [host transport layer](HOST_TRANSPORT.md)
 now implements FIFO/spool I/O, bounded queues, transport/operation deadlines and

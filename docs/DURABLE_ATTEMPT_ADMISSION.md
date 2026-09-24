@@ -153,7 +153,8 @@ dispatch methods recheck the signal after committing, so a stop during persisten
 does not produce a fresh dispatch grant. The future executor must check it again
 at the external-call boundary. The runtime must observe the signal and initiate
 independent Docker termination without waiting for more journal work; that Docker
-handler is not implemented by this stage.
+handler is now available in the [Docker termination layer](DOCKER_TERMINATION.md);
+the future launcher must arm it before admission.
 
 Committed duplicates remain identifiable. Uncommitted in-memory transitions never
 produce success responses, and a failed ledger cannot admit more work. Read-only
@@ -172,7 +173,8 @@ dispatch persistence, and abrupt process exit with a dispatched unknown operatio
 
 Remaining runtime work includes the broker's actual transport/envelope audit,
 authorization/native adapter and its step audit, model/other-operation accounting,
-progress/finalization timer integration, an emergency termination segment and the
-Docker termination observer. The [host transport layer](HOST_TRANSPORT.md) now
+progress/finalization timer integration and wiring the implemented
+[emergency records/Docker observer](DOCKER_TERMINATION.md) into launch and dispatch.
+The [host transport layer](HOST_TRANSPORT.md) now
 supplies FIFO/spool queues and startup/transfer/operation/campaign timers. None of the
 new APIs starts a container or sends a native request.

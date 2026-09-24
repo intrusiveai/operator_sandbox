@@ -182,11 +182,28 @@ func ParseManifest(raw []byte) (RunManifest, error) {
 }
 
 func (b DockerBinding) validate(m RunManifest, manifestDigest string) error {
-	if b.APIVersion != BindingVersion || b.CampaignID != m.CampaignID || b.LaunchID != m.LaunchID || b.ContainerID != m.ContainerID ||
+	if b.Validate() != nil || b.CampaignID != m.CampaignID || b.LaunchID != m.LaunchID || b.ContainerID != m.ContainerID ||
 		b.RunManifestDigest != manifestDigest || b.ImageDigest != m.ImageDigest || !dockerIDPattern.MatchString(b.DockerContainerID) ||
 		!validID(b.DaemonID) || len(b.Labels) != 3 {
 		return ErrInvalid
 	}
+	for k, v := range m.DockerLabels() {
+		if b.Labels[k] != v {
+			return ErrInvalid
+		}
+	}
+	return nil
+}
+
+// Validate checks a detached binding before passing it to Docker. ReadDockerBinding
+// additionally verifies it against the durable campaign manifest.
+func (b DockerBinding) Validate() error {
+	if b.APIVersion != BindingVersion || !validID(b.CampaignID) || !validID(b.LaunchID) ||
+		!dockerIDPattern.MatchString(b.ContainerID) || !dockerIDPattern.MatchString(b.DockerContainerID) ||
+		!validDigest(b.RunManifestDigest) || !validDigest(b.ImageDigest) || !validID(b.DaemonID) || len(b.Labels) != 3 {
+		return ErrInvalid
+	}
+	m := RunManifest{CampaignID: b.CampaignID, LaunchID: b.LaunchID, ContainerID: b.ContainerID}
 	for k, v := range m.DockerLabels() {
 		if b.Labels[k] != v {
 			return ErrInvalid

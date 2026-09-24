@@ -251,6 +251,11 @@ automatically restart Docker. No automatic worker-death watchdog is required for
 the MVP administrative termination guarantee. Worker/service recovery performs
 cleanup and finalization only, never campaign execution recovery.
 
+The [implemented termination stage](docs/DOCKER_TERMINATION.md) provides this CLI,
+saved-binding verification, bounded Docker inspection/kill, emergency evidence and
+the live terminal-fence observer. Launcher/service integration and actual Docker
+qualification are still required; fake subprocess tests do not qualify a host profile.
+
 ## 3.1 macOS service lifetime and idle-sleep prevention
 
 Operator and Interceptor run as the logged-in Docker Desktop user. An installed

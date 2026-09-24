@@ -893,6 +893,9 @@ campaigns/<campaign-id>/
   campaign.json
   writer.lock
   journal-head.json
+  termination.lock
+  termination-intent.json
+  termination-results.json
   launch/
     run-manifest.json
     docker-binding.json
@@ -926,9 +929,11 @@ It detects missing whole records as well as partial writes. Read-only recovery
 preserves a verified prefix and reports incomplete operations as unknown. It does
 not reopen execution. The exact Docker binding remains readable without taking
 the campaign writer lock or reading journal data. Attempt audit reservations and
-the lock-independent terminal signal are implemented. Emergency termination
-records, the Docker termination observer and remaining broker/lifecycle integration
-are still required before external execution is implemented.
+the lock-independent terminal signal are implemented. The
+[Docker termination layer](docs/DOCKER_TERMINATION.md) supplies bounded emergency
+records, exact-identity stop confirmation, the administrative CLI and a terminal-fence
+observer. Wiring those components into launch/dispatch and the remaining
+broker/lifecycle behavior is still required before external execution is implemented.
 
 Retain completed evidence until an administrator explicitly purges it. Host audit
 policy still defines active/deployment write budgets, segment sizes and a free-space
@@ -1039,6 +1044,11 @@ the same Docker daemon that launched the container. It runs as a separate proces
 without routing through or waiting on the campaign worker. No separate termination
 service or guest acknowledgement is required. Retain idempotency keys and termination
 records; repeated requests against an already stopped container succeed idempotently.
+
+The [implemented command and emergency-record format](docs/DOCKER_TERMINATION.md)
+define explicit state-root selection, JSON receipts and separate Docker/persistence
+outcomes. Emergency results preserve up to 128 observations within a fixed 1 MiB
+segment outside ordinary journal reservations; exhaustion cannot gate the kill.
 
 On immediate/fatal stop:
 
