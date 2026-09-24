@@ -116,11 +116,14 @@ func publish(r *os.Root, name string, raw []byte, replace bool, hooks *ioHooks) 
 
 // Hooks are package-private and only replaced by failure-injection tests.
 type ioHooks struct {
-	sync    func(*os.File) error
-	syncDir func(*os.Root, string) error
+	sync      func(*os.File) error
+	syncDir   func(*os.Root, string) error
+	available func(*os.Root) (int64, error)
 }
 
-func diskHooks() ioHooks { return ioHooks{sync: (*os.File).Sync, syncDir: syncDir} }
+func diskHooks() ioHooks {
+	return ioHooks{sync: (*os.File).Sync, syncDir: syncDir, available: filesystemAvailable}
+}
 
 func lock(r *os.Root, create bool) (*os.File, error) {
 	var f *os.File

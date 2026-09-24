@@ -199,5 +199,8 @@ Interceptor's native API are needed for this foundation.
 Attempt bookkeeping and finite-loop/progress/finalization accounting have shared
 semantic traces. The separate [host persistence foundation](../docs/CAMPAIGN_PERSISTENCE.md)
 now defines the host-private RunManifest and implements durable journal writes and
-recovery inspection. Dispatcher integration, storage reservations, durable counter
-integration, event-source verification and deadline enforcement remain outstanding.
+recovery inspection. The [durable attempt layer](../docs/DURABLE_ATTEMPT_ADMISSION.md)
+connects attempt counters/results to that journal with audit-capacity reservations,
+free-space checks and a terminal fence. Native dispatch, model/other-operation
+accounting, emergency termination recording, event-source verification and deadline
+enforcement remain outstanding.

@@ -29,6 +29,7 @@ type Inspection struct {
 	VerifiedBytes  int64
 	JournalIntact  bool
 	Operations     []RecoveredOperation
+	Reservations   []Reservation
 }
 
 // Inspect takes a nonblocking writer lock and streams the committed journal.
@@ -65,7 +66,12 @@ func Inspect(stateRoot, campaignID string, visit func(Event) error) (report Insp
 		return report, ErrCorrupt
 	}
 	operations := map[string]OperationMark{}
+	reservations := newReservationBook()
 	defer func() {
+		for id, remaining := range reservations.remaining {
+			report.Reservations = append(report.Reservations, Reservation{id, remaining})
+		}
+		sort.Slice(report.Reservations, func(i, j int) bool { return report.Reservations[i].ID < report.Reservations[j].ID })
 		for _, op := range operations {
 			outcome := Unknown
 			if op.State == ResultCommitted {
@@ -152,6 +158,15 @@ func Inspect(stateRoot, campaignID string, visit func(Event) error) (report Insp
 					if cost > head.Bytes-report.VerifiedBytes {
 						return ErrCorrupt
 					}
+					change, err := reservationFromMetadata(ev.Metadata)
+					if err != nil {
+						return ErrCorrupt
+					}
+					total, err := reservations.prepare(change, cost, report.VerifiedBytes, m.Retention.MaxJournalBytes)
+					if err != nil {
+						return ErrCorrupt
+					}
+					reservations.commit(change, cost, total)
 					report.VerifiedEvents++
 					report.VerifiedBytes += cost
 					previous = env.Digest

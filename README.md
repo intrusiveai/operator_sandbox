@@ -26,6 +26,9 @@ The [model codec contract](schemas/MODEL_CODEC_CONTRACT.md) adds typed model rel
 exchanges, a pinned Chat Completions subset and correlated tool continuation checks.
 The [host persistence foundation](docs/CAMPAIGN_PERSISTENCE.md) adds immutable run
 manifests, exact Docker bindings, durable campaign journals and recovery inspection.
+The [durable attempt layer](docs/DURABLE_ATTEMPT_ADMISSION.md) connects submission,
+admission and result bookkeeping to that journal, reserves future audit capacity,
+and exposes a terminal signal independent of the writer lock.
 Run `make setup` then `make test`. Contract publication and
 the remaining Operator/Attack Harness runtime implementation remain pending.
 

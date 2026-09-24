@@ -849,6 +849,16 @@ transport and durable operation IDs, attempt lineage, exact bounded guest reques
 authorization disposition, translated plan/steps, external receipts, result or
 ambiguity, timestamps and charged resources.
 
+The [durable attempt admission implementation](docs/DURABLE_ATTEMPT_ADMISSION.md)
+commits identifiable requests and high-water marks before tactical validation,
+then commits admission charges and translated plans before dispatch. It reserves
+the maximum remaining attempt audit bytes within the campaign journal budget and
+checks filesystem availability against outstanding reservations and the configured
+free-space floor. Other host writers can consume filesystem space after preflight;
+a later persistence failure remains terminal. Reservations and unused-capacity
+release are journaled atomically with their owning events. Duplicates retain the
+original target binding and do not charge or execute again.
+
 For model calls, also retain the exact engine-visible and canonical provider-bound
 request bodies, bounded provider response and exact normalized guest response,
 codec/profile/model, usage and timing. Exclude host-added credentials, authority
@@ -911,9 +921,10 @@ content files, hash-linked event segments and a separately synced committed head
 It detects missing whole records as well as partial writes. Read-only recovery
 preserves a verified prefix and reports incomplete operations as unknown. It does
 not reopen execution. The exact Docker binding remains readable without taking
-the campaign writer lock or reading journal data. Dispatch-time result reservations,
-emergency termination records and lifecycle integration are still required before
-external execution is implemented.
+the campaign writer lock or reading journal data. Attempt audit reservations and
+the lock-independent terminal signal are implemented. Emergency termination
+records, the Docker termination observer and remaining broker/lifecycle integration
+are still required before external execution is implemented.
 
 Retain completed evidence until an administrator explicitly purges it. Host audit
 policy still defines active/deployment write budgets, segment sizes and a free-space

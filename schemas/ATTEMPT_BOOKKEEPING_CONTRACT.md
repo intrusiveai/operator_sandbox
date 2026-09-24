@@ -2,8 +2,10 @@
 
 Status: matching Go/Python in-memory helpers and 40 shared traces implement the
 numbering and admission transitions from [Harness execution rules](HARNESS_EXECUTION_RULES.md#1-campaign-wide-attempt-numbering).
-This stage adds no wire fields or Interceptor changes. Durable journaling, request
-dispatch, native lineage checks and finite-loop accounting remain runtime work.
+This contract adds no wire fields or Interceptor changes. The host's
+[durable attempt layer](../docs/DURABLE_ATTEMPT_ADMISSION.md) now connects these
+helpers to the campaign journal, result reservations and terminal failure signal.
+Native dispatch, lineage verification and the remaining loop integration are pending.
 
 ## Harness allocation
 
@@ -72,7 +74,9 @@ interchange schema or a replacement for the existing attempt/result contracts.
 
 ## Required runtime integration
 
-These helpers do not provide crash durability. The Operator dispatcher must:
+The shared in-memory helpers do not provide crash durability. The host's durable
+wrapper implements the persistence ordering below; the full dispatcher must also
+perform the specified policy, lineage and native-effect checks:
 
 1. Validate outer framing/campaign binding and bookkeeping; derive a trusted
    operation identity. Resolve duplicates against their original stored target

@@ -135,6 +135,7 @@ to skip journaling or continue an effect.
 `Failure()` and `Close()` use the writer mutex. Neither is a prerequisite for
 independent Docker termination. `Close()` only releases resources; it does not
 assert campaign completion, native-effect resolution or container exit.
+It also closes the lock-independent terminal signal exposed by `Fence()`.
 
 ## Operation history and recovery
 
@@ -177,10 +178,12 @@ Run `make test` and `go test -race ./internal/campaign`. The filesystem tests ru
 on the current macOS ARM64 host; cross-compilation checks the other three targets.
 Neither substitutes for Docker/transport qualification or a power-loss test.
 
-Before any real external dispatch, implement result/terminal storage reservations,
-free-space policy and an emergency termination segment, connect every required
-admission/accounting transition to durable records, and route journal failure to
-the terminal fence and independent Docker kill. This package enforces a logical
-write budget; it does not reserve physical disk space. The launcher, live
+The [durable attempt admission layer](DURABLE_ATTEMPT_ADMISSION.md) now persists
+attempt observations/charges/results, reserves their future journal capacity,
+checks filesystem free space and signals a lock-independent terminal fence.
+Before real external dispatch, implement the emergency termination segment,
+remaining operation/accounting integration and the independent Docker kill observer.
+The reservations protect the logical write budget; they do not reserve physical
+disk space against other host writers. The launcher, live
 FIFO/spool I/O, timer scheduler, cleanup/report/purge paths and Attack Harness
 runtime are subsequent stages.

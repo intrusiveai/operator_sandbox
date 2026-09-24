@@ -104,6 +104,11 @@ type Writer struct {
 	hooks            ioHooks
 	failure          error
 	closed           bool
+	fence            *Fence
+	reservations     reservationBook
+	minimumFreeBytes int64
+	spaceConfigured  bool
+	attemptOwner     bool
 }
 
 // Create requires an existing private state root. A campaign ID is never reused,
@@ -141,7 +146,7 @@ func Create(stateRoot string, manifest RunManifest) (*Writer, error) {
 		return nil, err
 	}
 	w := &Writer{root: r, manifest: manifest, manifestDigest: contracts.RawDigest(raw), revision: manifest.InitialRevision,
-		operations: map[string]OperationMark{}, hooks: diskHooks()}
+		operations: map[string]OperationMark{}, hooks: diskHooks(), fence: NewFence(), reservations: newReservationBook()}
 	ok := false
 	defer func() {
 		if !ok {
@@ -177,6 +182,9 @@ func Create(stateRoot string, manifest RunManifest) (*Writer, error) {
 
 func (w *Writer) ManifestDigest() string { return w.manifestDigest }
 
+// Fence can be read/stopped without acquiring the writer mutex.
+func (w *Writer) Fence() *Fence { return w.fence }
+
 func (w *Writer) ready() error {
 	if w.failure != nil {
 		return w.failure
@@ -188,6 +196,7 @@ func (w *Writer) ready() error {
 }
 func (w *Writer) fail(err error) error {
 	w.failure = errors.Join(ErrStorage, err)
+	w.fence.Stop(w.failure)
 	return w.failure
 }
 
@@ -270,8 +279,25 @@ func contentPath(revision, seq int64, index int) string {
 func (w *Writer) Append(entry Entry) (string, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
+	return w.appendLocked(entry, nil)
+}
+
+func (w *Writer) appendLocked(entry Entry, reservation *reservationChange) (string, error) {
 	if err := w.ready(); err != nil {
 		return "", err
+	}
+	metadata, err := addReservation(entry.Metadata, reservation)
+	if err != nil {
+		return "", err
+	}
+	entry.Metadata = metadata
+	if reservation != nil && reservation.Action == "reserve" && !w.spaceConfigured {
+		return "", ErrInvalid
+	}
+	if reservation != nil && reservation.Action == "reserve" {
+		if err := w.fence.Err(); err != nil {
+			return "", err
+		}
 	}
 	if !validID(entry.Kind) || !validateMetadata(entry.Metadata) || entry.RunRevision < w.revision || entry.RunRevision > contracts.MaxSafeInteger ||
 		len(entry.Content) > MaxContents || !operationNext(w.operations, entry.Operation) || w.head.Sequence == contracts.MaxSafeInteger {
@@ -301,8 +327,21 @@ func (w *Writer) Append(entry Entry) (string, error) {
 	}
 	line = append(line, '\n')
 	cost := int64(len(line)) + contentSize
-	if cost > w.manifest.Retention.MaxJournalBytes-w.head.Bytes {
-		return "", w.fail(ErrQuota)
+	reservedTotal, err := w.reservations.prepare(reservation, cost, w.head.Bytes, w.manifest.Retention.MaxJournalBytes)
+	if err != nil {
+		if errors.Is(err, ErrQuota) {
+			return "", w.fail(err)
+		}
+		return "", err
+	}
+	if w.spaceConfigured {
+		available, err := w.hooks.available(w.root)
+		if err != nil {
+			return "", w.fail(err)
+		}
+		if available < w.minimumFreeBytes || reservedTotal > available-w.minimumFreeBytes || cost > available-w.minimumFreeBytes-reservedTotal {
+			return "", w.fail(ErrQuota)
+		}
 	}
 	contentCount := w.revisionContents
 	if ev.RunRevision != w.revision {
@@ -331,6 +370,7 @@ func (w *Writer) Append(entry Entry) (string, error) {
 		return "", w.fail(err)
 	}
 	w.head = head
+	w.reservations.commit(reservation, cost, reservedTotal)
 	w.revision = ev.RunRevision
 	w.segmentSize += int64(len(line))
 	w.revisionContents = contentCount + len(ev.Content)
@@ -403,6 +443,7 @@ func (w *Writer) Close() error {
 		return nil
 	}
 	w.closed = true
+	w.fence.Stop(ErrClosed)
 	var errs []error
 	if w.segment != nil {
 		errs = append(errs, w.segment.Close())
