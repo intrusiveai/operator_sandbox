@@ -1,6 +1,7 @@
 # Operator Sandbox — container design
 
-Implementation specification, 2026-09-19. No runtime is implemented here.
+Implementation specification with shared contracts and initial host persistence.
+The Docker launcher and campaign execution runtime are not implemented yet.
 
 The [shared validation foundation](contracts/README.md) now provides Go/Python
 strict JSON decoders, offline validation of the current schema catalog and shared
@@ -23,8 +24,10 @@ The [harness loop accounting contract](schemas/HARNESS_LOOP_ACCOUNTING_CONTRACT.
 adds finite-loop limits, read reservations, progress tracking and bounded finalization.
 The [model codec contract](schemas/MODEL_CODEC_CONTRACT.md) adds typed model relay
 exchanges, a pinned Chat Completions subset and correlated tool continuation checks.
+The [host persistence foundation](docs/CAMPAIGN_PERSISTENCE.md) adds immutable run
+manifests, exact Docker bindings, durable campaign journals and recovery inspection.
 Run `make setup` then `make test`. Contract publication and
-Operator/Attack Harness runtime implementation remain pending.
+the remaining Operator/Attack Harness runtime implementation remain pending.
 
 Operator accepts structured objectives and optional scenarios from users or external
 generators, runs a custom Python harness in a network-disabled container, brokers

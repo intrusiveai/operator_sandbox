@@ -189,7 +189,7 @@ still require semantic validators. Schema `format` annotations are not a substit
 for those checks. This library is not yet sufficient to admit campaign execution.
 
 Before publishing `0.1.0`, qualify the first native model route and package its
-codec/tool projections; define the host-private RunManifest; complete the operation registry,
+codec/tool projections; complete the operation registry,
 native identity verification, typed message bindings, distribution/install tooling
 and the full shared conformance suite. Package manifest/digest verification is
 implemented, but publication remains gated on that work. Message framing and
@@ -197,5 +197,7 @@ sequence/ACK checks are implemented; actual FIFO/spool I/O, queues, timers and
 fake-broker/fake-harness integration tests are outstanding. No changes to
 Interceptor's native API are needed for this foundation.
 Attempt bookkeeping and finite-loop/progress/finalization accounting have shared
-semantic traces; dispatcher integration, durable campaign history, event-source
-verification and deadline enforcement remain outstanding.
+semantic traces. The separate [host persistence foundation](../docs/CAMPAIGN_PERSISTENCE.md)
+now defines the host-private RunManifest and implements durable journal writes and
+recovery inspection. Dispatcher integration, storage reservations, durable counter
+integration, event-source verification and deadline enforcement remain outstanding.

@@ -501,6 +501,11 @@ to the guest, not the private native session configuration. Skill archive transp
 belongs to host build/publishing; both runtime ends consume the normalized data
 inventory and content identities, not an archive-specific guest ABI.
 
+The [host persistence contract](../docs/CAMPAIGN_PERSISTENCE.md) defines the concrete
+host-private RunManifest, its canonical digest, separate exact Docker binding and
+durable journal. These host records are implemented in Go outside the shared
+catalog; the guest continues to consume the existing startup fields and digests.
+
 ## 8. One closed operation registry
 
 The current [ordinary wire implementation](ORDINARY_WIRE_CONTRACT.md) fixes concrete
@@ -809,8 +814,8 @@ integration, timer enforcement and full transport conformance remain implementat
 The package shape, startup/manifest flow, identity/deadline rules and completion
 semantics and macOS physical spool mapping above are accepted. Remaining work
 is to qualify and package the initial native codec and implement any additional
-advertised codec profiles, define the host-private
-RunManifest, and complete
+advertised codec profiles, integrate the host-private
+RunManifest and durable journal into runtime admission, and complete
 the operation registry, extend the existing offline
 catalog and Go/Python validation foundation with semantic validators and fixtures;
 port the required existing data contracts; and pass Section 12 conformance before

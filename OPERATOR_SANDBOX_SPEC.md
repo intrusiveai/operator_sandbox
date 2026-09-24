@@ -282,6 +282,11 @@ updates the active campaign revision and target binding through a durable
 transition record and correlated tool result; it does not rewrite mounted
 inputs, change launch identity or reinitialize the harness (Section 10.3).
 
+The concrete host-private fields, digest recipe and exact Docker binding are
+defined in [Host campaign persistence](docs/CAMPAIGN_PERSISTENCE.md). Its Go
+implementation validates the manifest against the existing shared startup and
+input identities. Docker create/start and live admission remain separate gates.
+
 ### 5.1.1 Local Docker image configuration and release validation
 
 The administrator supplies one required image selector in the installed host
@@ -853,7 +858,7 @@ audit records. Public summaries and protected audit content are separate outputs
 
 The operation journal records at least `INTENT_COMMITTED`, `DISPATCHED`,
 `RESULT_COMMITTED` or `UNKNOWN`, plus associated reservations and receipts.
-These names are proposed Operator states, not invented native Interceptor states.
+These are Operator journal states; Interceptor retains its native state names.
 Crash after possible dispatch remains unknown unless existing status/evidence
 proves the outcome. Absence of a status record does not prove no effect occurred.
 No replay of unknown mutations, hidden upstream retry or replacement harness.
@@ -872,11 +877,15 @@ beneath its private state root:
 ```text
 campaigns/<campaign-id>/
   campaign.json
+  writer.lock
+  journal-head.json
   launch/
-  journals/<revision>/
+    run-manifest.json
+    docker-binding.json
+  journals/<16-digit-revision>/
     events-000001.jsonl
-    content/event-000042-request.bin
-    content/event-000042-response.bin
+    content/event-0000000000000042-00.bin
+    content/event-0000000000000042-01.bin
     manifest.json
   artifacts/sha256/...
   revisions/<revision>/...
@@ -896,6 +905,15 @@ journal writer discipline, atomic publication and host-generated names. Large/bi
 bodies use size/media/digest descriptors. The guest cannot mount/read/delete evidence.
 Escape hostile control characters in viewers. Finalized manifests record content
 integrity, completeness and present/missing artifacts.
+
+The [implemented persistence format](docs/CAMPAIGN_PERSISTENCE.md) uses synced
+content files, hash-linked event segments and a separately synced committed head.
+It detects missing whole records as well as partial writes. Read-only recovery
+preserves a verified prefix and reports incomplete operations as unknown. It does
+not reopen execution. The exact Docker binding remains readable without taking
+the campaign writer lock or reading journal data. Dispatch-time result reservations,
+emergency termination records and lifecycle integration are still required before
+external execution is implemented.
 
 Retain completed evidence until an administrator explicitly purges it. Host audit
 policy still defines active/deployment write budgets, segment sizes and a free-space
