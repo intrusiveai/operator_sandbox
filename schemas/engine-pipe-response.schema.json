@@ -36,6 +36,7 @@
         "engine.artifact_put_part",
         "engine.attempt_execute",
         "engine.injection_delete",
+        "engine.model_generate",
         "engine.observation_read",
         "engine.record_append",
         "engine.request_stop",
@@ -222,6 +223,40 @@
                   "enum": [
                     "ACTION_UNAVAILABLE",
                     "CLEANUP_FAILED",
+                    "DEADLINE_EXCEEDED",
+                    "IDEMPOTENCY_CONFLICT",
+                    "INTERNAL_ERROR",
+                    "INVALID_ARGUMENTS",
+                    "LIMIT_EXCEEDED",
+                    "OUTCOME_UNKNOWN",
+                    "POLICY_DENIED",
+                    "STATE_CHANGED",
+                    "UNSUPPORTED_CAPABILITY"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "properties": {
+        "operation": {
+          "const": "engine.model_generate"
+        },
+        "result": {
+          "$ref": "urn:operator:schema:engine-model-generate-result:v1alpha1"
+        },
+        "error": {
+          "allOf": [
+            {
+              "$ref": "urn:operator:schema:operation-error:v1alpha1"
+            },
+            {
+              "properties": {
+                "code": {
+                  "enum": [
                     "DEADLINE_EXCEEDED",
                     "IDEMPOTENCY_CONFLICT",
                     "INTERNAL_ERROR",

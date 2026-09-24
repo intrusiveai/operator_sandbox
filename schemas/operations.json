@@ -144,6 +144,32 @@
       "receipt_policy": "durable"
     },
     {
+      "name": "engine.model_generate",
+      "request_schema": "urn:operator:schema:engine-model-generate-request:v1alpha1",
+      "result_schema": "urn:operator:schema:engine-model-generate-result:v1alpha1",
+      "error_schema": "urn:operator:schema:operation-error:v1alpha1",
+      "error_codes": [
+        "DEADLINE_EXCEEDED",
+        "IDEMPOTENCY_CONFLICT",
+        "INTERNAL_ERROR",
+        "INVALID_ARGUMENTS",
+        "LIMIT_EXCEEDED",
+        "OUTCOME_UNKNOWN",
+        "POLICY_DENIED",
+        "STATE_CHANGED",
+        "UNSUPPORTED_CAPABILITY"
+      ],
+      "lifecycle_states": [
+        "admitted"
+      ],
+      "finalization_rule": "denied",
+      "timeout_ms": 120000,
+      "max_request_bytes": 4194304,
+      "max_result_bytes": 4194304,
+      "effect": "model-call",
+      "receipt_policy": "durable"
+    },
+    {
       "name": "engine.observation_read",
       "request_schema": "urn:operator:schema:engine-observation-read-request:v1alpha1",
       "result_schema": "urn:operator:schema:engine-observation-read-result:v1alpha1",

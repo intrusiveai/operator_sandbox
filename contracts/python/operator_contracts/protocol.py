@@ -7,7 +7,7 @@ from pathlib import Path
 
 from .validation import Catalog, ContractError, ORDINARY_LIMIT
 from .assessment import check_record, validate_conclusion, validate_completion
-from . import startup, inputs, identity, transport
+from . import startup, inputs, identity, transport, model
 from .canonical import _object_digest
 from .schema_ids import (
     ENGINE_PIPE_REQUEST_SCHEMA, ENGINE_PIPE_RESPONSE_SCHEMA, OPERATION_REGISTRY_SCHEMA,
@@ -91,6 +91,21 @@ class Protocol:
 
     def validate_lane_message(self, lane, raw):
         return transport.validate_lane_message(self, lane, raw)
+
+    def validate_model_request(self, policy, request):
+        return model.validate_model_request(self,policy,request)
+
+    def model_policy_from_context(self, context, tools, prompt):
+        return model.model_policy_from_context(self,context,tools,prompt)
+
+    def validate_model_exchange(self, policy, request, result):
+        return model.validate_model_exchange(self,policy,request,result)
+
+    def model_disposition(self, result):
+        return model.model_disposition(self,result)
+
+    def chat_continuation(self, result, tool_results):
+        return model.chat_continuation(self,result,tool_results)
 
     def encode_frame(self, lane, raw):
         return transport.encode_frame(self, lane, raw)
@@ -186,7 +201,9 @@ class Protocol:
         body = message["body"]
         self._check_registered(operation, "request_schema", body)
         name = operation["name"]
-        if name == "engine.record_append":
+        if name == "engine.model_generate":
+            model.check_request(body['request'])
+        elif name == "engine.record_append":
             check_record(body)
         elif name == "engine.attempt_execute":
             _require(body["request_id"] == message["operation_id"])
@@ -210,6 +227,7 @@ class Protocol:
             _require(message["error"]["code"] in operation["error_codes"])
         else:
             self._check_registered(operation, "result_schema", message["result"])
+            if operation['name']=='engine.model_generate': model.check_response(message['result']['response'])
         return message
 
     def validate_response(self, request: bytes, response: bytes):
@@ -221,7 +239,9 @@ class Protocol:
         if "error" in message:
             return message
         result, body, name = message["result"], req["body"], req["operation"]
-        if name == "engine.record_append":
+        if name == "engine.model_generate":
+            model.check_correlation(body,result)
+        elif name == "engine.record_append":
             _require(result["record_kind"] == body["record_kind"])
             for field in ("campaign_id", "launch_id"):
                 _require(result["attribution"][field] == req[field])

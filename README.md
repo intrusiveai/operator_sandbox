@@ -5,7 +5,7 @@ Implementation specification, 2026-09-19. No runtime is implemented here.
 The [shared validation foundation](contracts/README.md) now provides Go/Python
 strict JSON decoders, offline validation of the current schema catalog and shared
 conformance vectors. The [ordinary wire contract](schemas/ORDINARY_WIRE_CONTRACT.md)
-adds typed exchanges and stateless validation for 12 operations, plus spool ACKs. The [assessment contract](schemas/ASSESSMENT_CONTRACT.md)
+adds typed exchanges and stateless validation for 13 operations, plus spool ACKs. The [assessment contract](schemas/ASSESSMENT_CONTRACT.md)
 adds typed records, structured conclusions and completion-chain checks.
 The [startup/manifest contract](schemas/STARTUP_MANIFEST_CONTRACT.md) adds control
 messages, five-message transcript checks and bounded input/skill inventories.
@@ -21,6 +21,8 @@ The [attempt bookkeeping contract](schemas/ATTEMPT_BOOKKEEPING_CONTRACT.md) adds
 campaign attempt allocation, duplicate/admission tracking and unknown-outcome closure.
 The [harness loop accounting contract](schemas/HARNESS_LOOP_ACCOUNTING_CONTRACT.md)
 adds finite-loop limits, read reservations, progress tracking and bounded finalization.
+The [model codec contract](schemas/MODEL_CODEC_CONTRACT.md) adds typed model relay
+exchanges, a pinned Chat Completions subset and correlated tool continuation checks.
 Run `make setup` then `make test`. Contract publication and
 Operator/Attack Harness runtime implementation remain pending.
 

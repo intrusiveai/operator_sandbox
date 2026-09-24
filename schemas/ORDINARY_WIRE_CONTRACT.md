@@ -6,9 +6,11 @@ It does not publish package `0.1.0` or claim a working broker or harness runtime
 
 ## Registry and envelopes
 
-[operations.json](operations.json) is the source for 12 ordinary operations:
+[operations.json](operations.json) is the source for 13 ordinary operations:
 artifact begin/part/commit, attempt execution, injection deletion, observation
-read, typed record append, snapshot create/list/inspect, restore and graceful stop. Each entry identifies
+read, typed record append, snapshot create/list/inspect, restore, graceful stop
+and model generation. The [model codec contract](MODEL_CODEC_CONTRACT.md) fixes
+the model exchange's native subset and trusted profile binding. Each entry identifies
 request/result/error schemas, allowed error codes, lifecycle states, finalization
 restrictions, timeout ceiling, encoded request/result ceilings, effect kind and
 receipt policy. Native Interceptor operation names and schemas stay in its adapter.

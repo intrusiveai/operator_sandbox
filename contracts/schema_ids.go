@@ -35,6 +35,10 @@ const EngineInjectionDeleteRequestSchema = "urn:operator:schema:engine-injection
 
 const EngineInjectionDeleteResultSchema = "urn:operator:schema:engine-injection-delete-result:v1alpha1"
 
+const EngineModelGenerateRequestSchema = "urn:operator:schema:engine-model-generate-request:v1alpha1"
+
+const EngineModelGenerateResultSchema = "urn:operator:schema:engine-model-generate-result:v1alpha1"
+
 const EngineObservationReadRequestSchema = "urn:operator:schema:engine-observation-read-request:v1alpha1"
 
 const EngineObservationReadResultSchema = "urn:operator:schema:engine-observation-read-result:v1alpha1"
@@ -75,9 +79,17 @@ const HarnessLoopLimitsSchema = "urn:operator:schema:harness-loop-limits:v1alpha
 
 const InputTreeManifestSchema = "urn:operator:schema:input-tree-manifest:v1alpha1"
 
+const ModelCodecPolicySchema = "urn:operator:schema:model-codec-policy:v1alpha1"
+
 const ModelToolNotExecutedResultSchema = "urn:operator:schema:model-tool-not-executed-result:v1alpha1"
 
 const ObservationSelectionSchema = "urn:operator:schema:observation-selection:v1alpha1"
+
+const OpenaiChatCommonSchema = "urn:operator:schema:openai-chat-common:v1alpha1"
+
+const OpenaiChatRequestSchema = "urn:operator:schema:openai-chat-request:v1alpha1"
+
+const OpenaiChatResponseSchema = "urn:operator:schema:openai-chat-response:v1alpha1"
 
 const OperationErrorSchema = "urn:operator:schema:operation-error:v1alpha1"
 

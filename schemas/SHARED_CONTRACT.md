@@ -18,7 +18,7 @@ this does not complete the remaining package publication or runtime gates.
 The [validation foundation](../contracts/README.md) implements strict JSON decoding
 and offline structural validation of the current catalog in Go and Python, with
 shared byte fixtures and generated schema-ID constants. The
-[ordinary protocol stage](ORDINARY_WIRE_CONTRACT.md) adds typed envelopes for 12
+[ordinary protocol stage](ORDINARY_WIRE_CONTRACT.md) supplies typed envelopes for 13
 operations, their registry, spool ACK schema and stateless correlation checks.
 The [assessment contract](ASSESSMENT_CONTRACT.md) supplies typed record append,
 conclusion content and completion-chain validation.
@@ -40,6 +40,10 @@ campaign-wide allocation and in-memory duplicate/admission/result transitions.
 The [loop accounting stage](HARNESS_LOOP_ACCOUNTING_CONTRACT.md) implements
 finite-loop limits, read/progress accounting, batch skipping and bounded finalization.
 Durable history, dispatch, verified event sources and timers remain runtime work.
+The [model codec stage](MODEL_CODEC_CONTRACT.md) supplies typed model relay,
+a pinned Chat Completions text/function subset,
+trusted policy binding and correlated native continuation segments. Other codecs
+and real provider/route qualification remain implementation work.
 Complete message bindings/schemas, stateful checks and transport conformance remain outstanding.
 
 ## 1. One owner and one pinned package
@@ -804,8 +808,8 @@ integration, timer enforcement and full transport conformance remain implementat
 
 The package shape, startup/manifest flow, identity/deadline rules and completion
 semantics and macOS physical spool mapping above are accepted. Remaining work
-is to author the remaining closed
-model request/result schemas and codec profiles, define the host-private
+is to qualify and package the initial native codec and implement any additional
+advertised codec profiles, define the host-private
 RunManifest, and complete
 the operation registry, extend the existing offline
 catalog and Go/Python validation foundation with semantic validators and fixtures;

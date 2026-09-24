@@ -40,11 +40,16 @@ additional source-path or URL field is introduced. Public capability delivery
 selectors remain data for the reviewed adapter. They do not grant network access.
 
 `model` contains `codec_id`, `profile_id`, `profile_digest`, `model_id` and
-`features`. The first two are bounded symbolic IDs; the digest pins the installed
+`features`, plus the selected codec's required `codec_settings` where implemented.
+The first two are bounded symbolic IDs; the digest pins the installed
 safe profile. `model_id` is a bounded non-whitespace string supporting native names
 such as names with slashes. MVP features are exactly `text`, `function-tools`, in
-that order. This projection contains no provider endpoint or credential and does
-not implement a provider request schema. The runtime must resolve these identities
+that order. The [initial model codec contract](MODEL_CODEC_CONTRACT.md) requires
+instruction role, output-token ceiling, accepted response model IDs and native
+tool-projection digest for `openai-chat-text-tools-v1`. The matching model schemas
+and policy builder consume those settings directly; the harness does not infer
+them from an opaque profile ID. This projection contains no provider endpoint or
+credential. The runtime must resolve these identities
 against its installed codec registry, selected host route and release compatibility
 record before admission. Unknown/unqualified profiles cannot be made executable
 by putting them in a structurally valid context.

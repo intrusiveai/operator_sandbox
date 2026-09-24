@@ -126,7 +126,7 @@ The verifier is not a substitute for those checks or for release qualification.
 
 The current development library can create and verify manifests; no production
 package manifest or release is checked in by this stage. Publication still requires
-the remaining model contracts, conformance and packaging work. Tests use version
+the advertised codec/tool profiles, full conformance and packaging work. Tests use version
 `0.0.0` and explicitly identified fixture semantic resources.
 
 ## Tests and regeneration

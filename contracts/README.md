@@ -1,7 +1,7 @@
 # Shared validation foundation
 
 This is the validation and protocol foundation of `operator-contracts`. It validates the
-50 schemas currently listed in [the catalog](../schemas/catalog.json) in Go and
+56 schemas currently listed in [the catalog](../schemas/catalog.json) in Go and
 Python. It is a development library, not the published `0.1.0` contract package.
 The authoritative design remains [SHARED_CONTRACT.md](../schemas/SHARED_CONTRACT.md).
 
@@ -17,8 +17,8 @@ The authoritative design remains [SHARED_CONTRACT.md](../schemas/SHARED_CONTRACT
 - Go-embedded schemas and generated Go/Python schema-ID constants.
 - One set of 154 accepted/rejected byte vectors used by both language runners,
   plus tests for unavailable external references and invalid catalog inventories.
-- Typed ordinary envelopes generated from a 12-operation registry, spool ACK
-  validation, and 179 shared protocol cases covering request/result correlation,
+- Typed ordinary envelopes generated from a 13-operation registry, spool ACK
+  validation, and 182 shared protocol cases covering request/result correlation,
   artifact chunks, snapshot metadata, restore transitions, typed records, errors and graceful stop.
 - Structured conclusions and completion-chain consistency checks, with 74 shared
   cases covering bindings, exact artifact bytes, record/stop receipts and explicit gaps.
@@ -37,8 +37,11 @@ The authoritative design remains [SHARED_CONTRACT.md](../schemas/SHARED_CONTRACT
   shared traces covering rejection, duplicates, gaps, quotas and unknown outcomes.
 - Harness-loop configuration resolution and campaign accounting, read reservation
   and novelty tracking, restore batch skipping and bounded finalization, with 129
-  shared cases. The full total is now 1,207 shared cases; the schema catalog remains
-  at 50 entries.
+  shared cases.
+- Typed model relay, a pinned native Chat Completions text/function codec, trusted
+  profile binding, startup codec settings and complete conversation/tool continuations,
+  with 102 shared cases. The full total is now 1,312 shared cases; the catalog has
+  56 entries.
 
 The [ordinary wire contract](../schemas/ORDINARY_WIRE_CONTRACT.md) documents the
 exact implemented fields and distinguishes stateless validation from runtime gates.
@@ -168,6 +171,16 @@ model/tool/read/progress accounting and its one-time finalization budget. See th
 [loop accounting contract](../schemas/HARNESS_LOOP_ACCOUNTING_CONTRACT.md) for
 event ordering, trusted progress sources and required runtime timer/admission gates.
 
+Use `ModelPolicyFromContext` / `model_policy_from_context` to derive the same safe
+policy from verified startup codec settings, frozen prompt bytes and a pinned
+native tool projection. Use `ValidateModelRequest` / `validate_model_request` and `ValidateModelExchange` /
+`validate_model_exchange` to bind native model bodies to an independently selected
+host policy, in addition to ordinary envelope validation. `ModelDisposition` /
+`model_disposition` classifies complete native outcomes; `ChatContinuation` /
+`chat_continuation` builds a correlated assistant/tool segment. See the
+[model codec contract](../schemas/MODEL_CODEC_CONTRACT.md) for required runtime
+receipt checks, preserved argument strings and provider qualification limits.
+
 ## Remaining stages
 
 Structural validation is one gate. Receipt lookup, operation identity, digests,
@@ -175,8 +188,8 @@ cross-field constraints, authorization, profile filtering and lifecycle rules
 still require semantic validators. Schema `format` annotations are not a substitute
 for those checks. This library is not yet sufficient to admit campaign execution.
 
-Before publishing `0.1.0`, implement the remaining model request/result schemas
-and codec profiles; define the host-private RunManifest; complete the operation registry,
+Before publishing `0.1.0`, qualify the first native model route and package its
+codec/tool projections; define the host-private RunManifest; complete the operation registry,
 native identity verification, typed message bindings, distribution/install tooling
 and the full shared conformance suite. Package manifest/digest verification is
 implemented, but publication remains gated on that work. Message framing and

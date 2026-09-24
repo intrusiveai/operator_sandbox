@@ -184,6 +184,9 @@
           "maxItems": 2,
           "minItems": 2,
           "uniqueItems": true
+        },
+        "codec_settings": {
+          "$ref": "urn:operator:schema:openai-chat-common:v1alpha1#/$defs/settings"
         }
       },
       "required": [
@@ -192,6 +195,29 @@
         "profile_digest",
         "model_id",
         "features"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "codec_id": {
+                "const": "openai-chat-text-tools-v1"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "codec_settings"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "codec_settings"
+              ]
+            }
+          }
+        }
       ]
     },
     "operations": {

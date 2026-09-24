@@ -508,6 +508,11 @@ Repeated invalid tool submissions are bounded.
 
 ## 7. Model relay and credentials
 
+The [model codec contract](schemas/MODEL_CODEC_CONTRACT.md) defines the implemented
+shared model request/result bodies, initial Chat Completions text/function subset,
+trusted profile binding and correlated native conversation segments. Its offline
+fixtures do not qualify a live provider route or implement the host relay.
+
 The engine relay uses Operator's host provider-client implementation and credential
 resolver. Interceptor's target-model bridge remains independently owned. Retain the
 constrained native families: OpenAI Chat/Responses, Anthropic Messages, Bedrock

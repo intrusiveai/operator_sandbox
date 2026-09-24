@@ -36,6 +36,7 @@
         "engine.artifact_put_part",
         "engine.attempt_execute",
         "engine.injection_delete",
+        "engine.model_generate",
         "engine.observation_read",
         "engine.record_append",
         "engine.request_stop",
@@ -113,6 +114,16 @@
         },
         "body": {
           "$ref": "urn:operator:schema:engine-injection-delete-request:v1alpha1"
+        }
+      }
+    },
+    {
+      "properties": {
+        "operation": {
+          "const": "engine.model_generate"
+        },
+        "body": {
+          "$ref": "urn:operator:schema:engine-model-generate-request:v1alpha1"
         }
       }
     },

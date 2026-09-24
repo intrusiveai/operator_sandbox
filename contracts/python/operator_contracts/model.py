@@ -1,0 +1,153 @@
+"""Pinned native Chat Completions subset; no provider I/O or dispatch authority."""
+from .validation import ORDINARY_LIMIT, ContractError, decode
+from .startup import require
+from .canonical import _canonical_value, _object_digest, raw_digest
+from .schema_ids import MODEL_CODEC_POLICY_SCHEMA, ENGINE_MODEL_GENERATE_REQUEST_SCHEMA, ENGINE_MODEL_GENERATE_RESULT_SCHEMA
+
+
+def model_policy_from_context(protocol, context_raw, tools_raw, prompt_raw):
+    context = protocol.validate_engine_context(context_raw)
+    model = context['model']
+    require(model['codec_id']=='openai-chat-text-tools-v1' and 'engine.model_generate' in context['operations'])
+    require(type(prompt_raw) is bytes and len(prompt_raw)<=131072)
+    try:
+        prompt=prompt_raw.decode('utf-8')
+    except UnicodeError:
+        raise ContractError('contract message consistency check failed') from None
+    effective=context['prompt']['provenance']['effective']
+    require(effective['digest']==raw_digest(prompt_raw) and effective['size_bytes']==len(prompt_raw))
+    tools=decode(tools_raw,ORDINARY_LIMIT)
+    settings=model['codec_settings']
+    require(settings['tools_digest']==_object_digest(tools,ORDINARY_LIMIT))
+    policy={key:model[key] for key in ('codec_id','profile_id','profile_digest')}
+    policy.update(request_model=model['model_id'],prompt=prompt,tools=tools)
+    policy.update({key:settings[key] for key in ('instruction_role','max_completion_tokens','response_models')})
+    protocol._catalog.validate_value(MODEL_CODEC_POLICY_SCHEMA,policy)
+    check_tools(tools)
+    return _canonical_value(policy,ORDINARY_LIMIT)
+
+
+def calls(message):
+    return message.get('tool_calls') or []
+
+
+def check_tools(tools):
+    names = [item['function']['name'] for item in tools]
+    require(len(names)==len(set(names)))
+
+
+def check_request(request):
+    check_tools(request['tools'])
+    require(request['tools'] or request['tool_choice']!='required')
+    seen, pending = set(), []
+    for index, message in enumerate(request['messages']):
+        role = message['role']
+        require((role in ('system','developer')) if index==0 else (role not in ('system','developer')))
+        require(index!=1 or role=='user')
+        if role=='tool':
+            require(pending and message['tool_call_id']==pending[0])
+            pending.pop(0)
+            continue
+        require(not pending)
+        current = calls(message)
+        require(not current or message.get('refusal') is None)
+        for call in current:
+            require(call['id'] not in seen)
+            seen.add(call['id']); pending.append(call['id'])
+    require(not pending)
+
+
+def check_response(response):
+    choice = response['choices'][0]
+    message, finish = choice['message'], choice['finish_reason']
+    current = calls(message)
+    ids = [call['id'] for call in current]
+    require(len(ids)==len(set(ids)))
+    require(finish!='tool_calls' or (current and message.get('refusal') is None))
+    require(finish!='stop' or not current)
+    usage = response.get('usage')
+    if usage is not None:
+        require(usage['prompt_tokens']+usage['completion_tokens']==usage['total_tokens'])
+        for group, name, maximum in [('prompt_tokens_details','cached_tokens',usage['prompt_tokens']),
+                                     ('completion_tokens_details','reasoning_tokens',usage['completion_tokens'])]:
+            detail = usage.get(group)
+            require(detail is None or detail.get(name,0)<=maximum)
+
+
+def check_correlation(body, result):
+    require(all(body[key]==result[key] for key in ('codec_id','profile_id','profile_digest')))
+    request, response = body['request'], result['response']
+    check_request(request); check_response(response)
+    usage = response.get('usage')
+    require(usage is None or usage['completion_tokens']<=request['max_completion_tokens'])
+    seen = {call['id'] for message in request['messages'] for call in calls(message)}
+    current = calls(response['choices'][0]['message'])
+    require(request['tool_choice']!='none' or not current)
+    require(all(call['id'] not in seen for call in current))
+
+
+def validate_model_request(protocol, policy_raw, request_raw):
+    policy = protocol._catalog.validate(MODEL_CODEC_POLICY_SCHEMA,policy_raw)
+    body = protocol._catalog.validate(ENGINE_MODEL_GENERATE_REQUEST_SCHEMA,request_raw)
+    require(all(body[key]==policy[key] for key in ('codec_id','profile_id','profile_digest')))
+    request = body['request']
+    check_request(request); check_tools(policy['tools'])
+    first = request['messages'][0]
+    require(request['model']==policy['request_model']
+            and request['max_completion_tokens']<=policy['max_completion_tokens']
+            and first['role']==policy['instruction_role'] and first['content']==policy['prompt']
+            and len(policy['prompt'].encode('utf-8'))<=131072
+            and _object_digest(request['tools'],ORDINARY_LIMIT)==_object_digest(policy['tools'],ORDINARY_LIMIT))
+    return body
+
+
+def validate_model_exchange(protocol, policy_raw, request_raw, result_raw):
+    body = validate_model_request(protocol,policy_raw,request_raw)
+    result = protocol._catalog.validate(ENGINE_MODEL_GENERATE_RESULT_SCHEMA,result_raw)
+    check_correlation(body,result)
+    policy = protocol._catalog.validate(MODEL_CODEC_POLICY_SCHEMA,policy_raw)
+    require(result['response']['model'] in policy['response_models'])
+    return result
+
+
+def disposition(response):
+    if response.get('usage') is None: return 'usage-unknown'
+    choice = response['choices'][0]
+    if choice['finish_reason']=='length': return 'truncated'
+    if choice['finish_reason']=='content_filter': return 'filtered'
+    if choice['message'].get('refusal') is not None: return 'refusal'
+    if choice['finish_reason']=='tool_calls': return 'tool-calls'
+    return 'text'
+
+
+def model_disposition(protocol, result_raw):
+    result = protocol._catalog.validate(ENGINE_MODEL_GENERATE_RESULT_SCHEMA,result_raw)
+    check_response(result['response'])
+    return disposition(result['response'])
+
+
+def chat_continuation(protocol, result_raw, results):
+    """One complete assistant/tool segment; call only after bound receipt validation.
+
+    results contains {tool_call_id, content} per original call, including explicit
+    invalid or not-executed local results. Never parses native argument strings.
+    """
+    result = protocol._catalog.validate(ENGINE_MODEL_GENERATE_RESULT_SCHEMA,result_raw)
+    response = result['response']
+    check_response(response)
+    require(disposition(response) in ('tool-calls','text','refusal'))
+    message = response['choices'][0]['message']
+    assistant = {key:message[key] for key in ('role','content','refusal','tool_calls')
+                 if key in message and not (key=='tool_calls' and message[key] is None)}
+    current = calls(message)
+    require(type(results) is list and len(results)==len(current))
+    segment = [assistant]
+    for call, item in zip(current,results):
+        require(type(item) is dict and item.keys()=={'tool_call_id','content'}
+                and item['tool_call_id']==call['id'] and type(item['content']) is str
+                and len(item['content'])<=1048576)
+        segment.append(dict(role='tool',**item))
+    try:
+        return _canonical_value(segment,ORDINARY_LIMIT)
+    except (UnicodeError, TypeError, ValueError):
+        raise ContractError('contract message consistency check failed') from None
