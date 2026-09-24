@@ -151,6 +151,9 @@ expected version/digest. `LoadVerifiedProtocol` / `load_verified_protocol` verif
 before loading the catalog/registry and retains the package pin for launch checks.
 See [package integrity](../schemas/PACKAGE_INTEGRITY_CONTRACT.md) for bounds, the
 fixed payload layout and the distinction between byte integrity and release readiness.
+Operator's separate [installed contract loader](../docs/INSTALLED_CONTRACT.md)
+adds bounded filesystem reads and `operatorctl contract check`; the shared APIs
+continue to operate on explicit payload bytes in both languages.
 
 Use `EncodeFrame` / `encode_frame` and `NewFrameDecoder` / `new_frame_decoder` for
 bounded FIFO messages. `NewTransportState` / `new_transport_state` tracks lane

@@ -42,6 +42,9 @@ approval with current compatibility checks.
 The [host configuration stage](docs/HOST_CONFIGURATION.md) adds strict private YAML
 loading, OS-specific local Docker/state defaults, `operatorctl config check` and
 configuration-aware termination with explicit recovery overrides.
+The [installed contract loader](docs/INSTALLED_CONTRACT.md) verifies a bounded
+filesystem inventory against an independent package pin, compiles the verified
+schemas offline and provides `operatorctl contract check`.
 Run `make setup` then `make test`. Contract publication and
 the remaining Operator/Attack Harness runtime implementation remain pending.
 

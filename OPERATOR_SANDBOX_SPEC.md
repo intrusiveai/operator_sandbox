@@ -1478,6 +1478,15 @@ explicit state-root override when the default configuration is damaged; it alway
 uses the campaign's saved Docker binding rather than the current configuration's
 endpoint. Launch freezes effective settings and their source digest.
 
+Load installed shared-contract bytes through the
+[installed contract loader](docs/INSTALLED_CONTRACT.md), using a version/digest pin
+selected from trusted distribution metadata. Require exact inventory and bounded
+regular-file reads before compiling the verified offline schemas. Preparation and
+launch use that frozen protocol and verified pin; incoming image/release metadata
+cannot supply replacement validators. `operatorctl contract check` provides the
+read-only installation diagnostic. Production package publication and distribution
+pin/version selection remain packaging requirements.
+
 The host `engine.image` setting selects local Docker content under Section 5.1.1;
 campaign or guest content cannot override it. Administrators install images and
 manage registry credentials outside Operator. Release validation uses the fixed

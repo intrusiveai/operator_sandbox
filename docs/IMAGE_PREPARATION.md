@@ -24,8 +24,9 @@ before checking approval. Its `Prepared` result retains both the image pin and a
 immutable copy of the approved response bytes. A cached approval alone cannot
 satisfy a missing local image. Close the client after preparation calls finish.
 
-Installed package/version selection and exposing preparation through the campaign
-CLI remain subsequent integration work. No caller
+The [installed contract loader](INSTALLED_CONTRACT.md) now supplies filesystem
+verification and a pinned protocol. Distribution-supported package/version selection
+and exposing preparation through the campaign CLI remain integration work. No caller
 can configure a different release URL or TLS policy through this API.
 
 ## Read-only Docker resolution

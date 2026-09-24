@@ -63,7 +63,11 @@ aggregate payload bytes. There are 3–64 semantic profile entries. `catalog.jso
 and `operations.json` additionally retain the shared 4 MiB JSON parsing ceiling.
 Payload limits apply independently of campaign input/skill limits. Host installers
 must enforce these bounds while reading or unpacking, before supplying buffers to
-these APIs; the APIs do not implement archive extraction or filesystem staging.
+these APIs; the shared APIs do not implement archive extraction or filesystem staging.
+Operator's [installed contract loader](../docs/INSTALLED_CONTRACT.md) implements
+bounded, exact-inventory host filesystem reads before calling these APIs. Its
+content-only runtime installation keeps detached publication material outside the
+package directory.
 
 ## APIs and verification order
 
