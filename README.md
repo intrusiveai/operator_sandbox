@@ -53,7 +53,8 @@ attachment/status, exact v1alpha2 request encoding and closure confirmation,
 with bounded responses and explicit transport uncertainty. It also prepares
 restore/stop lifecycle requests, validates replacement bindings and decodes the
 separate lifecycle/native operation records for reconciliation without automatic
-replay.
+replay. Snapshot helpers carry the remaining campaign byte allowance, verify native
+checkpoint integrity and provide bounded inventory pages and scoped inspection.
 Run `make setup` then `make test`. Contract publication and
 the remaining Operator/Attack Harness runtime implementation remain pending.
 

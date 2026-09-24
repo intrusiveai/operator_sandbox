@@ -2,8 +2,8 @@
 
 Status: the host-only client is implemented in `internal/interceptor`.
 It provides campaign attachment, instance status, immutable v1alpha2 operation
-encoding/dispatch, typed closure confirmation, lifecycle restore/stop and durable
-operation-record decoding. It does not start a campaign or
+encoding/dispatch, typed closure confirmation, lifecycle restore/stop, durable
+operation-record decoding and snapshot creation/discovery. It does not start a campaign or
 serve as the harness-facing policy broker. Shared Operator/Attack Harness schemas
 and Interceptor's existing API are unchanged.
 
@@ -25,6 +25,8 @@ actual response reads even when Content-Length is absent or incorrect. Larger
 artifact envelopes are not supported by this stage; future artifact admission must
 account for base64/envelope overhead and this client ceiling before dispatch.
 Evidence archive streaming is a separate transport still to be implemented.
+Snapshot list/inspect responses have the narrower native **4 MiB** complete-envelope
+limit, enforced while reading even without a Content-Length header.
 
 Attachment/status have a 30-second total deadline. Native dispatch uses the earlier
 of the saved request deadline, caller context deadline and a 300-second transport
@@ -180,6 +182,60 @@ queries cannot establish non-execution or authorize another effect under a new I
 No decoder changes the host terminal fence. Record data and raw session metadata
 are protected host audit inputs, not guest-visible payloads.
 
+## Snapshot creation and discovery
+
+`PrepareSnapshotCreate(request, SnapshotCreate{...})` prepares a native
+`snapshot.create` operation for the existing journal-before-`Execute` path. The
+input contains optional label/description and a required explicit
+`maximum_committed_bytes`. Its zero value means exhausted, not omitted. The host
+must obtain this allowance from cumulative campaign accounting, retain the same
+allowance on retries, and enforce snapshot admission count independently of native
+session counters. Labels are valid UTF-8 with at most 256 characters; descriptions
+are valid UTF-8 with at most 4,096 bytes. Campaign association comes from the request
+envelope, never a body override.
+
+`DecodeSnapshotCreated(response, prepared, targetSession)` requires native status
+**201**, verifies the checkpoint, and compares campaign/source, label/description,
+environment/application digests and canonical size against the saved request and
+target. It rejects a receipt larger than the saved allowance or any successful
+creation against an exhausted allowance. Native rejections such as
+`429 snapshot_bytes_exhausted` remain `RemoteError` values. The decoder does not
+charge counters or adopt a checkpoint: exactly-once accounting and durable receipt
+storage remain broker responsibilities, including after operation reconciliation.
+
+`Client.ListSnapshots(ctx, SnapshotListRequest{...})` and
+`Client.InspectSnapshot(ctx, campaign, sourceSession, checkpointID)` use the native
+read-only host routes with 30-second deadlines. They work for retained source
+sessions after restore and after target closure while Interceptor remains alive.
+They require no worker attribution or mutation identity and do not restart targets.
+Inspect requires the complete source/checkpoint handle and checks both returned IDs.
+
+Listing returns one `SnapshotPage`, including an empty array for an empty result.
+Native defaults and limits are 100 records per page, maximum 1,000, maximum offset
+and selected inventory of 10,000. The client validates campaign/filter agreement,
+page length, totals, exact next offset, ordering by creation time/source/ID, and
+duplicate handles within the page. It never automatically follows pagination.
+An offset beyond the current total returns an empty page. Inventory is not frozen;
+the broker must refresh from zero if concurrent creation or restore changes it,
+and apply the smaller harness page/control-frame limits when projecting results.
+
+All three paths use the same native `Checkpoint` model and integrity verification.
+The native hash is SHA-256 of Go's ordered struct JSON with `hash` set to an empty
+string (the key remains present), including campaign/description metadata. It is
+neither the shared contract canonical digest nor a hash of incoming wire bytes.
+Native uint64 journal/event sequence values retain their precision. Unknown fields,
+duplicate JSON keys, missing required fields, malformed digests, incompatible
+metadata versions/status and invalid hashes are rejected.
+
+Read paths accept legacy checkpoints that omit campaign/description metadata,
+relying on Interceptor's campaign-scoped source-session lookup. They preserve those
+original fields and hash; new creation requires the explicit expected campaign.
+The later harness adapter can project the attached campaign and empty description
+without modifying the native receipt. An explicitly different campaign is rejected.
+Native checkpoint metadata is host-only: the harness projection still needs source
+lineage/parent-handle resolution, compatibility checks and public field selection.
+A verified ready checkpoint does not guarantee restore preflight will succeed.
+
 ## Validation and pending integration
 
 Tests use copied native fixtures with [recorded provenance](../internal/interceptor/testdata/README.md),
@@ -192,8 +248,12 @@ replacement lineage, independent native revisions, cross-worker attribution,
 missing/in-progress/unknown outcomes, changed-command rejection and strict nested
 responses. The loopback server is a protocol test double, not a running Interceptor
 target or a qualification result.
+Snapshot tests use independently generated native fixtures for current and legacy
+checkpoint hashing, including HTML escaping and uint64 values above the shared
+contract's safe-integer range. They cover creation status/allowance/receipt binding,
+metadata tampering, source scoping, pagination, empty inventories and response bounds.
 
-Snapshot inventory, protected evidence streaming, typed experiment bodies/results, capability projection and
+Protected evidence streaming, typed experiment bodies/results, capability projection and
 feedback filtering remain adapter work. Durable dispatch/reconciliation, status
 polling, terminal fencing and the campaign CLI still need integration. No command
 in this stage attaches to or mutates a real local target automatically.

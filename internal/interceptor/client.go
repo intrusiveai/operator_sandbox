@@ -71,7 +71,11 @@ func (c *Client) Close() {
 }
 
 func (c *Client) post(ctx context.Context, route string, raw []byte) (Response, error) {
-	if len(raw) > JSONLimit || c == nil || c.http == nil {
+	return c.postBounded(ctx, route, raw, JSONLimit)
+}
+
+func (c *Client) postBounded(ctx context.Context, route string, raw []byte, responseLimit int64) (Response, error) {
+	if len(raw) > JSONLimit || responseLimit <= 0 || responseLimit > JSONLimit || c == nil || c.http == nil {
 		return Response{}, &CallError{Kind: "invalid_request"}
 	}
 	if ctx.Err() != nil {
@@ -93,11 +97,11 @@ func (c *Client) post(ctx context.Context, route string, raw []byte) (Response, 
 	defer response.Body.Close()
 	fail := func() (Response, error) { return Response{}, &CallError{Kind: "invalid_response", Uncertain: true} }
 	media, _, err := mime.ParseMediaType(response.Header.Get("Content-Type"))
-	if err != nil || media != "application/json" || (response.Header.Get("Content-Encoding") != "" && response.Header.Get("Content-Encoding") != "identity") || response.ContentLength > JSONLimit {
+	if err != nil || media != "application/json" || (response.Header.Get("Content-Encoding") != "" && response.Header.Get("Content-Encoding") != "identity") || response.ContentLength > responseLimit {
 		return fail()
 	}
-	raw, err = io.ReadAll(io.LimitReader(response.Body, JSONLimit+1))
-	if err != nil || len(raw) > JSONLimit || ctx.Err() != nil {
+	raw, err = io.ReadAll(io.LimitReader(response.Body, responseLimit+1))
+	if err != nil || int64(len(raw)) > responseLimit || ctx.Err() != nil {
 		return fail()
 	}
 	result, err := decodeResponse(raw)

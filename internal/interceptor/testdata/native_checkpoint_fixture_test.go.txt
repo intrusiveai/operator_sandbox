@@ -1,0 +1,44 @@
+// Overlay this test into Interceptor's internal/snapshot package to regenerate
+// fixtures with the native constructor, verifier and hash implementation.
+package snapshot
+
+import (
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+
+	"github.com/intrusive-ai/interceptor-sandbox/internal/digest"
+)
+
+func TestOperatorCheckpointFixtures(t *testing.T) {
+	destination := os.Getenv("OPERATOR_SNAPSHOT_FIXTURE_DIR")
+	if destination == "" {
+		t.Fatal("missing fixture output directory")
+	}
+	cp, err := NewCheckpoint("sess-1", "", digest.Bytes([]byte("environment")), digest.Bytes([]byte("application")), 9007199254740993, digest.Bytes([]byte("journal")), digest.Bytes([]byte("manifest")), 123, 7, "baseline <&>", "fixture", time.Date(2026, 9, 24, 12, 0, 0, 123456789, time.UTC), Metadata{CampaignID: "campaign-1", Description: "Before mutation — retain context"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	cp.ID = "cp-1790251200000-0123456789abcdef01234567"
+	for _, name := range []string{"checkpoint-v1.json", "checkpoint-legacy-v1.json"} {
+		if name == "checkpoint-legacy-v1.json" {
+			cp.CampaignID, cp.Description = "", ""
+		}
+		cp.Hash, err = checkpointDigest(cp)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err = VerifyCheckpoint(cp); err != nil {
+			t.Fatal(err)
+		}
+		raw, err := json.Marshal(cp)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err = os.WriteFile(filepath.Join(destination, name), append(raw, '\n'), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
