@@ -123,7 +123,8 @@ test doubles; they do not qualify a production image, Docker host or release ser
 
 Before launch, implement immutable engine-file inspection without guest execution,
 verify the embedded manifest/package against this approval, prepare/freeze campaign
-inputs, enforce fixed Docker policy and complete confinement/startup checks. The
+inputs through the [host staging layer](INPUT_STAGING.md), enforce fixed Docker
+policy and complete confinement/startup checks. The
 image build, live Python confinement and full host/runtime qualification remain
 separate work. A release record identifies installed runtime policy; it supplies
 no executable code, Docker flags, filesystem mounts or downloaded shared contract.

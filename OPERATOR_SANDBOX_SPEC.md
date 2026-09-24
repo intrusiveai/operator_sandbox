@@ -235,6 +235,12 @@ manifest; host source paths do not appear in guest data. No symlinks, hard links
 special files, nested mounts, executable metadata or unmanifested entries.
 The container cannot mount filesystems or access a raw filesystem image.
 
+The [host input staging implementation](docs/INPUT_STAGING.md) materializes exact
+validated manifest inventories into private service-owned mount trees and verifies
+their actual bytes, names and fixed modes. Reverify before Docker exposure; retain
+the backing trees throughout the harness lifetime. Staging completion does not
+replace release/skill/target admission or the RunManifest/startup binding checks.
+
 ```text
 /run/operator/input/scenario-bundle.json
 /run/operator/input/system-prompt.txt

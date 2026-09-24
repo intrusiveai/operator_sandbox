@@ -149,6 +149,8 @@ The shared library exposes matching Go / Python entry points:
 
 These checks do not open actual input files, verify their contents or canonical
 digests, install confinement, enforce live deadlines or establish host attestation.
+Operator's [host staging layer](../docs/INPUT_STAGING.md) now materializes and
+verifies physical input/skill/manifest trees; the shared APIs remain filesystem-independent.
 The runtime must use bounded reads, reject links/undeclared files, verify actual
 file sizes/hashes and passive skill content, enforce read-only mounts and gates,
 and maintain live transport sequences. Guest echoes never replace those checks.

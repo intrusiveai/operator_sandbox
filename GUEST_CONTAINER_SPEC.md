@@ -140,6 +140,9 @@ Host staging parents and backing files are service-owned and cannot change durin
 the harness lifetime. Read-only bind mounts alone do not prevent a host-side owner from
 changing backing bytes, so do not mount caller-owned source trees. Reject nested
 mounts; freeze and verify a host-created copy before exposing it.
+The [host staging layer](docs/INPUT_STAGING.md) creates these copies and checks their
+fixed names, bytes and modes. Docker mount wiring and guest access qualification
+remain launcher requirements; mount only its three read-only child trees.
 
 Work and tmp mounts are separate bounded `tmpfs` instances with
 `rw,nodev,nosuid,noexec`, private propagation and byte/inode ceilings from policy.

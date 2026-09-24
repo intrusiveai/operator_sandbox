@@ -45,6 +45,9 @@ configuration-aware termination with explicit recovery overrides.
 The [installed contract loader](docs/INSTALLED_CONTRACT.md) verifies a bounded
 filesystem inventory against an independent package pin, compiles the verified
 schemas offline and provides `operatorctl contract check`.
+The [immutable input staging layer](docs/INPUT_STAGING.md) copies exact campaign
+input/skill inventories into service-owned read-only trees, checks their bytes and
+layout, and provides verification and cleanup before Docker integration.
 Run `make setup` then `make test`. Contract publication and
 the remaining Operator/Attack Harness runtime implementation remain pending.
 
