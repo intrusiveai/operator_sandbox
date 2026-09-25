@@ -6,6 +6,9 @@ engine:
 spool:
   max_bytes: 536870912
 
+evidence:
+  max_archive_bytes: 4294967296
+
 # Optional settings below have OS-specific defaults. See docs/HOST_CONFIGURATION.md.
 # docker:
 #   endpoint: unix:///var/run/docker.sock

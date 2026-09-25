@@ -3,7 +3,8 @@
 Status: the host-only client is implemented in `internal/interceptor`.
 It provides campaign attachment, instance status, immutable v1alpha2 operation
 encoding/dispatch, typed closure confirmation, lifecycle restore/stop, durable
-operation-record decoding and snapshot creation/discovery. It does not start a campaign or
+operation-record decoding, snapshot creation/discovery and bounded evidence downloads.
+It does not start a campaign or
 serve as the harness-facing policy broker. Shared Operator/Attack Harness schemas
 and Interceptor's existing API are unchanged.
 
@@ -24,7 +25,7 @@ bounds both complete JSON request and response envelopes to **5 MiB**, checking
 actual response reads even when Content-Length is absent or incorrect. Larger
 artifact envelopes are not supported by this stage; future artifact admission must
 account for base64/envelope overhead and this client ceiling before dispatch.
-Evidence archive streaming is a separate transport still to be implemented.
+Evidence archives use the separate streaming transfer described below.
 Snapshot list/inspect responses have the narrower native **4 MiB** complete-envelope
 limit, enforced while reading even without a Content-Length header.
 
@@ -236,6 +237,57 @@ Native checkpoint metadata is host-only: the harness projection still needs sour
 lineage/parent-handle resolution, compatibility checks and public field selection.
 A verified ready checkpoint does not guarantee restore preflight will succeed.
 
+## Protected evidence download
+
+`Client.DownloadEvidence(ctx, request, privateDirectory)` posts the lifecycle
+version and saved campaign/session IDs to `/v1/evidence`. It never sends a host
+output path. Supply an explicit absolute host deadline, local `MaxArchiveBytes`
+from `evidence.max_archive_bytes`, and `InterceptorMaxBytes` captured from the
+attached instance's status. Limits accept 1 through 9007199254740991 bytes; the
+configured local default is 4 GiB. The deadline includes server archive generation
+and download and is shortened by an earlier caller-context deadline. It is not
+the harness control-frame deadline. There are no automatic retries or range/resume
+requests. The existing fixed-loopback, no-proxy, no-redirect transport applies.
+
+Successful transfer requires HTTP 200, `application/x-tar`, one `Content-Length`,
+one `X-Content-SHA256` and one `X-Evidence-Max-Bytes` matching the saved native
+ceiling. Encoded, partial, chunked or trailer-bearing responses are rejected.
+The declared size must fit both ceilings. A 64 KiB buffer streams bytes into a
+random exclusive 0600 temporary file with incremental hashing; the extra-byte
+probe never writes beyond the declared size. Premature EOF, excess readable body
+bytes, digest mismatch, cancellation or storage failure reject the transfer.
+HTTP message framing defines the body; bytes outside that framing are not evidence.
+Connection reuse is disabled. Successful bytes are synced before returning.
+
+The directory must already exist, be private, owned by the service user and not
+be a final symlink. The client pins it with `os.Root` and verifies its identity.
+The caller must select a host-only campaign staging directory that the guest cannot
+mount. `EvidenceDownload.Receipt()` records requested campaign/session, byte count,
+digest and both ceilings. `Reader()` returns a bounded read-only view for the
+next validation step, exposing neither a path nor a writable file descriptor.
+Always defer `Close()`, which removes the temporary file even after a successful
+download. Finish readers before closing; handle methods are not concurrent lifecycle
+operations. No committed evidence is replaced. Failures remove incomplete files;
+cleanup failure is explicit. After process loss, campaign recovery must remove
+or revalidate abandoned staging files; this client does not recover or publish them.
+
+Valid native rejections remain `RemoteError`, preserving HTTP 413
+`evidence_limit_exceeded`, `maximum_bytes` and `evidence_retained` without treating
+them as target execution failures. Transfer/storage/protocol failures use the
+separate `EvidenceError` kind, with no raw body or filesystem path in error strings.
+The finalizer must record an evidence-collection gap and avoid retrying unchanged
+capacity failures. The per-archive bound does not cap aggregate retained storage or
+concurrent downloads; campaign admission/finalization controls those lifetimes.
+
+**A successful download proves byte-transfer integrity only.** Before committing
+evidence or declaring completeness, the next verifier must check archive paths,
+regular-file types, entry/expanded-size bounds, native manifests/journal/blob hashes,
+campaign/session lineage and native completeness markers. The receipt identifies
+the requested session; archive identity is not established by the HTTP digest.
+This stage does not extract archives, publish evidence, expose it to the harness,
+or implement final reports/import/recovery. Administrative import will use the same
+native validator once implemented.
+
 ## Validation and pending integration
 
 Tests use copied native fixtures with [recorded provenance](../internal/interceptor/testdata/README.md),
@@ -252,8 +304,12 @@ Snapshot tests use independently generated native fixtures for current and legac
 checkpoint hashing, including HTML escaping and uint64 values above the shared
 contract's safe-integer range. They cover creation status/allowance/receipt binding,
 metadata tampering, source scoping, pagination, empty inventories and response bounds.
+Evidence tests cover strict headers, the smaller of both ceilings, a streamed
+archive larger than the JSON limit, bounded buffer reads, interrupted/damaged bodies,
+storage write failure, native quota errors, private staging cleanup and a real HTTP
+test using Interceptor's `http.ServeContent` response pattern.
 
-Protected evidence streaming, typed experiment bodies/results, capability projection and
+Native evidence archive/provenance validation and publication, typed experiment bodies/results, capability projection and
 feedback filtering remain adapter work. Durable dispatch/reconciliation, status
 polling, terminal fencing and the campaign CLI still need integration. No command
 in this stage attaches to or mutates a real local target automatically.

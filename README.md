@@ -55,6 +55,8 @@ restore/stop lifecycle requests, validates replacement bindings and decodes the
 separate lifecycle/native operation records for reconciliation without automatic
 replay. Snapshot helpers carry the remaining campaign byte allowance, verify native
 checkpoint integrity and provide bounded inventory pages and scoped inspection.
+Evidence download helpers stream into private temporary files, enforce configured
+archive limits and verify transfer length/digest before native archive validation.
 Run `make setup` then `make test`. Contract publication and
 the remaining Operator/Attack Harness runtime implementation remain pending.
 

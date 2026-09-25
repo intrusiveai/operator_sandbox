@@ -162,7 +162,7 @@ func TestConfigCheckIsReadOnly(t *testing.T) {
 			Status     string `json:"status"`
 			hostconfig.Loaded
 		}
-		if err := json.Unmarshal(out.Bytes(), &result); err != nil || code != 0 || result.Status != "valid" || result.APIVersion != "operator.dev/config-check/v1alpha1" || result.Digest != contracts.RawDigest([]byte(raw)) || result.Config.State.Root != p.StateRoot || result.Config.Spool.MaxBytes != 536870912 {
+		if err := json.Unmarshal(out.Bytes(), &result); err != nil || code != 0 || result.Status != "valid" || result.APIVersion != "operator.dev/config-check/v1alpha1" || result.Digest != contracts.RawDigest([]byte(raw)) || result.Config.State.Root != p.StateRoot || result.Config.Spool.MaxBytes != 536870912 || result.Config.Evidence.MaxArchiveBytes != 4294967296 {
 			t.Fatal(code, out.String(), stderr.String(), err)
 		}
 		if _, err := os.Stat(p.StateRoot); !os.IsNotExist(err) {

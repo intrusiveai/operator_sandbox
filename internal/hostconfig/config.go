@@ -25,13 +25,15 @@ import (
 
 const MaxBytes = 64 << 10
 const DefaultSpoolBytes int64 = 512 << 20
+const DefaultEvidenceBytes int64 = 4 << 30
 
 var (
-	ErrInvalid = errors.New("invalid configuration: use only documented sections, fields and scalar types")
-	ErrPrivate = errors.New("configuration must be a private regular file owned by the service user or root")
-	ErrImage   = errors.New("engine.image must select a local Docker image name, repository digest or full image ID")
-	ErrPath    = errors.New("configuration paths must be absolute and clean, without control characters")
-	ErrSpool   = errors.New("spool.max_bytes must be a positive decimal integer no greater than 9007199254740991")
+	ErrInvalid  = errors.New("invalid configuration: use only documented sections, fields and scalar types")
+	ErrPrivate  = errors.New("configuration must be a private regular file owned by the service user or root")
+	ErrImage    = errors.New("engine.image must select a local Docker image name, repository digest or full image ID")
+	ErrPath     = errors.New("configuration paths must be absolute and clean, without control characters")
+	ErrSpool    = errors.New("spool.max_bytes must be a positive decimal integer no greater than 9007199254740991")
+	ErrEvidence = errors.New("evidence.max_archive_bytes must be a positive decimal integer no greater than 9007199254740991")
 )
 
 type Paths struct{ ConfigFile, StateRoot, DockerEndpoint string }
@@ -69,6 +71,9 @@ type Config struct {
 	Spool struct {
 		MaxBytes int64 `json:"max_bytes"`
 	} `json:"spool"`
+	Evidence struct {
+		MaxArchiveBytes int64 `json:"max_archive_bytes"`
+	} `json:"evidence"`
 }
 
 type Loaded struct {
@@ -121,6 +126,7 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 	c.State.Root = defaults.StateRoot
 	c.Docker.Endpoint = defaults.DockerEndpoint
 	c.Spool.MaxBytes = DefaultSpoolBytes
+	c.Evidence.MaxArchiveBytes = DefaultEvidenceBytes
 	fields := map[string]map[string]*string{
 		"engine": {"image": &c.Engine.Image},
 		"docker": {"endpoint": &c.Docker.Endpoint, "executable": &c.Docker.Executable},
@@ -129,7 +135,7 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 	}
 	for section, node := range sections {
 		allowed, ok := fields[section]
-		if !ok && section != "spool" {
+		if !ok && section != "spool" && section != "evidence" {
 			return Config{}, ErrInvalid
 		}
 		values, err := mapping(node)
@@ -140,15 +146,19 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 			if value.Kind != yaml.ScalarNode || value.Anchor != "" {
 				return Config{}, ErrInvalid
 			}
-			if section == "spool" {
-				if name != "max_bytes" || value.Tag != "!!int" || !decimal.MatchString(value.Value) {
-					return Config{}, ErrSpool
+			if section == "spool" || section == "evidence" {
+				key, dst, invalid := "max_bytes", &c.Spool.MaxBytes, ErrSpool
+				if section == "evidence" {
+					key, dst, invalid = "max_archive_bytes", &c.Evidence.MaxArchiveBytes, ErrEvidence
+				}
+				if name != key || value.Tag != "!!int" || !decimal.MatchString(value.Value) {
+					return Config{}, invalid
 				}
 				n, err := strconv.ParseInt(value.Value, 10, 64)
 				if err != nil || n > contracts.MaxSafeInteger {
-					return Config{}, ErrSpool
+					return Config{}, invalid
 				}
-				c.Spool.MaxBytes = n
+				*dst = n
 				continue
 			}
 			dst, ok := allowed[name]

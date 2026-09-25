@@ -4,6 +4,7 @@ package hostconfig
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -35,7 +36,7 @@ func TestDefaultsAndEffectiveSettings(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if c.State.Root != p.StateRoot || c.Docker.Endpoint != p.DockerEndpoint || c.Spool.MaxBytes != 536870912 || c.Cache.ReleaseDirectory != filepath.Join(p.StateRoot, "cache/releases") || c.Docker.Executable != "" {
+			if c.State.Root != p.StateRoot || c.Docker.Endpoint != p.DockerEndpoint || c.Spool.MaxBytes != 536870912 || c.Evidence.MaxArchiveBytes != 4294967296 || c.Cache.ReleaseDirectory != filepath.Join(p.StateRoot, "cache/releases") || c.Docker.Executable != "" {
 				t.Fatal(c)
 			}
 			if goos == "darwin" && (p.ConfigFile != "/Users/test/Library/Application Support/Operator/config/config.yaml" || p.DockerEndpoint != "unix:///Users/test/.docker/run/docker.sock") {
@@ -87,6 +88,7 @@ func TestRejectAmbiguousOrUnsupportedConfiguration(t *testing.T) {
 	}
 	for _, n := range []string{"0", "-1", "1.5", "0x200", "010", "1_000", "+10", "'512'", "9007199254740992", "999999999999999999999999999999"} {
 		cases["spool "+n] = minimal + "spool: {max_bytes: " + n + "}"
+		cases["evidence "+n] = minimal + "evidence: {max_archive_bytes: " + n + "}"
 	}
 	for name, raw := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -98,6 +100,20 @@ func TestRejectAmbiguousOrUnsupportedConfiguration(t *testing.T) {
 	_, err := Parse([]byte("engine: {unknown-super-secret-value: [password]}"), linuxDefaults(t))
 	if err == nil || strings.Contains(err.Error(), "password") || strings.Contains(err.Error(), "super-secret") {
 		t.Fatal(err)
+	}
+}
+
+func TestEvidenceCapacityConfiguration(t *testing.T) {
+	for _, n := range []string{"1", "4294967296", "9007199254740991"} {
+		c, err := Parse([]byte(minimal+"evidence: {max_archive_bytes: "+n+"}"), linuxDefaults(t))
+		if err != nil || fmt.Sprint(c.Evidence.MaxArchiveBytes) != n {
+			t.Fatal(c, err)
+		}
+	}
+	for _, section := range []string{"evidence: {max_archive_bytes: null}", "evidence: {other: 123}", "evidence: {max_archive_bytes: true}", "evidence: {max_archive_bytes: 1, max_archive_bytes: 2}"} {
+		if _, err := Parse([]byte(minimal+section), linuxDefaults(t)); err == nil {
+			t.Fatal("accepted", section)
+		}
 	}
 }
 

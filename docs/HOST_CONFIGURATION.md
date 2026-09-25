@@ -23,6 +23,7 @@ The initial loader accepts exactly these fields:
 | `state.root` | Linux default: `/var/lib/operator`; macOS default: `<home>/Library/Application Support/Operator/data`. |
 | `cache.release_directory` | Default: `<effective state.root>/cache/releases`. Must be outside `<state.root>/campaigns`, whose contents are purgeable. |
 | `spool.max_bytes` | Positive decimal byte count, default `536870912` (512 MiB), maximum `9007199254740991`. Applies to macOS spool accounting; Linux uses FIFOs. |
+| `evidence.max_archive_bytes` | Per-session native archive acceptance ceiling, default `4294967296` (4 GiB), maximum `9007199254740991`; positive decimal integer. Collection uses the smaller of this and Interceptor's advertised limit. |
 
 The macOS default selects Docker Desktop's documented
 [per-user socket](https://docs.docker.com/desktop/setup/install/mac-permission-requirements/#installing-symlinks)

@@ -95,12 +95,16 @@ func (c *Client) postBounded(ctx context.Context, route string, raw []byte, resp
 		return Response{}, &CallError{Kind: "transport_unavailable", Uncertain: true}
 	}
 	defer response.Body.Close()
+	return readJSONResponse(ctx, response, responseLimit)
+}
+
+func readJSONResponse(ctx context.Context, response *http.Response, responseLimit int64) (Response, error) {
 	fail := func() (Response, error) { return Response{}, &CallError{Kind: "invalid_response", Uncertain: true} }
 	media, _, err := mime.ParseMediaType(response.Header.Get("Content-Type"))
 	if err != nil || media != "application/json" || (response.Header.Get("Content-Encoding") != "" && response.Header.Get("Content-Encoding") != "identity") || response.ContentLength > responseLimit {
 		return fail()
 	}
-	raw, err = io.ReadAll(io.LimitReader(response.Body, responseLimit+1))
+	raw, err := io.ReadAll(io.LimitReader(response.Body, responseLimit+1))
 	if err != nil || int64(len(raw)) > responseLimit || ctx.Err() != nil {
 		return fail()
 	}
