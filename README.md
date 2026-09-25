@@ -2,7 +2,8 @@
 
 Implementation specification with shared contracts, host persistence and transport,
 and independent administrative termination.
-The campaign service and Docker launch orchestration are not implemented yet.
+The initial campaign service library is implemented; full campaign dispatch and
+Docker launch orchestration remain pending.
 
 The [shared validation foundation](contracts/README.md) now provides Go/Python
 strict JSON decoders, offline validation of the current schema catalog and shared
@@ -75,8 +76,12 @@ profiles, filters permitted observations and provides bounded receipt-scoped rea
 The [durable receipts](docs/DURABLE_RECEIPTS.md) and [attempt broker](docs/ATTEMPT_BROKER.md)
 retain feedback before reply, dispatch typed attempts and retained-injection cleanup,
 and enforce cumulative receipt-read budgets across restores.
+The [campaign preparation](docs/CAMPAIGN_PREPARATION.md) and
+[service foundation](docs/CAMPAIGN_SERVICE.md) add private target profiles, frozen
+inputs, verified startup admission, live source callbacks, physical spool dispatch
+and independent termination with bounded post-closure cleanup.
 The [implementation phase handoff](docs/IMPLEMENTATION_STATUS.md) describes these
-completed foundations and the next campaign service integration phase.
+completed foundations and the remaining service routes and restore coordination.
 Run `make setup` then `make test`. Contract publication and
 the remaining Operator/Attack Harness runtime implementation remain pending.
 
@@ -122,4 +127,5 @@ OS/Docker versions are informational; startup checks required runtime capabiliti
 
 Retained injections can be explicitly removed through the
 [typed cleanup contract](schemas/INJECTION_CLEANUP_CONTRACT.md), including after a
-healthy restore, without rolling back the target. Runtime implementation is pending.
+healthy restore, without rolling back the target. The host broker and initial
+service route are implemented; campaign restore orchestration remains pending.

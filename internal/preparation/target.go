@@ -114,6 +114,7 @@ func (t *Target) Profile() *targetprofile.Profile { return t.profile }
 func (t *Target) Protocol() *contracts.Protocol   { return t.protocol }
 func (t *Target) InstanceID() string              { return t.instance }
 func (t *Target) HostPolicyJSON() []byte          { return bytes.Clone(t.hostPolicy) }
+func (t *Target) BundleJSON() []byte              { return t.bundle.JSON() }
 func (t *Target) ReadKinds() []string             { return t.compatibility.AllowedKinds() }
 func (t *Target) Binding() campaign.TargetBinding {
 	b := t.live.Binding()
@@ -184,6 +185,9 @@ func (t *Target) Persist(w *campaign.Writer, context []byte) (*Stored, error) {
 	if c["launch_id"] != m.LaunchID {
 		return nil, ErrPreparation
 	}
+	if c["model"].(map[string]any)["profile_digest"] != m.ModelProfileDigest {
+		return nil, ErrPreparation
+	}
 	release := c["release"].(map[string]any)
 	if release["image_digest"] != m.ImageDigest || release["release_record_digest"] != m.ReleaseRecordDigest {
 		return nil, ErrPreparation
@@ -197,16 +201,14 @@ func (t *Target) Persist(w *campaign.Writer, context []byte) (*Stored, error) {
 			return nil, ErrPreparation
 		}
 	}
-	var limits struct {
-		Bytes   int64 `json:"artifact_bytes"`
-		Objects int   `json:"artifact_objects"`
-	}
-	_ = json.Unmarshal(m.RemainingLimits, &limits)
+	limits := c["remaining_limits"].(map[string]any)
+	maxBytes, _ := limits["artifact_bytes"].(json.Number).Float64()
+	maxObjects, _ := limits["artifact_objects"].(json.Number).Float64()
 	total := int64(0)
 	for _, a := range t.artifacts {
 		total += int64(len(a.Bytes))
 	}
-	if total > limits.Bytes || len(t.artifacts) > limits.Objects {
+	if total > int64(maxBytes) || int64(len(t.artifacts)) > int64(maxObjects) {
 		return nil, ErrPreparation
 	}
 	record, _ := json.Marshal(map[string]any{"api_version": "operator.dev/campaign-preparation/v1alpha1", "instance_id": t.instance, "target": t.Binding(), "host_policy": json.RawMessage(t.hostPolicy), "compatibility": json.RawMessage(t.compatibility.RecordJSON()), "authoring_source": json.RawMessage(t.authoring.NativeJSON()), "live_source": json.RawMessage(t.live.Export().NativeJSON()), "bundle": json.RawMessage(t.bundle.JSON()), "engine_context": json.RawMessage(context)})

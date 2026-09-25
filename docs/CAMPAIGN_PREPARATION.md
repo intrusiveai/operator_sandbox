@@ -49,11 +49,16 @@ verified inputs. Prompt, model, skill, release and resource settings MUST come f
 their host preparation steps. Context projection does not grant release approval.
 
 `Target.Persist` MUST match the immutable RunManifest's target, context, bundle,
-host policy, package, release and remaining-limit pins. It MUST retain source,
+host policy, model profile, package, release and remaining-limit pins. It MUST retain source,
 policy, compatibility, bundle and context bytes plus campaign-local artifacts
 before publishing preparation adoption. A failed write MUST prevent service use.
 Broker artifact reads MUST use verified retained journal content, not the original
 source paths or caller-owned buffers.
+
+The [campaign service](CAMPAIGN_SERVICE.md) supplies concrete artifact, policy,
+lineage and current native revision callbacks from this adopted preparation.
+Preparation MUST NOT accept an unverified installed package or grant permissions
+from capability publication alone.
 
 Before launch/admission, the service MUST recheck native identity/readiness and the
 exact Docker binding. Native `session.status` supplies the mutation revision for

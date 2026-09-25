@@ -1,8 +1,8 @@
 # Typed Interceptor attempt adapter
 
 `internal/attemptadapter` connects validated shared attempt requests to the durable
-native executor. It is a host library; campaign service and CLI wiring remain
-separate work.
+native executor. The [campaign service](CAMPAIGN_SERVICE.md) now supplies its live
+callbacks; campaign start CLI and Docker launch remain separate work.
 
 ## Preparation
 
@@ -21,10 +21,10 @@ separate work.
    using that ledger and the pinned native/Docker guard. The constructor verifies
    the saved plan, original request identity and target provenance.
 
-The resolver currently consumes concrete host scope records. Configuration parsing,
-administrative scope expansion, startup preparation and publication of the effective
-harness execution context still need service integration. These records are host
-policy inputs, not additional model arguments or a new public wire contract.
+The resolver consumes concrete host scope records from the private
+[TargetProfile](CAMPAIGN_PREPARATION.md). Preparation resolves those scopes and
+publishes the effective harness context. These records are host policy inputs,
+not additional model arguments or a new public wire contract.
 
 ## Translation and execution
 
@@ -65,9 +65,9 @@ publication and implements the `engine.injection_delete` tool route.
 After terminal failure, the ordinary executor stops. Its confirmed-created handles
 are available to the separate bounded terminal-cleanup controller; `Run` does not
 reopen execution to perform cleanup or collect additional failure feedback.
-Independent termination, native closure, terminal cleanup, reporting-only evidence
-collection must be wired by the campaign service. Final attempt receipt publication
-is performed by the broker before any reply.
+The campaign service wires independent termination, native closure and bounded
+terminal cleanup. Reporting-only evidence provenance and publication remain pending.
+Final attempt receipt publication is performed by the broker before any reply.
 
 Tests exercise all these translations and failure boundaries against a scripted
 native peer with the real campaign journal and executor. They check current native

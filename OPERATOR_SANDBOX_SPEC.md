@@ -951,8 +951,10 @@ the campaign writer lock or reading journal data. Attempt audit reservations and
 the lock-independent terminal signal are implemented. The
 [Docker termination layer](docs/DOCKER_TERMINATION.md) supplies bounded emergency
 records, exact-identity stop confirmation, the administrative CLI and a terminal-fence
-observer. Wiring those components into launch/dispatch and the remaining
-broker/lifecycle behavior is still required before external execution is implemented.
+observer. The [campaign service foundation](docs/CAMPAIGN_SERVICE.md) now joins
+verified preparation, attempt/read/cleanup dispatch, the observer and bounded native
+closure/cleanup. Remaining tool routes, restore coordination and Docker launch
+orchestration MUST be completed before a full campaign can execute.
 
 Retain completed evidence until an administrator explicitly purges it. Host audit
 policy still defines active/deployment write budgets, segment sizes and a free-space

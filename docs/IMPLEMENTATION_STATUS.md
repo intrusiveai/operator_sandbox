@@ -1,6 +1,35 @@
 # Implementation phase handoff
 
-## Completed phase: durable receipts and ordinary attempt broker
+## Completed phase: campaign preparation and service foundation
+
+The [preparation layer](CAMPAIGN_PREPARATION.md) and
+[campaign service](CAMPAIGN_SERVICE.md) now join immutable inputs to live ordinary
+dispatch and independent termination.
+
+| Area | Implemented |
+| --- | --- |
+| Administrator policy | Private TargetProfile file selected by host configuration; concrete native scopes, feedback ceiling and explicit target-stop permission. |
+| Preparation | Verified package, live target and bundle compatibility; checked artifact bytes; frozen policy/context/model/release/manifest pins and retained provenance. |
+| Admission | Full five-message startup and input validation, live target and exact saved Docker checks, durable admission record. |
+| Dispatch | Concrete source/lineage/policy callbacks, fresh native mutation revisions, exact request/response audit and advertised-route enforcement. |
+| Transport | Ordinary FIFO/spool queue integration with original deadlines, guest-relative lane directions and sequence zero; physical spool integration test. |
+| Lifetime | Absolute campaign timer and idle native status watcher; terminal cancellation and Docker termination independent of the ordinary gate. |
+| Terminal cleanup | Pre-reserved audit capacity, confirmed native closure, at most 64 confirmed injection IDs within 30 seconds, separate optional target-stop outcome. |
+
+The service currently supports attempt execution, observation reads and retained
+injection deletion. It rejects contexts advertising other routes. This completes
+the preparation/admission/dispatch/termination foundation, not the full campaign
+service: snapshot/restore, artifact uploads, model relay and conclusion/stop routes
+remain the next service stage. No new shared wire schema or sibling repository
+change was required.
+
+Validation: full Go/Python suite and shared fixtures, targeted race tests, `go vet`,
+and preparation/service test builds for Linux amd64/arm64 and macOS amd64. Tests run
+on macOS arm64 using real journals and spool files with scripted native/Docker
+interfaces. Cross-compilation does not qualify Docker or a live Interceptor/Attack
+Harness deployment. Campaign start CLI and Docker launch remain pending.
+
+## Earlier completed phase: durable receipts and ordinary attempt broker
 
 The [receipt publication layer](DURABLE_RECEIPTS.md) and
 [attempt broker](ATTEMPT_BROKER.md) now connect typed execution to durable guest
@@ -16,11 +45,11 @@ results, disk-backed feedback reads and retained-injection deletion.
 | Duplicates and restore | Shared operation namespace, serialized concurrent duplicates, old result replay, persistent counters and new cleanup against restored injections. |
 | Failure | Uncertainty and journal loss close execution; no uncommitted reply or repeated native effect. |
 
-The broker is a host library with installed source/admission callbacks. It does not
-start a campaign or run a transport service. The next phase supplies those concrete
-callbacks, owns the full restore transition and wires post-closure cleanup and
-independent termination. Guest execution cannot use the ordinary broker after the
-terminal fence. Shared wire schemas remain unchanged; no sibling repo was edited.
+The broker is a host library with installed source/admission callbacks. The service
+foundation above now supplies those callbacks, transport integration, post-closure
+cleanup and independent termination. Full restore coordination remains pending.
+Guest execution cannot use the ordinary broker after the terminal fence. Shared
+wire schemas remain unchanged; no sibling repo was edited.
 
 Validation passed: full Go/Python tests and shared fixtures, targeted race tests,
 `go vet`, and broker test builds for Linux amd64/arm64 and macOS amd64. Tests execute
@@ -54,10 +83,9 @@ independently from Interceptor using a temporary Go overlay without repository e
 
 This completes the host adapter boundary. `Run` returns schema-validated guest JSON,
 frozen feedback and injection handles; the broker above now atomically retains them
-before replying and implements retained-handle cleanup. A terminal cleanup
-controller must use confirmed handles after execution is fenced. Concrete
-TargetProfile configuration, immutable campaign preparation and effective context
-publication remain service integration work. Existing Operator/Attack Harness
+before replying and implements retained-handle cleanup. The service foundation
+above supplies the bounded terminal cleanup controller, concrete TargetProfile,
+immutable campaign preparation and effective context publication. Existing Operator/Attack Harness
 wire contracts are unchanged; no sibling repository was edited.
 
 Validation: full Go/Python suite and shared fixtures, race tests, `go vet`, and
@@ -117,8 +145,9 @@ integration responsibilities.
 | Policy handoff | Explicit host decisions and selectable action routes; preserved native profile, effective profile and allowed feedback kinds. |
 | Frozen records | Unchanged bundle bytes plus authoring/live provenance, binding, policy digest and compatibility results. |
 
-This is a host library boundary. It does not yet implement CLI export writing,
-TargetProfile route resolution, per-attempt authorization or campaign startup.
+This is a host library boundary. It does not yet implement CLI export writing or
+campaign startup. Later phases above supply TargetProfile route resolution,
+per-attempt authorization and immutable preparation.
 Artifact descriptors do not substitute for verification and staging of actual
 artifact bytes. Compatibility records must be persisted with the immutable input
 and installed contract-package pins by the campaign preparation layer.
@@ -170,21 +199,16 @@ packages pass race tests; the full Go/Python suite, fixture runners and `go vet`
 pass. Capability tests also compile for Linux amd64/arm64 and macOS amd64; they
 execute on macOS arm64. These builds do not qualify Docker runtime behavior.
 
-## Next major phase: campaign preparation and service integration
+## Next major phase: complete service routes and restore coordination
 
-1. Wire concrete TargetProfile configuration, live bundle compatibility, verified
-   artifact/lineage sources and installed contract pins into immutable campaign
-   preparation and effective EngineContext publication. Supply the broker's trusted
-   callbacks, including current native revision and policy checks.
-2. Connect transport admission/envelope audit and the ordinary broker to service
-   dispatch; coordinate snapshot/restore and remaining operation routes through the
-   same drain/transition gate. Keep model/reference-read and finalization accounting.
-3. Add bounded host-owned terminal cleanup using confirmed handles and audit
-   capacity reserved before effects. An uncertain outcome cannot reopen guest
-   execution. Retain closure, cleanup and reporting outcomes independently.
-4. Arm the independent Docker observer and campaign/operation timers in the service;
-   wire native target closure and lifecycle cleanup. Recheck immutable preparation
-   before launch and preserve the harness across healthy target restores.
+1. Implement snapshot create/list/restore through the service's drain/transition
+   gate, preserving the harness, cumulative accounting and original receipt sources.
+   Adopt only verified replacement bindings; keep uncertainty terminal.
+2. Add artifact upload/reference, model relay and assessment/stop routes with the
+   shared operation namespace, durable publication and campaign/loop budgets.
+3. Coordinate revision notifications, skipped queued calls, structured conclusions
+   and finalization accounting with independent control handling. Expand the
+   advertised operation set only as the routes are implemented and tested.
 
 Native evidence provenance validation remains a separate required phase: verify
 manifest identities, event/state chains, execution records, references, restore

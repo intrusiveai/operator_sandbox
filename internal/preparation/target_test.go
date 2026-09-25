@@ -1,4 +1,4 @@
-package preparation
+package preparation_test
 
 import (
 	"bytes"
@@ -13,6 +13,7 @@ import (
 	"github.com/intrusive-ai/operator-sandbox/internal/campaign"
 	"github.com/intrusive-ai/operator-sandbox/internal/capabilities"
 	"github.com/intrusive-ai/operator-sandbox/internal/interceptor"
+	"github.com/intrusive-ai/operator-sandbox/internal/preparation"
 	"github.com/intrusive-ai/operator-sandbox/internal/targetprofile"
 	"github.com/intrusive-ai/operator-sandbox/schemas"
 )
@@ -54,7 +55,7 @@ func protocol(t *testing.T) *contracts.Protocol {
 	}
 	return p
 }
-func fixture(t *testing.T) Input {
+func fixture(t *testing.T) preparation.Input {
 	t.Helper()
 	p := protocol(t)
 	native := read(t, "../interceptor/testdata/capability-delivery.json")
@@ -73,19 +74,39 @@ func fixture(t *testing.T) Input {
 	}
 	data := []byte(`{"query":"test"}`)
 	d := interceptor.ArtifactDescriptor{Digest: contracts.RawDigest(data), SizeBytes: int64(len(data)), MediaType: "application/json", Canonicalization: "jcs-v1"}
-	return Input{Protocol: p, Profile: profile, Attachment: a, Status: s, InstanceID: "instance-1", Authoring: authoring, Bundle: read(t, "../../schemas/fixtures/capability-chain/submitted-bundle.json"), Artifacts: []attemptadapter.Artifact{{CampaignID: "campaign-1", Descriptor: d, Bytes: data}}}
+	return preparation.Input{Protocol: p, Profile: profile, Attachment: a, Status: s, InstanceID: "instance-1", Authoring: authoring, Bundle: read(t, "../../schemas/fixtures/capability-chain/submitted-bundle.json"), Artifacts: []attemptadapter.Artifact{{CampaignID: "campaign-1", Descriptor: d, Bytes: data}}}
 }
-func preparedWriter(t *testing.T, target *Target) (*campaign.Writer, []byte) {
+func preparedWriter(t *testing.T, target *preparation.Target) (*campaign.Writer, []byte) {
+	w, in, _ := preparedLaunch(t, target)
+	return w, in.EngineContext
+}
+func preparedLaunch(t *testing.T, target *preparation.Target, operations ...string) (*campaign.Writer, campaign.LaunchInputs, string) {
 	t.Helper()
 	var template map[string]any
 	_ = json.Unmarshal(read(t, "../../schemas/fixtures/engine-context-example.json"), &template)
+	template["operations"] = []string{"engine.attempt_execute", "engine.injection_delete", "engine.observation_read"}
+	if operations != nil {
+		template["operations"] = operations
+	}
 	template["remaining_limits"].(map[string]any)["artifact_bytes"] = 1 << 20
 	template["limits"].(map[string]any)["campaign"].(map[string]any)["artifact_bytes"] = 1 << 20
+	for _, limits := range []map[string]any{template["remaining_limits"].(map[string]any), template["limits"].(map[string]any)["campaign"].(map[string]any)} {
+		limits["artifact_objects"] = 10
+		limits["attempt_admissions"] = 10
+	}
+	prompt, provenance, err := contracts.ComposePrompt("default", []byte("Test campaign guidance."), nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	template["prompt"] = map[string]any{"entry_id": "prompt", "provenance": provenance}
+	set := template["skills"].(map[string]any)
+	delete(set, "loading_digest")
+	set["loading_digest"], _ = contracts.CanonicalDigest(encode(set), contracts.ControlLimit)
 	context, err := target.Context(encode(template))
 	if err != nil {
 		t.Fatal(err)
 	}
-	c, _ := target.protocol.ValidateEngineContext(context)
+	c, _ := target.Protocol().ValidateEngineContext(context)
 	release := c["release"].(map[string]any)
 	digest := func(raw []byte) string {
 		d, e := contracts.CanonicalDigest(raw, contracts.OrdinaryLimit)
@@ -94,10 +115,11 @@ func preparedWriter(t *testing.T, target *Target) (*campaign.Writer, []byte) {
 		}
 		return d
 	}
-	d := contracts.RawDigest([]byte("fixture"))
-	pin, _ := target.protocol.PackageIdentity()
-	reg := target.protocol.RegistryDigests()
-	m := campaign.RunManifest{APIVersion: campaign.ManifestVersion, CampaignID: "campaign-1", LaunchID: "launch-1", ContainerID: strings.Repeat("a", 64), InitialRevision: 1, CreatedAt: "2026-09-25T12:00:00Z", HostPlatform: "darwin/arm64", ImagePlatform: "linux/arm64", Transport: "spool", RuntimeProfile: "operator-container/v1", ImageDigest: release["image_digest"].(string), ReleaseRecordDigest: release["release_record_digest"].(string), Contract: campaign.ContractPin{Version: pin.Version, Digest: pin.Digest, CatalogDigest: reg["catalog_digest"], OperationsDigest: reg["operations_digest"]}, EngineContextDigest: digest(context), InputTreeDigest: d, SkillSetDigest: d, ScenarioBundleDigest: digest(target.bundle.JSON()), HostPolicyDigest: digest(target.HostPolicyJSON()), ModelProfileDigest: c["model"].(map[string]any)["profile_digest"].(string), Target: target.Binding(), RemainingLimits: encode(c["remaining_limits"]), HarnessLimits: encode(c["limits"].(map[string]any)["harness"]), Retention: campaign.Retention{Mode: "manual-purge", MaxJournalBytes: 256 << 20, MaxSegmentBytes: campaign.MaxEventBytes}}
+	setRaw := encode(set)
+	tree := inputTree(t, target, context, prompt)
+	pin, _ := target.Protocol().PackageIdentity()
+	reg := target.Protocol().RegistryDigests()
+	m := campaign.RunManifest{APIVersion: campaign.ManifestVersion, CampaignID: "campaign-1", LaunchID: "launch-1", ContainerID: strings.Repeat("a", 64), InitialRevision: 1, CreatedAt: "2026-09-25T12:00:00Z", HostPlatform: "darwin/arm64", ImagePlatform: "linux/arm64", Transport: "spool", RuntimeProfile: "operator-container/v1", ImageDigest: release["image_digest"].(string), ReleaseRecordDigest: release["release_record_digest"].(string), Contract: campaign.ContractPin{Version: pin.Version, Digest: pin.Digest, CatalogDigest: reg["catalog_digest"], OperationsDigest: reg["operations_digest"]}, EngineContextDigest: digest(context), InputTreeDigest: digest(tree), SkillSetDigest: digest(setRaw), ScenarioBundleDigest: digest(target.BundleJSON()), HostPolicyDigest: digest(target.HostPolicyJSON()), ModelProfileDigest: c["model"].(map[string]any)["profile_digest"].(string), Target: target.Binding(), RemainingLimits: encode(c["remaining_limits"]), HarnessLimits: encode(c["limits"].(map[string]any)["harness"]), Retention: campaign.Retention{Mode: "manual-purge", MaxJournalBytes: 256 << 20, MaxSegmentBytes: campaign.MaxEventBytes}}
 	root := t.TempDir()
 	_ = os.Chmod(root, 0700)
 	w, err := campaign.Create(root, m)
@@ -108,11 +130,16 @@ func preparedWriter(t *testing.T, target *Target) (*campaign.Writer, []byte) {
 	if err = w.ConfigureFreeSpace(0); err != nil {
 		t.Fatal(err)
 	}
-	return w, context
+	in := campaign.LaunchInputs{InputTree: tree, SkillSet: setRaw, EngineContext: context, ScenarioBundle: target.BundleJSON(), Prompt: prompt, HostPolicy: target.HostPolicyJSON()}
+	in.Messages = startup(t, target, w, in)
+	if err = m.ValidateLaunchInputs(target.Protocol(), in); err != nil {
+		t.Fatal("startup fixture", err)
+	}
+	return w, in, root
 }
 func TestPreparationFreezesPolicyBytesAndManifestBindings(t *testing.T) {
 	input := fixture(t)
-	target, err := Build(input)
+	target, err := preparation.Build(input)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -165,7 +192,7 @@ func TestPreparationRejectsForeignStaleAndCorruptInputs(t *testing.T) {
 			case "unverified":
 				in.Protocol, _ = contracts.LoadProtocol(schemas.Files)
 			}
-			if _, err := Build(in); err == nil {
+			if _, err := preparation.Build(in); err == nil {
 				t.Fatal("invalid preparation accepted")
 			}
 		})

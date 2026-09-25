@@ -59,10 +59,13 @@ across the entire restore transition before calling `Rebind`. This library does 
 issue restores or attach to transport queues itself. Keep the independent fence
 observer and absolute campaign timer outside the ordinary mutex.
 
-Post-closure cleanup is a separate host controller. It must use confirmed handles,
-bounded deadlines and pre-reserved audit capacity without reopening guest admission
-or bypassing the ordinary executor's fence. Wiring that controller, native closure,
-reporting and Docker termination belongs to the next service-integration phase.
+The [campaign service](CAMPAIGN_SERVICE.md) now supplies the concrete preparation
+callbacks, startup admission, exact envelope audit and transport queue integration.
+Its separate post-closure controller uses confirmed handles, bounded deadlines
+and pre-reserved audit capacity without reopening guest admission or bypassing the
+ordinary executor's fence. It also wires native closure and independent Docker
+termination. The full restore transition and remaining ordinary routes are the
+next service stage.
 
 Tests use the real journal, compiled attempt adapter and scripted native peer.
 They cover rejection numbering, duplicate concurrency, publication/settlement loss,

@@ -2,8 +2,9 @@
 
 Status: implemented in `internal/hostconfig` and `cmd/operatorctl`. This stage
 loads installation settings and makes them available to administrative termination.
-Campaign preparation/start, policy/model/target configuration and service installation
-remain integration work. The host configuration is separate from the shared
+The private target profile and campaign preparation library are also implemented;
+campaign start, model configuration and service installation remain integration
+work. The host configuration is separate from the shared
 Operator/Attack Harness wire package.
 
 ## File and supported settings
@@ -18,6 +19,7 @@ The initial loader accepts exactly these fields:
 | Field | Meaning and default |
 | --- | --- |
 | `engine.image` | Required local image selector: name/tag, repository reference with full SHA-256 digest, or full image ID. |
+| `target.profile_file` | Optional clean absolute path to the private administrator TargetProfile; required for campaign preparation. See [campaign preparation](CAMPAIGN_PREPARATION.md). |
 | `docker.endpoint` | Canonical local `unix:///` socket. Linux default: `unix:///var/run/docker.sock`; macOS default: `unix://<home>/.docker/run/docker.sock`. Configure rootless/custom socket locations explicitly. |
 | `docker.executable` | Optional absolute Docker CLI path; omitted means resolve from the administrator/service `PATH` when constructing the Docker client. |
 | `state.root` | Linux default: `/var/lib/operator`; macOS default: `<home>/Library/Application Support/Operator/data`. |
@@ -66,7 +68,8 @@ Success emits `operator.dev/config-check/v1alpha1` JSON with `status: valid`,
 **2** for invalid arguments or failed configuration loading, and **1** if output
 cannot be written. A missing file is an error.
 
-Validation reads the selected configuration only. It does not create directories,
+Validation reads the selected configuration only, checking the target profile path
+without opening that file. It does not create directories,
 resolve the Docker executable, contact Docker or HTTPS, or assert that images and
 runtime capabilities are available. Actual preparation must perform the existing
 [local image and release checks](IMAGE_PREPARATION.md). Launch must freeze the

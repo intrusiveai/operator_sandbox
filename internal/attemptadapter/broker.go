@@ -102,7 +102,7 @@ func (b *Broker) envelope(raw []byte, seq int64, r reply) ([]byte, error) {
 // ordinary-operation serialization; the transport still owns sequence tracking,
 // absolute receive deadlines and enqueue. Errors mean no reply is safe to send.
 func (b *Broker) Handle(ctx context.Context, raw []byte, responseSequence int64) ([]byte, error) {
-	if responseSequence < 1 || responseSequence > contracts.MaxSafeInteger {
+	if responseSequence < 0 || responseSequence > contracts.MaxSafeInteger {
 		return nil, b.stop(contracts.ErrProtocol)
 	}
 	if _, err := b.config.Protocol.ValidateRequest(raw); err != nil {

@@ -16,6 +16,18 @@ import (
 
 const minimal = "engine:\n  image: intrusive/attack_harness:dev\n"
 
+func TestTargetProfileIsAnExplicitHostPath(t *testing.T) {
+	c, err := Parse([]byte(minimal+"target:\n  profile_file: /etc/operator/target.json\n"), linuxDefaults(t))
+	if err != nil || c.Target.ProfileFile != "/etc/operator/target.json" {
+		t.Fatal(c, err)
+	}
+	for _, path := range []string{"relative.json", "~/target.json", "/etc/operator/../target.json"} {
+		if _, err = Parse([]byte(minimal+"target:\n  profile_file: "+path+"\n"), linuxDefaults(t)); err == nil {
+			t.Fatal("nonabsolute target profile accepted")
+		}
+	}
+}
+
 func linuxDefaults(t *testing.T) Paths {
 	t.Helper()
 	p, err := Defaults("linux", "")
