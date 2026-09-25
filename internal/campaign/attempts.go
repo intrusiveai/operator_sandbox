@@ -62,6 +62,7 @@ type Attempts struct {
 	w                  *Writer
 	ledger             *contracts.AttemptLedger
 	records            map[string]SavedAttempt
+	nativeSteps        map[string]NativeStep
 	target             TargetBinding
 	revision           int64
 	maximumAdmissions  int64
@@ -109,7 +110,7 @@ func NewAttempts(w *Writer, initialHighWatermark int64) (*Attempts, error) {
 		return nil, err
 	}
 	w.attemptOwner = true
-	return &Attempts{w: w, ledger: ledger, records: map[string]SavedAttempt{}, target: w.manifest.Target, revision: w.revision, maximumAdmissions: maximum, maximumSubmissions: submissions}, nil
+	return &Attempts{w: w, ledger: ledger, records: map[string]SavedAttempt{}, nativeSteps: map[string]NativeStep{}, target: w.manifest.Target, revision: w.revision, maximumAdmissions: maximum, maximumSubmissions: submissions}, nil
 }
 
 func (a *Attempts) failure(err error) error {
@@ -299,6 +300,17 @@ func (a *Attempts) Resolve(id string, c AttemptCompletion) error {
 	r, ok := a.records[id]
 	if !ok {
 		return ErrInvalid
+	}
+	for _, step := range a.nativeSteps {
+		if step.ParentID != id {
+			continue
+		}
+		if c.Outcome != "unknown" && (step.State == IntentCommitted || step.State == Dispatched || step.Outcome == "unknown") {
+			return ErrActive
+		}
+		if c.Outcome == "succeeded" && step.Outcome != "succeeded" {
+			return ErrInvalid
+		}
 	}
 	if !validJSONObject(c.Result, MaxContentBytes) || len(c.NativeResult) > MaxContentBytes || len(c.Receipts) > MaxAttemptReceiptBytes || !validateMetadata(c.Receipts) {
 		return a.failure(ErrInvalid)

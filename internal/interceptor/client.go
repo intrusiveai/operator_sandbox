@@ -26,6 +26,7 @@ type CallError struct {
 func (e *CallError) Error() string { return "Interceptor call failed: " + e.Kind }
 
 type Response struct {
+	raw             []byte
 	Status          int             `json:"status"`
 	Body            json.RawMessage `json:"body,omitempty"`
 	SessionRevision uint64          `json:"session_revision"`
@@ -139,6 +140,7 @@ func decodeResponse(raw []byte) (Response, error) {
 			return Response{}, invalidResponse()
 		}
 	}
+	result.raw = bytes.Clone(raw)
 	return result, nil
 }
 
