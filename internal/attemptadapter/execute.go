@@ -17,15 +17,7 @@ import (
 	"github.com/intrusive-ai/operator-sandbox/internal/nativeexec"
 )
 
-type InjectionHandle struct {
-	CampaignID  string `json:"campaign_id"`
-	SessionID   string `json:"session_id"`
-	AttemptID   string `json:"attempt_id"`
-	ReceiptID   string `json:"receipt_id"`
-	ActionID    string `json:"action_id"`
-	InjectionID string `json:"injection_id"`
-	Deleted     bool   `json:"deleted"`
-}
+type InjectionHandle = campaign.InjectionHandle
 type Result struct {
 	// These values must be committed together with receipt contents before any
 	// harness reply. Native steps are already durable; this is not publication.

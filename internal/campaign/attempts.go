@@ -44,6 +44,7 @@ type SavedAttempt struct {
 	PlanDigest        string             `json:"plan_digest"`
 	CompletionDigest  string             `json:"completion_digest"`
 	Result            *ContentDescriptor `json:"result"`
+	Publication       *ContentDescriptor `json:"publication,omitempty"`
 }
 
 type AttemptStatus struct {
@@ -67,6 +68,7 @@ type Attempts struct {
 	revision           int64
 	maximumAdmissions  int64
 	maximumSubmissions int64
+	publicationBytes   map[string]int64
 }
 
 func exactInteger(v any) (int64, bool) {
@@ -127,6 +129,10 @@ func (a *Attempts) ready() error {
 }
 
 func cloneAttempt(r SavedAttempt) SavedAttempt {
+	if r.Publication != nil {
+		d := *r.Publication
+		r.Publication = &d
+	}
 	if r.Result != nil {
 		d := *r.Result
 		r.Result = &d
@@ -297,6 +303,10 @@ func (a *Attempts) Resolve(id string, c AttemptCompletion) error {
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	return a.resolveLocked(id, c)
+}
+
+func (a *Attempts) resolveLocked(id string, c AttemptCompletion) error {
 	r, ok := a.records[id]
 	if !ok {
 		return ErrInvalid
