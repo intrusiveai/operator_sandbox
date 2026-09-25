@@ -30,9 +30,10 @@ access restriction.
 
 Before publication, the broker must durably commit `RecordJSON` and all available
 `Content` values, then construct the attempt result with `ManifestJSON`. This
-package supplies immutable in-memory records; campaign receipt persistence and
-service tool routing are subsequent integration work. It neither contacts the
-target nor grants dispatch authority.
+package supplies immutable in-memory records plus validated retained-record reads.
+The [durable publication layer](DURABLE_RECEIPTS.md) stores those records and bytes;
+the [attempt broker](ATTEMPT_BROKER.md) routes bounded, policy-checked disk reads.
+The projection itself neither contacts the target nor grants dispatch authority.
 
 Native golden attempt/observation fixtures in `internal/interceptor/testdata`
 were captured by the adjacent `capture_attempt_fixture_test.go.txt`, run through

@@ -24,7 +24,7 @@ prerequisites; these APIs do not establish trust in arbitrary caller configurati
 
 ## Request-to-result ordering
 
-The future broker uses these steps for `engine.attempt_execute`:
+The [attempt broker](ATTEMPT_BROKER.md) uses these steps for `engine.attempt_execute`:
 
 1. Validate the outer transport/envelope identity, campaign, launch and operation
    routing. Preserve the exact envelope in the transport audit. Pass its exact
@@ -93,7 +93,7 @@ fresh IDs and the next index.
 rejected, completed and unknown records. It does not create a new reservation,
 advance counters or grant dispatch. `Lookup` verifies and reads result bytes from
 the campaign journal rather than retaining potentially large responses in memory.
-The future broker constructs the response envelope for the current exchange around
+The broker constructs the response envelope for the current exchange around
 that saved result. It must not rewrite the saved receipt's original attribution.
 
 `Rebind` records a caller-verified successful restore with the next revision and
@@ -174,7 +174,8 @@ They also verify a terminal signal while the journal mutex is held, stop during
 dispatch persistence, and abrupt process exit with a dispatched unknown operation.
 
 Remaining runtime work includes the broker's actual transport/envelope audit,
-authorization/native adapter and its step audit, model/other-operation accounting,
+service wiring for the implemented authorization/native adapter and its step audit,
+model/other-operation accounting,
 progress/finalization timer integration and wiring the implemented
 [emergency records/Docker observer](DOCKER_TERMINATION.md) into launch and dispatch.
 The [host transport layer](HOST_TRANSPORT.md) now

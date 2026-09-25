@@ -167,7 +167,8 @@ func (e *Executor) Execute(ctx context.Context, parent string, p interceptor.Pre
 	if err != nil || outcome != Succeeded && outcome != Failed && outcome != Unknown {
 		return e.finish(step.ID, Unknown, raw)
 	}
-	if outcome == Succeeded && (verified.Status != 200 && verified.Status != 201 && verified.Status != 204) {
+	absent := p.Request().Operation == "injection.delete" && verified.Status == 404 && verified.Code() == "not_found"
+	if outcome == Succeeded && !absent && (verified.Status != 200 && verified.Status != 201 && verified.Status != 204) {
 		return e.finish(step.ID, Unknown, raw)
 	}
 	return e.finish(step.ID, outcome, raw)

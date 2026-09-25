@@ -55,6 +55,9 @@ type AttemptStatus struct {
 	Closed        bool
 }
 
+func (a *Attempts) BelongsTo(w *Writer) bool { return a.w == w }
+func (a *Attempts) Target() TargetBinding    { a.mu.Lock(); defer a.mu.Unlock(); return a.target }
+
 // Attempts owns the campaign's sole durable attempt ledger. No restore/recovery
 // constructor exists. Callers still perform authorization, native lineage checks,
 // typed response validation, live-container/deadline gates and actual dispatch.
@@ -69,6 +72,9 @@ type Attempts struct {
 	maximumAdmissions  int64
 	maximumSubmissions int64
 	publicationBytes   map[string]int64
+	tools              map[string]SavedTool
+	readRequests       int64
+	readBytes          int64
 }
 
 func exactInteger(v any) (int64, bool) {
@@ -165,6 +171,9 @@ func (a *Attempts) Observe(in AttemptInput) (record SavedAttempt, replay bool, e
 	}
 	target := a.target
 	previous, exists := a.records[requestID]
+	if _, collision := a.tools[requestID]; collision {
+		return record, false, ErrInvalid
+	}
 	if exists {
 		target = previous.Target
 	}
@@ -186,7 +195,7 @@ func (a *Attempts) Observe(in AttemptInput) (record SavedAttempt, replay bool, e
 	if in.RunRevision != a.revision {
 		return record, false, ErrInvalid
 	}
-	if int64(len(a.records)) >= a.maximumSubmissions {
+	if int64(len(a.records)+len(a.tools)) >= a.maximumSubmissions {
 		return record, false, a.failure(ErrQuota)
 	}
 	observed, _, err := a.ledger.Observe(submission)
@@ -435,6 +444,11 @@ func (a *Attempts) Rebind(revision int64, target TargetBinding) error {
 	}
 	for _, r := range a.records {
 		if r.State == "observed" || r.State == "admitted" {
+			return ErrActive
+		}
+	}
+	for _, r := range a.tools {
+		if r.Result == nil {
 			return ErrActive
 		}
 	}

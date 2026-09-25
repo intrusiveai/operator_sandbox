@@ -72,8 +72,11 @@ scopes, validates artifact bytes/lineage/input contracts, compiles deterministic
 native commands and executes them through that journal with typed receipt checks.
 The [feedback projection](docs/FEEDBACK_PROJECTION.md) preserves native/effective
 profiles, filters permitted observations and provides bounded receipt-scoped reads.
+The [durable receipts](docs/DURABLE_RECEIPTS.md) and [attempt broker](docs/ATTEMPT_BROKER.md)
+retain feedback before reply, dispatch typed attempts and retained-injection cleanup,
+and enforce cumulative receipt-read budgets across restores.
 The [implementation phase handoff](docs/IMPLEMENTATION_STATUS.md) describes these
-completed foundations and the next durable receipt publication/broker integration phase.
+completed foundations and the next campaign service integration phase.
 Run `make setup` then `make test`. Contract publication and
 the remaining Operator/Attack Harness runtime implementation remain pending.
 

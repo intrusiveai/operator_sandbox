@@ -72,6 +72,10 @@ operation-specific receipts and outcomes. These are mandatory trusted-code hooks
 not guest callbacks. The executor does not supply a permissive default or infer
 success from HTTP status. The [typed attempt adapter](TYPED_ATTEMPT_ADAPTER.md)
 now supplies these checks for compiled Interceptor attempts and feedback reads.
+The [attempt broker](ATTEMPT_BROKER.md) also supplies exact-command handling for
+retained-injection cleanup. That parent can dispatch only one resolved native
+deletion. Native 404 `not_found` is successful only for this typed deletion path;
+generic transport errors cannot establish absence.
 
 `Execute` obtains the one-time durable dispatch grant, checks the terminal fence
 again after persistence, and sends the exact saved envelope with a bounded context.

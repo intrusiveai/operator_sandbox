@@ -96,9 +96,10 @@ type Plan struct {
 	sourceDigest, projectionDigest string
 }
 
-func (p *Plan) RecordJSON() []byte    { return bytes.Clone(p.record) }
-func (p *Plan) RequestID() string     { return p.request.RequestID }
-func (p *Plan) ContextDigest() string { return p.context.Digest }
+func (p *Plan) RecordJSON() []byte       { return bytes.Clone(p.record) }
+func (p *Plan) RequestID() string        { return p.request.RequestID }
+func (p *Plan) FeedbackAllowance() int64 { return p.feedbackBytes }
+func (p *Plan) ContextDigest() string    { return p.context.Digest }
 
 func Compile(catalog *contracts.Catalog, raw []byte, in Inputs) (*Plan, error) {
 	if catalog == nil || in.Live == nil || in.Compatibility == nil || in.Policy == nil || in.SessionRevision == 0 || in.CreatedAt.IsZero() || !in.Deadline.After(in.CreatedAt) || in.Deadline.Sub(in.CreatedAt) > interceptor.MaxOperationTimeout || !digestID.MatchString(in.ReleaseDigest) || in.FeedbackBytes < 0 || in.FeedbackBytes > 64*feedback.MaxArtifact {

@@ -33,6 +33,8 @@ type nativePeer struct {
 	after        func(string)
 	output       []byte
 	view         interceptor.ObservationView
+	absent       bool
+	lostCleanup  bool
 }
 
 func (p *nativePeer) Status(context.Context, string) (interceptor.Status, error) {
@@ -48,7 +50,7 @@ func (p *nativePeer) Execute(_ context.Context, q interceptor.PreparedOperation)
 	if q.Request().ExpectedSessionRevision != p.revision {
 		p.t.Fatalf("wrong expected native revision: %d != %d", q.Request().ExpectedSessionRevision, p.revision)
 	}
-	if q.Request().AttemptContextDigest != p.plan.context.Digest {
+	if q.Request().AttemptID != "" && q.Request().AttemptContextDigest != p.plan.context.Digest {
 		p.t.Fatal("wrong context digest")
 	}
 	var envelope struct {
@@ -60,7 +62,7 @@ func (p *nativePeer) Execute(_ context.Context, q interceptor.PreparedOperation)
 		if op == "application.invoke" {
 			return interceptor.Response{}, &interceptor.CallError{Kind: "lost_reply", Uncertain: true}
 		}
-		return response(p.t, 409, p.revision, map[string]any{"error": map[string]string{"code": "test_rejection", "message": "SECRET"}}), nil
+		return response(p.t, 409, p.revision, map[string]string{"code": "test_rejection", "message": "SECRET"}), nil
 	}
 	status := 200
 	var body any
@@ -127,6 +129,12 @@ func (p *nativePeer) Execute(_ context.Context, q interceptor.PreparedOperation)
 		}
 		body = chunk
 	case "injection.delete":
+		if p.lostCleanup {
+			return interceptor.Response{}, &interceptor.CallError{Kind: "lost_reply", Uncertain: true}
+		}
+		if p.absent {
+			return response(p.t, 404, p.revision, map[string]string{"code": "not_found", "message": "missing"}), nil
+		}
 		status = 204
 		p.revision++
 	default:
@@ -152,7 +160,7 @@ func response(t *testing.T, status int, revision uint64, body any) interceptor.R
 	}
 	return r
 }
-func executionSetup(t *testing.T, raw []byte, p *Plan) (*Execution, *campaign.Writer, *campaign.Attempts, *nativePeer) {
+func executionSetup(t *testing.T, raw []byte, p *Plan, unadmitted ...bool) (*Execution, *campaign.Writer, *campaign.Attempts, *nativePeer) {
 	t.Helper()
 	root := t.TempDir()
 	if err := os.Chmod(root, 0700); err != nil {
@@ -175,20 +183,25 @@ func executionSetup(t *testing.T, raw []byte, p *Plan) (*Execution, *campaign.Wr
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err = a.Observe(campaign.AttemptInput{CampaignID: "campaign-1", WorkerInstanceID: "worker-1", RunRevision: 1, Body: raw}); err != nil {
-		t.Fatal(err)
-	}
-	if _, err = a.Admit(p.RequestID(), p.RecordJSON()); err != nil {
-		t.Fatal(err)
-	}
-	if _, err = a.MarkDispatched(p.RequestID()); err != nil {
-		t.Fatal(err)
+	if len(unadmitted) == 0 {
+		if _, _, err = a.Observe(campaign.AttemptInput{CampaignID: "campaign-1", WorkerInstanceID: "worker-1", RunRevision: 1, Body: raw}); err != nil {
+			t.Fatal(err)
+		}
+		if _, err = a.Admit(p.RequestID(), p.RecordJSON()); err != nil {
+			t.Fatal(err)
+		}
+		if _, err = a.MarkDispatched(p.RequestID()); err != nil {
+			t.Fatal(err)
+		}
 	}
 	docker := campaign.DockerBinding{APIVersion: campaign.BindingVersion, CampaignID: m.CampaignID, LaunchID: m.LaunchID, ContainerID: m.ContainerID, RunManifestDigest: w.ManifestDigest(), Endpoint: "unix:///saved/docker.sock", DaemonID: "daemon-1", DockerContainerID: strings.Repeat("b", 64), ImageDigest: m.ImageDigest, Labels: m.DockerLabels()}
 	if err = w.SaveDockerBinding(docker); err != nil {
 		t.Fatal(err)
 	}
 	peer := &nativePeer{t: t, plan: p, revision: p.revision, output: []byte("benign marker")}
+	if len(unadmitted) > 0 {
+		return nil, w, a, peer
+	}
 	guard, err := nativeexec.NewGuard(peer, runtimeStub{}, docker, "instance-1", p.binding)
 	if err != nil {
 		t.Fatal(err)

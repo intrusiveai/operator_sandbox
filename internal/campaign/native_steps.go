@@ -4,6 +4,7 @@ package campaign
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -112,7 +113,8 @@ func (s *NativeSteps) read(parts []ContentDescriptor) ([]byte, error) {
 }
 
 // Begin commits the exact native request and capacity reservation. It requires an
-// already admitted/dispatched parent plan. This is bookkeeping, not authorization.
+// admitted/dispatched attempt or an authorized retained-handle cleanup parent.
+// This is bookkeeping, not installed target-policy authorization.
 // Existing commands return replay=true across worker/revision changes; no repeat
 // call obtains another dispatch grant. Changed actual commands conflict.
 func (s *NativeSteps) Begin(parent string, p interceptor.PreparedOperation) (NativeStep, bool, error) {
@@ -135,7 +137,24 @@ func (s *NativeSteps) Begin(parent string, p interceptor.PreparedOperation) (Nat
 		return NativeStep{}, false, err
 	}
 	owner, ok := a.records[parent]
-	if !ok || owner.State != "admitted" || !owner.Dispatched || q.SessionID != a.target.SessionID || q.SessionID != owner.Target.SessionID || q.RunRevision != uint64(a.revision) || q.AttemptID != "" && q.AttemptID != owner.AttemptID {
+	allowed := ok && owner.State == "admitted" && owner.Dispatched && q.SessionID == owner.Target.SessionID && (q.AttemptID == "" || q.AttemptID == owner.AttemptID)
+	if tool, exists := a.tools[parent]; exists && tool.Operation == "engine.injection_delete" && tool.Result == nil && tool.InjectionID != "" {
+		for _, previous := range a.nativeSteps {
+			if previous.ParentID == parent {
+				return NativeStep{}, false, ErrInvalid
+			}
+		}
+		var envelope struct {
+			Body struct {
+				InjectionID string `json:"injection_id"`
+			} `json:"body"`
+		}
+		_ = json.Unmarshal(p.Bytes(), &envelope)
+		expected, _ := json.Marshal(map[string]string{"injection_id": tool.InjectionID})
+		check, err := interceptor.PrepareOperation(q, expected)
+		allowed = err == nil && check.CommandFingerprint() == identity && envelope.Body.InjectionID == tool.InjectionID && q.Operation == "injection.delete" && q.AttemptID == "" && q.AttemptContextDigest == "" && q.SessionID == tool.Target.SessionID
+	}
+	if !allowed || q.SessionID != a.target.SessionID || q.RunRevision != uint64(a.revision) {
 		return NativeStep{}, false, ErrInvalid
 	}
 	// One native step at a time, including unresolved requests. A partial plan must

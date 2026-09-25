@@ -1,6 +1,33 @@
 # Implementation phase handoff
 
-## Completed phase: typed attempt execution and feedback
+## Completed phase: durable receipts and ordinary attempt broker
+
+The [receipt publication layer](DURABLE_RECEIPTS.md) and
+[attempt broker](ATTEMPT_BROKER.md) now connect typed execution to durable guest
+results, disk-backed feedback reads and retained-injection deletion.
+
+| Area | Implemented |
+| --- | --- |
+| Publication | Capacity reserved before dispatch; feedback and index staged before atomic final-result adoption; interrupted staging exposes no receipt. |
+| Retention | Immutable original source/mappings and verified content chunks; confirmed arm/deletion records back injection handles. |
+| Attempts | Observe before tactical rejection, charge admission once, execute the fixed native plan, persist results before correlated replies. |
+| Reads | Current admission/visibility/range checks, complete-byte hash verification, explicit optional unavailability, cumulative count/byte reservation and settlement. |
+| Cleanup | Same-campaign handles resolve to the current target; typed native deletion and durable receipts; confirmed absence distinguished from transport/storage errors. |
+| Duplicates and restore | Shared operation namespace, serialized concurrent duplicates, old result replay, persistent counters and new cleanup against restored injections. |
+| Failure | Uncertainty and journal loss close execution; no uncommitted reply or repeated native effect. |
+
+The broker is a host library with installed source/admission callbacks. It does not
+start a campaign or run a transport service. The next phase supplies those concrete
+callbacks, owns the full restore transition and wires post-closure cleanup and
+independent termination. Guest execution cannot use the ordinary broker after the
+terminal fence. Shared wire schemas remain unchanged; no sibling repo was edited.
+
+Validation passed: full Go/Python tests and shared fixtures, targeted race tests,
+`go vet`, and broker test builds for Linux amd64/arm64 and macOS amd64. Tests execute
+on macOS arm64 with real journals and a scripted native peer. This does not qualify
+Docker or a live Interceptor/Attack Harness deployment.
+
+## Earlier completed phase: typed attempt execution and feedback
 
 The host [typed attempt adapter](TYPED_ATTEMPT_ADAPTER.md) now connects reviewed
 scope decisions and checked bundle/live bindings to the durable native executor.
@@ -25,11 +52,10 @@ invocation. Zero-byte output remains available with EOF; unavailable output does
 not become a fake empty artifact. Native attempt/observation fixtures were captured
 independently from Interceptor using a temporary Go overlay without repository edits.
 
-This completes the host adapter boundary. It does not launch a campaign or publish
-an attempt result to the harness. `Run` returns schema-validated guest JSON, frozen
-feedback and injection handles; the service must atomically retain them before
-replying. A terminal cleanup controller must use confirmed handles after execution
-is fenced, and old retained-handle cleanup still needs its tool route. Concrete
+This completes the host adapter boundary. `Run` returns schema-validated guest JSON,
+frozen feedback and injection handles; the broker above now atomically retains them
+before replying and implements retained-handle cleanup. A terminal cleanup
+controller must use confirmed handles after execution is fenced. Concrete
 TargetProfile configuration, immutable campaign preparation and effective context
 publication remain service integration work. Existing Operator/Attack Harness
 wire contracts are unchanged; no sibling repository was edited.
@@ -144,21 +170,21 @@ packages pass race tests; the full Go/Python suite, fixture runners and `go vet`
 pass. Capability tests also compile for Linux amd64/arm64 and macOS amd64; they
 execute on macOS arm64. These builds do not qualify Docker runtime behavior.
 
-## Next major phase: durable receipt publication and broker integration
+## Next major phase: campaign preparation and service integration
 
-1. Persist filtered feedback bytes, immutable receipt/source mappings and confirmed
-   injection handles, then atomically adopt the final attempt result before any
-   harness reply. Support receipt reads across target restore, current policy
-   narrowing and explicit missing/corrupt content without redirecting old sources.
-2. Route typed attempt execution, observation reads and retained-injection cleanup
-   through the ordinary broker. Preserve exact replay behavior and cumulative
-   non-attempt/read budgets. Add bounded terminal cleanup using confirmed handles;
-   an uncertain result cannot reopen experimental execution.
-3. Wire concrete TargetProfile configuration, live bundle compatibility, verified
+1. Wire concrete TargetProfile configuration, live bundle compatibility, verified
    artifact/lineage sources and installed contract pins into immutable campaign
-   preparation and effective EngineContext publication. Recheck before launch.
-4. Arm the independent Docker observer and campaign/operation timers in the
-   service; wire target closure and cleanup through the lifecycle controller.
+   preparation and effective EngineContext publication. Supply the broker's trusted
+   callbacks, including current native revision and policy checks.
+2. Connect transport admission/envelope audit and the ordinary broker to service
+   dispatch; coordinate snapshot/restore and remaining operation routes through the
+   same drain/transition gate. Keep model/reference-read and finalization accounting.
+3. Add bounded host-owned terminal cleanup using confirmed handles and audit
+   capacity reserved before effects. An uncertain outcome cannot reopen guest
+   execution. Retain closure, cleanup and reporting outcomes independently.
+4. Arm the independent Docker observer and campaign/operation timers in the service;
+   wire native target closure and lifecycle cleanup. Recheck immutable preparation
+   before launch and preserve the harness across healthy target restores.
 
 Native evidence provenance validation remains a separate required phase: verify
 manifest identities, event/state chains, execution records, references, restore

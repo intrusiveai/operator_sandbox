@@ -59,14 +59,15 @@ attempt/action handles, without worker/revision ownership restrictions.
 The result contains schema-validated guest JSON, an immutable feedback receipt,
 confirmed injection handles and durable native step IDs. The caller must commit
 receipt mappings, all retained feedback bytes and the final attempt result before
-replying to the harness. This phase does not implement that atomic publication
-service or the `engine.injection_delete` tool route.
+replying to the harness. The [attempt broker](ATTEMPT_BROKER.md) now performs this
+publication and implements the `engine.injection_delete` tool route.
 
 After terminal failure, the ordinary executor stops. Its confirmed-created handles
 are available to the separate bounded terminal-cleanup controller; `Run` does not
 reopen execution to perform cleanup or collect additional failure feedback.
 Independent termination, native closure, terminal cleanup, reporting-only evidence
-collection and final receipt publication must be wired by the campaign service.
+collection must be wired by the campaign service. Final attempt receipt publication
+is performed by the broker before any reply.
 
 Tests exercise all these translations and failure boundaries against a scripted
 native peer with the real campaign journal and executor. They check current native
