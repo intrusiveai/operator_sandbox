@@ -7,6 +7,8 @@ operation-record decoding, snapshot creation/discovery and bounded evidence down
 It does not start a campaign or
 serve as the harness-facing policy broker. Shared Operator/Attack Harness schemas
 and Interceptor's existing API are unchanged.
+The [phase handoff](IMPLEMENTATION_STATUS.md) summarizes completed scope and the
+remaining host interpretation, campaign-broker and runtime gates.
 
 The authoritative native contracts remain Interceptor's
 [local integration guide](../../interceptor_sandbox/docs/local-api.md) and
@@ -341,6 +343,10 @@ test using Interceptor's `http.ServeContent` response pattern.
 Archive tests cover bounded member access, native blob names, duplicate and unsafe
 members, metadata budgets, entry/expanded-size boundaries, footer/truncation errors,
 changed temporary bytes and canceled inspection.
+The stateful HTTP workflow test combines attachment, snapshot discovery, a lost
+restore reply, lifecycle and original-session operation reconciliation, replacement
+cleanup/stop and source-session evidence collection. It asserts one effect per
+mutation and uses reconciliation only for cleanup after uncertainty.
 
 Native evidence archive/provenance validation and publication, typed experiment bodies/results, capability projection and
 feedback filtering remain adapter work. Durable dispatch/reconciliation, status
