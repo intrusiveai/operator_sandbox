@@ -249,7 +249,7 @@ func safeCategoryReason(s string) string {
 
 func normalize(kind string, b []byte, truncated bool, actions map[string]string, session string) ([]byte, error) {
 	if kind == "target_output" {
-		return bytes.Clone(b), nil
+		return append([]byte{}, b...), nil
 	}
 	if truncated {
 		return nil, nil
