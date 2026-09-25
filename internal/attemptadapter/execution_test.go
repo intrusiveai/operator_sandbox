@@ -22,20 +22,26 @@ type runtimeStub struct{}
 func (runtimeStub) CheckRunning(context.Context, campaign.DockerBinding) error { return nil }
 
 type nativePeer struct {
-	t           *testing.T
-	plan        *Plan
-	calls       []string
-	revision    uint64
-	fail        string
-	malformed   string
-	unavailable bool
-	output      []byte
-	view        interceptor.ObservationView
+	t            *testing.T
+	plan         *Plan
+	calls        []string
+	revision     uint64
+	fail         string
+	malformed    string
+	unavailable  bool
+	unreadyAfter string
+	after        func(string)
+	output       []byte
+	view         interceptor.ObservationView
 }
 
 func (p *nativePeer) Status(context.Context, string) (interceptor.Status, error) {
 	b := p.plan.binding
-	return interceptor.Status{InstanceID: "instance-1", CampaignID: "campaign-1", Active: b, Sessions: map[string]interceptor.Binding{b.SessionID: b}, Phase: "ready", StoreAvailable: true}, nil
+	s := interceptor.Status{InstanceID: "instance-1", CampaignID: "campaign-1", Active: b, Sessions: map[string]interceptor.Binding{b.SessionID: b}, Phase: "ready", StoreAvailable: true}
+	if len(p.calls) > 0 && p.calls[len(p.calls)-1] == p.unreadyAfter {
+		s.Closed = true
+	}
+	return s, nil
 }
 func (p *nativePeer) Execute(_ context.Context, q interceptor.PreparedOperation) (interceptor.Response, error) {
 	p.calls = append(p.calls, q.Request().Operation)
@@ -128,6 +134,9 @@ func (p *nativePeer) Execute(_ context.Context, q interceptor.PreparedOperation)
 	}
 	if p.malformed == op {
 		body = map[string]bool{"ok": true}
+	}
+	if p.after != nil {
+		p.after(op)
 	}
 	return response(p.t, status, p.revision, body), nil
 }
@@ -319,5 +328,58 @@ func TestAdapterRejectsChangedNativeCommand(t *testing.T) {
 	adapter := stepAdapter{plan: p, active: a}
 	if !errors.Is(adapter.Authorize(b), ErrPolicy) {
 		t.Fatal("command substitution admitted")
+	}
+}
+
+func TestStoppedBeforeInvocationReportsNoDispatch(t *testing.T) {
+	c, raw, in := fixture(t)
+	p, err := Compile(c, raw, in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	e, _, _, peer := executionSetup(t, raw, p)
+	peer.unreadyAfter = "injection.arm"
+	r, err := e.Run(context.Background())
+	if !errors.Is(err, nativeexec.ErrFailed) {
+		t.Fatal(err)
+	}
+	var result map[string]any
+	_ = json.Unmarshal(r.GuestJSON, &result)
+	if result["invocation_state"] != "not-dispatched" || result["status"] != "failed" || peer.calls[len(peer.calls)-1] != "injection.arm" {
+		t.Fatalf("incorrect failed preflight result: %s", r.GuestJSON)
+	}
+}
+func TestJournalFailureAfterInvocationDoesNotClaimNoDispatch(t *testing.T) {
+	c, raw, in := fixture(t)
+	p, err := Compile(c, raw, in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	e, w, _, peer := executionSetup(t, raw, p)
+	peer.after = func(op string) {
+		if op == "application.invoke" {
+			_ = w.Close()
+		}
+	}
+	r, err := e.Run(context.Background())
+	if err == nil {
+		t.Fatal("expected result persistence failure")
+	}
+	var result map[string]any
+	_ = json.Unmarshal(r.GuestJSON, &result)
+	if result["invocation_state"] != "unknown" || result["target_contact"] != "unknown" || result["status"] != "unknown" || peer.calls[len(peer.calls)-1] != "application.invoke" {
+		t.Fatalf("incorrect uncertain result: %s (%v)", r.GuestJSON, err)
+	}
+}
+func TestCompiledRequestCannotBorrowAnotherAdmission(t *testing.T) {
+	c, raw, in := fixture(t)
+	p, err := Compile(c, raw, in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, _, a, _ := executionSetup(t, raw, p)
+	p.rawRequest = mutate(raw, func(m map[string]any) { m["rationale"] = "different submitted request" })
+	if _, err = p.NewExecution(a, nil); !errors.Is(err, ErrAttempt) {
+		t.Fatal("request mismatch not rejected before executor construction", err)
 	}
 }

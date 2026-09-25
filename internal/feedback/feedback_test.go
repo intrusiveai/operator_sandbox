@@ -173,7 +173,7 @@ func TestProjectionFiltersAliasesProtectedAndHiddenData(t *testing.T) {
 func TestProjectionNormalizesAndBounds(t *testing.T) {
 	p, _ := New("oracle-assisted", "oracle-assisted", kinds, nil)
 	s, v := view(p)
-	b := []byte(`{"injection_id":"native-injection","state":"applied","scope":"turn","event_seq":4,"secret":"SECRET"}`)
+	b := []byte(`{"injection_id":"native-injection","state":"applied","scope":"turn","event_seq":9007199254740993,"secret":"SECRET"}`)
 	entry(&v, "delivery", "injection_delivery", b, interceptor.HarnessVisible)
 	r, err := Project(catalog(t), p, s, "receipt", seal(v), map[string][]byte{"delivery": b}, map[string]string{"native-injection": "action-1"}, 1024)
 	if err != nil {
@@ -258,5 +258,59 @@ func TestAssemblyChunksAndTampering(t *testing.T) {
 				t.Fatal("invalid bytes exposed")
 			}
 		})
+	}
+}
+
+func TestZeroByteOutputRemainsAvailable(t *testing.T) {
+	p, _ := New("black-box", "black-box", []string{"target_output"}, nil)
+	s, v := view(p)
+	entry(&v, "empty", "target_output", nil, interceptor.TargetVisible)
+	r, err := Project(catalog(t), p, s, "receipt", seal(v), map[string][]byte{"empty": nil}, nil, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r.entries[0].entry.Availability != "available" {
+		t.Fatal(string(r.ManifestJSON()))
+	}
+	b, err := r.Read("campaign", "receipt", r.entries[0].entry.ID, 0, 1, true, []string{"target_output"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var read ReadResult
+	_ = json.Unmarshal(b, &read)
+	if !read.EOF || read.RawLength != 0 || read.Artifact.Digest != contracts.RawDigest(nil) {
+		t.Fatal(string(b))
+	}
+}
+
+func TestNormalizedOracleAndErrorFacts(t *testing.T) {
+	for _, tc := range []struct{ kind, body string }{
+		{"operation_error", `{"code":"APPLICATION_OPERATION_FAILED","failed":true,"stack":"SECRET"}`},
+		{"oracle_outcome", `{"oracle_id":"private-detector","oracle_kind":"event_match","fired":true,"definition":"SECRET"}`},
+	} {
+		t.Run(tc.kind, func(t *testing.T) {
+			b, err := normalize(tc.kind, []byte(tc.body), false, nil, "session")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if bytes.Contains(b, []byte("SECRET")) || bytes.Contains(b, []byte("private-detector")) {
+				t.Fatal(string(b))
+			}
+			if b, err = normalize(tc.kind, []byte(tc.body), true, nil, "session"); err != nil || b != nil {
+				t.Fatal("truncated diagnostic treated as a fact")
+			}
+		})
+	}
+}
+
+func TestContradictoryCategoryAndEntryIsRejected(t *testing.T) {
+	p, _ := New("black-box", "black-box", []string{"target_output"}, nil)
+	s, v := view(p)
+	entry(&v, "output", "target_output", []byte("test"), interceptor.TargetVisible)
+	for _, state := range []string{"empty", "withheld", "not_requested", "unavailable"} {
+		v.Categories[0].State = state
+		if _, err := VerifyView(seal(v), s, p); err == nil {
+			t.Fatal("contradictory category accepted", state)
+		}
 	}
 }

@@ -1,8 +1,10 @@
 # Live attempt feedback contract
 
 Status: agreed container contract; native/effective profile mapping updated
-2026-09-21. Operator and engine runtime work
-remains unimplemented. The current attempt request/result schemas define this
+2026-09-21. Operator's [host adapter and projection](../docs/FEEDBACK_PROJECTION.md)
+now implement selection, native receipt checks, filtering and bounded reads.
+Durable receipt publication, campaign service wiring and the harness runtime
+remain implementation work. The current attempt request/result schemas define this
 integration.
 `catalog.json` maps their absolute schema URNs to local files for offline resolution.
 Closed schemas validate structure; the semantic rules below also require validators.
@@ -111,8 +113,9 @@ The machine-readable [translation vectors](fixtures/feedback-translation.json)
 cover all nine native/requested profile combinations, host narrowing, selection
 and empty intersections. They are adapter conformance inputs/expectations, not
 additional wire fields. `validate_feedback_fixtures.py` checks their consistency
-and existing selection/manifest schemas; production adapter/read-path tests remain
-required with Operator implementation.
+and existing selection/manifest schemas. Operator's `internal/feedback` tests run
+the complete vectors against the implementation; service publication/read-path
+integration still requires its own tests.
 Run `python3 schemas/validate_feedback_fixtures.py` from the Operator repository
 with the `jsonschema` package installed.
 

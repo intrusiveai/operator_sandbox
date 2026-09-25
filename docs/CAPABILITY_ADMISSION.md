@@ -52,8 +52,9 @@ configuration and native provenance stay out of public execution choices.
    allowed references constrain dependencies; action families also need at least
    one selectable route. Missing policy permissions deny access. The resolver
    must evaluate actual scopes/routes; it must not populate decisions simply by
-   copying every exported capability. This resolver's concrete attempt checks are
-   part of the upcoming broker work.
+   copying every exported capability. `attemptadapter.Resolve` now implements
+   concrete operation/injection scope resolution and derives this policy. Its
+   configuration and campaign preparation wiring remain broker work.
 5. `Check` compares the unchanged bundle and verified authoring/live exports.
    Required dependencies must be usable. Optional dependencies and suggestions
    yield sorted, explained gaps; unavailable optional objective/scenario routes
@@ -70,8 +71,9 @@ profile. `FeedbackKinds == nil` adds no kind restriction; an explicit empty slic
 withholds all kinds. Excluding an evidence reference from `AllowedRefs` also
 withholds that kind. The native profile remains unchanged for native requests.
 The implementation tests the profile/allowed-kind portions of all shared feedback
-translation vectors; attempt selection, byte filtering and receipt handling belong
-to the subsequent execution adapter.
+translation vectors. The [feedback projection](FEEDBACK_PROJECTION.md) additionally
+tests all complete vectors and implements selection, byte filtering and immutable
+receipt reads. Durable receipt publication remains broker work.
 
 Recheck readiness, current policy and compatibility before launch; keep the result
 and live execution projection with immutable inputs. Later effects still require

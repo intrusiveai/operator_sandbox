@@ -1,6 +1,45 @@
 # Implementation phase handoff
 
-## Completed phase: durable native execution core
+## Completed phase: typed attempt execution and feedback
+
+The host [typed attempt adapter](TYPED_ATTEMPT_ADAPTER.md) now connects reviewed
+scope decisions and checked bundle/live bindings to the durable native executor.
+The [feedback projection](FEEDBACK_PROJECTION.md) supplies the corresponding
+filtered, receipt-scoped observation view.
+
+| Area | Implemented |
+| --- | --- |
+| Concrete policy | Native-capability checks for administrator-selected operations and injection routes, scope/placement/pointer/merge restrictions, optional caller identities and retention permission. |
+| Pure translation | Shared schema plus artifact bytes/campaign/digest/media/JCS checks, scenario/release attribution, current native parent lineage and delivery-schema validation. |
+| Native commands | Deterministic IDs, immutable native context digest/profile, declared injection setup, correct carrier handling, one invocation, exact-turn feedback and requested cleanup. |
+| Durable execution | Original request/plan/target admission checks, native revision progression, strict typed response interpretation and committed results before continuation. |
+| Feedback policy | All 17 shared selection vectors, native/effective profile separation, explicit empty-selection skip and fixed category summaries. |
+| Feedback bytes | Original receipt identity/hash checks, visibility filtering, bounded chunks with complete-content hashing, typed diagnostic projection and immutable receipt reads. |
+| Terminal results | Known failure versus uncertainty, no subsequent experimental dispatch, sanitized guest errors and confirmed-created injection handles for cleanup. |
+
+Tests use real campaign journals and the native executor with a scripted native
+peer. They cover multi-chunk output, retained actions, optional unavailable content,
+empty selection, policy/lineage/artifact denials, target loss before invocation,
+setup rejection, lost invocation replies, malformed receipts and journal loss after
+invocation. Zero-byte output remains available with EOF; unavailable output does
+not become a fake empty artifact. Native attempt/observation fixtures were captured
+independently from Interceptor using a temporary Go overlay without repository edits.
+
+This completes the host adapter boundary. It does not launch a campaign or publish
+an attempt result to the harness. `Run` returns schema-validated guest JSON, frozen
+feedback and injection handles; the service must atomically retain them before
+replying. A terminal cleanup controller must use confirmed handles after execution
+is fenced, and old retained-handle cleanup still needs its tool route. Concrete
+TargetProfile configuration, immutable campaign preparation and effective context
+publication remain service integration work. Existing Operator/Attack Harness
+wire contracts are unchanged; no sibling repository was edited.
+
+Validation: full Go/Python suite and shared fixtures, race tests, `go vet`, and
+adapter/feedback test builds for Linux amd64/arm64 and macOS amd64. Native execution
+tests run on macOS arm64. This validates host protocol/library behavior; it does
+not qualify Docker, a live Interceptor deployment or the harness runtime.
+
+## Earlier completed phase: durable native execution core
 
 `internal/nativeexec` now connects admitted attempt steps to the Interceptor
 client and campaign journal. The [native execution guide](NATIVE_EXECUTION.md)
@@ -17,10 +56,8 @@ describes its ordering, bounds, guard checks and reporting-only reconciliation.
 | Restore continuity | A verified replacement can rebind future work while preserving old step results, attribution, cumulative admissions and attempt numbering. |
 
 The executor requires trusted adapter authorization and operation-specific result
-interpretation. Concrete attempt translation, selector policy, feedback filtering
-and harness receipts are not implemented by these hooks. This boundary provides
-the durable executor they will use; it does not expose a generic execution tool
-to the harness or launch campaigns.
+interpretation. The completed typed adapter above now supplies these hooks. The
+executor itself does not expose a generic execution tool or launch campaigns.
 
 Tests join the real journal/attempt ledger to a scripted native peer and exercise
 lost replies, completed-record reconciliation, malformed/foreign/missing records,
@@ -107,27 +144,28 @@ packages pass race tests; the full Go/Python suite, fixture runners and `go vet`
 pass. Capability tests also compile for Linux amd64/arm64 and macOS amd64; they
 execute on macOS arm64. These builds do not qualify Docker runtime behavior.
 
-## Next major phase: typed execution adapter and campaign preparation
+## Next major phase: durable receipt publication and broker integration
 
-The next layer must implement and integrate the following before an executable
-campaign service can treat these client results as admitted work or final evidence:
+1. Persist filtered feedback bytes, immutable receipt/source mappings and confirmed
+   injection handles, then atomically adopt the final attempt result before any
+   harness reply. Support receipt reads across target restore, current policy
+   narrowing and explicit missing/corrupt content without redirecting old sources.
+2. Route typed attempt execution, observation reads and retained-injection cleanup
+   through the ordinary broker. Preserve exact replay behavior and cumulative
+   non-attempt/read budgets. Add bounded terminal cleanup using confirmed handles;
+   an uncertain result cannot reopen experimental execution.
+3. Wire concrete TargetProfile configuration, live bundle compatibility, verified
+   artifact/lineage sources and installed contract pins into immutable campaign
+   preparation and effective EngineContext publication. Recheck before launch.
+4. Arm the independent Docker observer and campaign/operation timers in the
+   service; wire target closure and cleanup through the lifecycle controller.
 
-1. Resolve installed TargetProfile scopes and concrete selectable routes; wire
-   capability export/import and bundle checks into campaign preparation. Preserve
-   the contract-package pin and recheck compatibility/readiness before launch.
-2. Translate typed attempts, artifact/injection operations and feedback profiles;
-   resolve handles and filter observations before exposing results to the harness.
-3. Verify native evidence JSON identities, manifests, event/state hash chains,
-   execution records, references, restore provenance and completeness markers.
-   Structural archive inspection alone does not permit evidence publication.
-4. Integrate the durable executor with the typed plan/result builder, transport
-   envelope audit, cumulative non-attempt accounting and exactly-once receipt
-   adoption. Arm the Docker observer and campaign/operation timers in the service;
-   wire terminal target closure and cleanup to the lifecycle controller.
-5. Publish verified per-session evidence into campaign retention, support later
-   administrative import and cleanup of abandoned staging, and derive report inputs.
+Native evidence provenance validation remains a separate required phase: verify
+manifest identities, event/state chains, execution records, references, restore
+lineage and completeness before publication/reporting. Structural archive inspection
+alone cannot establish these claims.
 
 Operator campaign start/service orchestration, guest Docker launch/bootstrap and
-runtime qualification follow integration of those host boundaries. The Attack
-Harness dispatcher/model loop and its runtime tests remain a subsequent component
-phase. No tool in the current client foundation bypasses these pending gates.
+runtime qualification follow these host integrations. The Attack Harness Python
+dispatcher/model loop remains a subsequent component phase. No completed library
+boundary substitutes for these pending service and runtime gates.

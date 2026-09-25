@@ -48,6 +48,7 @@ type stepAdapter struct {
 	command command
 	source  feedback.Source
 	entry   *interceptor.FeedbackEntry
+	turn    interceptor.Turn
 }
 
 func (p *Plan) NewExecution(attempts *campaign.Attempts, guard *nativeexec.Guard) (*Execution, error) {
@@ -120,13 +121,13 @@ func (a *stepAdapter) Interpret(p interceptor.PreparedOperation, r interceptor.R
 			return nativeexec.Failed, nil
 		}
 	case "observation.read":
-		_, err := feedback.VerifyView(r.Body, a.source, a.plan.policy)
-		valid = r.Status == 200 && err == nil
+		view, err := feedback.VerifyView(r.Body, a.source, a.plan.policy)
+		valid = r.Status == 200 && r.SessionRevision == a.source.SessionRevision && err == nil && view.Operation.State == "SUCCEEDED" && view.Operation.ResponseCode == a.turn.Code && reflect.DeepEqual(view.Operation.ExitCode, a.turn.ExitCode)
 	case "observation.content.read":
 		var actual interceptor.FeedbackChunk
 		var query interceptor.FeedbackReadRequest
 		_ = json.Unmarshal(a.command.Body, &query)
-		valid = r.Status == 200 && decode(&actual) && a.entry != nil && actual.ReceiptID == query.ReceiptID && actual.Entry.ID == query.EntryID && actual.Offset == query.Offset && actual.RawLength == len(actual.Content) && actual.RawLength <= query.MaxBytes
+		valid = r.Status == 200 && r.SessionRevision == a.source.SessionRevision && decode(&actual) && a.entry != nil && actual.ReceiptID == query.ReceiptID && actual.Entry.ID == query.EntryID && actual.Offset == query.Offset && actual.RawLength == len(actual.Content) && actual.RawLength <= query.MaxBytes
 		if valid {
 			expected := *a.entry
 			if actual.Entry.Availability == "unavailable" {
@@ -139,6 +140,9 @@ func (a *stepAdapter) Interpret(p interceptor.PreparedOperation, r interceptor.R
 		}
 	case "injection.delete":
 		valid = r.Status == 204 && (len(r.Body) == 0 || bytes.Equal(r.Body, []byte("null")))
+	}
+	if a.command.Operation != "observation.read" && a.command.Operation != "observation.content.read" && !(a.command.Operation == "artifact.register" && r.Status == 200) && r.SessionRevision <= q.ExpectedSessionRevision {
+		valid = false
 	}
 	if !valid {
 		return nativeexec.Unknown, ErrResult
@@ -174,9 +178,11 @@ func (e *Execution) Run(ctx context.Context) (result Result, runErr error) {
 		}
 		status, retry, code, message := "completed", "do-not-retry", "", ""
 		if runErr != nil {
-			status, code, message = "failed", "DELIVERY_FAILED", "Target execution failed; campaign execution is closed."
-			if errors.Is(runErr, nativeexec.ErrUnknown) || errors.Is(runErr, nativeexec.ErrPending) || errors.Is(runErr, ErrResult) || errors.Is(runErr, feedback.ErrFeedback) {
-				status, retry, code, message = "unknown", "host-reconciliation-required", "OUTCOME_UNKNOWN", "Target outcome could not be verified; campaign execution is closed."
+			// Journal failures can occur after dispatch but before a result record.
+			// Only the executor's explicit known-failure outcome proves otherwise.
+			status, retry, code, message = "unknown", "host-reconciliation-required", "OUTCOME_UNKNOWN", "Target outcome could not be verified; campaign execution is closed."
+			if errors.Is(runErr, nativeexec.ErrFailed) {
+				status, retry, code, message = "failed", "do-not-retry", "DELIVERY_FAILED", "Target execution failed; campaign execution is closed."
 			}
 			if stage == "observation" && status == "failed" {
 				code, message = "OBSERVATION_UNAVAILABLE", "Feedback collection failed; campaign execution is closed."
@@ -224,6 +230,9 @@ func (e *Execution) Run(ctx context.Context) (result Result, runErr error) {
 			contact = "attempted"
 		}
 		if err != nil {
+			if lastOutcome != string(nativeexec.Failed) && lastOutcome != string(nativeexec.NotDispatched) {
+				contact = "unknown"
+			}
 			return interceptor.Response{}, err
 		}
 		if r.Native == nil {
@@ -237,12 +246,12 @@ func (e *Execution) Run(ctx context.Context) (result Result, runErr error) {
 		r, err := send(cmd)
 		if err != nil {
 			if cmd.Operation == "application.invoke" {
-				invocation = "not-dispatched"
+				invocation = "unknown"
 				if lastOutcome == string(nativeexec.Failed) {
 					invocation = "failed"
 				}
-				if errors.Is(err, nativeexec.ErrUnknown) || errors.Is(err, nativeexec.ErrPending) {
-					invocation = "unknown"
+				if lastOutcome == string(nativeexec.NotDispatched) {
+					invocation = "not-dispatched"
 				}
 			}
 			return result, err
@@ -264,6 +273,7 @@ func (e *Execution) Run(ctx context.Context) (result Result, runErr error) {
 	stage = "observation"
 	source := feedback.Source{CampaignID: p.context.CampaignID, SessionID: p.binding.SessionID, AttemptID: p.request.AttemptID, AttemptContextDigest: p.context.Digest, TurnID: turn.ID, RunRevision: p.binding.RunRevision, SessionRevision: revision}
 	e.adapter.source = source
+	e.adapter.turn = turn
 	var observation []byte
 	content := map[string][]byte{}
 	remaining := p.feedbackBytes
@@ -325,9 +335,9 @@ func (e *Execution) Run(ctx context.Context) (result Result, runErr error) {
 		stage = "cleanup"
 		for i, cmd := range p.cleanup {
 			if _, err = send(cmd); err != nil {
-				cleanup = "failed"
-				if errors.Is(err, nativeexec.ErrUnknown) || errors.Is(err, nativeexec.ErrPending) {
-					cleanup = "unknown"
+				cleanup = "unknown"
+				if lastOutcome == string(nativeexec.Failed) || lastOutcome == string(nativeexec.NotDispatched) {
+					cleanup = "failed"
 				}
 				return result, err
 			}

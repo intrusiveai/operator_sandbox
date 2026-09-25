@@ -129,7 +129,7 @@ func Compile(catalog *contracts.Catalog, raw []byte, in Inputs) (*Plan, error) {
 	if err != nil {
 		return nil, err
 	}
-	p := &Plan{catalog: catalog, request: r, binding: in.Live.Binding(), policy: policy, actions: map[string]string{}, deadline: in.Deadline, revision: in.SessionRevision, feedbackBytes: in.FeedbackBytes}
+	p := &Plan{catalog: catalog, request: r, binding: in.Live.Binding(), policy: policy, actions: map[string]string{}, deadline: in.Deadline.UTC(), revision: in.SessionRevision, feedbackBytes: in.FeedbackBytes}
 	p.rawRequest = bytes.Clone(raw)
 	p.sourceDigest, p.projectionDigest = in.Live.Export().SourceDigest(), in.Live.Export().ProjectionDigest()
 	artifactBytes := map[string][]byte{}
@@ -158,7 +158,7 @@ func Compile(catalog *contracts.Catalog, raw []byte, in Inputs) (*Plan, error) {
 			return nil, err
 		}
 	}
-	p.context = interceptor.AttemptContext{APIVersion: "interceptor.dev/attempt-context/v1alpha1", CampaignID: in.Live.CampaignID(), ThreadID: r.ThreadID, AttemptID: r.AttemptID, ParentAttemptID: r.ParentAttemptID, Generation: r.Generation, AttemptIndex: r.AttemptIndex, Payload: r.Payload, Generator: r.Generator, StrategyProvenanceRef: r.StrategyProvenanceRef, FeedbackProfile: policy.NativeProfile(), CreatedAt: in.CreatedAt, ObservationSelection: policy.NativeSelection()}
+	p.context = interceptor.AttemptContext{APIVersion: "interceptor.dev/attempt-context/v1alpha1", CampaignID: in.Live.CampaignID(), ThreadID: r.ThreadID, AttemptID: r.AttemptID, ParentAttemptID: r.ParentAttemptID, Generation: r.Generation, AttemptIndex: r.AttemptIndex, Payload: r.Payload, Generator: r.Generator, StrategyProvenanceRef: r.StrategyProvenanceRef, FeedbackProfile: policy.NativeProfile(), CreatedAt: in.CreatedAt.UTC(), ObservationSelection: policy.NativeSelection()}
 	p.context.Digest = interceptor.AttemptContextDigest(p.context)
 	if err = p.add("attempt.register", p.context, false); err != nil {
 		return nil, err

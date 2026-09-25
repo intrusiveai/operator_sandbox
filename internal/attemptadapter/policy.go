@@ -159,9 +159,20 @@ func validRoute(f capabilities.ExecutionFacts, r Route) bool {
 		if !slices.Contains(profile.Placements, nativePlacement(s)) {
 			return false
 		}
+		if s == "insert_array" && (r.Surface == "service_response" || r.Surface == "mcp_tool_result") {
+			return false
+		}
+		if s == "merge_object" && len(r.MergeFields) == 0 {
+			return false
+		}
 	}
 	for _, pointer := range r.Pointers {
 		if !validPointer(pointer) {
+			return false
+		}
+	}
+	for _, field := range r.MergeFields {
+		if field == "" || len(field) > 256 || strings.ContainsAny(field, "\x00\r\n") {
 			return false
 		}
 	}
@@ -206,7 +217,7 @@ func validRoute(f capabilities.ExecutionFacts, r Route) bool {
 					return true
 				}
 			case "service_response":
-				if ep.Kind == "http-route" && ep.Method == t.Method && ep.Path == t.Path {
+				if ep.Kind == "http-route" && ep.Method == t.Method && endpointMatches(ep.Path, t.Path) {
 					return true
 				}
 			case "environment_state":
@@ -224,6 +235,28 @@ func validRoute(f capabilities.ExecutionFacts, r Route) bool {
 		}
 	}
 	return false
+}
+
+// A native route template can describe a concrete host-authorized resource.
+// Only complete named path segments vary; this does not widen the installed
+// target itself, which is still matched by exact equality at attempt admission.
+func endpointMatches(template, concrete string) bool {
+	if template == concrete {
+		return true
+	}
+	a, b := strings.Split(template, "/"), strings.Split(concrete, "/")
+	if len(a) != len(b) {
+		return false
+	}
+	for i, part := range a {
+		if part == b[i] {
+			continue
+		}
+		if len(part) < 3 || part[0] != '{' || part[len(part)-1] != '}' || !identifier.MatchString(part[1:len(part)-1]) || b[i] == "" {
+			return false
+		}
+	}
+	return true
 }
 func validPointer(s string) bool {
 	if len(s) > 2048 || s != "" && !strings.HasPrefix(s, "/") {
@@ -253,7 +286,7 @@ func (p *Policy) authorizeInjection(d interceptor.Definition, knownTurns []strin
 	seen := map[string]bool{}
 	for k := range s.HeadersEqual {
 		name := textproto.CanonicalMIMEHeaderKey(k)
-		if name == "" || seen[name] || strings.ContainsAny(k, " \t:") || slices.Contains([]string{"Authorization", "Proxy-Authorization", "Cookie", "Set-Cookie", "Host", "Connection", "Transfer-Encoding", "Content-Length", "Forwarded", "X-Forwarded-Host", "X-Forwarded-For", "X-Forwarded-Proto"}, name) {
+		if !headerName(k) || name == "" || seen[name] || slices.Contains([]string{"Authorization", "Proxy-Authorization", "Cookie", "Set-Cookie", "Host", "Connection", "Transfer-Encoding", "Content-Length", "Forwarded", "X-Forwarded-Host", "X-Forwarded-For", "X-Forwarded-Proto"}, name) {
 			return ErrPolicy
 		}
 		seen[name] = true
@@ -271,4 +304,17 @@ func (p *Policy) authorizeInjection(d interceptor.Definition, knownTurns []strin
 		return nil
 	}
 	return ErrPolicy
+}
+
+func headerName(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, c := range s {
+		if c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || strings.ContainsRune("!#$%&'*+-.^_`|~", c) {
+			continue
+		}
+		return false
+	}
+	return true
 }

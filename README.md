@@ -2,7 +2,7 @@
 
 Implementation specification with shared contracts, host persistence and transport,
 and independent administrative termination.
-The Docker launcher and campaign execution runtime are not implemented yet.
+The campaign service and Docker launch orchestration are not implemented yet.
 
 The [shared validation foundation](contracts/README.md) now provides Go/Python
 strict JSON decoders, offline validation of the current schema catalog and shared
@@ -66,10 +66,14 @@ retains authoring/live provenance, optional gaps and separate native/effective
 feedback profiles.
 The [durable native executor](docs/NATIVE_EXECUTION.md) connects admitted steps to
 per-step journal reservations, pinned live target/Docker checks, one-time dispatch,
-terminal cancellation and reporting-only reconciliation. Concrete typed attempt
-and feedback adapters remain the next layer.
+terminal cancellation and reporting-only reconciliation.
+The [typed attempt adapter](docs/TYPED_ATTEMPT_ADAPTER.md) resolves concrete host
+scopes, validates artifact bytes/lineage/input contracts, compiles deterministic
+native commands and executes them through that journal with typed receipt checks.
+The [feedback projection](docs/FEEDBACK_PROJECTION.md) preserves native/effective
+profiles, filters permitted observations and provides bounded receipt-scoped reads.
 The [implementation phase handoff](docs/IMPLEMENTATION_STATUS.md) describes these
-completed foundations and the next typed execution adapter/preparation phase.
+completed foundations and the next durable receipt publication/broker integration phase.
 Run `make setup` then `make test`. Contract publication and
 the remaining Operator/Attack Harness runtime implementation remain pending.
 

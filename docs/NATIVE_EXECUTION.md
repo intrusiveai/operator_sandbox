@@ -70,8 +70,8 @@ persisted in this campaign. It also requires an installed `Adapter`. Its `Author
 membership in the admitted plan and current policy; its `Interpret` method checks
 operation-specific receipts and outcomes. These are mandatory trusted-code hooks,
 not guest callbacks. The executor does not supply a permissive default or infer
-success from HTTP status. Concrete typed attempt/feedback adapters remain the next
-implementation layer.
+success from HTTP status. The [typed attempt adapter](TYPED_ATTEMPT_ADAPTER.md)
+now supplies these checks for compiled Interceptor attempts and feedback reads.
 
 `Execute` obtains the one-time durable dispatch grant, checks the terminal fence
 again after persistence, and sends the exact saved envelope with a bounded context.

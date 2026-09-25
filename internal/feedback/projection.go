@@ -93,11 +93,13 @@ func VerifyView(raw []byte, source Source, p *Policy) (interceptor.ObservationVi
 		return v, ErrFeedback
 	}
 	seen := map[string]bool{}
+	states := map[string]string{}
 	for _, c := range v.Categories {
 		if !slices.Contains(kinds, c.Kind) || seen[c.Kind] || !slices.Contains([]string{"available", "empty", "withheld", "not_requested", "unavailable", "partial"}, c.State) {
 			return v, ErrFeedback
 		}
 		seen[c.Kind] = true
+		states[c.Kind] = c.State
 	}
 	seen = map[string]bool{}
 	for _, e := range v.Entries {
@@ -105,6 +107,9 @@ func VerifyView(raw []byte, source Source, p *Policy) (interceptor.ObservationVi
 			return v, ErrFeedback
 		}
 		seen[e.ID] = true
+		if slices.Contains([]string{"empty", "withheld", "not_requested"}, states[e.Kind]) || states[e.Kind] == "unavailable" && e.Availability == "available" {
+			return v, ErrFeedback
+		}
 		if e.Availability == "available" && e.Artifact == nil {
 			return v, ErrFeedback
 		}
@@ -254,12 +259,11 @@ func normalize(kind string, b []byte, truncated bool, actions map[string]string,
 	if truncated {
 		return nil, nil
 	} // partial JSON is never presented as a fact
-	v, err := contracts.Decode(b, MaxArtifact)
-	if err != nil {
-		return nil, ErrFeedback
-	}
-	m, ok := v.(map[string]any)
-	if !ok {
+	// Native diagnostics can contain uint64 event sequences that are deliberately
+	// omitted from the shared projection. Keep their native numeric domain while
+	// selecting only the fields below for the guest.
+	var m map[string]any
+	if interceptor.DecodeTypedBody(b, &m, MaxArtifact) != nil {
 		return nil, ErrFeedback
 	}
 	var result any

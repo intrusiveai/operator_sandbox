@@ -11,6 +11,7 @@ import (
 	"github.com/intrusive-ai/operator-sandbox/contracts"
 	"github.com/intrusive-ai/operator-sandbox/internal/capabilities"
 	"github.com/intrusive-ai/operator-sandbox/internal/interceptor"
+	"github.com/intrusive-ai/operator-sandbox/internal/nativedelivery"
 	"github.com/intrusive-ai/operator-sandbox/schemas"
 )
 
@@ -227,5 +228,62 @@ func TestResolvedScopesAreNarrowAndCopied(t *testing.T) {
 	copy.AllowedRefs[0] = "changed"
 	if in.Policy.CapabilityPolicy().AllowedRefs[0] == "changed" {
 		t.Fatal("mutable policy")
+	}
+}
+
+func TestConcreteRoutesCoverNativeSurfacesAndRejectBroaderSelectors(t *testing.T) {
+	_, _, in := fixture(t)
+	facts := in.Live.Export().ExecutionFacts()
+	facts.Services = append(facts.Services, capabilities.ServiceCapability{ID: "http", InjectionSurfaces: []string{"service_response"}, Endpoints: []nativedelivery.Endpoint{{Kind: "http-route", Method: "GET", Path: "/tickets/{key}"}}})
+	routes := []Route{
+		{Surface: "model_tool_result", Target: Target{ToolName: "lookup"}, Scopes: []string{"next_turn"}, Placements: []string{"replace"}, Pointers: []string{""}},
+		{Surface: "environment_state", Target: Target{FileNamespace: "records", RelativePath: "documents/one.json"}, Scopes: []string{"standing"}, Placements: []string{"replace"}, Pointers: []string{""}},
+		{Surface: "environment_state", Target: Target{Service: "tickets", Collection: "tickets", Key: "T-1"}, Scopes: []string{"once"}, Placements: []string{"replace"}, Pointers: []string{""}},
+		{Surface: "service_response", Target: Target{Service: "http", Method: "GET", Path: "/tickets/T-1"}, Scopes: []string{"once"}, Placements: []string{"replace"}, Pointers: []string{""}},
+	}
+	for _, r := range routes {
+		if !validRoute(facts, r) {
+			t.Fatal("supported route rejected", r)
+		}
+	}
+	httpRoute := routes[3]
+	policy := &Policy{scopes: Scopes{Routes: []Route{httpRoute}}, facts: facts}
+	d := interceptor.Definition{Surface: "service_response", Scope: "once", Selector: interceptor.Selector{Service: "http", Method: "GET", Path: "/tickets/T-1", CallOrdinal: "first"}, Placement: interceptor.Placement{Operation: "replace", Pointer: ""}}
+	if policy.authorizeInjection(d, nil) != nil {
+		t.Fatal("exact route denied")
+	}
+	d.Selector.Path = "/tickets/T-2"
+	if policy.authorizeInjection(d, nil) == nil {
+		t.Fatal("route template widened administrator scope")
+	}
+	d.Selector.Path = "/tickets/T-1"
+	for _, headers := range []map[string]string{{"authorization": "secret"}, {"Host": "other"}, {"x-test": "a", "X-Test": "b"}} {
+		d.Selector.HeadersEqual = headers
+		if policy.authorizeInjection(d, nil) == nil {
+			t.Fatal("sensitive or duplicate header selector admitted")
+		}
+	}
+	bad := routes[3]
+	bad.Placements = []string{"insert_array"}
+	if validRoute(facts, bad) {
+		t.Fatal("unsupported response insertion route advertised")
+	}
+	bad.Placements = []string{"merge_object"}
+	if validRoute(facts, bad) {
+		t.Fatal("unusable merge route advertised")
+	}
+}
+
+func TestNativeTimesRoundTripWithoutMonotonicState(t *testing.T) {
+	c, raw, in := fixture(t)
+	in.CreatedAt = time.Now()
+	in.Deadline = in.CreatedAt.Add(time.Minute)
+	p, err := Compile(c, raw, in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var reply interceptor.AttemptContext
+	if err = interceptor.DecodeTypedBody(encode(p.context), &reply, interceptor.JSONLimit); err != nil || !reflect.DeepEqual(reply, p.context) {
+		t.Fatal("timestamp lost native round-trip identity", err)
 	}
 }
