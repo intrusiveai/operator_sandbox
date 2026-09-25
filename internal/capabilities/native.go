@@ -177,7 +177,7 @@ func validNative(n *nativeManifest) bool {
 	ids = nil
 	for _, svc := range n.Services {
 		ids = append(ids, svc.ID)
-		if !allowed(svc.Kind, "fixture_http", "stateful_http", "mcp_http", "oauth2", "oidc", "http_sink") || !allowed(svc.Role, "environment", "identity", "attacker") || !allowed(svc.Implementation, "", "generic") || !allowed(svc.ResponseMode, "", "static", "dynamic") || !subset(svc.Transports, "http", "https") || !subset(svc.InjectionSurfaces, surfaces...) {
+		if !allowed(svc.Kind, "fixture_http", "stateful_http", "mcp_http", "oidc", "http_sink") || !allowed(svc.Role, "environment", "identity", "attacker") || !allowed(svc.Implementation, "", "generic") || !allowed(svc.ResponseMode, "", "static", "dynamic") || !subset(svc.Transports, "http", "https") || !subset(svc.InjectionSurfaces, surfaces...) {
 			return false
 		}
 		endpoints := []string{}
@@ -221,7 +221,7 @@ func validNative(n *nativeManifest) bool {
 			return false
 		}
 	}
-	if !uniqueIDs(ids) || !subset(n.Network.DNS.RecordTypes, "A", "AAAA", "TXT", "CNAME", "MX", "SRV") || !allowed(n.Network.DNS.UnknownPolicy, "", "nxdomain", "refused") || !allowed(n.Network.HTTPS.TrustMode, "", "auto", "bundle", "application-managed") || !allowed(n.Network.HTTPS.MinimumVersion, "", "TLS1.2") {
+	if !uniqueIDs(ids) || !subset(n.Network.DNS.RecordTypes, "A") || !allowed(n.Network.DNS.UnknownPolicy, "", "nxdomain", "refused") || !allowed(n.Network.HTTPS.TrustMode, "", "auto", "bundle", "application-managed") || !allowed(n.Network.HTTPS.MinimumVersion, "", "TLS1.2") {
 		return false
 	}
 	return n.Limits.MaximumAttempts > 0 && n.Limits.MaximumArtifacts > 0 && n.Limits.MaximumArtifactBytes > 0 && n.Limits.MaximumInvocations > 0 && n.Limits.MaximumSnapshots >= 0

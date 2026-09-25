@@ -1,9 +1,12 @@
 # Public capabilities and compatible bundle admission
 
 Status: accepted MVP contract, 2026-09-21. The closed public capability and bundle
-schemas are in the offline catalog. The fixture runner checks the reference chain;
-production adapters, full Go/Python conformance and runtime qualification remain
-implementation prerequisites. Existing Attack Harness tool schemas are unchanged.
+schemas are in the offline catalog. The Go host capability/bundle library verifies
+and projects native exports, checks compatible submissions and preserves live
+binding/policy records; see the [implementation guide](../docs/CAPABILITY_ADMISSION.md).
+The fixture runner checks the reference chain. CLI/broker integration, complete
+Go/Python publication conformance and runtime qualification remain implementation
+prerequisites. Existing Attack Harness tool schemas are unchanged.
 
 ## 1. Public export
 

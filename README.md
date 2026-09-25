@@ -59,8 +59,13 @@ Evidence download helpers stream into private temporary files, enforce configure
 archive limits and verify transfer length/digest before native archive validation.
 Archive inspection checks native member names, framing, regular-file/size limits
 and blob digests without extracting files; native provenance validation remains pending.
-The [implementation phase handoff](docs/IMPLEMENTATION_STATUS.md) describes the
-completed native client foundation and the next host interpretation/broker phase.
+The [capability admission layer](docs/CAPABILITY_ADMISSION.md) verifies native
+capability hashes and delivery contracts, projects/imports public exports, and
+checks bundle dependencies against live bindings and explicit host policy. It
+retains authoring/live provenance, optional gaps and separate native/effective
+feedback profiles.
+The [implementation phase handoff](docs/IMPLEMENTATION_STATUS.md) describes these
+completed foundations and the next execution adapter/broker phase.
 Run `make setup` then `make test`. Contract publication and
 the remaining Operator/Attack Harness runtime implementation remain pending.
 

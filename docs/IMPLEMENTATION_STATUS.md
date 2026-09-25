@@ -1,6 +1,30 @@
 # Implementation phase handoff
 
-## Completed phase: native Interceptor client foundation
+## Completed phase: target capability and bundle compatibility
+
+The host `internal/capabilities` layer now verifies native capability provenance,
+projects public exports, imports hash-named companions, validates bundle semantics
+and checks compatibility against a ready live binding and trusted policy snapshot.
+The [capability admission guide](CAPABILITY_ADMISSION.md) describes its API and
+integration responsibilities.
+
+| Area | Implemented |
+| --- | --- |
+| Native verification | Exact typed digest recipe, strict JSON/field shapes, supported vocabulary, duplicate identifiers and offline delivery contracts. |
+| Public projection | Deterministic allowlisted records, native/public provenance hashes, full JCS projection hashing and safe companion import. |
+| Bundle validation | Schema, unique IDs, internal links, coverage, narrative byte limits, artifact descriptor consistency and declared omissions. |
+| Live binding | Ready process/session/revision, campaign identity, capability/environment/application hashes and advertised native profile. |
+| Compatibility | Required dependencies, explicit optional gaps/disabled routes, source provenance, compatible updates and opt-in exact pins. |
+| Policy handoff | Explicit host decisions and selectable action routes; preserved native profile, effective profile and allowed feedback kinds. |
+| Frozen records | Unchanged bundle bytes plus authoring/live provenance, binding, policy digest and compatibility results. |
+
+This is a host library boundary. It does not yet implement CLI export writing,
+TargetProfile route resolution, per-attempt authorization or campaign startup.
+Artifact descriptors do not substitute for verification and staging of actual
+artifact bytes. Compatibility records must be persisted with the immutable input
+and installed contract-package pins by the campaign preparation layer.
+
+## Earlier completed phase: native Interceptor client foundation
 
 The host-only `internal/interceptor` layer now covers the current local API routes
 and their transport/lifecycle envelopes. It is ready for the next host adapter and
@@ -38,14 +62,23 @@ These are protocol tests against test servers. They do not qualify a real Docker
 launcher, native Linux/macOS runtime, live Interceptor target or Attack Harness.
 Cross-compilation establishes build compatibility only.
 
-## Next major phase: host interpretation and campaign broker
+Additional validation for this phase compares the Go adapter against the existing
+native hash preimage and public/JCS golden files, exercises live binding failures,
+required/optional dependency changes and policy denials, and checks the
+profile/allowed-kind portions of every shared feedback translation vector. Safe
+companion loading rejects links, special files and mismatched bytes. The new
+packages pass race tests; the full Go/Python suite, fixture runners and `go vet`
+pass. Capability tests also compile for Linux amd64/arm64 and macOS amd64; they
+execute on macOS arm64. These builds do not qualify Docker runtime behavior.
+
+## Next major phase: execution adapter and campaign broker
 
 The next layer must implement and integrate the following before an executable
 campaign service can treat these client results as admitted work or final evidence:
 
-1. Verify native capability manifests and delivery contracts; project the public
-   capability export; validate objective/scenario bundle dependencies and live
-   target compatibility.
+1. Resolve installed TargetProfile scopes and concrete selectable routes; wire
+   capability export/import and bundle checks into campaign preparation. Preserve
+   the contract-package pin and recheck compatibility/readiness before launch.
 2. Translate typed attempts, artifact/injection operations and feedback profiles;
    resolve handles and filter observations before exposing results to the harness.
 3. Verify native evidence JSON identities, manifests, event/state hash chains,
