@@ -15,7 +15,7 @@ var ErrExecutionFailure = errors.New("native execution failed; execution closed"
 
 // Each step reserves dispatch/result plus ONE reporting-only reconciliation.
 // Native frames can exceed a journal content member; retain them in ordered parts.
-const NativeStepReservation = 5*(MaxEventBytes+1) + 2*interceptor.JSONLimit + (64 << 10)
+const NativeStepReservation = 6*(MaxEventBytes+1) + 2*interceptor.JSONLimit + (64 << 10)
 
 type NativeStep struct {
 	ID                     string              `json:"id"`
@@ -344,4 +344,44 @@ func (s *NativeSteps) Reconciliation(id string) (interceptor.PreparedOperation, 
 	}
 	response, err := s.read(r.ReconciliationResponse)
 	return p, response, err
+}
+
+// RecordPreflight retains bounded host-verified live identity facts before
+// dispatch. It does not grant permission or replace the independent stop fence.
+func (s *NativeSteps) RecordPreflight(id string, proof []byte) error {
+	a := s.a
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	r, ok := a.nativeSteps[id]
+	if !ok || r.State != IntentCommitted || len(proof) > 32<<10 || !validateMetadata(proof) {
+		return ErrInvalid
+	}
+	_, err := s.commit(r, "native.preflight", nil, []Content{{Role: "live-binding", MediaType: "application/json", Bytes: proof}}, false, false)
+	return err
+}
+
+// VerifyRuntimeBinding requires the already persisted launch identity. The native
+// executor cannot create a new binding or select another otherwise valid container.
+func (s *NativeSteps) VerifyRuntimeBinding(b DockerBinding) error {
+	w := s.a.w
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if err := w.ready(); err != nil {
+		return err
+	}
+	if err := b.validate(w.manifest, w.manifestDigest); err != nil {
+		return err
+	}
+	raw, err := readFile(w.root, "launch/docker-binding.json", ManifestLimit)
+	if err != nil {
+		return w.fail(err)
+	}
+	expected, err := encode(b, ManifestLimit)
+	if err != nil {
+		return err
+	}
+	if !bytes.Equal(raw, expected) {
+		return ErrInvalid
+	}
+	return nil
 }

@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -218,4 +219,25 @@ func (c *Client) Terminate(ctx context.Context, b campaign.DockerBinding) (out O
 		case <-timer.C:
 		}
 	}
+}
+
+// CheckRunning confirms the pinned local daemon and exact harness container are
+// running under the required lifecycle policy. It never starts or repairs one.
+func (c *Client) CheckRunning(ctx context.Context, b campaign.DockerBinding) error {
+	if b.Validate() != nil || c == nil || c.run == nil {
+		return errors.New("invalid Docker binding")
+	}
+	ctx, cancel := context.WithTimeout(ctx, ConfirmationTimeout)
+	defer cancel()
+	item, code := c.inspect(ctx, b)
+	if code != "" {
+		return fmt.Errorf("Docker identity check failed: %s", code)
+	}
+	if !item.Running || item.Paused || item.Restarting || item.Status != "running" || item.RestartPolicy != "no" || item.AutoRemove {
+		return errors.New("Docker container is not running under the pinned lifecycle policy")
+	}
+	if code = c.daemon(ctx, b); code != "" {
+		return fmt.Errorf("Docker identity check failed: %s", code)
+	}
+	return ctx.Err()
 }

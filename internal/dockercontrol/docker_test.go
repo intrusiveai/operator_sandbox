@@ -258,3 +258,30 @@ esac
 		t.Fatal("subprocess did not stop", err)
 	}
 }
+
+func TestCheckRunningRequiresExactHealthyIdentity(t *testing.T) {
+	for name, change := range map[string]func(*fakeDocker){
+		"healthy":         func(*fakeDocker) {},
+		"wrong daemon":    func(f *fakeDocker) { f.daemon = "other" },
+		"wrong container": func(f *fakeDocker) { f.item.ID = strings.Repeat("c", 64) },
+		"wrong image":     func(f *fakeDocker) { f.item.Image = contracts.RawDigest([]byte("other")) },
+		"stopped":         func(f *fakeDocker) { f.item.Running = false; f.item.Status = "exited" },
+		"paused":          func(f *fakeDocker) { f.item.Paused = true },
+		"restarting":      func(f *fakeDocker) { f.item.Restarting = true },
+		"restart policy":  func(f *fakeDocker) { f.item.RestartPolicy = "always" },
+		"auto removal":    func(f *fakeDocker) { f.item.AutoRemove = true },
+		"missing":         func(f *fakeDocker) { f.inspectError = true },
+	} {
+		t.Run(name, func(t *testing.T) {
+			c, f := fake(t)
+			change(f)
+			err := c.CheckRunning(context.Background(), f.b)
+			if (err == nil) != (name == "healthy") {
+				t.Fatal(err)
+			}
+			if f.kills != 0 {
+				t.Fatal("read-only check mutated Docker")
+			}
+		})
+	}
+}
