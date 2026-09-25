@@ -40,6 +40,10 @@ type Protocol struct {
 	packageIdentity  *PackageIdentity
 }
 
+// Catalog is the frozen catalog compiled with this protocol's installed bytes.
+// Catalog has no public mutation API; callers must not substitute another package.
+func (p *Protocol) Catalog() *Catalog { return p.catalog }
+
 // ValidateAck checks syntax and size. Launch matching and monotonic positions
 // require the transport's saved state and are not inferred from a single ACK.
 func (p *Protocol) ValidateAck(raw []byte) (map[string]any, error) {

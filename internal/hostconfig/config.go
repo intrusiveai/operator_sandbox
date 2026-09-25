@@ -55,6 +55,9 @@ func Defaults(goos, home string) (Paths, error) {
 }
 
 type Config struct {
+	Target struct {
+		ProfileFile string `json:"profile_file"`
+	} `json:"target"`
 	Engine struct {
 		Image string `json:"image"`
 	} `json:"engine"`
@@ -128,6 +131,7 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 	c.Spool.MaxBytes = DefaultSpoolBytes
 	c.Evidence.MaxArchiveBytes = DefaultEvidenceBytes
 	fields := map[string]map[string]*string{
+		"target": {"profile_file": &c.Target.ProfileFile},
 		"engine": {"image": &c.Engine.Image},
 		"docker": {"endpoint": &c.Docker.Endpoint, "executable": &c.Docker.Executable},
 		"state":  {"root": &c.State.Root},
@@ -183,6 +187,9 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 	if !absolute(c.Cache.ReleaseDirectory) {
 		return Config{}, ErrPath
 	}
+	if c.Target.ProfileFile != "" && !absolute(c.Target.ProfileFile) {
+		return Config{}, ErrPath
+	}
 	// Reusable approvals must not be inside the purgeable campaign tree.
 	campaigns := filepath.Join(c.State.Root, "campaigns")
 	if c.Cache.ReleaseDirectory == campaigns || strings.HasPrefix(c.Cache.ReleaseDirectory, campaigns+string(filepath.Separator)) {
@@ -200,36 +207,49 @@ func privateFile(info os.FileInfo) bool {
 // os.ErrNotExist is preserved; malformed/unreadable files are not absence.
 // Loading creates no directories and contacts neither Docker nor the network.
 func Load(name string, defaults Paths) (Loaded, error) {
-	if !absolute(name) {
-		return Loaded{}, ErrPath
-	}
-	info, err := os.Lstat(name)
+	raw, err := ReadPrivate(name, MaxBytes)
 	if err != nil {
 		return Loaded{}, err
-	}
-	if !privateFile(info) || info.Size() > MaxBytes {
-		return Loaded{}, ErrPrivate
-	}
-	f, err := os.OpenFile(name, os.O_RDONLY|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, 0)
-	if err != nil {
-		return Loaded{}, err
-	}
-	defer f.Close()
-	before, err := f.Stat()
-	if err != nil || !privateFile(before) || !os.SameFile(info, before) || before.Size() > MaxBytes {
-		return Loaded{}, ErrPrivate
-	}
-	raw, err := io.ReadAll(io.LimitReader(f, MaxBytes+1))
-	if err != nil {
-		return Loaded{}, err
-	}
-	after, err := f.Stat()
-	if err != nil || !privateFile(after) || before.Size() != after.Size() || after.Size() != int64(len(raw)) || !before.ModTime().Equal(after.ModTime()) || len(raw) > MaxBytes {
-		return Loaded{}, ErrInvalid
 	}
 	c, err := Parse(raw, defaults)
 	if err != nil {
 		return Loaded{}, err
 	}
 	return Loaded{name, contracts.RawDigest(raw), c}, nil
+}
+
+// ReadPrivate captures an administrator-owned bounded file using the same
+// ownership, no-follow and stability checks as installation configuration.
+func ReadPrivate(name string, maximum int64) ([]byte, error) {
+	if maximum < 1 || maximum > 1<<20 {
+		return nil, ErrInvalid
+	}
+	if !absolute(name) {
+		return nil, ErrPath
+	}
+	info, err := os.Lstat(name)
+	if err != nil {
+		return nil, err
+	}
+	if !privateFile(info) || info.Size() > maximum {
+		return nil, ErrPrivate
+	}
+	f, err := os.OpenFile(name, os.O_RDONLY|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, 0)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	before, err := f.Stat()
+	if err != nil || !privateFile(before) || !os.SameFile(info, before) || before.Size() > maximum {
+		return nil, ErrPrivate
+	}
+	raw, err := io.ReadAll(io.LimitReader(f, maximum+1))
+	if err != nil {
+		return nil, err
+	}
+	after, err := f.Stat()
+	if err != nil || !privateFile(after) || before.Size() != after.Size() || after.Size() != int64(len(raw)) || !before.ModTime().Equal(after.ModTime()) || int64(len(raw)) > maximum {
+		return nil, ErrInvalid
+	}
+	return raw, nil
 }
