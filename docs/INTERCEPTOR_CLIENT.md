@@ -280,13 +280,43 @@ capacity failures. The per-archive bound does not cap aggregate retained storage
 concurrent downloads; campaign admission/finalization controls those lifetimes.
 
 **A successful download proves byte-transfer integrity only.** Before committing
-evidence or declaring completeness, the next verifier must check archive paths,
-regular-file types, entry/expanded-size bounds, native manifests/journal/blob hashes,
+evidence or declaring completeness, run the structural inspection below, then
+verify native manifests/journal hashes,
 campaign/session lineage and native completeness markers. The receipt identifies
 the requested session; archive identity is not established by the HTTP digest.
 This stage does not extract archives, publish evidence, expose it to the harness,
 or implement final reports/import/recovery. Administrative import will use the same
 native validator once implemented.
+
+### Archive inspection without extraction
+
+`download.InspectArchive(ctx, limits)` reads the complete tar and produces a bounded
+index with each member's name, byte count and SHA-256. It rechecks the whole archive
+against the transfer receipt, checks blob contents against their hash-based names,
+and exposes bounded read-only member readers. The index shares the download's
+lifetime; close the download after all readers finish. It does not write extracted
+files, interpret native JSON or publish evidence.
+
+`DefaultArchiveLimits(maxBytes)` selects 10,000 entries and the supplied total
+expanded-byte ceiling. Explicit limits require 1–100,000 entries and a positive
+expanded-byte ceiling within the existing maximum archive-byte range. The future
+finalizer must retain the selected limits with collection policy. Metadata blocks
+have a separate 64 KiB budget per tar-header advance; member hashing uses a 64 KiB
+buffer. Large native files can use the tar PAX size extension.
+
+Inspection accepts only regular files with exact native export names: the known
+top-level metadata/journals, checkpoint JSON files, SHA-256 blobs and documented
+restore-source/failure records. It rejects unknown names, traversal/absolute paths,
+aliases, duplicate entries, links, devices, directories, privilege mode bits,
+extended attributes, sparse files and other PAX extensions. Required export members
+must exist, and restore-source checkpoint/journal files must appear together.
+The native writer's two-block footer must terminate the archive exactly; missing
+footers, trailing payloads, concatenated archives and extra padding are rejected.
+
+Structural success is deliberately distinct from native evidence validity. Native
+JSON version/identity checks, journal chains, manifest/reference checks, execution
+records and completeness/provenance interpretation remain a separate verifier gate.
+Until that gate exists, inspected archives remain uncommitted temporary inputs.
 
 ## Validation and pending integration
 
@@ -308,6 +338,9 @@ Evidence tests cover strict headers, the smaller of both ceilings, a streamed
 archive larger than the JSON limit, bounded buffer reads, interrupted/damaged bodies,
 storage write failure, native quota errors, private staging cleanup and a real HTTP
 test using Interceptor's `http.ServeContent` response pattern.
+Archive tests cover bounded member access, native blob names, duplicate and unsafe
+members, metadata budgets, entry/expanded-size boundaries, footer/truncation errors,
+changed temporary bytes and canceled inspection.
 
 Native evidence archive/provenance validation and publication, typed experiment bodies/results, capability projection and
 feedback filtering remain adapter work. Durable dispatch/reconciliation, status
