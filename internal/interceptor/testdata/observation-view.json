@@ -1,0 +1,45 @@
+{
+  "receipt_id": "feedback-41a52ffc93105ff1b647eff423f96d7d3dde8be5bea878c4d3575f35c7c64139",
+  "campaign_id": "campaign",
+  "attempt_context_digest": "sha256:fdba61205c588808a4c6055f3783ae13fa7e4a981052736dc6aa51d5fbff51b5",
+  "turn_id": "turn",
+  "captured_at": "2026-09-25T00:00:00Z",
+  "window_start": "2026-09-25T00:00:00Z",
+  "window_end": "2026-09-25T00:00:00Z",
+  "through_event_seq": 9007199254740993,
+  "collection_state": "complete",
+  "categories": [
+    {
+      "kind": "target_output",
+      "state": "empty"
+    },
+    {
+      "kind": "operation_error",
+      "state": "not_requested",
+      "reason": "selection"
+    },
+    {
+      "kind": "injection_delivery",
+      "state": "not_requested",
+      "reason": "selection"
+    },
+    {
+      "kind": "oracle_outcome",
+      "state": "not_requested",
+      "reason": "selection"
+    }
+  ],
+  "entries": [],
+  "hash": "sha256:3769eba566d281b20d3cd4ab650eeec4f6cb0f237f11684c141081f8ba559937",
+  "api_version": "interceptor.dev/observation-view/v1alpha2",
+  "session_id": "session",
+  "attempt_id": "attempt",
+  "feedback_profile": "diagnostic",
+  "operation": {
+    "state": "SUCCEEDED",
+    "receipt_id": "turn"
+  },
+  "target_output": {},
+  "observations": [],
+  "session_revision": 10
+}
