@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -363,5 +364,54 @@ func TestNativeStopDuringDispatchCommit(t *testing.T) {
 	}
 	if fresh, err := s.MarkDispatched(r.ID); fresh || err == nil {
 		t.Fatal("granted dispatch despite stop", fresh, err)
+	}
+}
+
+func TestNativeCrashLeavesUnknownSteps(t *testing.T) {
+	if root := os.Getenv("OPERATOR_NATIVE_CRASH_ROOT"); root != "" {
+		m := testManifest(t)
+		m.Retention.MaxJournalBytes = 64 << 20
+		w, err := Create(root, m)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err = w.ConfigureFreeSpace(0); err != nil {
+			t.Fatal(err)
+		}
+		a, err := NewAttempts(w, 5)
+		if err != nil {
+			t.Fatal(err)
+		}
+		observe(t, a, "parent", 6)
+		admit(t, a, "parent")
+		dispatch(t, a, "parent")
+		s := a.NativeSteps()
+		r, _, err := s.Begin("parent", nativeRequest(t, "invoke"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if fresh, err := s.MarkDispatched(r.ID); err != nil || !fresh {
+			t.Fatal(fresh, err)
+		}
+		os.Exit(0) // simulate loss without writer Close or result persistence
+	}
+	root := privateRoot(t)
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	command := exec.Command(executable, "-test.run=^TestNativeCrashLeavesUnknownSteps$")
+	command.Env = append(os.Environ(), "OPERATOR_NATIVE_CRASH_ROOT="+root)
+	if out, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("child failed: %v %s", err, out)
+	}
+	report, err := Inspect(root, "campaign-1", nil)
+	if err != nil || !report.JournalIntact || len(report.Operations) != 2 || len(report.Reservations) != 2 {
+		t.Fatal(report, err)
+	}
+	for _, op := range report.Operations {
+		if op.LastRecordedState != Dispatched || op.Outcome != Unknown {
+			t.Fatal("crash produced a known result", op)
+		}
 	}
 }

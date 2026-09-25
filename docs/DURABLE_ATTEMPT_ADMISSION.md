@@ -2,7 +2,9 @@
 
 Status: implemented in `internal/campaign`. This stage joins the existing shared
 attempt ledger to the host journal. It adds no host/harness wire fields and needs
-no Interceptor or Attack Harness changes. Native execution remains a later stage.
+no Interceptor or Attack Harness changes. The [durable native executor](NATIVE_EXECUTION.md)
+now provides the per-step dispatch/audit boundary; concrete typed attempt and
+feedback adapters remain a later stage.
 
 ## Startup and authority
 
@@ -121,7 +123,7 @@ and one guest result. The original observation/request bytes are charged separat
 Receipt metadata is capped at 60 KiB, leaving room for attribution, counters and
 reservation metadata within the 64 KiB metadata ceiling. Every result/plan/native
 body is separately bounded to 4 MiB. This covers the attempt-level audit records,
-not an arbitrary sequence of native step exchanges. A multi-step adapter must
+not an arbitrary sequence of native step exchanges. The native-step ledger now lets a multi-step adapter
 reserve and journal each step's native requests, responses and uncertainty
 separately before contact; it cannot treat this fixed allowance as covering all
 injection/invocation/cleanup traffic. The adapter must enforce body bounds while

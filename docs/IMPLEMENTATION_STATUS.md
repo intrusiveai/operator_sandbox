@@ -1,6 +1,42 @@
 # Implementation phase handoff
 
-## Completed phase: target capability and bundle compatibility
+## Completed phase: durable native execution core
+
+`internal/nativeexec` now connects admitted attempt steps to the Interceptor
+client and campaign journal. The [native execution guide](NATIVE_EXECUTION.md)
+describes its ordering, bounds, guard checks and reporting-only reconciliation.
+
+| Area | Implemented |
+| --- | --- |
+| Per-step persistence | Exact native request/response envelopes, ordered bounded journal members, separate audit reservations and verified disk reads. |
+| Parent integration | Steps require an admitted/dispatched attempt; one unresolved step at a time; pending/failed/unknown steps cannot produce successful attempt completion. |
+| Duplicate protection | One durable dispatch grant; native command identity preserves command/deadline while excluding worker/revision attribution. |
+| Live guard | Pinned Interceptor process/session/revision and the persisted exact Docker daemon/container/image/labels/lifecycle identity. |
+| Terminal handling | Failure/uncertainty fences before journal locks; the fence cancels in-flight native calls; no automatic replay or renewed deadline. |
+| Reporting | One separately recorded operation-status query from reserved capacity; fingerprints/records verified; results never reopen unknown execution. |
+| Restore continuity | A verified replacement can rebind future work while preserving old step results, attribution, cumulative admissions and attempt numbering. |
+
+The executor requires trusted adapter authorization and operation-specific result
+interpretation. Concrete attempt translation, selector policy, feedback filtering
+and harness receipts are not implemented by these hooks. This boundary provides
+the durable executor they will use; it does not expose a generic execution tool
+to the harness or launch campaigns.
+
+Tests join the real journal/attempt ledger to a scripted native peer and exercise
+lost replies, completed-record reconciliation, malformed/foreign/missing records,
+concurrency, live-binding failures, cancellation, verified restore adoption and the
+independent Docker termination observer. A subprocess exits after native dispatch
+without closing its writer; inspection retains unknown outcomes and reservations.
+Storage-failure tests cover intent, dispatch, result and reconciliation writes.
+These tests use synthetic operation bodies and installed test adapters; they do
+not qualify operation-specific native semantics or a real Docker deployment.
+
+Validation passed: `make test` (Go/Python and shared fixtures), `go vet ./...`,
+race tests for campaign/client/Docker/executor packages, and executor test builds
+for Linux amd64/arm64 and macOS amd64. Execution tests run on macOS arm64;
+cross-compilation is build coverage, not runtime qualification.
+
+## Earlier completed phase: target capability and bundle compatibility
 
 The host `internal/capabilities` layer now verifies native capability provenance,
 projects public exports, imports hash-named companions, validates bundle semantics
@@ -71,7 +107,7 @@ packages pass race tests; the full Go/Python suite, fixture runners and `go vet`
 pass. Capability tests also compile for Linux amd64/arm64 and macOS amd64; they
 execute on macOS arm64. These builds do not qualify Docker runtime behavior.
 
-## Next major phase: execution adapter and campaign broker
+## Next major phase: typed execution adapter and campaign preparation
 
 The next layer must implement and integrate the following before an executable
 campaign service can treat these client results as admitted work or final evidence:
@@ -84,8 +120,10 @@ campaign service can treat these client results as admitted work or final eviden
 3. Verify native evidence JSON identities, manifests, event/state hash chains,
    execution records, references, restore provenance and completeness markers.
    Structural archive inspection alone does not permit evidence publication.
-4. Connect dispatch and reconciliation to durable admission, cumulative accounting,
-   instance/session pins, terminal fencing and exactly-once binding/receipt adoption.
+4. Integrate the durable executor with the typed plan/result builder, transport
+   envelope audit, cumulative non-attempt accounting and exactly-once receipt
+   adoption. Arm the Docker observer and campaign/operation timers in the service;
+   wire terminal target closure and cleanup to the lifecycle controller.
 5. Publish verified per-session evidence into campaign retention, support later
    administrative import and cleanup of abandoned staging, and derive report inputs.
 

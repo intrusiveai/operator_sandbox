@@ -64,8 +64,12 @@ capability hashes and delivery contracts, projects/imports public exports, and
 checks bundle dependencies against live bindings and explicit host policy. It
 retains authoring/live provenance, optional gaps and separate native/effective
 feedback profiles.
+The [durable native executor](docs/NATIVE_EXECUTION.md) connects admitted steps to
+per-step journal reservations, pinned live target/Docker checks, one-time dispatch,
+terminal cancellation and reporting-only reconciliation. Concrete typed attempt
+and feedback adapters remain the next layer.
 The [implementation phase handoff](docs/IMPLEMENTATION_STATUS.md) describes these
-completed foundations and the next execution adapter/broker phase.
+completed foundations and the next typed execution adapter/preparation phase.
 Run `make setup` then `make test`. Contract publication and
 the remaining Operator/Attack Harness runtime implementation remain pending.
 
