@@ -80,6 +80,9 @@ and image/release compatibility records remain required. The image release's
 
 Use Docker's read-only root and explicit read-only input/skill/manifest mounts,
 ordinary ownership/permissions, and bounded non-executable temporary filesystems.
+Input/skill/manifest binds MUST be nonrecursive with private propagation; staged
+regular files MUST use mode `0444` and directories `0555`. Writable tmpfs mounts
+MUST use `nodev,nosuid,noexec` with byte/inode ceilings.
 Only the designated macOS outbound spool lanes are writable host-backed transport
 mounts. Do not expose runtime sockets, credentials or unrelated host paths.
 Read-only mounts prevent writes; readable container files are not subject to an

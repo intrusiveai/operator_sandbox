@@ -152,7 +152,7 @@ Detailed startup sequencing and image composition are in the guest contract.
 | Identity | Nonroot guest UID/GID; separate user-namespace remapping optional; empty capabilities; `no_new_privs`; no supplementary authority. |
 | Namespaces | Private mount, PID, IPC, UTS and network namespaces, with runtime-provided cgroup isolation; separate user namespace optional; no joining host/target namespaces. |
 | Network | Empty private network namespace: no veth/TAP, routes, CNI attachment, host networking, published ports or external DNS. Deny socket creation in the harness syscall profile. |
-| Filesystem | Immutable read-only root; exact host-created input/skill/manifest trees mounted read-only, private propagation, `nodev,nosuid,noexec`; private OS-specific transport mounts as Section 6.2; bounded fresh scratch only. |
+| Filesystem | Immutable read-only root; exact host-created input/skill/manifest trees mounted read-only and nonrecursive with private propagation; regular input files mode `0444` and directories `0555`; private OS-specific transport mounts as Section 6.2; bounded fresh scratch only. |
 | Host access | No Docker/containerd sockets, KVM, host devices, home directories, source checkout, target volumes, credentials, host `/proc` or writable cgroup mounts. |
 | Execution | Fixed Python startup only; deny additional `execve`, `execveat`, process creation and arbitrary code evaluation before processing untrusted inputs. |
 | Kernel controls | Restricted startup seccomp plus a tighter live allowlist installed by trusted bootstrap; no unfiltered fallback. Docker mounts and ordinary permissions enforce the filesystem baseline; additional AppArmor/SELinux/Landlock policy is optional. |

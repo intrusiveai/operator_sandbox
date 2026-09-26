@@ -1,7 +1,7 @@
 //go:build linux || darwin
 
-// Package dockercontrol provides the narrow, exact-identity administrative kill
-// path. It never selects containers by name, changes context, pulls, or starts one.
+// Package dockercontrol provides exact-identity Docker launch and administrative
+// termination. It never selects containers by name, changes context, or pulls.
 package dockercontrol
 
 import (
@@ -28,7 +28,10 @@ type Outcome = campaign.TerminationOutcome
 
 type command func(context.Context, string, ...string) ([]byte, error)
 
-type Client struct{ run command }
+type Client struct {
+	run        command
+	executable string
+}
 
 // New resolves the administrator's Docker executable once. An explicit path must
 // be absolute. Neither the executable nor arguments come from campaign content.
@@ -47,7 +50,7 @@ func New(executable string) (*Client, error) {
 	if err != nil || !info.Mode().IsRegular() || info.Mode().Perm()&0111 == 0 {
 		return nil, errors.New("Docker executable unavailable")
 	}
-	return &Client{run: func(ctx context.Context, endpoint string, args ...string) ([]byte, error) {
+	return &Client{executable: executable, run: func(ctx context.Context, endpoint string, args ...string) ([]byte, error) {
 		cmd := exec.CommandContext(ctx, executable, append([]string{"--host", endpoint}, args...)...)
 		cmd.Env = dockerEnvironment(os.Environ())
 		// Context cancellation kills the CLI child. Bound pipe draining too, in case
