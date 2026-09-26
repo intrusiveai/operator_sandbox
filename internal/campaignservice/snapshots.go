@@ -162,6 +162,8 @@ func (s *Service) remaining() map[string]int64 {
 	objects, bytes := s.config.Prepared.ArtifactUsage()
 	limits["artifact_objects"] -= objects + s.artifacts.objects
 	limits["artifact_bytes"] -= bytes + s.artifacts.bytes
+	limits["model_turns"] -= s.model.turns
+	limits["model_tokens"] -= s.model.tokens
 	limits["snapshot_admissions"] -= s.snapshotAdmissions
 	limits["snapshot_bytes"] -= s.snapshotBytes
 	return limits

@@ -1,0 +1,172 @@
+package preparation_test
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/intrusive-ai/operator-sandbox/internal/campaignservice"
+)
+
+func modelFixture(t *testing.T) (map[string]any, map[string]any, map[string]any) {
+	t.Helper()
+	var fixtures []struct {
+		Name                    string
+		Policy, Request, Result map[string]any
+	}
+	if err := json.Unmarshal(read(t, "../../schemas/fixtures/model-codec.json"), &fixtures); err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range fixtures {
+		if f.Name == "native text and usage preserved" {
+			return f.Policy, f.Request, f.Result
+		}
+	}
+	t.Fatal("missing model fixture")
+	return nil, nil, nil
+}
+
+type provider struct {
+	calls    int
+	response []byte
+	err      error
+	block    bool
+	entered  chan struct{}
+}
+
+func (p *provider) Generate(ctx context.Context, request []byte) ([]byte, error) {
+	p.calls++
+	if p.entered != nil {
+		close(p.entered)
+	}
+	if p.block {
+		<-ctx.Done()
+		return nil, ctx.Err()
+	}
+	return p.response, p.err
+}
+func TestServiceModelReplayPolicyAndRestoreBudgets(t *testing.T) {
+	policy, request, result := modelFixture(t)
+	p := &provider{response: encode(result["response"])}
+	routes := append(append([]string{}, snapshotRoutes...), "engine.model_generate")
+	s, _, _, _, launch := serviceWithSettings(t, 0, routes, func(c *campaignservice.Config) {
+		c.Model = &campaignservice.ModelConfig{Provider: p, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
+	}, snapshotInput(t))
+	if err := s.Admit(context.Background(), launch); err != nil {
+		t.Fatal(err)
+	}
+	request["request"].(map[string]any)["messages"].([]any)[0].(map[string]any)["content"] = string(launch.Prompt)
+	call := func(op, id string, rev int, body any) map[string]any {
+		t.Helper()
+		raw, err := s.Handle(context.Background(), stateWire(op, id, rev, body), 0)
+		return stateResult(t, raw, err)
+	}
+	first := call("engine.model_generate", "model-1", 1, request)
+	if p.calls != 1 {
+		t.Fatal(p.calls)
+	}
+	if again := call("engine.model_generate", "model-1", 1, request); again["receipt_id"] != first["receipt_id"] || p.calls != 1 {
+		t.Fatal("duplicate model dispatch", again)
+	}
+	cp := call("engine.snapshot_request", "snapshot", 1, map[string]any{})["snapshot"].(map[string]any)
+	restored := call("engine.restore_request", "restore", 1, map[string]any{"source_session": cp["source_session"], "checkpoint_id": cp["checkpoint_id"]})
+	remaining := restored["remaining_limits"].(map[string]any)
+	if remaining["model_turns"] != float64(2) || remaining["model_tokens"] != float64(9880) {
+		t.Fatal("restore refunded usage", remaining)
+	}
+	call("engine.model_generate", "model-1", 2, request)
+	if p.calls != 1 {
+		t.Fatal("restore replay called provider")
+	}
+	request["request"].(map[string]any)["messages"].([]any)[0].(map[string]any)["content"] = "Changed prompt"
+	raw, err := s.Handle(context.Background(), stateWire("engine.model_generate", "changed", 2, request), 0)
+	if err != nil || !strings.Contains(string(raw), "POLICY_DENIED") || p.calls != 1 {
+		t.Fatal(string(raw), err)
+	}
+	request["request"].(map[string]any)["messages"].([]any)[0].(map[string]any)["content"] = string(launch.Prompt)
+	call("engine.model_generate", "model-2", 2, request)
+	call("engine.model_generate", "model-3", 2, request)
+	raw, err = s.Handle(context.Background(), stateWire("engine.model_generate", "model-4", 2, request), 0)
+	if err != nil || !strings.Contains(string(raw), "LIMIT_EXCEEDED") || p.calls != 3 {
+		t.Fatal(string(raw), err)
+	}
+}
+func TestServiceModelUncertainAndInvalidResponsesTerminate(t *testing.T) {
+	for _, mode := range []string{"lost-reply", "missing-usage", "bad-model", "excess-input", "oversize"} {
+		t.Run(mode, func(t *testing.T) {
+			policy, request, result := modelFixture(t)
+			response := result["response"].(map[string]any)
+			p := &provider{}
+			switch mode {
+			case "lost-reply":
+				p.err = errors.New("private provider details")
+			case "missing-usage":
+				delete(response, "usage")
+			case "bad-model":
+				response["model"] = "unapproved"
+			case "excess-input":
+				response["usage"].(map[string]any)["prompt_tokens"] = 300
+				response["usage"].(map[string]any)["total_tokens"] = 320
+			}
+			p.response = encode(response)
+			if mode == "oversize" {
+				p.response = make([]byte, (4<<20)+1)
+			}
+			s, _, runtime, _, launch := serviceWithSettings(t, 0, []string{"engine.model_generate"}, func(c *campaignservice.Config) {
+				c.Model = &campaignservice.ModelConfig{Provider: p, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
+			})
+			if err := s.Admit(context.Background(), launch); err != nil {
+				t.Fatal(err)
+			}
+			request["request"].(map[string]any)["messages"].([]any)[0].(map[string]any)["content"] = string(launch.Prompt)
+			raw, err := s.Handle(context.Background(), stateWire("engine.model_generate", "model", 1, request), 0)
+			if err != nil || !strings.Contains(string(raw), "terminate") || strings.Contains(string(raw), "private provider") {
+				t.Fatal(string(raw), err)
+			}
+			select {
+			case <-runtime.killed:
+			case <-time.After(time.Second):
+				t.Fatal("provider failure left execution open")
+			}
+			_, _ = s.Handle(context.Background(), stateWire("engine.model_generate", "model", 1, request), 0)
+			if p.calls != 1 {
+				t.Fatal("retried uncertain generation")
+			}
+		})
+	}
+}
+func TestServiceModelCancellationDoesNotBlockDockerTermination(t *testing.T) {
+	policy, request, _ := modelFixture(t)
+	p := &provider{block: true, entered: make(chan struct{})}
+	s, _, runtime, _, launch := serviceWithSettings(t, 0, []string{"engine.model_generate"}, func(c *campaignservice.Config) {
+		c.Model = &campaignservice.ModelConfig{Provider: p, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
+	})
+	if err := s.Admit(context.Background(), launch); err != nil {
+		t.Fatal(err)
+	}
+	request["request"].(map[string]any)["messages"].([]any)[0].(map[string]any)["content"] = string(launch.Prompt)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		_, _ = s.Handle(context.Background(), stateWire("engine.model_generate", "model", 1, request), 0)
+	}()
+	select {
+	case <-p.entered:
+	case <-time.After(time.Second):
+		t.Fatal("provider not entered")
+	}
+	s.Stop(errors.New("administrator stop"))
+	select {
+	case <-runtime.killed:
+	case <-time.After(time.Second):
+		t.Fatal("provider blocked independent kill")
+	}
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("provider context not canceled")
+	}
+}

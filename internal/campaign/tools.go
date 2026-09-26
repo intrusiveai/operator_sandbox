@@ -81,7 +81,7 @@ func (t *Tools) Observe(in ToolInput) (SavedTool, bool, error) {
 	a := t.a
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if in.CampaignID != a.w.manifest.CampaignID || !validID(in.OperationID) || !validID(in.WorkerInstanceID) || in.RunRevision < 0 || in.RunRevision > contracts.MaxSafeInteger || !slices.Contains([]string{"engine.observation_read", "engine.injection_delete", "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request", "engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit"}, in.Operation) || !validJSONObject(in.Body, MaxContentBytes) {
+	if in.CampaignID != a.w.manifest.CampaignID || !validID(in.OperationID) || !validID(in.WorkerInstanceID) || in.RunRevision < 0 || in.RunRevision > contracts.MaxSafeInteger || !slices.Contains([]string{"engine.observation_read", "engine.injection_delete", "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request", "engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit", "engine.model_generate"}, in.Operation) || !validJSONObject(in.Body, MaxContentBytes) {
 		return SavedTool{}, false, ErrInvalid
 	}
 	if _, ok := a.records[in.OperationID]; ok {

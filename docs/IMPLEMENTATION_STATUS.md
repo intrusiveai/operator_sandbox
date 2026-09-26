@@ -1,6 +1,18 @@
 # Implementation phase handoff
 
-## Completed service stage: campaign artifact uploads
+## Completed service stage: host-bound model relay
+
+The [model service](MODEL_SERVICE.md) adds `engine.model_generate`, frozen
+prompt/tool/profile validation, durable native exchanges, conservative token
+reservations and known-usage settlement. Duplicate replay and healthy restore
+preserve model charges. Unknown or malformed provider outcomes close execution;
+provider cancellation never gates independent Docker termination.
+
+Eleven ordinary routes are implemented. Provider transport/credential integration
+is a trusted launcher dependency; tests use scripted providers. Typed assessment
+and conclusion/stop handling remain the next service stage.
+
+## Earlier completed service stage: campaign artifact uploads
 
 The [artifact service](ARTIFACT_SERVICE.md) adds begin/part/commit, durable
 campaign-local receipts, contiguous chunks, complete-content verification and

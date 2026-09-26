@@ -209,6 +209,9 @@ func serviceWithDeadline(t *testing.T, budget time.Duration, change ...func(*pre
 	return serviceWithOperations(t, budget, nil, change...)
 }
 func serviceWithOperations(t *testing.T, budget time.Duration, operations []string, change ...func(*preparation.Input)) (*campaignservice.Service, *peer, *runtime, *campaign.Writer, campaign.LaunchInputs) {
+	return serviceWithSettings(t, budget, operations, nil, change...)
+}
+func serviceWithSettings(t *testing.T, budget time.Duration, operations []string, settings func(*campaignservice.Config), change ...func(*preparation.Input)) (*campaignservice.Service, *peer, *runtime, *campaign.Writer, campaign.LaunchInputs) {
 	t.Helper()
 	in := fixture(t)
 	for _, fn := range change {
@@ -234,7 +237,11 @@ func serviceWithOperations(t *testing.T, budget time.Duration, operations []stri
 	if budget > 0 {
 		deadline = time.Now().Add(budget)
 	}
-	service, err := campaignservice.New(context.Background(), campaignservice.Config{Prepared: stored, Peer: native, Runtime: runtime, Docker: docker, StateRoot: root, Deadline: deadline})
+	config := campaignservice.Config{Prepared: stored, Peer: native, Runtime: runtime, Docker: docker, StateRoot: root, Deadline: deadline}
+	if settings != nil {
+		settings(&config)
+	}
+	service, err := campaignservice.New(context.Background(), config)
 	if err != nil {
 		t.Fatal(err)
 	}

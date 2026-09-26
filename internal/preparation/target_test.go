@@ -103,6 +103,17 @@ func preparedLaunch(t *testing.T, target *preparation.Target, operations ...stri
 	if err != nil {
 		t.Fatal(err)
 	}
+	for _, op := range operations {
+		if op == "engine.model_generate" {
+			policy, _, _ := modelFixture(t)
+			toolsDigest, _ := contracts.CanonicalDigest(encode(policy["tools"]), contracts.OrdinaryLimit)
+			template["model"] = map[string]any{"codec_id": policy["codec_id"], "profile_id": policy["profile_id"], "profile_digest": policy["profile_digest"], "model_id": policy["request_model"], "features": []string{"text", "function-tools"}, "codec_settings": map[string]any{"instruction_role": policy["instruction_role"], "max_completion_tokens": policy["max_completion_tokens"], "response_models": policy["response_models"], "tools_digest": toolsDigest}}
+			for _, limits := range []map[string]any{template["remaining_limits"].(map[string]any), template["limits"].(map[string]any)["campaign"].(map[string]any)} {
+				limits["model_turns"] = 3
+				limits["model_tokens"] = 10000
+			}
+		}
+	}
 	template["prompt"] = map[string]any{"entry_id": "prompt", "provenance": provenance}
 	set := template["skills"].(map[string]any)
 	delete(set, "loading_digest")

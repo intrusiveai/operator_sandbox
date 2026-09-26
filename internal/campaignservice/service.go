@@ -44,6 +44,7 @@ type Config struct {
 	Docker    campaign.DockerBinding
 	StateRoot string
 	Deadline  time.Time
+	Model     *ModelConfig
 }
 type Service struct {
 	config             Config
@@ -57,6 +58,7 @@ type Service struct {
 	live               atomic.Pointer[preparation.Target]
 	restoring          atomic.Bool
 	transitionEpoch    atomic.Uint64
+	model              modelState
 	artifacts          artifactStore
 	snapshotAdmissions int64
 	snapshotBytes      int64
@@ -91,7 +93,7 @@ func New(ctx context.Context, c Config) (*Service, error) {
 	}
 	operations := map[string]bool{}
 	for _, name := range parsed["operations"].([]any) {
-		if !slices.Contains([]string{"engine.attempt_execute", "engine.injection_delete", "engine.observation_read", "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request", "engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit"}, name.(string)) {
+		if !slices.Contains([]string{"engine.attempt_execute", "engine.injection_delete", "engine.observation_read", "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request", "engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit", "engine.model_generate"}, name.(string)) {
 			return nil, attemptadapter.ErrOperation
 		}
 		operations[name.(string)] = true
@@ -100,6 +102,14 @@ func New(ctx context.Context, c Config) (*Service, error) {
 				return nil, ErrService
 			}
 		}
+	}
+	if operations["engine.model_generate"] {
+		if c.Model == nil || c.Model.Provider == nil || c.Model.ProfileDigest != m.ModelProfileDigest || c.Model.MaximumPromptTokens < 1 || c.Model.MaximumPromptTokens > 1<<40 {
+			return nil, ErrService
+		}
+		copyModel := *c.Model
+		copyModel.Tools = slices.Clone(c.Model.Tools)
+		c.Model = &copyModel
 	}
 	persisted, err := campaign.ReadDockerBinding(c.StateRoot, m.CampaignID)
 	if err != nil || persisted.RunManifestDigest != w.ManifestDigest() {
@@ -339,6 +349,14 @@ func (s *Service) Admit(ctx context.Context, in campaign.LaunchInputs) error {
 		s.Stop(err)
 		return err
 	}
+	if s.operations["engine.model_generate"] {
+		policy, err := s.target().Protocol().ModelPolicyFromContext(s.config.Prepared.Context(), s.config.Model.Tools, in.Prompt)
+		if err != nil {
+			s.Stop(err)
+			return err
+		}
+		s.model.policy = policy
+	}
 	if _, err := s.inspect(ctx, false); err != nil {
 		s.Stop(err)
 		return err
@@ -390,6 +408,9 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 	if request["operation"] == "engine.snapshot_request" || request["operation"] == "engine.restore_request" {
 		ceiling = 300000
 	}
+	if request["operation"] == "engine.model_generate" {
+		ceiling = 120000
+	}
 	milliseconds, _ := request["timeout_ms"].(json.Number).Float64()
 	ctx, operationCancel := context.WithTimeout(ctx, time.Duration(min(int64(milliseconds), ceiling))*time.Millisecond)
 	defer operationCancel()
@@ -404,6 +425,8 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 	var result []byte
 	if isSnapshot(request["operation"].(string)) {
 		result, err = s.handleSnapshot(ctx, raw, sequence)
+	} else if request["operation"] == "engine.model_generate" {
+		result, err = s.handleModel(ctx, raw, sequence)
 	} else if isArtifact(request["operation"].(string)) {
 		result, err = s.handleArtifact(ctx, raw, sequence)
 	} else {
