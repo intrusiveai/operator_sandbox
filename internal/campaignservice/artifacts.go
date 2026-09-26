@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"slices"
 
+	"github.com/intrusive-ai/operator-sandbox/contracts"
 	"github.com/intrusive-ai/operator-sandbox/internal/attemptadapter"
 	"github.com/intrusive-ai/operator-sandbox/internal/campaign"
 	"github.com/intrusive-ai/operator-sandbox/internal/interceptor"
@@ -28,6 +29,7 @@ type artifactUpload struct {
 	Artifact interceptor.ArtifactDescriptor `json:"artifact"`
 	Offset   int64                          `json:"next_offset"`
 	Receipt  string                         `json:"artifact_receipt,omitempty"`
+	Commit   *campaign.ContentDescriptor    `json:"-"`
 	Begin    []byte                         `json:"-"`
 	Parts    []campaign.ContentDescriptor   `json:"parts"`
 }
@@ -56,6 +58,20 @@ func (s *Service) handleArtifact(ctx context.Context, raw []byte, seq int64) ([]
 	response, err := s.stateEnvelope(raw, seq, reply)
 	if err != nil {
 		return nil, err
+	}
+	if q.Operation == "engine.artifact_commit" && reply.Error == nil {
+		var body struct {
+			ID string `json:"upload_id"`
+		}
+		_ = json.Unmarshal(q.Body, &body)
+		u := s.artifacts.uploads[body.ID]
+		if u.Commit == nil {
+			refs, err := s.writer.AppendStored(campaign.Entry{RunRevision: q.Revision, Kind: "artifact.receipt", Metadata: marshal(map[string]any{"upload_id": u.ID, "artifact_receipt": u.Receipt}), Content: []campaign.Content{{Role: "artifact-response", MediaType: "application/json", Bytes: response}}}, "", false)
+			if err != nil {
+				return nil, err
+			}
+			u.Commit = &refs[0]
+		}
 	}
 	if err = s.attempts.Tools().Finish(q.ID, marshal(reply), 0); err != nil {
 		return nil, err
@@ -106,7 +122,11 @@ func (s *Service) artifactOperation(q stateRequest, raw []byte) (stateReply, err
 				return stateDenied("INVALID_ARGUMENTS"), nil
 			}
 		}
-		u := &artifactUpload{ID: "upload-" + termination.NewRequestID(), Purpose: declaration.Purpose, Artifact: declaration.Artifact, Begin: slices.Clone(raw), Parts: []campaign.ContentDescriptor{}}
+		canonical, err := contracts.Canonicalize(raw, contracts.OrdinaryLimit)
+		if err != nil {
+			return stateReply{}, err
+		}
+		u := &artifactUpload{ID: "upload-" + termination.NewRequestID(), Purpose: declaration.Purpose, Artifact: declaration.Artifact, Begin: canonical, Parts: []campaign.ContentDescriptor{}}
 		// Charge declarations before accepting bytes. Incomplete uploads retain their
 		// reservations until shutdown; there is no guest abort/refund operation.
 		entry := campaign.Entry{RunRevision: q.Revision, Kind: "artifact.begun", Metadata: marshal(map[string]any{"operation_id": q.ID, "upload": u, "artifact_objects": s.artifacts.objects + 1, "artifact_bytes": s.artifacts.bytes + u.Artifact.SizeBytes})}

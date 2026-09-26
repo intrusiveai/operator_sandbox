@@ -112,7 +112,7 @@ func TestServiceArtifactRangesAndCampaignQuotaSurviveRestore(t *testing.T) {
 	}
 	deny("engine.artifact_begin", "exhausted", 2, begin, "ARTIFACT_BUDGET_EXCEEDED")
 	call("engine.artifact_begin", "conclusion", 2, map[string]any{"purpose": "conclusion", "artifact": d})
-	deny("engine.artifact_begin", "over", 2, begin, "ARTIFACT_BUDGET_EXCEEDED")
+	deny("engine.artifact_begin", "over", 2, begin, "STATE_CHANGED")
 }
 func TestServiceArtifactIntegrityFailureTerminates(t *testing.T) {
 	for _, mode := range []string{"digest", "canonical"} {

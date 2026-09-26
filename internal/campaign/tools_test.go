@@ -114,3 +114,27 @@ func TestLargeToolBodiesKeepDistinctIdentitiesAndBoundedMetadata(t *testing.T) {
 		t.Fatal("oversized identity collapsed to same digest", err)
 	}
 }
+
+func TestFinalizationHasSeparateBoundedNamespaceAllowance(t *testing.T) {
+	_, _, a := attemptWriter(t, 0)
+	a.maximumSubmissions = 1
+	tools := a.Tools()
+	if _, _, err := tools.Observe(readTool("explore")); err != nil {
+		t.Fatal(err)
+	}
+	if err := tools.Finish("explore", []byte(`{"result":{}}`), 0); err != nil {
+		t.Fatal(err)
+	}
+	stop := readTool("stop")
+	stop.Operation = "engine.request_stop"
+	stop.Body = []byte(`{}`)
+	if _, _, err := tools.Observe(stop); !errors.Is(err, contracts.ErrLimit) {
+		t.Fatal("exploration allowance enlarged", err)
+	}
+	if _, _, err := tools.ObserveFinalization(stop); err != nil {
+		t.Fatal("no reserved finalization allowance", err)
+	}
+	if _, _, err := tools.ObserveFinalization(readTool("read")); !errors.Is(err, ErrInvalid) {
+		t.Fatal("finalization admitted feedback read", err)
+	}
+}

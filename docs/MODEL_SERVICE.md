@@ -16,6 +16,9 @@ this service does not discover endpoints or resolve production credentials.
   Both campaign and harness model-turn limits MUST apply. Known usage MUST settle
   the reservation; missing usage, cancellation, transport ambiguity or invalid
   native responses MUST retain it and terminate execution without retry.
+- A response exceeding the configured per-response tool-call limit MUST be
+  rejected as a whole after accounting for its generation. It MUST enter bounded
+  finalization; no prefix of that batch may execute.
 - Native request/response bytes, timing, profile binding and usage MUST be retained
   before a model receipt is returned. Private provider error text MUST NOT appear
   in guest replies or journal diagnostics.

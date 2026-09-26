@@ -78,10 +78,22 @@ func (t *Tools) commit(r SavedTool, kind string, result []byte, reserve, release
 	return parts, nil
 }
 func (t *Tools) Observe(in ToolInput) (SavedTool, bool, error) {
+	return t.observe(in, false)
+}
+
+// ObserveFinalization is host-only. The service enforces the conclusion-only
+// classification and a separate 16-request finalization allowance.
+func (t *Tools) ObserveFinalization(in ToolInput) (SavedTool, bool, error) {
+	if !slices.Contains([]string{"engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit", "engine.record_append", "engine.request_stop"}, in.Operation) {
+		return SavedTool{}, false, ErrInvalid
+	}
+	return t.observe(in, true)
+}
+func (t *Tools) observe(in ToolInput, finalizing bool) (SavedTool, bool, error) {
 	a := t.a
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if in.CampaignID != a.w.manifest.CampaignID || !validID(in.OperationID) || !validID(in.WorkerInstanceID) || in.RunRevision < 0 || in.RunRevision > contracts.MaxSafeInteger || !slices.Contains([]string{"engine.observation_read", "engine.injection_delete", "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request", "engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit", "engine.model_generate"}, in.Operation) || !validJSONObject(in.Body, MaxContentBytes) {
+	if in.CampaignID != a.w.manifest.CampaignID || !validID(in.OperationID) || !validID(in.WorkerInstanceID) || in.RunRevision < 0 || in.RunRevision > contracts.MaxSafeInteger || !slices.Contains([]string{"engine.observation_read", "engine.injection_delete", "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request", "engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit", "engine.model_generate", "engine.record_append", "engine.request_stop"}, in.Operation) || !validJSONObject(in.Body, MaxContentBytes) {
 		return SavedTool{}, false, ErrInvalid
 	}
 	if _, ok := a.records[in.OperationID]; ok {
@@ -109,7 +121,11 @@ func (t *Tools) Observe(in ToolInput) (SavedTool, bool, error) {
 	if in.RunRevision != a.revision {
 		return SavedTool{}, false, ErrInvalid
 	}
-	if int64(len(a.records)+len(a.tools)) >= a.maximumSubmissions {
+	maximum := a.maximumSubmissions
+	if finalizing {
+		maximum += 16
+	}
+	if int64(len(a.records)+len(a.tools)) >= maximum {
 		return SavedTool{}, false, contracts.ErrLimit
 	}
 	r := SavedTool{ID: in.OperationID, Operation: in.Operation, IdentityDigest: digest, Target: target, RunRevision: in.RunRevision, WorkerInstanceID: in.WorkerInstanceID, Body: append(json.RawMessage{}, in.Body...)}

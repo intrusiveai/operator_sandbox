@@ -69,9 +69,13 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 	remaining := s.remaining()
 	var loop struct {
 		Turns int64 `json:"max_model_turns"`
+		Calls int64 `json:"max_tool_calls_per_response"`
 	}
 	_ = json.Unmarshal(s.writer.Manifest().HarnessLimits, &loop)
 	if remaining["model_turns"] < 1 || s.model.turns >= loop.Turns || reserve > remaining["model_tokens"] {
+		if err := s.beginFinalization(); err != nil {
+			return stateReply{}, err
+		}
 		return stateDenied("LIMIT_EXCEEDED"), nil
 	}
 	if err := ctx.Err(); err != nil {
@@ -129,6 +133,14 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 		return stateReply{}, err
 	}
 	s.model.tokens = charged
+	choice := verified["response"].(map[string]any)["choices"].([]any)[0].(map[string]any)
+	calls, _ := choice["message"].(map[string]any)["tool_calls"].([]any)
+	if int64(len(calls)) > loop.Calls {
+		if err := s.beginFinalization(); err != nil {
+			return stateReply{}, err
+		}
+		return stateReply{Error: &attemptadapter.Fault{Code: "LIMIT_EXCEEDED", Message: "The model tool batch exceeds the campaign limit.", Effect: "known", Disposition: "gap-and-continue"}}, nil
+	}
 	return stateReply{Result: json.RawMessage(body)}, nil
 }
 func modelFailure(code, effect string) stateReply {

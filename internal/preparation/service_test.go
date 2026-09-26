@@ -23,6 +23,7 @@ import (
 )
 
 type peer struct {
+	feedbackView        interceptor.ObservationView
 	statusSample        *delayedStatus
 	mu                  sync.Mutex
 	input               preparation.Input
@@ -112,7 +113,9 @@ func (p *peer) Execute(_ context.Context, q interceptor.PreparedOperation) (inte
 	if r.ExpectedSessionRevision != p.revision {
 		return result(409, map[string]string{"code": "stale_session_revision"})
 	}
-	p.revision++
+	if r.Operation != "observation.read" && r.Operation != "observation.content.read" {
+		p.revision++
+	}
 	switch r.Operation {
 	case "artifact.register":
 		var body struct {
@@ -141,6 +144,21 @@ func (p *peer) Execute(_ context.Context, q interceptor.PreparedOperation) (inte
 		var invoke interceptor.TurnRequest
 		_ = json.Unmarshal(envelope.Body, &invoke)
 		return result(200, interceptor.Turn{ID: fmt.Sprintf("turn-%d", p.revision), Operation: "invoke", Status: "complete", AttemptID: r.AttemptID, PayloadDigest: invoke.PayloadDigest, Body: []byte(`{"answer":"test"}`), MediaType: "application/json", OutputDigest: contracts.RawDigest([]byte(`{"answer":"test"}`)), Started: now, Finished: now})
+	case "observation.read":
+		var lookup map[string]string
+		_ = json.Unmarshal(envelope.Body, &lookup)
+		turn := lookup["turn_id"]
+		session := p.input.Attachment.Binding.SessionID
+		output := []byte(`{"answer":"test"}`)
+		p.feedbackView = interceptor.ObservationView{APIVersion: "interceptor.dev/observation-view/v1alpha2", CampaignID: "campaign-1", SessionID: session, AttemptID: r.AttemptID, AttemptContextDigest: p.contexts[r.AttemptID].Digest, TurnID: turn, ReceiptID: interceptor.FeedbackReceiptID(session, turn), FeedbackProfile: "black-box", SessionRevision: p.revision, CapturedAt: now, WindowStart: now, WindowEnd: now, CollectionState: "complete", Operation: interceptor.OperationView{State: "SUCCEEDED", ReceiptID: turn}, Observations: []interceptor.Observation{}, Categories: []interceptor.FeedbackCategory{{Kind: "target_output", State: "available"}, {Kind: "operation_error", State: "not_requested"}, {Kind: "injection_delivery", State: "not_requested"}, {Kind: "oracle_outcome", State: "not_requested"}}, Entries: []interceptor.FeedbackEntry{{ID: "entry-1", Kind: "target_output", Visibility: interceptor.TargetVisible, Source: "application", Assurance: "target-response", Availability: "available", Artifact: &interceptor.ArtifactDescriptor{Digest: contracts.RawDigest(output), SizeBytes: int64(len(output)), MediaType: "application/json", Canonicalization: "raw"}, OriginalSizeBytes: int64(len(output))}}}
+		p.feedbackView.Hash = interceptor.ObservationViewDigest(p.feedbackView)
+		return result(200, p.feedbackView)
+	case "observation.content.read":
+		var query interceptor.FeedbackReadRequest
+		_ = json.Unmarshal(envelope.Body, &query)
+		output := []byte(`{"answer":"test"}`)
+		end := min(int64(len(output)), query.Offset+int64(query.MaxBytes))
+		return result(200, interceptor.FeedbackChunk{ReceiptID: p.feedbackView.ReceiptID, Entry: p.feedbackView.Entries[0], Offset: query.Offset, Content: output[query.Offset:end], RawLength: int(end - query.Offset), EOF: end == int64(len(output))})
 	case "snapshot.create":
 		return p.createCheckpoint(envelope.Body, result)
 	case "injection.arm":

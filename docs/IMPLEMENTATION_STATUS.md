@@ -1,6 +1,30 @@
 # Implementation phase handoff
 
-## Completed service stage: host-bound model relay
+## Completed phase: artifact, model and completion service routes
+
+All 13 shared ordinary operations now have host service handlers. The new
+[artifact](ARTIFACT_SERVICE.md), [model](MODEL_SERVICE.md) and
+[completion](COMPLETION_SERVICE.md) services join the existing attempt, feedback,
+cleanup and snapshot routes through one gate and durable operation namespace.
+
+- Artifact chunks, immutable receipts and campaign reservations survive restore.
+- Model requests bind exact prompt/tools/profile; usage is reserved before provider
+  contact, settled from known usage, and preserved on ambiguous outcomes.
+- Typed assessments resolve campaign records and feedback; assertions remain
+  distinct from execution facts.
+- Conclusions bind verified launch bytes and final revision through the shared
+  completion validator. Stop acceptance is durable before acknowledgement.
+- Finalization has a separate bounded allowance; five-second guest exit enforcement
+  and immediate hard stops use the independent Docker termination path.
+
+Validation: full `make test` (Go, 26 Python tests and shared fixture runners),
+`go vet ./...`, affected-package race tests and service test builds for Linux
+amd64/arm64 and macOS amd64. Tests execute on macOS arm64 with real journals/spools
+and scripted native, provider and Docker peers. This completes the ordinary host service integration boundary;
+production provider setup, the launcher and real runtime qualification remain open.
+No shared wire schema or sibling repository change was needed.
+
+## Earlier completed service stage: host-bound model relay
 
 The [model service](MODEL_SERVICE.md) adds `engine.model_generate`, frozen
 prompt/tool/profile validation, durable native exchanges, conservative token
@@ -250,19 +274,14 @@ packages pass race tests; the full Go/Python suite, fixture runners and `go vet`
 pass. Capability tests also compile for Linux amd64/arm64 and macOS amd64; they
 execute on macOS arm64. These builds do not qualify Docker runtime behavior.
 
-## Next major phase: artifact, model and completion service routes
+## Next major phase: native evidence provenance and retained export
 
-1. Add artifact upload/reference, model relay and assessment/stop routes with the
-   shared operation namespace, durable publication and campaign/loop budgets.
-2. Coordinate structured conclusions and bounded graceful finalization with the
-   independent control and Docker termination paths.
-3. Expand the advertised operation set only as each route is implemented and tested.
-   Preserve existing restore/duplicate behavior and lifetime counters.
-
-Native evidence provenance validation remains a separate required phase: verify
-manifest identities, event/state chains, execution records, references, restore
-lineage and completeness before publication/reporting. Structural archive inspection
-alone cannot establish these claims.
+1. Connect bounded evidence acquisition to campaign finalization and campaign-local
+   retained storage without making Docker termination depend on export.
+2. Verify native manifest identities, event/state chains, execution records,
+   references, restore lineage and completeness before evidence publication.
+3. Record explicit missing/invalid/partial export outcomes for reporting. Structural
+   archive inspection alone MUST NOT establish native provenance or completeness.
 
 Operator campaign start/service orchestration, guest Docker launch/bootstrap and
 runtime qualification follow these host integrations. The Attack Harness Python

@@ -58,6 +58,7 @@ type Service struct {
 	live               atomic.Pointer[preparation.Target]
 	restoring          atomic.Bool
 	transitionEpoch    atomic.Uint64
+	completion         completionState
 	model              modelState
 	artifacts          artifactStore
 	snapshotAdmissions int64
@@ -93,7 +94,7 @@ func New(ctx context.Context, c Config) (*Service, error) {
 	}
 	operations := map[string]bool{}
 	for _, name := range parsed["operations"].([]any) {
-		if !slices.Contains([]string{"engine.attempt_execute", "engine.injection_delete", "engine.observation_read", "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request", "engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit", "engine.model_generate"}, name.(string)) {
+		if !slices.Contains([]string{"engine.attempt_execute", "engine.injection_delete", "engine.observation_read", "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request", "engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit", "engine.model_generate", "engine.record_append", "engine.request_stop"}, name.(string)) {
 			return nil, attemptadapter.ErrOperation
 		}
 		operations[name.(string)] = true
@@ -349,6 +350,7 @@ func (s *Service) Admit(ctx context.Context, in campaign.LaunchInputs) error {
 		s.Stop(err)
 		return err
 	}
+	s.initializeCompletion(in)
 	if s.operations["engine.model_generate"] {
 		policy, err := s.target().Protocol().ModelPolicyFromContext(s.config.Prepared.Context(), s.config.Model.Tools, in.Prompt)
 		if err != nil {
@@ -422,8 +424,20 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 		s.Stop(err)
 		return nil, err
 	}
+	body := request["body"].(map[string]any)
+	// Conclusion traffic is the guest's existing finish signal; it must not
+	// depend on an extra RPC to open the reserved finalization allowance.
+	if request["operation"] == "engine.request_stop" || request["operation"] == "engine.artifact_begin" && body["purpose"] == "conclusion" || request["operation"] == "engine.record_append" && body["record_kind"] == "conclusion" {
+		if err := s.beginFinalization(); err != nil {
+			return nil, err
+		}
+	}
 	var result []byte
-	if isSnapshot(request["operation"].(string)) {
+	if !s.phaseAllows(request["operation"].(string), request["body"].(map[string]any)) {
+		result, err = s.stateEnvelope(raw, sequence, stateDenied("STATE_CHANGED"))
+	} else if request["operation"] == "engine.record_append" || request["operation"] == "engine.request_stop" {
+		result, err = s.handleCompletion(ctx, raw, sequence)
+	} else if isSnapshot(request["operation"].(string)) {
 		result, err = s.handleSnapshot(ctx, raw, sequence)
 	} else if request["operation"] == "engine.model_generate" {
 		result, err = s.handleModel(ctx, raw, sequence)

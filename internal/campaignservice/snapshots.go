@@ -77,13 +77,20 @@ func (s *Service) observeTool(raw []byte) (stateRequest, *stateReply, error) {
 		return stateRequest{}, nil, ErrService
 	}
 	t := s.attempts.Tools()
-	_, replay, err := t.Observe(campaign.ToolInput{CampaignID: q.Campaign, OperationID: q.ID, Operation: q.Operation, WorkerInstanceID: s.target().Live().Binding().WorkerInstanceID, RunRevision: q.Revision, Body: q.Body})
+	observe := t.Observe
+	if s.completion.finalizing {
+		observe = t.ObserveFinalization
+	}
+	_, replay, err := observe(campaign.ToolInput{CampaignID: q.Campaign, OperationID: q.ID, Operation: q.Operation, WorkerInstanceID: s.target().Live().Binding().WorkerInstanceID, RunRevision: q.Revision, Body: q.Body})
 	if err != nil {
 		if s.writer.Fence().Err() != nil {
 			return stateRequest{}, nil, err
 		}
 		code := "IDEMPOTENCY_CONFLICT"
 		if errors.Is(err, contracts.ErrLimit) {
+			if err := s.beginFinalization(); err != nil {
+				return stateRequest{}, nil, err
+			}
 			code = "LIMIT_EXCEEDED"
 		} else if q.Revision != s.attempts.Status().RunRevision {
 			code = "STATE_CHANGED"
@@ -101,6 +108,9 @@ func (s *Service) observeTool(raw []byte) (stateRequest, *stateReply, error) {
 			return stateRequest{}, nil, campaign.ErrCorrupt
 		}
 		return q, &reply, nil
+	}
+	if err := s.chargeFinalization(q); err != nil {
+		return stateRequest{}, nil, err
 	}
 	return q, nil, nil
 }

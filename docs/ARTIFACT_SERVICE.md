@@ -47,6 +47,7 @@ cumulative reservations, conclusion capacity, and digest/canonical-form failures
 Large-body ledger tests check retained bytes and changed-body identity conflicts.
 Native and Docker peers are scripted; these tests do not qualify a real container.
 
-The service now supports ten ordinary routes. Model relay, typed assessments and
-conclusion/stop handling are subsequent service work. The uploader can retain a
-conclusion artifact but does not itself certify its assessment or completion chain.
+The service now supports all 13 ordinary routes. The
+[completion service](COMPLETION_SERVICE.md) validates conclusion assessments and
+the completion chain; successful artifact commitment alone does not certify them.
+The first conclusion begin enters the bounded finalization phase.

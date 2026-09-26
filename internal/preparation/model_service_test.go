@@ -170,3 +170,31 @@ func TestServiceModelCancellationDoesNotBlockDockerTermination(t *testing.T) {
 		t.Fatal("provider context not canceled")
 	}
 }
+
+func TestServiceModelOversizedBatchClosesExploration(t *testing.T) {
+	policy, request, result := modelFixture(t)
+	response := result["response"].(map[string]any)
+	choice := response["choices"].([]any)[0].(map[string]any)
+	choice["finish_reason"] = "tool_calls"
+	calls := []any{}
+	for i := 0; i < 17; i++ {
+		calls = append(calls, map[string]any{"id": strings.Repeat("x", i+1), "type": "function", "function": map[string]any{"name": "snapshot_list", "arguments": "{}"}})
+	}
+	choice["message"].(map[string]any)["tool_calls"] = calls
+	p := &provider{response: encode(response)}
+	s, _, _, w, launch := serviceWithSettings(t, 0, []string{"engine.model_generate", "engine.artifact_begin"}, func(c *campaignservice.Config) {
+		c.Model = &campaignservice.ModelConfig{Provider: p, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
+	})
+	if err := s.Admit(context.Background(), launch); err != nil {
+		t.Fatal(err)
+	}
+	request["request"].(map[string]any)["messages"].([]any)[0].(map[string]any)["content"] = string(launch.Prompt)
+	raw, err := s.Handle(context.Background(), stateWire("engine.model_generate", "model", 1, request), 0)
+	if err != nil || !strings.Contains(string(raw), "LIMIT_EXCEEDED") || !strings.Contains(string(raw), "known") || p.calls != 1 {
+		t.Fatal(string(raw), err)
+	}
+	raw, err = s.Handle(context.Background(), stateWire("engine.artifact_begin", "payload", 1, map[string]any{"purpose": "payload", "artifact": descriptor([]byte(`{}`))}), 0)
+	if err != nil || !strings.Contains(string(raw), "STATE_CHANGED") || w.Fence().Err() != nil {
+		t.Fatal("batch prefix could execute or finalization was unavailable", string(raw), err)
+	}
+}

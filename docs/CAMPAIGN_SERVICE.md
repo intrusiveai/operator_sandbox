@@ -3,9 +3,10 @@
 Status: implemented in `internal/campaignservice`, with integration tests in
 `internal/preparation`. This host library connects frozen preparation, ordinary
 attempt/feedback/cleanup dispatch, transport and terminal handling. Campaign start
-CLI, Docker creation/bootstrap and the remaining ordinary routes are subsequent
-implementation stages. [Snapshot/restore coordination](SNAPSHOT_SERVICE.md) is now
-implemented on this foundation.
+CLI and Docker creation/bootstrap are subsequent implementation stages.
+[Snapshot/restore](SNAPSHOT_SERVICE.md), [artifacts](ARTIFACT_SERVICE.md),
+[model relay](MODEL_SERVICE.md) and [assessment/completion](COMPLETION_SERVICE.md)
+are implemented on this foundation.
 
 ## Construction and admission
 
@@ -14,11 +15,11 @@ runtime, private state root and the saved exact Docker binding. Construction MUS
 verify the campaign's persisted manifest/container binding and freeze caller-owned
 identity fields. The service MUST use one attempt ledger and one ordinary gate.
 
-The service supports `engine.attempt_execute`, `engine.observation_read`,
-`engine.injection_delete` and all four snapshot/restore routes. Construction MUST
-reject a context advertising other
-routes. Dispatch MUST reject unadvertised operations before target effects. This
-restricted service is not a complete Attack Harness session yet.
+The service supports all 13 ordinary operations in the shared registry.
+Dispatch MUST reject unadvertised operations before effects. Advertising model
+generation MUST require a host-bound provider configuration; admission MUST verify
+its frozen prompt/tool policy. This library is not a complete Attack Harness
+session launcher yet.
 
 Admission MUST validate the complete five-message startup transcript, actual input
 bytes and all RunManifest pins, recheck native identity/readiness and the exact
@@ -99,7 +100,6 @@ native status loss, blocked ordinary work, closure uncertainty, confirmed-inject
 cleanup and lost deletion replies. These tests do not qualify Docker or a live
 Interceptor/Attack Harness deployment.
 
-The next service stage MUST implement artifact uploads,
-model relay, records/conclusion/stop and their accounting before a complete campaign
-can be launched. Reporting/provenance validation, Docker launch/control orchestration,
+The ordinary service routes and bounded graceful finalization are implemented.
+Reporting/provenance validation, Docker launch/control orchestration,
 OS service lifetime and runtime qualification remain required follow-on work.
