@@ -345,3 +345,42 @@ func TestEvidenceNativeServeContentHTTP(t *testing.T) {
 	}
 	assertEmpty(t, dir)
 }
+
+func TestStageRetainedEvidenceBoundsAndCleanup(t *testing.T) {
+	raw := []byte("retained archive bytes")
+	receipt := EvidenceReceipt{"campaign-1", "sess-old", int64(len(raw)), rawDigest(raw), 1024, 1024}
+	for _, mode := range []string{"success", "short", "excess", "digest", "capacity", "cancelled"} {
+		t.Run(mode, func(t *testing.T) {
+			dir := privateEvidenceDir(t)
+			r := receipt
+			data := bytes.Clone(raw)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			switch mode {
+			case "short":
+				data = data[:len(data)-1]
+			case "excess":
+				data = append(data, 'x')
+			case "digest":
+				r.SHA256 = rawDigest(nil)
+			case "capacity":
+				r.LocalMaxBytes = 1
+			case "cancelled":
+				cancel()
+			}
+			d, err := StageEvidence(ctx, r, bytes.NewReader(data), dir)
+			if mode == "success" {
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err = d.Close(); err != nil {
+					t.Fatal(err)
+				}
+			} else if err == nil {
+				d.Close()
+				t.Fatal("invalid retained source accepted")
+			}
+			assertEmpty(t, dir)
+		})
+	}
+}

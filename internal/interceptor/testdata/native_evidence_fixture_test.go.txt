@@ -1,63 +1,126 @@
 // Run in a disposable copy of Interceptor's cmd/interceptor package. Captures
 // native exporter output; no Docker, running target, or Operator serializers.
 package main
+
 import (
- "bytes"
- "encoding/json"
- "os"
- "path/filepath"
- "testing"
- "time"
- "github.com/intrusiveai/interceptor_sandbox/internal/adaptive"
- "github.com/intrusiveai/interceptor_sandbox/internal/blobstore"
- "github.com/intrusiveai/interceptor_sandbox/internal/digest"
- "github.com/intrusiveai/interceptor_sandbox/internal/environment"
- "github.com/intrusiveai/interceptor_sandbox/internal/evaluation"
- "github.com/intrusiveai/interceptor_sandbox/internal/recording"
- "github.com/intrusiveai/interceptor_sandbox/internal/session"
- "github.com/intrusiveai/interceptor_sandbox/internal/snapshot"
- "github.com/intrusiveai/interceptor_sandbox/internal/statejournal"
+	"bytes"
+	"encoding/json"
+	"github.com/intrusiveai/interceptor_sandbox/internal/adaptive"
+	"github.com/intrusiveai/interceptor_sandbox/internal/blobstore"
+	"github.com/intrusiveai/interceptor_sandbox/internal/digest"
+	"github.com/intrusiveai/interceptor_sandbox/internal/environment"
+	"github.com/intrusiveai/interceptor_sandbox/internal/evaluation"
+	"github.com/intrusiveai/interceptor_sandbox/internal/recording"
+	"github.com/intrusiveai/interceptor_sandbox/internal/session"
+	"github.com/intrusiveai/interceptor_sandbox/internal/snapshot"
+	"github.com/intrusiveai/interceptor_sandbox/internal/statejournal"
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
 )
-func TestOperatorEvidenceFixture(t *testing.T){
- root:=t.TempDir();dest:=os.Getenv("OPERATOR_EVIDENCE_FIXTURE_DIR");if dest==""{t.Fatal("missing destination")}
- env:=filepath.Join(root,"environment");must:=func(err error){t.Helper();if err!=nil{t.Fatal(err)}}
- must(os.CopyFS(env,os.DirFS("../../examples/delivery-contract-environment")))
- lock,_,err:=environment.Seal(env,time.Unix(0,0));must(err)
- now:=time.Now().UTC()
- m:=session.Metadata{SchemaVersion:1,ID:"sess-1-000000000000000000000000",CampaignID:"campaign-1",OperationAPIVersion:adaptive.OperationRequestVersion,Phase:session.Stopped,CreatedAt:now,UpdatedAt:now,EnvironmentPath:env,EnvironmentDigest:lock.EnvironmentDigest,AppDigest:lock.ApplicationDigest,CapabilityManifestDigest:digest.Bytes([]byte("fixture-capabilities")),FeedbackProfile:"black-box",Limits:session.Limits{MaxBlobBytes:2<<20},Taints:[]string{}}
- p,events,journal,err:=session.Initialize(root,m,"");must(err)
- must(snapshot.WriteManifest(p.FileManifest,snapshot.EmptyManifest()))
- store,err:=blobstore.Open(p.Blobs,2<<20);must(err)
- artifacts,err:=adaptive.OpenArtifactRegistry(filepath.Join(p.Root,"artifacts.json"),store,2<<20);must(err)
- content:=[]byte("retained native feedback <&>\n")
- descriptor:=adaptive.ArtifactDescriptor{Digest:digest.Bytes(content),SizeBytes:int64(len(content)),MediaType:"text/plain",Canonicalization:"raw"}
- _,err=artifacts.Register(t.Context(),descriptor,bytes.NewReader(content));must(err)
- attempts,err:=adaptive.OpenAttemptRegistry(filepath.Join(p.Root,"attempts.json"),"black-box",100,artifacts);must(err)
- attempt,err:=attempts.Register(adaptive.AttemptContext{APIVersion:adaptive.AttemptContextVersion,CampaignID:m.CampaignID,ThreadID:"thread-1",AttemptID:"attempt-1",Generation:1,AttemptIndex:1,Payload:descriptor,Generator:adaptive.Generator{Kind:"attack_harness"},FeedbackProfile:"black-box",CreatedAt:now});must(err)
- _,err=events.Append(recording.Draft{Channel:recording.Attack,Layer:"application",Kind:"turn_completed",Provenance:recording.Application,AttemptID:attempt.AttemptID,Semantic:map[string]any{"output_ref":descriptor.Digest}});must(err);must(events.Close())
- value,_:=json.Marshal(map[string]string{"source":"fixture"});_,err=journal.Append("fixture",[]statejournal.Operation{{Kind:"oracle_state_set",Value:value}});must(err)
- txs,err:=statejournal.VerifyFile(p.Journal);must(err)
- cp,err:=snapshot.NewCheckpoint(m.ID,"",m.EnvironmentDigest,m.AppDigest,txs[len(txs)-1].Seq,txs[len(txs)-1].Hash,snapshot.EmptyManifest().Digest,0,2,"baseline","fixture",now,snapshot.Metadata{CampaignID:m.CampaignID,Description:"Captured native lineage"});must(err)
- write:=func(name string,v any){raw,err:=json.Marshal(v);must(err);must(os.WriteFile(name,raw,0600))}
- write(filepath.Join(p.Checkpoints,cp.ID+".json"),cp)
- req:=adaptive.OperationRequest{APIVersion:adaptive.OperationRequestVersion,RequestID:"operation-1",OperationID:"operation-1",Operation:"session.owner",SessionID:m.ID,CampaignID:m.CampaignID,WorkerInstanceID:"worker-1",RunRevision:1,BodyDigest:digest.Bytes([]byte(`{}`)),Deadline:now.Add(time.Minute)}
- state:=adaptive.ExecutionState{APIVersion:adaptive.ExecutionStateVersion,SessionID:m.ID,ClosedAt:&now,ClosureReason:"controller_closed_execution",Owner:&adaptive.ExecutionOwner{Principal:"operator",CampaignID:m.CampaignID,WorkerInstanceID:"worker-1",RunRevision:1,BoundAt:now,ClosedAt:&now},Records:map[string]*adaptive.OperationRecord{"operation-1":{Request:req,Fingerprint:adaptive.OperationFingerprint(req),State:"completed",Response:adaptive.GatewayResponse{Status:200,SessionRevision:1,Body:json.RawMessage(`{}`)},AdmittedAt:now,FinishedAt:&now}}}
- raw,_:=json.Marshal(state);must(os.WriteFile(filepath.Join(p.Root,"execution.json"),raw,0600));value,_=json.Marshal(map[string]string{"execution_state_digest":digest.Bytes(raw),"session_id":m.ID});_,err=journal.Append("execution_state",[]statejournal.Operation{{Kind:"idempotency_commit",Value:value}});must(err);must(journal.Close())
- report:=evaluation.Report{Oracles:[]evaluation.OracleResult{},Injections:[]evaluation.InjectionResult{},Coverage:[]string{}}
- write(filepath.Join(p.Root,"final-evaluation.json"),report)
- m,_,err=session.Load(root,m.ID);must(err)
- must(exportEvidence(t.Context(),root,m,p,filepath.Join(dest,"native-evidence.tar"),4<<20))
- must(os.Remove(filepath.Join(p.Root,"final-evaluation.json")))
- must(exportEvidence(t.Context(),root,m,p,filepath.Join(dest,"native-evidence-partial.tar"),4<<20))
- child:=m;child.ID="sess-2-000000000000000000000000";child.ParentSessionID=m.ID;child.ParentCheckpoint=cp.ID
- p2,e2,j2,err:=session.Initialize(root,child,"");must(err);must(e2.Close());must(snapshot.WriteManifest(p2.FileManifest,snapshot.EmptyManifest()))
- must(os.CopyFS(p2.Blobs,os.DirFS(p.Blobs)))
- for _,name:=range []string{"artifacts.json","attempts.json"}{data,err:=os.ReadFile(filepath.Join(p.Root,name));must(err);must(os.WriteFile(filepath.Join(p2.Root,name),data,0600))}
- must(os.Mkdir(filepath.Join(p2.Root,"restore-source"),0700));write(filepath.Join(p2.Root,"restore-source/checkpoint.json"),cp)
- var source bytes.Buffer;for _,tx:=range txs{raw,_:=json.Marshal(tx);source.Write(raw);source.WriteByte('\n')};must(os.WriteFile(filepath.Join(p2.Root,"restore-source/state.jsonl"),source.Bytes(),0600))
- state.SessionID=child.ID;state.Records=map[string]*adaptive.OperationRecord{};state.Owner.RunRevision=2
- raw,_=json.Marshal(state);must(os.WriteFile(filepath.Join(p2.Root,"execution.json"),raw,0600));value,_=json.Marshal(map[string]string{"execution_state_digest":digest.Bytes(raw),"session_id":child.ID});_,err=j2.Append("execution_state",[]statejournal.Operation{{Kind:"idempotency_commit",Value:value}});must(err);must(j2.Close())
- write(filepath.Join(p2.Root,"final-evaluation.json"),report);child,_,err=session.Load(root,child.ID);must(err)
- must(exportEvidence(t.Context(),root,child,p2,filepath.Join(dest,"native-evidence-restored.tar"),4<<20))
+
+func TestOperatorEvidenceFixture(t *testing.T) {
+	root := t.TempDir()
+	dest := os.Getenv("OPERATOR_EVIDENCE_FIXTURE_DIR")
+	if dest == "" {
+		t.Fatal("missing destination")
+	}
+	env := filepath.Join(root, "environment")
+	must := func(err error) {
+		t.Helper()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	must(os.CopyFS(env, os.DirFS("../../examples/delivery-contract-environment")))
+	lock, _, err := environment.Seal(env, time.Unix(0, 0))
+	must(err)
+	now := time.Now().UTC()
+	capabilityRaw, err := os.ReadFile(filepath.Join(dest, "capability-delivery.json"))
+	must(err)
+	var capability struct {
+		Digest string `json:"digest"`
+	}
+	must(json.Unmarshal(capabilityRaw, &capability))
+	m := session.Metadata{SchemaVersion: 1, ID: "sess-1-000000000000000000000000", CampaignID: "campaign-1", OperationAPIVersion: adaptive.OperationRequestVersion, Phase: session.Stopped, CreatedAt: now, UpdatedAt: now, EnvironmentPath: env, EnvironmentDigest: lock.EnvironmentDigest, AppDigest: lock.ApplicationDigest, CapabilityManifestDigest: capability.Digest, FeedbackProfile: "black-box", Limits: session.Limits{MaxBlobBytes: 2 << 20}, Taints: []string{}}
+	p, events, journal, err := session.Initialize(root, m, "")
+	must(err)
+	must(snapshot.WriteManifest(p.FileManifest, snapshot.EmptyManifest()))
+	store, err := blobstore.Open(p.Blobs, 2<<20)
+	must(err)
+	artifacts, err := adaptive.OpenArtifactRegistry(filepath.Join(p.Root, "artifacts.json"), store, 2<<20)
+	must(err)
+	content := []byte("retained native feedback <&>\n")
+	descriptor := adaptive.ArtifactDescriptor{Digest: digest.Bytes(content), SizeBytes: int64(len(content)), MediaType: "text/plain", Canonicalization: "raw"}
+	_, err = artifacts.Register(t.Context(), descriptor, bytes.NewReader(content))
+	must(err)
+	attempts, err := adaptive.OpenAttemptRegistry(filepath.Join(p.Root, "attempts.json"), "black-box", 100, artifacts)
+	must(err)
+	attempt, err := attempts.Register(adaptive.AttemptContext{APIVersion: adaptive.AttemptContextVersion, CampaignID: m.CampaignID, ThreadID: "thread-1", AttemptID: "attempt-1", Generation: 1, AttemptIndex: 1, Payload: descriptor, Generator: adaptive.Generator{Kind: "attack_harness"}, FeedbackProfile: "black-box", CreatedAt: now})
+	must(err)
+	_, err = events.Append(recording.Draft{Channel: recording.Attack, Layer: "application", Kind: "turn_completed", Provenance: recording.Application, AttemptID: attempt.AttemptID, Semantic: map[string]any{"output_ref": descriptor.Digest}})
+	must(err)
+	must(events.Close())
+	value, _ := json.Marshal(map[string]string{"source": "fixture"})
+	_, err = journal.Append("fixture", []statejournal.Operation{{Kind: "oracle_state_set", Value: value}})
+	must(err)
+	txs, err := statejournal.VerifyFile(p.Journal)
+	must(err)
+	cp, err := snapshot.NewCheckpoint(m.ID, "", m.EnvironmentDigest, m.AppDigest, txs[len(txs)-1].Seq, txs[len(txs)-1].Hash, snapshot.EmptyManifest().Digest, 0, 2, "baseline", "fixture", now, snapshot.Metadata{CampaignID: m.CampaignID, Description: "Captured native lineage"})
+	must(err)
+	write := func(name string, v any) { raw, err := json.Marshal(v); must(err); must(os.WriteFile(name, raw, 0600)) }
+	write(filepath.Join(p.Checkpoints, cp.ID+".json"), cp)
+	req := adaptive.OperationRequest{APIVersion: adaptive.OperationRequestVersion, RequestID: "operation-1", OperationID: "operation-1", Operation: "session.owner", SessionID: m.ID, CampaignID: m.CampaignID, WorkerInstanceID: "worker-1", RunRevision: 1, BodyDigest: digest.Bytes([]byte(`{}`)), Deadline: now.Add(time.Minute)}
+	state := adaptive.ExecutionState{APIVersion: adaptive.ExecutionStateVersion, SessionID: m.ID, ClosedAt: &now, ClosureReason: "controller_closed_execution", Owner: &adaptive.ExecutionOwner{Principal: "operator", CampaignID: m.CampaignID, WorkerInstanceID: "worker-1", RunRevision: 1, BoundAt: now, ClosedAt: &now}, Records: map[string]*adaptive.OperationRecord{"operation-1": {Request: req, Fingerprint: adaptive.OperationFingerprint(req), State: "completed", Response: adaptive.GatewayResponse{Status: 200, SessionRevision: 1, Body: json.RawMessage(`{}`)}, AdmittedAt: now, FinishedAt: &now}}}
+	raw, _ := json.Marshal(state)
+	must(os.WriteFile(filepath.Join(p.Root, "execution.json"), raw, 0600))
+	value, _ = json.Marshal(map[string]string{"execution_state_digest": digest.Bytes(raw), "session_id": m.ID})
+	_, err = journal.Append("execution_state", []statejournal.Operation{{Kind: "idempotency_commit", Value: value}})
+	must(err)
+	must(journal.Close())
+	report := evaluation.Report{Oracles: []evaluation.OracleResult{}, Injections: []evaluation.InjectionResult{}, Coverage: []string{}}
+	write(filepath.Join(p.Root, "final-evaluation.json"), report)
+	m, _, err = session.Load(root, m.ID)
+	must(err)
+	must(exportEvidence(t.Context(), root, m, p, filepath.Join(dest, "native-evidence.tar"), 4<<20))
+	must(os.Remove(filepath.Join(p.Root, "final-evaluation.json")))
+	must(exportEvidence(t.Context(), root, m, p, filepath.Join(dest, "native-evidence-partial.tar"), 4<<20))
+	child := m
+	child.ID = "sess-2-000000000000000000000000"
+	child.ParentSessionID = m.ID
+	child.ParentCheckpoint = cp.ID
+	p2, e2, j2, err := session.Initialize(root, child, "")
+	must(err)
+	must(e2.Close())
+	must(snapshot.WriteManifest(p2.FileManifest, snapshot.EmptyManifest()))
+	must(os.CopyFS(p2.Blobs, os.DirFS(p.Blobs)))
+	for _, name := range []string{"artifacts.json", "attempts.json"} {
+		data, err := os.ReadFile(filepath.Join(p.Root, name))
+		must(err)
+		must(os.WriteFile(filepath.Join(p2.Root, name), data, 0600))
+	}
+	must(os.Mkdir(filepath.Join(p2.Root, "restore-source"), 0700))
+	write(filepath.Join(p2.Root, "restore-source/checkpoint.json"), cp)
+	var source bytes.Buffer
+	for _, tx := range txs {
+		raw, _ := json.Marshal(tx)
+		source.Write(raw)
+		source.WriteByte('\n')
+	}
+	must(os.WriteFile(filepath.Join(p2.Root, "restore-source/state.jsonl"), source.Bytes(), 0600))
+	state.SessionID = child.ID
+	state.Records = map[string]*adaptive.OperationRecord{}
+	state.Owner.RunRevision = 2
+	raw, _ = json.Marshal(state)
+	must(os.WriteFile(filepath.Join(p2.Root, "execution.json"), raw, 0600))
+	value, _ = json.Marshal(map[string]string{"execution_state_digest": digest.Bytes(raw), "session_id": child.ID})
+	_, err = j2.Append("execution_state", []statejournal.Operation{{Kind: "idempotency_commit", Value: value}})
+	must(err)
+	must(j2.Close())
+	write(filepath.Join(p2.Root, "final-evaluation.json"), report)
+	child, _, err = session.Load(root, child.ID)
+	must(err)
+	must(exportEvidence(t.Context(), root, child, p2, filepath.Join(dest, "native-evidence-restored.tar"), 4<<20))
 
 }

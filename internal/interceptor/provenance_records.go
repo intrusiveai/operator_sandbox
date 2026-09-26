@@ -3,7 +3,10 @@
 package interceptor
 
 import (
+	"bytes"
 	"context"
+	"github.com/intrusiveai/operator_sandbox/contracts"
+	"io"
 	"mime"
 	"slices"
 	"sort"
@@ -93,8 +96,26 @@ func (v *evidenceVerifier) registries(b evidenceEvidenceBundle) error {
 		if err := v.blob(a.Digest, a.SizeBytes); err != nil {
 			return err
 		}
+		if a.Canonicalization == "jcs-v1" {
+			if a.SizeBytes > evidenceJSONLimit {
+				return ErrProvenance
+			}
+			reader, err := v.archive.Reader("blobs/sha256/" + strings.TrimPrefix(a.Digest, "sha256:"))
+			if err != nil {
+				return err
+			}
+			raw, err := io.ReadAll(reader)
+			if err != nil {
+				return err
+			}
+			canonical, err := contracts.Canonicalize(raw, evidenceJSONLimit)
+			if err != nil || !bytes.Equal(raw, canonical) {
+				return ErrProvenance
+			}
+		}
 		byDigest[a.Digest] = a
 	}
+	artifacts.Artifacts = append([]ArtifactDescriptor{}, artifacts.Artifacts...)
 	sort.Slice(artifacts.Artifacts, func(i, j int) bool { return artifacts.Artifacts[i].Digest < artifacts.Artifacts[j].Digest })
 	if !equalNative(b.ArtifactRefs, artifacts.Artifacts) {
 		return ErrProvenance

@@ -287,8 +287,8 @@ verify native manifests/journal hashes,
 campaign/session lineage and native completeness markers. The receipt identifies
 the requested session; archive identity is not established by the HTTP digest.
 This stage does not extract archives, publish evidence, expose it to the harness,
-or implement final reports/import/recovery. Administrative import will use the same
-native validator once implemented.
+or implement final reports/import/recovery. `StageEvidence` accepts host-selected retained streams for this same verifier;
+the administrative import CLI remains pending.
 
 ### Archive inspection without extraction
 
@@ -348,10 +348,10 @@ restore reply, lifecycle and original-session operation reconciliation, replacem
 cleanup/stop and source-session evidence collection. It asserts one effect per
 mutation and uses reconciliation only for cleanup after uncertainty.
 
-Native evidence archive/provenance validation and publication, typed experiment bodies/results, capability projection and
-feedback filtering remain adapter work. Durable dispatch/reconciliation, status
-polling, terminal fencing and the campaign CLI still need integration. No command
-in this stage attaches to or mutates a real local target automatically.
+Native provenance validation and publication are implemented by the verifier and
+[campaign evidence service](EVIDENCE_SERVICE.md). Typed experiment routing,
+capability/policy checks, reconciliation, polling and terminal fencing have host
+library integrations. Production campaign start and Docker launch remain pending.
 
 ### Native provenance verification
 

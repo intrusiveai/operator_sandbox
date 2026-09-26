@@ -182,6 +182,9 @@ func (s *Service) stateOperation(ctx context.Context, q stateRequest, reservatio
 	if err != nil {
 		return stateReply{}, nil, err
 	}
+	if err = s.rememberEvidenceTarget(next, &cp); err != nil {
+		return stateReply{}, nil, err
+	}
 	if _, err = s.inspectTarget(ctx, false, next); err != nil {
 		return stateReply{}, nil, err
 	}

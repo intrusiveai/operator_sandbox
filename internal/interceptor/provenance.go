@@ -141,7 +141,9 @@ func (a *EvidenceArchive) VerifyProvenance(ctx context.Context, id EvidenceIdent
 			return nil, err
 		}
 	}
-	expectedGaps := append(slices.Clone(report.Coverage), gaps...)
+	report.Oracles = append([]evidenceOracleResult{}, report.Oracles...)
+	report.Injections = append([]evidenceInjectionResult{}, report.Injections...)
+	expectedGaps := append(append([]string{}, report.Coverage...), gaps...)
 	sort.Strings(expectedGaps)
 	if !equalNative(b.Oracles, report.Oracles) || !equalNative(b.Injections, report.Injections) || !equalNative(b.CoverageGaps, expectedGaps) {
 		return nil, ErrProvenance

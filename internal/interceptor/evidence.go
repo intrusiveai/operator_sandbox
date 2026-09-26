@@ -208,27 +208,56 @@ func (c *Client) DownloadEvidence(ctx context.Context, q EvidenceRequest, direct
 	if length > min(q.MaxArchiveBytes, q.InterceptorMaxBytes) {
 		return nil, evidenceError("archive_limit_exceeded")
 	}
-	var nonce [16]byte
-	if _, err := rand.Read(nonce[:]); err != nil {
-		return nil, evidenceError("temporary_storage_unavailable")
-	}
-	name := "evidence-" + hex.EncodeToString(nonce[:]) + ".pending"
-	f, err := r.OpenFile(name, os.O_CREATE|os.O_EXCL|os.O_RDWR, 0600)
-	if err != nil {
-		return nil, evidenceError("temporary_storage_unavailable")
-	}
-	d.name, d.file = name, f
-	if err := receiveEvidence(ctx, f, response.Body, length, hash); err != nil {
+	if err = d.receive(ctx, EvidenceReceipt{q.CampaignID, q.SessionID, length, hash, q.MaxArchiveBytes, q.InterceptorMaxBytes}, response.Body); err != nil {
 		return nil, err
 	}
-	if err := f.Sync(); err != nil {
-		return nil, evidenceError("temporary_storage_failed")
+	return d, nil
+}
+
+// StageEvidence accepts a host-selected retained archive stream for the same
+// inspection/provenance pipeline. The receipt states transfer expectations, not
+// trusted archive contents. It never extracts, publishes, or resumes execution.
+func StageEvidence(ctx context.Context, receipt EvidenceReceipt, source io.Reader, directory string) (download *EvidenceDownload, err error) {
+	if source == nil || !identifier.MatchString(receipt.CampaignID) || !identifier.MatchString(receipt.SessionID) || !digest.MatchString(receipt.SHA256) || receipt.Bytes <= 0 || receipt.LocalMaxBytes <= 0 || receipt.LocalMaxBytes > maxEvidenceBytes || receipt.InterceptorMaxBytes <= 0 || receipt.InterceptorMaxBytes > maxEvidenceBytes || receipt.Bytes > min(receipt.LocalMaxBytes, receipt.InterceptorMaxBytes) {
+		return nil, ErrRequest
+	}
+	root, err := evidenceRoot(directory)
+	if err != nil {
+		return nil, err
+	}
+	d := &EvidenceDownload{root: root}
+	defer func() {
+		if download == nil {
+			err = errors.Join(err, d.Close())
+		}
+	}()
+	if err = d.receive(ctx, receipt, source); err != nil {
+		return nil, err
+	}
+	return d, nil
+}
+func (d *EvidenceDownload) receive(ctx context.Context, receipt EvidenceReceipt, source io.Reader) error {
+	var nonce [16]byte
+	if _, err := rand.Read(nonce[:]); err != nil {
+		return evidenceError("temporary_storage_unavailable")
+	}
+	name := "evidence-" + hex.EncodeToString(nonce[:]) + ".pending"
+	f, err := d.root.OpenFile(name, os.O_CREATE|os.O_EXCL|os.O_RDWR, 0600)
+	if err != nil {
+		return evidenceError("temporary_storage_unavailable")
+	}
+	d.name, d.file = name, f
+	if err = receiveEvidence(ctx, f, source, receipt.Bytes, receipt.SHA256); err != nil {
+		return err
+	}
+	if err = f.Sync(); err != nil {
+		return evidenceError("temporary_storage_failed")
 	}
 	if ctx.Err() != nil {
-		return nil, evidenceError("transfer_interrupted")
+		return evidenceError("transfer_interrupted")
 	}
-	d.receipt = EvidenceReceipt{q.CampaignID, q.SessionID, length, hash, q.MaxArchiveBytes, q.InterceptorMaxBytes}
-	return d, nil
+	d.receipt = receipt
+	return nil
 }
 
 type evidenceReader struct {

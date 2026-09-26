@@ -13,6 +13,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/attemptadapter"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
@@ -45,6 +46,7 @@ type Config struct {
 	StateRoot string
 	Deadline  time.Time
 	Model     *ModelConfig
+	Evidence  *EvidenceConfig
 }
 type Service struct {
 	config             Config
@@ -73,17 +75,29 @@ type Service struct {
 	shutdownOnce       sync.Once
 	terminalDone       chan struct{}
 	terminal           TerminalResult
+	evidenceTargets    []evidenceTarget
+	evidenceMu         sync.Mutex
 }
 type TerminalResult struct {
-	Closure          string `json:"closure"`
-	CleanupConfirmed int    `json:"cleanup_confirmed"`
-	CleanupRemaining int    `json:"cleanup_remaining"`
-	CleanupState     string `json:"cleanup_state"`
-	TargetStop       string `json:"target_stop"`
+	Closure          string            `json:"closure"`
+	CleanupConfirmed int               `json:"cleanup_confirmed"`
+	CleanupRemaining int               `json:"cleanup_remaining"`
+	CleanupState     string            `json:"cleanup_state"`
+	TargetStop       string            `json:"target_stop"`
+	Evidence         []EvidenceOutcome `json:"evidence"`
 }
 
 func New(ctx context.Context, c Config) (*Service, error) {
 	if c.Prepared == nil || c.Peer == nil || c.Runtime == nil || c.StateRoot == "" || ctx.Err() != nil {
+		return nil, ErrService
+	}
+	if c.Evidence == nil {
+		c.Evidence = &EvidenceConfig{MaxArchiveBytes: 4 << 30, Timeout: 2 * time.Minute, TotalTimeout: 5 * time.Minute}
+	} else {
+		copy := *c.Evidence
+		c.Evidence = &copy
+	}
+	if c.Evidence.MaxArchiveBytes < 1 || c.Evidence.MaxArchiveBytes > contracts.MaxSafeInteger || c.Evidence.Timeout <= 0 || c.Evidence.Timeout > 5*time.Minute || c.Evidence.TotalTimeout <= 0 || c.Evidence.TotalTimeout > 30*time.Minute {
 		return nil, ErrService
 	}
 	w := c.Prepared.Writer()
@@ -157,6 +171,10 @@ func New(ctx context.Context, c Config) (*Service, error) {
 		return nil, err
 	}
 	s.broker = b
+	if err = s.rememberEvidenceTarget(c.Prepared.Target(), nil); err != nil {
+		w.Fence().Stop(err)
+		return nil, err
+	}
 	// Arm before admission. Neither goroutine takes the ordinary gate or journal lock.
 	go func() {
 		s.kill = termination.New(c.Runtime).Watch(ctx, w.Fence(), c.StateRoot, c.Docker)
@@ -533,8 +551,8 @@ func (s *Service) Wait(ctx context.Context) (TerminalResult, termination.Receipt
 	}
 	select {
 	case <-ctx.Done():
-		return s.terminal, termination.Receipt{}, ctx.Err()
+		return cloneTerminal(s.terminal), termination.Receipt{}, ctx.Err()
 	case <-s.killDone:
-		return s.terminal, s.kill, nil
+		return cloneTerminal(s.terminal), s.kill, nil
 	}
 }

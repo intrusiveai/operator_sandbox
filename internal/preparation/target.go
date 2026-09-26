@@ -31,17 +31,19 @@ type Input struct {
 	Artifacts  []attemptadapter.Artifact
 }
 type Target struct {
-	protocol      *contracts.Protocol
-	profile       *targetprofile.Profile
-	live          *capabilities.Live
-	compatibility *capabilities.Compatibility
-	policy        *attemptadapter.Policy
-	bundle        *capabilities.Bundle
-	authoring     *capabilities.Export
-	artifacts     map[string]attemptadapter.Artifact
-	scenarioIDs   []string
-	instance      string
-	hostPolicy    []byte
+	protocol         *contracts.Protocol
+	profile          *targetprofile.Profile
+	live             *capabilities.Live
+	compatibility    *capabilities.Compatibility
+	policy           *attemptadapter.Policy
+	bundle           *capabilities.Bundle
+	authoring        *capabilities.Export
+	artifacts        map[string]attemptadapter.Artifact
+	scenarioIDs      []string
+	instance         string
+	hostPolicy       []byte
+	nativeEvidence   interceptor.EvidenceIdentity
+	evidenceMaxBytes int64
 }
 
 func Build(in Input) (*Target, error) {
@@ -71,6 +73,8 @@ func Build(in Input) (*Target, error) {
 		return nil, err
 	}
 	t := &Target{protocol: in.Protocol, profile: in.Profile, live: live, compatibility: compat, policy: policy, bundle: bundle, authoring: in.Authoring, instance: in.InstanceID, artifacts: map[string]attemptadapter.Artifact{}}
+	t.nativeEvidence = interceptor.EvidenceIdentity{CampaignID: in.Attachment.CampaignID, SessionID: in.Attachment.Session.ID, EnvironmentDigest: in.Attachment.Session.EnvironmentDigest, ApplicationDigest: in.Attachment.Session.AppDigest, CapabilityDigest: in.Attachment.Session.CapabilityManifestDigest, FeedbackProfile: in.Attachment.Session.FeedbackProfile}
+	t.evidenceMaxBytes = in.Attachment.EvidenceMaxBytes
 	if len(in.Artifacts) > 4096 {
 		return nil, ErrPreparation
 	}
@@ -274,4 +278,8 @@ func (s *Stored) Inputs() (attemptadapter.Inputs, error) {
 		in.Artifacts[key] = a
 	}
 	return in, nil
+}
+
+func (t *Target) NativeEvidence() (interceptor.EvidenceIdentity, int64) {
+	return t.nativeEvidence, t.evidenceMaxBytes
 }

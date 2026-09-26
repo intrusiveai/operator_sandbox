@@ -18,10 +18,14 @@ func (s *Service) finish() {
 	defer cancel()
 	defer func() { s.terminal = result }()
 	if err := s.acquire(ctx); err != nil {
+		for _, target := range s.selectedEvidence() {
+			result.Evidence = append(result.Evidence, EvidenceOutcome{SessionID: target.Identity.SessionID, State: "missing", Reason: "finalization_gate_unavailable", LocalMaxBytes: s.config.Evidence.MaxArchiveBytes, NativeMaxBytes: target.NativeMaxBytes})
+		}
 		return
 	}
 	defer s.release()
 	defer func() { raw, _ := json.Marshal(result); _ = s.log("service.terminal-result", nil, raw, true, true) }()
+	defer func() { result.Evidence = s.collectEvidence() }()
 	view, err := s.inspect(ctx, true)
 	if err != nil {
 		return

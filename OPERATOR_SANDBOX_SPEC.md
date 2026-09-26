@@ -1445,6 +1445,19 @@ collection gap, clean up incomplete transfer files and preserve already committe
 evidence. Native completeness/partial markers remain meaningful after successful
 transport: a verified transfer does not prove complete campaign evidence.
 
+The initial native verifier MUST bound JSON metadata members to 64 MiB, individual
+journal lines to 32 MiB and each event/state journal to 100,000 records, in addition
+to the archive entry and byte limits. Unsupported or oversized provenance MUST
+produce an explicit collection gap. Automatic finalization SHOULD allow two
+minutes per session and five minutes overall, independently of the campaign's
+execution deadline. Host configuration may select bounded deadlines up to five
+minutes per session and thirty minutes overall. Collection MUST record one outcome
+for every selected source/replacement session, including sessions skipped when the
+batch deadline expires. Archive publication MUST follow native provenance
+verification and durable file storage, with a journal adoption record distinguishing
+published evidence from incomplete/orphaned files.
+
+
 Later collection/reporting may ingest an administrator-exported retained archive
 after increasing the applicable limit, using
 `interceptor logs export <session-id> --output <path> --evidence-max-bytes <bytes>`.

@@ -72,6 +72,9 @@ unavailable output; bounded finalization and independent termination. They use
 real journals and shared validators with scripted native/provider/Docker peers.
 
 All 13 ordinary routes now have service handlers. Campaign launch orchestration,
-production provider binding/credential resolution, native evidence provenance,
+production provider binding/credential resolution,
 report generation, Attack Harness execution and runtime qualification remain
 separate integration work. Stop acceptance does not mark those tasks complete.
+
+Native evidence verification and finalization are now implemented in the
+[evidence service](EVIDENCE_SERVICE.md), independently of stop acceptance.

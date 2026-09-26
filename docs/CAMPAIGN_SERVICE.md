@@ -101,5 +101,12 @@ cleanup and lost deletion replies. These tests do not qualify Docker or a live
 Interceptor/Attack Harness deployment.
 
 The ordinary service routes and bounded graceful finalization are implemented.
-Reporting/provenance validation, Docker launch/control orchestration,
+Reporting, Docker launch/control orchestration,
 OS service lifetime and runtime qualification remain required follow-on work.
+
+## Native evidence collection
+
+Finalization now collects each verified native source/replacement session after
+cleanup. The [evidence service](EVIDENCE_SERVICE.md) defines saved selection,
+verification, retention, limits and per-session outcomes. Collection and publication
+are independent of Docker termination and do not reopen execution.

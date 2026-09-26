@@ -1,6 +1,29 @@
 # Implementation phase handoff
 
-## Completed phase: artifact, model and completion service routes
+## Completed phase: native evidence provenance and retained export
+
+The native verifier now checks manifest/target identity, event and state chains,
+execution records and journal binding, checkpoint/restore-source lineage,
+registries, blob references, evaluation and completeness. Native exporter captures
+cover complete, partial and restored archives; corrupted or inconsistent exports
+are rejected before adoption.
+
+Campaign finalization selects each verified source/replacement session, collects
+bounded exports after cleanup, and records complete/partial/missing/invalid
+outcomes. Docker termination remains independent. Verified archives are fsynced
+into campaign-local storage before journal adoption; readers distinguish adoption
+from orphaned files and recheck retained hashes. See [Evidence service](EVIDENCE_SERVICE.md).
+
+Validation: full `make test`, `go vet ./...`, targeted evidence race tests, and
+service test builds for Linux amd64/arm64 and macOS amd64 pass. Native exporter
+captures and tests run on macOS arm64. Collection tests cover retained complete and
+partial exports, restoration inventory, malformed/capacity/timeout failures,
+corruption, failed adoption, temporary cleanup and independent Docker termination.
+No sibling repository was modified; native captures were generated in a disposable
+copy. Docker runtime qualification remains pending.
+
+
+## Earlier completed phase: artifact, model and completion service routes
 
 All 13 shared ordinary operations now have host service handlers. The new
 [artifact](ARTIFACT_SERVICE.md), [model](MODEL_SERVICE.md) and
@@ -274,16 +297,14 @@ packages pass race tests; the full Go/Python suite, fixture runners and `go vet`
 pass. Capability tests also compile for Linux amd64/arm64 and macOS amd64; they
 execute on macOS arm64. These builds do not qualify Docker runtime behavior.
 
-## Next major phase: native evidence provenance and retained export
+## Next major phase: Operator host-service start and lifecycle orchestration
 
-1. Connect bounded evidence acquisition to campaign finalization and campaign-local
-   retained storage without making Docker termination depend on export.
-2. Verify native manifest identities, event/state chains, execution records,
-   references, restore lineage and completeness before evidence publication.
-3. Record explicit missing/invalid/partial export outcomes for reporting. Structural
-   archive inspection alone MUST NOT establish native provenance or completeness.
+Wire immutable campaign preparation, configured model/evidence services, local
+Docker identity, guest launch/bootstrap and transport into an executable host
+service/worker start path. Keep administrative termination independent and retain
+explicit startup/recovery failures. Runtime qualification remains an implementation
+gate; library and protocol tests do not qualify Docker containment or transport.
 
-Operator campaign start/service orchestration, guest Docker launch/bootstrap and
-runtime qualification follow these host integrations. The Attack Harness Python
-dispatcher/model loop remains a subsequent component phase. No completed library
-boundary substitutes for these pending service and runtime gates.
+Administrative evidence import/reporting/purge integration and the Attack Harness
+Python dispatcher/model loop remain subsequent work. No completed library boundary
+substitutes for these pending service and runtime gates.

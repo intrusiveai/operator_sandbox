@@ -29,6 +29,10 @@ func (t *Target) Replacement(r interceptor.RestoreResult, status interceptor.Sta
 	}
 	next := *t
 	next.live, next.policy, next.compatibility = live, policy, compat
+	next.nativeEvidence.SessionID = r.Binding.SessionID
+	next.nativeEvidence.ParentSessionID = r.SourceSessionID
+	next.nativeEvidence.ParentCheckpointID = r.CheckpointID
+	next.evidenceMaxBytes = status.EvidenceMaxBytes
 	return &next, nil
 }
 
