@@ -352,3 +352,19 @@ Native evidence archive/provenance validation and publication, typed experiment 
 feedback filtering remain adapter work. Durable dispatch/reconciliation, status
 polling, terminal fencing and the campaign CLI still need integration. No command
 in this stage attaches to or mutates a real local target automatically.
+
+### Native provenance verification
+
+`EvidenceArchive.VerifyProvenance` requires an independently saved
+`EvidenceIdentity`, including the exact checkpoint digest for restored sessions.
+It verifies native serialization hashes, session/manifest/bundle identity, event
+and state chains, execution-state journal binding and operation fingerprints,
+checkpoint journal positions, restore-source chains, registries, blob references,
+and evaluation/completeness consistency. Only successful verification constructs
+`VerifiedEvidence`; its archive reader and receipt remain host-only.
+
+Parsing is bounded to 64 MiB per metadata member, 32 MiB per journal line and
+100,000 records per journal, in addition to archive transport/entry limits.
+Unsupported or inconsistent evidence is rejected. Valid partial evidence retains
+explicit gaps. Native hashes establish internal integrity and saved-target binding;
+they do not authenticate arbitrary files or establish that oracle assertions are true.
