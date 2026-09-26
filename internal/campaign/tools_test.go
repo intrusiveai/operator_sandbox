@@ -89,3 +89,28 @@ func TestReadSettlementFailureDoesNotRefundPendingDelivery(t *testing.T) {
 		t.Fatal("uncommitted reply visible", err)
 	}
 }
+
+func TestLargeToolBodiesKeepDistinctIdentitiesAndBoundedMetadata(t *testing.T) {
+	_, w, a := attemptWriter(t, 0)
+	in := readTool("large")
+	in.Operation = "engine.artifact_put_part"
+	in.Body = []byte(`{"content":"` + strings.Repeat("A", 350000) + `","offset":0,"upload_id":"upload-1"}`)
+	saved, replay, err := a.Tools().Observe(in)
+	if err != nil || replay || saved.BodyRef == nil || len(saved.Body) != 0 {
+		t.Fatal(saved, err)
+	}
+	raw, err := w.ReadContent(*saved.BodyRef)
+	if err != nil || string(raw) != string(in.Body) {
+		t.Fatal("large body not durably retained", err)
+	}
+	if err := a.Tools().Finish(in.OperationID, []byte(`{"result":{"next_offset":1}}`), 0); err != nil {
+		t.Fatal(err)
+	}
+	if _, replay, err = a.Tools().Observe(in); err != nil || !replay {
+		t.Fatal(err)
+	}
+	in.Body = []byte(`{"content":"` + strings.Repeat("B", 350000) + `","offset":0,"upload_id":"upload-1"}`)
+	if _, _, err = a.Tools().Observe(in); !errors.Is(err, ErrConflict) {
+		t.Fatal("oversized identity collapsed to same digest", err)
+	}
+}

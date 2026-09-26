@@ -61,26 +61,26 @@ func (s *Service) stateEnvelope(raw []byte, seq int64, result stateReply) ([]byt
 	return reply, err
 }
 
-// handleSnapshot runs under the ordinary gate. The same tool ledger owns IDs for
-// all state operations; a saved restore reply is replayed without another rebind.
-func (s *Service) handleSnapshot(ctx context.Context, raw []byte, seq int64) ([]byte, error) {
+// observeTool owns the campaign-wide namespace before any local or native effect.
+// A returned reply is either an admission denial or an immutable saved result.
+func (s *Service) observeTool(raw []byte) (stateRequest, *stateReply, error) {
 	canonical, err := contracts.Canonicalize(raw, contracts.OrdinaryLimit)
 	if err != nil {
-		return nil, err
+		return stateRequest{}, nil, err
 	}
 	var q stateRequest
 	if json.Unmarshal(canonical, &q) != nil {
-		return nil, ErrService
+		return stateRequest{}, nil, ErrService
 	}
 	m := s.writer.Manifest()
 	if q.Campaign != m.CampaignID || q.Launch != m.LaunchID {
-		return nil, ErrService
+		return stateRequest{}, nil, ErrService
 	}
 	t := s.attempts.Tools()
 	_, replay, err := t.Observe(campaign.ToolInput{CampaignID: q.Campaign, OperationID: q.ID, Operation: q.Operation, WorkerInstanceID: s.target().Live().Binding().WorkerInstanceID, RunRevision: q.Revision, Body: q.Body})
 	if err != nil {
 		if s.writer.Fence().Err() != nil {
-			return nil, err
+			return stateRequest{}, nil, err
 		}
 		code := "IDEMPOTENCY_CONFLICT"
 		if errors.Is(err, contracts.ErrLimit) {
@@ -88,19 +88,34 @@ func (s *Service) handleSnapshot(ctx context.Context, raw []byte, seq int64) ([]
 		} else if q.Revision != s.attempts.Status().RunRevision {
 			code = "STATE_CHANGED"
 		}
-		return s.stateEnvelope(raw, seq, stateDenied(code))
+		reply := stateDenied(code)
+		return q, &reply, nil
 	}
 	if replay {
 		_, saved, err := t.Lookup(q.ID)
 		if err != nil || saved == nil {
-			return nil, ErrService
+			return stateRequest{}, nil, ErrService
 		}
 		var reply stateReply
 		if json.Unmarshal(saved, &reply) != nil {
-			return nil, campaign.ErrCorrupt
+			return stateRequest{}, nil, campaign.ErrCorrupt
 		}
-		return s.stateEnvelope(raw, seq, reply)
+		return q, &reply, nil
 	}
+	return q, nil, nil
+}
+
+// handleSnapshot runs under the ordinary gate. The same tool ledger owns IDs for
+// all state operations; a saved restore reply is replayed without another rebind.
+func (s *Service) handleSnapshot(ctx context.Context, raw []byte, seq int64) ([]byte, error) {
+	q, saved, err := s.observeTool(raw)
+	if err != nil {
+		return nil, err
+	}
+	if saved != nil {
+		return s.stateEnvelope(raw, seq, *saved)
+	}
+	t := s.attempts.Tools()
 	// Reserve native audit before any possible external mutation.
 	reservation := "state:" + contracts.RawDigest([]byte(q.ID))[7:]
 	if _, err = s.writer.AppendReserving(campaign.Entry{RunRevision: q.Revision, Kind: "state.admitted", Metadata: marshal(map[string]any{"operation_id": q.ID, "operation": q.Operation})}, reservation, 2<<20); err != nil {
@@ -145,8 +160,8 @@ func (s *Service) remaining() map[string]int64 {
 	limits["observation_reads"] -= reads.Requests
 	limits["observation_bytes"] -= reads.Bytes + reads.Reserved
 	objects, bytes := s.config.Prepared.ArtifactUsage()
-	limits["artifact_objects"] -= objects
-	limits["artifact_bytes"] -= bytes
+	limits["artifact_objects"] -= objects + s.artifacts.objects
+	limits["artifact_bytes"] -= bytes + s.artifacts.bytes
 	limits["snapshot_admissions"] -= s.snapshotAdmissions
 	limits["snapshot_bytes"] -= s.snapshotBytes
 	return limits

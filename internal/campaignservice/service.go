@@ -57,6 +57,7 @@ type Service struct {
 	live               atomic.Pointer[preparation.Target]
 	restoring          atomic.Bool
 	transitionEpoch    atomic.Uint64
+	artifacts          artifactStore
 	snapshotAdmissions int64
 	snapshotBytes      int64
 	lineage            nativeLineage
@@ -90,7 +91,7 @@ func New(ctx context.Context, c Config) (*Service, error) {
 	}
 	operations := map[string]bool{}
 	for _, name := range parsed["operations"].([]any) {
-		if !slices.Contains([]string{"engine.attempt_execute", "engine.injection_delete", "engine.observation_read", "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request"}, name.(string)) {
+		if !slices.Contains([]string{"engine.attempt_execute", "engine.injection_delete", "engine.observation_read", "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request", "engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit"}, name.(string)) {
 			return nil, attemptadapter.ErrOperation
 		}
 		operations[name.(string)] = true
@@ -134,6 +135,7 @@ func New(ctx context.Context, c Config) (*Service, error) {
 	}
 	s := &Service{config: c, writer: w, attempts: a, gate: make(chan struct{}, 1), operations: operations, deadline: deadline, killDone: make(chan struct{}), terminalDone: make(chan struct{})}
 	s.live.Store(c.Prepared.Target())
+	s.artifacts = newArtifactStore()
 	s.lineage = cloneLineage(nativeLineage{}, "")
 	s.history = map[string]attemptadapter.Parent{}
 	s.checkpointLineage = map[string]nativeLineage{}
@@ -282,6 +284,10 @@ func (s *Service) prepare(ctx context.Context, raw []byte, deadline time.Time) (
 		s.Stop(err)
 		return nil, nil, err
 	}
+	if err := s.addArtifacts(raw, &in); err != nil {
+		s.Stop(err)
+		return nil, nil, err
+	}
 	var request struct {
 		Parent string `json:"parent_attempt_id"`
 	}
@@ -398,6 +404,8 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 	var result []byte
 	if isSnapshot(request["operation"].(string)) {
 		result, err = s.handleSnapshot(ctx, raw, sequence)
+	} else if isArtifact(request["operation"].(string)) {
+		result, err = s.handleArtifact(ctx, raw, sequence)
 	} else {
 		result, err = s.broker.Handle(ctx, raw, sequence)
 		if err == nil && request["operation"] == "engine.attempt_execute" {

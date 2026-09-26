@@ -138,7 +138,9 @@ func (p *peer) Execute(_ context.Context, q interceptor.PreparedOperation) (inte
 		p.contexts[body.AttemptID] = body
 		return result(201, body)
 	case "application.invoke":
-		return result(200, interceptor.Turn{ID: fmt.Sprintf("turn-%d", p.revision), Operation: "invoke", Status: "complete", AttemptID: r.AttemptID, PayloadDigest: p.input.Artifacts[0].Descriptor.Digest, Body: []byte(`{"answer":"test"}`), MediaType: "application/json", OutputDigest: contracts.RawDigest([]byte(`{"answer":"test"}`)), Started: now, Finished: now})
+		var invoke interceptor.TurnRequest
+		_ = json.Unmarshal(envelope.Body, &invoke)
+		return result(200, interceptor.Turn{ID: fmt.Sprintf("turn-%d", p.revision), Operation: "invoke", Status: "complete", AttemptID: r.AttemptID, PayloadDigest: invoke.PayloadDigest, Body: []byte(`{"answer":"test"}`), MediaType: "application/json", OutputDigest: contracts.RawDigest([]byte(`{"answer":"test"}`)), Started: now, Finished: now})
 	case "snapshot.create":
 		return p.createCheckpoint(envelope.Body, result)
 	case "injection.arm":
@@ -513,7 +515,9 @@ func serviceSpool(t *testing.T, s *campaignservice.Service, p *peer, w *campaign
 		put("ordinary-out", sequence, request)
 		name, _ := contracts.SpoolMessageName(sequence, false)
 		response := filepath.Join(dir, "ordinary-in", name)
-		timeout := time.NewTimer(4 * time.Second)
+		// Full-size chunks exercise several JSON/digest passes under the race
+		// detector. Stay within the protocol's 30-second operation deadline.
+		timeout := time.NewTimer(20 * time.Second)
 		defer timeout.Stop()
 		ticker := time.NewTicker(10 * time.Millisecond)
 		defer ticker.Stop()

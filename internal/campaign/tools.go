@@ -32,7 +32,8 @@ type SavedTool struct {
 	Target           TargetBinding      `json:"target"`
 	RunRevision      int64              `json:"run_revision"`
 	WorkerInstanceID string             `json:"worker_instance_id"`
-	Body             json.RawMessage    `json:"body"`
+	Body             json.RawMessage    `json:"body,omitempty"`
+	BodyRef          *ContentDescriptor `json:"body_ref,omitempty"`
 	InjectionID      string             `json:"injection_id,omitempty"`
 	ReadReserved     int64              `json:"read_reserved"`
 	ReadCharged      bool               `json:"read_charged"`
@@ -42,6 +43,10 @@ type SavedTool struct {
 
 func cloneTool(r SavedTool) SavedTool {
 	r.Body = append(json.RawMessage{}, r.Body...)
+	if r.BodyRef != nil {
+		d := *r.BodyRef
+		r.BodyRef = &d
+	}
 	if r.Result != nil {
 		d := *r.Result
 		r.Result = &d
@@ -76,7 +81,7 @@ func (t *Tools) Observe(in ToolInput) (SavedTool, bool, error) {
 	a := t.a
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if in.CampaignID != a.w.manifest.CampaignID || !validID(in.OperationID) || !validID(in.WorkerInstanceID) || in.RunRevision < 0 || in.RunRevision > contracts.MaxSafeInteger || !slices.Contains([]string{"engine.observation_read", "engine.injection_delete", "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request"}, in.Operation) || !validJSONObject(in.Body, 32<<10) {
+	if in.CampaignID != a.w.manifest.CampaignID || !validID(in.OperationID) || !validID(in.WorkerInstanceID) || in.RunRevision < 0 || in.RunRevision > contracts.MaxSafeInteger || !slices.Contains([]string{"engine.observation_read", "engine.injection_delete", "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request", "engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit"}, in.Operation) || !validJSONObject(in.Body, MaxContentBytes) {
 		return SavedTool{}, false, ErrInvalid
 	}
 	if _, ok := a.records[in.OperationID]; ok {
@@ -87,7 +92,10 @@ func (t *Tools) Observe(in ToolInput) (SavedTool, bool, error) {
 	if exists {
 		target = old.Target
 	}
-	raw, _ := encode(map[string]any{"campaign_id": in.CampaignID, "operation_id": in.OperationID, "operation": in.Operation, "body": json.RawMessage(in.Body), "target": map[string]any{"adapter": target.Adapter, "session_id": target.SessionID, "capability_source_digest": target.CapabilitySourceDigest, "capability_projection_digest": target.CapabilityProjectionDigest, "native_feedback_profile": target.NativeFeedbackProfile}}, MaxMetadataBytes)
+	raw, err := encode(map[string]any{"campaign_id": in.CampaignID, "operation_id": in.OperationID, "operation": in.Operation, "body": json.RawMessage(in.Body), "target": map[string]any{"adapter": target.Adapter, "session_id": target.SessionID, "capability_source_digest": target.CapabilitySourceDigest, "capability_projection_digest": target.CapabilityProjectionDigest, "native_feedback_profile": target.NativeFeedbackProfile}}, MaxContentBytes+MaxMetadataBytes)
+	if err != nil {
+		return SavedTool{}, false, err
+	}
 	digest := contracts.RawDigest(raw)
 	if exists {
 		if digest != old.IdentityDigest {
@@ -105,6 +113,15 @@ func (t *Tools) Observe(in ToolInput) (SavedTool, bool, error) {
 		return SavedTool{}, false, contracts.ErrLimit
 	}
 	r := SavedTool{ID: in.OperationID, Operation: in.Operation, IdentityDigest: digest, Target: target, RunRevision: in.RunRevision, WorkerInstanceID: in.WorkerInstanceID, Body: append(json.RawMessage{}, in.Body...)}
+	// Large bodies live in verified content, keeping metadata and the in-memory
+	// ledger bounded. Content retained before adoption grants no execution rights.
+	if len(r.Body) > 32<<10 {
+		refs, err := a.w.AppendStored(Entry{RunRevision: a.revision, Kind: "tool.body", Metadata: json.RawMessage(`{}`), Content: []Content{{Role: "tool-body", MediaType: "application/json", Bytes: r.Body}}}, "", false)
+		if err != nil {
+			return SavedTool{}, false, a.failure(err)
+		}
+		r.Body, r.BodyRef = nil, &refs[0]
+	}
 	if _, err := t.commit(r, "tool.observed", nil, true, false); err != nil {
 		return SavedTool{}, false, err
 	}

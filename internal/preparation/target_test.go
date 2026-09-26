@@ -91,8 +91,8 @@ func preparedLaunch(t *testing.T, target *preparation.Target, operations ...stri
 		sort.Strings(operations)
 		template["operations"] = operations
 	}
-	template["remaining_limits"].(map[string]any)["artifact_bytes"] = 1 << 20
-	template["limits"].(map[string]any)["campaign"].(map[string]any)["artifact_bytes"] = 1 << 20
+	template["remaining_limits"].(map[string]any)["artifact_bytes"] = 4 << 20
+	template["limits"].(map[string]any)["campaign"].(map[string]any)["artifact_bytes"] = 4 << 20
 	for _, limits := range []map[string]any{template["remaining_limits"].(map[string]any), template["limits"].(map[string]any)["campaign"].(map[string]any)} {
 		limits["artifact_objects"] = 10
 		limits["attempt_admissions"] = 10

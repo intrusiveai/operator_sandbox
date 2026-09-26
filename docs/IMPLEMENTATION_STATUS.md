@@ -1,6 +1,19 @@
 # Implementation phase handoff
 
-## Completed phase: snapshot lifecycle and healthy restore coordination
+## Completed service stage: campaign artifact uploads
+
+The [artifact service](ARTIFACT_SERVICE.md) adds begin/part/commit, durable
+campaign-local receipts, contiguous chunks, complete-content verification and
+attempt resolution of uploaded payloads/carriers. Upload reservations and receipts
+survive healthy restore. One conclusion slot and up to 1 MiB remain protected
+inside the campaign allowance. Large ordinary tool bodies use verified content
+instead of inline journal metadata.
+
+Ten ordinary routes are implemented. Model relay and typed assessment/completion
+remain the next service stages. The implementation still rejects advertised routes
+that have no handler; no full campaign-launch command exists yet.
+
+## Earlier completed phase: snapshot lifecycle and healthy restore coordination
 
 The [snapshot service](SNAPSHOT_SERVICE.md) now implements checkpoint create/list/
 inspect and restore through the ordinary service gate. It uses the shared tool
