@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/intrusive-ai/operator-sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/contracts"
 )
 
 const minimal = "engine:\n  image: intrusive/attack_harness:dev\n"

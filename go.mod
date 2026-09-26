@@ -1,4 +1,4 @@
-module github.com/intrusive-ai/operator-sandbox
+module github.com/intrusiveai/operator_sandbox
 
 go 1.26.0
 

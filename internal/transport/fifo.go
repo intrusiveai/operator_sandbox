@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/intrusive-ai/operator-sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/contracts"
 )
 
 type fifoLane struct {

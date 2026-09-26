@@ -16,8 +16,8 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/intrusive-ai/operator-sandbox/contracts"
-	"github.com/intrusive-ai/operator-sandbox/schemas"
+	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/schemas"
 )
 
 func fixture(t *testing.T, change func(map[string][]byte)) (string, []byte, contracts.PackageIdentity) {

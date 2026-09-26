@@ -81,7 +81,7 @@ value, err := catalog.Validate(contracts.EngineObservationReadRequestSchema,
     rawBytes, contracts.OrdinaryLimit)
 ```
 
-Import `contracts` and `schemas` from `github.com/intrusive-ai/operator-sandbox`.
+Import `contracts` and `schemas` from `github.com/intrusiveai/operator_sandbox`.
 Numbers in returned objects are `json.Number`; validate before converting them
 to application types. Public errors are bounded categories, without submitted
 values or native validator diagnostics.

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/intrusive-ai/operator-sandbox/schemas"
+	"github.com/intrusiveai/operator_sandbox/schemas"
 )
 
 func TestSharedValidationFixtures(t *testing.T) {

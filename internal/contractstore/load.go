@@ -17,8 +17,8 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/intrusive-ai/operator-sandbox/contracts"
-	"github.com/intrusive-ai/operator-sandbox/schemas"
+	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/schemas"
 )
 
 var (

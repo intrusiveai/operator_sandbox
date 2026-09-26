@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/intrusive-ai/operator-sandbox/contracts"
-	"github.com/intrusive-ai/operator-sandbox/internal/campaign"
-	"github.com/intrusive-ai/operator-sandbox/internal/preparation"
+	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/preparation"
 )
 
 func inputTree(t *testing.T, target *preparation.Target, context, prompt []byte) []byte {

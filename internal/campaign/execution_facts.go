@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"sort"
 
-	"github.com/intrusive-ai/operator-sandbox/internal/interceptor"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
 // Lineage resolves only successfully committed native registrations/invocations

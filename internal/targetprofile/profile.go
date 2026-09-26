@@ -10,11 +10,11 @@ import (
 	"regexp"
 	"slices"
 
-	"github.com/intrusive-ai/operator-sandbox/contracts"
-	"github.com/intrusive-ai/operator-sandbox/internal/attemptadapter"
-	"github.com/intrusive-ai/operator-sandbox/internal/capabilities"
-	"github.com/intrusive-ai/operator-sandbox/internal/hostconfig"
-	"github.com/intrusive-ai/operator-sandbox/internal/interceptor"
+	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/attemptadapter"
+	"github.com/intrusiveai/operator_sandbox/internal/capabilities"
+	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
 const Version = "operator.dev/target-profile/v1alpha1"

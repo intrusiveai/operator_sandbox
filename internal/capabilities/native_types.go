@@ -2,7 +2,7 @@
 // 567e6e0546a8f797c1673f90ba749e907b3dc56f. Keep changes covered by native fixtures.
 package capabilities
 
-import "github.com/intrusive-ai/operator-sandbox/internal/nativedelivery"
+import "github.com/intrusiveai/operator_sandbox/internal/nativedelivery"
 
 type FeedbackCapability struct {
 	ViewVersion       string   `json:"view_version"`

@@ -7,10 +7,10 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/intrusive-ai/operator-sandbox/contracts"
-	"github.com/intrusive-ai/operator-sandbox/internal/attemptadapter"
-	"github.com/intrusive-ai/operator-sandbox/internal/campaign"
-	"github.com/intrusive-ai/operator-sandbox/internal/termination"
+	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/attemptadapter"
+	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/termination"
 )
 
 // ModelProvider is a trusted host dependency bound to an installed private

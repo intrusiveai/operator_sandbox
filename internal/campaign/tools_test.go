@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/intrusive-ai/operator-sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/contracts"
 )
 
 func readTool(id string) ToolInput {

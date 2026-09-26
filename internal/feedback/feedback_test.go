@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/intrusive-ai/operator-sandbox/contracts"
-	"github.com/intrusive-ai/operator-sandbox/internal/interceptor"
-	"github.com/intrusive-ai/operator-sandbox/schemas"
+	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
+	"github.com/intrusiveai/operator_sandbox/schemas"
 )
 
 func catalog(t *testing.T) *contracts.Catalog {

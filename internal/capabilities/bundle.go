@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/intrusive-ai/operator-sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/contracts"
 )
 
 var ErrBundle = errors.New("invalid scenario bundle semantics")

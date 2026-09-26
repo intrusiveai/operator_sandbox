@@ -5,7 +5,7 @@ package campaignservice
 import (
 	"encoding/json"
 
-	"github.com/intrusive-ai/operator-sandbox/internal/attemptadapter"
+	"github.com/intrusiveai/operator_sandbox/internal/attemptadapter"
 )
 
 type nativeLineage struct {

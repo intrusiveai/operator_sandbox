@@ -7,11 +7,11 @@ import (
 	"slices"
 	"time"
 
-	"github.com/intrusive-ai/operator-sandbox/contracts"
-	"github.com/intrusive-ai/operator-sandbox/internal/capabilities"
-	"github.com/intrusive-ai/operator-sandbox/internal/feedback"
-	"github.com/intrusive-ai/operator-sandbox/internal/interceptor"
-	"github.com/intrusive-ai/operator-sandbox/internal/nativedelivery"
+	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/capabilities"
+	"github.com/intrusiveai/operator_sandbox/internal/feedback"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
+	"github.com/intrusiveai/operator_sandbox/internal/nativedelivery"
 )
 
 var identifier = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$`)

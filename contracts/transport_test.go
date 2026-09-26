@@ -9,7 +9,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/intrusive-ai/operator-sandbox/schemas"
+	"github.com/intrusiveai/operator_sandbox/schemas"
 )
 
 type transportStep struct {

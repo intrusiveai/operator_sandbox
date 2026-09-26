@@ -10,7 +10,7 @@ import (
 	"path"
 	"syscall"
 
-	"github.com/intrusive-ai/operator-sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/contracts"
 )
 
 // All paths below a caller-selected, private state root are host generated.

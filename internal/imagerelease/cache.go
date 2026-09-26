@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/intrusive-ai/operator-sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/contracts"
 )
 
 const cacheVersion = "operator.dev/image-release-cache/v1alpha1"

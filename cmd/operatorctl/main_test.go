@@ -11,10 +11,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/intrusive-ai/operator-sandbox/contracts"
-	"github.com/intrusive-ai/operator-sandbox/internal/campaign"
-	"github.com/intrusive-ai/operator-sandbox/internal/hostconfig"
-	"github.com/intrusive-ai/operator-sandbox/internal/termination"
+	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
+	"github.com/intrusiveai/operator_sandbox/internal/termination"
 )
 
 func savedCampaign(t *testing.T) (string, campaign.DockerBinding) {

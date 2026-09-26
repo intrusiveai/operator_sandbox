@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/intrusive-ai/operator-sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/contracts"
 )
 
 var retainedPath = regexp.MustCompile(`^journals/[0-9]{16}/content/event-[0-9]{16}-0[0-7]\.bin$`)

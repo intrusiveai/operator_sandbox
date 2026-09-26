@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/intrusive-ai/operator-sandbox/internal/interceptor"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
 func nativeRequest(t *testing.T, id string) interceptor.PreparedOperation {

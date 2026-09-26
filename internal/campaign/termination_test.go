@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/intrusive-ai/operator-sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/contracts"
 )
 
 func stopFixture(t *testing.T) (string, *Writer, DockerBinding, StopRecord) {

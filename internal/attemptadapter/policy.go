@@ -10,8 +10,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/intrusive-ai/operator-sandbox/internal/capabilities"
-	"github.com/intrusive-ai/operator-sandbox/internal/interceptor"
+	"github.com/intrusiveai/operator_sandbox/internal/capabilities"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
 var ErrPolicy = errors.New("attempt is outside installed target scope")

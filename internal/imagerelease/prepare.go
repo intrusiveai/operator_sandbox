@@ -5,7 +5,7 @@ package imagerelease
 import (
 	"context"
 
-	"github.com/intrusive-ai/operator-sandbox/internal/dockercontrol"
+	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 )
 
 type ImageResolver interface {

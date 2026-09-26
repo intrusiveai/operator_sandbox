@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/intrusive-ai/operator-sandbox/contracts"
-	"github.com/intrusive-ai/operator-sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 )
 
 var completionRoutes = []string{"engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit", "engine.record_append", "engine.request_stop"}

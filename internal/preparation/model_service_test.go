@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/intrusive-ai/operator-sandbox/internal/campaignservice"
+	"github.com/intrusiveai/operator_sandbox/internal/campaignservice"
 )
 
 func modelFixture(t *testing.T) (map[string]any, map[string]any, map[string]any) {

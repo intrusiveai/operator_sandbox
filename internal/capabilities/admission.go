@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/intrusive-ai/operator-sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/contracts"
 )
 
 var ErrCompatibility = errors.New("scenario bundle is incompatible with the selected target")

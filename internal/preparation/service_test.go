@@ -11,15 +11,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/intrusive-ai/operator-sandbox/contracts"
-	"github.com/intrusive-ai/operator-sandbox/internal/attemptadapter"
-	"github.com/intrusive-ai/operator-sandbox/internal/campaign"
-	"github.com/intrusive-ai/operator-sandbox/internal/campaignservice"
-	"github.com/intrusive-ai/operator-sandbox/internal/dockercontrol"
-	"github.com/intrusive-ai/operator-sandbox/internal/interceptor"
-	"github.com/intrusive-ai/operator-sandbox/internal/preparation"
-	"github.com/intrusive-ai/operator-sandbox/internal/targetprofile"
-	"github.com/intrusive-ai/operator-sandbox/internal/transport"
+	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/attemptadapter"
+	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/campaignservice"
+	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
+	"github.com/intrusiveai/operator_sandbox/internal/preparation"
+	"github.com/intrusiveai/operator_sandbox/internal/targetprofile"
+	"github.com/intrusiveai/operator_sandbox/internal/transport"
 )
 
 type peer struct {

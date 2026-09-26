@@ -7,8 +7,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/intrusive-ai/operator-sandbox/internal/interceptor"
-	"github.com/intrusive-ai/operator-sandbox/internal/nativeexec"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
+	"github.com/intrusiveai/operator_sandbox/internal/nativeexec"
 )
 
 type cleanupAdapter struct{ command interceptor.PreparedOperation }

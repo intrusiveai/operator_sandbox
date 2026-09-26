@@ -3,9 +3,9 @@
 package preparation
 
 import (
-	"github.com/intrusive-ai/operator-sandbox/internal/attemptadapter"
-	"github.com/intrusive-ai/operator-sandbox/internal/capabilities"
-	"github.com/intrusive-ai/operator-sandbox/internal/interceptor"
+	"github.com/intrusiveai/operator_sandbox/internal/attemptadapter"
+	"github.com/intrusiveai/operator_sandbox/internal/capabilities"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
 // Replacement preserves immutable launch inputs and policy. The caller must first

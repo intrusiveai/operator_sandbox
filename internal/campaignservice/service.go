@@ -13,13 +13,13 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/intrusive-ai/operator-sandbox/internal/attemptadapter"
-	"github.com/intrusive-ai/operator-sandbox/internal/campaign"
-	"github.com/intrusive-ai/operator-sandbox/internal/interceptor"
-	"github.com/intrusive-ai/operator-sandbox/internal/nativeexec"
-	"github.com/intrusive-ai/operator-sandbox/internal/preparation"
-	"github.com/intrusive-ai/operator-sandbox/internal/termination"
-	"github.com/intrusive-ai/operator-sandbox/internal/transport"
+	"github.com/intrusiveai/operator_sandbox/internal/attemptadapter"
+	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
+	"github.com/intrusiveai/operator_sandbox/internal/nativeexec"
+	"github.com/intrusiveai/operator_sandbox/internal/preparation"
+	"github.com/intrusiveai/operator_sandbox/internal/termination"
+	"github.com/intrusiveai/operator_sandbox/internal/transport"
 )
 
 var ErrService = errors.New("campaign service is not admitted or its live binding changed")

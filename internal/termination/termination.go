@@ -11,8 +11,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/intrusive-ai/operator-sandbox/internal/campaign"
-	"github.com/intrusive-ai/operator-sandbox/internal/dockercontrol"
+	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 )
 
 const recordingWait = 250 * time.Millisecond

@@ -8,7 +8,7 @@ import (
 	"math/big"
 	"sync"
 
-	"github.com/intrusive-ai/operator-sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/contracts"
 )
 
 // Capacity for admission/dispatch/completion event envelopes, one translated plan,

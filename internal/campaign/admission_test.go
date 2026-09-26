@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/intrusive-ai/operator-sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/contracts"
 )
 
 func attemptWriter(t *testing.T, maximum int64) (string, *Writer, *Attempts) {

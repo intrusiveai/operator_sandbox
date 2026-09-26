@@ -3,7 +3,7 @@ package capabilities
 import (
 	"encoding/json"
 
-	"github.com/intrusive-ai/operator-sandbox/internal/interceptor"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
 // ExecutionFacts is an independent copy of verified native facts. It describes

@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/intrusive-ai/operator-sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/contracts"
 )
 
 const MaxEventBytes = 256 << 10

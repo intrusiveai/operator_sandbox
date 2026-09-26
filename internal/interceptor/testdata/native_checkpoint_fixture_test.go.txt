@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/intrusive-ai/interceptor-sandbox/internal/digest"
+	"github.com/intrusiveai/interceptor_sandbox/internal/digest"
 )
 
 func TestOperatorCheckpointFixtures(t *testing.T) {

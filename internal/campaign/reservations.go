@@ -8,7 +8,7 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/intrusive-ai/operator-sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/contracts"
 )
 
 const reservationKey = "journal_reservation"

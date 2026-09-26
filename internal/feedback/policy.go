@@ -6,7 +6,7 @@ import (
 	"errors"
 	"slices"
 
-	"github.com/intrusive-ai/operator-sandbox/internal/interceptor"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
 var ErrFeedback = errors.New("invalid native feedback or receipt binding")

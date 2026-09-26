@@ -13,10 +13,10 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/intrusive-ai/operator-sandbox/internal/campaign"
-	"github.com/intrusive-ai/operator-sandbox/internal/dockercontrol"
-	"github.com/intrusive-ai/operator-sandbox/internal/hostconfig"
-	"github.com/intrusive-ai/operator-sandbox/internal/termination"
+	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
+	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
+	"github.com/intrusiveai/operator_sandbox/internal/termination"
 )
 
 func main() { os.Exit(run(context.Background(), os.Args[1:], os.Stdout, os.Stderr)) }
