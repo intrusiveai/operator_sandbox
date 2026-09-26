@@ -953,7 +953,8 @@ the lock-independent terminal signal are implemented. The
 records, exact-identity stop confirmation, the administrative CLI and a terminal-fence
 observer. The [campaign service foundation](docs/CAMPAIGN_SERVICE.md) now joins
 verified preparation, attempt/read/cleanup dispatch, the observer and bounded native
-closure/cleanup. Remaining tool routes, restore coordination and Docker launch
+closure/cleanup. [Snapshot/restore coordination](docs/SNAPSHOT_SERVICE.md) now
+preserves the live harness and cumulative accounting. Remaining tool routes and Docker launch
 orchestration MUST be completed before a full campaign can execute.
 
 Retain completed evidence until an administrator explicitly purges it. Host audit

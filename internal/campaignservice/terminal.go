@@ -11,7 +11,7 @@ import (
 func (s *Service) finish() {
 	defer close(s.terminalDone)
 	result := TerminalResult{Closure: "unconfirmed", CleanupState: "unconfirmed", TargetStop: "not-permitted"}
-	if s.config.Prepared.Target().Profile().Settings().AllowTargetStop {
+	if s.target().Profile().Settings().AllowTargetStop {
 		result.TargetStop = "unconfirmed"
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), TerminalTimeout)
@@ -26,7 +26,7 @@ func (s *Service) finish() {
 	if err != nil {
 		return
 	}
-	b := s.config.Prepared.Target().Live().Binding()
+	b := s.target().Live().Binding()
 	campaignID := s.writer.Manifest().CampaignID
 	deadline, _ := ctx.Deadline()
 	query := func(operation string, body []byte) (interceptor.PreparedOperation, error) {
@@ -79,7 +79,7 @@ func (s *Service) finish() {
 	if result.CleanupState == "complete" && result.CleanupRemaining > 0 {
 		result.CleanupState = "bounded-remainder"
 	}
-	if s.config.Prepared.Target().Profile().Settings().AllowTargetStop {
+	if s.target().Profile().Settings().AllowTargetStop {
 		result.TargetStop = "unconfirmed"
 		p, err := interceptor.PrepareLifecycle(interceptor.LifecycleRequest{CampaignID: campaignID, SessionID: b.SessionID, WorkerInstanceID: b.WorkerInstanceID, RunRevision: b.RunRevision, OperationID: "stop-" + termination.NewRequestID(), Operation: "session.stop"}, deadline)
 		if err == nil && ctx.Err() == nil && s.log("service.target-stop-intent", p.Bytes(), nil, true, false) == nil {

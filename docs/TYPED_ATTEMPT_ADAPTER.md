@@ -34,6 +34,12 @@ parent lineage, selected routes and input delivery schema. It fixes the order of
 artifact registration, attempt registration, declared injections and one invocation.
 Narrative fields never choose a tactic or repair arguments.
 
+The [restore service](SNAPSHOT_SERVICE.md) supplies verified checkpoint lineage.
+A known historical parent absent from that inventory becomes a new native root;
+the original harness request and generation remain retained. Native children follow
+native generations while campaign lineage checks use the original harness generations.
+Unverified parent assertions remain invalid.
+
 Native capability placement names (`append`, `prepend`, `merge`, `insert`) map to
 the request vocabulary (`append_text`, `prepend_text`, `merge_object`,
 `insert_array`) during permission checks. Native injection definitions retain the

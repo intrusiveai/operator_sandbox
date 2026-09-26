@@ -56,8 +56,9 @@ type Artifact struct {
 	Bytes      []byte
 }
 type Parent struct {
-	SessionID string
-	Context   interceptor.AttemptContext
+	SessionID          string
+	Context            interceptor.AttemptContext
+	CampaignGeneration uint64 // Original harness generation, when native roots were rebased.
 }
 type Inputs struct {
 	Live                *capabilities.Live
@@ -65,6 +66,7 @@ type Inputs struct {
 	Policy              *Policy
 	Artifacts           map[string]Artifact
 	Parent              *Parent
+	PriorParent         *Parent // Verified campaign history absent from the restored registry.
 	KnownTurnIDs        []string
 	ScenarioIDs         []string
 	ReleaseDigest       string
@@ -122,7 +124,17 @@ func Compile(catalog *contracts.Catalog, raw []byte, in Inputs) (*Plan, error) {
 	}
 	if r.ParentAttemptID != "" {
 		parent := in.Parent
-		if parent == nil || parent.SessionID != in.Live.Binding().SessionID || parent.Context.APIVersion != "interceptor.dev/attempt-context/v1alpha1" || parent.Context.Digest != interceptor.AttemptContextDigest(parent.Context) || parent.Context.AttemptID != r.ParentAttemptID || parent.Context.CampaignID != in.Live.CampaignID() || parent.Context.ThreadID != r.ThreadID || parent.Context.Generation+1 != r.Generation || parent.Context.AttemptIndex >= r.AttemptIndex {
+		if parent == nil {
+			parent = in.PriorParent
+		}
+		if parent == nil || (in.Parent != nil && parent.SessionID != in.Live.Binding().SessionID) || (in.Parent == nil && (parent.SessionID == in.Live.Binding().SessionID || parent.CampaignGeneration == 0)) || parent.Context.APIVersion != "interceptor.dev/attempt-context/v1alpha1" || parent.Context.Digest != interceptor.AttemptContextDigest(parent.Context) || parent.Context.AttemptID != r.ParentAttemptID || parent.Context.CampaignID != in.Live.CampaignID() || parent.Context.ThreadID != r.ThreadID || parent.Context.AttemptIndex >= r.AttemptIndex {
+			return nil, ErrAttempt
+		}
+		generation := parent.CampaignGeneration
+		if generation == 0 {
+			generation = parent.Context.Generation
+		}
+		if generation+1 != r.Generation {
 			return nil, ErrAttempt
 		}
 	}
@@ -160,6 +172,14 @@ func Compile(catalog *contracts.Catalog, raw []byte, in Inputs) (*Plan, error) {
 		}
 	}
 	p.context = interceptor.AttemptContext{APIVersion: "interceptor.dev/attempt-context/v1alpha1", CampaignID: in.Live.CampaignID(), ThreadID: r.ThreadID, AttemptID: r.AttemptID, ParentAttemptID: r.ParentAttemptID, Generation: r.Generation, AttemptIndex: r.AttemptIndex, Payload: r.Payload, Generator: r.Generator, StrategyProvenanceRef: r.StrategyProvenanceRef, FeedbackProfile: policy.NativeProfile(), CreatedAt: in.CreatedAt.UTC(), ObservationSelection: policy.NativeSelection()}
+	if r.ParentAttemptID != "" {
+		if in.Parent == nil {
+			p.context.ParentAttemptID = ""
+			p.context.Generation = 1
+		} else {
+			p.context.Generation = in.Parent.Context.Generation + 1
+		}
+	}
 	p.context.Digest = interceptor.AttemptContextDigest(p.context)
 	if err = p.add("attempt.register", p.context, false); err != nil {
 		return nil, err

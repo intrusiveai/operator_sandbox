@@ -46,21 +46,29 @@ type Config struct {
 	Deadline  time.Time
 }
 type Service struct {
-	config       Config
-	writer       *campaign.Writer
-	attempts     *campaign.Attempts
-	broker       *attemptadapter.Broker
-	gate         chan struct{}
-	admitted     atomic.Bool
-	serving      atomic.Bool
-	operations   map[string]bool
-	deadline     time.Time
-	timer        *time.Timer
-	killDone     chan struct{}
-	kill         termination.Receipt
-	shutdownOnce sync.Once
-	terminalDone chan struct{}
-	terminal     TerminalResult
+	config             Config
+	writer             *campaign.Writer
+	attempts           *campaign.Attempts
+	broker             *attemptadapter.Broker
+	gate               chan struct{}
+	admitted           atomic.Bool
+	serving            atomic.Bool
+	operations         map[string]bool
+	live               atomic.Pointer[preparation.Target]
+	restoring          atomic.Bool
+	transitionEpoch    atomic.Uint64
+	snapshotAdmissions int64
+	snapshotBytes      int64
+	lineage            nativeLineage
+	history            map[string]attemptadapter.Parent
+	checkpointLineage  map[string]nativeLineage
+	deadline           time.Time
+	timer              *time.Timer
+	killDone           chan struct{}
+	kill               termination.Receipt
+	shutdownOnce       sync.Once
+	terminalDone       chan struct{}
+	terminal           TerminalResult
 }
 type TerminalResult struct {
 	Closure          string `json:"closure"`
@@ -82,10 +90,15 @@ func New(ctx context.Context, c Config) (*Service, error) {
 	}
 	operations := map[string]bool{}
 	for _, name := range parsed["operations"].([]any) {
-		if !slices.Contains([]string{"engine.attempt_execute", "engine.injection_delete", "engine.observation_read"}, name.(string)) {
+		if !slices.Contains([]string{"engine.attempt_execute", "engine.injection_delete", "engine.observation_read", "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request"}, name.(string)) {
 			return nil, attemptadapter.ErrOperation
 		}
 		operations[name.(string)] = true
+		if isSnapshot(name.(string)) {
+			if _, ok := c.Peer.(SnapshotPeer); !ok {
+				return nil, ErrService
+			}
+		}
 	}
 	persisted, err := campaign.ReadDockerBinding(c.StateRoot, m.CampaignID)
 	if err != nil || persisted.RunManifestDigest != w.ManifestDigest() {
@@ -120,8 +133,12 @@ func New(ctx context.Context, c Config) (*Service, error) {
 		return nil, err
 	}
 	s := &Service{config: c, writer: w, attempts: a, gate: make(chan struct{}, 1), operations: operations, deadline: deadline, killDone: make(chan struct{}), terminalDone: make(chan struct{})}
+	s.live.Store(c.Prepared.Target())
+	s.lineage = cloneLineage(nativeLineage{}, "")
+	s.history = map[string]attemptadapter.Parent{}
+	s.checkpointLineage = map[string]nativeLineage{}
 	s.gate <- struct{}{}
-	b, err := attemptadapter.NewBroker(attemptadapter.BrokerConfig{Catalog: c.Prepared.Target().Protocol().Catalog(), Protocol: c.Prepared.Target().Protocol(), Writer: w, Attempts: a, Deadline: deadline, Admitted: s.admitted.Load, Prepare: s.prepare, Cleanup: s.cleanupTarget, ReadKinds: c.Prepared.Target().ReadKinds})
+	b, err := attemptadapter.NewBroker(attemptadapter.BrokerConfig{Catalog: c.Prepared.Target().Protocol().Catalog(), Protocol: c.Prepared.Target().Protocol(), Writer: w, Attempts: a, Deadline: deadline, Admitted: s.admitted.Load, Prepare: s.prepare, Cleanup: s.cleanupTarget, ReadKinds: func() []string { return s.target().ReadKinds() }})
 	if err != nil {
 		w.Fence().Stop(err)
 		return nil, err
@@ -143,6 +160,8 @@ func New(ctx context.Context, c Config) (*Service, error) {
 	return s, nil
 }
 
+func (s *Service) target() *preparation.Target { return s.live.Load() }
+
 func (s *Service) watchTarget() {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
@@ -151,10 +170,18 @@ func (s *Service) watchTarget() {
 		case <-s.writer.Fence().Done():
 			return
 		case <-ticker.C:
+			target := s.target()
+			epoch := s.transitionEpoch.Load()
+			if s.restoring.Load() {
+				continue
+			}
 			ctx, cancel := context.WithTimeout(context.Background(), interceptor.QueryTimeout)
-			status, err := s.config.Peer.Status(ctx, s.config.Prepared.Target().Live().CampaignID())
+			status, err := s.config.Peer.Status(ctx, s.target().Live().CampaignID())
 			cancel()
-			if err != nil || !status.Ready() || !status.Matches(s.config.Prepared.Target().InstanceID(), s.config.Prepared.Target().Live().Binding()) {
+			if s.restoring.Load() || epoch != s.transitionEpoch.Load() || target != s.target() {
+				continue
+			}
+			if err != nil || !status.Ready() || !status.Matches(s.target().InstanceID(), s.target().Live().Binding()) {
 				s.Stop(ErrService)
 				return
 			}
@@ -172,7 +199,7 @@ func (s *Service) acquire(ctx context.Context) error {
 }
 func (s *Service) release() { s.gate <- struct{}{} }
 func (s *Service) guard() (*nativeexec.Guard, error) {
-	return nativeexec.NewGuard(s.config.Peer, s.config.Runtime, s.config.Docker, s.config.Prepared.Target().InstanceID(), s.config.Prepared.Target().Live().Binding())
+	return nativeexec.NewGuard(s.config.Peer, s.config.Runtime, s.config.Docker, s.target().InstanceID(), s.target().Live().Binding())
 }
 func (s *Service) log(kind string, request, response []byte, terminal bool, release bool) error {
 	entry := campaign.Entry{RunRevision: s.attempts.Status().RunRevision, Kind: kind, Metadata: json.RawMessage(`{}`)}
@@ -198,7 +225,9 @@ func (s *Service) log(kind string, request, response []byte, terminal bool, rele
 	return err
 }
 func (s *Service) inspect(ctx context.Context, terminal bool) (interceptor.SessionStatus, error) {
-	t := s.config.Prepared.Target()
+	return s.inspectTarget(ctx, terminal, s.target())
+}
+func (s *Service) inspectTarget(ctx context.Context, terminal bool, t *preparation.Target) (interceptor.SessionStatus, error) {
 	b := t.Live().Binding()
 	campaignID := t.Live().CampaignID()
 	status, err := s.config.Peer.Status(ctx, campaignID)
@@ -248,7 +277,7 @@ func (s *Service) prepare(ctx context.Context, raw []byte, deadline time.Time) (
 		s.Stop(err)
 		return nil, nil, err
 	}
-	in, err := s.config.Prepared.Inputs()
+	in, err := s.config.Prepared.InputsFor(s.target())
 	if err != nil {
 		s.Stop(err)
 		return nil, nil, err
@@ -257,23 +286,20 @@ func (s *Service) prepare(ctx context.Context, raw []byte, deadline time.Time) (
 		Parent string `json:"parent_attempt_id"`
 	}
 	_ = json.Unmarshal(raw, &request)
-	parent, turns, err := s.attempts.Lineage(in.Live.Binding().SessionID, request.Parent)
-	if err != nil {
-		s.Stop(err)
-		return nil, nil, err
+	if parent, ok := s.lineage.Parents[request.Parent]; ok {
+		in.Parent = &parent
+	} else if parent, ok := s.history[request.Parent]; ok {
+		in.PriorParent = &parent
 	}
-	if parent != nil {
-		in.Parent = &attemptadapter.Parent{SessionID: in.Live.Binding().SessionID, Context: *parent}
-	}
-	in.KnownTurnIDs = turns
+	in.KnownTurnIDs = append([]string{}, s.lineage.Turns...)
 	in.SessionRevision = view.Session.Revision
 	in.CreatedAt = time.Now()
 	in.Deadline = deadline
-	bound := in.CreatedAt.Add(time.Duration(s.config.Prepared.Target().Profile().Settings().OperationTimeoutMS) * time.Millisecond)
+	bound := in.CreatedAt.Add(time.Duration(s.target().Profile().Settings().OperationTimeoutMS) * time.Millisecond)
 	if bound.Before(in.Deadline) {
 		in.Deadline = bound
 	}
-	p, err := attemptadapter.Compile(s.config.Prepared.Target().Protocol().Catalog(), raw, in)
+	p, err := attemptadapter.Compile(s.target().Protocol().Catalog(), raw, in)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -281,7 +307,7 @@ func (s *Service) prepare(ctx context.Context, raw []byte, deadline time.Time) (
 	return p, g, err
 }
 func (s *Service) cleanupTarget(ctx context.Context, _ time.Time) (attemptadapter.CleanupTarget, error) {
-	if !slices.Contains(s.config.Prepared.Target().Live().Export().ExecutionFacts().NativeOperations, "injection.delete") {
+	if !slices.Contains(s.target().Live().Export().ExecutionFacts().NativeOperations, "injection.delete") {
 		return attemptadapter.CleanupTarget{}, attemptadapter.ErrPolicy
 	}
 	view, err := s.inspect(ctx, false)
@@ -290,7 +316,7 @@ func (s *Service) cleanupTarget(ctx context.Context, _ time.Time) (attemptadapte
 		return attemptadapter.CleanupTarget{}, err
 	}
 	g, err := s.guard()
-	return attemptadapter.CleanupTarget{Guard: g, Binding: s.config.Prepared.Target().Live().Binding(), SessionRevision: view.Session.Revision}, err
+	return attemptadapter.CleanupTarget{Guard: g, Binding: s.target().Live().Binding(), SessionRevision: view.Session.Revision}, err
 }
 
 // Admit requires the complete validated startup transcript and pinned launch
@@ -303,7 +329,7 @@ func (s *Service) Admit(ctx context.Context, in campaign.LaunchInputs) error {
 	if s.admitted.Load() || s.writer.Fence().Err() != nil {
 		return ErrService
 	}
-	if err := s.writer.Manifest().ValidateLaunchInputs(s.config.Prepared.Target().Protocol(), in); err != nil {
+	if err := s.writer.Manifest().ValidateLaunchInputs(s.target().Protocol(), in); err != nil {
 		s.Stop(err)
 		return err
 	}
@@ -330,15 +356,14 @@ func (s *Service) Admit(ctx context.Context, in campaign.LaunchInputs) error {
 func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byte, error) {
 	ctx, cancel := context.WithDeadline(ctx, s.deadline)
 	defer cancel()
-	ctx, operationCancel := context.WithTimeout(ctx, time.Duration(s.config.Prepared.Target().Profile().Settings().OperationTimeoutMS)*time.Millisecond)
-	defer operationCancel()
-	go func() {
+
+	go func(watchCtx context.Context) {
 		select {
-		case <-ctx.Done():
+		case <-watchCtx.Done():
 		case <-s.writer.Fence().Done():
 			cancel()
 		}
-	}()
+	}(ctx)
 	if err := s.acquire(ctx); err != nil {
 		return nil, err
 	}
@@ -346,7 +371,7 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 	if !s.admitted.Load() || s.writer.Fence().Err() != nil {
 		return nil, ErrService
 	}
-	request, err := s.config.Prepared.Target().Protocol().ValidateRequest(raw)
+	request, err := s.target().Protocol().ValidateRequest(raw)
 	if err != nil {
 		s.Stop(err)
 		return nil, err
@@ -355,6 +380,13 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 		s.Stop(attemptadapter.ErrOperation)
 		return nil, attemptadapter.ErrOperation
 	}
+	ceiling := s.target().Profile().Settings().OperationTimeoutMS
+	if request["operation"] == "engine.snapshot_request" || request["operation"] == "engine.restore_request" {
+		ceiling = 300000
+	}
+	milliseconds, _ := request["timeout_ms"].(json.Number).Float64()
+	ctx, operationCancel := context.WithTimeout(ctx, time.Duration(min(int64(milliseconds), ceiling))*time.Millisecond)
+	defer operationCancel()
 	reservation := "wire-" + termination.NewRequestID()
 	deadline, _ := ctx.Deadline()
 	meta, _ := json.Marshal(map[string]any{"deadline": deadline.UTC().Format(time.RFC3339Nano)})
@@ -363,8 +395,17 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 		s.Stop(err)
 		return nil, err
 	}
-	result, err := s.broker.Handle(ctx, raw, sequence)
+	var result []byte
+	if isSnapshot(request["operation"].(string)) {
+		result, err = s.handleSnapshot(ctx, raw, sequence)
+	} else {
+		result, err = s.broker.Handle(ctx, raw, sequence)
+		if err == nil && request["operation"] == "engine.attempt_execute" {
+			err = s.rememberAttempt(raw, result)
+		}
+	}
 	entry.Kind = "service.response"
+	entry.RunRevision = s.attempts.Status().RunRevision
 	entry.Content = nil
 	if err == nil {
 		entry.Content = []campaign.Content{{Role: "response", MediaType: "application/json", Bytes: result}}

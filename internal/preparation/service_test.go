@@ -23,22 +23,43 @@ import (
 )
 
 type peer struct {
-	mu            sync.Mutex
-	input         preparation.Input
-	calls         []string
-	revision      uint64
-	closed        bool
-	unknownClose  bool
-	unknownDelete bool
-	block         chan struct{}
-	entered       chan struct{}
+	statusSample        *delayedStatus
+	mu                  sync.Mutex
+	input               preparation.Input
+	calls               []string
+	revision            uint64
+	closed              bool
+	unknownClose        bool
+	unknownDelete       bool
+	checkpoints         []interceptor.Checkpoint
+	contexts            map[string]interceptor.AttemptContext
+	checkpointContexts  map[string]map[string]interceptor.AttemptContext
+	allowances          []int64
+	restoreMode         string
+	restores            int
+	block               chan struct{}
+	entered             chan struct{}
+	restoreEntered      chan struct{}
+	restoreRelease      chan struct{}
+	beforeRestoreResult func()
 }
 
 func (p *peer) Status(ctx context.Context, _ string) (interceptor.Status, error) {
 	p.mu.Lock()
 	block, entered := p.block, p.entered
 	status := p.input.Status
+	sample := p.statusSample
+	p.statusSample = nil
 	p.mu.Unlock()
+	if sample != nil {
+		close(sample.entered)
+		select {
+		case <-ctx.Done():
+			return interceptor.Status{}, ctx.Err()
+		case <-sample.release:
+			return sample.status, nil
+		}
+	}
 	if block != nil {
 		if entered != nil {
 			select {
@@ -67,7 +88,7 @@ func (p *peer) Execute(_ context.Context, q interceptor.PreparedOperation) (inte
 		return interceptor.ParseResponse(encode(map[string]any{"status": status, "session_revision": p.revision, "body": body}))
 	}
 	now := time.Now().UTC()
-	owner := interceptor.Owner{Principal: "operator", CampaignID: "campaign-1", WorkerInstanceID: "worker-1", RunRevision: 1, BoundAt: now}
+	owner := interceptor.Owner{Principal: "operator", CampaignID: "campaign-1", WorkerInstanceID: "worker-1", RunRevision: p.input.Attachment.Binding.RunRevision, BoundAt: now}
 	owner.AllowTargetStop = p.input.Profile.Settings().AllowTargetStop
 	if p.closed {
 		owner.ClosedAt = &now
@@ -102,9 +123,24 @@ func (p *peer) Execute(_ context.Context, q interceptor.PreparedOperation) (inte
 	case "attempt.register":
 		var body interceptor.AttemptContext
 		_ = json.Unmarshal(envelope.Body, &body)
+		if p.contexts == nil {
+			p.contexts = map[string]interceptor.AttemptContext{}
+		}
+		if body.ParentAttemptID == "" && body.Generation != 1 {
+			return result(400, map[string]string{"code": "invalid_root_generation"})
+		}
+		if body.ParentAttemptID != "" {
+			parent, ok := p.contexts[body.ParentAttemptID]
+			if !ok || body.Generation != parent.Generation+1 {
+				return result(400, map[string]string{"code": "invalid_parent"})
+			}
+		}
+		p.contexts[body.AttemptID] = body
 		return result(201, body)
 	case "application.invoke":
 		return result(200, interceptor.Turn{ID: fmt.Sprintf("turn-%d", p.revision), Operation: "invoke", Status: "complete", AttemptID: r.AttemptID, PayloadDigest: p.input.Artifacts[0].Descriptor.Digest, Body: []byte(`{"answer":"test"}`), MediaType: "application/json", OutputDigest: contracts.RawDigest([]byte(`{"answer":"test"}`)), Started: now, Finished: now})
+	case "snapshot.create":
+		return p.createCheckpoint(envelope.Body, result)
 	case "injection.arm":
 		var body any
 		_ = json.Unmarshal(envelope.Body, &body)
@@ -117,7 +153,32 @@ func (p *peer) Execute(_ context.Context, q interceptor.PreparedOperation) (inte
 	}
 	return result(400, map[string]string{"code": "unexpected"})
 }
-func (p *peer) ExecuteLifecycle(_ context.Context, q interceptor.PreparedLifecycle) (interceptor.Response, error) {
+func (p *peer) ExecuteLifecycle(ctx context.Context, q interceptor.PreparedLifecycle) (interceptor.Response, error) {
+	if q.Request().Operation == "snapshot.restore" {
+		p.mu.Lock()
+		entered, release := p.restoreEntered, p.restoreRelease
+		p.input.Status.Phase = "transitioning"
+		p.mu.Unlock()
+		if entered != nil {
+			close(entered)
+		}
+		if release != nil {
+			select {
+			case <-ctx.Done():
+				return interceptor.Response{}, ctx.Err()
+			case <-release:
+			}
+		}
+		p.mu.Lock()
+		defer p.mu.Unlock()
+		p.input.Status.Phase = "ready"
+		result, err := p.restoreCheckpoint(q)
+		if p.beforeRestoreResult != nil {
+			p.beforeRestoreResult()
+		}
+		return result, err
+	}
+
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	r := q.Request()
@@ -363,13 +424,19 @@ func TestServiceTargetStopRequiresHostPermissionAndConfirmedClosure(t *testing.T
 
 func TestServiceRealSpoolUsesGuestLanesAndZeroSequence(t *testing.T) {
 	s, p, _, w, launch := serviceFixture(t)
+	exchange := serviceSpool(t, s, p, w, launch)
+	exchange(attemptWire(p, 1, 1, w.Manifest().ReleaseRecordDigest))
+}
+
+func serviceSpool(t *testing.T, s *campaignservice.Service, p *peer, w *campaign.Writer, launch campaign.LaunchInputs) func([]byte) []byte {
+	t.Helper()
 	dir := t.TempDir()
 	_ = os.Chmod(dir, 0700)
 	channel, err := transport.NewSpool(dir, transport.Config{Protocol: p.input.Protocol, CampaignID: "campaign-1", LaunchID: "launch-1", Fence: w.Fence(), CampaignDeadline: time.Now().Add(time.Minute)})
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer channel.Close()
+	t.Cleanup(func() { channel.Close() })
 	pump := func() {
 		t.Helper()
 		if err := channel.Pump(); err != nil {
@@ -417,41 +484,70 @@ func TestServiceRealSpoolUsesGuestLanesAndZeroSequence(t *testing.T) {
 		t.Fatal(err)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+
 	pumpDone := make(chan error, 1)
 	serveDone := make(chan error, 1)
 	go func() { pumpDone <- channel.Run(ctx) }()
 	go func() { serveDone <- s.ServeOrdinary(ctx, channel) }()
-	q := attemptWire(p, 1, 1, w.Manifest().ReleaseRecordDigest)
-	put("ordinary-out", 0, q)
-	response := filepath.Join(dir, "ordinary-in", "00000000000000000000.json")
-	timeout := time.NewTimer(3 * time.Second)
-	defer timeout.Stop()
-	ticker := time.NewTicker(10 * time.Millisecond)
-	defer ticker.Stop()
-	for {
-		select {
-		case err := <-pumpDone:
-			t.Fatal("spool pump stopped", err)
-		case err := <-serveDone:
-			t.Fatal("service stopped", err)
-		case <-timeout.C:
-			t.Fatal("no ordinary reply")
-		case <-ticker.C:
-			raw, err := os.ReadFile(response)
-			if os.IsNotExist(err) {
-				continue
+
+	t.Cleanup(func() { cancel(); <-pumpDone; <-serveDone })
+	ack := func(ordinary any) {
+		t.Helper()
+		raw := encode(map[string]any{"api_version": "operator.dev/engine-spool-ack/v1alpha1", "launch_id": "launch-1", "ordinary_seq": ordinary, "control_seq": 2})
+		tmp := filepath.Join(dir, "control-out/.consumed.tmp")
+		if err := os.WriteFile(tmp, raw, 0600); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Rename(tmp, filepath.Join(dir, "control-out/consumed.json")); err != nil {
+			t.Fatal(err)
+		}
+	}
+	ack(nil)
+	sequence := int64(0)
+	return func(request []byte) []byte {
+		t.Helper()
+		var value map[string]any
+		_ = json.Unmarshal(request, &value)
+		value["seq"] = sequence
+		request = encode(value)
+		put("ordinary-out", sequence, request)
+		name, _ := contracts.SpoolMessageName(sequence, false)
+		response := filepath.Join(dir, "ordinary-in", name)
+		timeout := time.NewTimer(4 * time.Second)
+		defer timeout.Stop()
+		ticker := time.NewTicker(10 * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				t.Fatal("spool canceled")
+			case <-w.Fence().Done():
+				t.Fatal("spool fenced", w.Fence().Err())
+			case <-timeout.C:
+				t.Fatal("no ordinary reply")
+			case <-ticker.C:
+				raw, err := os.ReadFile(response)
+				if os.IsNotExist(err) {
+					continue
+				}
+				if err != nil {
+					t.Fatal(err)
+				}
+				if _, err = p.input.Protocol.ValidateResponse(request, raw); err != nil {
+					t.Fatal(err)
+				}
+				var reply map[string]any
+				_ = json.Unmarshal(raw, &reply)
+				if reply["seq"] != float64(sequence) {
+					t.Fatal("transport sequence reset", reply)
+				}
+				ack(sequence)
+				if err = os.Remove(filepath.Join(dir, "ordinary-out", name)); err != nil {
+					t.Fatal(err)
+				}
+				sequence++
+				return raw
 			}
-			if err != nil {
-				t.Fatal(err)
-			}
-			if _, err = p.input.Protocol.ValidateResponse(q, raw); err != nil {
-				t.Fatal(err)
-			}
-			cancel()
-			<-pumpDone
-			<-serveDone
-			return
 		}
 	}
 }

@@ -1,6 +1,31 @@
 # Implementation phase handoff
 
-## Completed phase: campaign preparation and service foundation
+## Completed phase: snapshot lifecycle and healthy restore coordination
+
+The [snapshot service](SNAPSHOT_SERVICE.md) now implements checkpoint create/list/
+inspect and restore through the ordinary service gate. It uses the shared tool
+namespace, immutable preparation, native receipt validators and durable journal.
+
+- Snapshot admissions and canonical byte charges survive restore and replay.
+- Public metadata preserves campaign/description fields and source/checkpoint handles.
+- Verified replacement binding is committed before the correlated restore reply.
+- Healthy restore preserves the harness, manifest, Docker identity and transport sequences.
+- Known preflight rejection continues the original revision; uncertainty stays terminal.
+- Checkpoint parent/turn inventory rolls back with target state. Campaign history
+  remains available, with native-root rebasing when a requested parent is absent.
+- Planned transitions do not trip the idle watcher; independent stop still works.
+
+This is the completed lifecycle boundary within service integration. Seven ordinary
+routes are now implemented. Artifact upload, model relay, assessment and conclusion/
+stop routes remain the next service stage; no full campaign-launch command exists yet.
+Shared wire contracts are unchanged and no sibling repository was edited.
+
+Validation: full Go/Python suite and shared fixtures, race tests, go vet and service
+builds for Linux amd64/arm64 and macOS amd64. Integration tests use real journals,
+validators and physical spools with scripted native/Docker peers; runtime qualification
+and live Interceptor/Attack Harness testing remain pending.
+
+## Earlier completed phase: campaign preparation and service foundation
 
 The [preparation layer](CAMPAIGN_PREPARATION.md) and
 [campaign service](CAMPAIGN_SERVICE.md) now join immutable inputs to live ordinary
@@ -16,12 +41,13 @@ dispatch and independent termination.
 | Lifetime | Absolute campaign timer and idle native status watcher; terminal cancellation and Docker termination independent of the ordinary gate. |
 | Terminal cleanup | Pre-reserved audit capacity, confirmed native closure, at most 64 confirmed injection IDs within 30 seconds, separate optional target-stop outcome. |
 
-The service currently supports attempt execution, observation reads and retained
-injection deletion. It rejects contexts advertising other routes. This completes
+This initial foundation supported attempt execution, observation reads and retained
+injection deletion. The lifecycle stage above expands that set to seven routes.
+Construction still rejects unimplemented advertised routes. This completes
 the preparation/admission/dispatch/termination foundation, not the full campaign
-service: snapshot/restore, artifact uploads, model relay and conclusion/stop routes
-remain the next service stage. No new shared wire schema or sibling repository
-change was required.
+service: snapshot/restore is implemented above; artifact uploads, model relay and
+conclusion/stop remain the next service stage. No new shared wire schema or sibling
+repository change was required.
 
 Validation: full Go/Python suite and shared fixtures, targeted race tests, `go vet`,
 and preparation/service test builds for Linux amd64/arm64 and macOS amd64. Tests run
@@ -47,7 +73,7 @@ results, disk-backed feedback reads and retained-injection deletion.
 
 The broker is a host library with installed source/admission callbacks. The service
 foundation above now supplies those callbacks, transport integration, post-closure
-cleanup and independent termination. Full restore coordination remains pending.
+cleanup and independent termination. Restore coordination is implemented in the lifecycle stage above.
 Guest execution cannot use the ordinary broker after the terminal fence. Shared
 wire schemas remain unchanged; no sibling repo was edited.
 
@@ -199,16 +225,14 @@ packages pass race tests; the full Go/Python suite, fixture runners and `go vet`
 pass. Capability tests also compile for Linux amd64/arm64 and macOS amd64; they
 execute on macOS arm64. These builds do not qualify Docker runtime behavior.
 
-## Next major phase: complete service routes and restore coordination
+## Next major phase: artifact, model and completion service routes
 
-1. Implement snapshot create/list/restore through the service's drain/transition
-   gate, preserving the harness, cumulative accounting and original receipt sources.
-   Adopt only verified replacement bindings; keep uncertainty terminal.
-2. Add artifact upload/reference, model relay and assessment/stop routes with the
+1. Add artifact upload/reference, model relay and assessment/stop routes with the
    shared operation namespace, durable publication and campaign/loop budgets.
-3. Coordinate revision notifications, skipped queued calls, structured conclusions
-   and finalization accounting with independent control handling. Expand the
-   advertised operation set only as the routes are implemented and tested.
+2. Coordinate structured conclusions and bounded graceful finalization with the
+   independent control and Docker termination paths.
+3. Expand the advertised operation set only as each route is implemented and tested.
+   Preserve existing restore/duplicate behavior and lifetime counters.
 
 Native evidence provenance validation remains a separate required phase: verify
 manifest identities, event/state chains, execution records, references, restore

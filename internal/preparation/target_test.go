@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/fs"
 	"os"
+	"sort"
 	"strings"
 	"testing"
 
@@ -86,6 +87,8 @@ func preparedLaunch(t *testing.T, target *preparation.Target, operations ...stri
 	_ = json.Unmarshal(read(t, "../../schemas/fixtures/engine-context-example.json"), &template)
 	template["operations"] = []string{"engine.attempt_execute", "engine.injection_delete", "engine.observation_read"}
 	if operations != nil {
+		operations = append([]string{}, operations...)
+		sort.Strings(operations)
 		template["operations"] = operations
 	}
 	template["remaining_limits"].(map[string]any)["artifact_bytes"] = 1 << 20
@@ -93,6 +96,8 @@ func preparedLaunch(t *testing.T, target *preparation.Target, operations ...stri
 	for _, limits := range []map[string]any{template["remaining_limits"].(map[string]any), template["limits"].(map[string]any)["campaign"].(map[string]any)} {
 		limits["artifact_objects"] = 10
 		limits["attempt_admissions"] = 10
+		limits["snapshot_admissions"] = 2
+		limits["snapshot_bytes"] = 4
 	}
 	prompt, provenance, err := contracts.ComposePrompt("default", []byte("Test campaign guidance."), nil, nil)
 	if err != nil {

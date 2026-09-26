@@ -5,6 +5,7 @@ package campaign
 import (
 	"encoding/json"
 	"errors"
+	"slices"
 
 	"github.com/intrusive-ai/operator-sandbox/contracts"
 	"github.com/intrusive-ai/operator-sandbox/internal/interceptor"
@@ -75,7 +76,7 @@ func (t *Tools) Observe(in ToolInput) (SavedTool, bool, error) {
 	a := t.a
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if in.CampaignID != a.w.manifest.CampaignID || !validID(in.OperationID) || !validID(in.WorkerInstanceID) || in.RunRevision < 0 || in.RunRevision > contracts.MaxSafeInteger || (in.Operation != "engine.observation_read" && in.Operation != "engine.injection_delete") || !validJSONObject(in.Body, 4096) {
+	if in.CampaignID != a.w.manifest.CampaignID || !validID(in.OperationID) || !validID(in.WorkerInstanceID) || in.RunRevision < 0 || in.RunRevision > contracts.MaxSafeInteger || !slices.Contains([]string{"engine.observation_read", "engine.injection_delete", "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request"}, in.Operation) || !validJSONObject(in.Body, 32<<10) {
 		return SavedTool{}, false, ErrInvalid
 	}
 	if _, ok := a.records[in.OperationID]; ok {

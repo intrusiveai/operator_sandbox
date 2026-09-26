@@ -64,8 +64,8 @@ callbacks, startup admission, exact envelope audit and transport queue integrati
 Its separate post-closure controller uses confirmed handles, bounded deadlines
 and pre-reserved audit capacity without reopening guest admission or bypassing the
 ordinary executor's fence. It also wires native closure and independent Docker
-termination. The full restore transition and remaining ordinary routes are the
-next service stage.
+termination. The [state service](SNAPSHOT_SERVICE.md) coordinates healthy restore
+and rebinding. Remaining ordinary routes are the next service stage.
 
 Tests use the real journal, compiled attempt adapter and scripted native peer.
 They cover rejection numbering, duplicate concurrency, publication/settlement loss,

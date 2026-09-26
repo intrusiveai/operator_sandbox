@@ -80,8 +80,10 @@ The [campaign preparation](docs/CAMPAIGN_PREPARATION.md) and
 [service foundation](docs/CAMPAIGN_SERVICE.md) add private target profiles, frozen
 inputs, verified startup admission, live source callbacks, physical spool dispatch
 and independent termination with bounded post-closure cleanup.
+The [snapshot service](docs/SNAPSHOT_SERVICE.md) adds cumulative checkpoint accounting,
+discovery and verified restore on the same harness and transport.
 The [implementation phase handoff](docs/IMPLEMENTATION_STATUS.md) describes these
-completed foundations and the remaining service routes and restore coordination.
+completed foundations and the remaining artifact/model/completion service routes.
 Run `make setup` then `make test`. Contract publication and
 the remaining Operator/Attack Harness runtime implementation remain pending.
 
@@ -128,4 +130,4 @@ OS/Docker versions are informational; startup checks required runtime capabiliti
 Retained injections can be explicitly removed through the
 [typed cleanup contract](schemas/INJECTION_CLEANUP_CONTRACT.md), including after a
 healthy restore, without rolling back the target. The host broker and initial
-service route are implemented; campaign restore orchestration remains pending.
+service route and healthy campaign restore coordination are implemented.
