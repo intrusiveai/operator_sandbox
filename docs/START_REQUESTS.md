@@ -54,5 +54,43 @@ must be reconciled before purge; deletion must not make a pending job executable
 
 Tests cover immutable replay/conflict, concurrent claims, acceptance/completion
 ordering, partial/corrupt/unsafe files, competing publication and a claimed child
-process killed without cleanup. CLI run-directory links, supervisor submission and
-worker execution dispatch remain the next integration.
+process killed without cleanup. Run-directory links and the fixed worker entrypoint are now implemented;
+OS supervisor submission remains the next integration.
+
+## Run-directory links and worker dispatch
+
+`LockRun` serializes starts for one private submitted-run directory. The frontend
+MUST hold it while selecting/publishing a request and submitting its supervisor
+job, then release it before waiting. It uses a separate stable `start.lock` inode;
+closing a CLI observer does not release a worker's execution lease.
+
+`start.json` binds the run to a private start-request group by state root, key,
+campaign and request digest. Readers MUST verify the referenced request and exact
+run-directory binding. Copying a link to another submission cannot select its
+campaign. Identical publication is idempotent. Selecting a different campaign
+requires explicit `--new-campaign`; replacement preserves historical start groups.
+After a purge removes the referenced metadata, the old pointer cannot silently
+start again; explicit new-campaign selection may replace it.
+
+The installed supervisor invokes the fixed entrypoint:
+
+```sh
+operatorctl _worker --state-root /private/installed/state \
+  --request-id HEX32 --request-digest sha256:HEX64
+```
+
+The command accepts only a durable request binding. It claims once, reloads frozen
+inputs, checks the fingerprint, performs online preparation, records acceptance,
+then executes the prepared session. Input/online preparation has a two-minute
+ceiling. The campaign retains its separately frozen execution deadline. Failed
+acceptance cancels the never-started session; it cannot proceed to Docker start.
+Worker completion is recorded with a fresh five-second recording context even if
+execution was cancelled. Errors do not produce a second claim or automatic retry.
+The worker's stdout is one bounded host result; diagnostics use fixed reason codes,
+not raw configuration/provider/secret-store errors. A terminal worker result is
+separate from experiment success and complete evidence.
+
+`operatorctl version` reports the installed compatibility version. Release builds
+set it with `go build -ldflags '-X main.operatorVersion=VERSION' ./cmd/operatorctl`;
+the initial source version is `0.1.0`. A version label does not qualify a platform,
+image, provider or secret store.

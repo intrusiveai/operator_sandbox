@@ -40,6 +40,16 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 }
 
 func runWithDefaults(ctx context.Context, args []string, stdout, stderr io.Writer, defaults hostconfig.Paths) int {
+	if len(args) > 0 && args[0] == "_worker" {
+		return workerCommand(ctx, args[1:], stdout, stderr)
+	}
+	if len(args) == 1 && args[0] == "version" {
+		if json.NewEncoder(stdout).Encode(map[string]string{"api_version": "operator.dev/version/v1alpha1", "version": operatorVersion}) != nil {
+			return 1
+		}
+		return 0
+	}
+
 	if len(args) >= 2 && args[0] == "campaign" && (args[1] == "status" || args[1] == "logs" || args[1] == "wait") {
 		return observeCampaign(ctx, args[1], args[2:], stdout, stderr, defaults)
 	}

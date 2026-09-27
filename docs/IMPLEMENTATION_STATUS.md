@@ -1,5 +1,16 @@
 # Implementation phase handoff
 
+## Current boundary: run links and worker dispatch
+
+Submitted runs now have private locked start links, explicit new-campaign
+replacement and immutable history. A fixed `_worker` entrypoint claims a saved
+request once, checks frozen input identity, prepares, records acceptance and runs
+the composed session. Failures produce fixed-code completion records; changed
+inputs and failed acceptance never reach execution. Tests cover claim replay,
+preparation failure, cancellation ownership, link copying/purge behavior and safe
+worker diagnostics. OS service installation and public start/wait wiring remain
+next; no live Docker/Python or external-provider qualification is claimed.
+
 ## Current boundary: durable start requests
 
 Private typed start requests now bind frozen inputs to one immutable request key.
