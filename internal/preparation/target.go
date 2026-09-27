@@ -29,6 +29,7 @@ type Input struct {
 	Authoring  *capabilities.Export
 	Bundle     []byte
 	Artifacts  []attemptadapter.Artifact
+	References map[string][]byte // Submitted passive reference bytes, keyed by raw digest.
 }
 type Target struct {
 	protocol         *contracts.Protocol
@@ -38,6 +39,7 @@ type Target struct {
 	policy           *attemptadapter.Policy
 	bundle           *capabilities.Bundle
 	authoring        *capabilities.Export
+	references       *referenceSet
 	artifacts        map[string]attemptadapter.Artifact
 	scenarioIDs      []string
 	instance         string
@@ -73,6 +75,10 @@ func Build(in Input) (*Target, error) {
 		return nil, err
 	}
 	t := &Target{protocol: in.Protocol, profile: in.Profile, live: live, compatibility: compat, policy: policy, bundle: bundle, authoring: in.Authoring, instance: in.InstanceID, artifacts: map[string]attemptadapter.Artifact{}}
+	t.references, err = prepareReferences(in.Protocol, t.bundle.JSON(), in.References)
+	if err != nil {
+		return nil, err
+	}
 	t.nativeEvidence = interceptor.EvidenceIdentity{CampaignID: in.Attachment.CampaignID, SessionID: in.Attachment.Session.ID, EnvironmentDigest: in.Attachment.Session.EnvironmentDigest, ApplicationDigest: in.Attachment.Session.AppDigest, CapabilityDigest: in.Attachment.Session.CapabilityManifestDigest, FeedbackProfile: in.Attachment.Session.FeedbackProfile}
 	t.evidenceMaxBytes = in.Attachment.EvidenceMaxBytes
 	if len(in.Artifacts) > 4096 {
@@ -144,6 +150,9 @@ func (t *Target) Context(template []byte) ([]byte, error) {
 	reg := t.protocol.RegistryDigests()
 	c["contract"] = map[string]any{"version": pin.Version, "digest": pin.Digest, "catalog_digest": reg["catalog_digest"], "operations_digest": reg["operations_digest"]}
 	c["target"] = json.RawMessage(t.live.Export().PublicJSON())
+	c["references"] = t.references.entries
+	c["artifact_bindings"] = t.references.bindings
+	c["omissions"] = t.references.omissions
 	c["feedback"] = map[string]any{"profile": t.compatibility.EffectiveProfile(), "allowed_kinds": t.compatibility.AllowedKinds()}
 	descriptor, ok := c["scenario_bundle"].(map[string]any)
 	if !ok {
@@ -237,6 +246,13 @@ func (t *Target) Persist(w *campaign.Writer, context []byte) (*Stored, error) {
 			return nil, err
 		}
 		store.artifacts[key] = refs
+	}
+	for _, entry := range t.references.entries {
+		metadata, _ := json.Marshal(map[string]any{"entry": entry})
+		raw := t.references.contents["input/"+entry["path"].(string)]
+		if _, err := w.AppendStored(campaign.Entry{RunRevision: m.InitialRevision, Kind: "campaign.reference-staged", Metadata: metadata, Content: parts("reference", raw)}, "", false); err != nil {
+			return nil, err
+		}
 	}
 	metadata, _ = json.Marshal(map[string]any{"preparation_digest": contracts.RawDigest(record), "artifact_count": len(keys), "artifact_bytes": total})
 	if _, err = w.Append(campaign.Entry{RunRevision: m.InitialRevision, Kind: "campaign.preparation-adopted", Metadata: metadata}); err != nil {

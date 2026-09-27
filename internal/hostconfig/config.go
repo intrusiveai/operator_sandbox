@@ -6,6 +6,7 @@ package hostconfig
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"io"
 	"os"
@@ -20,6 +21,7 @@ import (
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/campaignlimits"
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 )
 
@@ -55,7 +57,8 @@ func Defaults(goos, home string) (Paths, error) {
 }
 
 type Config struct {
-	Model struct {
+	Limits campaignlimits.Host `json:"limits"`
+	Model  struct {
 		ProfileFile string `json:"profile_file"`
 	} `json:"model"`
 	Credentials struct {
@@ -117,7 +120,7 @@ func mapping(n *yaml.Node) (map[string]*yaml.Node, error) {
 
 var decimal = regexp.MustCompile(`^[1-9][0-9]*$`)
 
-// Parse accepts a closed two-level YAML map. Aliases, anchors, merge keys, multiple
+// Parse accepts a closed YAML map with one nested harness-limits map. Aliases, anchors, merge keys, multiple
 // documents, coercions, unknown/duplicate fields and nulls are rejected. Errors do
 // not include parser excerpts or unrecognized values.
 func Parse(raw []byte, defaults Paths) (Config, error) {
@@ -141,6 +144,10 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 	c.Docker.Endpoint = defaults.DockerEndpoint
 	c.Spool.MaxBytes = DefaultSpoolBytes
 	c.Evidence.MaxArchiveBytes = DefaultEvidenceBytes
+	c.Limits, err = campaignlimits.ParseHost([]byte(`{}`))
+	if err != nil {
+		return Config{}, err
+	}
 	fields := map[string]map[string]*string{
 		"model":       {"profile_file": &c.Model.ProfileFile},
 		"credentials": {"file": &c.Credentials.File},
@@ -152,6 +159,17 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 		"cache":       {"release_directory": &c.Cache.ReleaseDirectory},
 	}
 	for section, node := range sections {
+		if section == "limits" {
+			raw, e := limitsJSON(node, true)
+			if e != nil {
+				return Config{}, e
+			}
+			c.Limits, e = campaignlimits.ParseHost(raw)
+			if e != nil {
+				return Config{}, e
+			}
+			continue
+		}
 		allowed, ok := fields[section]
 		if !ok && section != "spool" && section != "evidence" {
 			return Config{}, ErrInvalid
@@ -215,6 +233,34 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 		return Config{}, ErrPath
 	}
 	return c, nil
+}
+
+// Preserve strict YAML integer handling before the shared JSON-safe validator.
+func limitsJSON(node *yaml.Node, allowHarness bool) ([]byte, error) {
+	values, err := mapping(node)
+	if err != nil {
+		return nil, err
+	}
+	out := map[string]any{}
+	for key, value := range values {
+		if key == "harness" && allowHarness {
+			raw, err := limitsJSON(value, false)
+			if err != nil {
+				return nil, err
+			}
+			out[key] = json.RawMessage(raw)
+			continue
+		}
+		if value.Kind != yaml.ScalarNode || value.Tag != "!!int" || value.Anchor != "" || (value.Value != "0" && !decimal.MatchString(value.Value)) {
+			return nil, ErrInvalid
+		}
+		n, err := strconv.ParseInt(value.Value, 10, 64)
+		if err != nil || n > contracts.MaxSafeInteger {
+			return nil, ErrInvalid
+		}
+		out[key] = n
+	}
+	return json.Marshal(out)
 }
 
 func privateFile(info os.FileInfo) bool {

@@ -124,3 +124,34 @@ and validate its profiles before resolving a credential. See [Credentials](CREDE
 `model.profile_file` selects the absolute private native provider profile.
 The host MUST load it before campaign preparation, freeze its identity and bind the
 selected codec and model. See [Model providers](MODEL_PROVIDERS.md).
+
+## Campaign and harness limits
+
+The optional `limits` section MUST accept only the following decimal integer
+settings plus the nested `harness` map. Omission MUST select the defaults below;
+all counters MUST remain at or below `9007199254740991` for exact shared JSON
+representation. Only snapshot settings permit zero, which disables creation.
+
+| Setting | Default |
+| --- | ---: |
+| `max_attempt_admissions` | 100 |
+| `max_active_seconds` | 1800; this is also the MVP hard maximum |
+| `max_model_tokens` | 250000 |
+| `max_artifact_bytes` | 1073741824 |
+| `max_artifact_objects` | 4096 |
+| `max_snapshot_admissions` | 20 |
+| `max_snapshot_bytes` | 1073741824 |
+| `max_observation_reads` | 2000 |
+
+`limits.harness` MUST use the shared harness field names and defaults from
+[the execution rules](../schemas/HARNESS_EXECUTION_RULES.md). Unknown fields,
+quoted numbers, fractions, nondecimal YAML integer notation, anchors, aliases and
+additional nesting MUST fail. `config check` MUST expose resolved defaults.
+
+At preparation, `requested_limits` from the verified ScenarioBundle MUST only
+narrow these settings. Requested seconds MUST be capped before conversion to
+milliseconds to avoid overflow. Campaign model-turn and observation-byte ceilings
+MUST agree with the effective harness model-turn/read-byte ceilings. Snapshot zero
+MUST remain zero even when a bundle requests snapshots. Fresh result maps MUST NOT
+mutate installed defaults or other campaigns. Target/native enforcement and any
+stricter installed runtime policy remain independent admission gates.

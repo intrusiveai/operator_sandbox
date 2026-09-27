@@ -1,5 +1,15 @@
 # Implementation phase handoff
 
+## Current boundary: production limits and passive reference preparation
+
+Administrator YAML now accepts closed campaign/harness overrides and resolves all
+defaults. Bundle requests can only narrow them; snapshot zero remains disabled and
+all wire counters use the approved JSON-safe bound. Passive submitted references
+are revalidated, copied, canonically bound into EngineContext and retained in the
+campaign journal separately from native execution artifacts. Tests cover malformed
+configuration, overflow/widening, changed input bytes, omissions and shared-digest
+metadata conflicts. Executable launch-input assembly remains the next integration.
+
 ## Current boundary: immutable image release-file inspection
 
 Operator can inspect fixed files from an approved local image without running guest

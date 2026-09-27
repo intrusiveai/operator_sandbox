@@ -69,3 +69,23 @@ Tests MUST cover unverified packages, changed process/capability bindings, forei
 or corrupt artifact bytes, mutable caller inputs, private profile loading and
 manifest/context mismatches. Full launch still requires release approval, staged
 input verification, the startup transcript and runtime qualification.
+
+## Passive submitted references
+
+Live preparation MUST revalidate the exact submitted supporting-reference inventory
+and retain independent copies. Only descriptors with `operator-engine` visibility
+are admitted by ScenarioBundle. Files MUST match declared size/raw digest and any
+installed schema. Missing, extra, corrupt or explicitly omitted-but-supplied files
+MUST fail preparation. Multiple artifact IDs may share a single digest/path only
+when their size, media type and schema agree.
+
+EngineContext reference entries MUST use canonical digest-derived paths and stable
+reference IDs. Artifact bindings and explicit omissions MUST be sorted by artifact
+ID; reference inventory MUST be sorted by path. Caller-supplied template references
+MUST NOT override the inventory prepared by the host. Immutable staging MUST use
+only copied inventoried bytes. The campaign journal MUST retain those bytes and
+descriptors as `campaign.reference-staged` records for later reporting.
+
+Passive references MUST NOT become native execution artifact receipts. The harness
+MUST explicitly publish data through the ordinary artifact protocol before using it
+in an experiment. Snapshot restoration MUST preserve the same reference inventory.

@@ -5,6 +5,7 @@
 package submission
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -46,6 +47,17 @@ func (p *Prepared) Receipt() Receipt {
 	r.OptionalGaps = append([]capabilities.Gap{}, r.OptionalGaps...)
 	return r
 }
+
+// Inputs returns frozen authoring inputs for a fresh live-target preparation.
+// It creates no native artifact receipts or execution authority.
+func (p *Prepared) Inputs() ([]byte, *capabilities.Export, map[string][]byte) {
+	contents := map[string][]byte{}
+	for digest, raw := range p.artifacts {
+		contents[digest] = bytes.Clone(raw)
+	}
+	return bytes.Clone(p.bundle), p.authoring, contents
+}
+
 func ArtifactName(digest string) string { return "sha256-" + strings.TrimPrefix(digest, "sha256:") }
 
 // Read captures exact bytes once. Artifact paths are derived exclusively from

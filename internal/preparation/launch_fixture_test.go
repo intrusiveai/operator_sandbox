@@ -2,6 +2,7 @@ package preparation_test
 
 import (
 	"encoding/json"
+	"sort"
 	"testing"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
@@ -20,7 +21,12 @@ func inputTree(t *testing.T, target *preparation.Target, context, prompt []byte)
 		}
 		return v
 	}
-	return encode(map[string]any{"api_version": "operator.dev/input-tree-manifest/v1alpha1", "entries": []any{descriptor("context", "run-context.json", "engine-context", "application/json", contracts.EngineContextSchema, context), bundle, descriptor("prompt", "system-prompt.txt", "system-prompt", "text/plain", "", prompt)}})
+	entries := append([]any{}, c["references"].([]any)...)
+	entries = append(entries, descriptor("context", "run-context.json", "engine-context", "application/json", contracts.EngineContextSchema, context), bundle, descriptor("prompt", "system-prompt.txt", "system-prompt", "text/plain", "", prompt))
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].(map[string]any)["path"].(string) < entries[j].(map[string]any)["path"].(string)
+	})
+	return encode(map[string]any{"api_version": "operator.dev/input-tree-manifest/v1alpha1", "entries": entries})
 }
 func startup(t *testing.T, target *preparation.Target, w *campaign.Writer, in campaign.LaunchInputs) [][]byte {
 	t.Helper()

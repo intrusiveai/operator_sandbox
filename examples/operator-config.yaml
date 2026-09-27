@@ -21,3 +21,14 @@ evidence:
 #   root: /var/lib/operator
 # cache:
 #   release_directory: /var/lib/operator/cache/releases
+
+# Optional campaign defaults; bundle requests can only narrow them.
+# limits:
+#   max_attempt_admissions: 100
+#   max_active_seconds: 1800
+#   max_model_tokens: 250000
+#   max_snapshot_admissions: 20
+#   max_snapshot_bytes: 1073741824
+#   harness:
+#     max_model_turns: 300
+#     max_tool_calls: 2000

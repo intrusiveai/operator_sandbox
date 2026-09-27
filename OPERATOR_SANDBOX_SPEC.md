@@ -1178,7 +1178,8 @@ acceptance and committed bytes are charged without refunds on deletion.
 
 Administrator configuration uses `limits.max_snapshot_admissions` (default `20`)
 and `limits.max_snapshot_bytes` (default `1073741824`). Both are nonnegative
-integers within signed 64-bit range; omission selects the default, and an explicit
+integers no greater than `9007199254740991` (the shared JSON-safe limit);
+omission selects the default, and an explicit
 zero disables new snapshot creation. These are campaign-wide limits and never
 reset on target restore or native session replacement. Listing, inspection and
 restoration of existing checkpoints remain subject to their own policy and budgets.
@@ -1242,7 +1243,8 @@ silently drops or rewrites a supplied description. Empty description means none.
 For Interceptor, creation uses native `snapshot.create`, with optional `label`
 and `description` plus `maximum_committed_bytes` in its body and the authoritative
 campaign ID in the v1alpha2 request envelope. Operator always supplies its current
-remaining campaign byte allowance as a nonnegative signed 64-bit JSON integer.
+remaining campaign byte allowance as a nonnegative JSON integer no greater than
+`9007199254740991`, preserving exact representation across the shared contract.
 The harness tool accepts only label/description; this allowance is host-owned.
 Interceptor enforces the smaller of this allowance and its remaining native byte
 limit under the snapshot lock, before committing the checkpoint. Explicit zero
