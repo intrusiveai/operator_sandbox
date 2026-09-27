@@ -1,5 +1,21 @@
 # Implementation phase handoff
 
+## Current boundary: all four host secret stores
+
+`internal/credentials` implements AWS Secrets Manager, Azure Key Vault, Google
+Secret Manager and Vault, reusing Interceptor's backend/profile pattern. Host
+configuration selects `credentials.file`; private parsing, approved locators,
+workload identity, bounded resolution/cache, sink rotation/Proxy mode and redacted
+metadata are implemented. See [Credentials](CREDENTIALS.md). Provider integration,
+campaign resolution auditing and live cloud qualification remain outstanding.
+
+Validation: full Go/Python suite, `go vet`, credential race/integration tests and
+credential test builds for Linux amd64/arm64 and macOS amd64 pass. Tests use
+synthetic SDK clients and a local TLS Vault server on macOS arm64. No Interceptor
+files changed. Skill signing now has an approved host-local Ed25519 trust root;
+the separate-builder requirement is awaiting the user's decision.
+
+
 ## Current boundary: offline bundle submission
 
 `operatorctl submit --bundle --capabilities [--artifacts] --output` and

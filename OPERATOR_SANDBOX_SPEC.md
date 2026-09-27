@@ -372,6 +372,14 @@ operatorctl skill build --project project-01 --source ./skills/custom-injection
 operatorctl campaign start --run ./runs/support-agent --skill sha256:<manifest-digest>
 ```
 
+The MVP skill-signing trust root MUST be a host-local Ed25519 key created by an
+explicit administrator `operatorctl skill keygen` command. Its private key MUST
+remain in the private Operator configuration directory. Skill build MUST sign the
+immutable manifest identity; skill import and campaign start MUST verify both the
+local signature and inventoried file bytes. Only that installation's configured
+public key grants skill-signing trust; bundle content MUST NOT install a trust key.
+
+
 `skill build` ingests regular files using descriptor-relative no-follow traversal,
 validates/normalizes content, publishes a signed immutable SkillBundle and returns
 a bounded receipt. It never starts a campaign. Launch selects already-built
@@ -555,7 +563,8 @@ override headers, route, region, cloud project, provider or credentials. Disable
 hidden SDK retries for possibly dispatched calls; preserve unknown outcomes and
 worst-case reservations. Cancellation does not establish that no tokens were used.
 
-Keep one host resolver for AWS Secrets Manager, Azure Key Vault, Google Cloud
+The [host credential configuration](docs/CREDENTIALS.md) defines installed
+profiles, private loading and backend authentication. Keep one host resolver for AWS Secrets Manager, Azure Key Vault, Google Cloud
 Secret Manager and HashiCorp Vault, using workload identity or configured Vault
 Agent/Proxy bootstrap. Production credentials do not arrive through campaign
 files, skill content, CLI secret values or guest environment. Provider/target

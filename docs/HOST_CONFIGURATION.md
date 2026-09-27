@@ -112,3 +112,9 @@ lowercase hex digits. These values MUST come from trusted installation metadata,
 not from a campaign or the package being checked. Submission/validation MUST load
 and verify this package; emergency termination remains usable without it.
 See [offline submission](SUBMISSION.md).
+
+## Credential configuration
+
+`credentials.file` selects the absolute private host credential configuration.
+Configuration checking validates the path; the provider setup MUST separately load
+and validate its profiles before resolving a credential. See [Credentials](CREDENTIALS.md).
