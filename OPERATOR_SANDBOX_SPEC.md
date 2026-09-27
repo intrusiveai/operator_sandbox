@@ -1390,6 +1390,8 @@ argument. At new-campaign start, resolve and validate the locally installed
 The supervised worker owns accepted execution/finalization and local report
 publication. The CLI returns a receipt; `--wait` attaches an observer. Closing an
 observer does not terminate a campaign. Status/logs/wait work from another terminal.
+Read-only campaign-ID observer commands and their committed-prefix semantics
+MUST follow [Campaign observation](docs/CAMPAIGN_OBSERVATION.md).
 Start success means accepted and owned, not successful simulation. JSON mode emits
 one bounded receipt without interleaved progress; human diagnostics go to stderr.
 

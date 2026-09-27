@@ -4,7 +4,9 @@
 Live journal observation now verifies a captured committed prefix without taking
 the writer lock. Concurrent head publication, pending tails, committed corruption
 and cancellation are covered by filesystem tests; strict recovery inspection
-continues to reject incomplete journals. CLI observers are the next integration.
+continues to reject incomplete journals. The CLI now exposes `campaign status`, bounded `campaign logs` pages and
+`campaign wait` by campaign ID; [observer semantics](CAMPAIGN_OBSERVATION.md)
+distinguish recorded facts from process health and campaign success.
 
 ## Current boundary: retained launch inputs and worker serialization
 

@@ -23,6 +23,22 @@ func savedCampaign(t *testing.T) (string, campaign.DockerBinding) {
 	if err := os.Chmod(root, 0700); err != nil {
 		t.Fatal(err)
 	}
+	m := savedManifest(t)
+	w, err := campaign.Create(root, m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { w.Close() })
+	b := campaign.DockerBinding{APIVersion: campaign.BindingVersion, CampaignID: m.CampaignID, LaunchID: m.LaunchID, ContainerID: m.ContainerID, RunManifestDigest: w.ManifestDigest(),
+		Endpoint: "unix:///saved/docker.sock", DaemonID: "daemon-1", DockerContainerID: strings.Repeat("b", 64), ImageDigest: m.ImageDigest, Labels: m.DockerLabels()}
+	if err := w.SaveDockerBinding(b); err != nil {
+		t.Fatal(err)
+	}
+	return root, b
+}
+
+func savedManifest(t *testing.T) campaign.RunManifest {
+	t.Helper()
 	d := contracts.RawDigest([]byte("fixture"))
 	m := campaign.RunManifest{APIVersion: campaign.ManifestVersion, CampaignID: "campaign-1", LaunchID: "launch-1", ContainerID: strings.Repeat("a", 64), InitialRevision: 3,
 		CreatedAt: "2026-09-23T12:00:00Z", HostPlatform: "darwin/arm64", ImagePlatform: "linux/arm64", Transport: "spool", RuntimeProfile: "operator-container/v1",
@@ -32,17 +48,7 @@ func savedCampaign(t *testing.T) (string, campaign.DockerBinding) {
 		RemainingLimits: json.RawMessage(`{"campaign_time_ms":1000,"attempt_admissions":100,"model_tokens":1000,"model_turns":300,"artifact_bytes":10000,"artifact_objects":100,"snapshot_admissions":100,"snapshot_bytes":10000,"observation_reads":100,"observation_bytes":10000}`),
 		HarnessLimits:   json.RawMessage(`{"max_model_turns":300,"max_tool_calls":2000,"max_tool_calls_per_response":16,"max_invalid_tool_calls":50,"max_consecutive_invalid_tool_calls":5,"max_read_bytes":268435456,"max_no_progress_turns":10}`),
 		Retention:       campaign.Retention{Mode: "manual-purge", MaxJournalBytes: 16 << 20, MaxSegmentBytes: campaign.MaxEventBytes}}
-	w, err := campaign.Create(root, m)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { w.Close() })
-	b := campaign.DockerBinding{APIVersion: campaign.BindingVersion, CampaignID: m.CampaignID, LaunchID: m.LaunchID, ContainerID: m.ContainerID, RunManifestDigest: w.ManifestDigest(),
-		Endpoint: "unix:///saved/docker.sock", DaemonID: "daemon-1", DockerContainerID: strings.Repeat("b", 64), ImageDigest: d, Labels: m.DockerLabels()}
-	if err := w.SaveDockerBinding(b); err != nil {
-		t.Fatal(err)
-	}
-	return root, b
+	return m
 }
 
 func fakeCLI(t *testing.T, b campaign.DockerBinding) string {

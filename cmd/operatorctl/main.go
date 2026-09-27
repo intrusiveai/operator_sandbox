@@ -10,8 +10,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"runtime"
+	"syscall"
 
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
@@ -19,7 +21,12 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/termination"
 )
 
-func main() { os.Exit(run(context.Background(), os.Args[1:], os.Stdout, os.Stderr)) }
+func main() {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	code := run(ctx, os.Args[1:], os.Stdout, os.Stderr)
+	cancel()
+	os.Exit(code)
+}
 
 func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	var home string
@@ -33,6 +40,9 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 }
 
 func runWithDefaults(ctx context.Context, args []string, stdout, stderr io.Writer, defaults hostconfig.Paths) int {
+	if len(args) >= 2 && args[0] == "campaign" && (args[1] == "status" || args[1] == "logs" || args[1] == "wait") {
+		return observeCampaign(ctx, args[1], args[2:], stdout, stderr, defaults)
+	}
 	if len(args) >= 2 && args[0] == "contract" && args[1] == "build" {
 		return buildContract(ctx, args[2:], stdout, stderr)
 	}
@@ -50,6 +60,7 @@ func runWithDefaults(ctx context.Context, args []string, stdout, stderr io.Write
 	}
 	if len(args) < 2 || args[0] != "campaign" || args[1] != "terminate" {
 		fmt.Fprintln(stderr, "usage: operatorctl submit --bundle FILE --capabilities FILE [--artifacts DIR] --output DIR [--config PATH]\n       operatorctl validate --run DIR [--config PATH]\n       operatorctl config check [--config PATH]\n       operatorctl contract check --package-dir DIR --package-version VERSION --package-digest SHA256\n       operatorctl campaign terminate --campaign ID [--config PATH] [--state-root DIR] [--mode immediate] [--reason user-request] [--request-id HEX32] [--docker-bin PATH]")
+		fmt.Fprintln(stderr, "       operatorctl campaign status|logs|wait --campaign ID [--config PATH] [--state-root DIR]")
 		fmt.Fprintln(stderr, "       operatorctl skill keygen|build|import|check [options]")
 		fmt.Fprintln(stderr, "       operatorctl contract build --source DIR --output DIR --package-version VERSION")
 		return 2
