@@ -31,7 +31,7 @@ type modelFixture struct {
 func modelFixtures(t *testing.T) []modelFixture {
 	t.Helper()
 	var cases []modelFixture
-	for _, name := range []string{"model-codec.json", "anthropic-model-codec.json", "bedrock-model-codec.json", "gemini-model-codec.json"} {
+	for _, name := range []string{"model-codec.json", "anthropic-model-codec.json", "bedrock-model-codec.json", "gemini-model-codec.json", "responses-model-codec.json"} {
 		raw, err := os.ReadFile("../schemas/fixtures/" + name)
 		if err != nil {
 			t.Fatal(err)
@@ -99,9 +99,11 @@ func TestSharedModelCodec(t *testing.T) {
 				}
 			case "wire":
 				_, err = p.ValidateResponse(modelEnvelope(t, c.Request, false), modelEnvelope(t, c.Result, true))
-			case "continuation", "anthropic-continuation", "bedrock-continuation", "gemini-continuation":
+			case "continuation", "anthropic-continuation", "bedrock-continuation", "gemini-continuation", "responses-continuation":
 				var segment []byte
-				if c.Mode == "gemini-continuation" {
+				if c.Mode == "responses-continuation" {
+					segment, err = p.ResponsesContinuation(c.Result, c.ToolResults)
+				} else if c.Mode == "gemini-continuation" {
 					segment, err = p.GeminiContinuation(c.Result, c.GeminiResults)
 				} else if c.Mode == "bedrock-continuation" {
 					segment, err = p.BedrockContinuation(c.Result, c.ToolResults)
@@ -126,6 +128,9 @@ func TestSharedModelCodec(t *testing.T) {
 					key := "messages"
 					if c.Mode == "gemini-continuation" {
 						key = "contents"
+					}
+					if c.Mode == "responses-continuation" {
+						key = "input"
 					}
 					native[key] = append(native[key].([]any), messages...)
 					raw, e := json.Marshal(request)

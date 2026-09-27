@@ -78,7 +78,8 @@ def documents():
         result[key]={'oneOf':[result[key]]}
     for stem,codec,builder in [('anthropic-messages','anthropic-messages-text-tools-v1',anthropic_documents),
                                ('bedrock-converse','bedrock-converse-text-tools-v1',bedrock_documents),
-                               ('gemini','gemini-text-tools-v1',gemini_documents)]:
+                               ('gemini','gemini-text-tools-v1',gemini_documents),
+                               ('openai-responses','openai-responses-text-tools-v1',responses_documents)]:
         extra,native_policy=builder(name,model)
         result.update(extra)
         native_binding=dict(binding,codec_id={'const':codec})
@@ -203,6 +204,59 @@ def gemini_documents(name,model):
         max_output_tokens=integer(1),thinking_config=r('thinking'),tools=tools))
     return {'gemini-common':{'$defs':dict(text=txt,call=call,signature=signature,result=result,assistant=assistant,message=message,
         usage=usage,thinking=thinking,settings=settings)},'gemini-request':request,'gemini-response':response},policy
+
+
+def responses_documents(name,model):
+    common=PREFIX+'openai-responses-common:v1alpha1#/$defs/'
+    r=lambda name:{'$ref':common+name}
+    opaque={'$ref':WIRE+'id'}
+    status={'enum':['in_progress','completed','incomplete']}
+    direct=nullable(obj(dict(type={'const':'direct'})))
+    call=obj(dict(type={'const':'function_call'},call_id=opaque,name=name,arguments=text(),id=nullable(opaque),status=nullable(status),
+        caller=direct,namespace={'type':'null'},**{'async':nullable({'const':False})}),['type','call_id','name','arguments'])
+    txt=obj(dict(type={'const':'output_text'},text=text(),annotations=dict(type='array',maxItems=0),logprobs=dict(type='array',maxItems=0)),['type','text','annotations'])
+    refusal=obj(dict(type={'const':'refusal'},refusal=text()))
+    message=obj(dict(type={'const':'message'},id=opaque,role={'const':'assistant'},status=status,
+        content=array({'oneOf':[r('text'),r('refusal')]},0,1024),phase=nullable({'enum':['commentary','final_answer']})),['type','id','role','status','content'])
+    reasoning_item=obj(dict(type={'const':'reasoning'},id=opaque,summary=array(obj(dict(type={'const':'summary_text'},text=text())),0,1024),
+        encrypted_content=nullable(text(1048576,1)),content=nullable(array(obj(dict(type={'const':'reasoning_text'},text=text())),0,1024)),status=nullable(status)),['type','id','summary'])
+    output_item={'oneOf':[r('message'),r('reasoning_item'),r('call')]}
+    user=obj(dict(type={'const':'message'},role={'const':'user'},content=text()),['role','content'])
+    result=obj(dict(type={'const':'function_call_output'},call_id=opaque,output=text(),caller=direct),['type','call_id','output'])
+    tool=obj(dict(type={'const':'function'},name=name,parameters={'type':'object'},strict={'const':False},description=nullable(text(8192))),['type','name','parameters','strict'])
+    tools=array(r('tool'),0,128)
+    reasoning=obj(dict(effort=nullable({'enum':['none','minimal','low','medium','high','xhigh','max']}),
+        summary=nullable({'enum':['auto','concise','detailed']}),context=nullable({'enum':['auto','current_turn','all_turns']}),
+        mode=nullable({'enum':['standard','pro']})),[])
+    text_config=obj(dict(format=obj(dict(type={'const':'text'})),verbosity={'enum':['low','medium','high']}),['format'])
+    usage=obj(dict(input_tokens=integer(),output_tokens=integer(),total_tokens=integer(),
+        input_tokens_details=nullable(obj(dict(cached_tokens=integer(),cache_write_tokens=integer()),[])),
+        output_tokens_details=nullable(obj(dict(reasoning_tokens=integer()),[]))),['input_tokens','output_tokens','total_tokens'])
+    settings=obj(dict(max_output_tokens=integer(1),reasoning=nullable(r('reasoning')),response_models=dict(array(model,1,32),uniqueItems=True),tools_digest={'$ref':WIRE+'digest'}))
+    request=obj(dict(model=model,instructions=text(131072),input=array({'oneOf':[r('user'),r('message'),r('reasoning_item'),r('call'),r('result')]},1,4096),
+        max_output_tokens=integer(1),stream={'const':False},store={'const':False},parallel_tool_calls={'const':True},
+        include=array({'const':'reasoning.encrypted_content'},1,1),truncation={'const':'disabled'},reasoning=nullable(r('reasoning')),
+        tools=tools,tool_choice={'enum':['auto','none','required']},text=obj(dict(format=obj(dict(type={'const':'text'}))))))
+    response=obj(dict(id=opaque,object={'const':'response'},created_at={'type':'number','minimum':0,'maximum':MAX},
+        completed_at=nullable({'type':'number','minimum':0,'maximum':MAX}),model=model,status={'enum':['completed','incomplete','failed','cancelled']},
+        output=array(output_item,0,1024),usage=nullable(r('usage')),error=nullable(obj(dict(code=text(128,1),message=text()))),
+        incomplete_details=nullable(obj(dict(reason=nullable({'enum':['max_output_tokens','max_messages','content_filter','steered']})),[])),
+        instructions=nullable(text(131072)),tools=tools,tool_choice={'enum':['auto','none','required']},parallel_tool_calls={'const':True},
+        max_output_tokens=nullable(integer(1)),store={'const':False},background=nullable({'const':False}),previous_response_id={'type':'null'},
+        conversation={'type':'null'},prompt={'type':'null'},max_tool_calls={'type':'null'},moderation={'type':'null'},
+        metadata=nullable(obj({})),reasoning=nullable(r('reasoning')),text=nullable(r('text_config')),truncation=nullable({'const':'disabled'}),
+        temperature=nullable({'type':'number','minimum':0,'maximum':2}),top_p=nullable({'type':'number','minimum':0,'maximum':1}),
+        top_logprobs=nullable({'const':0}),service_tier=nullable(text(128)),user=nullable(text(256)),safety_identifier=nullable(text(256)),
+        prompt_cache_key=nullable(text(512)),prompt_cache_retention=nullable({'enum':['in_memory','24h']}),
+        prompt_cache_options=nullable(obj(dict(mode={'const':'implicit'},ttl={'const':'30m'},comparison_response_id={'type':'null'}),['mode','ttl'])),
+        prompt_cache_diagnostics={'type':'null'},access_programs=nullable(obj(dict(cyber={'enum':['standard','daybreak_blue','daybreak_red']})))),
+        ['id','object','created_at','model','status','output'])
+    binding=dict(codec_id={'const':'openai-responses-text-tools-v1'},profile_id={'$ref':WIRE+'id'},profile_digest={'$ref':WIRE+'digest'})
+    policy=obj(dict(binding,request_model=model,response_models=dict(array(model,1,32),uniqueItems=True),prompt=text(131072),
+        max_output_tokens=integer(1),reasoning=nullable(r('reasoning')),tools=tools))
+    return {'openai-responses-common':{'$defs':dict(call=call,text=txt,refusal=refusal,message=message,reasoning_item=reasoning_item,user=user,result=result,
+        tool=tool,reasoning=reasoning,text_config=text_config,usage=usage,settings=settings)},
+        'openai-responses-request':request,'openai-responses-response':response},policy
 
 
 def main():

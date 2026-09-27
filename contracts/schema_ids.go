@@ -109,6 +109,12 @@ const OpenaiChatRequestSchema = "urn:operator:schema:openai-chat-request:v1alpha
 
 const OpenaiChatResponseSchema = "urn:operator:schema:openai-chat-response:v1alpha1"
 
+const OpenaiResponsesCommonSchema = "urn:operator:schema:openai-responses-common:v1alpha1"
+
+const OpenaiResponsesRequestSchema = "urn:operator:schema:openai-responses-request:v1alpha1"
+
+const OpenaiResponsesResponseSchema = "urn:operator:schema:openai-responses-response:v1alpha1"
+
 const OperationErrorSchema = "urn:operator:schema:operation-error:v1alpha1"
 
 const OperationRegistrySchema = "urn:operator:schema:operation-registry:v1alpha1"

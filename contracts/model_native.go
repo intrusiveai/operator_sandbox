@@ -21,6 +21,9 @@ func nativeRequestOK(body map[string]any) bool {
 	if body["codec_id"] == geminiCodec {
 		return geminiRequestOK(request)
 	}
+	if body["codec_id"] == responsesCodec {
+		return responsesRequestOK(request)
+	}
 	return chatRequestOK(request)
 }
 func nativeResponseOK(body map[string]any) bool {
@@ -33,6 +36,9 @@ func nativeResponseOK(body map[string]any) bool {
 	}
 	if body["codec_id"] == geminiCodec {
 		return geminiResponseOK(response)
+	}
+	if body["codec_id"] == responsesCodec {
+		return responsesResponseOK(response)
 	}
 	return chatResponseOK(response)
 }
@@ -57,6 +63,9 @@ func (p *Protocol) ModelOutputLimit(raw []byte) (int64, error) {
 	if body["codec_id"] == geminiCodec {
 		return number(request["generationConfig"].(map[string]any)["maxOutputTokens"]), nil
 	}
+	if body["codec_id"] == responsesCodec {
+		return number(request["max_output_tokens"]), nil
+	}
 	return number(request["max_completion_tokens"]), nil
 }
 func (p *Protocol) ModelUsage(raw []byte) (ModelMetrics, error) {
@@ -77,6 +86,9 @@ func (p *Protocol) ModelUsage(raw []byte) (ModelMetrics, error) {
 	}
 	if body["codec_id"] == geminiCodec {
 		return geminiMetrics(response), nil
+	}
+	if body["codec_id"] == responsesCodec {
+		return responsesMetrics(response), nil
 	}
 	m := ModelMetrics{ToolCalls: int64(len(chatCalls(response["choices"].([]any)[0].(map[string]any)["message"].(map[string]any))))}
 	if usage, ok := response["usage"].(map[string]any); ok {

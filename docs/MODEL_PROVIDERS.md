@@ -57,9 +57,10 @@ endpoint resolver and SigV4 signer without decoding/reconstructing native bodies
 results MUST produce a sanitized uncertain failure and MUST NOT trigger a retry.
 
 Transport implementations and synthetic TLS/signing tests cover all listed families.
-The Chat and Anthropic Messages codecs are integrated with the shared Go/Python semantic
-validators; the remaining codecs MUST be completed before campaign admission can
-advertise those routes. Transport coverage alone does not qualify live providers,
+All five native codec families have shared Go/Python semantic validators.
+Executable profile/startup integration and the Attack Harness loop MUST be
+completed before campaign admission can advertise these routes. Synthetic
+transport/contract coverage alone does not qualify live providers,
 model versions, authentication or reasoning continuation.
 
 Native API references: [OpenAI Responses](https://developers.openai.com/api/reference/resources/responses),

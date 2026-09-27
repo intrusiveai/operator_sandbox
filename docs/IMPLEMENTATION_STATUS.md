@@ -1,5 +1,19 @@
 # Implementation phase handoff
 
+## Current boundary: stateless Responses contract
+
+All five specified native codec families now have shared Go/Python validation:
+Chat, Responses, Anthropic Messages, Bedrock Converse and Gemini GenerateContent.
+Responses preserves encrypted reasoning, assistant phases and complete function
+batches. Its 66 shared cases and host integration cover policy binding, continuation,
+failed/incomplete results, cumulative usage and replay. See the
+[Responses contract](../schemas/RESPONSES_MODEL_CODEC_CONTRACT.md).
+
+Full Go/Python suite, targeted contract/model-service race tests and vet pass
+on macOS arm64. Provider profiles still need executable startup settings/tool
+projection wiring. The
+Attack Harness loop and live provider/runtime qualification remain outstanding.
+
 ## Current boundary: native Gemini contract and campaign accounting
 
 The shared Go/Python contract now supports Gemini GenerateContent on the configured
@@ -12,7 +26,7 @@ See the [Gemini contract](../schemas/GEMINI_MODEL_CODEC_CONTRACT.md).
 Full Go/Python suite, targeted contract/model-service race tests and vet pass.
 The bootstrap success test passed three isolated repeats after a load-sensitive
 two-second timeout in the full run; its filesystem/attempt deadline is now ten
-seconds while silent-peer coverage remains 100 ms. Responses, executable
+seconds while silent-peer coverage remains 100 ms. Executable
 startup/profile integration and live provider qualification remain.
 
 ## Current boundary: native Bedrock contract and campaign accounting
@@ -40,7 +54,7 @@ across restore, unknown usage and excessive cached input. See the
 Validation: full Go/Python and fixture suites, targeted contract/model-service race
 tests and affected-package `go vet` pass on macOS arm64.
 
-The Responses codec, executable profile/startup integration and
+Executable profile/startup integration and
 real-provider qualification remain required. Transport coverage alone is not
 campaign readiness for those routes.
 
@@ -84,7 +98,7 @@ HTTP bodies; no SDK response conversion drops native fields. See
 [Model providers](MODEL_PROVIDERS.md).
 
 The shared Go/Python model validators and host service implement the Chat,
-Anthropic Messages, Bedrock Converse and Gemini GenerateContent codecs. Remaining native codecs, executable startup wiring and real provider
+Anthropic Messages, Bedrock Converse, Gemini GenerateContent and Responses codecs. Remaining native codecs, executable startup wiring and real provider
 qualification MUST be finished before declaring every route campaign-ready.
 The user approved trusted host-side skill validation/signing with a host-local
 Ed25519 key; the spec now replaces the separate builder/publisher requirement.

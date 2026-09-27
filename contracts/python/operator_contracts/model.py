@@ -8,7 +8,9 @@ from . import model_bedrock as bedrock
 
 from . import model_gemini as gemini
 
-NATIVE_CODECS={anthropic.CODEC:anthropic,bedrock.CODEC:bedrock,gemini.CODEC:gemini}
+from . import model_responses as responses
+
+NATIVE_CODECS={responses.CODEC:responses,anthropic.CODEC:anthropic,bedrock.CODEC:bedrock,gemini.CODEC:gemini}
 
 
 def model_policy_from_context(protocol, context_raw, tools_raw, prompt_raw):
@@ -189,6 +191,7 @@ def native_response(body):
 def model_output_limit(protocol,raw):
     body=protocol._catalog.validate(ENGINE_MODEL_GENERATE_REQUEST_SCHEMA,raw)
     native_request(body)
+    if body['codec_id']==responses.CODEC:return body['request']['max_output_tokens']
     if body['codec_id']==gemini.CODEC:return body['request']['generationConfig']['maxOutputTokens']
     if body['codec_id']==bedrock.CODEC:return body['request']['inferenceConfig']['maxTokens']
     return body['request']['max_tokens' if body['codec_id']==anthropic.CODEC else 'max_completion_tokens']

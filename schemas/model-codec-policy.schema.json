@@ -295,6 +295,84 @@
         "thinking_config",
         "tools"
       ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "codec_id": {
+          "const": "openai-responses-text-tools-v1"
+        },
+        "profile_id": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+        },
+        "profile_digest": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+        },
+        "request_model": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x20\\x7f]+$",
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        "response_models": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[^\\x00-\\x20\\x7f]+$",
+            "not": {
+              "pattern": "[\\r\\n]"
+            }
+          },
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 131072
+        },
+        "max_output_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "reasoning": {
+          "anyOf": [
+            {
+              "$ref": "urn:operator:schema:openai-responses-common:v1alpha1#/$defs/reasoning"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "$ref": "urn:operator:schema:openai-responses-common:v1alpha1#/$defs/tool"
+          },
+          "minItems": 0,
+          "maxItems": 128
+        }
+      },
+      "required": [
+        "codec_id",
+        "profile_id",
+        "profile_digest",
+        "request_model",
+        "response_models",
+        "prompt",
+        "max_output_tokens",
+        "reasoning",
+        "tools"
+      ]
     }
   ]
 }

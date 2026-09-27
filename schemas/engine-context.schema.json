@@ -198,6 +198,9 @@
             },
             {
               "$ref": "urn:operator:schema:gemini-common:v1alpha1#/$defs/settings"
+            },
+            {
+              "$ref": "urn:operator:schema:openai-responses-common:v1alpha1#/$defs/settings"
             }
           ]
         }
@@ -290,12 +293,32 @@
           "if": {
             "properties": {
               "codec_id": {
+                "const": "openai-responses-text-tools-v1"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "codec_settings"
+            ],
+            "properties": {
+              "codec_settings": {
+                "$ref": "urn:operator:schema:openai-responses-common:v1alpha1#/$defs/settings"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "codec_id": {
                 "not": {
                   "enum": [
                     "openai-chat-text-tools-v1",
                     "anthropic-messages-text-tools-v1",
                     "bedrock-converse-text-tools-v1",
-                    "gemini-text-tools-v1"
+                    "gemini-text-tools-v1",
+                    "openai-responses-text-tools-v1"
                   ]
                 }
               }

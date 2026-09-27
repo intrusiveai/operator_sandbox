@@ -98,6 +98,30 @@
         "profile_digest",
         "request"
       ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "codec_id": {
+          "const": "openai-responses-text-tools-v1"
+        },
+        "profile_id": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+        },
+        "profile_digest": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+        },
+        "request": {
+          "$ref": "urn:operator:schema:openai-responses-request:v1alpha1"
+        }
+      },
+      "required": [
+        "codec_id",
+        "profile_id",
+        "profile_digest",
+        "request"
+      ]
     }
   ]
 }

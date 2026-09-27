@@ -11,7 +11,7 @@ func (p *Protocol) ModelPolicyFromContext(contextRaw, toolsRaw, promptRaw []byte
 		return nil, err
 	}
 	m := c["model"].(map[string]any)
-	if m["codec_id"] != "openai-chat-text-tools-v1" && m["codec_id"] != anthropicCodec && m["codec_id"] != bedrockCodec && m["codec_id"] != geminiCodec {
+	if m["codec_id"] != "openai-chat-text-tools-v1" && m["codec_id"] != anthropicCodec && m["codec_id"] != bedrockCodec && m["codec_id"] != geminiCodec && m["codec_id"] != responsesCodec {
 		return nil, ErrProtocol
 	}
 	admitted := false
@@ -51,6 +51,9 @@ func (p *Protocol) ModelPolicyFromContext(contextRaw, toolsRaw, promptRaw []byte
 	if m["codec_id"] == geminiCodec {
 		keys = []string{"max_output_tokens", "thinking_config", "response_models"}
 	}
+	if m["codec_id"] == responsesCodec {
+		keys = []string{"max_output_tokens", "reasoning", "response_models"}
+	}
 	for _, key := range keys {
 		policy[key] = settings[key]
 	}
@@ -68,6 +71,8 @@ func (p *Protocol) ModelPolicyFromContext(contextRaw, toolsRaw, promptRaw []byte
 		valid = bedrockToolsOK(tools.([]any))
 	} else if m["codec_id"] == geminiCodec {
 		valid = geminiToolsOK(tools.([]any))
+	} else if m["codec_id"] == responsesCodec {
+		valid = responsesToolsOK(tools.([]any))
 	} else {
 		valid = chatToolsOK(tools.([]any))
 	}
@@ -206,6 +211,9 @@ func modelCorrelationOK(body, result map[string]any) bool {
 	if body["codec_id"] == geminiCodec {
 		return geminiCorrelationOK(request, response)
 	}
+	if body["codec_id"] == responsesCodec {
+		return responsesCorrelationOK(request, response)
+	}
 	if !chatRequestOK(request) || !chatResponseOK(response) {
 		return false
 	}
@@ -266,6 +274,12 @@ func (p *Protocol) ValidateModelRequest(policyRaw, requestRaw []byte) (map[strin
 		}
 		return body, nil
 	}
+	if body["codec_id"] == responsesCodec {
+		if !responsesPolicyOK(policy, request) {
+			return nil, ErrProtocol
+		}
+		return body, nil
+	}
 	first := request["messages"].([]any)[0].(map[string]any)
 	if !chatRequestOK(request) || !chatToolsOK(policy["tools"].([]any)) ||
 		request["model"] != policy["request_model"] || number(request["max_completion_tokens"]) > number(policy["max_completion_tokens"]) ||
@@ -319,6 +333,12 @@ func (p *Protocol) ModelDisposition(resultRaw []byte) (string, error) {
 		return "", err
 	}
 	response := value.(map[string]any)["response"].(map[string]any)
+	if value.(map[string]any)["codec_id"] == responsesCodec {
+		if !responsesResponseOK(response) {
+			return "", ErrProtocol
+		}
+		return responsesDisposition(response), nil
+	}
 	if value.(map[string]any)["codec_id"] == geminiCodec {
 		if !geminiResponseOK(response) {
 			return "", ErrProtocol

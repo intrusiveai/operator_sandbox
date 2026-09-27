@@ -38,6 +38,7 @@ func TestServiceNativeCacheAccountingAndRestore(t *testing.T) {
 		{"anthropic-model-codec.json", "anthropic: native text including cache counts", "cache_read_input_tokens", "usage"},
 		{"bedrock-model-codec.json", "bedrock: native text with separate caches", "cacheReadInputTokens", "usage"},
 		{"gemini-model-codec.json", "gemini: native text including thinking tokens", "promptTokenCount", "usageMetadata"},
+		{"responses-model-codec.json", "responses: native text with usage details", "input_tokens", "usage"},
 	} {
 		t.Run(codec.file, func(t *testing.T) {
 			for _, mode := range []string{"complete", "unknown-usage", "excess-input"} {
@@ -50,6 +51,10 @@ func TestServiceNativeCacheAccountingAndRestore(t *testing.T) {
 					if mode == "excess-input" {
 						usage := response[codec.usage].(map[string]any)
 						usage[codec.cache] = 101
+						if codec.cache == "input_tokens" {
+							usage[codec.cache] = 201
+							usage["total_tokens"] = 261
+						}
 						if codec.cache == "promptTokenCount" {
 							usage[codec.cache] = 201
 							usage["totalTokenCount"] = 261
@@ -68,7 +73,7 @@ func TestServiceNativeCacheAccountingAndRestore(t *testing.T) {
 							t.Fatal(err)
 						}
 						settings := map[string]any{"tools_digest": digest}
-						for _, key := range []string{"max_tokens", "thinking", "max_output_tokens", "thinking_config", "response_models"} {
+						for _, key := range []string{"max_tokens", "thinking", "max_output_tokens", "thinking_config", "reasoning", "response_models"} {
 							if value, ok := policy[key]; ok {
 								settings[key] = value
 							}
@@ -82,7 +87,11 @@ func TestServiceNativeCacheAccountingAndRestore(t *testing.T) {
 					if codec.cache == "cacheReadInputTokens" {
 						system = []any{map[string]any{"text": string(launch.Prompt)}}
 					}
-					if codec.cache == "promptTokenCount" {
+					if codec.cache == "input_tokens" {
+						request["request"].(map[string]any)["instructions"] = string(launch.Prompt)
+						response["instructions"] = string(launch.Prompt)
+						p.response = encode(response)
+					} else if codec.cache == "promptTokenCount" {
 						request["request"].(map[string]any)["systemInstruction"] = map[string]any{"parts": []any{map[string]any{"text": string(launch.Prompt)}}}
 					} else {
 						request["request"].(map[string]any)["system"] = system

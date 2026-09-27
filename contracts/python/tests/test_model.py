@@ -28,6 +28,7 @@ class ModelTest(unittest.TestCase):
         cls.cases+=json.loads((ROOT/'schemas/fixtures/anthropic-model-codec.json').read_text())
         cls.cases+=json.loads((ROOT/'schemas/fixtures/bedrock-model-codec.json').read_text())
         cls.cases+=json.loads((ROOT/'schemas/fixtures/gemini-model-codec.json').read_text())
+        cls.cases+=json.loads((ROOT/'schemas/fixtures/responses-model-codec.json').read_text())
 
     def test_shared_model_codec(self):
         p=self.protocol
@@ -44,11 +45,12 @@ class ModelTest(unittest.TestCase):
                         p.validate_response(envelope(c['request']),envelope(c['result'],True))
                     elif c['mode'].endswith('continuation'):
                         continuation={'continuation':p.chat_continuation,'anthropic-continuation':p.anthropic_continuation,
-                                      'bedrock-continuation':p.bedrock_continuation,'gemini-continuation':p.gemini_continuation}[c['mode']]
+                                      'bedrock-continuation':p.bedrock_continuation,'gemini-continuation':p.gemini_continuation,'responses-continuation':p.responses_continuation}[c['mode']]
                         raw=continuation(encoded(c['result']),c['gemini_tool_results'] if c['mode']=='gemini-continuation' else c['tool_results'])
                         self.assertEqual(raw,c['segment_json'].encode())
                         request=json.loads(encoded(c['request']))
-                        request['request']['contents' if c['mode']=='gemini-continuation' else 'messages'].extend(json.loads(raw))
+                        key={'gemini-continuation':'contents','responses-continuation':'input'}.get(c['mode'],'messages')
+                        request['request'][key].extend(json.loads(raw))
                         p.validate_model_request(encoded(c['policy']),encoded(request))
                     else: self.fail('unknown fixture mode')
                 if c['valid']:
