@@ -152,7 +152,7 @@ func (r StopRecord) validate(b DockerBinding, result bool) error {
 		o := r.Outcome
 		switch o.Code {
 		case "confirmed_stopped", "invalid_binding", "docker_unavailable", "invalid_response", "identity_mismatch",
-			"container_unconfirmed", "deadline_or_cancellation", "lifecycle_policy_mismatch":
+			"container_unconfirmed", "deadline_or_cancellation", "lifecycle_policy_mismatch", "startup_outcome_unconfirmed":
 		default:
 			return ErrInvalid
 		}

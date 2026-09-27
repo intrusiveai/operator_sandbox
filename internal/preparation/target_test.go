@@ -82,6 +82,9 @@ func preparedWriter(t *testing.T, target *preparation.Target) (*campaign.Writer,
 	return w, in.EngineContext
 }
 func preparedLaunch(t *testing.T, target *preparation.Target, operations ...string) (*campaign.Writer, campaign.LaunchInputs, string) {
+	return preparedLaunchConfigured(t, target, nil, "", operations...)
+}
+func preparedLaunchConfigured(t *testing.T, target *preparation.Target, configure func(map[string]any), platform string, operations ...string) (*campaign.Writer, campaign.LaunchInputs, string) {
 	t.Helper()
 	var template map[string]any
 	_ = json.Unmarshal(read(t, "../../schemas/fixtures/engine-context-example.json"), &template)
@@ -118,6 +121,9 @@ func preparedLaunch(t *testing.T, target *preparation.Target, operations ...stri
 	set := template["skills"].(map[string]any)
 	delete(set, "loading_digest")
 	set["loading_digest"], _ = contracts.CanonicalDigest(encode(set), contracts.ControlLimit)
+	if configure != nil {
+		configure(template)
+	}
 	context, err := target.Context(encode(template))
 	if err != nil {
 		t.Fatal(err)
@@ -136,6 +142,13 @@ func preparedLaunch(t *testing.T, target *preparation.Target, operations ...stri
 	pin, _ := target.Protocol().PackageIdentity()
 	reg := target.Protocol().RegistryDigests()
 	m := campaign.RunManifest{APIVersion: campaign.ManifestVersion, CampaignID: "campaign-1", LaunchID: "launch-1", ContainerID: strings.Repeat("a", 64), InitialRevision: 1, CreatedAt: "2026-09-25T12:00:00Z", HostPlatform: "darwin/arm64", ImagePlatform: "linux/arm64", Transport: "spool", RuntimeProfile: "operator-container/v1", ImageDigest: release["image_digest"].(string), ReleaseRecordDigest: release["release_record_digest"].(string), Contract: campaign.ContractPin{Version: pin.Version, Digest: pin.Digest, CatalogDigest: reg["catalog_digest"], OperationsDigest: reg["operations_digest"]}, EngineContextDigest: digest(context), InputTreeDigest: digest(tree), SkillSetDigest: digest(setRaw), ScenarioBundleDigest: digest(target.BundleJSON()), HostPolicyDigest: digest(target.HostPolicyJSON()), ModelProfileDigest: c["model"].(map[string]any)["profile_digest"].(string), Target: target.Binding(), RemainingLimits: encode(c["remaining_limits"]), HarnessLimits: encode(c["limits"].(map[string]any)["harness"]), Retention: campaign.Retention{Mode: "manual-purge", MaxJournalBytes: 256 << 20, MaxSegmentBytes: campaign.MaxEventBytes}}
+	if platform != "" {
+		m.HostPlatform = platform
+		m.ImagePlatform = "linux/" + strings.Split(platform, "/")[1]
+		if strings.HasPrefix(platform, "linux/") {
+			m.Transport = "fifo"
+		}
+	}
 	root := t.TempDir()
 	_ = os.Chmod(root, 0700)
 	w, err := campaign.Create(root, m)

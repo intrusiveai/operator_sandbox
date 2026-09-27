@@ -80,3 +80,7 @@ func (s *Session) LaunchMounts(campaignID, launchID, mode string, gid int) ([]Mo
 	}
 	return mounts, nil
 }
+
+// AccessGroup is the frozen group selected when the transport was constructed.
+// A privileged host may choose a dedicated nonroot group using Config.GuestGID.
+func (s *Session) AccessGroup() int { s.mu.Lock(); defer s.mu.Unlock(); return *s.config.GuestGID }

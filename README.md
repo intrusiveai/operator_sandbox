@@ -2,8 +2,9 @@
 
 Implementation specification with shared contracts, host persistence and transport,
 and independent administrative termination.
-The initial campaign service library is implemented; full campaign dispatch and
-Docker launch orchestration remain pending.
+The campaign service and Docker launch/bootstrap worker libraries are implemented.
+Executable campaign preparation/start, host-service installation and runtime
+qualification remain pending.
 
 The [shared validation foundation](contracts/README.md) now provides Go/Python
 strict JSON decoders, offline validation of the current schema catalog and shared
@@ -59,7 +60,8 @@ checkpoint integrity and provide bounded inventory pages and scoped inspection.
 Evidence download helpers stream into private temporary files, enforce configured
 archive limits and verify transfer length/digest before native archive validation.
 Archive inspection checks native member names, framing, regular-file/size limits
-and blob digests without extracting files; native provenance validation remains pending.
+and blob digests without extracting files. Native provenance checks and retained
+campaign export collection are implemented by the [evidence service](docs/EVIDENCE_SERVICE.md).
 The [capability admission layer](docs/CAPABILITY_ADMISSION.md) verifies native
 capability hashes and delivery contracts, projects/imports public exports, and
 checks bundle dependencies against live bindings and explicit host policy. It
@@ -83,7 +85,9 @@ and independent termination with bounded post-closure cleanup.
 The [snapshot service](docs/SNAPSHOT_SERVICE.md) adds cumulative checkpoint accounting,
 discovery and verified restore on the same harness and transport.
 The [implementation phase handoff](docs/IMPLEMENTATION_STATUS.md) describes these
-completed foundations and the remaining artifact/model/completion service routes.
+completed foundations, including artifact/model/completion service routes.
+The [host launch worker](docs/HOST_LAUNCH.md) adds fixed Docker policy, live bootstrap,
+host power/event lifetime and confirmed container/transport cleanup.
 Run `make setup` then `make test`. Contract publication and
 the remaining Operator/Attack Harness runtime implementation remain pending.
 

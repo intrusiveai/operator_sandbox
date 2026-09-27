@@ -21,6 +21,7 @@ import (
 
 const TransferTimeout = 5 * time.Second
 const StartupTimeout = 60 * time.Second
+const IdleTimeout = 180 * time.Second
 const SpoolPoll = 10 * time.Millisecond
 const DefaultSpoolBytes int64 = 512 << 20
 
@@ -103,6 +104,7 @@ type Session struct {
 	fullSince          [4]time.Time
 	phase              string
 	phaseDeadline      time.Time
+	idleDeadline       time.Time
 	active             *operation
 	peerEstablished    bool
 	admissionPublished bool
@@ -120,6 +122,12 @@ func newSession(c Config) (*Session, error) {
 	if c.SpoolMaxBytes == 0 {
 		c.SpoolMaxBytes = DefaultSpoolBytes
 	}
+	// Freeze the selected access group; later caller changes cannot retarget mounts.
+	gid, err := guestGroup(c)
+	if err != nil {
+		return nil, err
+	}
+	c.GuestGID = &gid
 	state, err := c.Protocol.NewTransportState("host", c.CampaignID, c.LaunchID)
 	if err != nil {
 		return nil, err
@@ -150,6 +158,9 @@ func (s *Session) check(now time.Time) error {
 		return ErrClosed
 	}
 	if !now.Before(s.config.CampaignDeadline) || (s.phase != "admitted" && !now.Before(s.phaseDeadline)) || (s.active != nil && !now.Before(s.active.deadline)) {
+		return s.fail(ErrDeadline)
+	}
+	if s.phase == "admitted" && s.active == nil && !now.Before(s.idleDeadline) {
 		return s.fail(ErrDeadline)
 	}
 	for i, q := range s.queues {
@@ -305,6 +316,7 @@ func (s *Session) published(i int, now time.Time) error {
 	s.fullSince[i] = time.Time{}
 	if i == 0 {
 		s.active = nil
+		s.idleDeadline = earlier(now.Add(IdleTimeout), s.config.CampaignDeadline)
 	}
 	return nil
 }
@@ -355,6 +367,7 @@ func (s *Session) OpenAdmission() error {
 		return s.fail(ErrProtocol)
 	}
 	s.phase = "admitted"
+	s.idleDeadline = earlier(s.now().Add(IdleTimeout), s.config.CampaignDeadline)
 	return nil
 }
 

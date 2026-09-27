@@ -491,8 +491,19 @@ func TestStartupOperationAndCampaignDeadlines(t *testing.T) {
 			t.Fatal("native timeout extended")
 		}
 	})
+	t.Run("idle progress", func(t *testing.T) {
+		_, s, _, now := makeSpool(t)
+		admitted(t, s)
+		*now = now.Add(IdleTimeout - time.Millisecond)
+		pump(t, s)
+		*now = now.Add(time.Millisecond)
+		if !errors.Is(s.Pump(), ErrDeadline) {
+			t.Fatal("idle harness did not terminate")
+		}
+	})
 	t.Run("campaign", func(t *testing.T) {
 		f, s, dir, now := makeSpool(t)
+		s.config.CampaignDeadline = now.Add(30 * time.Second)
 		admitted(t, s)
 		*now = s.config.CampaignDeadline.Add(-time.Second)
 		put(t, dir, "ordinary-out", 0, f.msg("ordinary-out", 0))

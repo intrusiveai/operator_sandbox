@@ -145,11 +145,11 @@ recorded terminal decision. Already dispatched native work can remain unknown.
 
 This command stops the harness container and retains it for evidence. It does not
 remove Docker resources, delete transport storage, stop the native Interceptor
-target or purge campaign artifacts. Those lifecycle steps require subsequent
-integration and confirmed exit. The existing transport cleanup API can then be
-called after host writers close. Host service installation, macOS sleep handling,
-normal completion, dispatch fencing, cleanup/removal provenance and reporting
-remain implementation work.
+target or purge campaign artifacts. The [host worker](HOST_LAUNCH.md) supplies those lifecycle steps after confirmed
+exit and records removal/cleanup separately. Its macOS power lease lasts through
+cleanup. Host service installation and administrative reporting remain pending.
+A stop overlapping an unconfirmed start uses `startup_outcome_unconfirmed`; that
+outcome does not authorize removal or transient-directory cleanup.
 
 ## Validation
 

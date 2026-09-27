@@ -60,3 +60,7 @@ func publicationReservation(id string) string {
 	return "publication:" + contracts.RawDigest([]byte(id))[7:]
 }
 func publicationRole(index int) string { return fmt.Sprintf("feedback-%d", index) }
+
+// Revision reports the latest journal revision for final host lifecycle records.
+// It is not a live target binding and must not authorize native requests.
+func (w *Writer) Revision() int64 { w.mu.Lock(); defer w.mu.Unlock(); return w.revision }

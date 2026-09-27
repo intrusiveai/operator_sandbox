@@ -207,6 +207,7 @@ func (s *Service) handleCompletion(ctx context.Context, raw []byte, seq int64) (
 	}
 	if q.Operation == "engine.request_stop" && reply.Error == nil {
 		s.completion.stopID = q.ID
+		s.stopAccepted.Store(true)
 		until := time.Now().Add(5 * time.Second)
 		if s.deadline.Before(until) {
 			until = s.deadline

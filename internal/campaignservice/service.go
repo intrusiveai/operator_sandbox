@@ -47,6 +47,7 @@ type Config struct {
 	Deadline  time.Time
 	Model     *ModelConfig
 	Evidence  *EvidenceConfig
+	CheckHost func() error // Installed host lifetime gate; called before admission and every ordinary request.
 }
 type Service struct {
 	config             Config
@@ -55,6 +56,7 @@ type Service struct {
 	broker             *attemptadapter.Broker
 	gate               chan struct{}
 	admitted           atomic.Bool
+	stopAccepted       atomic.Bool
 	serving            atomic.Bool
 	operations         map[string]bool
 	live               atomic.Pointer[preparation.Target]
@@ -364,6 +366,12 @@ func (s *Service) Admit(ctx context.Context, in campaign.LaunchInputs) error {
 	if s.admitted.Load() || s.writer.Fence().Err() != nil {
 		return ErrService
 	}
+	if s.config.CheckHost != nil {
+		if err := s.config.CheckHost(); err != nil {
+			s.Stop(err)
+			return err
+		}
+	}
 	if err := s.writer.Manifest().ValidateLaunchInputs(s.target().Protocol(), in); err != nil {
 		s.Stop(err)
 		return err
@@ -414,6 +422,12 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 	defer s.release()
 	if !s.admitted.Load() || s.writer.Fence().Err() != nil {
 		return nil, ErrService
+	}
+	if s.config.CheckHost != nil {
+		if err := s.config.CheckHost(); err != nil {
+			s.Stop(err)
+			return nil, err
+		}
 	}
 	request, err := s.target().Protocol().ValidateRequest(raw)
 	if err != nil {
@@ -556,3 +570,7 @@ func (s *Service) Wait(ctx context.Context) (TerminalResult, termination.Receipt
 		return cloneTerminal(s.terminal), s.kill, nil
 	}
 }
+
+// StopAccepted reports the durably accepted harness conclusion/stop decision.
+// It does not assert successful native cleanup, guest exit or assessment success.
+func (s *Service) StopAccepted() bool { return s.stopAccepted.Load() }

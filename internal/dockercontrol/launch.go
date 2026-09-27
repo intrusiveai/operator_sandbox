@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 )
@@ -19,6 +20,8 @@ func (c *Client) Create(ctx context.Context, p *LaunchPlan) (campaign.DockerBind
 	if p == nil || c == nil || c.run == nil || !p.created.CompareAndSwap(false, true) {
 		return campaign.DockerBinding{}, ErrLaunch
 	}
+	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
 	if err := p.verify(ctx); err != nil {
 		return campaign.DockerBinding{}, err
 	}
@@ -30,7 +33,8 @@ func (c *Client) Create(ctx context.Context, p *LaunchPlan) (campaign.DockerBind
 	if err != nil || (strings.TrimSpace(string(volumes)) != "null" && strings.TrimSpace(string(volumes)) != "{}") {
 		return campaign.DockerBinding{}, ErrLaunch
 	}
-	raw, err := c.run(ctx, p.image.Endpoint, p.args...)
+	args := append([]string{"--config", p.directory}, p.args...)
+	raw, err := c.run(ctx, p.image.Endpoint, args...)
 	if err != nil {
 		return campaign.DockerBinding{}, ErrLaunch
 	}
@@ -56,6 +60,8 @@ func (c *Client) StartCreated(ctx context.Context, stateRoot string, b campaign.
 	if c == nil || c.run == nil || b.Validate() != nil || p == nil || b.RunManifestDigest != p.manifestDigest || b.Endpoint != p.image.Endpoint || b.DaemonID != p.image.DaemonID || p.actualID.Load() != b.DockerContainerID {
 		return ErrLaunch
 	}
+	ctx, cancel := context.WithTimeout(ctx, ConfirmationTimeout)
+	defer cancel()
 	saved, err := campaign.ReadDockerBinding(stateRoot, b.CampaignID)
 	if err != nil || !sameBinding(saved, b) {
 		return ErrLaunch
@@ -91,4 +97,29 @@ func sameBinding(a, b campaign.DockerBinding) bool {
 		}
 	}
 	return true
+}
+
+// RemoveStopped removes only an exact, independently confirmed inactive container.
+// It never force-removes execution or deletes volumes. Missing/failed replies are
+// unknown; a later caller must not substitute a container selected by name.
+func (c *Client) RemoveStopped(ctx context.Context, b campaign.DockerBinding) error {
+	if c == nil || c.run == nil || b.Validate() != nil {
+		return ErrLaunch
+	}
+	ctx, cancel := context.WithTimeout(ctx, ConfirmationTimeout)
+	defer cancel()
+	item, code := c.inspect(ctx, b)
+	if code != "" || item.Running || item.Paused || item.Restarting || item.RestartPolicy != "no" || item.AutoRemove {
+		return ErrLaunch
+	}
+	switch item.Status {
+	case "created", "exited", "dead":
+	default:
+		return ErrLaunch
+	}
+	raw, err := c.run(ctx, b.Endpoint, "container", "rm", b.DockerContainerID)
+	if err != nil || strings.TrimSpace(string(raw)) != b.DockerContainerID || c.daemon(ctx, b) != "" {
+		return ErrLaunch
+	}
+	return ctx.Err()
 }

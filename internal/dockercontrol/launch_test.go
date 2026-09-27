@@ -93,6 +93,10 @@ func launchFixture(t *testing.T, mode string) (*LaunchPlan, string, *campaign.Wr
 	ipc := t.TempDir()
 	_ = os.Chmod(ipc, 0700)
 	config := transport.Config{Protocol: p, CampaignID: m.CampaignID, LaunchID: m.LaunchID, Fence: w.Fence(), CampaignDeadline: time.Now().Add(time.Minute)}
+	if os.Getgid() == 0 {
+		gid := 65532
+		config.GuestGID = &gid
+	}
 	var channel *transport.Session
 	if mode == "fifo" {
 		channel, err = transport.NewFIFO(ipc, config)
@@ -124,6 +128,12 @@ type launchDocker struct {
 func (f *launchDocker) run(ctx context.Context, endpoint string, args ...string) ([]byte, error) {
 	if endpoint != f.p.image.Endpoint {
 		f.t.Fatal("endpoint changed")
+	}
+	if args[0] == "--config" {
+		if args[1] != f.p.directory {
+			f.t.Fatal("ambient Docker configuration")
+		}
+		args = args[2:]
 	}
 	switch args[0] {
 	case "info":
@@ -178,7 +188,7 @@ func TestLaunchRequiresPersistedBindingAndCannotRestart(t *testing.T) {
 	}
 }
 func TestLaunchRejectsMutationAndUncertainCreation(t *testing.T) {
-	for _, kind := range []string{"mount changed", "policy changed", "daemon changed", "image volume", "lost reply"} {
+	for _, kind := range []string{"mount changed", "policy changed", "CLI config changed", "daemon changed", "image volume", "lost reply"} {
 		t.Run(kind, func(t *testing.T) {
 			p, _, _ := launchFixture(t, "spool")
 			f := &launchDocker{t: t, p: p, daemon: p.image.DaemonID, volumes: "{}"}
@@ -190,6 +200,8 @@ func TestLaunchRejectsMutationAndUncertainCreation(t *testing.T) {
 				_ = os.WriteFile(path, []byte("changed"), 0444)
 			case "policy changed":
 				_ = os.WriteFile(filepath.Join(p.directory, "startup-seccomp.json"), []byte(`{}`), 0600)
+			case "CLI config changed":
+				_ = os.WriteFile(filepath.Join(p.directory, "config.json"), []byte(`{"proxies":{}}`), 0600)
 			case "daemon changed":
 				f.daemon = "other"
 			case "image volume":
@@ -208,6 +220,9 @@ func TestLaunchRejectsMutationAndUncertainCreation(t *testing.T) {
 			if f.created != want {
 				t.Fatal("unexpected create/retry", f.created)
 			}
+			if _, retryErr := c.Create(context.Background(), p); retryErr == nil || f.created != want {
+				t.Fatal("retried single-use plan", retryErr, f.created)
+			}
 		})
 	}
 }
@@ -216,7 +231,7 @@ func TestLaunchPolicyMountsAndSyscalls(t *testing.T) {
 		t.Run(mode, func(t *testing.T) {
 			p, _, _ := launchFixture(t, mode)
 			joined := strings.Join(p.args, " ")
-			for _, must := range []string{"--pull=never", "--network=none", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges:true", "--restart=no", "--no-healthcheck", "--pids-limit=16", "nodev,nosuid,noexec", "bind-recursive=disabled", "bind-propagation=rprivate", "--entrypoint=/usr/bin/python3", p.image.ImageID + " -I -S -B /opt/operator/engine/bootstrap.py"} {
+			for _, must := range []string{"--pull=never", "--network=none", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges:true", "--restart=no", "--no-healthcheck", "--init=false", "--ipc=none", "--pids-limit=16", "nodev,nosuid,noexec", "bind-recursive=disabled", "bind-propagation=rprivate", "--entrypoint=/usr/bin/python3", p.image.ImageID + " -I -S -B /opt/operator/engine/bootstrap.py"} {
 				if !strings.Contains(joined, must) {
 					t.Error("missing", must)
 				}
@@ -265,5 +280,41 @@ func TestDockerEventsNeverReconnectOrIgnoreExit(t *testing.T) {
 		if err := readEvents(context.Background(), strings.NewReader(stream), id); !errors.Is(err, ErrEvents) {
 			t.Fatal(err)
 		}
+	}
+}
+
+func TestRemoveStoppedNeverForcesOrSelectsByName(t *testing.T) {
+	for _, state := range []string{"running", "created", "exited", "dead"} {
+		t.Run(state, func(t *testing.T) {
+			b := binding()
+			calls := 0
+			c := &Client{run: func(ctx context.Context, endpoint string, args ...string) ([]byte, error) {
+				if endpoint != b.Endpoint {
+					t.Fatal(endpoint)
+				}
+				if args[0] == "info" {
+					return json.Marshal(b.DaemonID)
+				}
+				if args[1] == "inspect" {
+					item := live(b)
+					item.Status = state
+					item.Running = state == "running"
+					return json.Marshal(item)
+				}
+				if !reflect.DeepEqual(args, []string{"container", "rm", b.DockerContainerID}) {
+					t.Fatal(args)
+				}
+				calls++
+				return []byte(b.DockerContainerID), nil
+			}}
+			err := c.RemoveStopped(context.Background(), b)
+			if state == "running" {
+				if err == nil || calls != 0 {
+					t.Fatal("removed running container")
+				}
+			} else if err != nil || calls != 1 {
+				t.Fatal(err, calls)
+			}
+		})
 	}
 }

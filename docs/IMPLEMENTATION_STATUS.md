@@ -1,6 +1,34 @@
 # Implementation phase handoff
 
-## Completed phase: native evidence provenance and retained export
+## Completed boundary: Docker launch and live campaign worker
+
+The [host worker](HOST_LAUNCH.md) now connects immutable input staging, local image
+and release pins, exact Docker create/save/start, real bootstrap exchange, campaign
+service admission/dispatch, power lifetime, event loss and terminal cleanup.
+Startup and ordinary traffic are journaled; a lost start reply retains an explicit
+unconfirmed outcome and its transient mounts. Confirmed shutdown removes the exact
+stopped container and transport/input trees. Power leases remain held through
+native cleanup and evidence collection.
+
+The approved MVP filesystem contract uses verified 0444 files/0555 directories and
+read-only nonrecursive private binds; writable tmpfs retains nodev/nosuid/noexec.
+The installed startup syscall allowlist and real Python/live-filter composition
+still require runtime qualification.
+
+This completes the worker integration boundary within the host-service phase.
+Executable start/preparation commands and service installation are the next boundary;
+see the final section. The CLI currently remains configuration/contract checking
+and independent termination. Attack Harness’s input-mount requirement was aligned
+with the approved filesystem policy. That directory is not a Git repository, so
+the one-line spec edit is outside Operator’s commits. Interceptor was not modified.
+
+Validation: the full Go/Python suite and shared fixture runners, `go vet ./...`,
+launch/transport/lifetime race tests and worker/bootstrap/stop integration race tests
+pass. Tests use real local files with scripted Docker/native/power peers on macOS
+arm64. The worker/service test binary also builds for Linux amd64/arm64 and macOS
+amd64. These builds and tests do not qualify real Docker or Python confinement.
+
+## Earlier completed phase: native evidence provenance and retained export
 
 The native verifier now checks manifest/target identity, event and state chains,
 execution records and journal binding, checkpoint/restore-source lineage,
@@ -125,7 +153,8 @@ Validation: full Go/Python suite and shared fixtures, targeted race tests, `go v
 and preparation/service test builds for Linux amd64/arm64 and macOS amd64. Tests run
 on macOS arm64 using real journals and spool files with scripted native/Docker
 interfaces. Cross-compilation does not qualify Docker or a live Interceptor/Attack
-Harness deployment. Campaign start CLI and Docker launch remain pending.
+Harness deployment. Campaign start CLI remains pending; Docker launch is now
+implemented by the worker boundary described above.
 
 ## Earlier completed phase: durable receipts and ordinary attempt broker
 
@@ -297,14 +326,16 @@ packages pass race tests; the full Go/Python suite, fixture runners and `go vet`
 pass. Capability tests also compile for Linux amd64/arm64 and macOS amd64; they
 execute on macOS arm64. These builds do not qualify Docker runtime behavior.
 
-## Next major phase: Operator host-service start and lifecycle orchestration
+## Next major phase: executable campaign preparation/start and host installation
 
-Wire immutable campaign preparation, configured model/evidence services, local
-Docker identity, guest launch/bootstrap and transport into an executable host
-service/worker start path. Keep administrative termination independent and retain
-explicit startup/recovery failures. Runtime qualification remains an implementation
-gate; library and protocol tests do not qualify Docker containment or transport.
+Connect administrator configuration, installed contracts, local image/release
+preparation, bundle/input/skill preparation and production model-provider settings
+to `hostworker`. Expose the foreground/start workflow, accepted-start deduplication
+and single-host campaign serialization; wire signals and systemd/LaunchAgent
+installation without resuming execution from recovered journals.
 
 Administrative evidence import/reporting/purge integration and the Attack Harness
-Python dispatcher/model loop remain subsequent work. No completed library boundary
-substitutes for these pending service and runtime gates.
+Python dispatcher/model loop remain subsequent work. The real Python image,
+startup/live confinement, Linux FIFO and Docker Desktop spool behavior still need
+runtime qualification. Tests of the host worker and native Interceptor do not
+qualify those components.

@@ -120,8 +120,14 @@ Cancellation is tested while the I/O mutex is held. Fake monotonic clocks make
 deadline boundary tests deterministic.
 
 Docker launch/permission/confinement qualification, the Python peer, full Go/Python
-physical exchanges, broker dispatch and durable traffic audit remain subsequent
-work. The transport scheduler covers transfer, startup, operation and campaign
-deadlines. Scheduling trusted meaningful-progress and bounded-finalization limits
-still requires broker/harness-loop integration. No Docker runtime is qualified by
-these local tests or cross-compilation alone.
+physical exchanges remain subsequent work. The host worker now connects broker
+dispatch and durable traffic audit. Transport schedules transfer, startup, idle,
+operation and campaign deadlines; the service separately bounds finalization.
+Meaningful model-loop progress remains an Attack Harness responsibility. No Docker
+runtime is qualified by these local tests or cross-compilation alone.
+
+The [host worker](HOST_LAUNCH.md) now supplies live bootstrap/admission and terminal
+cleanup orchestration. Idle admission has a 180-second progress deadline; active
+requests use their own bounded deadlines. Only publication of a completed ordinary
+response resets the idle deadline. Guest ACKs and file timestamps cannot renew it.
+Transport access groups are frozen at construction and checked by the launch plan.

@@ -37,10 +37,10 @@ type LaunchPlan struct {
 
 // NewLaunchPlan writes the installed startup syscall policy to a fresh private
 // directory. parent is administrator-controlled. The guest uses UID 65532 and
-// the host's nonroot primary group for directional transport access.
+// the transport's frozen nonroot group for directional access.
 func NewLaunchPlan(ctx context.Context, parent string, image ImagePin, m campaign.RunManifest, tree *staging.Tree, channel *transport.Session) (*LaunchPlan, error) {
 	raw, err := m.Bytes()
-	if err != nil || image.Validate() != nil || tree == nil || channel == nil || os.Getgid() == 0 || image.ImageID != m.ImageDigest || image.HostPlatform != m.HostPlatform || image.ImagePlatform != m.ImagePlatform {
+	if err != nil || image.Validate() != nil || tree == nil || channel == nil || channel.AccessGroup() <= 0 || image.ImageID != m.ImageDigest || image.HostPlatform != m.HostPlatform || image.ImagePlatform != m.ImagePlatform {
 		return nil, ErrLaunch
 	}
 	m, err = campaign.ParseManifest(raw)
@@ -58,7 +58,7 @@ func NewLaunchPlan(ctx context.Context, parent string, image ImagePin, m campaig
 	if receipt.InputTreeDigest != m.InputTreeDigest || receipt.SkillSetDigest != m.SkillSetDigest || receipt.Contract.Version != m.Contract.Version || receipt.Contract.Digest != m.Contract.Digest {
 		return nil, ErrLaunch
 	}
-	p := &LaunchPlan{image: image, manifest: m, manifestDigest: contracts.RawDigest(raw), tree: tree, channel: channel, gid: os.Getgid()}
+	p := &LaunchPlan{image: image, manifest: m, manifestDigest: contracts.RawDigest(raw), tree: tree, channel: channel, gid: channel.AccessGroup()}
 	p.image.RepoDigests = append([]string(nil), image.RepoDigests...)
 	if err = tree.Verify(ctx); err != nil {
 		return nil, err
@@ -92,7 +92,10 @@ func NewLaunchPlan(ctx context.Context, parent string, image ImagePin, m campaig
 	if err = os.WriteFile(filepath.Join(p.directory, "startup-seccomp.json"), startupSeccomp, 0600); err != nil {
 		return nil, err
 	}
-	p.args = []string{"container", "create", "--pull=never", "--platform", image.ImagePlatform, "--restart=no", "--no-healthcheck", "--ipc=private", "--cgroupns=private", "--network=none", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges:true", "--security-opt=seccomp=" + filepath.Join(p.directory, "startup-seccomp.json"), "--user", fmt.Sprintf("65532:%d", p.gid), "--cpus=2", "--memory=4294967296", "--memory-swap=4294967296", "--pids-limit=16", "--ulimit=nofile=256:256", "--ulimit=core=0:0", "--log-driver=none", "--workdir=/run/operator/work", "--entrypoint=/usr/bin/python3", "--env=OPERATOR_TRANSPORT=" + m.Transport}
+	if err = os.WriteFile(filepath.Join(p.directory, "config.json"), []byte(`{"auths":{}}`), 0600); err != nil {
+		return nil, err
+	}
+	p.args = []string{"container", "create", "--pull=never", "--platform", image.ImagePlatform, "--restart=no", "--no-healthcheck", "--ipc=none", "--init=false", "--cgroupns=private", "--network=none", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges:true", "--security-opt=seccomp=" + filepath.Join(p.directory, "startup-seccomp.json"), "--user", fmt.Sprintf("65532:%d", p.gid), "--cpus=2", "--memory=4294967296", "--memory-swap=4294967296", "--pids-limit=16", "--ulimit=nofile=256:256", "--ulimit=core=0:0", "--log-driver=none", "--workdir=/run/operator/work", "--entrypoint=/usr/bin/python3", "--env=OPERATOR_TRANSPORT=" + m.Transport}
 	for _, tmp := range []struct {
 		path          string
 		bytes, inodes int
@@ -131,6 +134,10 @@ func (p *LaunchPlan) verify(ctx context.Context) error {
 	}
 	info, err := os.Lstat(p.directory)
 	if err != nil || !info.IsDir() || !os.SameFile(info, p.identity) || info.Mode().Perm() != 0700 {
+		return ErrLaunch
+	}
+	config, err := staging.Capture(ctx, filepath.Join(p.directory, "config.json"), 64)
+	if err != nil || string(config) != `{"auths":{}}` {
 		return ErrLaunch
 	}
 	raw, err := staging.Capture(ctx, filepath.Join(p.directory, "startup-seccomp.json"), int64(len(startupSeccomp)))
