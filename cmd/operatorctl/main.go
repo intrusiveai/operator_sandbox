@@ -33,6 +33,9 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 }
 
 func runWithDefaults(ctx context.Context, args []string, stdout, stderr io.Writer, defaults hostconfig.Paths) int {
+	if len(args) > 0 && (args[0] == "submit" || args[0] == "validate") {
+		return submissionCommand(ctx, args, stdout, stderr, defaults)
+	}
 	if len(args) >= 2 && args[0] == "contract" && args[1] == "check" {
 		return checkContract(ctx, args[2:], stdout, stderr)
 	}
@@ -40,7 +43,7 @@ func runWithDefaults(ctx context.Context, args []string, stdout, stderr io.Write
 		return checkConfig(args[2:], stdout, stderr, defaults)
 	}
 	if len(args) < 2 || args[0] != "campaign" || args[1] != "terminate" {
-		fmt.Fprintln(stderr, "usage: operatorctl config check [--config PATH]\n       operatorctl contract check --package-dir DIR --package-version VERSION --package-digest SHA256\n       operatorctl campaign terminate --campaign ID [--config PATH] [--state-root DIR] [--mode immediate] [--reason user-request] [--request-id HEX32] [--docker-bin PATH]")
+		fmt.Fprintln(stderr, "usage: operatorctl submit --bundle FILE --capabilities FILE [--artifacts DIR] --output DIR [--config PATH]\n       operatorctl validate --run DIR [--config PATH]\n       operatorctl config check [--config PATH]\n       operatorctl contract check --package-dir DIR --package-version VERSION --package-digest SHA256\n       operatorctl campaign terminate --campaign ID [--config PATH] [--state-root DIR] [--mode immediate] [--reason user-request] [--request-id HEX32] [--docker-bin PATH]")
 		return 2
 	}
 	flags := flag.NewFlagSet("campaign terminate", flag.ContinueOnError)

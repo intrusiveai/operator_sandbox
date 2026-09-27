@@ -1,5 +1,22 @@
 # Implementation phase handoff
 
+## Current boundary: offline bundle submission
+
+`operatorctl submit --bundle --capabilities [--artifacts] --output` and
+`operatorctl validate --run` now use the administrator-installed contract pin,
+verify authoring provenance and required references, capture exact artifact
+inventories, and persist reusable input snapshots. Validation rereads exact bytes;
+no target/model/Docker contact or campaign authority is created. See
+[Submission](SUBMISSION.md). Executable live preparation/start and service
+installation remain in progress, followed by administrative reporting/retention,
+all specified provider/secret-store integrations and the Attack Harness runtime.
+
+Validation: full `make test`, `go vet ./...`, affected CLI/configuration/capability/staging race tests, and CLI builds for Linux amd64/arm64 and macOS amd64 pass. Tests execute on macOS arm64.
+
+The user confirmed that all stated model providers and secret stores remain in
+MVP scope. They initialized the separate Attack Harness Git repository.
+
+
 ## Completed boundary: Docker launch and live campaign worker
 
 The [host worker](HOST_LAUNCH.md) now connects immutable input staging, local image

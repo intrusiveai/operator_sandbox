@@ -102,3 +102,13 @@ checks, missing versus corrupt configuration and recovery overrides. CLI termina
 tests exercise the real subprocess wrapper with a fake Docker executable that rejects
 any endpoint other than the saved campaign binding. Host/Docker qualification and
 launch integration remain separate gates.
+
+## Installed contract selection
+
+The optional `contract` section contains `directory`, `version` and `digest`.
+When any is supplied, all three MUST be supplied. The directory MUST be absolute;
+the version MUST be a release semver; the digest MUST be `sha256:` followed by 64
+lowercase hex digits. These values MUST come from trusted installation metadata,
+not from a campaign or the package being checked. Submission/validation MUST load
+and verify this package; emergency termination remains usable without it.
+See [offline submission](SUBMISSION.md).

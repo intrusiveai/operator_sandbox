@@ -1343,6 +1343,13 @@ the existing shared conclusion contract.
 
 ## 12. Local workflow and results
 
+The executable offline submission contract is defined in
+[Offline bundle submission](docs/SUBMISSION.md). Installed package selection MUST
+use the administrator's `contract.directory`, `contract.version` and
+`contract.digest`. Offline submission MUST retain exact input bytes and native
+capability provenance without claiming live execution readiness.
+
+
 The staged workflow imports an already authored bundle:
 
 ```sh

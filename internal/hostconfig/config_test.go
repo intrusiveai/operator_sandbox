@@ -189,3 +189,21 @@ func TestPrivateBoundedFileLoading(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestInstalledContractPinIsComplete(t *testing.T) {
+	valid := "contract:\n  directory: /opt/operator/contracts\n  version: '0.1.0'\n  digest: 'sha256:" + strings.Repeat("a", 64) + "'\n"
+	if _, err := Parse([]byte(minimal+valid), linuxDefaults(t)); err != nil {
+		t.Fatal(err)
+	}
+	for _, bad := range []string{
+		"contract: {directory: /opt/contracts}",
+		strings.Replace(valid, "0.1.0", "01.0.0", 1),
+		strings.Replace(valid, "/opt/operator/contracts", "relative", 1),
+		strings.Replace(valid, "sha256:", "sha512:", 1),
+		"contract: {version: '0.1.0'}",
+	} {
+		if _, err := Parse([]byte(minimal+bad), linuxDefaults(t)); err == nil {
+			t.Fatal("accepted invalid pin", bad)
+		}
+	}
+}

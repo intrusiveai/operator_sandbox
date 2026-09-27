@@ -55,6 +55,11 @@ func Defaults(goos, home string) (Paths, error) {
 }
 
 type Config struct {
+	Contract struct {
+		Directory string `json:"directory"`
+		Version   string `json:"version"`
+		Digest    string `json:"digest"`
+	} `json:"contract"`
 	Target struct {
 		ProfileFile string `json:"profile_file"`
 	} `json:"target"`
@@ -131,11 +136,12 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 	c.Spool.MaxBytes = DefaultSpoolBytes
 	c.Evidence.MaxArchiveBytes = DefaultEvidenceBytes
 	fields := map[string]map[string]*string{
-		"target": {"profile_file": &c.Target.ProfileFile},
-		"engine": {"image": &c.Engine.Image},
-		"docker": {"endpoint": &c.Docker.Endpoint, "executable": &c.Docker.Executable},
-		"state":  {"root": &c.State.Root},
-		"cache":  {"release_directory": &c.Cache.ReleaseDirectory},
+		"contract": {"directory": &c.Contract.Directory, "version": &c.Contract.Version, "digest": &c.Contract.Digest},
+		"target":   {"profile_file": &c.Target.ProfileFile},
+		"engine":   {"image": &c.Engine.Image},
+		"docker":   {"endpoint": &c.Docker.Endpoint, "executable": &c.Docker.Executable},
+		"state":    {"root": &c.State.Root},
+		"cache":    {"release_directory": &c.Cache.ReleaseDirectory},
 	}
 	for section, node := range sections {
 		allowed, ok := fields[section]
@@ -174,6 +180,11 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 	}
 	if dockercontrol.ValidateImageSelector(c.Engine.Image) != nil {
 		return Config{}, ErrImage
+	}
+	if c.Contract.Directory != "" || c.Contract.Version != "" || c.Contract.Digest != "" {
+		if !absolute(c.Contract.Directory) || !regexp.MustCompile(`^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$`).MatchString(c.Contract.Version) || !regexp.MustCompile(`^sha256:[0-9a-f]{64}$`).MatchString(c.Contract.Digest) {
+			return Config{}, errors.New("contract requires an absolute directory, release version and independently installed SHA-256 digest")
+		}
 	}
 	if campaign.ValidateDockerEndpoint(c.Docker.Endpoint) != nil {
 		return Config{}, errors.New("docker.endpoint must be a canonical local unix:/// socket")
