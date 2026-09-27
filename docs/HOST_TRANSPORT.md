@@ -5,6 +5,13 @@ shared messages over real named FIFOs and regular files. It does not start Docke
 implement the Python peer, verify confinement, dispatch operations or grant durable
 admission. No shared wire schemas or Interceptor APIs change.
 
+The sibling Attack Harness now supplies a Python spool peer. Run
+`OPERATOR_PYTHON_PEER_TEST=1 go test ./internal/transport -run TestPythonSpoolInteroperability -count=1`
+with its checkout and Operator's prepared `.venv` to exchange the complete wire
+startup and one ordinary operation using real files. This tests peer communication;
+the test-only guest does not claim confinement or validate campaign inputs. Docker
+Desktop mount behavior and the complete runtime still require qualification.
+
 ## Launcher and broker integration
 
 1. Load the installed `contracts.Protocol`, establish the campaign/launch identity,
