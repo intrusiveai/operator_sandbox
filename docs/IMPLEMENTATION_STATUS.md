@@ -1,6 +1,14 @@
 # Implementation phase handoff
 
-## Latest boundary: public preparation and supervised startup
+## Latest boundary: two-stage confinement startup feasibility
+
+The real Distroless ARM64 confinement probe exposed a missing `openat2` allowance
+in Docker's pre-Python startup path. The startup policy now permits it; the
+Attack Harness live policy omits it. The corrected two-stage policy passed twelve
+denial probes and permitted bounded file I/O in the pinned Python 3.13.5 runtime.
+See Attack Harness's `native/README.md` for scope and remaining qualification.
+
+## Completed boundary: public preparation and supervised startup
 
 `campaign prepare` freezes an offline start request; `campaign start` submits its
 fixed worker to systemd or launchd and waits for retained acceptance. Repeated
