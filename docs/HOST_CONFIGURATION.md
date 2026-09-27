@@ -118,3 +118,9 @@ See [offline submission](SUBMISSION.md).
 `credentials.file` selects the absolute private host credential configuration.
 Configuration checking validates the path; the provider setup MUST separately load
 and validate its profiles before resolving a credential. See [Credentials](CREDENTIALS.md).
+
+## Model provider selection
+
+`model.profile_file` selects the absolute private native provider profile.
+The host MUST load it before campaign preparation, freeze its identity and bind the
+selected codec and model. See [Model providers](MODEL_PROVIDERS.md).

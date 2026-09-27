@@ -55,6 +55,9 @@ func Defaults(goos, home string) (Paths, error) {
 }
 
 type Config struct {
+	Model struct {
+		ProfileFile string `json:"profile_file"`
+	} `json:"model"`
 	Credentials struct {
 		File string `json:"file"`
 	} `json:"credentials"`
@@ -139,6 +142,7 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 	c.Spool.MaxBytes = DefaultSpoolBytes
 	c.Evidence.MaxArchiveBytes = DefaultEvidenceBytes
 	fields := map[string]map[string]*string{
+		"model":       {"profile_file": &c.Model.ProfileFile},
 		"credentials": {"file": &c.Credentials.File},
 		"contract":    {"directory": &c.Contract.Directory, "version": &c.Contract.Version, "digest": &c.Contract.Digest},
 		"target":      {"profile_file": &c.Target.ProfileFile},
@@ -202,7 +206,7 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 	if !absolute(c.Cache.ReleaseDirectory) {
 		return Config{}, ErrPath
 	}
-	if (c.Target.ProfileFile != "" && !absolute(c.Target.ProfileFile)) || (c.Credentials.File != "" && !absolute(c.Credentials.File)) {
+	if (c.Target.ProfileFile != "" && !absolute(c.Target.ProfileFile)) || (c.Credentials.File != "" && !absolute(c.Credentials.File)) || (c.Model.ProfileFile != "" && !absolute(c.Model.ProfileFile)) {
 		return Config{}, ErrPath
 	}
 	// Reusable approvals must not be inside the purgeable campaign tree.

@@ -399,10 +399,10 @@ ingestion. YAML uses a data-only safe parser with bounded aliases/depth.
 
 Use product-built **data bundles** and verified
 immutable directory trees. The signed bundle binds normalized path, size, media
-type and content digest for every file. A bounded unprivileged networkless
-builder has no signing key, runtime socket or host-control authority. A separate
-project-scoped publisher signs only validated instruction-only bundles, never
-executable releases. Storage/archive decoding is bounded and cannot install code.
+type and content digest for every file. The trusted host-side `operatorctl skill build` implementation MUST parse and
+validate the complete input inventory before using the local signing key. It MUST
+NOT execute submitted files, scripts, hooks or commands. It MUST sign only validated
+instruction-only bundles, never executable releases. Storage/archive decoding is bounded and cannot install code.
 
 The SkillSetManifest binds exact bundle digests in canonical skill-ID order,
 loader schema/implementation, entrypoints and aggregate loading digest. Initially
@@ -557,6 +557,7 @@ fail explicitly. The host validates like-for-like requests; it never silently
 translates between provider families. No streaming, provider-hosted tools,
 arbitrary URLs, persistent provider state, HTTP shim or synthetic API keys.
 
+The [host provider profile](docs/MODEL_PROVIDERS.md) implements route selection.
 ModelProviderProfile selects trusted endpoint/model/deployment, exact codecs,
 supported features, limits and credential references. Guest requests cannot
 override headers, route, region, cloud project, provider or credentials. Disable

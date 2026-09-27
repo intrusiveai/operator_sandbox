@@ -1,5 +1,29 @@
 # Implementation phase handoff
 
+## Current boundary: native provider transport and private profiles
+
+`internal/modelprovider` loads private pinned profiles for OpenAI Chat/Responses,
+Anthropic Messages, Bedrock Converse, Gemini Developer/Vertex, Azure OpenAI and
+LiteLLM. Generation uses fixed HTTPS endpoints, host credentials, no replay or
+redirects, bounded native JSON and sanitized failures. Bedrock uses AWS SDK
+workload identity, endpoint resolution and SigV4 signing while preserving raw
+HTTP bodies; no SDK response conversion drops native fields. See
+[Model providers](MODEL_PROVIDERS.md).
+
+The shared Go/Python model validators and host service still implement only the
+Chat codec. Remaining native codecs, executable startup wiring and real provider
+qualification MUST be finished before declaring every route campaign-ready.
+The user approved trusted host-side skill validation/signing with a host-local
+Ed25519 key; the spec now replaces the separate builder/publisher requirement.
+
+Validation: full Go/Python suite and `go vet` pass; subsequent Bedrock raw-body
+changes pass the affected provider/credential race tests. TLS tests exercise every
+HTTP family, cancellation, redirects, byte limits, private-error exclusion and
+native byte preservation; signed Bedrock tests use synthetic workload credentials.
+No live cloud/model claim follows from those tests. Cross-platform builds are
+checked separately; no Interceptor or Attack Harness files changed in this boundary.
+
+
 ## Current boundary: all four host secret stores
 
 `internal/credentials` implements AWS Secrets Manager, Azure Key Vault, Google
@@ -13,7 +37,7 @@ Validation: full Go/Python suite, `go vet`, credential race/integration tests an
 credential test builds for Linux amd64/arm64 and macOS amd64 pass. Tests use
 synthetic SDK clients and a local TLS Vault server on macOS arm64. No Interceptor
 files changed. Skill signing now has an approved host-local Ed25519 trust root;
-the separate-builder requirement is awaiting the user's decision.
+the user approved trusted host-side skill parsing/validation/signing, replacing the separate builder/publisher requirement.
 
 
 ## Current boundary: offline bundle submission

@@ -46,14 +46,15 @@ type awsSecretsClient interface {
 type awsBackend struct{ client awsSecretsClient }
 
 func newAWSBackend(ctx context.Context, profile SecretStoreProfile) (Backend, error) {
-	if os.Getenv("AWS_ACCESS_KEY_ID") != "" || os.Getenv("AWS_SECRET_ACCESS_KEY") != "" || os.Getenv("AWS_SESSION_TOKEN") != "" {
-		return nil, errors.New("AWS secret store requires workload identity")
-	}
-	cfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(profile.Region), awsconfig.WithSharedConfigFiles([]string{}), awsconfig.WithSharedCredentialsFiles([]string{}))
+	cfg, err := AWSWorkloadConfig(ctx, profile.Region)
 	if err != nil {
 		return nil, err
 	}
-	return &awsBackend{client: secretsmanager.NewFromConfig(cfg)}, nil
+	return &awsBackend{client: secretsmanager.NewFromConfig(cfg, func(o *secretsmanager.Options) {
+		o.BaseEndpoint = nil
+		o.EndpointResolver = nil
+		o.EndpointResolverV2 = secretsmanager.NewDefaultEndpointResolverV2()
+	})}, nil
 }
 func (b *awsBackend) Read(ctx context.Context, profile SecretStoreProfile, locator Locator) ([]byte, string, error) {
 	if locator.Region != profile.Region {
@@ -85,15 +86,9 @@ type azureBackend struct {
 }
 
 func newAzureBackend(_ context.Context, profile SecretStoreProfile) (Backend, error) {
-	var credential azcore.TokenCredential
-	workload, err := azidentity.NewWorkloadIdentityCredential(nil)
-	if err == nil {
-		credential = workload
-	} else {
-		credential, err = azidentity.NewManagedIdentityCredential(nil)
-		if err != nil {
-			return nil, err
-		}
+	credential, err := AzureWorkloadIdentity()
+	if err != nil {
+		return nil, err
 	}
 	client, err := azsecrets.NewClient(profile.VaultURL, credential, nil)
 	if err != nil {
@@ -129,17 +124,9 @@ type gcpSecretsClient interface {
 type gcpBackend struct{ client gcpSecretsClient }
 
 func newGCPBackend(ctx context.Context, _ SecretStoreProfile) (Backend, error) {
-	identity, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/cloud-platform")
+	identity, err := GoogleWorkloadIdentity(ctx)
 	if err != nil {
 		return nil, err
-	}
-	if len(identity.JSON) > 0 {
-		var kind struct {
-			Type string `json:"type"`
-		}
-		if json.Unmarshal(identity.JSON, &kind) != nil || kind.Type != "external_account" {
-			return nil, errors.New("Google secret store requires workload identity")
-		}
 	}
 	client, err := secretmanager.NewClient(ctx, option.WithCredentials(identity))
 	if err != nil {
@@ -239,4 +226,45 @@ func (b *gcpBackend) Close() error {
 		return c.Close()
 	}
 	return nil
+}
+
+func AWSWorkloadConfig(ctx context.Context, region string) (aws.Config, error) {
+	if os.Getenv("AWS_ACCESS_KEY_ID") != "" || os.Getenv("AWS_SECRET_ACCESS_KEY") != "" || os.Getenv("AWS_SESSION_TOKEN") != "" {
+		return aws.Config{}, errors.New("AWS secret store requires workload identity")
+	}
+	cfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(region), awsconfig.WithSharedConfigFiles([]string{}), awsconfig.WithSharedCredentialsFiles([]string{}))
+	if err != nil {
+		return aws.Config{}, err
+	}
+	return cfg, nil
+}
+
+func AzureWorkloadIdentity() (azcore.TokenCredential, error) {
+	var credential azcore.TokenCredential
+	workload, err := azidentity.NewWorkloadIdentityCredential(nil)
+	if err == nil {
+		credential = workload
+	} else {
+		credential, err = azidentity.NewManagedIdentityCredential(nil)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return credential, nil
+}
+
+func GoogleWorkloadIdentity(ctx context.Context) (*google.Credentials, error) {
+	identity, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/cloud-platform")
+	if err != nil {
+		return nil, err
+	}
+	if len(identity.JSON) > 0 {
+		var kind struct {
+			Type string `json:"type"`
+		}
+		if json.Unmarshal(identity.JSON, &kind) != nil || kind.Type != "external_account" {
+			return nil, errors.New("Google secret store requires workload identity")
+		}
+	}
+	return identity, nil
 }
