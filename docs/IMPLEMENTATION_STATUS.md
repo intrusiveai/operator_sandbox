@@ -1,5 +1,14 @@
 # Implementation phase handoff
 
+## Current boundary: retained launch inputs and worker serialization
+
+Staged launch inputs can now be retained in bounded journal parts with a final
+verified completion record. Corruption, cancellation and mismatched staging fence
+the campaign. The installed state root has a private nonblocking worker lease;
+cross-process tests confirm contention and automatic release on process loss.
+The lease does not reconcile old Docker containers or authorize recovered execution.
+CLI/service orchestration and startup recovery gates remain required.
+
 ## Current boundary: production launch-input assembly
 
 `Target.BuildLaunch` now composes the verified image, embedded prompt/loader, private

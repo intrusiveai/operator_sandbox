@@ -111,3 +111,34 @@ fresh host campaign, persist preparation and launch inputs, recheck image/target
 identity, stage files and start the worker. Tests MUST cover all five codecs,
 selected signed skills, supporting references, prompt composition, complete launch
 identity validation and actual immutable file staging.
+
+## Durable launch-input retention
+
+Before execution, the worker composition MUST call `Launch.RetainInputs` for the
+actual verified staged tree. It MUST match the campaign manifest and package pins,
+visit mounted files in canonical path order, and journal exact bytes in bounded
+parts with path, size, raw digest and part numbering. The private staging wrapper
+receipt MUST be verified separately from the mounted file count/byte inventory.
+A completion record MUST be written only after a final inventory check and matching
+aggregate counts. Failure MUST fence execution; retries MUST NOT append a second
+retention transaction through the same launch object.
+
+These retained inputs include the effective prompt, input/skill manifests, selected
+skill files, full engine context, ScenarioBundle and supporting references. Their
+journal records belong to the campaign's independently purgeable storage. Retention
+MUST NOT fabricate bootstrap replies or grant execution authority; target adoption
+and live bootstrap remain independent gates.
+
+## One worker per installed state root
+
+The worker MUST acquire `campaign.AcquireHostLease` before campaign acceptance and
+hold it through execution/cleanup. All workers MUST use the same administrator-owned
+state root. The lease MUST use a stable private regular lock file and nonblocking
+OS locking; its file MUST NOT be unlinked on release. Unsafe links, public files
+and competing workers MUST fail. Process exit MUST release the OS lock.
+
+Acquiring this lock MUST NOT imply that containers left by a previous process have
+stopped or permit execution recovery. Startup MUST reconcile persisted Docker
+bindings and unresolved launch outcomes before accepting another campaign.
+Administrative termination, status and evidence inspection MUST remain usable
+without acquiring the execution lease.

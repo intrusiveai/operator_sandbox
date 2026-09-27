@@ -162,8 +162,34 @@ func TestProductionLaunchInputsForEveryCodec(t *testing.T) {
 			if err != nil {
 				t.Fatal("real staging", err)
 			}
+			defer tree.Discard()
 			if err = tree.Verify(context.Background()); err != nil {
 				t.Fatal(err)
+			}
+			if err = launch.RetainInputs(context.Background(), writer, tree); err != nil {
+				t.Fatal("input retention", err)
+			}
+			if err = launch.RetainInputs(context.Background(), writer, tree); err == nil {
+				t.Fatal("repeated input retention accepted")
+			}
+			if err = writer.Close(); err != nil {
+				t.Fatal(err)
+			}
+			markers, parts := 0, 0
+			_, err = campaign.Inspect(root, "campaign-1", func(e campaign.Event) error {
+				if e.Kind == "campaign.launch-inputs-retained" {
+					markers++
+				}
+				if e.Kind == "campaign.launch-input" {
+					parts++
+					if len(e.Content) != 1 || e.Content[0].Role != "input-part" {
+						t.Fatal("invalid retained part")
+					}
+				}
+				return nil
+			})
+			if err != nil || markers != 1 || parts != tree.Receipt().FileCount {
+				t.Fatal("retained input chain", markers, parts, err)
 			}
 			if err = tree.Discard(); err != nil {
 				t.Fatal(err)
@@ -279,5 +305,76 @@ func TestLaunchStagesSignedSkillAndPassiveReference(t *testing.T) {
 	}
 	if err = tree.Discard(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestLaunchRetentionFailureNeverPublishesCompletion(t *testing.T) {
+	for _, mode := range []string{"changed tree", "cancelled", "wrong tree"} {
+		t.Run(mode, func(t *testing.T) {
+			in := fixture(t)
+			target, err := preparation.Build(in)
+			if err != nil {
+				t.Fatal(err)
+			}
+			config := launchConfig(t, target, "openai-chat-text-tools-v1")
+			launch, err := target.BuildLaunch(config)
+			if err != nil {
+				t.Fatal(err)
+			}
+			root := t.TempDir()
+			os.Chmod(root, 0700)
+			writer, err := campaign.Create(root, launch.Manifest)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer writer.Close()
+			writer.ConfigureFreeSpace(0)
+			staged := launch
+			if mode == "wrong tree" {
+				config.PromptMode = "replacement"
+				config.Replacement = []byte("Different prompt.")
+				staged, err = target.BuildLaunch(config)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			parent := t.TempDir()
+			os.Chmod(parent, 0700)
+			tree, err := staging.Create(context.Background(), in.Protocol, parent, staging.Manifests{InputTree: staged.Inputs.InputTree, SkillSet: staged.Inputs.SkillSet, Skills: staged.Inputs.Skills}, staged.Contents)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer tree.Discard()
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			if mode == "cancelled" {
+				cancel()
+			}
+			if mode == "changed tree" {
+				file := filepath.Join(tree.Directory(), "input", "system-prompt.txt")
+				if err = os.Chmod(file, 0600); err != nil {
+					t.Fatal(err)
+				}
+				if err = os.WriteFile(file, []byte("changed"), 0444); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err = launch.RetainInputs(ctx, writer, tree); err == nil {
+				t.Fatal("bad input retained")
+			}
+			if writer.Fence().Err() == nil {
+				t.Fatal("failure did not fence campaign")
+			}
+			writer.Close()
+			_, err = campaign.Inspect(root, "campaign-1", func(e campaign.Event) error {
+				if e.Kind == "campaign.launch-inputs-retained" {
+					t.Fatal("false completion")
+				}
+				return nil
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+		})
 	}
 }

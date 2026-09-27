@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"sort"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
@@ -34,6 +35,7 @@ type LaunchConfig struct {
 // Launch is freshly prepared in memory. It does not authorize execution, persist
 // a journal, contact providers or claim that a live guest completed bootstrap.
 type Launch struct {
+	retained                atomic.Bool
 	Manifest                campaign.RunManifest
 	Inputs                  campaign.LaunchInputs
 	Contents                map[string][]byte
