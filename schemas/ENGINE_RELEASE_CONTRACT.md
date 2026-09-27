@@ -1,14 +1,15 @@
 # Engine release discovery and compatibility
 
 Status: accepted MVP design, 2026-09-16; local identity resolution and HTTPS/cache
-validation implemented; launcher integration and qualification pending.
+validation and embedded-file inspection implemented; executable startup integration
+and qualification pending.
 Operator owns this host-only discovery contract for local Attack Harness images and their
 release approval. The shared host/harness contract separately governs runtime
 messages and data exchange.
 
 The [host image preparation implementation](../docs/IMAGE_PREPARATION.md) provides
-local pinning, strict compatibility checks and atomic caching. Embedded release-file
-inspection, configuration/launcher integration and actual runtime qualification
+local pinning, strict compatibility checks, atomic caching and stopped-image file
+inspection. Configuration/launcher integration and actual runtime qualification
 remain prerequisites for executing the guest.
 
 ## 1. Local image identity
@@ -127,3 +128,64 @@ The Attack Harness release pipeline publishes one response per supported platfor
 after its image/package/runtime qualification gates pass. Archive image/config/
 manifest identities, embedded metadata, build provenance, SBOM and test evidence
 with the release. Verify upstream build inputs according to the release pipeline requirements.
+
+## 5. Embedded image files
+
+After HTTPS/cache approval, Operator MUST inspect the same pinned local image
+without starting guest code. It MUST create a stopped, nonroot, networkless,
+read-only inspection container with capabilities dropped, no-new-privileges,
+restart disabled, a private empty Docker CLI configuration and pull forbidden.
+Images declaring volumes MUST be rejected. All subsequent reads and removal MUST
+use the full returned container ID and saved local daemon binding. Operator MUST
+verify the image ID, inspection label and never-started state before and after
+reading. It MUST remove that exact stopped container before accepting the files.
+An uncertain create/removal MUST fail preparation; a known full ID MUST remain
+available for administrative cleanup. Inspection MUST NOT start, execute in, or
+force-remove a container.
+
+The required fixed paths are:
+
+| Path | Content |
+| --- | --- |
+| `/opt/operator/engine/share/engine-manifest.json` | Closed manifest below, at most 64 KiB. |
+| `/opt/operator/engine/share/default-system-prompt.txt` | Exact default prompt satisfying the shared prompt contract. |
+| `/opt/operator/engine/lib/attack_harness/skill_loader.py` | Fixed loader implementation; its raw digest binds SkillSetManifest. |
+| `/opt/operator/engine/share/tool-catalog.json` | Shared package's complete native tool projections. |
+
+Docker archive output MUST be bounded to 1 MiB plus 64 KiB of framing per file.
+The host MUST decode it in memory and accept exactly one regular file bearing the
+expected basename, at most 1 MiB. It MUST reject links, special files, sparse
+representations, extended attributes, set-ID/sticky bits, alternate paths,
+additional entries and nonzero trailing data. No archive path may be extracted
+onto the host filesystem. The whole inspection MUST have a 60-second deadline;
+cleanup MUST have its own five-second deadline after cancellation/failure.
+
+`engine-manifest.json` MUST contain exactly:
+
+- `api_version`: `operator.dev/engine-manifest/v1alpha1`.
+- `contract`: exact installed `{version, digest}` package identity.
+- `runtime_profile`: `operator-container/v1`.
+- `platform`: the approved image's `linux/amd64` or `linux/arm64`.
+- `entrypoint`: `['/usr/bin/python3', '-I', '-S', '-B', '/opt/operator/engine/bootstrap.py']` as a JSON array of strings.
+- `transports`: `['fifo', 'spool']` in this order.
+- `prompt`, `skill_loader`, `tool_catalog`: each a closed object containing
+  `size_bytes` and `digest`, the actual file length and raw SHA-256 digest.
+
+The host MUST reject missing/extra fields, duplicate JSON keys, identity mismatch,
+changed file bytes, invalid prompt bytes or a loader containing invalid UTF-8/NUL.
+The full approved image ID binds this manifest; the manifest MUST NOT contain its
+own image ID.
+
+`tool-catalog.json` MUST contain exactly `api_version`, set to
+`operator.dev/model-tool-catalog/v1alpha1`, and `codecs`. The latter MUST map all five
+supported codec IDs to the native tool arrays defined by
+[MODEL_TOOL_CATALOG.md](MODEL_TOOL_CATALOG.md), generated with the complete installed
+operation registry. Operator MUST compare each canonical array with its own
+verified package projection. Campaign startup MUST then derive the narrower
+projection from the actual admitted operation set. Image files MUST NOT alter
+host commands, mounts, tool handlers, policy settings or credential selection.
+
+Tests MUST cover tampered bytes/metadata, catalog divergence, daemon/image drift,
+archive rejection, incomplete create replies, independently cancelled cleanup and
+removal failure. Passing these host tests does not replace native Docker image
+qualification.

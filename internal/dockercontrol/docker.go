@@ -30,6 +30,7 @@ type command func(context.Context, string, ...string) ([]byte, error)
 
 type Client struct {
 	run        command
+	archive    command
 	executable string
 }
 
@@ -50,22 +51,23 @@ func New(executable string) (*Client, error) {
 	if err != nil || !info.Mode().IsRegular() || info.Mode().Perm()&0111 == 0 {
 		return nil, errors.New("Docker executable unavailable")
 	}
-	return &Client{executable: executable, run: func(ctx context.Context, endpoint string, args ...string) ([]byte, error) {
+	return &Client{executable: executable, run: dockerCommand(executable, outputLimit), archive: dockerCommand(executable, imageArchiveLimit)}, nil
+}
+
+func dockerCommand(executable string, limit int) command {
+	return func(ctx context.Context, endpoint string, args ...string) ([]byte, error) {
 		cmd := exec.CommandContext(ctx, executable, append([]string{"--host", endpoint}, args...)...)
 		cmd.Env = dockerEnvironment(os.Environ())
-		// Context cancellation kills the CLI child. Bound pipe draining too, in case
-		// an unexpected child inherited a descriptor. Docker failure stays unconfirmed.
 		cmd.WaitDelay = 100 * time.Millisecond
-		out := &boundedOutput{}
+		out := &boundedOutput{limit: limit}
 		cmd.Stdout, cmd.Stderr = out, io.Discard
-		if err := cmd.Run(); err != nil {
-			return nil, err
-		}
+		err := cmd.Run()
 		if out.overflow {
 			return nil, errors.New("Docker output limit")
 		}
-		return out.Bytes(), nil
-	}}, nil
+		// Preserve a complete create ID even when the CLI reports a later error.
+		return out.Bytes(), err
+	}
 }
 
 func dockerEnvironment(env []string) []string {
@@ -83,6 +85,7 @@ func dockerEnvironment(env []string) []string {
 
 type boundedOutput struct {
 	buffer   bytes.Buffer
+	limit    int
 	overflow bool
 }
 
@@ -90,7 +93,11 @@ func (b *boundedOutput) Bytes() []byte { return b.buffer.Bytes() }
 
 func (b *boundedOutput) Write(p []byte) (int, error) {
 	n := len(p)
-	available := outputLimit - b.buffer.Len()
+	limit := b.limit
+	if limit == 0 {
+		limit = outputLimit
+	}
+	available := limit - b.buffer.Len()
 	if len(p) > available {
 		b.overflow = true
 		p = p[:available]

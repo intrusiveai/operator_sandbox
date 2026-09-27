@@ -1,5 +1,14 @@
 # Implementation phase handoff
 
+## Current boundary: immutable image release-file inspection
+
+Operator can inspect fixed files from an approved local image without running guest
+code. Bounded in-memory archive reads reject links and extra content; exact Docker
+identity and stopped-state checks govern cleanup. Embedded prompt/loader/catalog
+bytes must match the closed manifest, installed package and all five native tool
+projections. See [release file admission](../schemas/ENGINE_RELEASE_CONTRACT.md#5-embedded-image-files).
+Executable startup wiring and actual image qualification remain outstanding.
+
 ## Current boundary: shared fixed model tools
 
 The installed package now defines eleven model-facing tools with matching Go/Python
