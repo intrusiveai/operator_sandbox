@@ -41,10 +41,19 @@ type embeddedManifest struct {
 // Embedded contains checked immutable image data. Accessors return independent
 // copies; the image cannot select host commands, paths or policy settings.
 type Embedded struct {
-	manifest embeddedManifest
-	files    map[string][]byte
+	image         dockercontrol.ImagePin
+	releaseDigest string
+	manifest      embeddedManifest
+	files         map[string][]byte
 }
 
+// Matches binds checked bytes to the same approved image and local daemon.
+func (e *Embedded) Matches(p Prepared) bool {
+	return e != nil && e.releaseDigest != "" && e.releaseDigest == p.Release.Digest() &&
+		e.image.ImageID == p.Image.ImageID && e.image.Endpoint == p.Image.Endpoint &&
+		e.image.DaemonID == p.Image.DaemonID && e.image.HostPlatform == p.Image.HostPlatform &&
+		e.image.ImagePlatform == p.Image.ImagePlatform
+}
 func (e *Embedded) DefaultPrompt() []byte { return bytes.Clone(e.files[PromptPath]) }
 func (e *Embedded) LoaderDigest() string  { return e.manifest.SkillLoader.Digest }
 func (e *Embedded) ManifestBytes() []byte { return bytes.Clone(e.files[ManifestPath]) }
@@ -82,6 +91,9 @@ func InspectEmbedded(ctx context.Context, reader FileInspector, prepared Prepare
 	if err != nil {
 		return nil, inspection, err
 	}
+	embedded.image = prepared.Image
+	embedded.image.RepoDigests = nil
+	embedded.releaseDigest = prepared.Release.Digest()
 	return embedded, inspection, nil
 }
 func parseEmbedded(files map[string][]byte, platform string, h Requirements, p *contracts.Protocol) (*Embedded, error) {

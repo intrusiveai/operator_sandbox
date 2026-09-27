@@ -2,8 +2,9 @@
 
 Status: implemented in `internal/dockercontrol/image.go` and
 `internal/imagerelease`. This stage resolves local image identity and obtains a
-validated compatibility response. It does not create/start a container or establish
-runtime confinement. The accepted [release contract](../schemas/ENGINE_RELEASE_CONTRACT.md)
+validated compatibility response. Separate embedded-file inspection creates and
+removes a stopped container without executing guest code. Runtime confinement
+requires the actual launch checks. The accepted [release contract](../schemas/ENGINE_RELEASE_CONTRACT.md)
 remains authoritative. These host-only records do not change the shared wire package.
 
 ## Preparation interface
@@ -128,3 +129,12 @@ policy and complete confinement/startup checks. The
 image build, live Python confinement and full host/runtime qualification remain
 separate work. A release record identifies installed runtime policy; it supplies
 no executable code, Docker flags, filesystem mounts or downloaded shared contract.
+
+## Embedded metadata and launch-input binding
+
+After approval, `InspectEmbedded` MUST perform the fixed-path inspection in
+[the embedded-file contract](../schemas/ENGINE_RELEASE_CONTRACT.md#5-embedded-image-files).
+It MUST return verified bytes only after cleanup succeeds. Its immutable result
+MUST retain the approved image/release and local daemon identity. The launch-input
+builder MUST reject combining that result with another image, release, daemon or
+host platform, even if the alternate tuple shares the same contract package.

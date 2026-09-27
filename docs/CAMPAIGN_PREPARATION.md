@@ -89,3 +89,25 @@ descriptors as `campaign.reference-staged` records for later reporting.
 Passive references MUST NOT become native execution artifact receipts. The harness
 MUST explicitly publish data through the ordinary artifact protocol before using it
 in an experiment. Snapshot restoration MUST preserve the same reference inventory.
+
+## Production launch inputs
+
+`Target.BuildLaunch` MUST consume the checked local image/release and embedded
+files, private model profile, explicitly verified skill selection, administrator
+limits and host-assigned launch identity. It MUST derive native tool declarations
+from the installed package, compose exact prompt bytes, apply bundle budget
+narrowing, and fill target/feedback/reference bindings from live preparation.
+
+It MUST construct EngineContext, InputTreeManifest and RunManifest in that order,
+with canonical object digests and separate raw file digests. It MUST validate the
+model policy and complete manifest set, and return copied staging contents.
+The skill-loader digest MUST match the admitted embedded implementation. Model
+endpoints and credential selectors MUST remain outside guest-visible inputs.
+
+Construction MUST NOT perform model calls, publish execution authority or fabricate
+guest bootstrap replies. The worker MUST receive the returned inputs and carry out
+the live bootstrap before admission. CLI/service composition MUST still claim a
+fresh host campaign, persist preparation and launch inputs, recheck image/target
+identity, stage files and start the worker. Tests MUST cover all five codecs,
+selected signed skills, supporting references, prompt composition, complete launch
+identity validation and actual immutable file staging.

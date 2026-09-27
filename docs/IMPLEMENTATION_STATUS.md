@@ -1,5 +1,15 @@
 # Implementation phase handoff
 
+## Current boundary: production launch-input assembly
+
+`Target.BuildLaunch` now composes the verified image, embedded prompt/loader, private
+provider settings, shared tool catalog, selected skills, submitted references and
+resolved budgets into EngineContext, input manifests and RunManifest. Tests exercise
+all five codecs through startup identity validation and real immutable staging,
+including a locally signed custom skill. Checked embedded bytes remain bound to
+the approved image/release and local daemon. CLI/service orchestration, retained
+launch-file publication, Attack Harness runtime and live qualification remain.
+
 ## Current boundary: production limits and passive reference preparation
 
 Administrator YAML now accepts closed campaign/harness overrides and resolves all
