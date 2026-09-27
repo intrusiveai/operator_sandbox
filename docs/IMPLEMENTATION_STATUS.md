@@ -1,5 +1,17 @@
 # Implementation phase handoff
 
+## Current boundary: private provider options and public startup projection
+
+Administrator profiles now require codec-specific `codec_options`, with shared
+schema validation and explicit allowed response model IDs. `PublicModel` derives
+startup caps/tool digests from the frozen host profile and trusted native catalog,
+without exposing endpoints or credential selectors. All ten supported
+provider/codec combinations match the shared startup fixtures. Settings accessors
+return independent copies. See [Model providers](MODEL_PROVIDERS.md).
+
+Full Go/Python suite, provider race tests and vet pass on macOS arm64. The next
+work connects the fixed model-tool projection and executable campaign startup.
+
 ## Current boundary: stateless Responses contract
 
 All five specified native codec families now have shared Go/Python validation:
@@ -10,8 +22,8 @@ failed/incomplete results, cumulative usage and replay. See the
 [Responses contract](../schemas/RESPONSES_MODEL_CODEC_CONTRACT.md).
 
 Full Go/Python suite, targeted contract/model-service race tests and vet pass
-on macOS arm64. Provider profiles still need executable startup settings/tool
-projection wiring. The
+on macOS arm64. Provider profiles now have explicit startup codec options and a safe projection
+constructor; executable startup/tool-projection wiring remains. The
 Attack Harness loop and live provider/runtime qualification remain outstanding.
 
 ## Current boundary: native Gemini contract and campaign accounting

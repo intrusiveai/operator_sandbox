@@ -18,7 +18,11 @@ provider/codec/authentication combinations and out-of-bounds limits.
   "credential_id": "model-key",
   "maximum_prompt_tokens": 32768,
   "maximum_completion_tokens": 4096,
-  "maximum_response_bytes": 1048576
+  "maximum_response_bytes": 1048576,
+  "codec_options": {
+    "instruction_role": "developer",
+    "response_models": ["administrator-selected-model"]
+  }
 }
 ```
 
@@ -26,6 +30,33 @@ provider/codec/authentication combinations and out-of-bounds limits.
 framing; it is used for conservative campaign reservations. Profiles MUST set
 positive token bounds and a response-byte limit at most 4 MiB. Secrets MUST resolve
 through the [host credential resolver](CREDENTIALS.md).
+
+Profiles MUST include a closed `codec_options` object for their native family:
+
+| Codec | Required options |
+| --- | --- |
+| Chat | `instruction_role` (`system` or `developer`), `response_models` |
+| Responses | `reasoning` (null or supported pinned configuration), `response_models` |
+| Anthropic | `thinking` (disabled, adaptive or enabled configuration), `response_models` |
+| Bedrock | Empty object `{}`; routing fixes the model and Converse has no response-model echo |
+| Gemini | `thinking_config` (supported pinned configuration, including `{}`), `response_models` |
+
+`response_models` MUST be a nonempty unique list of explicitly accepted native
+response model/version IDs. An administrator MUST include the concrete model IDs
+returned for a selected alias; the host MUST NOT infer aliases or accept arbitrary
+versions. Reasoning/thinking options MUST satisfy the shared native schemas.
+Enabled Anthropic thinking MUST have a budget below the output ceiling. Unknown
+options and options for another codec MUST be rejected.
+
+`Profile.PublicModel` MUST derive the secret-free EngineContext model object from
+the frozen profile and trusted native tool projection. The generation ceiling MUST
+come from `maximum_completion_tokens`; `tools_digest` MUST be calculated from the
+actual ordered projection, never supplied as administrator or guest authority.
+Profile options MUST NOT contain these derived fields. The complete profile's
+canonical digest MUST bind the projection while endpoint, region, authentication
+and credential identifiers remain private. Returned settings/JSON MUST be copies.
+The launcher MUST still verify the installed package/release and complete context;
+constructing this projection does not authorize a campaign.
 
 | Provider | Native codec | Authentication |
 | --- | --- | --- |

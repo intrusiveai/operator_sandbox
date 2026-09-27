@@ -6,6 +6,7 @@ package modelprovider
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"net/url"
 	"regexp"
@@ -26,19 +27,20 @@ var id = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$`)
 // Settings never crosses into guest inputs. The full request endpoint, cloud
 // scope and credential reference are administrator-owned and frozen before launch.
 type Settings struct {
-	APIVersion              string `json:"api_version"`
-	ID                      string `json:"id"`
-	Provider                string `json:"provider"`
-	Codec                   string `json:"codec_id"`
-	Model                   string `json:"model"`
-	Endpoint                string `json:"endpoint,omitempty"`
-	Region                  string `json:"region,omitempty"`
-	APIVersionHeader        string `json:"anthropic_version,omitempty"`
-	Authentication          string `json:"authentication"`
-	CredentialID            string `json:"credential_id,omitempty"`
-	MaximumPromptTokens     int64  `json:"maximum_prompt_tokens"`
-	MaximumCompletionTokens int64  `json:"maximum_completion_tokens"`
-	MaximumResponseBytes    int64  `json:"maximum_response_bytes"`
+	APIVersion              string          `json:"api_version"`
+	ID                      string          `json:"id"`
+	Provider                string          `json:"provider"`
+	Codec                   string          `json:"codec_id"`
+	Model                   string          `json:"model"`
+	Endpoint                string          `json:"endpoint,omitempty"`
+	Region                  string          `json:"region,omitempty"`
+	APIVersionHeader        string          `json:"anthropic_version,omitempty"`
+	Authentication          string          `json:"authentication"`
+	CredentialID            string          `json:"credential_id,omitempty"`
+	MaximumPromptTokens     int64           `json:"maximum_prompt_tokens"`
+	MaximumCompletionTokens int64           `json:"maximum_completion_tokens"`
+	MaximumResponseBytes    int64           `json:"maximum_response_bytes"`
+	CodecOptions            json.RawMessage `json:"codec_options"`
 }
 
 type Profile struct {
@@ -47,8 +49,12 @@ type Profile struct {
 	digest   string
 }
 
-func (p *Profile) Settings() Settings { return p.settings }
-func (p *Profile) Digest() string     { return p.digest }
+func (p *Profile) Settings() Settings {
+	s := p.settings
+	s.CodecOptions = bytes.Clone(s.CodecOptions)
+	return s
+}
+func (p *Profile) Digest() string { return p.digest }
 
 // JSON is host-private configuration; callers must not journal or mount it.
 func (p *Profile) JSON() []byte { return bytes.Clone(p.raw) }
@@ -130,6 +136,9 @@ func Parse(raw []byte) (*Profile, error) {
 			return nil, ErrProfile
 		}
 	} else if s.APIVersionHeader != "" {
+		return nil, ErrProfile
+	}
+	if _, err := publicPolicy(s, "sha256:"+strings.Repeat("0", 64), []byte("[]")); err != nil {
 		return nil, ErrProfile
 	}
 	canonical, err := contracts.Canonicalize(raw, 64<<10)

@@ -39,6 +39,18 @@ func profile(t *testing.T, provider, endpoint string) *Profile {
 		credential = ""
 	}
 	s := Settings{APIVersion: Version, ID: "test", Provider: provider, Codec: codecs[provider][0], Model: "test-model", Endpoint: endpoint, Authentication: auth, CredentialID: credential, MaximumPromptTokens: 10000, MaximumCompletionTokens: 100, MaximumResponseBytes: 1024}
+	options := map[string]any{}
+	switch s.Codec {
+	case "openai-chat-text-tools-v1":
+		options = map[string]any{"instruction_role": "developer", "response_models": []string{"test-model"}}
+	case "openai-responses-text-tools-v1":
+		options = map[string]any{"reasoning": nil, "response_models": []string{"test-model"}}
+	case "anthropic-messages-text-tools-v1":
+		options = map[string]any{"thinking": map[string]any{"type": "disabled"}, "response_models": []string{"test-model"}}
+	case "gemini-text-tools-v1":
+		options = map[string]any{"thinking_config": map[string]any{}, "response_models": []string{"test-model"}}
+	}
+	s.CodecOptions, _ = json.Marshal(options)
 	if provider == "anthropic-messages" {
 		s.APIVersionHeader = "2023-06-01"
 	}
