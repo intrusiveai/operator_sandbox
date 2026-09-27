@@ -1,6 +1,19 @@
 # Implementation phase handoff
 
-## Current boundary: run links and worker dispatch
+## Latest boundary: public preparation and supervised startup
+
+`campaign prepare` freezes an offline start request; `campaign start` submits its
+fixed worker to systemd or launchd and waits for retained acceptance. Repeated
+starts preserve identity, source changes conflict, and `--new-campaign` retains
+history while selecting a fresh intent. Run-directory status/log/wait observers
+include pre-journal preparation failures. Manager arguments, uncertainty,
+observer-only timeout, and short publication races have focused tests.
+
+See [campaign startup](CAMPAIGN_START.md). Live macOS LaunchAgent worker dispatch
+has a passing opt-in test; Linux service qualification, pre-claim service-registration reconciliation, frozen skill-set selection,
+installation packaging and the Python runtime remain outstanding.
+
+## Completed boundary: run links and worker dispatch
 
 Submitted runs now have private locked start links, explicit new-campaign
 replacement and immutable history. A fixed `_worker` entrypoint claims a saved
@@ -11,7 +24,7 @@ preparation failure, cancellation ownership, link copying/purge behavior and saf
 worker diagnostics. OS service installation and public start/wait wiring remain
 next; no live Docker/Python or external-provider qualification is claimed.
 
-## Current boundary: durable start requests
+## Completed boundary: durable start requests
 
 Private typed start requests now bind frozen inputs to one immutable request key.
 A durable one-time worker claim survives process loss; identical replays return
@@ -22,7 +35,7 @@ publication. The input fingerprint also binds effective installation defaults.
 See [durable start requests](START_REQUESTS.md). CLI run links, supervisor submission
 and worker dispatch remain the next integration.
 
-## Current boundary: installed campaign input loading
+## Completed boundary: installed campaign input loading
 
 Offline input loading now verifies installed profiles and a submitted run and
 freezes a fingerprint before online work. Tests cover changed target/model/secret

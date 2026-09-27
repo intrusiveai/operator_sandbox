@@ -1038,7 +1038,8 @@ reconciled using the saved key, never replaced blindly. Concurrent starts serial
 The host composition MUST follow [composed launch sessions](docs/LAUNCH_SESSION.md),
 including complete input retention and the startup reconciliation gate.
 Durable host start requests and worker claims MUST follow
-[Start requests](docs/START_REQUESTS.md).
+[Start requests](docs/START_REQUESTS.md). Public preparation, startup and OS manager
+submission MUST follow [Campaign startup](docs/CAMPAIGN_START.md).
 `--new-campaign` explicitly creates a new intent/ledger for a fresh execution.
 No accepted campaign is reopened, and no unresolved start silently duplicates it.
 

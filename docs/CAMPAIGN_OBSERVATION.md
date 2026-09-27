@@ -51,3 +51,6 @@ snapshot; the nonzero exit code still means terminal completion was not observed
 
 Tests exercise real active journals, pagination, terminal records, cancellation,
 timeout, changed committed data, and continued writer operation after observation.
+
+Run-directory lookups and pre-journal start status MUST follow
+[Campaign startup](CAMPAIGN_START.md).
