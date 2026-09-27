@@ -1,5 +1,11 @@
 # Implementation phase handoff
 
+
+Live journal observation now verifies a captured committed prefix without taking
+the writer lock. Concurrent head publication, pending tails, committed corruption
+and cancellation are covered by filesystem tests; strict recovery inspection
+continues to reject incomplete journals. CLI observers are the next integration.
+
 ## Current boundary: retained launch inputs and worker serialization
 
 Staged launch inputs can now be retained in bounded journal parts with a final

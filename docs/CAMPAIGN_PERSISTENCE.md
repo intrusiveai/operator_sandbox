@@ -163,6 +163,16 @@ does not truncate files, promote uncommitted tails, replay effects or repair the
 head. A visitor sees individually verified records; the final return determines
 whether the entire journal was intact.
 
+`Observe(ctx, ...)` supports live status/log observers without taking the writer
+lock. It opens one atomically published head, then verifies exactly that prefix,
+including referenced content, operation transitions and reservations. Appends
+committed during observation appear on the next read. Pending files, later
+segments and incomplete future revisions are outside the captured prefix; this
+result deliberately has no `JournalIntact` field. A successful observation MUST
+NOT authorize recovery, cleanup, execution or a claim that the worker is healthy.
+Observers MUST check the final error as well as individual visitor results.
+Cancellation stops scanning without changing files or the worker.
+
 Operations without a committed result are reported as `UNKNOWN`, including
 intent-only operations. The result preserves their last recorded state. Inspection
 never returns execution permission or an open writer. Recovery remains cleanup

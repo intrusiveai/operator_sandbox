@@ -4,6 +4,7 @@ package campaign
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -11,6 +12,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 )
@@ -38,16 +40,45 @@ type Inspection struct {
 // cleanup/reporting result, never a campaign-resume grant. Visitors receive only
 // verified individual events; the final result still determines overall integrity.
 func Inspect(stateRoot, campaignID string, visit func(Event) error) (report Inspection, err error) {
+	return inspect(context.Background(), stateRoot, campaignID, visit, false)
+}
+
+// Observation describes only the captured committed prefix. It says nothing about
+// a pending tail, worker health, or permission to resume execution.
+type Observation struct {
+	Manifest       RunManifest
+	ManifestDigest string
+	VerifiedEvents int64
+	VerifiedBytes  int64
+	Operations     []RecoveredOperation
+	Reservations   []Reservation
+}
+
+// Observe verifies one atomic journal-head snapshot without acquiring the writer
+// lock. Later appends and incomplete publication are outside this observation.
+// Visitors stream individually verified events; callers must also check the final
+// error before treating the captured prefix as complete.
+func Observe(ctx context.Context, stateRoot, campaignID string, visit func(Event) error) (Observation, error) {
+	r, err := inspect(ctx, stateRoot, campaignID, visit, true)
+	return Observation{r.Manifest, r.ManifestDigest, r.VerifiedEvents, r.VerifiedBytes, r.Operations, r.Reservations}, err
+}
+
+func inspect(ctx context.Context, stateRoot, campaignID string, visit func(Event) error, observing bool) (report Inspection, err error) {
+	if err := ctx.Err(); err != nil {
+		return report, err
+	}
 	r, err := openCampaign(stateRoot, campaignID)
 	if err != nil {
 		return report, err
 	}
 	defer r.Close()
-	lockFile, err := lock(r, false)
-	if err != nil {
-		return report, err
+	if !observing {
+		lockFile, err := lock(r, false)
+		if err != nil {
+			return report, err
+		}
+		defer lockFile.Close()
 	}
-	defer lockFile.Close()
 	m, digest, err := loadManifest(r, campaignID)
 	if err != nil {
 		return report, err
@@ -56,7 +87,11 @@ func Inspect(stateRoot, campaignID string, visit func(Event) error) (report Insp
 	if err := privateDir(r, "journals"); err != nil {
 		return report, err
 	}
-	rawHead, err := readFile(r, "journal-head.json", ManifestLimit)
+	readHead := readFile
+	if observing {
+		readHead = readAtomicHead
+	}
+	rawHead, err := readHead(r, "journal-head.json", ManifestLimit)
 	if err != nil {
 		return report, err
 	}
@@ -87,6 +122,12 @@ func Inspect(stateRoot, campaignID string, visit func(Event) error) (report Insp
 	}
 	previous := digest
 	for _, revisionName := range dirs {
+		if observing && report.VerifiedEvents == head.Sequence {
+			break
+		}
+		if err := ctx.Err(); err != nil {
+			return report, err
+		}
 		revision, e := strconv.ParseInt(revisionName, 10, 64)
 		if e != nil || revision < m.InitialRevision || revision > contracts.MaxSafeInteger || fmt.Sprintf("%016d", revision) != revisionName {
 			return report, ErrCorrupt
@@ -107,6 +148,9 @@ func Inspect(stateRoot, campaignID string, visit func(Event) error) (report Insp
 		}
 		contentNames := map[string]bool{}
 		for i, file := range files[1:] {
+			if observing && report.VerifiedEvents == head.Sequence {
+				break
+			}
 			if file != fmt.Sprintf("events-%06d.jsonl", i+1) {
 				return report, ErrCorrupt
 			}
@@ -123,6 +167,12 @@ func Inspect(stateRoot, campaignID string, visit func(Event) error) (report Insp
 				defer f.Close()
 				reader := bufio.NewReaderSize(io.LimitReader(f, m.Retention.MaxSegmentBytes+1), MaxEventBytes+1)
 				for {
+					if err := ctx.Err(); err != nil {
+						return err
+					}
+					if observing && report.VerifiedEvents == head.Sequence {
+						return nil
+					}
 					line, err := reader.ReadSlice('\n')
 					if errors.Is(err, io.EOF) && len(line) == 0 {
 						return nil
@@ -184,6 +234,9 @@ func Inspect(stateRoot, campaignID string, visit func(Event) error) (report Insp
 				return report, err
 			}
 		}
+		if observing {
+			continue
+		}
 		actual, err := directoryNames(r, dir+"/content")
 		if err != nil || len(actual) != len(contentNames) {
 			return report, ErrCorrupt
@@ -196,6 +249,9 @@ func Inspect(stateRoot, campaignID string, visit func(Event) error) (report Insp
 	}
 	if report.VerifiedEvents != head.Sequence || report.VerifiedBytes != head.Bytes || previous != head.Digest {
 		return report, ErrCorrupt
+	}
+	if observing {
+		return report, ctx.Err()
 	}
 	// An interrupted head publication makes persistence uncertain even if the old
 	// committed prefix remains valid. Recovery preserves it without silent repair.
@@ -229,4 +285,23 @@ func directoryNames(r *os.Root, dir string) ([]string, error) {
 	}
 	sort.Strings(names)
 	return names, nil
+}
+
+// Unlike immutable journal files, the head is atomically replaced. Opening first
+// pins either complete inode without a false Lstat/open race during publication.
+func readAtomicHead(r *os.Root, name string, maximum int) ([]byte, error) {
+	f, err := r.OpenFile(name, os.O_RDONLY|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, 0)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	info, err := f.Stat()
+	if err != nil || !info.Mode().IsRegular() || info.Mode().Perm()&0077 != 0 || info.Size() > int64(maximum) {
+		return nil, ErrCorrupt
+	}
+	raw, err := io.ReadAll(io.LimitReader(f, int64(maximum)+1))
+	if err != nil || len(raw) > maximum {
+		return nil, ErrCorrupt
+	}
+	return raw, nil
 }
