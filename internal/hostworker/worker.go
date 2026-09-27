@@ -186,11 +186,15 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 			}
 		}
 		runErr = errors.Join(runErr, w.plan.Discard())
+		raw, _ := json.Marshal(result)
+		entry := campaign.Entry{RunRevision: writer.Revision(), Kind: "launch.terminal", Metadata: json.RawMessage(`{"execution_admission":"closed"}`), Content: []campaign.Content{{Role: "launch-result", MediaType: "application/json", Bytes: raw}}}
+		var recordErr error
 		if terminalReserved {
-			raw, _ := json.Marshal(result)
-			_, recordErr := writer.AppendReserved(campaign.Entry{RunRevision: writer.Revision(), Kind: "launch.terminal", Metadata: json.RawMessage(`{"execution_admission":"closed"}`), Content: []campaign.Content{{Role: "launch-result", MediaType: "application/json", Bytes: raw}}}, "launch-terminal", true)
-			runErr = errors.Join(runErr, recordErr)
+			_, recordErr = writer.AppendReserved(entry, "launch-terminal", true)
+		} else {
+			_, recordErr = writer.Append(entry)
 		}
+		runErr = errors.Join(runErr, recordErr)
 	}()
 	release, err = w.power.Acquire(ctx)
 	if err != nil {
@@ -331,4 +335,13 @@ func (r guardedRuntime) Terminate(ctx context.Context, b campaign.DockerBinding)
 		out.Code = "startup_outcome_unconfirmed"
 	}
 	return out
+}
+
+// Discard releases the generated launch policy for a worker that never ran. It
+// cannot remove a running worker's policy or make a launch plan reusable.
+func (w *Worker) Discard() error {
+	if w == nil || !w.used.CompareAndSwap(false, true) {
+		return ErrWorker
+	}
+	return w.plan.Discard()
 }

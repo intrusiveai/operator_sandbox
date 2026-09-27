@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"sync/atomic"
 
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
@@ -32,13 +33,24 @@ type Prior struct {
 
 // Gate owns the same installation-wide lease needed by the new worker. Callers
 // keep it until that worker finishes, including cleanup. Closing is not a stop.
-type Gate struct{ lease *campaign.HostLease }
+type Gate struct {
+	lease     *campaign.HostLease
+	stateRoot string
+	claimed   atomic.Bool
+	closed    atomic.Bool
+}
 
 func (g *Gate) Close() error {
 	if g == nil {
 		return nil
 	}
+	g.closed.Store(true)
 	return g.lease.Close()
+}
+
+// Claim transfers this fresh gate to exactly one worker composition for its root.
+func (g *Gate) Claim(stateRoot string) bool {
+	return g != nil && g.stateRoot == stateRoot && !g.closed.Load() && g.claimed.CompareAndSwap(false, true)
 }
 
 // Acquire serializes new workers, inspects old groups, and confirms exact Docker
@@ -124,5 +136,5 @@ func Acquire(ctx context.Context, stateRoot string, docker Docker) (*Gate, []Pri
 		return nil, records, err
 	}
 	accepted = true
-	return &Gate{lease}, records, nil
+	return &Gate{lease: lease, stateRoot: stateRoot}, records, nil
 }

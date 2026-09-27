@@ -196,3 +196,20 @@ func TestGateNeverCreatedAndInvalidInventory(t *testing.T) {
 	}
 	gate.Close()
 }
+
+func TestGateClaimIsBoundToRootAndSingleWorker(t *testing.T) {
+	root := t.TempDir()
+	os.Chmod(root, 0700)
+	gate, _, err := Acquire(context.Background(), root, &recoveryDocker{state: "absent"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer gate.Close()
+	if gate.Claim(root+"/other") || !gate.Claim(root) || gate.Claim(root) {
+		t.Fatal("invalid ownership transfer")
+	}
+	gate.Close()
+	if gate.Claim(root) {
+		t.Fatal("closed gate claimed")
+	}
+}

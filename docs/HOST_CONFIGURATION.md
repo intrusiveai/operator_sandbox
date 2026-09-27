@@ -26,6 +26,9 @@ The initial loader accepts exactly these fields:
 | `cache.release_directory` | Default: `<effective state.root>/cache/releases`. Must be outside `<state.root>/campaigns`, whose contents are purgeable. |
 | `spool.max_bytes` | Positive decimal byte count, default `536870912` (512 MiB), maximum `9007199254740991`. Applies to macOS spool accounting; Linux uses FIFOs. |
 | `evidence.max_archive_bytes` | Per-session native archive acceptance ceiling, default `4294967296` (4 GiB), maximum `9007199254740991`; positive decimal integer. Collection uses the smaller of this and Interceptor's advertised limit. |
+| `journal.max_bytes` | Cumulative event and retained-content budget, default `8589934592` (8 GiB), at most `9007199254740991`, and no smaller than one segment. |
+| `journal.segment_bytes` | Event segment ceiling, default `16777216` (16 MiB), from `262144` through `67108864` bytes. |
+| `journal.minimum_free_bytes` | Filesystem free-space floor for writes/reservations, default `268435456` (256 MiB), positive and at most `9007199254740991`. This does not reserve disk blocks against other processes. |
 
 The macOS default selects Docker Desktop's documented
 [per-user socket](https://docs.docker.com/desktop/setup/install/mac-permission-requirements/#installing-symlinks)

@@ -1,5 +1,17 @@
 # Implementation phase handoff
 
+## Current boundary: composed launch sessions
+
+`internal/hostrun.Prepare` now transfers the startup lease into a single-use
+session, builds production launch inputs, freezes journal storage policy, retains
+all mounted bytes, persists target preparation, creates the OS transport and
+constructs the worker before recording acceptance. Run owns finalization; cancel
+before Run discards only never-started resources. Early worker failures now also
+record terminal outcomes. Administrator journal defaults are 8 GiB total, 16 MiB
+segments and a 256 MiB free-space floor. CLI/service submission ownership remains
+the next integration; these library tests use a scripted guest and Docker peer.
+See [composed launch sessions](LAUNCH_SESSION.md).
+
 ## Current boundary: startup container reconciliation
 
 `internal/startup.Acquire` holds the installation worker lease while inspecting

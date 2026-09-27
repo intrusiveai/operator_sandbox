@@ -9,6 +9,11 @@ spool:
 evidence:
   max_archive_bytes: 4294967296
 
+journal:
+  max_bytes: 8589934592
+  segment_bytes: 16777216
+  minimum_free_bytes: 268435456
+
 # Campaign preparation requires a private profile; select its installed location.
 # target:
 #   profile_file: /etc/operator/targets/local-interceptor.json

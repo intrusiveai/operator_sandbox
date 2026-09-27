@@ -207,3 +207,23 @@ func TestInstalledContractPinIsComplete(t *testing.T) {
 		}
 	}
 }
+
+func TestJournalConfigurationBounds(t *testing.T) {
+	c, err := Parse([]byte(minimal), linuxDefaults(t))
+	if err != nil || c.Journal.MaxBytes != 8<<30 || c.Journal.SegmentBytes != 16<<20 || c.Journal.MinimumFreeBytes != 256<<20 {
+		t.Fatal(c, err)
+	}
+	c, err = Parse([]byte(minimal+"journal: {max_bytes: 9007199254740991, segment_bytes: 262144}\n"), linuxDefaults(t))
+	if err != nil || c.Journal.MaxBytes != contracts.MaxSafeInteger || c.Journal.SegmentBytes != 262144 {
+		t.Fatal(c, err)
+	}
+	for _, raw := range []string{
+		"{max_bytes: 9007199254740992}", "{max_bytes: 0}", "{max_bytes: 1000}",
+		"{segment_bytes: 262143}", "{segment_bytes: 67108865}", "{max_bytes: '8589934592'}",
+		"{minimum_free_bytes: 0}", "{minimum_free_bytes: 9007199254740992}", "{segment_bytes: 1.5}", "{unexpected: 10}", "{max_bytes: null}",
+	} {
+		if _, err := Parse([]byte(minimal+"journal: "+raw+"\n"), linuxDefaults(t)); err == nil {
+			t.Fatal("accepted journal", raw)
+		}
+	}
+}

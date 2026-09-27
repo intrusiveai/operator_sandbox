@@ -1035,6 +1035,8 @@ Persist one start intent, exact immutable inputs and idempotency key before
 launcher contact. Same accepted key/inputs returns the original campaign/status,
 including after completion; changed content conflicts. Lost acknowledgement is
 reconciled using the saved key, never replaced blindly. Concurrent starts serialize.
+The host composition MUST follow [composed launch sessions](docs/LAUNCH_SESSION.md),
+including complete input retention and the startup reconciliation gate.
 `--new-campaign` explicitly creates a new intent/ledger for a fresh execution.
 No accepted campaign is reopened, and no unresolved start silently duplicates it.
 

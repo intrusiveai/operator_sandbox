@@ -28,6 +28,9 @@ import (
 const MaxBytes = 64 << 10
 const DefaultSpoolBytes int64 = 512 << 20
 const DefaultEvidenceBytes int64 = 4 << 30
+const DefaultJournalBytes int64 = 8 << 30
+const DefaultSegmentBytes int64 = 16 << 20
+const DefaultMinimumFreeBytes int64 = 256 << 20
 
 var (
 	ErrInvalid  = errors.New("invalid configuration: use only documented sections, fields and scalar types")
@@ -57,6 +60,11 @@ func Defaults(goos, home string) (Paths, error) {
 }
 
 type Config struct {
+	Journal struct {
+		MinimumFreeBytes int64 `json:"minimum_free_bytes"`
+		MaxBytes         int64 `json:"max_bytes"`
+		SegmentBytes     int64 `json:"segment_bytes"`
+	} `json:"journal"`
 	Limits campaignlimits.Host `json:"limits"`
 	Model  struct {
 		ProfileFile string `json:"profile_file"`
@@ -144,6 +152,8 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 	c.Docker.Endpoint = defaults.DockerEndpoint
 	c.Spool.MaxBytes = DefaultSpoolBytes
 	c.Evidence.MaxArchiveBytes = DefaultEvidenceBytes
+	c.Journal.MaxBytes, c.Journal.SegmentBytes = DefaultJournalBytes, DefaultSegmentBytes
+	c.Journal.MinimumFreeBytes = DefaultMinimumFreeBytes
 	c.Limits, err = campaignlimits.ParseHost([]byte(`{}`))
 	if err != nil {
 		return Config{}, err
@@ -171,7 +181,7 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 			continue
 		}
 		allowed, ok := fields[section]
-		if !ok && section != "spool" && section != "evidence" {
+		if !ok && section != "spool" && section != "evidence" && section != "journal" {
 			return Config{}, ErrInvalid
 		}
 		values, err := mapping(node)
@@ -182,10 +192,19 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 			if value.Kind != yaml.ScalarNode || value.Anchor != "" {
 				return Config{}, ErrInvalid
 			}
-			if section == "spool" || section == "evidence" {
+			if section == "spool" || section == "evidence" || section == "journal" {
 				key, dst, invalid := "max_bytes", &c.Spool.MaxBytes, ErrSpool
 				if section == "evidence" {
 					key, dst, invalid = "max_archive_bytes", &c.Evidence.MaxArchiveBytes, ErrEvidence
+				}
+				if section == "journal" {
+					key, dst, invalid = "max_bytes", &c.Journal.MaxBytes, ErrInvalid
+					if name == "minimum_free_bytes" {
+						key, dst = "minimum_free_bytes", &c.Journal.MinimumFreeBytes
+					}
+					if name == "segment_bytes" {
+						key, dst = "segment_bytes", &c.Journal.SegmentBytes
+					}
 				}
 				if name != key || value.Tag != "!!int" || !decimal.MatchString(value.Value) {
 					return Config{}, invalid
@@ -203,6 +222,9 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 			}
 			*dst = value.Value
 		}
+	}
+	if c.Journal.SegmentBytes < campaign.MaxEventBytes || c.Journal.SegmentBytes > 64<<20 || c.Journal.MaxBytes < c.Journal.SegmentBytes {
+		return Config{}, ErrInvalid
 	}
 	if dockercontrol.ValidateImageSelector(c.Engine.Image) != nil {
 		return Config{}, ErrImage
