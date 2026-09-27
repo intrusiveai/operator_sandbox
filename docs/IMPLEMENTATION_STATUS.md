@@ -1,5 +1,20 @@
 # Implementation phase handoff
 
+## Current boundary: signed instruction skills
+
+`operatorctl skill keygen|build|import|check` and `internal/skills` now implement
+explicit installation-local Ed25519 trust, bounded instruction-only ingestion,
+canonical signed manifests, exact import verification and immutable explicit skill
+selection. macOS ingestion allows only the automatically assigned provenance
+attribute; source attributes are never copied. See [Skills](SKILLS.md).
+
+Tests cover build/import/check, idempotent publication, key isolation, tampering,
+normalization, inventory/path collisions, file/link/executable restrictions,
+extended attributes and duplicate skill revisions. Campaign preparation/start
+still needs to connect selection to the admitted image loader and staged inputs.
+Full implementation continues with executable workflows, remaining model codecs,
+administrative commands and the Attack Harness runtime.
+
 ## Current boundary: native provider transport and private profiles
 
 `internal/modelprovider` loads private pinned profiles for OpenAI Chat/Responses,

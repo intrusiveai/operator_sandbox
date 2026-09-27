@@ -378,7 +378,8 @@ remain in the private Operator configuration directory. Skill build MUST sign th
 immutable manifest identity; skill import and campaign start MUST verify both the
 local signature and inventoried file bytes. Only that installation's configured
 public key grants skill-signing trust; bundle content MUST NOT install a trust key.
-
+The [local skill contract](docs/SKILLS.md) defines key paths, source validation,
+signature preimages, installed bundle layout and selection behavior.
 
 `skill build` ingests regular files using descriptor-relative no-follow traversal,
 validates/normalizes content, publishes a signed immutable SkillBundle and returns
@@ -395,7 +396,10 @@ Reject executable components, hooks, package archives, binary modules, MCP/LSP
 configuration, plugin/agent/command registration and dynamic interpolation.
 Reject unsafe paths, escaping links, duplicate/colliding normalized names,
 special files, xattrs/capabilities, setuid/setgid metadata and changed-source
-ingestion. YAML uses a data-only safe parser with bounded aliases/depth.
+ingestion. On macOS only, ingestion MUST permit the automatically assigned
+`com.apple.provenance` attribute; it MUST reject all other extended attributes.
+Build MUST copy only normalized file bytes, never source filesystem attributes.
+YAML uses a data-only safe parser with bounded aliases/depth.
 
 Use product-built **data bundles** and verified
 immutable directory trees. The signed bundle binds normalized path, size, media
