@@ -58,6 +58,34 @@
         "response",
         "receipt_id"
       ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "codec_id": {
+          "const": "bedrock-converse-text-tools-v1"
+        },
+        "profile_id": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+        },
+        "profile_digest": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+        },
+        "response": {
+          "$ref": "urn:operator:schema:bedrock-converse-response:v1alpha1"
+        },
+        "receipt_id": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+        }
+      },
+      "required": [
+        "codec_id",
+        "profile_id",
+        "profile_digest",
+        "response",
+        "receipt_id"
+      ]
     }
   ]
 }

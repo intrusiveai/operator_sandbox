@@ -30,7 +30,7 @@ type modelFixture struct {
 func modelFixtures(t *testing.T) []modelFixture {
 	t.Helper()
 	var cases []modelFixture
-	for _, name := range []string{"model-codec.json", "anthropic-model-codec.json"} {
+	for _, name := range []string{"model-codec.json", "anthropic-model-codec.json", "bedrock-model-codec.json"} {
 		raw, err := os.ReadFile("../schemas/fixtures/" + name)
 		if err != nil {
 			t.Fatal(err)
@@ -98,9 +98,11 @@ func TestSharedModelCodec(t *testing.T) {
 				}
 			case "wire":
 				_, err = p.ValidateResponse(modelEnvelope(t, c.Request, false), modelEnvelope(t, c.Result, true))
-			case "continuation", "anthropic-continuation":
+			case "continuation", "anthropic-continuation", "bedrock-continuation":
 				var segment []byte
-				if c.Mode == "anthropic-continuation" {
+				if c.Mode == "bedrock-continuation" {
+					segment, err = p.BedrockContinuation(c.Result, c.ToolResults)
+				} else if c.Mode == "anthropic-continuation" {
 					segment, err = p.AnthropicContinuation(c.Result, c.ToolResults)
 				} else {
 					segment, err = p.ChatContinuation(c.Result, c.ToolResults)

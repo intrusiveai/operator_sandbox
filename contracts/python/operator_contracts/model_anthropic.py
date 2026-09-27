@@ -5,6 +5,7 @@ from .canonical import _canonical_value, _object_digest
 from .schema_ids import ENGINE_MODEL_GENERATE_RESULT_SCHEMA
 
 CODEC = 'anthropic-messages-text-tools-v1'
+POLICY_FIELDS=('max_tokens','thinking','response_models')
 MAX = 2**53-1
 
 

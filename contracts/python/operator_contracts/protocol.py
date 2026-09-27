@@ -110,6 +110,9 @@ class Protocol:
     def anthropic_continuation(self, result, tool_results):
         return model.anthropic.continuation(self,result,tool_results)
 
+    def bedrock_continuation(self, result, tool_results):
+        return model.bedrock.continuation(self,result,tool_results)
+
     def model_output_limit(self, request):
         return model.model_output_limit(self,request)
 

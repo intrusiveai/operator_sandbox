@@ -9,6 +9,12 @@ const AnthropicMessagesResponseSchema = "urn:operator:schema:anthropic-messages-
 
 const AssessmentCommonSchema = "urn:operator:schema:assessment-common:v1alpha1"
 
+const BedrockConverseCommonSchema = "urn:operator:schema:bedrock-converse-common:v1alpha1"
+
+const BedrockConverseRequestSchema = "urn:operator:schema:bedrock-converse-request:v1alpha1"
+
+const BedrockConverseResponseSchema = "urn:operator:schema:bedrock-converse-response:v1alpha1"
+
 const ConclusionBindingSchema = "urn:operator:schema:conclusion-binding:v1alpha1"
 
 const ContractPackageSchema = "urn:operator:schema:contract-package:v1alpha1"

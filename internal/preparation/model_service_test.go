@@ -33,59 +33,80 @@ func namedModelFixture(t *testing.T, file, name string) (map[string]any, map[str
 	return nil, nil, nil
 }
 
-func TestServiceAnthropicCacheAccountingAndRestore(t *testing.T) {
-	for _, mode := range []string{"complete", "unknown-usage", "excess-cached-input"} {
-		t.Run(mode, func(t *testing.T) {
-			policy, request, result := namedModelFixture(t, "anthropic-model-codec.json", "anthropic: native text including cache counts")
-			response := result["response"].(map[string]any)
-			if mode == "unknown-usage" {
-				delete(response, "usage")
-			}
-			if mode == "excess-cached-input" {
-				response["usage"].(map[string]any)["cache_read_input_tokens"] = 101
-			}
-			p := &provider{response: encode(response)}
-			routes := append(append([]string{}, snapshotRoutes...), "engine.model_generate")
-			s, _, runtime, _, launch := serviceWithTemplate(t, 0, routes, func(c *campaignservice.Config) {
-				c.Model = &campaignservice.ModelConfig{Provider: p, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
-			}, func(c map[string]any) {
-				digest, err := contracts.CanonicalDigest(encode(policy["tools"]), contracts.OrdinaryLimit)
-				if err != nil {
-					t.Fatal(err)
-				}
-				c["model"] = map[string]any{"codec_id": policy["codec_id"], "profile_id": policy["profile_id"], "profile_digest": policy["profile_digest"], "model_id": policy["request_model"], "features": []string{"text", "function-tools"}, "codec_settings": map[string]any{"max_tokens": policy["max_tokens"], "thinking": policy["thinking"], "response_models": policy["response_models"], "tools_digest": digest}}
-			}, snapshotInput(t))
-			if err := s.Admit(context.Background(), launch); err != nil {
-				t.Fatal(err)
-			}
-			request["request"].(map[string]any)["system"] = string(launch.Prompt)
-			raw, err := s.Handle(context.Background(), stateWire("engine.model_generate", "messages-1", 1, request), 0)
-			if mode != "complete" {
-				code := "OUTCOME_UNKNOWN"
-				if mode == "excess-cached-input" {
-					code = "INTERNAL_ERROR"
-				}
-				if err != nil || !strings.Contains(string(raw), code) {
-					t.Fatal(string(raw), err)
-				}
-				select {
-				case <-runtime.killed:
-				case <-time.After(3 * time.Second):
-					t.Fatal("invalid model accounting did not stop execution")
-				}
-				return
-			}
-			first := stateResult(t, raw, err)
-			raw, err = s.Handle(context.Background(), stateWire("engine.model_generate", "messages-1", 1, request), 0)
-			if stateResult(t, raw, err)["receipt_id"] != first["receipt_id"] || p.calls != 1 {
-				t.Fatal("model replay executed twice")
-			}
-			raw, err = s.Handle(context.Background(), stateWire("engine.snapshot_request", "snapshot", 1, map[string]any{}), 0)
-			cp := stateResult(t, raw, err)["snapshot"].(map[string]any)
-			raw, err = s.Handle(context.Background(), stateWire("engine.restore_request", "restore", 1, map[string]any{"source_session": cp["source_session"], "checkpoint_id": cp["checkpoint_id"]}), 0)
-			remaining := stateResult(t, raw, err)["remaining_limits"].(map[string]any)
-			if remaining["model_tokens"] != float64(9840) || remaining["model_turns"] != float64(2) {
-				t.Fatal("cached native tokens were omitted or refunded", remaining)
+func TestServiceNativeCacheAccountingAndRestore(t *testing.T) {
+	for _, codec := range []struct{ file, name, cache string }{
+		{"anthropic-model-codec.json", "anthropic: native text including cache counts", "cache_read_input_tokens"},
+		{"bedrock-model-codec.json", "bedrock: native text with separate caches", "cacheReadInputTokens"},
+	} {
+		t.Run(codec.file, func(t *testing.T) {
+			for _, mode := range []string{"complete", "unknown-usage", "excess-cached-input"} {
+				t.Run(mode, func(t *testing.T) {
+					policy, request, result := namedModelFixture(t, codec.file, codec.name)
+					response := result["response"].(map[string]any)
+					if mode == "unknown-usage" {
+						delete(response, "usage")
+					}
+					if mode == "excess-cached-input" {
+						usage := response["usage"].(map[string]any)
+						usage[codec.cache] = 101
+						if codec.cache == "cacheReadInputTokens" {
+							usage["totalTokens"] = 211
+						}
+					}
+					p := &provider{response: encode(response)}
+					routes := append(append([]string{}, snapshotRoutes...), "engine.model_generate")
+					s, _, runtime, _, launch := serviceWithTemplate(t, 0, routes, func(c *campaignservice.Config) {
+						c.Model = &campaignservice.ModelConfig{Provider: p, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
+					}, func(c map[string]any) {
+						digest, err := contracts.CanonicalDigest(encode(policy["tools"]), contracts.OrdinaryLimit)
+						if err != nil {
+							t.Fatal(err)
+						}
+						settings := map[string]any{"max_tokens": policy["max_tokens"], "tools_digest": digest}
+						for _, key := range []string{"thinking", "response_models"} {
+							if value, ok := policy[key]; ok {
+								settings[key] = value
+							}
+						}
+						c["model"] = map[string]any{"codec_id": policy["codec_id"], "profile_id": policy["profile_id"], "profile_digest": policy["profile_digest"], "model_id": policy["request_model"], "features": []string{"text", "function-tools"}, "codec_settings": settings}
+					}, snapshotInput(t))
+					if err := s.Admit(context.Background(), launch); err != nil {
+						t.Fatal(err)
+					}
+					var system any = string(launch.Prompt)
+					if codec.cache == "cacheReadInputTokens" {
+						system = []any{map[string]any{"text": string(launch.Prompt)}}
+					}
+					request["request"].(map[string]any)["system"] = system
+					raw, err := s.Handle(context.Background(), stateWire("engine.model_generate", "messages-1", 1, request), 0)
+					if mode != "complete" {
+						code := "OUTCOME_UNKNOWN"
+						if mode == "excess-cached-input" {
+							code = "INTERNAL_ERROR"
+						}
+						if err != nil || !strings.Contains(string(raw), code) {
+							t.Fatal(string(raw), err)
+						}
+						select {
+						case <-runtime.killed:
+						case <-time.After(3 * time.Second):
+							t.Fatal("invalid model accounting did not stop execution")
+						}
+						return
+					}
+					first := stateResult(t, raw, err)
+					raw, err = s.Handle(context.Background(), stateWire("engine.model_generate", "messages-1", 1, request), 0)
+					if stateResult(t, raw, err)["receipt_id"] != first["receipt_id"] || p.calls != 1 {
+						t.Fatal("model replay executed twice")
+					}
+					raw, err = s.Handle(context.Background(), stateWire("engine.snapshot_request", "snapshot", 1, map[string]any{}), 0)
+					cp := stateResult(t, raw, err)["snapshot"].(map[string]any)
+					raw, err = s.Handle(context.Background(), stateWire("engine.restore_request", "restore", 1, map[string]any{"source_session": cp["source_session"], "checkpoint_id": cp["checkpoint_id"]}), 0)
+					remaining := stateResult(t, raw, err)["remaining_limits"].(map[string]any)
+					if remaining["model_tokens"] != float64(9840) || remaining["model_turns"] != float64(2) {
+						t.Fatal("cached native tokens were omitted or refunded", remaining)
+					}
+				})
 			}
 		})
 	}

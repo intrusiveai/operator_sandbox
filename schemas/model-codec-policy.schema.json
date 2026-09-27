@@ -135,6 +135,57 @@
         "thinking",
         "tools"
       ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "codec_id": {
+          "const": "bedrock-converse-text-tools-v1"
+        },
+        "profile_id": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+        },
+        "profile_digest": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+        },
+        "request_model": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x20\\x7f]+$",
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 131072
+        },
+        "max_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "$ref": "urn:operator:schema:bedrock-converse-common:v1alpha1#/$defs/tool"
+          },
+          "minItems": 0,
+          "maxItems": 128
+        }
+      },
+      "required": [
+        "codec_id",
+        "profile_id",
+        "profile_digest",
+        "request_model",
+        "prompt",
+        "max_tokens",
+        "tools"
+      ]
     }
   ]
 }

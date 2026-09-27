@@ -11,7 +11,7 @@ func (p *Protocol) ModelPolicyFromContext(contextRaw, toolsRaw, promptRaw []byte
 		return nil, err
 	}
 	m := c["model"].(map[string]any)
-	if m["codec_id"] != "openai-chat-text-tools-v1" && m["codec_id"] != anthropicCodec {
+	if m["codec_id"] != "openai-chat-text-tools-v1" && m["codec_id"] != anthropicCodec && m["codec_id"] != bedrockCodec {
 		return nil, ErrProtocol
 	}
 	admitted := false
@@ -45,6 +45,9 @@ func (p *Protocol) ModelPolicyFromContext(contextRaw, toolsRaw, promptRaw []byte
 	if m["codec_id"] == anthropicCodec {
 		keys = []string{"max_tokens", "thinking", "response_models"}
 	}
+	if m["codec_id"] == bedrockCodec {
+		keys = []string{"max_tokens"}
+	}
 	for _, key := range keys {
 		policy[key] = settings[key]
 	}
@@ -58,6 +61,8 @@ func (p *Protocol) ModelPolicyFromContext(contextRaw, toolsRaw, promptRaw []byte
 	valid := false
 	if m["codec_id"] == anthropicCodec {
 		valid = anthropicToolsOK(tools.([]any))
+	} else if m["codec_id"] == bedrockCodec {
+		valid = bedrockToolsOK(tools.([]any))
 	} else {
 		valid = chatToolsOK(tools.([]any))
 	}
@@ -190,6 +195,9 @@ func modelCorrelationOK(body, result map[string]any) bool {
 	if body["codec_id"] == anthropicCodec {
 		return anthropicCorrelationOK(request, response)
 	}
+	if body["codec_id"] == bedrockCodec {
+		return bedrockCorrelationOK(request, response)
+	}
 	if !chatRequestOK(request) || !chatResponseOK(response) {
 		return false
 	}
@@ -238,6 +246,12 @@ func (p *Protocol) ValidateModelRequest(policyRaw, requestRaw []byte) (map[strin
 		}
 		return body, nil
 	}
+	if body["codec_id"] == bedrockCodec {
+		if !bedrockPolicyOK(policy, request) {
+			return nil, ErrProtocol
+		}
+		return body, nil
+	}
 	first := request["messages"].([]any)[0].(map[string]any)
 	if !chatRequestOK(request) || !chatToolsOK(policy["tools"].([]any)) ||
 		request["model"] != policy["request_model"] || number(request["max_completion_tokens"]) > number(policy["max_completion_tokens"]) ||
@@ -263,6 +277,9 @@ func (p *Protocol) ValidateModelExchange(policyRaw, requestRaw, resultRaw []byte
 	if !modelCorrelationOK(body, result) {
 		return nil, ErrProtocol
 	}
+	if body["codec_id"] == bedrockCodec {
+		return result, nil
+	} // Model is pinned by the host URL/profile.
 	policy, _ := Decode(policyRaw, OrdinaryLimit)
 	model := result["response"].(map[string]any)["model"]
 	for _, candidate := range policy.(map[string]any)["response_models"].([]any) {
@@ -281,6 +298,12 @@ func (p *Protocol) ModelDisposition(resultRaw []byte) (string, error) {
 		return "", err
 	}
 	response := value.(map[string]any)["response"].(map[string]any)
+	if value.(map[string]any)["codec_id"] == bedrockCodec {
+		if !bedrockResponseOK(response) {
+			return "", ErrProtocol
+		}
+		return bedrockDisposition(response), nil
+	}
 	if value.(map[string]any)["codec_id"] == anthropicCodec {
 		if !anthropicResponseOK(response) {
 			return "", ErrProtocol

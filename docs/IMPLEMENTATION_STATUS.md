@@ -1,5 +1,18 @@
 # Implementation phase handoff
 
+## Current boundary: native Bedrock contract and campaign accounting
+
+The shared Go/Python contract now supports native Bedrock Converse requests,
+reasoning/signature continuation, ordered tool batches and cache-inclusive usage.
+Fifty shared cases cover policy, accounting and rejected unsupported semantics.
+Host integration tests exercise replay, snapshot restore and terminal accounting
+failures for both Bedrock and Anthropic. See the
+[Bedrock contract](../schemas/BEDROCK_MODEL_CODEC_CONTRACT.md).
+
+Validation: full Go/Python suite, affected contract/service race tests and vet
+pass on macOS arm64. Real Bedrock/model credentials and runtime
+qualification remain outstanding.
+
 ## Current boundary: native Anthropic contract and campaign accounting
 
 The shared schemas and Go/Python validators now support Anthropic Messages,
@@ -12,7 +25,7 @@ across restore, unknown usage and excessive cached input. See the
 Validation: full Go/Python and fixture suites, targeted contract/model-service race
 tests and affected-package `go vet` pass on macOS arm64.
 
-Responses, Bedrock and Gemini codecs, executable profile/startup integration and
+Responses and Gemini codecs, executable profile/startup integration and
 real-provider qualification remain required. Transport coverage alone is not
 campaign readiness for those routes.
 
@@ -55,8 +68,8 @@ workload identity, endpoint resolution and SigV4 signing while preserving raw
 HTTP bodies; no SDK response conversion drops native fields. See
 [Model providers](MODEL_PROVIDERS.md).
 
-The shared Go/Python model validators and host service implement the Chat and
-Anthropic Messages codecs. Remaining native codecs, executable startup wiring and real provider
+The shared Go/Python model validators and host service implement the Chat,
+Anthropic Messages and Bedrock Converse codecs. Remaining native codecs, executable startup wiring and real provider
 qualification MUST be finished before declaring every route campaign-ready.
 The user approved trusted host-side skill validation/signing with a host-local
 Ed25519 key; the spec now replaces the separate builder/publisher requirement.
