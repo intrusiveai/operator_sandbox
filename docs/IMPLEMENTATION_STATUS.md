@@ -1,5 +1,16 @@
 # Implementation phase handoff
 
+## Current boundary: installed campaign input loading
+
+Offline input loading now verifies installed profiles and a submitted run and
+freezes a fingerprint before online work. Tests cover changed target/model/secret
+configuration and prompt bytes, missing credentials, target mismatch, changed
+submission bytes, malformed host selections and single-use online preparation.
+The online loader connects the existing exact-Docker/image/release/skill/native
+and provider components to the composed session; durable start requests and
+supervised CLI dispatch are the next integration. Real image/provider/secret-store
+qualification remains outstanding.
+
 ## Current boundary: composed launch sessions
 
 `internal/hostrun.Prepare` now transfers the startup lease into a single-use

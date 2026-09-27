@@ -51,3 +51,35 @@ journals, spool files and lifecycle handling with scripted Docker/native/model
 peers. They exercise a real message handshake, event-loss termination, cleanup,
 prelaunch cancellation, invalid configuration, single-use ownership and lease
 release. They do not qualify a deployed Python image or live model route.
+
+## Installed input loading
+
+`hostrun.LoadInputs` reads the private installed configuration, verifies the pinned
+shared package and submitted run, and freezes target/model/credential configuration
+and explicit prompt bytes. It rejects a target ID mismatch, an unconfigured model
+credential, invalid skill digests and incompatible prompt options before Docker
+or Interceptor contact. Selection contains host-generated campaign/launch/worker,
+shared container and start-request IDs; the bundle cannot supply these identities.
+At most 16 skill digests and 16 prompt append files may be selected. Each prompt
+source is bounded to 1 MiB; shared prompt composition limits also apply.
+
+The returned fingerprint binds the selection, configuration source/digest, shared
+package and submission receipt, profile/configuration digests and exact prompt
+byte digests. A supervised frontend MUST persist this fingerprint with the start
+request and compare it after reloading in the worker. Changed files cannot silently
+change a queued campaign. The object exposes no private profile or credential
+configuration and does not serialize those fields.
+
+`InstalledInputs.Open` is single-use. It obtains the startup gate, checks the local
+image and HTTPS/cached release, inspects embedded files, validates selected skills,
+constructs host-only provider/credential clients and attaches the configured local
+Interceptor. It then builds the launch session and records installation provenance
+as digests. No secret value is resolved by offline loading. Provider calls use the
+existing host resolver; credential values, locators and provider endpoints remain
+outside guest inputs and journal metadata.
+
+The resulting `InstalledRun` owns its native/model/credential clients through Run
+or Cancel, then closes them. The installed state and release-cache directories
+must already exist with the documented private permissions. This API does not
+install services, create administrator accounts or automatically pull an image.
+Durable start-key publication and supervised CLI dispatch are the next integration.

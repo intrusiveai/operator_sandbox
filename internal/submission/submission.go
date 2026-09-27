@@ -42,6 +42,8 @@ type Prepared struct {
 	artifacts map[string][]byte
 }
 
+func (p *Prepared) TargetID() string { return p.authoring.TargetID() }
+
 func (p *Prepared) Receipt() Receipt {
 	r := p.receipt
 	r.OptionalGaps = append([]capabilities.Gap{}, r.OptionalGaps...)
