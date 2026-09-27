@@ -1,5 +1,17 @@
 # Implementation phase handoff
 
+## Current boundary: startup container reconciliation
+
+`internal/startup.Acquire` holds the installation worker lease while inspecting
+prior campaign groups and checking saved Docker bindings. It rejects active
+writers and missing identity after a start intent, independently terminates active
+orphan containers, and removes confirmed stopped containers. Exact-ID absence is
+verified against the saved daemon; inspect errors never imply absence. Damaged
+journals remain retained and explicitly incomplete. The gate is ready for the
+executable start composition; unknown creates without a saved binding still need
+explicit recovery before another launch. See [startup recovery](STARTUP_RECOVERY.md).
+
+## Campaign observers
 
 Live journal observation now verifies a captured committed prefix without taking
 the writer lock. Concurrent head publication, pending tails, committed corruption
