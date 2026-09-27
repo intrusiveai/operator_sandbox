@@ -23,17 +23,23 @@ type modelFixture struct {
 	Context     json.RawMessage  `json:"context"`
 	Tools       json.RawMessage  `json:"tools"`
 	Prompt      string           `json:"prompt"`
+	Metrics     *ModelMetrics    `json:"metrics"`
+	OutputLimit int64            `json:"output_limit"`
 }
 
 func modelFixtures(t *testing.T) []modelFixture {
 	t.Helper()
-	raw, err := os.ReadFile("../schemas/fixtures/model-codec.json")
-	if err != nil {
-		t.Fatal(err)
-	}
 	var cases []modelFixture
-	if err = json.Unmarshal(raw, &cases); err != nil {
-		t.Fatal(err)
+	for _, name := range []string{"model-codec.json", "anthropic-model-codec.json"} {
+		raw, err := os.ReadFile("../schemas/fixtures/" + name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var batch []modelFixture
+		if err = json.Unmarshal(raw, &batch); err != nil {
+			t.Fatal(err)
+		}
+		cases = append(cases, batch...)
 	}
 	return cases
 }
@@ -92,9 +98,13 @@ func TestSharedModelCodec(t *testing.T) {
 				}
 			case "wire":
 				_, err = p.ValidateResponse(modelEnvelope(t, c.Request, false), modelEnvelope(t, c.Result, true))
-			case "continuation":
+			case "continuation", "anthropic-continuation":
 				var segment []byte
-				segment, err = p.ChatContinuation(c.Result, c.ToolResults)
+				if c.Mode == "anthropic-continuation" {
+					segment, err = p.AnthropicContinuation(c.Result, c.ToolResults)
+				} else {
+					segment, err = p.ChatContinuation(c.Result, c.ToolResults)
+				}
 				if err == nil {
 					if !bytes.Equal(segment, []byte(c.Segment)) {
 						t.Fatal("native continuation bytes differ")
@@ -123,10 +133,22 @@ func TestSharedModelCodec(t *testing.T) {
 			if (err == nil) != c.Valid {
 				t.Fatalf("valid=%v want=%v error=%v", err == nil, c.Valid, err)
 			}
-			if c.Valid && c.Mode != "continuation" && c.Mode != "context" {
+			if c.Valid && !strings.HasSuffix(c.Mode, "continuation") && c.Mode != "context" {
 				disposition, e := p.ModelDisposition(c.Result)
 				if e != nil || disposition != c.Disposition {
 					t.Fatalf("disposition=%s want=%s error=%v", disposition, c.Disposition, e)
+				}
+			}
+			if c.Valid && c.Metrics != nil {
+				got, e := p.ModelUsage(c.Result)
+				if e != nil || got != *c.Metrics {
+					t.Fatalf("metrics=%+v want=%+v err=%v", got, *c.Metrics, e)
+				}
+			}
+			if c.Valid && c.OutputLimit > 0 {
+				got, e := p.ModelOutputLimit(c.Request)
+				if e != nil || got != c.OutputLimit {
+					t.Fatalf("output=%v want=%v err=%v", got, c.OutputLimit, e)
 				}
 			}
 		})

@@ -25,6 +25,7 @@ class ModelTest(unittest.TestCase):
     def setUpClass(cls):
         cls.protocol=Protocol(ROOT/'schemas')
         cls.cases=json.loads((ROOT/'schemas/fixtures/model-codec.json').read_text())
+        cls.cases+=json.loads((ROOT/'schemas/fixtures/anthropic-model-codec.json').read_text())
 
     def test_shared_model_codec(self):
         p=self.protocol
@@ -39,8 +40,9 @@ class ModelTest(unittest.TestCase):
                         self.assertEqual(p.validate_model_exchange(encoded(c['policy']),encoded(c['request']),encoded(c['result'])),c['result'])
                     elif c['mode']=='wire':
                         p.validate_response(envelope(c['request']),envelope(c['result'],True))
-                    elif c['mode']=='continuation':
-                        raw=p.chat_continuation(encoded(c['result']),c['tool_results'])
+                    elif c['mode'] in ('continuation','anthropic-continuation'):
+                        continuation=p.anthropic_continuation if c['mode']=='anthropic-continuation' else p.chat_continuation
+                        raw=continuation(encoded(c['result']),c['tool_results'])
                         self.assertEqual(raw,c['segment_json'].encode())
                         request=json.loads(encoded(c['request']))
                         request['request']['messages'].extend(json.loads(raw))
@@ -48,7 +50,9 @@ class ModelTest(unittest.TestCase):
                     else: self.fail('unknown fixture mode')
                 if c['valid']:
                     run()
-                    if c['mode'] not in ('continuation','context'): self.assertEqual(p.model_disposition(encoded(c['result'])),c['disposition'])
+                    if c['mode'] not in ('continuation','anthropic-continuation','context'): self.assertEqual(p.model_disposition(encoded(c['result'])),c['disposition'])
+                    if 'metrics' in c: self.assertEqual(p.model_usage(encoded(c['result'])),c['metrics'])
+                    if 'output_limit' in c: self.assertEqual(p.model_output_limit(encoded(c['request'])),c['output_limit'])
                 else:
                     with self.assertRaises(ContractError): run()
 

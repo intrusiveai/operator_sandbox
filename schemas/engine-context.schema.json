@@ -186,7 +186,14 @@
           "uniqueItems": true
         },
         "codec_settings": {
-          "$ref": "urn:operator:schema:openai-chat-common:v1alpha1#/$defs/settings"
+          "oneOf": [
+            {
+              "$ref": "urn:operator:schema:openai-chat-common:v1alpha1#/$defs/settings"
+            },
+            {
+              "$ref": "urn:operator:schema:anthropic-messages-common:v1alpha1#/$defs/settings"
+            }
+          ]
         }
       },
       "required": [
@@ -208,9 +215,47 @@
           "then": {
             "required": [
               "codec_settings"
-            ]
+            ],
+            "properties": {
+              "codec_settings": {
+                "$ref": "urn:operator:schema:openai-chat-common:v1alpha1#/$defs/settings"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "codec_id": {
+                "const": "anthropic-messages-text-tools-v1"
+              }
+            }
           },
-          "else": {
+          "then": {
+            "required": [
+              "codec_settings"
+            ],
+            "properties": {
+              "codec_settings": {
+                "$ref": "urn:operator:schema:anthropic-messages-common:v1alpha1#/$defs/settings"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "codec_id": {
+                "not": {
+                  "enum": [
+                    "openai-chat-text-tools-v1",
+                    "anthropic-messages-text-tools-v1"
+                  ]
+                }
+              }
+            }
+          },
+          "then": {
             "not": {
               "required": [
                 "codec_settings"

@@ -1,5 +1,21 @@
 # Implementation phase handoff
 
+## Current boundary: native Anthropic contract and campaign accounting
+
+The shared schemas and Go/Python validators now support Anthropic Messages,
+including native tool-result batches, opaque thinking blocks, pinned thinking
+settings, refusal/partial-result rules and cache-inclusive usage accounting.
+Campaign model reservations/settlement use validated codec helpers. The 49 new
+shared cases and host integration tests cover duplicate generation, cache charges
+across restore, unknown usage and excessive cached input. See the
+[codec contract](../schemas/ANTHROPIC_MODEL_CODEC_CONTRACT.md).
+Validation: full Go/Python and fixture suites, targeted contract/model-service race
+tests and affected-package `go vet` pass on macOS arm64.
+
+Responses, Bedrock and Gemini codecs, executable profile/startup integration and
+real-provider qualification remain required. Transport coverage alone is not
+campaign readiness for those routes.
+
 ## Current boundary: reproducible contract package tooling
 
 `operatorctl contract build` packages the root schemas/catalog/registry, real
@@ -39,8 +55,8 @@ workload identity, endpoint resolution and SigV4 signing while preserving raw
 HTTP bodies; no SDK response conversion drops native fields. See
 [Model providers](MODEL_PROVIDERS.md).
 
-The shared Go/Python model validators and host service still implement only the
-Chat codec. Remaining native codecs, executable startup wiring and real provider
+The shared Go/Python model validators and host service implement the Chat and
+Anthropic Messages codecs. Remaining native codecs, executable startup wiring and real provider
 qualification MUST be finished before declaring every route campaign-ready.
 The user approved trusted host-side skill validation/signing with a host-local
 Ed25519 key; the spec now replaces the separate builder/publisher requirement.

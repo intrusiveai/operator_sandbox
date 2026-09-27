@@ -64,7 +64,10 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 		return stateDenied("POLICY_DENIED"), nil
 	}
 	native := value["request"].(map[string]any)
-	completion, _ := native["max_completion_tokens"].(json.Number).Int64()
+	completion, err := s.target().Protocol().ModelOutputLimit(q.Body)
+	if err != nil {
+		return stateDenied("POLICY_DENIED"), nil
+	}
 	reserve := s.config.Model.MaximumPromptTokens + completion
 	remaining := s.remaining()
 	var loop struct {
@@ -115,16 +118,18 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 	}
 	result := map[string]any{"codec_id": value["codec_id"], "profile_id": value["profile_id"], "profile_digest": value["profile_digest"], "receipt_id": "model-" + termination.NewRequestID(), "response": json.RawMessage(response)}
 	body := marshal(result)
-	verified, err := s.target().Protocol().ValidateModelExchange(s.model.policy, q.Body, body)
+	_, err = s.target().Protocol().ValidateModelExchange(s.model.policy, q.Body, body)
 	if err != nil {
 		return modelFailure("INTERNAL_ERROR", "known"), nil
 	}
-	usage, known := verified["response"].(map[string]any)["usage"].(map[string]any)
-	if !known {
+	usage, err := s.target().Protocol().ModelUsage(body)
+	if err != nil {
+		return modelFailure("INTERNAL_ERROR", "known"), nil
+	}
+	if !usage.Known {
 		return modelFailure("OUTCOME_UNKNOWN", "unknown"), nil
 	}
-	input, _ := usage["prompt_tokens"].(json.Number).Int64()
-	total, _ := usage["total_tokens"].(json.Number).Int64()
+	input, total := usage.InputTokens, usage.TotalTokens
 	if input > s.config.Model.MaximumPromptTokens || total > reserve {
 		return modelFailure("INTERNAL_ERROR", "known"), nil
 	}
@@ -133,9 +138,7 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 		return stateReply{}, err
 	}
 	s.model.tokens = charged
-	choice := verified["response"].(map[string]any)["choices"].([]any)[0].(map[string]any)
-	calls, _ := choice["message"].(map[string]any)["tool_calls"].([]any)
-	if int64(len(calls)) > loop.Calls {
+	if usage.ToolCalls > loop.Calls {
 		if err := s.beginFinalization(); err != nil {
 			return stateReply{}, err
 		}

@@ -140,7 +140,7 @@ func (p *Protocol) ValidateRequest(raw []byte) (map[string]any, error) {
 	valid := true
 	switch op.Name {
 	case "engine.model_generate":
-		valid = chatRequestOK(body["request"].(map[string]any))
+		valid = nativeRequestOK(body)
 	case "engine.record_append":
 		valid = recordOK(body)
 	case "engine.attempt_execute":
@@ -345,7 +345,7 @@ func (p *Protocol) validateResponseEnvelope(raw []byte) (map[string]any, error) 
 	if p.catalog.schemas[op.ResultSchema].Validate(message["result"]) != nil {
 		return nil, ErrSchema
 	}
-	if op.Name == "engine.model_generate" && !chatResponseOK(message["result"].(map[string]any)["response"].(map[string]any)) {
+	if op.Name == "engine.model_generate" && !nativeResponseOK(message["result"].(map[string]any)) {
 		return nil, ErrProtocol
 	}
 	return message, nil

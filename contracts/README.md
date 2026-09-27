@@ -1,7 +1,7 @@
 # Shared validation foundation
 
 This is the validation and protocol foundation of `operator-contracts`. It validates the
-56 schemas currently listed in [the catalog](../schemas/catalog.json) in Go and
+59 schemas currently listed in [the catalog](../schemas/catalog.json) in Go and
 Python. It is a development library, not the published `0.1.0` contract package.
 The authoritative design remains [SHARED_CONTRACT.md](../schemas/SHARED_CONTRACT.md).
 
@@ -40,8 +40,8 @@ The authoritative design remains [SHARED_CONTRACT.md](../schemas/SHARED_CONTRACT
   shared cases.
 - Typed model relay, a pinned native Chat Completions text/function codec, trusted
   profile binding, startup codec settings and complete conversation/tool continuations,
-  with 102 shared cases. The full total is now 1,312 shared cases; the catalog has
-  56 entries.
+  with 102 shared Chat cases and 49 native Anthropic cases. The full total is now
+  1,361 shared cases; the catalog has 59 entries.
 
 The [ordinary wire contract](../schemas/ORDINARY_WIRE_CONTRACT.md) documents the
 exact implemented fields and distinguishes stateless validation from runtime gates.

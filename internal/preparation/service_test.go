@@ -230,6 +230,9 @@ func serviceWithOperations(t *testing.T, budget time.Duration, operations []stri
 	return serviceWithSettings(t, budget, operations, nil, change...)
 }
 func serviceWithSettings(t *testing.T, budget time.Duration, operations []string, settings func(*campaignservice.Config), change ...func(*preparation.Input)) (*campaignservice.Service, *peer, *runtime, *campaign.Writer, campaign.LaunchInputs) {
+	return serviceWithTemplate(t, budget, operations, settings, nil, change...)
+}
+func serviceWithTemplate(t *testing.T, budget time.Duration, operations []string, settings func(*campaignservice.Config), template func(map[string]any), change ...func(*preparation.Input)) (*campaignservice.Service, *peer, *runtime, *campaign.Writer, campaign.LaunchInputs) {
 	t.Helper()
 	in := fixture(t)
 	for _, fn := range change {
@@ -239,7 +242,7 @@ func serviceWithSettings(t *testing.T, budget time.Duration, operations []string
 	if err != nil {
 		t.Fatal(err)
 	}
-	w, launch, root := preparedLaunch(t, target, operations...)
+	w, launch, root := preparedLaunchConfigured(t, target, template, "", operations...)
 	stored, err := target.Persist(w, launch.EngineContext)
 	if err != nil {
 		t.Fatal(err)

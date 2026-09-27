@@ -1,8 +1,9 @@
-# Model relay and initial native codec
+# Model relay and native codecs
 
-Status: typed `engine.model_generate` exchanges, Go/Python validators and 102 shared
-cases are implemented. The first codec is `openai-chat-text-tools-v1`, a bounded
-OpenAI Chat Completions subset. This is offline contract conformance, not provider,
+Status: typed `engine.model_generate` exchanges, Go/Python validators and 151 shared
+cases are implemented for `openai-chat-text-tools-v1` and
+[`anthropic-messages-text-tools-v1`](ANTHROPIC_MODEL_CODEC_CONTRACT.md). The Chat
+subset is described below. This is offline contract conformance, not provider,
 model, credential, route or container qualification. No real model call occurs here.
 
 The native field reference is [OpenAI's Create chat completion API](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create),

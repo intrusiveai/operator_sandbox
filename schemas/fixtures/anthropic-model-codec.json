@@ -1,0 +1,5858 @@
+[
+  {
+    "name": "anthropic: native text including cache counts",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "text",
+    "output_limit": 2048,
+    "metrics": {
+      "known": true,
+      "input_tokens": 140,
+      "output_tokens": 20,
+      "total_tokens": 160,
+      "tool_calls": 0
+    }
+  },
+  {
+    "name": "anthropic: multiple tools",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "tool-1",
+            "name": "snapshot_list",
+            "input": {}
+          },
+          {
+            "type": "tool_use",
+            "id": "tool-2",
+            "name": "snapshot_list",
+            "input": {}
+          }
+        ],
+        "stop_reason": "tool_use",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "tool-calls",
+    "output_limit": 2048,
+    "metrics": {
+      "known": true,
+      "input_tokens": 140,
+      "output_tokens": 20,
+      "total_tokens": 160,
+      "tool_calls": 2
+    }
+  },
+  {
+    "name": "anthropic: missing usage",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null
+      }
+    },
+    "valid": true,
+    "disposition": "usage-unknown",
+    "output_limit": 2048,
+    "metrics": {
+      "known": false,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0,
+      "tool_calls": 0
+    }
+  },
+  {
+    "name": "anthropic: null usage",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": null
+      }
+    },
+    "valid": true,
+    "disposition": "usage-unknown",
+    "output_limit": 2048,
+    "metrics": {
+      "known": false,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0,
+      "tool_calls": 0
+    }
+  },
+  {
+    "name": "anthropic: unknown function remains a correctable local call",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "tool-1",
+            "name": "unknown",
+            "input": {}
+          }
+        ],
+        "stop_reason": "tool_use",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "tool-calls",
+    "output_limit": 2048
+  },
+  {
+    "name": "anthropic: reserved argument is local validation",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "tool-1",
+            "name": "snapshot_list",
+            "input": {
+              "attempt_index": 9
+            }
+          }
+        ],
+        "stop_reason": "tool_use",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "tool-calls",
+    "output_limit": 2048
+  },
+  {
+    "name": "anthropic: refusal stop reason",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "refusal",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "refusal",
+    "output_limit": 2048
+  },
+  {
+    "name": "anthropic: refusal details retained",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        },
+        "stop_details": {
+          "type": "refusal",
+          "category": "example",
+          "explanation": "Declined."
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "refusal",
+    "output_limit": 2048
+  },
+  {
+    "name": "anthropic: max_tokens executes no calls",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "tool-1",
+            "name": "snapshot_list",
+            "input": {}
+          }
+        ],
+        "stop_reason": "max_tokens",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "truncated",
+    "output_limit": 2048
+  },
+  {
+    "name": "anthropic: pause_turn executes no calls",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "tool-1",
+            "name": "snapshot_list",
+            "input": {}
+          }
+        ],
+        "stop_reason": "pause_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "truncated",
+    "output_limit": 2048
+  },
+  {
+    "name": "anthropic: model_context_window_exceeded executes no calls",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "tool-1",
+            "name": "snapshot_list",
+            "input": {}
+          }
+        ],
+        "stop_reason": "model_context_window_exceeded",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "truncated",
+    "output_limit": 2048
+  },
+  {
+    "name": "anthropic: compaction suppresses calls",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "none"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "text",
+    "output_limit": 2048
+  },
+  {
+    "name": "anthropic: pinned thinking adaptive",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "adaptive"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "adaptive"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "text",
+    "output_limit": 2048
+  },
+  {
+    "name": "anthropic: pinned thinking enabled",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "enabled",
+        "budget_tokens": 1024
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "enabled",
+          "budget_tokens": 1024
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "text",
+    "output_limit": 2048
+  },
+  {
+    "name": "anthropic: guest profile change",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "other",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "other",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: guest model change",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "other",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: unapproved response model",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "other",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: changed system prompt",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Changed",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: changed tool catalog",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "Changed",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: duplicate tool definitions",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: changed thinking policy",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "adaptive"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: forced tool with thinking",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "adaptive"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "adaptive"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "any"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: thinking exceeds output allowance",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "enabled",
+        "budget_tokens": 2048
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "enabled",
+          "budget_tokens": 2048
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: output exceeds profile",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2049,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: output usage exceeds request",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 2049,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: cache detail mismatch",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 1,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: thinking usage exceeds output",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 21
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: aggregate usage overflow",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 9007199254740991,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: duplicate response calls",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "tool-1",
+            "name": "snapshot_list",
+            "input": {}
+          },
+          {
+            "type": "tool_use",
+            "id": "tool-1",
+            "name": "snapshot_list",
+            "input": {}
+          }
+        ],
+        "stop_reason": "tool_use",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: tool stop without calls",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "tool_use",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: end turn with calls",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "tool-1",
+            "name": "snapshot_list",
+            "input": {}
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: tool call while suppressed",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "none"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "tool-1",
+            "name": "snapshot_list",
+            "input": {}
+          }
+        ],
+        "stop_reason": "tool_use",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: server tool response rejected",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 1,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: remote container rejected",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        },
+        "container": {
+          "id": "remote"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: unknown native field rejected",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        },
+        "new_behavior": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: tool input scalar rejected",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "tool-1",
+            "name": "snapshot_list",
+            "input": 1
+          }
+        ],
+        "stop_reason": "tool_use",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: initial assistant forbidden",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "assistant",
+            "content": []
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: orphan result forbidden",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "missing",
+                "content": "x"
+              }
+            ]
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: unfinished tool batch forbidden",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "tool-1",
+                "name": "snapshot_list",
+                "input": {}
+              }
+            ]
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: assistant prefill forbidden",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "Finished."
+              }
+            ]
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: complete native continuation",
+    "mode": "anthropic-continuation",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "native thinking",
+            "signature": "opaque-signature"
+          },
+          {
+            "type": "redacted_thinking",
+            "data": "opaque-data"
+          },
+          {
+            "type": "tool_use",
+            "id": "tool-1",
+            "name": "snapshot_list",
+            "input": {}
+          },
+          {
+            "type": "tool_use",
+            "id": "tool-2",
+            "name": "snapshot_list",
+            "input": {}
+          }
+        ],
+        "stop_reason": "tool_use",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "text",
+    "output_limit": 2048,
+    "tool_results": [
+      {
+        "tool_call_id": "tool-1",
+        "content": "{\"snapshots\":[]}"
+      },
+      {
+        "tool_call_id": "tool-2",
+        "content": "{\"code\":\"TARGET_REVISION_CHANGED\"}"
+      }
+    ],
+    "segment_json": "[{\"content\":[{\"signature\":\"opaque-signature\",\"thinking\":\"native thinking\",\"type\":\"thinking\"},{\"data\":\"opaque-data\",\"type\":\"redacted_thinking\"},{\"id\":\"tool-1\",\"input\":{},\"name\":\"snapshot_list\",\"type\":\"tool_use\"},{\"id\":\"tool-2\",\"input\":{},\"name\":\"snapshot_list\",\"type\":\"tool_use\"}],\"role\":\"assistant\"},{\"content\":[{\"content\":\"{\\\"snapshots\\\":[]}\",\"tool_use_id\":\"tool-1\",\"type\":\"tool_result\"},{\"content\":\"{\\\"code\\\":\\\"TARGET_REVISION_CHANGED\\\"}\",\"tool_use_id\":\"tool-2\",\"type\":\"tool_result\"}],\"role\":\"user\"}]"
+  },
+  {
+    "name": "anthropic: missing correlated continuation",
+    "mode": "anthropic-continuation",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "native thinking",
+            "signature": "opaque-signature"
+          },
+          {
+            "type": "redacted_thinking",
+            "data": "opaque-data"
+          },
+          {
+            "type": "tool_use",
+            "id": "tool-1",
+            "name": "snapshot_list",
+            "input": {}
+          },
+          {
+            "type": "tool_use",
+            "id": "tool-2",
+            "name": "snapshot_list",
+            "input": {}
+          }
+        ],
+        "stop_reason": "tool_use",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false,
+    "disposition": "text",
+    "output_limit": 2048,
+    "tool_results": [
+      {
+        "tool_call_id": "tool-1",
+        "content": "{\"snapshots\":[]}"
+      }
+    ],
+    "segment_json": "[{\"content\":[{\"signature\":\"opaque-signature\",\"thinking\":\"native thinking\",\"type\":\"thinking\"},{\"data\":\"opaque-data\",\"type\":\"redacted_thinking\"},{\"id\":\"tool-1\",\"input\":{},\"name\":\"snapshot_list\",\"type\":\"tool_use\"},{\"id\":\"tool-2\",\"input\":{},\"name\":\"snapshot_list\",\"type\":\"tool_use\"}],\"role\":\"assistant\"},{\"content\":[{\"content\":\"{\\\"snapshots\\\":[]}\",\"tool_use_id\":\"tool-1\",\"type\":\"tool_result\"},{\"content\":\"{\\\"code\\\":\\\"TARGET_REVISION_CHANGED\\\"}\",\"tool_use_id\":\"tool-2\",\"type\":\"tool_result\"}],\"role\":\"user\"}]"
+  },
+  {
+    "name": "anthropic: reordered correlated continuation",
+    "mode": "anthropic-continuation",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "native thinking",
+            "signature": "opaque-signature"
+          },
+          {
+            "type": "redacted_thinking",
+            "data": "opaque-data"
+          },
+          {
+            "type": "tool_use",
+            "id": "tool-1",
+            "name": "snapshot_list",
+            "input": {}
+          },
+          {
+            "type": "tool_use",
+            "id": "tool-2",
+            "name": "snapshot_list",
+            "input": {}
+          }
+        ],
+        "stop_reason": "tool_use",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false,
+    "disposition": "text",
+    "output_limit": 2048,
+    "tool_results": [
+      {
+        "tool_call_id": "tool-2",
+        "content": "{\"code\":\"TARGET_REVISION_CHANGED\"}"
+      },
+      {
+        "tool_call_id": "tool-1",
+        "content": "{\"snapshots\":[]}"
+      }
+    ],
+    "segment_json": "[{\"content\":[{\"signature\":\"opaque-signature\",\"thinking\":\"native thinking\",\"type\":\"thinking\"},{\"data\":\"opaque-data\",\"type\":\"redacted_thinking\"},{\"id\":\"tool-1\",\"input\":{},\"name\":\"snapshot_list\",\"type\":\"tool_use\"},{\"id\":\"tool-2\",\"input\":{},\"name\":\"snapshot_list\",\"type\":\"tool_use\"}],\"role\":\"assistant\"},{\"content\":[{\"content\":\"{\\\"snapshots\\\":[]}\",\"tool_use_id\":\"tool-1\",\"type\":\"tool_result\"},{\"content\":\"{\\\"code\\\":\\\"TARGET_REVISION_CHANGED\\\"}\",\"tool_use_id\":\"tool-2\",\"type\":\"tool_result\"}],\"role\":\"user\"}]"
+  },
+  {
+    "name": "anthropic: wrong correlated continuation",
+    "mode": "anthropic-continuation",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "native thinking",
+            "signature": "opaque-signature"
+          },
+          {
+            "type": "redacted_thinking",
+            "data": "opaque-data"
+          },
+          {
+            "type": "tool_use",
+            "id": "tool-1",
+            "name": "snapshot_list",
+            "input": {}
+          },
+          {
+            "type": "tool_use",
+            "id": "tool-2",
+            "name": "snapshot_list",
+            "input": {}
+          }
+        ],
+        "stop_reason": "tool_use",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false,
+    "disposition": "text",
+    "output_limit": 2048,
+    "tool_results": [
+      {
+        "tool_call_id": "wrong",
+        "content": "x"
+      },
+      {
+        "tool_call_id": "wrong",
+        "content": "x"
+      }
+    ],
+    "segment_json": "[{\"content\":[{\"signature\":\"opaque-signature\",\"thinking\":\"native thinking\",\"type\":\"thinking\"},{\"data\":\"opaque-data\",\"type\":\"redacted_thinking\"},{\"id\":\"tool-1\",\"input\":{},\"name\":\"snapshot_list\",\"type\":\"tool_use\"},{\"id\":\"tool-2\",\"input\":{},\"name\":\"snapshot_list\",\"type\":\"tool_use\"}],\"role\":\"assistant\"},{\"content\":[{\"content\":\"{\\\"snapshots\\\":[]}\",\"tool_use_id\":\"tool-1\",\"type\":\"tool_result\"},{\"content\":\"{\\\"code\\\":\\\"TARGET_REVISION_CHANGED\\\"}\",\"tool_use_id\":\"tool-2\",\"type\":\"tool_result\"}],\"role\":\"user\"}]"
+  },
+  {
+    "name": "anthropic: historical call reuse rejected",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "thinking",
+                "thinking": "native thinking",
+                "signature": "opaque-signature"
+              },
+              {
+                "type": "redacted_thinking",
+                "data": "opaque-data"
+              },
+              {
+                "type": "tool_use",
+                "id": "tool-1",
+                "name": "snapshot_list",
+                "input": {}
+              },
+              {
+                "type": "tool_use",
+                "id": "tool-2",
+                "name": "snapshot_list",
+                "input": {}
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "tool-1",
+                "content": "{\"snapshots\":[]}"
+              },
+              {
+                "type": "tool_result",
+                "tool_use_id": "tool-2",
+                "content": "{\"code\":\"TARGET_REVISION_CHANGED\"}"
+              }
+            ]
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "tool-1",
+            "name": "snapshot_list",
+            "input": {}
+          }
+        ],
+        "stop_reason": "tool_use",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: out of order historical results",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "thinking",
+                "thinking": "native thinking",
+                "signature": "opaque-signature"
+              },
+              {
+                "type": "redacted_thinking",
+                "data": "opaque-data"
+              },
+              {
+                "type": "tool_use",
+                "id": "tool-1",
+                "name": "snapshot_list",
+                "input": {}
+              },
+              {
+                "type": "tool_use",
+                "id": "tool-2",
+                "name": "snapshot_list",
+                "input": {}
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "tool-2",
+                "content": "{\"code\":\"TARGET_REVISION_CHANGED\"}"
+              },
+              {
+                "type": "tool_result",
+                "tool_use_id": "tool-1",
+                "content": "{\"snapshots\":[]}"
+              }
+            ]
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: native wire shape",
+    "mode": "wire",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "text",
+    "output_limit": 2048
+  },
+  {
+    "name": "anthropic: wire suppression",
+    "mode": "wire",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "none"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "tool-1",
+            "name": "snapshot_list",
+            "input": {}
+          }
+        ],
+        "stop_reason": "tool_use",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "anthropic: startup policy",
+    "mode": "context",
+    "policy": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tools": [
+        {
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "system": "Frozen instructions.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_tokens": 2048,
+        "stream": false,
+        "thinking": {
+          "type": "disabled"
+        },
+        "tools": [
+          {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "input_schema": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "auto"
+        }
+      }
+    },
+    "result": {
+      "codec_id": "anthropic-messages-text-tools-v1",
+      "profile_id": "fixture-anthropic",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "msg-1",
+        "type": "message",
+        "role": "assistant",
+        "model": "fixture-model-2026",
+        "content": [
+          {
+            "type": "text",
+            "text": "Ready.",
+            "citations": null
+          }
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "cache_creation_input_tokens": 10,
+          "cache_read_input_tokens": 30,
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 10
+          },
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "text",
+    "output_limit": 2048,
+    "context": {
+      "api_version": "operator.dev/engine-context/v1alpha1",
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "attempt_index_high_watermark": 0,
+      "contract": {
+        "version": "0.1.0",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "catalog_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "operations_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "release": {
+        "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "release_record_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "scenario_bundle": {
+        "entry_id": "bundle",
+        "root_kind": "input",
+        "path": "scenario-bundle.json",
+        "role": "scenario-bundle",
+        "media_type": "application/json",
+        "size_bytes": 1852,
+        "digest": "sha256:761cdd26fde8fb29164ce927803996447a3b3ec4b2a26efad9a510b0ba11d5ec",
+        "schema_id": "urn:operator:schema:scenario-bundle:v1alpha1"
+      },
+      "references": [],
+      "artifact_bindings": [],
+      "omissions": [],
+      "prompt": {
+        "entry_id": "prompt",
+        "provenance": {
+          "api_version": "operator.dev/prompt-provenance/v1alpha1",
+          "mode": "default",
+          "base": {
+            "size_bytes": 20,
+            "digest": "sha256:dd8d3e58494c8e8951bf11f51c00bfcb3206689c52af03d29fde2978ca5f5179"
+          },
+          "appends": [],
+          "effective": {
+            "size_bytes": 20,
+            "digest": "sha256:dd8d3e58494c8e8951bf11f51c00bfcb3206689c52af03d29fde2978ca5f5179"
+          }
+        }
+      },
+      "skills": {
+        "api_version": "operator.dev/skill-set-manifest/v1alpha1",
+        "loader_schema": "operator.dev/instruction-skill-loader/v1alpha1",
+        "loader_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "loading_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "skills": []
+      },
+      "target": {
+        "schema_version": "operator.dev/target-capability-manifest/v1alpha1",
+        "source": {
+          "adapter": "interceptor/v1",
+          "schema_version": "interceptor.dev/capability-manifest/v1alpha2",
+          "capability_source_digest": "sha256:3d623d0b9e6efeff7ee442f68c4439d5c4ec586f0864ac31c1a7d2bb7cd88511",
+          "raw_digest": "sha256:4e22ac4ac3f02629ec06879c19b62532fd14819a0c5ae31fd94c9d1fed426900"
+        },
+        "capabilities": {
+          "target_id": "delivery-example",
+          "adapter": "interceptor/v1",
+          "operations": [
+            {
+              "ref": "operation:invoke",
+              "operation_id": "invoke",
+              "delivery_status": "described",
+              "maximum_input_bytes": 65536,
+              "delivery": {
+                "description": "Submit a task to the synthetic agent",
+                "input": {
+                  "media_type": "application/json",
+                  "encoding": "json",
+                  "max_bytes": 65536,
+                  "basis": "synthetic",
+                  "schema": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "query": {
+                        "description": "Task text for the agent",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "query"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "output": {
+                  "media_type": "application/json",
+                  "encoding": "json",
+                  "max_bytes": 65536,
+                  "basis": "unknown"
+                },
+                "examples": [
+                  {
+                    "id": "benign",
+                    "input": {
+                      "query": "Summarize ticket T-1"
+                    },
+                    "output": {
+                      "answer": "Illustrative summary"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "actions": [
+            {
+              "ref": "action:injection:environment_state",
+              "action_type": "interceptor.injection/v1alpha1",
+              "surface": "environment_state",
+              "scopes": [
+                "next_turn",
+                "once",
+                "standing"
+              ],
+              "placements": [
+                "append",
+                "insert",
+                "merge",
+                "prepend",
+                "replace"
+              ],
+              "selector_fields": [
+                "collection",
+                "file_namespace",
+                "key",
+                "path",
+                "relative_path",
+                "service",
+                "turn_id"
+              ],
+              "carriers": [
+                "managed_service_state",
+                "mutable_file"
+              ]
+            },
+            {
+              "ref": "action:injection:mcp_tool_result",
+              "action_type": "interceptor.injection/v1alpha1",
+              "surface": "mcp_tool_result",
+              "scopes": [
+                "once",
+                "standing"
+              ],
+              "placements": [
+                "append",
+                "insert",
+                "merge",
+                "prepend",
+                "replace"
+              ],
+              "selector_fields": [
+                "arguments_contain",
+                "arguments_equal",
+                "arguments_json_pointer",
+                "call_ordinal",
+                "service",
+                "tool_name",
+                "turn_id"
+              ],
+              "carriers": [
+                "mcp_tools_call_result"
+              ]
+            },
+            {
+              "ref": "action:injection:model_tool_result",
+              "action_type": "interceptor.injection/v1alpha1",
+              "surface": "model_tool_result",
+              "scopes": [
+                "next_turn",
+                "once",
+                "standing"
+              ],
+              "placements": [
+                "append",
+                "insert",
+                "merge",
+                "prepend",
+                "replace"
+              ],
+              "selector_fields": [
+                "arguments_contain",
+                "arguments_equal",
+                "arguments_json_pointer",
+                "call_ordinal",
+                "tool_name",
+                "turn_id"
+              ],
+              "carriers": [
+                "model_client_tool_result"
+              ]
+            },
+            {
+              "ref": "action:injection:service_response",
+              "action_type": "interceptor.injection/v1alpha1",
+              "surface": "service_response",
+              "scopes": [
+                "once",
+                "standing"
+              ],
+              "placements": [
+                "append",
+                "insert",
+                "merge",
+                "prepend",
+                "replace"
+              ],
+              "selector_fields": [
+                "call_ordinal",
+                "headers_equal",
+                "method",
+                "path",
+                "query_equal",
+                "request_body_contain",
+                "request_body_equal",
+                "request_body_json_pointer",
+                "service",
+                "turn_id"
+              ],
+              "carriers": [
+                "dynamic_attacker_sink_response",
+                "managed_http_response"
+              ]
+            }
+          ],
+          "services": [
+            {
+              "ref": "service:tickets",
+              "service_id": "tickets",
+              "injection_surfaces": [
+                "environment_state",
+                "mcp_tool_result",
+                "service_response"
+              ],
+              "kind": "mcp_http",
+              "role": "environment",
+              "transports": [
+                "http"
+              ],
+              "implementation": "generic",
+              "mcp": true,
+              "endpoints": [
+                {
+                  "id": "get_ticket",
+                  "kind": "mcp-tool",
+                  "collection": "tickets",
+                  "delivery": {
+                    "description": "Read a synthetic ticket record",
+                    "input": {
+                      "media_type": "application/json",
+                      "encoding": "json",
+                      "max_bytes": 1048576,
+                      "basis": "synthetic",
+                      "schema": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "description": "Ticket key",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "output": {
+                      "media_type": "application/json",
+                      "encoding": "json",
+                      "max_bytes": 1048576,
+                      "basis": "synthetic",
+                      "schema": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "description": {
+                            "description": "Benign customer-supplied ticket text",
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "description",
+                          "status"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "examples": [
+                      {
+                        "id": "benign",
+                        "input": {
+                          "id": "T-1"
+                        },
+                        "output": {
+                          "description": "An illustrative ticket",
+                          "id": "T-1",
+                          "status": "open"
+                        }
+                      }
+                    ]
+                  },
+                  "injection_root": "mcp-tool-result",
+                  "output_pointer": "/structuredContent",
+                  "maximum_request_bytes": 1048576
+                },
+                {
+                  "id": "search_notes",
+                  "kind": "mcp-tool",
+                  "delivery": {
+                    "description": "Search synthetic notes; output structure is not guaranteed",
+                    "input": {
+                      "media_type": "application/json",
+                      "encoding": "json",
+                      "max_bytes": 1048576,
+                      "basis": "observed",
+                      "schema": {
+                        "properties": {
+                          "query": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "query"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "output": {
+                      "media_type": "application/json",
+                      "encoding": "json",
+                      "max_bytes": 1048576,
+                      "basis": "unknown"
+                    }
+                  },
+                  "injection_root": "mcp-tool-result",
+                  "output_pointer": "/structuredContent",
+                  "maximum_request_bytes": 1048576
+                }
+              ]
+            }
+          ],
+          "file_namespaces": [
+            {
+              "ref": "file_namespace:records",
+              "namespace_id": "records",
+              "allow_create": false
+            }
+          ],
+          "evidence_classes": [
+            {
+              "ref": "evidence:target_output",
+              "feedback_kind": "target_output",
+              "profiles": [
+                "black-box"
+              ]
+            }
+          ],
+          "features": [],
+          "feedback_profiles": [
+            "black-box"
+          ]
+        },
+        "capability_projection_digest": "sha256:c35a54f77e1625f629071f6c29a7025a36e0f802eb980d1e7ff2e3dd15fedeca"
+      },
+      "feedback": {
+        "profile": "black-box",
+        "allowed_kinds": [
+          "target_output"
+        ]
+      },
+      "model": {
+        "codec_id": "anthropic-messages-text-tools-v1",
+        "profile_id": "fixture-anthropic",
+        "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "model_id": "fixture-model",
+        "features": [
+          "text",
+          "function-tools"
+        ],
+        "codec_settings": {
+          "max_tokens": 2048,
+          "thinking": {
+            "type": "disabled"
+          },
+          "response_models": [
+            "fixture-model-2026"
+          ],
+          "tools_digest": "sha256:148ecd781e9c159542bf81cdd9175fbdc53563437945f440980a2b0244ea2ee3"
+        }
+      },
+      "operations": [
+        "engine.artifact_begin",
+        "engine.artifact_commit",
+        "engine.artifact_put_part",
+        "engine.attempt_execute",
+        "engine.injection_delete",
+        "engine.model_generate",
+        "engine.observation_read",
+        "engine.record_append",
+        "engine.request_stop",
+        "engine.restore_request",
+        "engine.snapshot_inspect",
+        "engine.snapshot_list",
+        "engine.snapshot_request"
+      ],
+      "limits": {
+        "harness": {
+          "max_model_turns": 300,
+          "max_tool_calls": 2000,
+          "max_tool_calls_per_response": 16,
+          "max_invalid_tool_calls": 50,
+          "max_consecutive_invalid_tool_calls": 5,
+          "max_read_bytes": 268435456,
+          "max_no_progress_turns": 10
+        },
+        "campaign": {
+          "campaign_time_ms": 60000,
+          "attempt_admissions": 1,
+          "model_tokens": 1,
+          "model_turns": 1,
+          "artifact_bytes": 1,
+          "artifact_objects": 1,
+          "snapshot_admissions": 1,
+          "snapshot_bytes": 1,
+          "observation_reads": 1,
+          "observation_bytes": 1
+        }
+      },
+      "remaining_limits": {
+        "campaign_time_ms": 60000,
+        "attempt_admissions": 1,
+        "model_tokens": 1,
+        "model_turns": 1,
+        "artifact_bytes": 1,
+        "artifact_objects": 1,
+        "snapshot_admissions": 1,
+        "snapshot_bytes": 1,
+        "observation_reads": 1,
+        "observation_bytes": 1
+      }
+    },
+    "tools": [
+      {
+        "name": "snapshot_list",
+        "description": "List snapshots.",
+        "input_schema": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        }
+      }
+    ],
+    "prompt": "Frozen instructions."
+  }
+]

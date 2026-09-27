@@ -107,6 +107,15 @@ class Protocol:
     def chat_continuation(self, result, tool_results):
         return model.chat_continuation(self,result,tool_results)
 
+    def anthropic_continuation(self, result, tool_results):
+        return model.anthropic.continuation(self,result,tool_results)
+
+    def model_output_limit(self, request):
+        return model.model_output_limit(self,request)
+
+    def model_usage(self, result):
+        return model.model_usage(self,result)
+
     def encode_frame(self, lane, raw):
         return transport.encode_frame(self, lane, raw)
 
@@ -202,7 +211,7 @@ class Protocol:
         self._check_registered(operation, "request_schema", body)
         name = operation["name"]
         if name == "engine.model_generate":
-            model.check_request(body['request'])
+            model.native_request(body)
         elif name == "engine.record_append":
             check_record(body)
         elif name == "engine.attempt_execute":
@@ -227,7 +236,7 @@ class Protocol:
             _require(message["error"]["code"] in operation["error_codes"])
         else:
             self._check_registered(operation, "result_schema", message["result"])
-            if operation['name']=='engine.model_generate': model.check_response(message['result']['response'])
+            if operation['name']=='engine.model_generate': model.native_response(message['result'])
         return message
 
     def validate_response(self, request: bytes, response: bytes):

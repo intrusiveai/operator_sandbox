@@ -1,7 +1,7 @@
 # Campaign model relay
 
 The campaign service implements `engine.model_generate` with the shared
-`openai-chat-text-tools-v1` codec. The launcher supplies a trusted `ModelConfig`;
+`openai-chat-text-tools-v1` and `anthropic-messages-text-tools-v1` codecs. The launcher supplies a trusted `ModelConfig`;
 this service does not discover endpoints or resolve production credentials.
 
 - The configuration MUST bind a provider to the manifest's model-profile digest,
@@ -16,6 +16,8 @@ this service does not discover endpoints or resolve production credentials.
   Both campaign and harness model-turn limits MUST apply. Known usage MUST settle
   the reservation; missing usage, cancellation, transport ambiguity or invalid
   native responses MUST retain it and terminate execution without retry.
+  Shared codec accounting MUST derive native token fields; Anthropic input MUST
+  include cache-creation and cache-read tokens in addition to uncached input.
 - A response exceeding the configured per-response tool-call limit MUST be
   rejected as a whole after accounting for its generation. It MUST enter bounded
   finalization; no prefix of that batch may execute.

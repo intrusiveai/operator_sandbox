@@ -8,25 +8,87 @@ import (
 	"testing"
 	"time"
 
+	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaignservice"
 )
 
 func modelFixture(t *testing.T) (map[string]any, map[string]any, map[string]any) {
+	return namedModelFixture(t, "model-codec.json", "native text and usage preserved")
+}
+func namedModelFixture(t *testing.T, file, name string) (map[string]any, map[string]any, map[string]any) {
 	t.Helper()
 	var fixtures []struct {
 		Name                    string
 		Policy, Request, Result map[string]any
 	}
-	if err := json.Unmarshal(read(t, "../../schemas/fixtures/model-codec.json"), &fixtures); err != nil {
+	if err := json.Unmarshal(read(t, "../../schemas/fixtures/"+file), &fixtures); err != nil {
 		t.Fatal(err)
 	}
 	for _, f := range fixtures {
-		if f.Name == "native text and usage preserved" {
+		if f.Name == name {
 			return f.Policy, f.Request, f.Result
 		}
 	}
 	t.Fatal("missing model fixture")
 	return nil, nil, nil
+}
+
+func TestServiceAnthropicCacheAccountingAndRestore(t *testing.T) {
+	for _, mode := range []string{"complete", "unknown-usage", "excess-cached-input"} {
+		t.Run(mode, func(t *testing.T) {
+			policy, request, result := namedModelFixture(t, "anthropic-model-codec.json", "anthropic: native text including cache counts")
+			response := result["response"].(map[string]any)
+			if mode == "unknown-usage" {
+				delete(response, "usage")
+			}
+			if mode == "excess-cached-input" {
+				response["usage"].(map[string]any)["cache_read_input_tokens"] = 101
+			}
+			p := &provider{response: encode(response)}
+			routes := append(append([]string{}, snapshotRoutes...), "engine.model_generate")
+			s, _, runtime, _, launch := serviceWithTemplate(t, 0, routes, func(c *campaignservice.Config) {
+				c.Model = &campaignservice.ModelConfig{Provider: p, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
+			}, func(c map[string]any) {
+				digest, err := contracts.CanonicalDigest(encode(policy["tools"]), contracts.OrdinaryLimit)
+				if err != nil {
+					t.Fatal(err)
+				}
+				c["model"] = map[string]any{"codec_id": policy["codec_id"], "profile_id": policy["profile_id"], "profile_digest": policy["profile_digest"], "model_id": policy["request_model"], "features": []string{"text", "function-tools"}, "codec_settings": map[string]any{"max_tokens": policy["max_tokens"], "thinking": policy["thinking"], "response_models": policy["response_models"], "tools_digest": digest}}
+			}, snapshotInput(t))
+			if err := s.Admit(context.Background(), launch); err != nil {
+				t.Fatal(err)
+			}
+			request["request"].(map[string]any)["system"] = string(launch.Prompt)
+			raw, err := s.Handle(context.Background(), stateWire("engine.model_generate", "messages-1", 1, request), 0)
+			if mode != "complete" {
+				code := "OUTCOME_UNKNOWN"
+				if mode == "excess-cached-input" {
+					code = "INTERNAL_ERROR"
+				}
+				if err != nil || !strings.Contains(string(raw), code) {
+					t.Fatal(string(raw), err)
+				}
+				select {
+				case <-runtime.killed:
+				case <-time.After(3 * time.Second):
+					t.Fatal("invalid model accounting did not stop execution")
+				}
+				return
+			}
+			first := stateResult(t, raw, err)
+			raw, err = s.Handle(context.Background(), stateWire("engine.model_generate", "messages-1", 1, request), 0)
+			if stateResult(t, raw, err)["receipt_id"] != first["receipt_id"] || p.calls != 1 {
+				t.Fatal("model replay executed twice")
+			}
+			raw, err = s.Handle(context.Background(), stateWire("engine.snapshot_request", "snapshot", 1, map[string]any{}), 0)
+			cp := stateResult(t, raw, err)["snapshot"].(map[string]any)
+			raw, err = s.Handle(context.Background(), stateWire("engine.restore_request", "restore", 1, map[string]any{"source_session": cp["source_session"], "checkpoint_id": cp["checkpoint_id"]}), 0)
+			remaining := stateResult(t, raw, err)["remaining_limits"].(map[string]any)
+			if remaining["model_tokens"] != float64(9840) || remaining["model_turns"] != float64(2) {
+				t.Fatal("cached native tokens were omitted or refunded", remaining)
+			}
+		})
+	}
 }
 
 type provider struct {

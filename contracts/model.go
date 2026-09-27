@@ -11,7 +11,7 @@ func (p *Protocol) ModelPolicyFromContext(contextRaw, toolsRaw, promptRaw []byte
 		return nil, err
 	}
 	m := c["model"].(map[string]any)
-	if m["codec_id"] != "openai-chat-text-tools-v1" {
+	if m["codec_id"] != "openai-chat-text-tools-v1" && m["codec_id"] != anthropicCodec {
 		return nil, ErrProtocol
 	}
 	admitted := false
@@ -41,7 +41,11 @@ func (p *Protocol) ModelPolicyFromContext(contextRaw, toolsRaw, promptRaw []byte
 	}
 	policy := map[string]any{"codec_id": m["codec_id"], "profile_id": m["profile_id"], "profile_digest": m["profile_digest"],
 		"request_model": m["model_id"], "prompt": string(promptRaw), "tools": tools}
-	for _, key := range []string{"instruction_role", "max_completion_tokens", "response_models"} {
+	keys := []string{"instruction_role", "max_completion_tokens", "response_models"}
+	if m["codec_id"] == anthropicCodec {
+		keys = []string{"max_tokens", "thinking", "response_models"}
+	}
+	for _, key := range keys {
 		policy[key] = settings[key]
 	}
 	schema, ok := p.catalog.schemas[ModelCodecPolicySchema]
@@ -51,7 +55,13 @@ func (p *Protocol) ModelPolicyFromContext(contextRaw, toolsRaw, promptRaw []byte
 	if schema.Validate(policy) != nil {
 		return nil, ErrSchema
 	}
-	if !chatToolsOK(tools.([]any)) {
+	valid := false
+	if m["codec_id"] == anthropicCodec {
+		valid = anthropicToolsOK(tools.([]any))
+	} else {
+		valid = chatToolsOK(tools.([]any))
+	}
+	if !valid {
 		return nil, ErrProtocol
 	}
 	return canonicalValue(policy, OrdinaryLimit)
@@ -177,6 +187,9 @@ func modelCorrelationOK(body, result map[string]any) bool {
 		}
 	}
 	request, response := body["request"].(map[string]any), result["response"].(map[string]any)
+	if body["codec_id"] == anthropicCodec {
+		return anthropicCorrelationOK(request, response)
+	}
 	if !chatRequestOK(request) || !chatResponseOK(response) {
 		return false
 	}
@@ -218,6 +231,12 @@ func (p *Protocol) ValidateModelRequest(policyRaw, requestRaw []byte) (map[strin
 		if body[key] != policy[key] {
 			return nil, ErrProtocol
 		}
+	}
+	if body["codec_id"] == anthropicCodec {
+		if !anthropicPolicyOK(policy, request) {
+			return nil, ErrProtocol
+		}
+		return body, nil
 	}
 	first := request["messages"].([]any)[0].(map[string]any)
 	if !chatRequestOK(request) || !chatToolsOK(policy["tools"].([]any)) ||
@@ -262,6 +281,12 @@ func (p *Protocol) ModelDisposition(resultRaw []byte) (string, error) {
 		return "", err
 	}
 	response := value.(map[string]any)["response"].(map[string]any)
+	if value.(map[string]any)["codec_id"] == anthropicCodec {
+		if !anthropicResponseOK(response) {
+			return "", ErrProtocol
+		}
+		return anthropicDisposition(response), nil
+	}
 	if !chatResponseOK(response) {
 		return "", ErrProtocol
 	}
@@ -300,6 +325,9 @@ func (p *Protocol) ChatContinuation(resultRaw []byte, results []ChatToolResult) 
 	value, err := p.catalog.Validate(EngineModelGenerateResultSchema, resultRaw, OrdinaryLimit)
 	if err != nil {
 		return nil, err
+	}
+	if value.(map[string]any)["codec_id"] != "openai-chat-text-tools-v1" {
+		return nil, ErrProtocol
 	}
 	response := value.(map[string]any)["response"].(map[string]any)
 	if !chatResponseOK(response) {

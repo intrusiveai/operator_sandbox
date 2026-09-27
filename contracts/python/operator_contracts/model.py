@@ -3,12 +3,13 @@ from .validation import ORDINARY_LIMIT, ContractError, decode
 from .startup import require
 from .canonical import _canonical_value, _object_digest, raw_digest
 from .schema_ids import MODEL_CODEC_POLICY_SCHEMA, ENGINE_MODEL_GENERATE_REQUEST_SCHEMA, ENGINE_MODEL_GENERATE_RESULT_SCHEMA
+from . import model_anthropic as anthropic
 
 
 def model_policy_from_context(protocol, context_raw, tools_raw, prompt_raw):
     context = protocol.validate_engine_context(context_raw)
     model = context['model']
-    require(model['codec_id']=='openai-chat-text-tools-v1' and 'engine.model_generate' in context['operations'])
+    require(model['codec_id'] in ('openai-chat-text-tools-v1',anthropic.CODEC) and 'engine.model_generate' in context['operations'])
     require(type(prompt_raw) is bytes and len(prompt_raw)<=131072)
     try:
         prompt=prompt_raw.decode('utf-8')
@@ -21,9 +22,10 @@ def model_policy_from_context(protocol, context_raw, tools_raw, prompt_raw):
     require(settings['tools_digest']==_object_digest(tools,ORDINARY_LIMIT))
     policy={key:model[key] for key in ('codec_id','profile_id','profile_digest')}
     policy.update(request_model=model['model_id'],prompt=prompt,tools=tools)
-    policy.update({key:settings[key] for key in ('instruction_role','max_completion_tokens','response_models')})
+    keys=('max_tokens','thinking','response_models') if model['codec_id']==anthropic.CODEC else ('instruction_role','max_completion_tokens','response_models')
+    policy.update({key:settings[key] for key in keys})
     protocol._catalog.validate_value(MODEL_CODEC_POLICY_SCHEMA,policy)
-    check_tools(tools)
+    (anthropic.check_tools if model['codec_id']==anthropic.CODEC else check_tools)(tools)
     return _canonical_value(policy,ORDINARY_LIMIT)
 
 
@@ -77,6 +79,8 @@ def check_response(response):
 def check_correlation(body, result):
     require(all(body[key]==result[key] for key in ('codec_id','profile_id','profile_digest')))
     request, response = body['request'], result['response']
+    if body['codec_id']==anthropic.CODEC:
+        return anthropic.check_correlation(request,response)
     check_request(request); check_response(response)
     usage = response.get('usage')
     require(usage is None or usage['completion_tokens']<=request['max_completion_tokens'])
@@ -91,6 +95,9 @@ def validate_model_request(protocol, policy_raw, request_raw):
     body = protocol._catalog.validate(ENGINE_MODEL_GENERATE_REQUEST_SCHEMA,request_raw)
     require(all(body[key]==policy[key] for key in ('codec_id','profile_id','profile_digest')))
     request = body['request']
+    if body['codec_id']==anthropic.CODEC:
+        anthropic.check_policy(policy,request)
+        return body
     check_request(request); check_tools(policy['tools'])
     first = request['messages'][0]
     require(request['model']==policy['request_model']
@@ -122,6 +129,9 @@ def disposition(response):
 
 def model_disposition(protocol, result_raw):
     result = protocol._catalog.validate(ENGINE_MODEL_GENERATE_RESULT_SCHEMA,result_raw)
+    if result['codec_id']==anthropic.CODEC:
+        anthropic.check_response(result['response'])
+        return anthropic.disposition(result['response'])
     check_response(result['response'])
     return disposition(result['response'])
 
@@ -133,6 +143,7 @@ def chat_continuation(protocol, result_raw, results):
     invalid or not-executed local results. Never parses native argument strings.
     """
     result = protocol._catalog.validate(ENGINE_MODEL_GENERATE_RESULT_SCHEMA,result_raw)
+    require(result['codec_id']=='openai-chat-text-tools-v1')
     response = result['response']
     check_response(response)
     require(disposition(response) in ('tool-calls','text','refusal'))
@@ -151,3 +162,29 @@ def chat_continuation(protocol, result_raw, results):
         return _canonical_value(segment,ORDINARY_LIMIT)
     except (UnicodeError, TypeError, ValueError):
         raise ContractError('contract message consistency check failed') from None
+
+
+def native_request(body):
+    (anthropic.check_request if body['codec_id']==anthropic.CODEC else check_request)(body['request'])
+
+
+def native_response(body):
+    (anthropic.check_response if body['codec_id']==anthropic.CODEC else check_response)(body['response'])
+
+
+def model_output_limit(protocol,raw):
+    body=protocol._catalog.validate(ENGINE_MODEL_GENERATE_REQUEST_SCHEMA,raw)
+    native_request(body)
+    return body['request']['max_tokens' if body['codec_id']==anthropic.CODEC else 'max_completion_tokens']
+
+
+def model_usage(protocol,raw):
+    body=protocol._catalog.validate(ENGINE_MODEL_GENERATE_RESULT_SCHEMA,raw)
+    native_response(body)
+    response=body['response']
+    if body['codec_id']==anthropic.CODEC: return anthropic.metrics(response)
+    result=dict(known=False,input_tokens=0,output_tokens=0,total_tokens=0,tool_calls=len(calls(response['choices'][0]['message'])))
+    usage=response.get('usage')
+    if usage is not None:
+        result.update(known=True,input_tokens=usage['prompt_tokens'],output_tokens=usage['completion_tokens'],total_tokens=usage['total_tokens'])
+    return result
