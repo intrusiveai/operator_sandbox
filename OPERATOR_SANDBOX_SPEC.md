@@ -1037,6 +1037,8 @@ including after completion; changed content conflicts. Lost acknowledgement is
 reconciled using the saved key, never replaced blindly. Concurrent starts serialize.
 The host composition MUST follow [composed launch sessions](docs/LAUNCH_SESSION.md),
 including complete input retention and the startup reconciliation gate.
+Durable host start requests and worker claims MUST follow
+[Start requests](docs/START_REQUESTS.md).
 `--new-campaign` explicitly creates a new intent/ledger for a fresh execution.
 No accepted campaign is reopened, and no unresolved start silently duplicates it.
 

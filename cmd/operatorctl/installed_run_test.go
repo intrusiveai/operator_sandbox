@@ -83,6 +83,17 @@ credentials:
 	if err != nil || first.Fingerprint() != second.Fingerprint() {
 		t.Fatal("unstable fingerprint", err)
 	}
+	alternate := paths
+	alternate.StateRoot = filepath.Join(source, "different-state-root")
+	changedDefaults, err := hostrun.LoadInputs(context.Background(), paths.ConfigFile, alternate, selected)
+	if err != nil || changedDefaults.Fingerprint() == first.Fingerprint() {
+		t.Fatal("effective installation defaults not bound", err)
+	}
+	frozenSelection := first.Selection()
+	frozenSelection.AppendFiles[0] = "/changed"
+	if first.Selection().AppendFiles[0] != appendPath || first.Installation().StateRoot != paths.StateRoot {
+		t.Fatal("mutable installed selection")
+	}
 	for _, tc := range []struct {
 		name, path    string
 		before, after []byte

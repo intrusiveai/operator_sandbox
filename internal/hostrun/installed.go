@@ -73,6 +73,9 @@ var selectedID = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$`)
 var selectedDigest = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
 var fullHex = regexp.MustCompile(`^[0-9a-f]{64}$`)
 
+// Validate checks the closed host-selected identity and input options without I/O.
+func (s Selection) Validate() error { return validateSelection(s) }
+
 func validateSelection(s Selection) error {
 	if !filepath.IsAbs(s.RunDirectory) || filepath.Clean(s.RunDirectory) != s.RunDirectory || !selectedID.MatchString(s.CampaignID) || !selectedID.MatchString(s.LaunchID) || !selectedID.MatchString(s.WorkerInstanceID) || !fullHex.MatchString(s.ContainerID) || !campaign.ValidStopRequest(s.StartRequestID, "start") || len(s.SkillDigests) > 16 || len(s.AppendFiles) > 16 {
 		return ErrSession
@@ -110,6 +113,15 @@ type InstalledInputs struct {
 }
 
 func (i *InstalledInputs) Fingerprint() string { return i.fingerprint }
+func (i *InstalledInputs) Installation() hostconfig.Paths {
+	return hostconfig.Paths{ConfigFile: i.loaded.Path, StateRoot: i.loaded.Config.State.Root, DockerEndpoint: i.loaded.Config.Docker.Endpoint}
+}
+func (i *InstalledInputs) Selection() Selection {
+	s := i.selected
+	s.SkillDigests = append([]string{}, s.SkillDigests...)
+	s.AppendFiles = append([]string{}, s.AppendFiles...)
+	return s
+}
 
 // LoadInputs reads and freezes installed profiles, submission and prompt bytes.
 // It creates no state, resolves no credentials and contacts no external service.
@@ -190,7 +202,7 @@ func LoadInputs(ctx context.Context, configPath string, defaults hostconfig.Path
 	for _, raw := range appends {
 		promptParts = append(promptParts, contracts.RawDigest(raw))
 	}
-	identityRaw, err := json.Marshal(map[string]any{"selection": selected, "config_path": loaded.Path, "config_digest": loaded.Digest, "contract": submitted.Receipt().Contract, "submission": submitted.Receipt(), "target_profile_digest": profile.Digest(), "model_profile_digest": model.Digest(), "credential_configuration_digest": contracts.RawDigest(credentialRaw), "replacement_digest": contracts.RawDigest(replacement), "append_digests": promptParts})
+	identityRaw, err := json.Marshal(map[string]any{"selection": selected, "config_path": loaded.Path, "config_digest": loaded.Digest, "effective_config": loaded.Config, "contract": submitted.Receipt().Contract, "submission": submitted.Receipt(), "target_profile_digest": profile.Digest(), "model_profile_digest": model.Digest(), "credential_configuration_digest": contracts.RawDigest(credentialRaw), "replacement_digest": contracts.RawDigest(replacement), "append_digests": promptParts})
 	if err != nil {
 		return nil, err
 	}

@@ -1,5 +1,16 @@
 # Implementation phase handoff
 
+## Current boundary: durable start requests
+
+Private typed start requests now bind frozen inputs to one immutable request key.
+A durable one-time worker claim survives process loss; identical replays return
+existing state and changed inputs conflict. Acceptance and fixed-code completion
+records distinguish submitted/claimed/accepted/finished/failed states. Race and
+child-process tests cover competing claims, lost-worker non-resumption and damaged
+publication. The input fingerprint also binds effective installation defaults.
+See [durable start requests](START_REQUESTS.md). CLI run links, supervisor submission
+and worker dispatch remain the next integration.
+
 ## Current boundary: installed campaign input loading
 
 Offline input loading now verifies installed profiles and a submitted run and
