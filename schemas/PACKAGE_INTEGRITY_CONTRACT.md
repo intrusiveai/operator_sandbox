@@ -4,6 +4,8 @@ This stage defines the closed [package manifest](contract-package.schema.json) a
 matching Go/Python construction, verification and loading APIs. It implements the
 package-content identity required by [SHARED_CONTRACT.md](SHARED_CONTRACT.md).
 It does not publish `0.1.0`, complete model codecs or certify runtime conformance.
+The [publication tooling contract](../docs/CONTRACT_PUBLICATION.md) specifies the
+reproducible source/package builder and required generated-package validation.
 
 ## Manifest and payload
 

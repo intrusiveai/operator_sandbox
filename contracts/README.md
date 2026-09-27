@@ -154,6 +154,10 @@ fixed payload layout and the distinction between byte integrity and release read
 Operator's separate [installed contract loader](../docs/INSTALLED_CONTRACT.md)
 adds bounded filesystem reads and `operatorctl contract check`; the shared APIs
 continue to operate on explicit payload bytes in both languages.
+The [package builder](../docs/CONTRACT_PUBLICATION.md) now exposes `operatorctl
+contract build` for reproducible content-only snapshots containing both validator
+sources and their common fixtures. A development snapshot is not a qualified
+`0.1.0` release.
 
 Use `EncodeFrame` / `encode_frame` and `NewFrameDecoder` / `new_frame_decoder` for
 bounded FIFO messages. `NewTransportState` / `new_transport_state` tracks lane

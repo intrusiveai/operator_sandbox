@@ -1,5 +1,19 @@
 # Implementation phase handoff
 
+## Current boundary: reproducible contract package tooling
+
+`operatorctl contract build` packages the root schemas/catalog/registry, real
+semantic-profile documents, matching Go/Python validator sources and shared
+fixtures with an exact canonical inventory. The output is checked through the
+production installed loader. Repeated builds produce the same identity; existing
+outputs are not overwritten. See [Contract publication](CONTRACT_PUBLICATION.md).
+
+The generated source snapshot's Go contract tests and all 26 Python test methods
+pass independently, and the package still passes exact-inventory verification
+after those tests. Publisher race tests and the full suite pass. This completes
+the distribution tooling boundary; native codec completion and runtime/provider
+qualification still gate a supported `0.1.0` release.
+
 ## Current boundary: signed instruction skills
 
 `operatorctl skill keygen|build|import|check` and `internal/skills` now implement
