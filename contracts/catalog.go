@@ -20,6 +20,7 @@ func (offlineLoader) Load(string) (any, error) { return nil, ErrCatalog }
 type Catalog struct {
 	schemas map[string]*jsonschema.Schema
 	digest  string
+	sources map[string][]byte
 }
 
 // LoadCatalog loads only resources explicitly listed in an installed, trusted
@@ -46,6 +47,7 @@ func LoadCatalog(files fs.FS) (*Catalog, error) {
 	compiler.UseLoader(offlineLoader{})
 	ids := make([]string, 0, len(entries))
 	seen := map[string]bool{}
+	sources := map[string][]byte{}
 	for id, file := range entries {
 		name, ok := file.(string)
 		if !ok || !fs.ValidPath(name) || path.Base(name) != name || strings.Contains(name, `\`) || !strings.HasSuffix(name, ".schema.json") || seen[name] {
@@ -56,6 +58,7 @@ func LoadCatalog(files fs.FS) (*Catalog, error) {
 		if err != nil {
 			return nil, ErrCatalog
 		}
+		sources[id] = raw
 		schema, err := Decode(raw, OrdinaryLimit)
 		if err != nil {
 			return nil, ErrCatalog
@@ -69,7 +72,7 @@ func LoadCatalog(files fs.FS) (*Catalog, error) {
 		}
 		ids = append(ids, id)
 	}
-	result := &Catalog{schemas: map[string]*jsonschema.Schema{}, digest: digest}
+	result := &Catalog{schemas: map[string]*jsonschema.Schema{}, digest: digest, sources: sources}
 	sort.Strings(ids)
 	for _, id := range ids {
 		schema, err := compiler.Compile(id)

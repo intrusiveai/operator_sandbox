@@ -110,6 +110,14 @@ class Protocol:
     def anthropic_continuation(self, result, tool_results):
         return model.anthropic.continuation(self,result,tool_results)
 
+    def model_tools(self, codec, operations):
+        from .model_tools import model_tools
+        return model_tools(self, codec, operations)
+
+    def validate_tool_arguments(self, name, raw):
+        from .model_tools import validate_tool_arguments
+        return validate_tool_arguments(self, name, raw)
+
     def responses_continuation(self, result_raw, results):
         from .model_responses import continuation
         return continuation(self, result_raw, results)

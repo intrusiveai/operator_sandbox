@@ -1,0 +1,1074 @@
+[
+  {
+    "name": "openai-chat-text-tools-v1/all",
+    "mode": "projection",
+    "codec": "openai-chat-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.request_stop",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "names": [
+      "artifact_publish",
+      "attempt_execute",
+      "injection_delete",
+      "observation_read",
+      "record_append",
+      "reference_read",
+      "request_stop",
+      "restore_request",
+      "snapshot_inspect",
+      "snapshot_list",
+      "snapshot_request"
+    ],
+    "digest": "sha256:5a8d5f692fa9a96a78daed8baf1a717c2ea6af9107ffce6f2a5ecef4e92189c6",
+    "size_bytes": 58512,
+    "valid": true
+  },
+  {
+    "name": "openai-chat-text-tools-v1/local-only",
+    "mode": "projection",
+    "codec": "openai-chat-text-tools-v1",
+    "operations": [],
+    "names": [
+      "reference_read"
+    ],
+    "digest": "sha256:896fcdfab636e92c545684d8c9531673f700f27e98755a75608cc8a5cb597532",
+    "size_bytes": 584,
+    "valid": true
+  },
+  {
+    "name": "openai-chat-text-tools-v1/incomplete-upload",
+    "mode": "projection",
+    "codec": "openai-chat-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.request_stop",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "names": [
+      "attempt_execute",
+      "injection_delete",
+      "observation_read",
+      "record_append",
+      "reference_read",
+      "restore_request",
+      "snapshot_inspect",
+      "snapshot_list",
+      "snapshot_request"
+    ],
+    "digest": "sha256:561a41f69fbe8d6ddd4c249fe813d9ae4bbb99250f518b7c9145988e3fd64d55",
+    "size_bytes": 49398,
+    "valid": true
+  },
+  {
+    "name": "openai-responses-text-tools-v1/all",
+    "mode": "projection",
+    "codec": "openai-responses-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.request_stop",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "names": [
+      "artifact_publish",
+      "attempt_execute",
+      "injection_delete",
+      "observation_read",
+      "record_append",
+      "reference_read",
+      "request_stop",
+      "restore_request",
+      "snapshot_inspect",
+      "snapshot_list",
+      "snapshot_request"
+    ],
+    "digest": "sha256:0cad80ed374ed6f0c1b3cfabf8da6700dc13c4272203c1abe4400e0f0a699594",
+    "size_bytes": 58369,
+    "valid": true
+  },
+  {
+    "name": "openai-responses-text-tools-v1/local-only",
+    "mode": "projection",
+    "codec": "openai-responses-text-tools-v1",
+    "operations": [],
+    "names": [
+      "reference_read"
+    ],
+    "digest": "sha256:248c616d4fd9581c7ba49e47288a67799d493af75dbc20894a3f7366943e37a2",
+    "size_bytes": 571,
+    "valid": true
+  },
+  {
+    "name": "openai-responses-text-tools-v1/incomplete-upload",
+    "mode": "projection",
+    "codec": "openai-responses-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.request_stop",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "names": [
+      "attempt_execute",
+      "injection_delete",
+      "observation_read",
+      "record_append",
+      "reference_read",
+      "restore_request",
+      "snapshot_inspect",
+      "snapshot_list",
+      "snapshot_request"
+    ],
+    "digest": "sha256:1d9465b420ea052a733eeddcebaa65d5fcf2c08be54901353ddc71881b8307bf",
+    "size_bytes": 49281,
+    "valid": true
+  },
+  {
+    "name": "anthropic-messages-text-tools-v1/all",
+    "mode": "projection",
+    "codec": "anthropic-messages-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.request_stop",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "names": [
+      "artifact_publish",
+      "attempt_execute",
+      "injection_delete",
+      "observation_read",
+      "record_append",
+      "reference_read",
+      "request_stop",
+      "restore_request",
+      "snapshot_inspect",
+      "snapshot_list",
+      "snapshot_request"
+    ],
+    "digest": "sha256:699aa00a5ebe2d7000d5fad39ae4b466ee809615570d878782a0ee981201fdc9",
+    "size_bytes": 58028,
+    "valid": true
+  },
+  {
+    "name": "anthropic-messages-text-tools-v1/local-only",
+    "mode": "projection",
+    "codec": "anthropic-messages-text-tools-v1",
+    "operations": [],
+    "names": [
+      "reference_read"
+    ],
+    "digest": "sha256:9beb3e53c51092ec52dad954009c5ee7de95ea1e4c4f6a0b01155eecb48de46a",
+    "size_bytes": 540,
+    "valid": true
+  },
+  {
+    "name": "anthropic-messages-text-tools-v1/incomplete-upload",
+    "mode": "projection",
+    "codec": "anthropic-messages-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.request_stop",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "names": [
+      "attempt_execute",
+      "injection_delete",
+      "observation_read",
+      "record_append",
+      "reference_read",
+      "restore_request",
+      "snapshot_inspect",
+      "snapshot_list",
+      "snapshot_request"
+    ],
+    "digest": "sha256:d707da83119a9df6f7f65f55f5038ab5e806f7dead6cf92d59a0f2f00891cd09",
+    "size_bytes": 49002,
+    "valid": true
+  },
+  {
+    "name": "bedrock-converse-text-tools-v1/all",
+    "mode": "projection",
+    "codec": "bedrock-converse-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.request_stop",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "names": [
+      "artifact_publish",
+      "attempt_execute",
+      "injection_delete",
+      "observation_read",
+      "record_append",
+      "reference_read",
+      "request_stop",
+      "restore_request",
+      "snapshot_inspect",
+      "snapshot_list",
+      "snapshot_request"
+    ],
+    "digest": "sha256:c27f0d7d1d82f582724fad850f558974851ffb8fdcda52d459be24d0cf32a11e",
+    "size_bytes": 58259,
+    "valid": true
+  },
+  {
+    "name": "bedrock-converse-text-tools-v1/local-only",
+    "mode": "projection",
+    "codec": "bedrock-converse-text-tools-v1",
+    "operations": [],
+    "names": [
+      "reference_read"
+    ],
+    "digest": "sha256:f606e725bace87efe97b3c3909c9b620c33ee6739804d5fbec54061fac040624",
+    "size_bytes": 561,
+    "valid": true
+  },
+  {
+    "name": "bedrock-converse-text-tools-v1/incomplete-upload",
+    "mode": "projection",
+    "codec": "bedrock-converse-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.request_stop",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "names": [
+      "attempt_execute",
+      "injection_delete",
+      "observation_read",
+      "record_append",
+      "reference_read",
+      "restore_request",
+      "snapshot_inspect",
+      "snapshot_list",
+      "snapshot_request"
+    ],
+    "digest": "sha256:315495de6db97e3c9a894ed92ce1cd9047d85ebaa89649cb8b57f368ac27b69d",
+    "size_bytes": 49191,
+    "valid": true
+  },
+  {
+    "name": "gemini-text-tools-v1/all",
+    "mode": "projection",
+    "codec": "gemini-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.request_stop",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "names": [
+      "artifact_publish",
+      "attempt_execute",
+      "injection_delete",
+      "observation_read",
+      "record_append",
+      "reference_read",
+      "request_stop",
+      "restore_request",
+      "snapshot_inspect",
+      "snapshot_list",
+      "snapshot_request"
+    ],
+    "digest": "sha256:36757c442155adc31a44672733fa348d18079116d6d433af4798eca97e95aa24",
+    "size_bytes": 58143,
+    "valid": true
+  },
+  {
+    "name": "gemini-text-tools-v1/local-only",
+    "mode": "projection",
+    "codec": "gemini-text-tools-v1",
+    "operations": [],
+    "names": [
+      "reference_read"
+    ],
+    "digest": "sha256:4517ee1729db864cf0b17f5617d2a80c5b1c87277c64755dac742cb019e26c3f",
+    "size_bytes": 575,
+    "valid": true
+  },
+  {
+    "name": "gemini-text-tools-v1/incomplete-upload",
+    "mode": "projection",
+    "codec": "gemini-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.request_stop",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "names": [
+      "attempt_execute",
+      "injection_delete",
+      "observation_read",
+      "record_append",
+      "reference_read",
+      "restore_request",
+      "snapshot_inspect",
+      "snapshot_list",
+      "snapshot_request"
+    ],
+    "digest": "sha256:844c10aaaa8c803ed0451865b446dc312e7074101cb4272ca9cb3cd627983e31",
+    "size_bytes": 49101,
+    "valid": true
+  },
+  {
+    "name": "unknown-codec",
+    "mode": "projection",
+    "codec": "unsupported",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.request_stop",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "valid": false
+  },
+  {
+    "name": "unknown-operation",
+    "mode": "projection",
+    "codec": "openai-chat-text-tools-v1",
+    "operations": [
+      "engine.shell"
+    ],
+    "valid": false
+  },
+  {
+    "name": "duplicate-operation",
+    "mode": "projection",
+    "codec": "openai-chat-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.request_stop",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request",
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.request_stop",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "valid": false
+  },
+  {
+    "name": "unsorted-operations",
+    "mode": "projection",
+    "codec": "openai-chat-text-tools-v1",
+    "operations": [
+      "engine.snapshot_request",
+      "engine.snapshot_list",
+      "engine.snapshot_inspect",
+      "engine.restore_request",
+      "engine.request_stop",
+      "engine.record_append",
+      "engine.observation_read",
+      "engine.model_generate",
+      "engine.injection_delete",
+      "engine.attempt_execute",
+      "engine.artifact_put_part",
+      "engine.artifact_commit",
+      "engine.artifact_begin"
+    ],
+    "valid": false
+  },
+  {
+    "name": "bounded reference",
+    "mode": "arguments",
+    "tool": "reference_read",
+    "arguments": {
+      "reference_id": "ref-1",
+      "offset": 0,
+      "max_bytes": 262144
+    },
+    "valid": true
+  },
+  {
+    "name": "no arbitrary path",
+    "mode": "arguments",
+    "tool": "reference_read",
+    "arguments": {
+      "path": "/etc/passwd",
+      "offset": 0,
+      "max_bytes": 1
+    },
+    "valid": false
+  },
+  {
+    "name": "bounded reference ceiling",
+    "mode": "arguments",
+    "tool": "reference_read",
+    "arguments": {
+      "reference_id": "ref-1",
+      "offset": 0,
+      "max_bytes": 262145
+    },
+    "valid": false
+  },
+  {
+    "name": "data artifact {'encoding': 'utf8', 'text': 'payload'}",
+    "mode": "arguments",
+    "tool": "artifact_publish",
+    "arguments": {
+      "purpose": "payload",
+      "media_type": "application/json",
+      "content": {
+        "encoding": "utf8",
+        "text": "payload"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "data artifact {'encoding': 'json', 'value': {'payload': 'data'}}",
+    "mode": "arguments",
+    "tool": "artifact_publish",
+    "arguments": {
+      "purpose": "payload",
+      "media_type": "application/json",
+      "content": {
+        "encoding": "json",
+        "value": {
+          "payload": "data"
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "data artifact {'encoding': 'json', 'value': 'JSON string'}",
+    "mode": "arguments",
+    "tool": "artifact_publish",
+    "arguments": {
+      "purpose": "payload",
+      "media_type": "application/json",
+      "content": {
+        "encoding": "json",
+        "value": "JSON string"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "data artifact {'encoding': 'base64', 'data': 'eA=='}",
+    "mode": "arguments",
+    "tool": "artifact_publish",
+    "arguments": {
+      "purpose": "payload",
+      "media_type": "application/json",
+      "content": {
+        "encoding": "base64",
+        "data": "eA=="
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "model cannot publish conclusion directly",
+    "mode": "arguments",
+    "tool": "artifact_publish",
+    "arguments": {
+      "purpose": "conclusion",
+      "media_type": "application/json",
+      "content": {
+        "encoding": "json",
+        "value": {}
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "no artifact source file",
+    "mode": "arguments",
+    "tool": "artifact_publish",
+    "arguments": {
+      "purpose": "payload",
+      "media_type": "application/json",
+      "source_file": "/tmp/file"
+    },
+    "valid": false
+  },
+  {
+    "name": "complete tactical arguments",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "exploratory",
+      "thread_id": "thread-1",
+      "generation": 1,
+      "payload": {
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size_bytes": 2,
+        "media_type": "application/json",
+        "canonicalization": "raw"
+      },
+      "pre_actions": [],
+      "invocation": {
+        "operation_id": "invoke",
+        "input_source": "payload",
+        "media_type": "application/json"
+      },
+      "cleanup": {
+        "delete_actions_after_observation": true
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "reserved api_version",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "exploratory",
+      "thread_id": "thread-1",
+      "generation": 1,
+      "payload": {
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size_bytes": 2,
+        "media_type": "application/json",
+        "canonicalization": "raw"
+      },
+      "pre_actions": [],
+      "invocation": {
+        "operation_id": "invoke",
+        "input_source": "payload",
+        "media_type": "application/json"
+      },
+      "cleanup": {
+        "delete_actions_after_observation": true
+      },
+      "api_version": "other"
+    },
+    "valid": false
+  },
+  {
+    "name": "reserved generator",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "exploratory",
+      "thread_id": "thread-1",
+      "generation": 1,
+      "payload": {
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size_bytes": 2,
+        "media_type": "application/json",
+        "canonicalization": "raw"
+      },
+      "pre_actions": [],
+      "invocation": {
+        "operation_id": "invoke",
+        "input_source": "payload",
+        "media_type": "application/json"
+      },
+      "cleanup": {
+        "delete_actions_after_observation": true
+      },
+      "generator": {}
+    },
+    "valid": false
+  },
+  {
+    "name": "reserved attempt_index",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "exploratory",
+      "thread_id": "thread-1",
+      "generation": 1,
+      "payload": {
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size_bytes": 2,
+        "media_type": "application/json",
+        "canonicalization": "raw"
+      },
+      "pre_actions": [],
+      "invocation": {
+        "operation_id": "invoke",
+        "input_source": "payload",
+        "media_type": "application/json"
+      },
+      "cleanup": {
+        "delete_actions_after_observation": true
+      },
+      "attempt_index": 1
+    },
+    "valid": false
+  },
+  {
+    "name": "reserved request_id",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "exploratory",
+      "thread_id": "thread-1",
+      "generation": 1,
+      "payload": {
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size_bytes": 2,
+        "media_type": "application/json",
+        "canonicalization": "raw"
+      },
+      "pre_actions": [],
+      "invocation": {
+        "operation_id": "invoke",
+        "input_source": "payload",
+        "media_type": "application/json"
+      },
+      "cleanup": {
+        "delete_actions_after_observation": true
+      },
+      "request_id": "r1"
+    },
+    "valid": false
+  },
+  {
+    "name": "reserved attempt_id",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "exploratory",
+      "thread_id": "thread-1",
+      "generation": 1,
+      "payload": {
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size_bytes": 2,
+        "media_type": "application/json",
+        "canonicalization": "raw"
+      },
+      "pre_actions": [],
+      "invocation": {
+        "operation_id": "invoke",
+        "input_source": "payload",
+        "media_type": "application/json"
+      },
+      "cleanup": {
+        "delete_actions_after_observation": true
+      },
+      "attempt_id": "a1"
+    },
+    "valid": false
+  },
+  {
+    "name": "injection_delete arguments",
+    "mode": "arguments",
+    "tool": "injection_delete",
+    "arguments": {
+      "attempt_receipt_id": "attempt-receipt-1",
+      "action_id": "action-1"
+    },
+    "valid": true
+  },
+  {
+    "name": "observation_read arguments",
+    "mode": "arguments",
+    "tool": "observation_read",
+    "arguments": {
+      "receipt_id": "receipt-1",
+      "entry_id": "entry-1",
+      "offset": 0,
+      "max_bytes": 262144
+    },
+    "valid": true
+  },
+  {
+    "name": "record_append arguments",
+    "mode": "arguments",
+    "tool": "record_append",
+    "arguments": {
+      "record_kind": "hypothesis",
+      "record": {
+        "hypothesis_id": "hypothesis-1",
+        "objective_refs": [
+          "objective-1"
+        ],
+        "provenance": {
+          "origin": "exploratory"
+        },
+        "statement": "A target response may reveal the tested behavior.",
+        "assumptions": [
+          "A response is observable."
+        ],
+        "predicted_observations": [
+          "A marker in the response."
+        ],
+        "record_refs": []
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "restore_request arguments",
+    "mode": "arguments",
+    "tool": "restore_request",
+    "arguments": {
+      "source_session": "source-1",
+      "checkpoint_id": "checkpoint-1"
+    },
+    "valid": true
+  },
+  {
+    "name": "snapshot_request arguments",
+    "mode": "arguments",
+    "tool": "snapshot_request",
+    "arguments": {},
+    "valid": true
+  },
+  {
+    "name": "snapshot_list arguments",
+    "mode": "arguments",
+    "tool": "snapshot_list",
+    "arguments": {},
+    "valid": true
+  },
+  {
+    "name": "snapshot_inspect arguments",
+    "mode": "arguments",
+    "tool": "snapshot_inspect",
+    "arguments": {
+      "source_session": "source-1",
+      "checkpoint_id": "checkpoint-1"
+    },
+    "valid": true
+  },
+  {
+    "name": "structured conclusion draft",
+    "mode": "arguments",
+    "tool": "request_stop",
+    "arguments": {
+      "status": "completed",
+      "finish_reason": "objectives-addressed",
+      "summary": "The experiment produced a limited observation; assessment remains a guest claim.",
+      "objectives": [
+        {
+          "objective_id": "objective-1",
+          "outcome": "inconclusive",
+          "summary": "An experiment addressed this objective.",
+          "attempt_receipt_refs": [
+            "attempt-receipt-1"
+          ],
+          "record_refs": [
+            "hypothesis-record-1"
+          ]
+        }
+      ],
+      "hypotheses": [
+        {
+          "hypothesis_id": "hypothesis-1",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "provenance": {
+            "origin": "exploratory"
+          },
+          "outcome": "supported",
+          "summary": "A response marker was observed.",
+          "attempt_receipt_refs": [
+            "attempt-receipt-1"
+          ],
+          "record_refs": [
+            "hypothesis-record-1"
+          ]
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "claim-1",
+          "statement": "The selected response excerpt contains the tested marker.",
+          "interpretation": "supported",
+          "confidence": "medium",
+          "assurance": "external-response",
+          "attempt_receipt_refs": [
+            "attempt-receipt-1"
+          ],
+          "observation_refs": [
+            {
+              "attempt_receipt_id": "attempt-receipt-1",
+              "entry_id": "entry-1",
+              "range": {
+                "offset": 0,
+                "length": 4
+              }
+            }
+          ],
+          "uncertainty_refs": [
+            "gap-1"
+          ]
+        }
+      ],
+      "coverage": [
+        {
+          "objective_id": "objective-1",
+          "status": "tested",
+          "reason": "One experiment executed.",
+          "attempt_receipt_refs": [
+            "attempt-receipt-1"
+          ]
+        }
+      ],
+      "uncertainties": [
+        {
+          "gap_id": "gap-1",
+          "kind": "unavailable-feedback",
+          "description": "No internal target evidence was available.",
+          "observation_refs": [],
+          "input_refs": [],
+          "record_refs": []
+        }
+      ],
+      "record_refs": [
+        "hypothesis-record-1"
+      ]
+    },
+    "valid": true
+  },
+  {
+    "name": "model cannot supply conclusion binding",
+    "mode": "arguments",
+    "tool": "request_stop",
+    "arguments": {
+      "status": "completed",
+      "finish_reason": "objectives-addressed",
+      "summary": "The experiment produced a limited observation; assessment remains a guest claim.",
+      "objectives": [
+        {
+          "objective_id": "objective-1",
+          "outcome": "inconclusive",
+          "summary": "An experiment addressed this objective.",
+          "attempt_receipt_refs": [
+            "attempt-receipt-1"
+          ],
+          "record_refs": [
+            "hypothesis-record-1"
+          ]
+        }
+      ],
+      "hypotheses": [
+        {
+          "hypothesis_id": "hypothesis-1",
+          "objective_refs": [
+            "objective-1"
+          ],
+          "provenance": {
+            "origin": "exploratory"
+          },
+          "outcome": "supported",
+          "summary": "A response marker was observed.",
+          "attempt_receipt_refs": [
+            "attempt-receipt-1"
+          ],
+          "record_refs": [
+            "hypothesis-record-1"
+          ]
+        }
+      ],
+      "claims": [
+        {
+          "claim_id": "claim-1",
+          "statement": "The selected response excerpt contains the tested marker.",
+          "interpretation": "supported",
+          "confidence": "medium",
+          "assurance": "external-response",
+          "attempt_receipt_refs": [
+            "attempt-receipt-1"
+          ],
+          "observation_refs": [
+            {
+              "attempt_receipt_id": "attempt-receipt-1",
+              "entry_id": "entry-1",
+              "range": {
+                "offset": 0,
+                "length": 4
+              }
+            }
+          ],
+          "uncertainty_refs": [
+            "gap-1"
+          ]
+        }
+      ],
+      "coverage": [
+        {
+          "objective_id": "objective-1",
+          "status": "tested",
+          "reason": "One experiment executed.",
+          "attempt_receipt_refs": [
+            "attempt-receipt-1"
+          ]
+        }
+      ],
+      "uncertainties": [
+        {
+          "gap_id": "gap-1",
+          "kind": "unavailable-feedback",
+          "description": "No internal target evidence was available.",
+          "observation_refs": [],
+          "input_refs": [],
+          "record_refs": []
+        }
+      ],
+      "record_refs": [
+        "hypothesis-record-1"
+      ],
+      "binding": {}
+    },
+    "valid": false
+  },
+  {
+    "name": "record wrapper cannot fabricate finalization",
+    "mode": "arguments",
+    "tool": "record_append",
+    "arguments": {
+      "record_kind": "conclusion",
+      "record": {}
+    },
+    "valid": false
+  },
+  {
+    "name": "internal model operation hidden",
+    "mode": "arguments",
+    "tool": "model_generate",
+    "arguments": {},
+    "valid": false
+  },
+  {
+    "name": "artifact chunk hidden",
+    "mode": "arguments",
+    "tool": "artifact_put_part",
+    "arguments": {},
+    "valid": false
+  },
+  {
+    "name": "shell hidden",
+    "mode": "arguments",
+    "tool": "exec",
+    "arguments": {
+      "command": "true"
+    },
+    "valid": false
+  },
+  {
+    "name": "non-object arguments",
+    "mode": "arguments",
+    "tool": "snapshot_request",
+    "arguments": [],
+    "valid": false
+  }
+]

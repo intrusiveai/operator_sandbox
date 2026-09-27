@@ -48,6 +48,7 @@
   "urn:operator:schema:harness-loop-limits:v1alpha1": "harness-loop-limits.schema.json",
   "urn:operator:schema:input-tree-manifest:v1alpha1": "input-tree-manifest.schema.json",
   "urn:operator:schema:model-codec-policy:v1alpha1": "model-codec-policy.schema.json",
+  "urn:operator:schema:model-tool-arguments:v1alpha1": "model-tool-arguments.schema.json",
   "urn:operator:schema:model-tool-not-executed-result:v1alpha1": "model-tool-not-executed-result.schema.json",
   "urn:operator:schema:observation-selection:v1alpha1": "observation-selection.schema.json",
   "urn:operator:schema:openai-chat-common:v1alpha1": "openai-chat-common.schema.json",

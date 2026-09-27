@@ -1,5 +1,14 @@
 # Implementation phase handoff
 
+## Current boundary: shared fixed model tools
+
+The installed package now defines eleven model-facing tools with matching Go/Python
+projections for all five codecs. Forty-eight shared fixtures cover exact catalog
+digests, dependency selection, model arguments and reserved bookkeeping fields.
+Native projections also pass full model-request validation. See the
+[tool catalog](../schemas/MODEL_TOOL_CATALOG.md). Executable startup wiring and the
+Attack Harness runtime remain outstanding.
+
 ## Current boundary: private provider options and public startup projection
 
 Administrator profiles now require codec-specific `codec_options`, with shared

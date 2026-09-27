@@ -40,8 +40,9 @@ The authoritative design remains [SHARED_CONTRACT.md](../schemas/SHARED_CONTRACT
   shared cases.
 - Typed model relay, a pinned native Chat Completions text/function codec, trusted
   profile binding, startup codec settings and complete conversation/tool continuations,
-  with 102 shared Chat cases and 49 native Anthropic cases. The full total is now
-  1,361 shared cases; the catalog has 59 entries.
+  with 334 shared cases across Chat, Responses, Anthropic, Bedrock and Gemini.
+- Fixed model-tool declarations and argument validation with 48 common fixtures
+  and native request integration. See [Model tools](../schemas/MODEL_TOOL_CATALOG.md).
 
 The [ordinary wire contract](../schemas/ORDINARY_WIRE_CONTRACT.md) documents the
 exact implemented fields and distinguishes stateless validation from runtime gates.
