@@ -34,21 +34,26 @@ func namedModelFixture(t *testing.T, file, name string) (map[string]any, map[str
 }
 
 func TestServiceNativeCacheAccountingAndRestore(t *testing.T) {
-	for _, codec := range []struct{ file, name, cache string }{
-		{"anthropic-model-codec.json", "anthropic: native text including cache counts", "cache_read_input_tokens"},
-		{"bedrock-model-codec.json", "bedrock: native text with separate caches", "cacheReadInputTokens"},
+	for _, codec := range []struct{ file, name, cache, usage string }{
+		{"anthropic-model-codec.json", "anthropic: native text including cache counts", "cache_read_input_tokens", "usage"},
+		{"bedrock-model-codec.json", "bedrock: native text with separate caches", "cacheReadInputTokens", "usage"},
+		{"gemini-model-codec.json", "gemini: native text including thinking tokens", "promptTokenCount", "usageMetadata"},
 	} {
 		t.Run(codec.file, func(t *testing.T) {
-			for _, mode := range []string{"complete", "unknown-usage", "excess-cached-input"} {
+			for _, mode := range []string{"complete", "unknown-usage", "excess-input"} {
 				t.Run(mode, func(t *testing.T) {
 					policy, request, result := namedModelFixture(t, codec.file, codec.name)
 					response := result["response"].(map[string]any)
 					if mode == "unknown-usage" {
-						delete(response, "usage")
+						delete(response, codec.usage)
 					}
-					if mode == "excess-cached-input" {
-						usage := response["usage"].(map[string]any)
+					if mode == "excess-input" {
+						usage := response[codec.usage].(map[string]any)
 						usage[codec.cache] = 101
+						if codec.cache == "promptTokenCount" {
+							usage[codec.cache] = 201
+							usage["totalTokenCount"] = 261
+						}
 						if codec.cache == "cacheReadInputTokens" {
 							usage["totalTokens"] = 211
 						}
@@ -62,8 +67,8 @@ func TestServiceNativeCacheAccountingAndRestore(t *testing.T) {
 						if err != nil {
 							t.Fatal(err)
 						}
-						settings := map[string]any{"max_tokens": policy["max_tokens"], "tools_digest": digest}
-						for _, key := range []string{"thinking", "response_models"} {
+						settings := map[string]any{"tools_digest": digest}
+						for _, key := range []string{"max_tokens", "thinking", "max_output_tokens", "thinking_config", "response_models"} {
 							if value, ok := policy[key]; ok {
 								settings[key] = value
 							}
@@ -77,11 +82,15 @@ func TestServiceNativeCacheAccountingAndRestore(t *testing.T) {
 					if codec.cache == "cacheReadInputTokens" {
 						system = []any{map[string]any{"text": string(launch.Prompt)}}
 					}
-					request["request"].(map[string]any)["system"] = system
+					if codec.cache == "promptTokenCount" {
+						request["request"].(map[string]any)["systemInstruction"] = map[string]any{"parts": []any{map[string]any{"text": string(launch.Prompt)}}}
+					} else {
+						request["request"].(map[string]any)["system"] = system
+					}
 					raw, err := s.Handle(context.Background(), stateWire("engine.model_generate", "messages-1", 1, request), 0)
 					if mode != "complete" {
 						code := "OUTCOME_UNKNOWN"
-						if mode == "excess-cached-input" {
+						if mode == "excess-input" {
 							code = "INTERNAL_ERROR"
 						}
 						if err != nil || !strings.Contains(string(raw), code) {
@@ -104,7 +113,7 @@ func TestServiceNativeCacheAccountingAndRestore(t *testing.T) {
 					raw, err = s.Handle(context.Background(), stateWire("engine.restore_request", "restore", 1, map[string]any{"source_session": cp["source_session"], "checkpoint_id": cp["checkpoint_id"]}), 0)
 					remaining := stateResult(t, raw, err)["remaining_limits"].(map[string]any)
 					if remaining["model_tokens"] != float64(9840) || remaining["model_turns"] != float64(2) {
-						t.Fatal("cached native tokens were omitted or refunded", remaining)
+						t.Fatal("native thinking/cache tokens were omitted or refunded", remaining)
 					}
 				})
 			}

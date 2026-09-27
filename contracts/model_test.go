@@ -11,26 +11,27 @@ import (
 )
 
 type modelFixture struct {
-	Name        string           `json:"name"`
-	Mode        string           `json:"mode"`
-	Policy      json.RawMessage  `json:"policy"`
-	Request     json.RawMessage  `json:"request"`
-	Result      json.RawMessage  `json:"result"`
-	ToolResults []ChatToolResult `json:"tool_results"`
-	Segment     string           `json:"segment_json"`
-	Valid       bool             `json:"valid"`
-	Disposition string           `json:"disposition"`
-	Context     json.RawMessage  `json:"context"`
-	Tools       json.RawMessage  `json:"tools"`
-	Prompt      string           `json:"prompt"`
-	Metrics     *ModelMetrics    `json:"metrics"`
-	OutputLimit int64            `json:"output_limit"`
+	Name          string             `json:"name"`
+	Mode          string             `json:"mode"`
+	Policy        json.RawMessage    `json:"policy"`
+	Request       json.RawMessage    `json:"request"`
+	Result        json.RawMessage    `json:"result"`
+	GeminiResults []GeminiToolResult `json:"gemini_tool_results"`
+	ToolResults   []ChatToolResult   `json:"tool_results"`
+	Segment       string             `json:"segment_json"`
+	Valid         bool               `json:"valid"`
+	Disposition   string             `json:"disposition"`
+	Context       json.RawMessage    `json:"context"`
+	Tools         json.RawMessage    `json:"tools"`
+	Prompt        string             `json:"prompt"`
+	Metrics       *ModelMetrics      `json:"metrics"`
+	OutputLimit   int64              `json:"output_limit"`
 }
 
 func modelFixtures(t *testing.T) []modelFixture {
 	t.Helper()
 	var cases []modelFixture
-	for _, name := range []string{"model-codec.json", "anthropic-model-codec.json", "bedrock-model-codec.json"} {
+	for _, name := range []string{"model-codec.json", "anthropic-model-codec.json", "bedrock-model-codec.json", "gemini-model-codec.json"} {
 		raw, err := os.ReadFile("../schemas/fixtures/" + name)
 		if err != nil {
 			t.Fatal(err)
@@ -98,9 +99,11 @@ func TestSharedModelCodec(t *testing.T) {
 				}
 			case "wire":
 				_, err = p.ValidateResponse(modelEnvelope(t, c.Request, false), modelEnvelope(t, c.Result, true))
-			case "continuation", "anthropic-continuation", "bedrock-continuation":
+			case "continuation", "anthropic-continuation", "bedrock-continuation", "gemini-continuation":
 				var segment []byte
-				if c.Mode == "bedrock-continuation" {
+				if c.Mode == "gemini-continuation" {
+					segment, err = p.GeminiContinuation(c.Result, c.GeminiResults)
+				} else if c.Mode == "bedrock-continuation" {
 					segment, err = p.BedrockContinuation(c.Result, c.ToolResults)
 				} else if c.Mode == "anthropic-continuation" {
 					segment, err = p.AnthropicContinuation(c.Result, c.ToolResults)
@@ -120,7 +123,11 @@ func TestSharedModelCodec(t *testing.T) {
 						t.Fatal(e)
 					}
 					native := request["request"].(map[string]any)
-					native["messages"] = append(native["messages"].([]any), messages...)
+					key := "messages"
+					if c.Mode == "gemini-continuation" {
+						key = "contents"
+					}
+					native[key] = append(native[key].([]any), messages...)
 					raw, e := json.Marshal(request)
 					if e != nil {
 						t.Fatal(e)

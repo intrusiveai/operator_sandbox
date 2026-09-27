@@ -87,6 +87,12 @@ const EngineSpoolAckSchema = "urn:operator:schema:engine-spool-ack:v1alpha1"
 
 const FeedbackManifestSchema = "urn:operator:schema:feedback-manifest:v1alpha1"
 
+const GeminiCommonSchema = "urn:operator:schema:gemini-common:v1alpha1"
+
+const GeminiRequestSchema = "urn:operator:schema:gemini-request:v1alpha1"
+
+const GeminiResponseSchema = "urn:operator:schema:gemini-response:v1alpha1"
+
 const HarnessLoopLimitsSchema = "urn:operator:schema:harness-loop-limits:v1alpha1"
 
 const InputTreeManifestSchema = "urn:operator:schema:input-tree-manifest:v1alpha1"

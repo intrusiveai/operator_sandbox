@@ -123,7 +123,9 @@ func TestLiveBootstrapGatesServiceAdmission(t *testing.T) {
 				t.Fatal(err)
 			}
 			defer channel.Close()
-			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			// This also covers the post-admission attempt and durable filesystem I/O.
+			// Keep the separate silent-peer deadline short without racing host load.
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 			if mode == "silent" {
 				short, stop := context.WithTimeout(ctx, 100*time.Millisecond)

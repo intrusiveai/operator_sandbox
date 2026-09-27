@@ -77,7 +77,8 @@ def documents():
     for key in ('engine-model-generate-request','engine-model-generate-result','model-codec-policy'):
         result[key]={'oneOf':[result[key]]}
     for stem,codec,builder in [('anthropic-messages','anthropic-messages-text-tools-v1',anthropic_documents),
-                               ('bedrock-converse','bedrock-converse-text-tools-v1',bedrock_documents)]:
+                               ('bedrock-converse','bedrock-converse-text-tools-v1',bedrock_documents),
+                               ('gemini','gemini-text-tools-v1',gemini_documents)]:
         extra,native_policy=builder(name,model)
         result.update(extra)
         native_binding=dict(binding,codec_id={'const':codec})
@@ -161,6 +162,47 @@ def bedrock_documents(name,model):
     return {'bedrock-converse-common':{'$defs':dict(text=txt,tool_use=tool_use,tool_result=tool_result,reasoning=reasoning,
         assistant=assistant,message=message,tool=tool,tool_config=tool_config,usage=usage,settings=settings)},
         'bedrock-converse-request':request,'bedrock-converse-response':response},policy
+
+
+def gemini_documents(name,model):
+    common=PREFIX+'gemini-common:v1alpha1#/$defs/'
+    r=lambda name:{'$ref':common+name}
+    metadata=dict(thought={'type':'boolean'},thoughtSignature=text(1048576,1))
+    txt=obj(dict(text=text(),**metadata),['text'])
+    call=obj(dict(functionCall=obj(dict(name=name,args={'type':'object'},id={'$ref':WIRE+'id'}),['name']),**metadata),['functionCall'])
+    signature=obj(metadata,['thoughtSignature'])
+    result=obj(dict(functionResponse=obj(dict(name=name,id={'$ref':WIRE+'id'},response=obj(dict(output=text()))),['name','response'])))
+    assistant=obj(dict(role={'const':'model'},parts=array({'oneOf':[r('text'),r('call'),r('signature')]},0,1024)))
+    message={'oneOf':[assistant,obj(dict(role={'const':'user'},parts=array({'oneOf':[obj(dict(text=text())),r('result')]},1,1024)))]}
+    declaration=obj(dict(name=name,description=text(8192),parametersJsonSchema={'type':'object'}),['name','parametersJsonSchema'])
+    tools=array(obj(dict(functionDeclarations=array(declaration,1,128))),0,1)
+    thinking=obj(dict(includeThoughts={'type':'boolean'},thinkingBudget=integer(-1),thinkingLevel={'enum':['MINIMAL','LOW','MEDIUM','HIGH']}),[])
+    thinking['not']={'required':['thinkingBudget','thinkingLevel']}
+    rating=obj(dict(category=text(128,1),probability={'enum':['HARM_PROBABILITY_UNSPECIFIED','NEGLIGIBLE','LOW','MEDIUM','HIGH']},
+        blocked={'type':'boolean'},probabilityScore={'type':'number','minimum':0,'maximum':1},severity=text(128),severityScore={'type':'number','minimum':0,'maximum':1}),['category','probability'])
+    detail=array(obj(dict(modality={'const':'TEXT'},tokenCount=integer())),0,1)
+    usage=obj(dict(promptTokenCount=integer(),candidatesTokenCount=integer(),thoughtsTokenCount=integer(),totalTokenCount=integer(),
+        cachedContentTokenCount=integer(),toolUsePromptTokenCount={'const':0},promptTokensDetails=detail,cacheTokensDetails=detail,
+        candidatesTokensDetails=detail,toolUsePromptTokensDetails=dict(type='array',maxItems=0),serviceTier=text(128)),['promptTokenCount','totalTokenCount'])
+    finish=['STOP','MAX_TOKENS','SAFETY','RECITATION','LANGUAGE','OTHER','BLOCKLIST','PROHIBITED_CONTENT','SPII',
+        'MALFORMED_FUNCTION_CALL','IMAGE_SAFETY','IMAGE_PROHIBITED_CONTENT','IMAGE_OTHER','NO_IMAGE','IMAGE_RECITATION',
+        'UNEXPECTED_TOOL_CALL','TOO_MANY_TOOL_CALLS','MISSING_THOUGHT_SIGNATURE','MALFORMED_RESPONSE','ESCALATION','PUP_LIMITED_DISABLED']
+    candidate=obj(dict(content=r('assistant'),finishReason={'enum':finish},index={'const':0},finishMessage=text(),
+        safetyRatings=array(rating,0,32),tokenCount=integer(),avgLogprobs={'type':'number'},
+        citationMetadata=obj(dict(citationSources=array(obj(dict(startIndex=integer(),endIndex=integer(),uri=text(8192),license=text(8192)),[]),0,128)),[])),['finishReason'])
+    feedback=obj(dict(blockReason={'enum':['BLOCK_REASON_UNSPECIFIED','SAFETY','OTHER','BLOCKLIST','PROHIBITED_CONTENT','IMAGE_SAFETY']},
+        blockReasonMessage=text(),safetyRatings=array(rating,0,32)),[])
+    settings=obj(dict(max_output_tokens=integer(1),thinking_config=r('thinking'),response_models=dict(array(model,1,32),uniqueItems=True),tools_digest={'$ref':WIRE+'digest'}))
+    request=obj(dict(systemInstruction=obj(dict(parts=array(obj(dict(text=text(131072))),1,1))),contents=array(r('message'),1,4096),
+        generationConfig=obj(dict(maxOutputTokens=integer(1),candidateCount={'const':1},thinkingConfig=r('thinking'))),tools=tools,
+        toolConfig=obj(dict(functionCallingConfig=obj(dict(mode={'enum':['AUTO','ANY','NONE']}))))))
+    response=obj(dict(candidates=array(candidate,0,1),promptFeedback=feedback,usageMetadata=nullable(r('usage')),modelVersion=model,
+        responseId=text(512,1),createTime=text(128),modelStatus=obj(dict(modelStage=text(128),retirementTime=text(128),message=text()),[])),[])
+    binding=dict(codec_id={'const':'gemini-text-tools-v1'},profile_id={'$ref':WIRE+'id'},profile_digest={'$ref':WIRE+'digest'})
+    policy=obj(dict(binding,request_model=model,response_models=dict(array(model,1,32),uniqueItems=True),prompt=text(131072),
+        max_output_tokens=integer(1),thinking_config=r('thinking'),tools=tools))
+    return {'gemini-common':{'$defs':dict(text=txt,call=call,signature=signature,result=result,assistant=assistant,message=message,
+        usage=usage,thinking=thinking,settings=settings)},'gemini-request':request,'gemini-response':response},policy
 
 
 def main():

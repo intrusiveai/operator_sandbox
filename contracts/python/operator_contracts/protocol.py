@@ -110,6 +110,10 @@ class Protocol:
     def anthropic_continuation(self, result, tool_results):
         return model.anthropic.continuation(self,result,tool_results)
 
+    def gemini_continuation(self, result_raw, results):
+        from .model_gemini import continuation
+        return continuation(self, result_raw, results)
+
     def bedrock_continuation(self, result, tool_results):
         return model.bedrock.continuation(self,result,tool_results)
 

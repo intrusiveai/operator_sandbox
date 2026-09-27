@@ -1,5 +1,20 @@
 # Implementation phase handoff
 
+## Current boundary: native Gemini contract and campaign accounting
+
+The shared Go/Python contract now supports Gemini GenerateContent on the configured
+Developer API or Vertex route. It preserves thought signatures and native content,
+correlates calls without native IDs by part position, and accounts for thinking
+and cached tokens without double charging. Sixty-seven shared fixtures cover
+continuation, policy binding, incomplete batches, filtering and usage failures.
+See the [Gemini contract](../schemas/GEMINI_MODEL_CODEC_CONTRACT.md).
+
+Full Go/Python suite, targeted contract/model-service race tests and vet pass.
+The bootstrap success test passed three isolated repeats after a load-sensitive
+two-second timeout in the full run; its filesystem/attempt deadline is now ten
+seconds while silent-peer coverage remains 100 ms. Responses, executable
+startup/profile integration and live provider qualification remain.
+
 ## Current boundary: native Bedrock contract and campaign accounting
 
 The shared Go/Python contract now supports native Bedrock Converse requests,
@@ -25,7 +40,7 @@ across restore, unknown usage and excessive cached input. See the
 Validation: full Go/Python and fixture suites, targeted contract/model-service race
 tests and affected-package `go vet` pass on macOS arm64.
 
-Responses and Gemini codecs, executable profile/startup integration and
+The Responses codec, executable profile/startup integration and
 real-provider qualification remain required. Transport coverage alone is not
 campaign readiness for those routes.
 
@@ -69,7 +84,7 @@ HTTP bodies; no SDK response conversion drops native fields. See
 [Model providers](MODEL_PROVIDERS.md).
 
 The shared Go/Python model validators and host service implement the Chat,
-Anthropic Messages and Bedrock Converse codecs. Remaining native codecs, executable startup wiring and real provider
+Anthropic Messages, Bedrock Converse and Gemini GenerateContent codecs. Remaining native codecs, executable startup wiring and real provider
 qualification MUST be finished before declaring every route campaign-ready.
 The user approved trusted host-side skill validation/signing with a host-local
 Ed25519 key; the spec now replaces the separate builder/publisher requirement.

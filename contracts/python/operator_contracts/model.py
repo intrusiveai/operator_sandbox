@@ -6,7 +6,9 @@ from .schema_ids import MODEL_CODEC_POLICY_SCHEMA, ENGINE_MODEL_GENERATE_REQUEST
 from . import model_anthropic as anthropic
 from . import model_bedrock as bedrock
 
-NATIVE_CODECS={anthropic.CODEC:anthropic,bedrock.CODEC:bedrock}
+from . import model_gemini as gemini
+
+NATIVE_CODECS={anthropic.CODEC:anthropic,bedrock.CODEC:bedrock,gemini.CODEC:gemini}
 
 
 def model_policy_from_context(protocol, context_raw, tools_raw, prompt_raw):
@@ -118,7 +120,11 @@ def validate_model_exchange(protocol, policy_raw, request_raw, result_raw):
     result = protocol._catalog.validate(ENGINE_MODEL_GENERATE_RESULT_SCHEMA,result_raw)
     check_correlation(body,result)
     policy = protocol._catalog.validate(MODEL_CODEC_POLICY_SCHEMA,policy_raw)
-    if 'response_models' in policy:require(result['response']['model'] in policy['response_models'])
+    if 'response_models' in policy:
+        if body['codec_id']==gemini.CODEC:
+            model=result['response'].get('modelVersion')
+            require((model is None and gemini.blocked(result['response'])) or model in policy['response_models'])
+        else:require(result['response']['model'] in policy['response_models'])
     return result
 
 
@@ -183,6 +189,7 @@ def native_response(body):
 def model_output_limit(protocol,raw):
     body=protocol._catalog.validate(ENGINE_MODEL_GENERATE_REQUEST_SCHEMA,raw)
     native_request(body)
+    if body['codec_id']==gemini.CODEC:return body['request']['generationConfig']['maxOutputTokens']
     if body['codec_id']==bedrock.CODEC:return body['request']['inferenceConfig']['maxTokens']
     return body['request']['max_tokens' if body['codec_id']==anthropic.CODEC else 'max_completion_tokens']
 
