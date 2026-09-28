@@ -18,7 +18,7 @@ import (
 
 func skillCommand(ctx context.Context, args []string, stdout, stderr io.Writer, defaults hostconfig.Paths) int {
 	if len(args) == 0 {
-		fmt.Fprintln(stderr, "usage: operatorctl skill keygen|build|import|check|set|remove [options]")
+		fmt.Fprintln(stderr, "usage: operatorctl skill build|import|check|set|remove [options]")
 		return 2
 	}
 	command := args[0]
@@ -28,12 +28,11 @@ func skillCommand(ctx context.Context, args []string, stdout, stderr io.Writer, 
 	var project, source, digest, loader, output *string
 	var selections stringsFlag
 	switch command {
-	case "keygen":
 	case "build":
 		project = flags.String("project", "", "project identifier")
 		source = flags.String("source", "", "instruction-only skill directory")
 	case "import":
-		source = flags.String("source", "", "signed bundle directory from this installation")
+		source = flags.String("source", "", "validated bundle directory")
 	case "set":
 		loader = flags.String("loader-digest", "", "approved image instruction-loader digest")
 		output = flags.String("output", "", "new frozen SkillSetManifest JSON file")
@@ -55,18 +54,6 @@ func skillCommand(ctx context.Context, args []string, stdout, stderr io.Writer, 
 	if err != nil {
 		fmt.Fprintln(stderr, "cannot load host configuration:", err)
 		return 1
-	}
-	keyDirectory := filepath.Join(filepath.Dir(loaded.Path), "skill-signing")
-	if command == "keygen" {
-		keyID, err := skills.Keygen(ctx, keyDirectory)
-		if err != nil {
-			fmt.Fprintln(stderr, "cannot create skill key:", err)
-			return 1
-		}
-		if json.NewEncoder(stdout).Encode(map[string]string{"api_version": "operator.dev/skill-key-receipt/v1alpha1", "key_id": keyID, "directory": keyDirectory}) != nil {
-			return 1
-		}
-		return 0
 	}
 	store := filepath.Join(loaded.Config.State.Root, "skills")
 	if command == "remove" {
@@ -91,7 +78,7 @@ func skillCommand(ctx context.Context, args []string, stdout, stderr io.Writer, 
 		return 1
 	}
 	if command == "set" {
-		selected, err := skills.Select(ctx, installed.Protocol(), keyDirectory, store, *loader, selections)
+		selected, err := skills.Select(ctx, installed.Protocol(), store, *loader, selections)
 		if err != nil {
 			fmt.Fprintln(stderr, "skill selection failed:", err)
 			return 1
@@ -117,15 +104,15 @@ func skillCommand(ctx context.Context, args []string, stdout, stderr io.Writer, 
 			return 2
 		}
 		if command == "build" {
-			b, err = skills.Build(ctx, installed.Protocol(), keyDirectory, *project, dir)
+			b, err = skills.Build(ctx, installed.Protocol(), *project, dir)
 		} else {
-			b, err = skills.Read(ctx, installed.Protocol(), keyDirectory, dir)
+			b, err = skills.Read(ctx, installed.Protocol(), dir)
 		}
 		if err == nil {
-			err = b.Install(ctx, installed.Protocol(), keyDirectory, store)
+			err = b.Install(ctx, installed.Protocol(), store)
 		}
 	} else {
-		b, err = skills.LoadInstalled(ctx, installed.Protocol(), keyDirectory, store, *digest)
+		b, err = skills.LoadInstalled(ctx, installed.Protocol(), store, *digest)
 	}
 	if err != nil {
 		fmt.Fprintln(stderr, "skill validation failed:", err)

@@ -103,7 +103,7 @@ func runWithDefaults(ctx context.Context, args []string, stdout, stderr io.Write
 		fmt.Fprintln(stderr, "       operatorctl report|export --run DIR | --campaign ID [--state-root DIR] [--output DIR]")
 		fmt.Fprintln(stderr, "       operatorctl campaign status|logs|wait --campaign ID [--config PATH] [--state-root DIR]")
 		fmt.Fprintln(stderr, "       operatorctl campaign prepare|start --run DIR [--config PATH] [--new-campaign] [--skill DIGEST | --skill-set FILE] [--system-prompt FILE | --system-prompt-append FILE]")
-		fmt.Fprintln(stderr, "       operatorctl skill keygen|build|import|check|set|remove [options]")
+		fmt.Fprintln(stderr, "       operatorctl skill build|import|check|set|remove [options]")
 		fmt.Fprintln(stderr, "       operatorctl run --bundle FILE (--environment DIR | --capabilities FILE [--target-profile FILE]) --output DIR [--wait]")
 		fmt.Fprintln(stderr, "       operatorctl capabilities export (--native FILE | --environment DIR | --capabilities FILE) --output FILE [--target-profile FILE]")
 		fmt.Fprintln(stderr, "       operatorctl inspect --run DIR | --campaign ID [--state-root DIR]")

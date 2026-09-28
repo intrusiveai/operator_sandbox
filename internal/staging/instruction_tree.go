@@ -17,7 +17,7 @@ import (
 )
 
 // CaptureInstructionTree freezes a bounded data-only source tree. Callers must
-// validate paths, media types and content before signing or publishing it. The
+// validate paths, media types and content before publishing it. The
 // selected directory's ancestors are trusted host paths; no source is mounted.
 func CaptureInstructionTree(ctx context.Context, directory string) (map[string][]byte, error) {
 	if !absolute(directory) {

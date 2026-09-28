@@ -109,7 +109,7 @@ guest bootstrap replies. The worker MUST receive the returned inputs and carry o
 the live bootstrap before admission. CLI/service composition MUST still claim a
 fresh host campaign, persist preparation and launch inputs, recheck image/target
 identity, stage files and start the worker. Tests MUST cover all five codecs,
-selected signed skills, supporting references, prompt composition, complete launch
+selected validated skills, supporting references, prompt composition, complete launch
 identity validation and actual immutable file staging.
 
 ## Durable launch-input retention

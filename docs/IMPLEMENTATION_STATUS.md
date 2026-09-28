@@ -14,7 +14,7 @@ criteria have not yet been demonstrated.
 | Area | Completed scope |
 |---|---|
 | Shared contracts | Closed schemas, offline catalog, 13-operation registry, strict JSON/JCS, Go/Python validators, common fixtures, startup/manifest/identity/deadline rules and reproducible package build/check tools. |
-| Inputs and preparation | Native capability verification/projection, compatible ScenarioBundle admission, offline submit/validate, immutable inputs, prompt construction, signed instruction-only skills and repeatable `--skill` selection. |
+| Inputs and preparation | Native capability verification/projection, compatible ScenarioBundle admission, offline submit/validate, immutable inputs, prompt construction, validated instruction-only skills and repeatable `--skill` selection. |
 | Image and launch | Local Docker image selection, fixed HTTPS compatibility lookup/cache, stopped-image embedded-file inspection, pinned launch identity, private staging, Docker confinement settings and startup verification. |
 | Transport and persistence | Linux FIFOs, macOS file spools, framing/ACKs, bounded queues, deadlines and spool size checks; durable journals, reservations, cumulative accounting, duplicate protection and terminal fencing. |
 | Native campaign service | All 13 ordinary routes: artifact upload, model relay, attempt execution, bounded feedback reads, injection cleanup, state/snapshots, assessments, conclusions and stop acknowledgement. |

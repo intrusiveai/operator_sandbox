@@ -35,7 +35,7 @@ func (s *Selection) Contents() map[string][]byte {
 	}
 	return r
 }
-func Select(ctx context.Context, p *contracts.Protocol, keyDirectory, store, loaderDigest string, digests []string) (*Selection, error) {
+func Select(ctx context.Context, p *contracts.Protocol, store, loaderDigest string, digests []string) (*Selection, error) {
 	if p == nil || !digestPattern.MatchString(loaderDigest) || len(digests) > 16 {
 		return nil, ErrSkill
 	}
@@ -57,7 +57,7 @@ func Select(ctx context.Context, p *contracts.Protocol, keyDirectory, store, loa
 			return nil, ErrSkill
 		}
 		seen[digest] = true
-		b, err := loadInstalled(ctx, p, keyDirectory, store, digest)
+		b, err := loadInstalled(ctx, p, store, digest)
 		if err != nil {
 			return nil, err
 		}
@@ -95,8 +95,8 @@ func Select(ctx context.Context, p *contracts.Protocol, keyDirectory, store, loa
 }
 
 // Frozen verifies a complete supplied SkillSetManifest against the current
-// installation's signed bundles. A manifest cannot introduce signing trust.
-func Frozen(ctx context.Context, p *contracts.Protocol, keys, store string, raw []byte) (*Selection, error) {
+// installation's validated bundles.
+func Frozen(ctx context.Context, p *contracts.Protocol, store string, raw []byte) (*Selection, error) {
 	if p == nil {
 		return nil, ErrSkill
 	}
@@ -108,7 +108,7 @@ func Frozen(ctx context.Context, p *contracts.Protocol, keys, store string, raw 
 	for _, item := range m["skills"].([]any) {
 		digests = append(digests, item.(map[string]any)["bundle_digest"].(string))
 	}
-	selected, err := Select(ctx, p, keys, store, m["loader_digest"].(string), digests)
+	selected, err := Select(ctx, p, store, m["loader_digest"].(string), digests)
 	if err != nil {
 		return nil, err
 	}

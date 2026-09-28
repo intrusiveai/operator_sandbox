@@ -113,6 +113,6 @@ independence, exact hash/size checks, canonical manifest identities, extra/missi
 content, capture limits and special-file rejection, on-disk tampering, cancellation,
 private-parent requirements and partial-tree cleanup after a filesystem write
 failure. Small test input documents exercise storage integrity, not campaign
-admission. Passive-skill policy/signature verification, release prompt binding,
+admission. Passive-skill policy/inventory verification, release prompt binding,
 target capability admission, guest readability under Docker and full host/runtime
 qualification remain independent gates.

@@ -35,9 +35,7 @@ func TestSkillCommands(t *testing.T) {
 		}
 		return out.Bytes()
 	}
-	call(1, "skill", "build", "--project", "demo", "--source", source)
-	call(0, "skill", "keygen")
-	call(1, "skill", "keygen")
+	call(2, "skill", "keygen")
 	raw := call(0, "skill", "build", "--project", "demo", "--source", source)
 	var receipt skills.Receipt
 	if json.Unmarshal(raw, &receipt) != nil || receipt.SkillID != "demo:example" {

@@ -376,17 +376,14 @@ operatorctl skill build --project project-01 --source ./skills/custom-injection
 operatorctl campaign start --run ./runs/support-agent --skill sha256:<manifest-digest>
 ```
 
-The MVP skill-signing trust root MUST be a host-local Ed25519 key created by an
-explicit administrator `operatorctl skill keygen` command. Its private key MUST
-remain in the private Operator configuration directory. Skill build MUST sign the
-immutable manifest identity; skill import and campaign start MUST verify both the
-local signature and inventoried file bytes. Only that installation's configured
-public key grants skill-signing trust; bundle content MUST NOT install a trust key.
-The [local skill contract](docs/SKILLS.md) defines key paths, source validation,
-signature preimages, installed bundle layout and selection behavior.
+Administrators MUST explicitly build or import instruction-only bundles into the
+private installed skill store. Build, import and campaign admission MUST validate
+the manifest, complete inventory and file bytes. Campaigns MUST select bundles by
+content digest and retain frozen copies. The [local skill contract](docs/SKILLS.md)
+defines source validation, installed bundle layout and selection behavior.
 
 `skill build` ingests regular files using descriptor-relative no-follow traversal,
-validates/normalizes content, publishes a signed immutable SkillBundle and returns
+validates/normalizes content, publishes an immutable SkillBundle and returns
 a bounded receipt. It never starts a campaign. Launch selects already-built
 artifacts by repeatable `--skill`; `--skill-set` selects a frozen set instead and
 cannot be mixed with individual selections. Omission uses the prepared selection
@@ -406,11 +403,11 @@ Build MUST copy only normalized file bytes, never source filesystem attributes.
 YAML uses a data-only safe parser with bounded aliases/depth.
 
 Use product-built **data bundles** and verified
-immutable directory trees. The signed bundle binds normalized path, size, media
+immutable directory trees. The bundle manifest binds normalized path, size, media
 type and content digest for every file. The trusted host-side `operatorctl skill build` implementation MUST parse and
-validate the complete input inventory before using the local signing key. It MUST
-NOT execute submitted files, scripts, hooks or commands. It MUST sign only validated
-instruction-only bundles, never executable releases. Storage/archive decoding is bounded and cannot install code.
+validate the complete input inventory before publication. It MUST NOT execute
+submitted files, scripts, hooks or commands. It MUST publish only validated
+instruction-only bundles. Storage/archive decoding is bounded and cannot install code.
 
 The SkillSetManifest binds exact bundle digests in canonical skill-ID order,
 loader schema/implementation, entrypoints and aggregate loading digest. Initially
@@ -852,8 +849,13 @@ from saved conversation or journals.
 
 ### 8.3 Declarative HTTPS adapter
 
-Preserve target independence through a signed/versioned declarative mapping to
-fixed HTTPS destinations and application operations. Trusted configuration owns
+Preserve target independence through an administrator-installed, versioned
+declarative mapping to fixed HTTPS destinations and application operations.
+Operator MUST validate the mapping before admission, freeze its selected contents
+for the campaign and bind its content digest into the campaign inputs. Later
+administrator edits MUST apply only to new campaigns. Mapping files MUST remain
+under administrator control and inaccessible to guest modification.
+Trusted configuration owns
 method/path/authentication, input/response mapping and egress policy; guest data
 cannot select a URL, header authority, proxy, redirect destination or host path.
 Validate resolved destinations against the profile, enforce TLS identity and
@@ -1572,8 +1574,8 @@ from an external interpretation of a report.
 
 Publish signed Linux and macOS host distributions for amd64 and arm64, with reproducible toolchain pins,
 release checksums/SBOMs and offline installation with a complete compatible artifact
-inventory. Separate executable release and instruction-only skill publication authorities.
-Verify applicable host/skill signatures and freshness/rollback policy before activation. Attack Harness images use the HTTPS release approval and compatibility
+inventory. Executable release publication MUST remain separate from local instruction-only skill installation.
+Verify host release signatures and freshness/rollback policy before activation. Attack Harness images use the HTTPS release approval and compatibility
 cache policy in Section 5.1.1.
 Active runs retain their pinned image, submitted bundle and reference inputs. No executable release keys or production credentials ship in images.
 
@@ -1691,7 +1693,7 @@ native gates; schemas must cover boundary cases rather than merely mirror code.
 | OC-AC-021 | HTTPS mapping rejects arbitrary destinations/redirects/headers and unsupported setup/state operations; reports retain its actual evidence assurance. |
 | OC-AC-022 | User-authored and generator-authored bundles use one strict validator; objectives-only input works without fabricated scenarios or generator metadata. Missing required capabilities/references fail before launch; optional gaps and requested-policy narrowing are explicit. No submission can select runtime credentials, tools or destinations. |
 | OC-AC-023 | Report retries/late evidence never execute attacks; reports separate observed facts, guest claims, inference, incomplete audit and cleanup uncertainty. |
-| OC-AC-024 | Release/skill updates, skill removal/reinstallation, retention and offline installation preserve pinned active inputs, scope-specific signing and referenced evidence. Bundle edits require a new immutable input identity and cannot modify an active campaign. |
+| OC-AC-024 | Release/skill updates, skill removal/reinstallation, retention and offline installation preserve pinned active inputs, executable release signatures, skill content digests and referenced evidence. Bundle edits require a new immutable input identity and cannot modify an active campaign. |
 | OC-AC-025 | CLI disconnect/observer interrupt does not stop accepted work; status/wait/JSON receipts, read-only doctor and fenced startup are demonstrated. |
 | OC-AC-026 | Local image selection uses Docker content with `--pull=never` and treats latest as a local tag. Cover missing image, local tag change, immutable ID launch, image removal, cached/uncached HTTPS release lookup, bad origin/TLS/redirect/status/metadata/digest, minimum version, exact contract/platform/profile mismatch, offline valid-cache reuse and accepted-start pinning. |
 | OC-AC-027 | Create/list/inspect/restore tools preserve campaign ID and description, discover retained earlier-session checkpoints and support context-preserving branch restores (Sections 10.3–10.4). |

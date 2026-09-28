@@ -77,7 +77,7 @@ func startCampaignWith(ctx context.Context, action string, args []string, stdout
 	replacement := f.String("system-prompt", "", "replacement prompt file")
 	skillSet := f.String("skill-set", "", "frozen SkillSetManifest file")
 	var skills, appends stringsFlag
-	f.Var(&skills, "skill", "installed signed skill digest (repeatable)")
+	f.Var(&skills, "skill", "installed skill digest (repeatable)")
 	f.Var(&appends, "system-prompt-append", "prompt extension file (repeatable)")
 	timeout := f.Duration("timeout", workerjob.PreparationTimeout+15*time.Second, "maximum acceptance wait")
 	if f.Parse(args) != nil {

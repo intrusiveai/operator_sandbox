@@ -1,7 +1,6 @@
 //go:build linux || darwin
 
-// Package skills validates instruction-only data and verifies installation-local
-// signatures. No skill content is evaluated, imported as code, or executed.
+// Package skills validates instruction-only data and content inventories. No skill content is evaluated, imported as code, or executed.
 package skills
 
 import (
@@ -24,7 +23,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/staging"
 )
 
-var ErrSkill = errors.New("invalid instruction-only skill: check metadata, inventory, limits and installed signing key")
+var ErrSkill = errors.New("invalid instruction-only skill: check metadata, inventory and limits")
 var idPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,62}$`)
 var digestPattern = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
 
@@ -43,10 +42,10 @@ type manifest struct {
 	Files       []fileEntry `json:"files"`
 }
 type Bundle struct {
-	manifest       manifest
-	raw, signature []byte
-	files          map[string][]byte
-	digest         string
+	manifest manifest
+	raw      []byte
+	files    map[string][]byte
+	digest   string
 }
 type Receipt struct {
 	APIVersion   string `json:"api_version"`
@@ -64,9 +63,8 @@ func (b *Bundle) Receipt() Receipt {
 	return Receipt{"operator.dev/skill-build-receipt/v1alpha1", b.manifest.SkillID, b.digest, len(b.files), total}
 }
 
-// Build captures and validates the entire source before reading the signing key.
-// The key directory is an explicit installation path, never supplied by a skill.
-func Build(ctx context.Context, p *contracts.Protocol, keyDirectory, project, source string) (*Bundle, error) {
+// Build captures and validates the entire administrator-selected source.
+func Build(ctx context.Context, p *contracts.Protocol, project, source string) (*Bundle, error) {
 	files, err := staging.CaptureInstructionTree(ctx, source)
 	if err != nil {
 		return nil, err
@@ -76,10 +74,6 @@ func Build(ctx context.Context, p *contracts.Protocol, keyDirectory, project, so
 		return nil, err
 	}
 	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-	b.signature, err = sign(keyDirectory, b.digest)
-	if err != nil {
 		return nil, err
 	}
 	return b, nil

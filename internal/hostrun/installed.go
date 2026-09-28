@@ -167,7 +167,7 @@ func LoadInputs(ctx context.Context, configPath string, defaults hostconfig.Path
 		if err != nil {
 			return nil, err
 		}
-		if _, err = skills.Frozen(ctx, p, filepath.Join(filepath.Dir(loaded.Path), "skill-signing"), filepath.Join(c.State.Root, "skills"), skillSet); err != nil {
+		if _, err = skills.Frozen(ctx, p, filepath.Join(c.State.Root, "skills"), skillSet); err != nil {
 			return nil, err
 		}
 	}
@@ -291,12 +291,12 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 	}
 	var selectedSkills *skills.Selection
 	if len(i.skillSet) > 0 {
-		selectedSkills, err = skills.Frozen(ctx, p, filepath.Join(filepath.Dir(loaded.Path), "skill-signing"), filepath.Join(c.State.Root, "skills"), i.skillSet)
+		selectedSkills, err = skills.Frozen(ctx, p, filepath.Join(c.State.Root, "skills"), i.skillSet)
 		if err == nil && selectedSkills.LoaderDigest() != embedded.LoaderDigest() {
 			err = skills.ErrSkill
 		}
 	} else {
-		selectedSkills, err = skills.Select(ctx, p, filepath.Join(filepath.Dir(loaded.Path), "skill-signing"), filepath.Join(c.State.Root, "skills"), embedded.LoaderDigest(), selected.SkillDigests)
+		selectedSkills, err = skills.Select(ctx, p, filepath.Join(c.State.Root, "skills"), embedded.LoaderDigest(), selected.SkillDigests)
 	}
 	if err != nil {
 		return nil, err

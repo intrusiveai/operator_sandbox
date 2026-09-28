@@ -131,7 +131,7 @@ pins its loading implementation. `loading_digest` is the canonical digest of the
 SkillSetManifest object with only `loading_digest` omitted; the descriptor's
 `object_digest` covers the complete object. The
 [canonical identity contract](CANONICAL_IDENTITY_CONTRACT.md) implements these
-computations and launch checks. Local skill signing/verification and pinned instruction-loader checks are
+computations and launch checks. Local skill content validation and pinned instruction-loader checks are
 implemented. Executable release signing/publication remains outstanding.
 
 The shared library exposes matching Go / Python entry points:

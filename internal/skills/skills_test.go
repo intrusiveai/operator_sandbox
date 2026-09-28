@@ -62,21 +62,14 @@ func skillText(name string) []byte {
 	return []byte("---\nname: " + name + "\ndescription: Evaluate an example scenario.\n---\nUse the supplied references.\n")
 }
 
-func TestBuildInstallSelectAndTrust(t *testing.T) {
+func TestBuildInstallSelectAndImport(t *testing.T) {
 	ctx := context.Background()
 	p := protocol(t)
 	base := t.TempDir()
-	keys, store, source := filepath.Join(base, "keys"), filepath.Join(base, "store"), filepath.Join(base, "source")
-	keyID, err := Keygen(ctx, keys)
-	if err != nil || !digestPattern.MatchString(keyID) {
-		t.Fatal(keyID, err)
-	}
-	if _, err := Keygen(ctx, keys); err == nil {
-		t.Fatal("overwrote trust root")
-	}
+	store, source := filepath.Join(base, "store"), filepath.Join(base, "source")
 	put(t, filepath.Join(source, "SKILL.md"), bytes.ReplaceAll(skillText("example"), []byte("\n"), []byte("\r\n")))
 	put(t, filepath.Join(source, "references", "example.json"), []byte("{ \"value\": 1 }\n"))
-	b, err := Build(ctx, p, keys, "project", source)
+	b, err := Build(ctx, p, "project", source)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -87,12 +80,12 @@ func TestBuildInstallSelectAndTrust(t *testing.T) {
 		t.Fatal("CRLF not normalized")
 	}
 	for range 2 {
-		if err := b.Install(ctx, p, keys, store); err != nil {
+		if err := b.Install(ctx, p, store); err != nil {
 			t.Fatal(err)
 		}
 	}
 	loader := contracts.RawDigest([]byte("test loader"))
-	s, err := Select(ctx, p, keys, store, loader, []string{b.digest})
+	s, err := Select(ctx, p, store, loader, []string{b.digest})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,41 +98,40 @@ func TestBuildInstallSelectAndTrust(t *testing.T) {
 	if s.Contents()["customer-skills/project:example/SKILL.md"][0] != '-' {
 		t.Fatal("mutable selection")
 	}
-	if _, err := Select(ctx, p, keys, store, loader, []string{b.digest, b.digest}); err == nil {
+	if _, err := Select(ctx, p, store, loader, []string{b.digest, b.digest}); err == nil {
 		t.Fatal("duplicate selection")
 	}
 	put(t, filepath.Join(source, "references", "example.json"), []byte("{\"value\":2}"))
-	second, err := Build(ctx, p, keys, "project", source)
+	second, err := Build(ctx, p, "project", source)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := second.Install(ctx, p, keys, store); err != nil {
+	if err := second.Install(ctx, p, store); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Select(ctx, p, keys, store, loader, []string{b.digest, second.digest}); err == nil {
+	if _, err := Select(ctx, p, store, loader, []string{b.digest, second.digest}); err == nil {
 		t.Fatal("two revisions of one skill selected")
 	}
-	// Empty selection neither discovers installed skills nor requires a key.
-	empty, err := Select(ctx, p, "/missing", "/missing", loader, nil)
+	// Empty selection neither discovers installed skills nor requires an existing store.
+	empty, err := Select(ctx, p, "/missing", loader, nil)
 	if err != nil || len(empty.Manifests()) != 0 {
 		t.Fatal(err)
 	}
-	other := filepath.Join(base, "otherkeys")
-	if _, err := Keygen(ctx, other); err != nil {
+	// Explicit import into a different installation needs only validated bytes.
+	imported, err := Read(ctx, p, filepath.Join(store, b.digest[7:]))
+	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := LoadInstalled(ctx, p, other, store, b.digest); err == nil {
-		t.Fatal("foreign trust accepted")
-	}
-	if err := os.Remove(filepath.Join(keys, "private.key")); err != nil {
+	otherStore := filepath.Join(t.TempDir(), "skills")
+	if err := imported.Install(ctx, p, otherStore); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := LoadInstalled(ctx, p, keys, store, b.digest); err != nil {
-		t.Fatal("verification required signing key", err)
+	if _, err := LoadInstalled(ctx, p, otherStore, b.digest); err != nil {
+		t.Fatal(err)
 	}
 	dir := filepath.Join(store, strings.TrimPrefix(b.digest, "sha256:"))
 	put(t, filepath.Join(dir, "files", "references", "example.json"), []byte("{\"value\":1}\n"))
-	if _, err := LoadInstalled(ctx, p, keys, store, b.digest); err == nil {
+	if _, err := LoadInstalled(ctx, p, store, b.digest); err == nil {
 		t.Fatal("changed file bytes accepted")
 	}
 }
@@ -148,14 +140,10 @@ func TestRejectsOtherExtendedAttributes(t *testing.T) {
 	p := protocol(t)
 	ctx := context.Background()
 	base := t.TempDir()
-	keys := filepath.Join(base, "keys")
-	if _, err := Keygen(ctx, keys); err != nil {
-		t.Fatal(err)
-	}
 	source := filepath.Join(base, "source")
 	file := filepath.Join(source, "SKILL.md")
 	put(t, file, skillText("test"))
-	if _, err := Build(ctx, p, keys, "project", source); err != nil {
+	if _, err := Build(ctx, p, "project", source); err != nil {
 		t.Fatal("ordinary OS metadata rejected", err)
 	}
 	f, err := os.Open(file)
@@ -167,17 +155,13 @@ func TestRejectsOtherExtendedAttributes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Build(ctx, p, keys, "project", source); err == nil {
+	if _, err := Build(ctx, p, "project", source); err == nil {
 		t.Fatal("unapproved extended attribute accepted")
 	}
 }
 
 func TestInvalidSourceAndNormalization(t *testing.T) {
 	p := protocol(t)
-	keys := filepath.Join(t.TempDir(), "keys")
-	if _, err := Keygen(context.Background(), keys); err != nil {
-		t.Fatal(err)
-	}
 	for _, kind := range []string{"unknown-frontmatter", "empty-body", "binary", "script", "registration", "duplicate-json", "yaml-alias", "yaml-tag", "yaml-duplicate", "case-collision", "prefix-collision", "unicode-collision", "escape", "symlink", "directory-link", "hardlink", "executable", "oversize"} {
 		t.Run(kind, func(t *testing.T) {
 			source := t.TempDir()
@@ -237,31 +221,27 @@ func TestInvalidSourceAndNormalization(t *testing.T) {
 			case "oversize":
 				put(t, filepath.Join(source, "large.txt"), bytes.Repeat([]byte("a"), 1<<20+1))
 			}
-			if _, err := Build(context.Background(), p, keys, "project", source); err == nil {
+			if _, err := Build(context.Background(), p, "project", source); err == nil {
 				t.Fatal("invalid source accepted")
 			}
 		})
 	}
 }
 
-func TestSignedInventoryCannotBeRenamedRepairedOrExtended(t *testing.T) {
+func TestInventoryCannotBeRenamedRepairedOrExtended(t *testing.T) {
 	p := protocol(t)
 	ctx := context.Background()
 	base := t.TempDir()
-	keys := filepath.Join(base, "keys")
-	if _, err := Keygen(ctx, keys); err != nil {
-		t.Fatal(err)
-	}
 	source := filepath.Join(base, "source")
 	put(t, filepath.Join(source, "SKILL.md"), skillText("test"))
-	b, err := Build(ctx, p, keys, "project", source)
+	b, err := Build(ctx, p, "project", source)
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, kind := range []string{"wrong-path-digest", "extra-file", "crlf-repair", "changed-signature", "changed-manifest", "extra-envelope-file", "incomplete", "missing-public"} {
+	for _, kind := range []string{"wrong-path-digest", "extra-file", "crlf-repair", "changed-content", "missing-content", "changed-manifest", "extra-envelope-file", "incomplete"} {
 		t.Run(kind, func(t *testing.T) {
 			store := filepath.Join(t.TempDir(), "store")
-			if err := b.Install(ctx, p, keys, store); err != nil {
+			if err := b.Install(ctx, p, store); err != nil {
 				t.Fatal(err)
 			}
 			dir := filepath.Join(store, strings.TrimPrefix(b.digest, "sha256:"))
@@ -276,21 +256,28 @@ func TestSignedInventoryCannotBeRenamedRepairedOrExtended(t *testing.T) {
 				put(t, filepath.Join(dir, "files", "extra.md"), []byte("extra"))
 			case "crlf-repair":
 				put(t, filepath.Join(dir, "files", "SKILL.md"), bytes.ReplaceAll(skillText("test"), []byte("\n"), []byte("\r\n")))
-			case "changed-signature":
-				put(t, filepath.Join(dir, "signature.json"), []byte(`{}`))
 			case "changed-manifest":
 				put(t, filepath.Join(dir, "manifest.json"), append(b.raw, ' '))
-			case "extra-envelope-file":
-				put(t, filepath.Join(dir, "public.key"), []byte("untrusted"))
-			case "incomplete":
-				if err := os.Remove(filepath.Join(dir, "signature.json")); err != nil {
+			case "changed-content":
+				put(t, filepath.Join(dir, "files", "SKILL.md"), bytes.ReplaceAll(skillText("test"), []byte("supplied"), []byte("modified")))
+			case "missing-content":
+				if err := os.Remove(filepath.Join(dir, "files", "SKILL.md")); err != nil {
 					t.Fatal(err)
 				}
-			case "missing-public":
-				keys = filepath.Join(base, "missing")
+			case "extra-envelope-file":
+				put(t, filepath.Join(dir, "extra.json"), []byte(`{}`))
+			case "incomplete":
+				if err := os.Remove(filepath.Join(dir, "manifest.json")); err != nil {
+					t.Fatal(err)
+				}
 			}
-			if _, err := LoadInstalled(ctx, p, keys, store, digest); err == nil {
+			if _, err := LoadInstalled(ctx, p, store, digest); err == nil {
 				t.Fatal("invalid installed skill accepted")
+			}
+			if kind == "incomplete" {
+				if err := b.Install(ctx, p, store); err == nil {
+					t.Fatal("retry silently repaired incomplete publication")
+				}
 			}
 		})
 	}
@@ -300,24 +287,21 @@ func TestFrozenSetBindsLoaderAndExactBundleDescriptors(t *testing.T) {
 	ctx := context.Background()
 	p := protocol(t)
 	base := t.TempDir()
-	keys, store, source := filepath.Join(base, "keys"), filepath.Join(base, "store"), filepath.Join(base, "source")
-	if _, err := Keygen(ctx, keys); err != nil {
-		t.Fatal(err)
-	}
+	store, source := filepath.Join(base, "store"), filepath.Join(base, "source")
 	put(t, filepath.Join(source, "SKILL.md"), skillText("example"))
-	b, err := Build(ctx, p, keys, "project", source)
+	b, err := Build(ctx, p, "project", source)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = b.Install(ctx, p, keys, store); err != nil {
+	if err = b.Install(ctx, p, store); err != nil {
 		t.Fatal(err)
 	}
 	loader := "sha256:" + strings.Repeat("a", 64)
-	set, err := Select(ctx, p, keys, store, loader, []string{b.digest})
+	set, err := Select(ctx, p, store, loader, []string{b.digest})
 	if err != nil {
 		t.Fatal(err)
 	}
-	frozen, err := Frozen(ctx, p, keys, store, set.Manifest())
+	frozen, err := Frozen(ctx, p, store, set.Manifest())
 	if err != nil || frozen.LoaderDigest() != loader {
 		t.Fatal(err)
 	}
@@ -333,15 +317,15 @@ func TestFrozenSetBindsLoaderAndExactBundleDescriptors(t *testing.T) {
 			m["skills"].([]any)[0].(map[string]any)["manifest"].(map[string]any)[field] = 1
 		}
 		raw, _ := json.Marshal(m)
-		if _, err := Frozen(ctx, p, keys, store, raw); err == nil {
+		if _, err := Frozen(ctx, p, store, raw); err == nil {
 			t.Fatal("accepted changed", field)
 		}
 	}
-	empty, err := Select(ctx, p, "/missing/keys", "/missing/store", loader, nil)
+	empty, err := Select(ctx, p, "/missing/store", loader, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Frozen(ctx, p, "/missing/keys", "/missing/store", empty.Manifest()); err != nil {
+	if _, err := Frozen(ctx, p, "/missing/store", empty.Manifest()); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -350,19 +334,16 @@ func TestRemoveReinstallAndFrozenCopy(t *testing.T) {
 	ctx := context.Background()
 	p := protocol(t)
 	base := t.TempDir()
-	keys, store, source := filepath.Join(base, "keys"), filepath.Join(base, "store"), filepath.Join(base, "source")
-	if _, err := Keygen(ctx, keys); err != nil {
-		t.Fatal(err)
-	}
+	store, source := filepath.Join(base, "store"), filepath.Join(base, "source")
 	put(t, filepath.Join(source, "SKILL.md"), skillText("example"))
-	b, err := Build(ctx, p, keys, "project", source)
+	b, err := Build(ctx, p, "project", source)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = b.Install(ctx, p, keys, store); err != nil {
+	if err = b.Install(ctx, p, store); err != nil {
 		t.Fatal(err)
 	}
-	selected, err := Select(ctx, p, keys, store, "sha256:"+strings.Repeat("a", 64), []string{b.digest})
+	selected, err := Select(ctx, p, store, "sha256:"+strings.Repeat("a", 64), []string{b.digest})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -377,7 +358,7 @@ func TestRemoveReinstallAndFrozenCopy(t *testing.T) {
 	if removed, err := Remove(ctx, store, b.digest); err != nil || !removed {
 		t.Fatal(removed, err)
 	}
-	if _, err := LoadInstalled(ctx, p, keys, store, b.digest); err == nil {
+	if _, err := LoadInstalled(ctx, p, store, b.digest); err == nil {
 		t.Fatal("selected absent bundle")
 	}
 	if len(selected.Contents()) != 1 {
@@ -386,21 +367,21 @@ func TestRemoveReinstallAndFrozenCopy(t *testing.T) {
 	if removed, err := Remove(ctx, store, b.digest); err != nil || removed {
 		t.Fatal("absent", removed, err)
 	}
-	if err = b.Install(ctx, p, keys, store); err != nil {
+	if err = b.Install(ctx, p, store); err != nil {
 		t.Fatal("cannot add back", err)
 	}
-	if _, err := Frozen(ctx, p, keys, store, selected.Manifest()); err != nil {
+	if _, err := Frozen(ctx, p, store, selected.Manifest()); err != nil {
 		t.Fatal("re-added bundle blocked", err)
 	}
 	// Partial/corrupt stored copies can be explicitly removed without validating
-	// their now-incomplete signature or inventory, then installed afresh.
+	// their now-incomplete manifest or inventory, then installed afresh.
 	if err := os.Remove(filepath.Join(store, b.digest[7:], "manifest.json")); err != nil {
 		t.Fatal(err)
 	}
 	if removed, err := Remove(ctx, store, b.digest); err != nil || !removed {
 		t.Fatal(removed, err)
 	}
-	if err = b.Install(ctx, p, keys, store); err != nil {
+	if err = b.Install(ctx, p, store); err != nil {
 		t.Fatal(err)
 	}
 	external := t.TempDir()

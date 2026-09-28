@@ -53,7 +53,7 @@ func launchConfig(t *testing.T, target *preparation.Target, codec string) prepar
 	if err != nil {
 		t.Fatal(err)
 	}
-	selection, err := skills.Select(context.Background(), p, "", "", embedded.LoaderDigest(), nil)
+	selection, err := skills.Select(context.Background(), p, "", embedded.LoaderDigest(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -221,7 +221,7 @@ func TestProductionLaunchRejectsMismatchedHostDependencies(t *testing.T) {
 			case "release":
 				c.Image.Release = imagerelease.Approval{}
 			case "loader":
-				c.Skills, err = skills.Select(context.Background(), in.Protocol, "", "", contracts.RawDigest([]byte("other loader")), nil)
+				c.Skills, err = skills.Select(context.Background(), in.Protocol, "", contracts.RawDigest([]byte("other loader")), nil)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -246,7 +246,7 @@ func TestProductionLaunchRejectsMismatchedHostDependencies(t *testing.T) {
 	}
 }
 
-func TestLaunchStagesSignedSkillAndPassiveReference(t *testing.T) {
+func TestLaunchStagesSkillAndPassiveReference(t *testing.T) {
 	ctx := context.Background()
 	in := fixture(t)
 	var bundle map[string]any
@@ -262,10 +262,7 @@ func TestLaunchStagesSignedSkillAndPassiveReference(t *testing.T) {
 	}
 	c := launchConfig(t, target, "openai-chat-text-tools-v1")
 	base := t.TempDir()
-	keys, source, store := filepath.Join(base, "keys"), filepath.Join(base, "source"), filepath.Join(base, "store")
-	if _, err = skills.Keygen(ctx, keys); err != nil {
-		t.Fatal(err)
-	}
+	source, store := filepath.Join(base, "source"), filepath.Join(base, "store")
 	if err = os.Mkdir(source, 0700); err != nil {
 		t.Fatal(err)
 	}
@@ -273,14 +270,14 @@ func TestLaunchStagesSignedSkillAndPassiveReference(t *testing.T) {
 	if err = os.WriteFile(filepath.Join(source, "SKILL.md"), skill, 0600); err != nil {
 		t.Fatal(err)
 	}
-	built, err := skills.Build(ctx, in.Protocol, keys, "project", source)
+	built, err := skills.Build(ctx, in.Protocol, "project", source)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = built.Install(ctx, in.Protocol, keys, store); err != nil {
+	if err = built.Install(ctx, in.Protocol, store); err != nil {
 		t.Fatal(err)
 	}
-	c.Skills, err = skills.Select(ctx, in.Protocol, keys, store, c.Embedded.LoaderDigest(), []string{built.Receipt().Digest})
+	c.Skills, err = skills.Select(ctx, in.Protocol, store, c.Embedded.LoaderDigest(), []string{built.Receipt().Digest})
 	if err != nil {
 		t.Fatal(err)
 	}

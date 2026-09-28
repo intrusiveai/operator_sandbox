@@ -1,30 +1,24 @@
 # Local instruction skills
 
-Operator validates custom skills as instruction data and signs their immutable
-manifests with an installation-local Ed25519 key. It never executes source files,
+Operator validates administrator-selected custom skills as instruction data and
+binds their immutable manifests and files with content digests. It never executes source files,
 commands, hooks, templates or package installers.
 
 ## Administrator commands
 
 ```sh
-operatorctl skill keygen --config /absolute/config.yaml
 operatorctl skill build --config /absolute/config.yaml --project project-01 --source ./my-skill
 operatorctl skill check --config /absolute/config.yaml --skill sha256:<manifest-digest>
-operatorctl skill import --config /absolute/config.yaml --source /absolute/signed-bundle
+operatorctl skill import --config /absolute/config.yaml --source /absolute/skill-bundle
 ```
 
 The configuration MUST select a verified shared contract package for build,
-import and check. Key generation requires only the private host configuration.
+import and check.
 The configured state root MUST already exist. Build creates its private `skills`
 child and returns the manifest digest; it does not start a campaign.
 
-Key generation MUST be explicit. It creates `skill-signing/` beside the installed
-configuration file, with `private.key` (64 raw Ed25519 bytes) and `public.key`
-(32 raw bytes). The directory MUST be mode 0700 and the keys mode 0600. Existing
-key directories MUST NOT be overwritten. Losing a private key prevents new builds;
-verification needs only the independently installed public key. Removing/replacing
-that public key invalidates admission of bundles signed by the old key. It does
-not retroactively terminate running campaigns.
+Administrators MUST control the private skill store and explicitly select skills.
+The harness MUST NOT install, modify or discover additional skills.
 
 ## Source format
 
@@ -60,13 +54,12 @@ Extended attributes MUST be rejected, except for macOS's automatically assigned
 `com.apple.provenance`. No source attributes are copied into the stored bundle or
 staged mount tree.
 
-## Signed storage and selection
+## Immutable storage and selection
 
 An installed bundle lives at `<state.root>/skills/<manifest-sha256-hex>/`:
 
 ```text
 manifest.json
-signature.json
 files/SKILL.md
 files/<declared-reference-paths>
 ```
@@ -75,16 +68,10 @@ files/<declared-reference-paths>
 Its raw/canonical SHA-256 is the bundle identity. Each file's exact normalized
 bytes, path, size and media type are bound by that manifest.
 
-`signature.json` MUST be a closed object with `api_version` equal to
-`operator.dev/skill-signature/v1alpha1`, `key_id` equal to the SHA-256 of the installed
-raw public key, `manifest_digest`, and a standard padded base64 `signature`.
-Ed25519 signs the canonical JSON object with `signature` omitted. The versioned
-payload separates skill signatures from other signed object types.
-
-Import and selection MUST verify the installed key, signature, manifest schema,
-exact inventory and content policy again. A key supplied in a bundle MUST NOT
-grant trust. Import MUST reject changed bytes rather than repair normalization.
-The signature is written last after file/directory synchronization. Incomplete
+Import and selection MUST verify the manifest schema, exact inventory and content
+policy again. Import MUST reject changed bytes rather than repair normalization.
+The bundle root MUST contain exactly `manifest.json` and `files/`.
+The manifest MUST be written last after file/directory synchronization. Incomplete
 publication MUST fail admission; a retry checks an existing complete object and
 MUST NOT overwrite it. Store files remain private; launch staging produces the
 separate verified read-only mount tree.
@@ -109,7 +96,7 @@ operatorctl campaign start --run ./runs/example
 operatorctl skill remove --skill sha256:<bundle-digest>
 ```
 
-`skill set` MUST validate every explicitly selected installed signed bundle and
+`skill set` MUST validate every explicitly selected installed bundle and
 publish the canonical shared SkillSetManifest to a new file. Omitting `--skill`
 MUST produce the canonical empty set. The administrator MUST supply the loader
 implementation digest associated with the intended image; selecting a different
@@ -124,16 +111,16 @@ and compare all descriptors. The file path and exact bytes MUST participate in
 start identity. An omitted selection MUST reuse the saved selection; changes MUST
 require explicit new-campaign selection. Online preparation MUST reverify bundles
 and match the frozen loader digest to the approved image. A set file MUST NOT
-supply trust keys or permit ambient skill discovery.
+permit ambient skill discovery.
 
 `skill remove` MUST remove only the selected hash-named installed bundle tree and
 return `operator.dev/skill-removal/v1alpha1` with `removed` or `already_absent`.
 Removal MUST serialize against store capture/publication, use bounded no-follow
-same-device traversal and preserve other bundles, signing keys and campaign data.
+same-device traversal and preserve other bundles and campaign data.
 Busy/unsafe/partial removal MUST fail with an actionable diagnostic and remain
 retryable. Incomplete installed copies MUST be removable even when their manifests
-or signatures cannot be validated. Removal MUST NOT require a usable contract
-package or signing key.
+or inventories cannot be validated. Removal MUST NOT require a usable contract
+package.
 
 Running campaigns MUST keep their frozen skill inputs. An administrator who wants
 to stop such a campaign MUST use the existing campaign termination command.

@@ -85,7 +85,7 @@ credentials:
 	if err != nil {
 		t.Fatal(err)
 	}
-	empty, err := skills.Select(context.Background(), installed.Protocol(), "/unused/keys", "/unused/store", "sha256:"+strings.Repeat("a", 64), nil)
+	empty, err := skills.Select(context.Background(), installed.Protocol(), "/unused/store", "sha256:"+strings.Repeat("a", 64), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
