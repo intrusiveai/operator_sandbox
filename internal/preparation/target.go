@@ -21,15 +21,16 @@ import (
 var ErrPreparation = errors.New("campaign preparation does not match trusted target inputs")
 
 type Input struct {
-	Protocol   *contracts.Protocol
-	Profile    *targetprofile.Profile
-	Attachment interceptor.Attachment
-	Status     interceptor.Status
-	InstanceID string
-	Authoring  *capabilities.Export
-	Bundle     []byte
-	Artifacts  []attemptadapter.Artifact
-	References map[string][]byte // Submitted passive reference bytes, keyed by raw digest.
+	CampaignID, WorkerInstanceID string
+	Protocol                     *contracts.Protocol
+	Profile                      *targetprofile.Profile
+	Attachment                   interceptor.Attachment
+	Status                       interceptor.Status
+	InstanceID                   string
+	Authoring                    *capabilities.Export
+	Bundle                       []byte
+	Artifacts                    []attemptadapter.Artifact
+	References                   map[string][]byte // Submitted passive reference bytes, keyed by raw digest.
 }
 type Target struct {
 	protocol         *contracts.Protocol
@@ -55,11 +56,18 @@ func Build(in Input) (*Target, error) {
 	if _, ok := in.Protocol.PackageIdentity(); !ok {
 		return nil, ErrPreparation
 	}
-	live, err := capabilities.BindLive(in.Protocol.Catalog(), in.Attachment, in.Status, in.InstanceID, in.Profile.Settings().TargetID)
+	var live *capabilities.Live
+	var err error
+	if in.Profile.HTTPS() != nil {
+		live, err = capabilities.BindHTTPS(in.Protocol.Catalog(), in.Profile.HTTPS(), in.Profile.Settings().TargetID, in.CampaignID, in.WorkerInstanceID)
+		in.InstanceID = "https-local"
+	} else {
+		live, err = capabilities.BindLive(in.Protocol.Catalog(), in.Attachment, in.Status, in.InstanceID, in.Profile.Settings().TargetID)
+	}
 	if err != nil {
 		return nil, err
 	}
-	if in.Attachment.Session.Revision == 0 {
+	if in.Profile.HTTPS() == nil && in.Attachment.Session.Revision == 0 {
 		return nil, ErrPreparation
 	}
 	policy, err := in.Profile.Resolve(live)
@@ -116,7 +124,7 @@ func Build(in Input) (*Target, error) {
 	for _, s := range parsed.Scenarios {
 		t.scenarioIDs = append(t.scenarioIDs, s.ID)
 	}
-	t.hostPolicy, _ = json.Marshal(map[string]any{"target_profile": json.RawMessage(in.Profile.JSON()), "resolved_policy": json.RawMessage(policy.RecordJSON())})
+	t.hostPolicy, _ = json.Marshal(map[string]any{"target_profile": json.RawMessage(in.Profile.RetainedJSON()), "resolved_policy": json.RawMessage(policy.RecordJSON())})
 	return t, nil
 }
 func (t *Target) Live() *capabilities.Live        { return t.live }
@@ -128,7 +136,7 @@ func (t *Target) BundleJSON() []byte              { return t.bundle.JSON() }
 func (t *Target) ReadKinds() []string             { return t.compatibility.AllowedKinds() }
 func (t *Target) Binding() campaign.TargetBinding {
 	b := t.live.Binding()
-	return campaign.TargetBinding{Adapter: "interceptor/v1", SessionID: b.SessionID, WorkerInstanceID: b.WorkerInstanceID, NativeFeedbackProfile: t.live.NativeProfile(), CapabilitySourceDigest: t.live.Export().SourceDigest(), CapabilityProjectionDigest: t.live.Export().ProjectionDigest()}
+	return campaign.TargetBinding{Adapter: t.live.Export().Adapter(), SessionID: b.SessionID, WorkerInstanceID: b.WorkerInstanceID, NativeFeedbackProfile: t.live.NativeProfile(), CapabilitySourceDigest: t.live.Export().SourceDigest(), CapabilityProjectionDigest: t.live.Export().ProjectionDigest()}
 }
 
 // Context fills authoritative target, feedback and package fields in a host-owned

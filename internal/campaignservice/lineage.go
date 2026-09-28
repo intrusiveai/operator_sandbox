@@ -48,6 +48,14 @@ func (s *Service) rememberAttempt(request, response []byte) error {
 	if _, exists := s.history[q.Body.AttemptID]; exists {
 		return nil
 	} // Historical duplicate after restore.
+	if s.config.HTTPS != nil {
+		if s.httpsParent == nil || s.httpsParent.Context.AttemptID != q.Body.AttemptID {
+			return ErrService
+		}
+		s.history[q.Body.AttemptID] = *s.httpsParent
+		s.lineage.Parents[q.Body.AttemptID] = *s.httpsParent
+		return nil
+	}
 	session := s.target().Live().Binding().SessionID
 	parent, turns, err := s.attempts.Lineage(session, q.Body.AttemptID)
 	if err != nil {

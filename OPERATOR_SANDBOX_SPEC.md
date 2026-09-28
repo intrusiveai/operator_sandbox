@@ -849,6 +849,9 @@ from saved conversation or journals.
 
 ### 8.3 Declarative HTTPS adapter
 
+The [HTTPS mapping and execution contract](docs/HTTPS_TARGETS.md) defines the
+implemented `https/v1` profile, public capabilities, authentication and limits.
+
 Preserve target independence through an administrator-installed, versioned
 declarative mapping to fixed HTTPS destinations and application operations.
 Operator MUST validate the mapping before admission, freeze its selected contents

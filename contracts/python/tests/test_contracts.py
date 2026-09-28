@@ -24,6 +24,16 @@ class ContractsTest(unittest.TestCase):
                     with self.assertRaises(ContractError): check()
         self.assertEqual(catalog.ids(), sorted(json.loads((ROOT / "schemas/catalog.json").read_text())))
 
+    def test_https_capability_export(self):
+        catalog = Catalog(ROOT / "schemas")
+        fixture = json.loads((ROOT / "schemas/fixtures/https-capability-chain.json").read_text())
+        export = fixture["public"]
+        schema = "urn:operator:schema:target-capability-manifest:v1alpha1"
+        catalog.validate(schema, json.dumps(export).encode())
+        export["source"]["adapter"] = "interceptor/v1"
+        with self.assertRaises(ContractError):
+            catalog.validate(schema, json.dumps(export).encode())
+
     def test_catalog_is_offline(self):
         for ref in ["https://example.invalid/forbidden.json", "file:///etc/passwd", "urn:missing"]:
             with self.subTest(ref=ref), tempfile.TemporaryDirectory() as temp:

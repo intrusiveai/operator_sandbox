@@ -99,6 +99,9 @@ func (t *Target) BuildLaunch(c LaunchConfig) (*Launch, error) {
 	}
 	operations := []string{}
 	for _, op := range t.protocol.Operations() {
+		if t.profile.HTTPS() != nil && (op.Name == "engine.injection_delete" || op.Name == "engine.snapshot_request" || op.Name == "engine.snapshot_list" || op.Name == "engine.snapshot_inspect" || op.Name == "engine.restore_request") {
+			continue
+		}
 		operations = append(operations, op.Name)
 	}
 	tools, err := t.protocol.ModelTools(c.Model.Settings().Codec, operations)

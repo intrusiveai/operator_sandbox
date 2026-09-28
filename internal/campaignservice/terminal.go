@@ -25,6 +25,12 @@ func (s *Service) finish() {
 	}
 	defer s.release()
 	defer func() { raw, _ := json.Marshal(result); _ = s.log("service.terminal-result", nil, raw, true, true) }()
+	if s.config.HTTPS != nil {
+		result.Closure = "not-applicable"
+		result.CleanupState = "not-needed"
+		result.TargetStop = "not-applicable"
+		return
+	}
 	defer func() { result.Evidence = s.collectEvidence() }()
 	view, err := s.inspect(ctx, true)
 	if err != nil {

@@ -25,10 +25,12 @@ a fixed absolute clean `path`, `input`, `response`, `maximum_input_bytes`,
 `maximum_request_bytes` and `maximum_response_bytes`. Paths MUST reject
 query/fragment syntax, escaped paths, traversal and authority overrides.
 Input ceilings MUST be 1 byte–1 MiB; encoded request ceilings MUST be at least
-the input ceiling and at most 2 MiB; response ceilings MUST be 1 byte–8 MiB.
+the input ceiling and at most 2 MiB; response ceilings MUST be 1 byte–2 MiB.
 The profile operation timeout MUST bound the whole request and be at most 30 s.
 Unknown fields, duplicate JSON keys and unsupported values MUST fail validation.
 
+`input.media_type` MUST select `text/plain` (default) or `application/json`
+as the harness payload type; each operation exposes that exact input type.
 `input.format` MUST be `text` or `json`. Text MUST accept UTF-8 `text/plain`
 payload bytes directly. JSON MUST accept UTF-8 text as a JSON string or strictly
 decoded `application/json` payloads as a JSON value. Optional `input.field`

@@ -58,10 +58,11 @@ type retained struct {
 // Receipt is an immutable projection. Persist RecordJSON and every Content value
 // before publishing ManifestJSON. This object does not implement durable storage.
 type Receipt struct {
-	source       Source
-	id, nativeID string
-	manifest     []byte
-	entries      []retained
+	source        Source
+	sourceAdapter string
+	id, nativeID  string
+	manifest      []byte
+	entries       []retained
 }
 
 func (r *Receipt) ManifestJSON() []byte { return bytes.Clone(r.manifest) }
@@ -70,7 +71,11 @@ func (r *Receipt) RecordJSON() []byte {
 	for _, e := range r.entries {
 		mapping[e.entry.ID] = e.nativeID
 	}
-	raw, _ := json.Marshal(map[string]any{"receipt_id": r.id, "source": r.source, "native_receipt_id": r.nativeID, "entries": mapping, "feedback": json.RawMessage(r.manifest)})
+	record := map[string]any{"receipt_id": r.id, "source": r.source, "native_receipt_id": r.nativeID, "entries": mapping, "feedback": json.RawMessage(r.manifest)}
+	if r.sourceAdapter != "" {
+		record["source_adapter"] = r.sourceAdapter
+	}
+	raw, _ := json.Marshal(record)
 	return raw
 }
 func (r *Receipt) Content(entryID string) ([]byte, bool) {

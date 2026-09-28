@@ -82,6 +82,7 @@ type command struct {
 // Plan is pure, immutable translation. Its commands contain exact verified bytes
 // and declared selectors. Rationale/technique prose never selects a native tactic.
 type Plan struct {
+	https                          *httpsExecution
 	catalog                        *contracts.Catalog
 	request                        request
 	context                        interceptor.AttemptContext
@@ -104,6 +105,9 @@ func (p *Plan) FeedbackAllowance() int64 { return p.feedbackBytes }
 func (p *Plan) ContextDigest() string    { return p.context.Digest }
 
 func Compile(catalog *contracts.Catalog, raw []byte, in Inputs) (*Plan, error) {
+	return compile(catalog, raw, in, nil)
+}
+func compile(catalog *contracts.Catalog, raw []byte, in Inputs, external *httpsExecution) (*Plan, error) {
 	if catalog == nil || in.Live == nil || in.Compatibility == nil || in.Policy == nil || in.SessionRevision == 0 || in.CreatedAt.IsZero() || !in.Deadline.After(in.CreatedAt) || in.Deadline.Sub(in.CreatedAt) > interceptor.MaxOperationTimeout || !digestID.MatchString(in.ReleaseDigest) || in.FeedbackBytes < 0 || in.FeedbackBytes > 64*feedback.MaxArtifact {
 		return nil, ErrAttempt
 	}
@@ -127,7 +131,7 @@ func Compile(catalog *contracts.Catalog, raw []byte, in Inputs) (*Plan, error) {
 		if parent == nil {
 			parent = in.PriorParent
 		}
-		if parent == nil || (in.Parent != nil && parent.SessionID != in.Live.Binding().SessionID) || (in.Parent == nil && (parent.SessionID == in.Live.Binding().SessionID || parent.CampaignGeneration == 0)) || parent.Context.APIVersion != "interceptor.dev/attempt-context/v1alpha1" || parent.Context.Digest != interceptor.AttemptContextDigest(parent.Context) || parent.Context.AttemptID != r.ParentAttemptID || parent.Context.CampaignID != in.Live.CampaignID() || parent.Context.ThreadID != r.ThreadID || parent.Context.AttemptIndex >= r.AttemptIndex {
+		if parent == nil || (in.Parent != nil && parent.SessionID != in.Live.Binding().SessionID) || (in.Parent == nil && (parent.SessionID == in.Live.Binding().SessionID || parent.CampaignGeneration == 0)) || parent.Context.APIVersion != contextVersion(external) || parent.Context.Digest != interceptor.AttemptContextDigest(parent.Context) || parent.Context.AttemptID != r.ParentAttemptID || parent.Context.CampaignID != in.Live.CampaignID() || parent.Context.ThreadID != r.ThreadID || parent.Context.AttemptIndex >= r.AttemptIndex {
 			return nil, ErrAttempt
 		}
 		generation := parent.CampaignGeneration
@@ -143,6 +147,7 @@ func Compile(catalog *contracts.Catalog, raw []byte, in Inputs) (*Plan, error) {
 		return nil, err
 	}
 	p := &Plan{catalog: catalog, request: r, binding: in.Live.Binding(), policy: policy, actions: map[string]string{}, deadline: in.Deadline.UTC(), revision: in.SessionRevision, feedbackBytes: in.FeedbackBytes}
+	p.https = external
 	p.rawRequest = bytes.Clone(raw)
 	p.sourceDigest, p.projectionDigest = in.Live.Export().SourceDigest(), in.Live.Export().ProjectionDigest()
 	artifactBytes := map[string][]byte{}
@@ -164,14 +169,16 @@ func Compile(catalog *contracts.Catalog, raw []byte, in Inputs) (*Plan, error) {
 			continue
 		}
 		artifactBytes[desc.Digest] = bytes.Clone(a.Bytes)
-		if err = p.add("artifact.register", struct {
-			Descriptor interceptor.ArtifactDescriptor `json:"descriptor"`
-			Content    []byte                         `json:"content"`
-		}{*desc, a.Bytes}, false); err != nil {
-			return nil, err
+		if external == nil {
+			if err = p.add("artifact.register", struct {
+				Descriptor interceptor.ArtifactDescriptor `json:"descriptor"`
+				Content    []byte                         `json:"content"`
+			}{*desc, a.Bytes}, false); err != nil {
+				return nil, err
+			}
 		}
 	}
-	p.context = interceptor.AttemptContext{APIVersion: "interceptor.dev/attempt-context/v1alpha1", CampaignID: in.Live.CampaignID(), ThreadID: r.ThreadID, AttemptID: r.AttemptID, ParentAttemptID: r.ParentAttemptID, Generation: r.Generation, AttemptIndex: r.AttemptIndex, Payload: r.Payload, Generator: r.Generator, StrategyProvenanceRef: r.StrategyProvenanceRef, FeedbackProfile: policy.NativeProfile(), CreatedAt: in.CreatedAt.UTC(), ObservationSelection: policy.NativeSelection()}
+	p.context = interceptor.AttemptContext{APIVersion: contextVersion(external), CampaignID: in.Live.CampaignID(), ThreadID: r.ThreadID, AttemptID: r.AttemptID, ParentAttemptID: r.ParentAttemptID, Generation: r.Generation, AttemptIndex: r.AttemptIndex, Payload: r.Payload, Generator: r.Generator, StrategyProvenanceRef: r.StrategyProvenanceRef, FeedbackProfile: policy.NativeProfile(), CreatedAt: in.CreatedAt.UTC(), ObservationSelection: policy.NativeSelection()}
 	if r.ParentAttemptID != "" {
 		if in.Parent == nil {
 			p.context.ParentAttemptID = ""
@@ -181,6 +188,9 @@ func Compile(catalog *contracts.Catalog, raw []byte, in Inputs) (*Plan, error) {
 		}
 	}
 	p.context.Digest = interceptor.AttemptContextDigest(p.context)
+	if external != nil {
+		return compileHTTPSPlan(p, in, artifactBytes)
+	}
 	if err = p.add("attempt.register", p.context, false); err != nil {
 		return nil, err
 	}

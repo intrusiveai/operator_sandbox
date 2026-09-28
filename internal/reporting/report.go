@@ -176,6 +176,13 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 		if event.Kind == "campaign.launch-inputs-retained" {
 			launchInputsRetained = true
 		}
+		if event.Kind == "https.dispatch-intent" {
+			var id string
+			if json.Unmarshal(metadata["operation_id"], &id) != nil || routeFacts.operations == nil {
+				return campaign.ErrCorrupt
+			}
+			routeFacts.operations[id] = true
+		}
 		if _, ok := metadata["native_step"]; ok {
 			if e := routeFacts.step(a, event); e != nil {
 				return e
@@ -355,6 +362,13 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 	result.JournalIntact = scanErr == nil && inspect.JournalIntact
 	result.TargetAdapter = inspect.Manifest.Target.Adapter
 	result.NativeProfile = inspect.Manifest.Target.NativeFeedbackProfile
+	if result.TargetAdapter == "https/v1" {
+		result.Assurance = "declared-observer"
+		result.NativeProfile = ""
+		result.TargetClosure = "not-applicable"
+		result.InjectionCleanup = "not-needed"
+		result.TargetStop = "not-applicable"
+	}
 	result.UntestedOperations, result.Routes = routeFacts.summarize()
 	if !launchInputsRetained {
 		result.Gaps = append(result.Gaps, "launch_inputs_incomplete")

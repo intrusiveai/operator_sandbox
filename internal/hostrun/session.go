@@ -19,6 +19,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
 	"github.com/intrusiveai/operator_sandbox/internal/hostlifetime"
 	"github.com/intrusiveai/operator_sandbox/internal/hostworker"
+	"github.com/intrusiveai/operator_sandbox/internal/httpstarget"
 	"github.com/intrusiveai/operator_sandbox/internal/imagerelease"
 	"github.com/intrusiveai/operator_sandbox/internal/preparation"
 	"github.com/intrusiveai/operator_sandbox/internal/staging"
@@ -29,6 +30,7 @@ import (
 var ErrSession = errors.New("campaign launch session is invalid or already consumed")
 
 type Config struct {
+	HTTPS            *httpstarget.Client
 	StateRoot        string
 	Target           *preparation.Target
 	Launch           preparation.LaunchConfig
@@ -81,7 +83,7 @@ func Prepare(ctx context.Context, c Config) (session *Session, err error) {
 			err = errors.Join(err, s.discard())
 		}
 	}()
-	if c.Gate == nil || c.Target == nil || c.Docker == nil || c.Peer == nil || c.Provider == nil || c.Launch.Model == nil || !filepath.IsAbs(c.StateRoot) || !campaign.ValidStopRequest(c.StartRequestID, "start") || c.Requirements.HostPlatform != runtime.GOOS+"/"+runtime.GOARCH {
+	if c.Gate == nil || c.Target == nil || c.Docker == nil || (c.Peer == nil && c.HTTPS == nil) || c.Provider == nil || c.Launch.Model == nil || !filepath.IsAbs(c.StateRoot) || !campaign.ValidStopRequest(c.StartRequestID, "start") || c.Requirements.HostPlatform != runtime.GOOS+"/"+runtime.GOARCH {
 		return nil, ErrSession
 	}
 	if c.MinimumFreeBytes == 0 {
@@ -160,7 +162,7 @@ func Prepare(ctx context.Context, c Config) (session *Session, err error) {
 		return nil, err
 	}
 	s.worker, err = hostworker.New(ctx, hostworker.Config{
-		Service: campaignservice.Config{Prepared: stored, Peer: c.Peer, StateRoot: c.StateRoot, Deadline: deadline,
+		Service: campaignservice.Config{Prepared: stored, Peer: c.Peer, HTTPS: c.HTTPS, StateRoot: c.StateRoot, Deadline: deadline,
 			Model:    &campaignservice.ModelConfig{Provider: c.Provider, ProfileDigest: launch.Manifest.ModelProfileDigest, Tools: launch.ModelTools, MaximumPromptTokens: c.Launch.Model.Settings().MaximumPromptTokens},
 			Evidence: &campaignservice.EvidenceConfig{MaxArchiveBytes: c.EvidenceMaxBytes, Timeout: 2 * time.Minute, TotalTimeout: 5 * time.Minute}},
 		Docker: c.Docker, Image: c.Launch.Image, Requirements: c.Requirements, Tree: s.tree, Channel: s.channel, Inputs: launch.Inputs, PolicyDirectory: filepath.Join(campaignDir, "launch/policies"), StartRequestID: c.StartRequestID, Lifetime: c.Lifetime,

@@ -6,8 +6,8 @@ and projects native exports, checks compatible submissions and preserves live
 binding/policy records; see the [implementation guide](../docs/CAPABILITY_ADMISSION.md).
 The fixture runner checks the reference chain. Submission/validation/start and
 broker integration are implemented.
-The public capability-export CLI, complete process/native conformance and package
-publication remain outstanding. Existing Attack Harness tool schemas are unchanged.
+The public capability-export CLI is implemented. Complete process/native conformance
+and package publication remain outstanding. Existing Attack Harness tool schemas are unchanged.
 
 ## 1. Public export
 
@@ -174,3 +174,28 @@ Native runtime policy/route checks and Go/Python structural, semantic and JCS
 validation are implemented. Public capability-export CLI integration, complete
 Operator/Attack Harness process tests, live target qualification and release
 publication remain outstanding. See [implementation status](../docs/IMPLEMENTATION_STATUS.md).
+
+
+## HTTPS adapter projection
+
+For `https/v1`, Operator MUST derive capabilities from the private mapping defined
+in [HTTPS targets](../docs/HTTPS_TARGETS.md). The source companion MUST use
+`operator.dev/https-capabilities/v1alpha1` and contain only the logical target ID,
+canonical private mapping digest and sorted operation delivery declarations.
+Its source digest MUST be SHA-256 of its canonical bytes. Public operation input
+media types and byte bounds MUST match the mapping; action, service, filesystem
+and feature arrays MUST be empty. Source and projection adapter IDs MUST agree.
+
+This declaration MUST NOT claim observed remote capabilities. Its delivery input
+basis is `provider-declared`; output structure has `unknown` basis. Feedback
+profiles MUST be limited to black-box/diagnostic, with only target output and
+operation errors advertised. Private URLs, headers, fixed request data,
+credentials and CA configuration MUST NOT be exported. Import MUST reproduce and
+compare the exact public projection. Campaign startup MUST independently
+rederive execution capabilities from the frozen private mapping. The shared
+[HTTPS fixture](fixtures/https-capability-chain.json) MUST pass Go/Python checks.
+
+The host's existing source-companion storage fields MAY retain their native
+names for compatibility; consumers MUST interpret provenance using `adapter`.
+An HTTPS execution binding's opaque session field identifies local campaign
+attribution only. It MUST NOT imply a remote session, readiness lease or reset.

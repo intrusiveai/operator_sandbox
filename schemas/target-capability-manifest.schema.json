@@ -13,7 +13,10 @@
       "additionalProperties": false,
       "properties": {
         "adapter": {
-          "const": "interceptor/v1"
+          "enum": [
+            "interceptor/v1",
+            "https/v1"
+          ]
         },
         "schema_version": {
           "type": "string",
@@ -56,7 +59,10 @@
           }
         },
         "adapter": {
-          "const": "interceptor/v1"
+          "enum": [
+            "interceptor/v1",
+            "https/v1"
+          ]
         },
         "operations": {
           "type": "array",
@@ -703,5 +709,75 @@
         "output"
       ]
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "source": {
+            "properties": {
+              "adapter": {
+                "const": "interceptor/v1"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "capabilities": {
+            "properties": {
+              "adapter": {
+                "const": "interceptor/v1"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "source": {
+            "properties": {
+              "adapter": {
+                "const": "https/v1"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "capabilities": {
+            "properties": {
+              "adapter": {
+                "const": "https/v1"
+              },
+              "actions": {
+                "maxItems": 0
+              },
+              "services": {
+                "maxItems": 0
+              },
+              "file_namespaces": {
+                "maxItems": 0
+              },
+              "features": {
+                "maxItems": 0
+              },
+              "feedback_profiles": {
+                "items": {
+                  "enum": [
+                    "black-box",
+                    "diagnostic"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

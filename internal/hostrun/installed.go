@@ -19,6 +19,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
 	"github.com/intrusiveai/operator_sandbox/internal/hostworker"
+	"github.com/intrusiveai/operator_sandbox/internal/httpstarget"
 	"github.com/intrusiveai/operator_sandbox/internal/imagerelease"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
@@ -213,6 +214,20 @@ func LoadInputs(ctx context.Context, configPath string, defaults hostconfig.Path
 			return nil, ErrSession
 		}
 	}
+	if m := profile.HTTPS(); m != nil {
+		id := m.Settings().Authentication.CredentialID
+		if id != "" {
+			found := false
+			for _, ref := range credentialConfig.Credentials {
+				if ref.CredentialID == id {
+					found = true
+				}
+			}
+			if !found {
+				return nil, ErrSession
+			}
+		}
+	}
 	credentialRaw, err := json.Marshal(credentialConfig)
 	if err != nil {
 		return nil, err
@@ -330,22 +345,29 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 			err = errors.Join(err, cleanup())
 		}
 	}()
-	attached, status, err := attachRecorded(ctx, c.State.Root, campaign.AttachmentIntent{
-		CampaignID: selected.CampaignID, LaunchID: selected.LaunchID, StartRequestID: selected.StartRequestID,
-		WorkerInstanceID: selected.WorkerInstanceID, InputsFingerprint: i.Fingerprint(),
-		AllowTargetStop: profile.Settings().AllowTargetStop, MinimumFreeBytes: c.Journal.MinimumFreeBytes,
-	}, native)
-	if err != nil {
-		return nil, err
-	}
 	bundle, authoring, references := submitted.Inputs()
-	target, err := preparation.Build(preparation.Input{Protocol: p, Profile: profile, Attachment: attached, Status: status, InstanceID: status.InstanceID, Authoring: authoring, Bundle: bundle, References: references})
+	var target *preparation.Target
+	var https *httpstarget.Client
+	if profile.HTTPS() != nil {
+		https, err = httpstarget.New(profile.HTTPS(), audited, time.Duration(profile.Settings().OperationTimeoutMS)*time.Millisecond)
+		if err != nil {
+			return nil, err
+		}
+		target, err = preparation.Build(preparation.Input{Protocol: p, Profile: profile, CampaignID: selected.CampaignID, WorkerInstanceID: selected.WorkerInstanceID, Authoring: authoring, Bundle: bundle, References: references})
+	} else {
+		attached, status, e := attachRecorded(ctx, c.State.Root, campaign.AttachmentIntent{
+			CampaignID: selected.CampaignID, LaunchID: selected.LaunchID, StartRequestID: selected.StartRequestID, WorkerInstanceID: selected.WorkerInstanceID, InputsFingerprint: i.Fingerprint(), AllowTargetStop: profile.Settings().AllowTargetStop, MinimumFreeBytes: c.Journal.MinimumFreeBytes}, native)
+		if e != nil {
+			return nil, e
+		}
+		target, err = preparation.Build(preparation.Input{Protocol: p, Profile: profile, Attachment: attached, Status: status, InstanceID: status.InstanceID, Authoring: authoring, Bundle: bundle, References: references})
+	}
 	if err != nil {
 		return nil, err
 	}
 	session, err := Prepare(ctx, Config{StateRoot: c.State.Root, Target: target,
 		Launch:       preparation.LaunchConfig{LaunchID: selected.LaunchID, ContainerID: selected.ContainerID, CreatedAt: time.Now().UTC().Truncate(time.Second), Image: image, Embedded: embedded, Model: model, Skills: selectedSkills, Limits: c.Limits, Retention: campaign.Retention{Mode: "manual-purge", MaxJournalBytes: c.Journal.MaxBytes, MaxSegmentBytes: c.Journal.SegmentBytes}, PromptMode: selected.PromptMode, Replacement: replacement, Appends: appends},
-		Requirements: requirements, Peer: native, Docker: docker, Provider: provider, MinimumFreeBytes: c.Journal.MinimumFreeBytes, SpoolMaxBytes: c.Spool.MaxBytes, EvidenceMaxBytes: c.Evidence.MaxArchiveBytes, StartRequestID: selected.StartRequestID, Gate: gate, Recovery: recovered})
+		Requirements: requirements, Peer: native, HTTPS: https, Docker: docker, Provider: provider, MinimumFreeBytes: c.Journal.MinimumFreeBytes, SpoolMaxBytes: c.Spool.MaxBytes, EvidenceMaxBytes: c.Evidence.MaxArchiveBytes, StartRequestID: selected.StartRequestID, Gate: gate, Recovery: recovered})
 	if err != nil {
 		return nil, err
 	}

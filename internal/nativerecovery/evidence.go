@@ -93,6 +93,10 @@ func CollectEvidence(ctx context.Context, root, id string, docker EvidenceDocker
 		return out, e
 	}
 	out.ManifestDigest = f.digest
+	if f.manifest.Target.Adapter == "https/v1" {
+		out.Reason = "unsupported_target_adapter"
+		return out, nil
+	}
 	if !f.prepared {
 		return out, campaign.ErrInvalid
 	}

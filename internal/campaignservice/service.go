@@ -16,6 +16,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/attemptadapter"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/httpstarget"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/nativeexec"
 	"github.com/intrusiveai/operator_sandbox/internal/preparation"
@@ -39,6 +40,7 @@ type Runtime interface {
 	termination.Killer
 }
 type Config struct {
+	HTTPS     *httpstarget.Client
 	Prepared  *preparation.Stored
 	Peer      Peer
 	Runtime   Runtime
@@ -50,6 +52,7 @@ type Config struct {
 	CheckHost func() error // Installed host lifetime gate; called before admission and every ordinary request.
 }
 type Service struct {
+	httpsParent        *attemptadapter.Parent
 	config             Config
 	writer             *campaign.Writer
 	attempts           *campaign.Attempts
@@ -90,7 +93,7 @@ type TerminalResult struct {
 }
 
 func New(ctx context.Context, c Config) (*Service, error) {
-	if c.Prepared == nil || c.Peer == nil || c.Runtime == nil || c.StateRoot == "" || ctx.Err() != nil {
+	if c.Prepared == nil || (c.Peer == nil && c.HTTPS == nil) || c.Runtime == nil || c.StateRoot == "" || ctx.Err() != nil {
 		return nil, ErrService
 	}
 	if c.Evidence == nil {
@@ -100,6 +103,13 @@ func New(ctx context.Context, c Config) (*Service, error) {
 		c.Evidence = &copy
 	}
 	if c.Evidence.MaxArchiveBytes < 1 || c.Evidence.MaxArchiveBytes > contracts.MaxSafeInteger || c.Evidence.Timeout <= 0 || c.Evidence.Timeout > 5*time.Minute || c.Evidence.TotalTimeout <= 0 || c.Evidence.TotalTimeout > 30*time.Minute {
+		return nil, ErrService
+	}
+	if m := c.Prepared.Target().Profile().HTTPS(); m != nil {
+		if c.HTTPS == nil || c.HTTPS.MappingDigest() != m.Digest() {
+			return nil, ErrService
+		}
+	} else if c.HTTPS != nil {
 		return nil, ErrService
 	}
 	w := c.Prepared.Writer()
@@ -178,9 +188,11 @@ func New(ctx context.Context, c Config) (*Service, error) {
 		w.Fence().Stop(err)
 		return nil, err
 	}
-	if err = s.rememberEvidenceTarget(c.Prepared.Target(), nil); err != nil {
-		w.Fence().Stop(err)
-		return nil, err
+	if c.HTTPS == nil {
+		if err = s.rememberEvidenceTarget(c.Prepared.Target(), nil); err != nil {
+			w.Fence().Stop(err)
+			return nil, err
+		}
 	}
 	// Arm before admission. Neither goroutine takes the ordinary gate or journal lock.
 	go func() {
@@ -194,7 +206,9 @@ func New(ctx context.Context, c Config) (*Service, error) {
 		s.timer.Stop()
 		s.shutdownOnce.Do(func() { go s.finish() })
 	}()
-	go s.watchTarget()
+	if c.HTTPS == nil {
+		go s.watchTarget()
+	}
 	return s, nil
 }
 
@@ -310,7 +324,14 @@ func boundedResponse(r interceptor.Response) []byte {
 	return raw
 }
 func (s *Service) prepare(ctx context.Context, raw []byte, deadline time.Time) (*attemptadapter.Plan, *nativeexec.Guard, error) {
-	view, err := s.inspect(ctx, false)
+	var view interceptor.SessionStatus
+	var err error
+	if s.config.HTTPS == nil {
+		view, err = s.inspect(ctx, false)
+	} else {
+		err = s.config.Runtime.CheckRunning(ctx, s.config.Docker)
+		view.Session.Revision = 1
+	}
 	if err != nil {
 		s.Stop(err)
 		return nil, nil, err
@@ -340,6 +361,15 @@ func (s *Service) prepare(ctx context.Context, raw []byte, deadline time.Time) (
 	bound := in.CreatedAt.Add(time.Duration(s.target().Profile().Settings().OperationTimeoutMS) * time.Millisecond)
 	if bound.Before(in.Deadline) {
 		in.Deadline = bound
+	}
+	if s.config.HTTPS != nil {
+		p, e := attemptadapter.CompileHTTPS(s.target().Protocol().Catalog(), raw, in, s.target().Profile().HTTPS(), s.config.HTTPS)
+		if e != nil {
+			return nil, nil, e
+		}
+		parent := p.HTTPSParent()
+		s.httpsParent = &parent
+		return p, nil, nil
 	}
 	p, err := attemptadapter.Compile(s.target().Protocol().Catalog(), raw, in)
 	if err != nil {
@@ -390,9 +420,11 @@ func (s *Service) Admit(ctx context.Context, in campaign.LaunchInputs) error {
 		}
 		s.model.policy = policy
 	}
-	if _, err := s.inspect(ctx, false); err != nil {
-		s.Stop(err)
-		return err
+	if s.config.HTTPS == nil {
+		if _, err := s.inspect(ctx, false); err != nil {
+			s.Stop(err)
+			return err
+		}
 	}
 	if err := s.config.Runtime.CheckRunning(ctx, s.config.Docker); err != nil {
 		s.Stop(err)

@@ -55,7 +55,7 @@ func Check(b *Bundle, authoring *Export, live *Live, policy Policy) (*Compatibil
 	}
 	current := live.export
 	target := b.value["target_requirements"].(map[string]any)
-	if target["target_id"] != authoring.TargetID() || target["target_id"] != current.TargetID() || target["capability_source_digest"] != authoring.SourceDigest() {
+	if authoring.Adapter() != current.Adapter() || target["target_id"] != authoring.TargetID() || target["target_id"] != current.TargetID() || target["capability_source_digest"] != authoring.SourceDigest() {
 		return nil, ErrCompatibility
 	}
 	mode := "compatible"
@@ -116,7 +116,7 @@ func Check(b *Bundle, authoring *Export, live *Live, policy Policy) (*Compatibil
 		case strings.HasPrefix(ref, "operation:"):
 			if item["delivery_status"] != "described" || item["delivery"] == nil {
 				reason = "missing_input_contract"
-			} else if !contains(current.native.CrossVMOperations, "application.invoke") || !contains(current.native.CrossVMOperations, "attempt.register") {
+			} else if current.Adapter() == "interceptor/v1" && (!contains(current.native.CrossVMOperations, "application.invoke") || !contains(current.native.CrossVMOperations, "attempt.register")) {
 				reason = "native_operation_unavailable"
 			}
 		case strings.HasPrefix(ref, "action:"):

@@ -66,6 +66,30 @@ func Run(ctx context.Context, root, id string, containerAbsent bool, peer Peer) 
 		out.ManifestDigest = f.digest
 		return out, nil
 	}
+	if f.manifest.Target.Adapter == "https/v1" {
+		out.State = "finalized"
+		out.Reason = "local_execution_ended"
+		out.Closure = "not-applicable"
+		out.Cleanup = "not-needed"
+		out.TargetStop = "not-applicable"
+		fresh, saved, e := a.Begin()
+		if e != nil {
+			return out, e
+		}
+		if !fresh {
+			if len(saved) == 0 {
+				out.State = "unconfirmed"
+				out.Reason = "prior_recovery_unconfirmed"
+				return out, nil
+			}
+			var old Outcome
+			if json.Unmarshal(saved, &old) != nil || old.CampaignID != id || old.ManifestDigest != f.digest {
+				return out, campaign.ErrCorrupt
+			}
+			return old, nil
+		}
+		return out, a.Finish(out)
+	}
 	return finalize(ctx, a, f, peer, out)
 }
 

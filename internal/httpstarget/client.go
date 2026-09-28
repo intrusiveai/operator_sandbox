@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"io"
 	"net"
 	"net/http"
@@ -180,7 +181,8 @@ func (c *Client) Execute(ctx context.Context, id string, payload []byte, media s
 	}
 	// An application echoing the authentication value must not disclose it through
 	// selected feedback. Refuse the whole output instead of changing its bytes.
-	if token != "" && bytes.Contains(raw, []byte(token)) {
+	encodedToken, _ := json.Marshal(token)
+	if token != "" && (bytes.Contains(raw, []byte(token)) || bytes.Contains(raw, encodedToken[1:len(encodedToken)-1])) {
 		out.Code = "HTTPS_CREDENTIAL_REFLECTED"
 		return out
 	}
@@ -190,3 +192,5 @@ func (c *Client) Execute(ctx context.Context, id string, payload []byte, media s
 	out.MediaType = media
 	return out
 }
+
+func (c *Client) MappingDigest() string { return c.mapping.Digest() }

@@ -18,6 +18,9 @@ type ExecutionFacts struct {
 
 func (e *Export) ExecutionFacts() ExecutionFacts {
 	source := ExecutionFacts{e.native.Operations, e.native.CrossVMOperations, e.native.InjectionProfiles, e.native.Services, e.native.FileNamespaces}
+	if e.https != nil {
+		source = ExecutionFacts{Operations: e.https.Operations}
+	}
 	raw, _ := json.Marshal(source)
 	var copy ExecutionFacts
 	_ = json.Unmarshal(raw, &copy)

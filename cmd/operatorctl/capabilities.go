@@ -26,7 +26,7 @@ type targetFlags struct{ environment, profile, capabilities string }
 func (s *targetFlags) bind(f *flag.FlagSet) {
 	f.StringVar(&s.environment, "environment", "", "administrator environment directory")
 	f.StringVar(&s.profile, "target-profile", "", "private TargetProfile file")
-	f.StringVar(&s.capabilities, "capabilities", "", "public capability export with native companion")
+	f.StringVar(&s.capabilities, "capabilities", "", "public capability export with source companion")
 }
 func (s targetFlags) valid() bool {
 	return s.environment == "" || (s.profile == "" && s.capabilities == "")
@@ -100,6 +100,10 @@ func exportCapabilities(ctx context.Context, args []string, stdout, stderr io.Wr
 		return 1
 	}
 	var exported *capabilities.Export
+	if *native != "" && profile.HTTPS() != nil {
+		fmt.Fprintln(stderr, "HTTPS capabilities are derived from the target profile")
+		return 2
+	}
 	if *native != "" {
 		name, e := filepath.Abs(*native)
 		if e != nil {
@@ -113,6 +117,8 @@ func exportCapabilities(ctx context.Context, args []string, stdout, stderr io.Wr
 		exported, err = capabilities.FromNative(installed.Protocol().Catalog(), raw, profile.Settings().TargetID)
 	} else if public != "" {
 		exported, err = capabilities.LoadExport(ctx, installed.Protocol().Catalog(), public, profile.Settings().TargetID)
+	} else if profile.HTTPS() != nil {
+		exported, err = capabilities.FromHTTPS(installed.Protocol().Catalog(), profile.HTTPS(), profile.Settings().TargetID)
 	} else {
 		fmt.Fprintln(stderr, "capability export requires --native, --capabilities or --environment")
 		return 2

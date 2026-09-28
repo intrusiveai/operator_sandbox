@@ -34,9 +34,10 @@ type Authentication struct {
 	Header       string `json:"header,omitempty"`
 }
 type Input struct {
-	Format string         `json:"format"`
-	Field  []string       `json:"field,omitempty"`
-	Fixed  map[string]any `json:"fixed,omitempty"`
+	MediaType string         `json:"media_type,omitempty"`
+	Format    string         `json:"format"`
+	Field     []string       `json:"field,omitempty"`
+	Fixed     map[string]any `json:"fixed,omitempty"`
 }
 type Response struct {
 	Format string   `json:"format"`
@@ -119,7 +120,10 @@ func Parse(raw []byte) (*Mapping, error) {
 			return nil, ErrMapping
 		}
 		seen[o.ID] = true
-		if o.MaximumInputBytes < 1 || o.MaximumInputBytes > 1<<20 || o.MaximumRequestBytes < o.MaximumInputBytes || o.MaximumRequestBytes > 2<<20 || o.MaximumResponseBytes < 1 || o.MaximumResponseBytes > 8<<20 {
+		if o.MaximumInputBytes < 1 || o.MaximumInputBytes > 1<<20 || o.MaximumRequestBytes < o.MaximumInputBytes || o.MaximumRequestBytes > 2<<20 || o.MaximumResponseBytes < 1 || o.MaximumResponseBytes > 2<<20 {
+			return nil, ErrMapping
+		}
+		if !slices.Contains([]string{"", "text/plain", "application/json"}, o.Input.MediaType) || o.Input.Format == "text" && o.Input.MediaType == "application/json" {
 			return nil, ErrMapping
 		}
 		if !fieldPath(o.Input.Field) || !fieldPath(o.Response.Field) {
@@ -205,7 +209,7 @@ func (m *Mapping) AllowsAddress(a netip.Addr) bool {
 }
 func (m *Mapping) Request(id string, payload []byte, media string) (Operation, []byte, error) {
 	o, ok := m.Operation(id)
-	if !ok || int64(len(payload)) > o.MaximumInputBytes || !utf8.Valid(payload) {
+	if !ok || media != o.InputMediaType() || int64(len(payload)) > o.MaximumInputBytes || !utf8.Valid(payload) {
 		return o, nil, ErrInput
 	}
 	raw, e := construct(o, payload, media)
@@ -291,4 +295,11 @@ func SelectResponse(o Operation, raw []byte) ([]byte, string, error) {
 	}
 	out, e := json.Marshal(value)
 	return out, "application/json", e
+}
+
+func (o Operation) InputMediaType() string {
+	if o.Input.MediaType == "" {
+		return "text/plain"
+	}
+	return o.Input.MediaType
 }

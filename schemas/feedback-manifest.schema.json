@@ -26,7 +26,7 @@
       ]
     },
     "boundary": {
-      "const": "invocation-completed"
+      "enum": ["invocation-completed", "request-ended"]
     },
     "categories": {
       "type": "array",

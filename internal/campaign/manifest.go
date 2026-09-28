@@ -141,7 +141,7 @@ func (m RunManifest) Validate() error {
 			return ErrInvalid
 		}
 	}
-	if m.Target.Adapter != "interceptor/v1" || !validID(m.Target.SessionID) || !validID(m.Target.WorkerInstanceID) {
+	if (m.Target.Adapter != "interceptor/v1" && m.Target.Adapter != "https/v1") || !validID(m.Target.SessionID) || !validID(m.Target.WorkerInstanceID) {
 		return ErrInvalid
 	}
 	switch m.Target.NativeFeedbackProfile {

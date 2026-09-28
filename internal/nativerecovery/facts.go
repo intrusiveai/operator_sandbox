@@ -174,6 +174,23 @@ func loadFacts(ctx context.Context, a *campaign.NativeRecovery) (facts, error) {
 	if err != nil || d != report.Manifest.HostPolicyDigest || target != report.Manifest.Target || !identifier.MatchString(f.instance) {
 		return f, campaign.ErrCorrupt
 	}
+	if report.Manifest.Target.Adapter == "https/v1" {
+		var retained struct {
+			Profile struct {
+				Adapter       string `json:"adapter"`
+				MappingDigest string `json:"https_mapping_digest"`
+				AllowStop     bool   `json:"allow_target_stop"`
+			} `json:"target_profile"`
+		}
+		var source struct {
+			Version       string `json:"api_version"`
+			MappingDigest string `json:"mapping_digest"`
+		}
+		if json.Unmarshal(hostPolicy, &retained) != nil || json.Unmarshal(jsonSource, &source) != nil || retained.Profile.Adapter != "https/v1" || retained.Profile.AllowStop || source.Version != "operator.dev/https-capabilities/v1alpha1" || source.MappingDigest != retained.Profile.MappingDigest || contracts.RawDigest(jsonSource) != target.CapabilitySourceDigest {
+			return f, campaign.ErrCorrupt
+		}
+		return f, nil
+	}
 	var hp struct {
 		Profile json.RawMessage `json:"target_profile"`
 	}

@@ -240,3 +240,25 @@ The generic native `artifact.read` remains an administrative/adapter operation;
 it is not exposed as a general guest tool. Guest reads use the receipt-scoped path.
 This contract resolves HC-02/HC-03 design choices. SDK generation, broker/harness
 implementation and end-to-end qualification remain HC-01/HC-06 deliverables.
+
+
+## HTTPS observer feedback
+
+The `https/v1` adapter MUST publish receipt-scoped feedback using these same
+selection, visibility, byte-limit and chunk-read rules. Its entries MUST use
+`source: https` and `assurance: declared-observer`. Its boundary MUST be
+`request-ended`, meaning the bounded request has ended, including uncertain
+outcomes; it MUST NOT imply successful remote execution.
+
+Only selected target response bytes and fixed host operation-error codes MAY be
+published. Unselected JSON fields, response headers, credential values and raw
+transport errors MUST NOT be exposed. Missing/oversize/malformed output MUST be
+explicitly unavailable; response-limit failures MUST mark truncation. An
+observation retention allowance too small for the selected bytes MUST yield
+`capture_limit`, never an apparently complete empty response.
+
+The retained host receipt MUST identify `source_adapter: https/v1`, use local
+execution attribution and omit a native receipt identity. Native receipt checks
+remain mandatory for Interceptor records. HTTPS receipts MUST NOT contain
+injection-delivery or oracle entries. Recovery MUST retain uncertainty and MUST
+NOT issue a replacement request to reconstruct missing feedback.

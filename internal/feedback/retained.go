@@ -11,6 +11,7 @@ import (
 // Record is a validated, immutable receipt index. It contains no execution grant
 // or content cache. Its loader is supplied by trusted campaign storage.
 type Record struct {
+	SourceAdapter   string            `json:"source_adapter,omitempty"`
 	ReceiptID       string            `json:"receipt_id"`
 	Source          Source            `json:"source"`
 	NativeReceiptID string            `json:"native_receipt_id"`
@@ -32,6 +33,12 @@ func OpenRecord(catalog *contracts.Catalog, raw []byte) (*Retained, error) {
 			return nil, ErrFeedback
 		}
 	}
+	if r.SourceAdapter != "" && r.SourceAdapter != "https/v1" {
+		return nil, ErrFeedback
+	}
+	if r.SourceAdapter == "https/v1" && r.NativeReceiptID != "" {
+		return nil, ErrFeedback
+	}
 	if r.NativeReceiptID != "" && r.NativeReceiptID != interceptor.FeedbackReceiptID(r.Source.SessionID, r.Source.TurnID) {
 		return nil, ErrFeedback
 	}
@@ -49,12 +56,15 @@ func OpenRecord(catalog *contracts.Catalog, raw []byte) (*Retained, error) {
 	}
 	seen := map[string]bool{}
 	for _, e := range m.Entries {
+		if r.SourceAdapter == "https/v1" && (e.Source != "https" || e.Assurance != "declared-observer" || (e.Kind != "target_output" && e.Kind != "operation_error")) {
+			return nil, ErrFeedback
+		}
 		if seen[e.ID] || !idPattern.MatchString(r.Entries[e.ID]) || !permitted(m.Profile, e.Kind) || !slices.Contains([]string{"available", "partial", "unavailable"}, states[e.Kind]) || e.Availability == "unavailable" && e.Artifact != nil {
 			return nil, ErrFeedback
 		}
 		seen[e.ID] = true
 	}
-	if len(seen) != len(r.Entries) || len(seen) > 0 && r.NativeReceiptID == "" {
+	if len(seen) != len(r.Entries) || len(seen) > 0 && r.NativeReceiptID == "" && r.SourceAdapter != "https/v1" {
 		return nil, ErrFeedback
 	}
 	return &Retained{r, m}, nil

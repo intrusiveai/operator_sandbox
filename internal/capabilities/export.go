@@ -21,14 +21,20 @@ var (
 // are private so callers cannot alter provenance after successful verification.
 type Export struct {
 	native           nativeManifest
+	https            *httpsDeclaration
 	raw, public      []byte
 	projection       map[string]any
 	projectionDigest string
 }
 
-func (e *Export) NativeJSON() []byte       { return bytes.Clone(e.raw) }
-func (e *Export) PublicJSON() []byte       { return bytes.Clone(e.public) }
-func (e *Export) SourceDigest() string     { return e.native.Digest }
+func (e *Export) NativeJSON() []byte { return bytes.Clone(e.raw) }
+func (e *Export) PublicJSON() []byte { return bytes.Clone(e.public) }
+func (e *Export) SourceDigest() string {
+	if e.https != nil {
+		return contracts.RawDigest(e.raw)
+	}
+	return e.native.Digest
+}
 func (e *Export) ProjectionDigest() string { return e.projectionDigest }
 func (e *Export) TargetID() string         { return e.projection["target_id"].(string) }
 func (e *Export) CompanionName() string {
@@ -133,7 +139,19 @@ func Import(catalog *contracts.Catalog, public, native []byte, targetID string) 
 	if _, err := catalog.Validate(contracts.TargetCapabilityManifestSchema, public, contracts.OrdinaryLimit); err != nil {
 		return nil, err
 	}
-	e, err := FromNative(catalog, native, targetID)
+	var source struct {
+		Source struct {
+			Adapter string `json:"adapter"`
+		} `json:"source"`
+	}
+	_ = json.Unmarshal(public, &source)
+	var e *Export
+	var err error
+	if source.Source.Adapter == "https/v1" {
+		e, err = fromHTTPSDeclaration(catalog, native, targetID)
+	} else {
+		e, err = FromNative(catalog, native, targetID)
+	}
 	if err != nil {
 		return nil, err
 	}
