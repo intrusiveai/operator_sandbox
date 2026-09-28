@@ -1050,6 +1050,10 @@ daemon. Operator MUST persist the full binding before cleanup, leave original
 journal records unchanged, and confirm exact-ID absence before a new launch.
 No match, multiple matches, damaged evidence or uncertain identity MUST block
 admission. Recovery MUST NOT start the old container or resume its campaign.
+After confirmed container absence, startup MUST reclaim transient transport and
+generated policy files under the campaign writer lock. Staged input copies MUST
+remain until complete journaled retention is verified. Cleanup MUST follow the
+bounded traversal and separate receipt rules in [Startup recovery](docs/STARTUP_RECOVERY.md#transient-filesystem-cleanup).
 
 The host-supervised worker owns a durable fencing identity independent of the
 CLI process. The per-OS service account, supervisor and state layout are fixed by

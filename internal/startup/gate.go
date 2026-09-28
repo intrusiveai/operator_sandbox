@@ -25,12 +25,13 @@ type Docker interface {
 }
 
 type Prior struct {
-	CampaignID       string                   `json:"campaign_id"`
-	JournalIntact    bool                     `json:"journal_intact"`
-	State            string                   `json:"state"`
-	Inactivity       dockercontrol.Inactivity `json:"inactivity"`
-	Termination      *termination.Receipt     `json:"termination,omitempty"`
-	BindingRecovered bool                     `json:"binding_recovered,omitempty"`
+	CampaignID       string                     `json:"campaign_id"`
+	JournalIntact    bool                       `json:"journal_intact"`
+	State            string                     `json:"state"`
+	Inactivity       dockercontrol.Inactivity   `json:"inactivity"`
+	Termination      *termination.Receipt       `json:"termination,omitempty"`
+	BindingRecovered bool                       `json:"binding_recovered,omitempty"`
+	Transient        *campaign.TransientCleanup `json:"transient,omitempty"`
 }
 
 // Gate owns the same installation-wide lease needed by the new worker. Callers
@@ -107,6 +108,11 @@ func Acquire(ctx context.Context, stateRoot string, docker Docker) (*Gate, []Pri
 		if bindingErr != nil {
 			if errors.Is(bindingErr, os.ErrNotExist) && p.JournalIntact && !started {
 				p.State = "never-created"
+				cleanup, err := campaign.CleanupTransient(ctx, stateRoot, id, true)
+				p.Transient = &cleanup
+				if err != nil {
+					return nil, records, ErrUnresolved
+				}
 				continue
 			}
 			if !errors.Is(bindingErr, os.ErrNotExist) || !p.JournalIntact || !started {
@@ -144,6 +150,11 @@ func Acquire(ctx context.Context, stateRoot string, docker Docker) (*Gate, []Pri
 			}
 		}
 		p.State = "container-absent"
+		cleanup, err := campaign.CleanupTransient(ctx, stateRoot, id, true)
+		p.Transient = &cleanup
+		if err != nil {
+			return nil, records, ErrUnresolved
+		}
 	}
 	if err := ctx.Err(); err != nil {
 		return nil, records, err

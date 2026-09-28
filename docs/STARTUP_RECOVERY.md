@@ -75,9 +75,31 @@ If Docker create itself returns a complete full ID alongside an error, the launc
 MUST retain the binding for cleanup and MUST fail the launch. That error MUST NOT
 grant `StartCreated` permission, even after the binding is saved.
 
-This gate handles container execution. Recovery of transient mount directories,
-native target finalization and report publication remain
-separate lifecycle work; none can resume failed execution.
+## Transient filesystem cleanup
+
+After exact container absence (or verified never-created preparation), the gate
+MUST acquire the campaign writer lock and reclaim `runtime/transport` and
+`launch/policies`. It MUST select only these fixed campaign-relative namespaces;
+journal/spool payloads cannot supply deletion paths. Cleanup MUST preserve the
+first `transient-cleanup-intent.json` and publish the bounded latest result in
+`transient-cleanup-result.json`, independently of the original journal.
+
+The traversal MUST read directory names in batches of 128, check cancellation,
+limit each tree to 100,000 entries and depth 128, and share a 30-second pass
+deadline. It MUST NOT read spool bytes, follow links, cross filesystem devices or
+remove a replacement root. Child links and special files MUST be unlinked without
+opening their targets. Cleanup failure MUST retain remaining resources, report
+uncertainty and block new admission; later startup can continue filesystem cleanup.
+
+`launch/stage-<26 alphanumeric characters>` directories MUST be removed only when
+a complete verified journal contains one matching `campaign.launch-inputs-retained`
+completion record. Otherwise input copies MUST remain `retained-unarchived`.
+Cleanup MUST leave journals, artifacts, submitted source inputs, reports, bindings
+and unrelated launch entries unchanged. It MUST never reopen transport or replay
+remaining messages. Returned recovery rows MUST include the cleanup result.
+
+Native target finalization and report publication remain separate lifecycle work;
+none can resume failed execution.
 
 Tests use real campaign files/locks and scripted Docker replies. They cover live
 writers, orphan termination, previously removed containers, damaged evidence,

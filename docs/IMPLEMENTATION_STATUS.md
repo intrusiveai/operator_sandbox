@@ -1,6 +1,16 @@
 # Implementation phase handoff
 
-## Latest boundary: lost-create identity reconciliation
+## Latest boundary: abandoned transient filesystem cleanup
+
+Startup now removes the fixed transport and generated-policy directories after
+container absence, under the campaign writer lock. It preserves unarchived input
+copies and only removes staged inputs after verified retention. Streaming bounded
+traversal handles hostile spool leftovers without following links or reading file
+contents. Separate intent/latest-result records preserve cleanup state. Filesystem,
+race and startup integration tests pass; Linux compilation is checked separately
+from runtime qualification. Native target finalization is the next boundary.
+
+## Completed boundary: lost-create identity reconciliation
 
 Startup now discovers a lost Docker create reply only from a complete verified
 start intent and one matching full container identity on the original daemon.

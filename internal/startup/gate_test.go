@@ -271,3 +271,35 @@ func TestGateRetainsRecoveredIdentityAfterCleanupFailure(t *testing.T) {
 	}
 	gate.Close()
 }
+
+func TestGateCleansTransportOnlyAfterContainerAbsence(t *testing.T) {
+	for _, failed := range []bool{false, true} {
+		root, w := gateFixture(t, true, true)
+		w.Close()
+		dir := filepath.Join(root, "campaigns/campaign-1/runtime/transport")
+		if err := os.MkdirAll(dir, 0700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, "unexpected"), []byte("spool"), 0600); err != nil {
+			t.Fatal(err)
+		}
+		d := &recoveryDocker{state: "active", failedKill: failed}
+		gate, rows, err := Acquire(context.Background(), root, d)
+		if failed {
+			if err == nil || rows[0].Transient != nil {
+				t.Fatal(rows, err)
+			}
+			if _, err := os.Stat(dir); err != nil {
+				t.Fatal(err)
+			}
+		} else {
+			if err != nil || rows[0].Transient == nil || rows[0].Transient.Transport != "removed" {
+				t.Fatal(rows, err)
+			}
+			gate.Close()
+			if _, err := os.Stat(dir); !errors.Is(err, os.ErrNotExist) {
+				t.Fatal(err)
+			}
+		}
+	}
+}
