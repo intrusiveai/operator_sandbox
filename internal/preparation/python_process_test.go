@@ -30,12 +30,20 @@ import (
 
 type processProvider struct {
 	requests [][]byte
+	block    bool
+	entered  chan struct{}
 	err      error
 	reply    func(int, map[string]any) ([]byte, error)
 }
 
-func (p *processProvider) Generate(_ context.Context, raw []byte) ([]byte, error) {
+func (p *processProvider) Generate(ctx context.Context, raw []byte) ([]byte, error) {
 	p.requests = append(p.requests, bytes.Clone(raw))
+	if p.block {
+		close(p.entered)
+		<-ctx.Done()
+		p.err = ctx.Err()
+		return nil, p.err
+	}
 	var request map[string]any
 	if err := json.Unmarshal(raw, &request); err != nil {
 		return nil, err
@@ -58,6 +66,9 @@ func processResponse(calls []any) []byte {
 
 type processCase struct {
 	transport, prompt string
+	native            func(*peer)
+	block             bool
+	spoolMaxBytes     int64
 	large, skill      bool
 	change            func(*preparation.Input)
 	reply             func(int, map[string]any) ([]byte, error)
@@ -70,12 +81,14 @@ type processRun struct {
 	channel     *transport.Session
 	tree        *staging.Tree
 	root        string
+	ipc         string
 	provider    *processProvider
 	cmd         *exec.Cmd
 	output      bytes.Buffer
 	ctx         context.Context
 	cancel      context.CancelFunc
 	pump, serve chan error
+	waited      bool
 }
 
 func newProcessRun(t *testing.T, tc processCase) *processRun {
@@ -191,7 +204,10 @@ func newProcessRun(t *testing.T, tc processCase) *processRun {
 		t.Fatal(err)
 	}
 	native := &peer{input: in, revision: 5}
-	provider := &processProvider{reply: tc.reply}
+	if tc.native != nil {
+		tc.native(native)
+	}
+	provider := &processProvider{reply: tc.reply, block: tc.block, entered: make(chan struct{})}
 	if provider.reply == nil {
 		provider.reply = func(int, map[string]any) ([]byte, error) { return processResponse(nil), nil }
 	}
@@ -214,7 +230,7 @@ func newProcessRun(t *testing.T, tc processCase) *processRun {
 	if tc.transport == "fifo" {
 		create = transport.NewFIFO
 	}
-	channel, err := create(ipc, transport.Config{Protocol: in.Protocol, CampaignID: m.CampaignID, LaunchID: m.LaunchID, Fence: writer.Fence(), CampaignDeadline: time.Now().Add(time.Minute)})
+	channel, err := create(ipc, transport.Config{Protocol: in.Protocol, CampaignID: m.CampaignID, LaunchID: m.LaunchID, Fence: writer.Fence(), CampaignDeadline: time.Now().Add(time.Minute), SpoolMaxBytes: tc.spoolMaxBytes})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -230,7 +246,7 @@ func newProcessRun(t *testing.T, tc processCase) *processRun {
 	config := filepath.Join(t.TempDir(), "launch.json")
 	write(config, map[string]any{"harness": harness, "package": pkg, "release": release, "tree": tree.Directory(), "ipc": ipc, "transport": tc.transport})
 	cmd := exec.CommandContext(ctx, filepath.Join(operator, ".venv/bin/python"), "-I", "-B", filepath.Join(operator, "internal/preparation/testdata/harness_process.py"), config)
-	run := &processRun{service: service, native: native, writer: writer, launch: launch, channel: channel, tree: tree, root: root, provider: provider, cmd: cmd, ctx: ctx, cancel: cancel, pump: make(chan error, 1), serve: make(chan error, 1)}
+	run := &processRun{service: service, native: native, writer: writer, launch: launch, channel: channel, tree: tree, root: root, ipc: ipc, provider: provider, cmd: cmd, ctx: ctx, cancel: cancel, pump: make(chan error, 1), serve: make(chan error, 1)}
 	cmd.Stdout = &run.output
 	cmd.Stderr = &run.output
 	go func() { run.pump <- channel.Run(ctx) }()
@@ -256,6 +272,10 @@ func newProcessRun(t *testing.T, tc processCase) *processRun {
 	t.Cleanup(func() {
 		cancel()
 		_ = cmd.Process.Kill()
+		if !run.waited {
+			_ = cmd.Wait()
+			run.waited = true
+		}
 		_ = channel.Close()
 		cleanup, stop := context.WithTimeout(context.Background(), 3*time.Second)
 		defer stop()
@@ -271,9 +291,15 @@ func newProcessRun(t *testing.T, tc processCase) *processRun {
 func (r *processRun) finish(t *testing.T) {
 	t.Helper()
 	err := r.cmd.Wait()
+	r.waited = true
 	r.cancel()
 	<-r.pump
 	<-r.serve
+	cleanup, stop := context.WithTimeout(context.Background(), 5*time.Second)
+	defer stop()
+	if _, e := r.service.Shutdown(cleanup); e != nil {
+		t.Fatal(e)
+	}
 	if err != nil {
 		t.Fatalf("Python entrypoint: %v; %s; fence: %v; provider: %v", err, r.output.String(), r.writer.Fence().Err(), r.provider.err)
 	}

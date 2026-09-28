@@ -41,3 +41,20 @@ the production HTTPS adapter and a local TLS server, preserving observer assuran
 The joined test discovered a release-identity disagreement: attempts MUST use the
 compatibility-record digest in `generator.release_digest`, as defined by the shared
 contract. Host and harness component fixtures alone had not detected that mismatch.
+
+## Restore and interruption coverage
+
+The restore process tests verify snapshot metadata/list/inspect, continued use of
+the same Python process, a single replacement revision, correlated skipped results
+for the rest of the model batch, retained-injection deletion through the original
+receipt, and child-attempt lineage after restore. Lost restore replies MUST close
+execution without a second restore or subsequent model turn.
+
+Failure tests interrupt an in-flight model request with host cancellation,
+harness process loss, control-lane termination and spool overflow. They MUST retain
+the uncertain outcome, reject readmission and finalize without model replay.
+`TestPythonProcessHostCrashRetainsUnknownWork` kills a separate Go host process
+after a model intent is durable, independently kills its surviving Python process,
+and verifies that repeated cleanup preserves the incomplete journal prefix.
+Docker event delivery remains a fixture boundary; these tests do not qualify a
+live daemon restart or native host interruption.
