@@ -67,3 +67,38 @@ func TestLoadExportFiles(t *testing.T) {
 		})
 	}
 }
+
+func TestSaveExportCompanionsAndFailure(t *testing.T) {
+	ctx := context.Background()
+	c := catalogForTest(t)
+	e := mustExport(t, c, fixture(t, "interceptor-export.json"))
+	dir := t.TempDir()
+	first := filepath.Join(dir, "first.json")
+	if err := e.Save(ctx, first); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := LoadExport(ctx, c, first, e.TargetID()); err != nil {
+		t.Fatal(err)
+	}
+	if err := e.Save(ctx, first); err == nil {
+		t.Fatal("overwrote export")
+	}
+	second := filepath.Join(dir, "second.json")
+	if err := e.Save(ctx, second); err != nil {
+		t.Fatal("matching companion reuse", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, e.CompanionName()), []byte("changed"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := e.Save(ctx, filepath.Join(dir, "third.json")); err == nil {
+		t.Fatal("accepted changed companion")
+	}
+	if _, err := os.Stat(filepath.Join(dir, "third.json")); !os.IsNotExist(err) {
+		t.Fatal("published public document after failure", err)
+	}
+	canceled, cancel := context.WithCancel(ctx)
+	cancel()
+	if err := e.Save(canceled, filepath.Join(t.TempDir(), "public.json")); err == nil {
+		t.Fatal("ignored cancellation")
+	}
+}

@@ -3,8 +3,9 @@
 Status: implemented in `internal/hostconfig` and `cmd/operatorctl`. This stage
 loads installation settings and makes them available to administrative termination.
 The private target profile and campaign preparation library are also implemented;
-campaign start, model configuration and service installation remain integration
-work. The host configuration is separate from the shared
+campaign start, model configuration and supervised worker submission are implemented.
+Explicit submission target selectors override `target.profile_file` for that run
+and bind the selected profile into its start-input fingerprint. The host configuration is separate from the shared
 Operator/Attack Harness wire package.
 
 ## File and supported settings

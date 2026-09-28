@@ -1445,7 +1445,9 @@ MUST follow [Campaign observation](docs/CAMPAIGN_OBSERVATION.md).
 Start success means accepted and owned, not successful simulation. JSON mode emits
 one bounded receipt without interleaved progress; human diagnostics go to stderr.
 
-`--target-profile` selects trusted reusable configuration instead of an environment;
+`--environment` selects the administrator-owned directory defined in
+[the submission contract](docs/SUBMISSION.md#administrator-target-selectors-and-capability-export).
+`--target-profile` selects a private reusable TargetProfile file instead;
 `--capabilities` supplies an offline export for input validation. Start still needs
 the configured live target binding; this does not enable remote Interceptor deployment.
 Capability export writes the public JSON and a hash-named native-source companion

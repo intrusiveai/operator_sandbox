@@ -49,3 +49,46 @@ These commands MUST NOT contact Docker, Interceptor, providers or release servic
 create authoritative campaign state or grant permission to execute. Live target
 compatibility and administrator policy MUST be checked separately at preparation
 and admission. Editing reusable inputs requires a new submission.
+
+## Administrator target selectors and capability export
+
+The CLI MUST accept `--environment DIR` as an administrator-owned directory with
+`target-profile.json`, `capabilities.json` and the public export's hash-named native
+companion. The directory MUST be owned by the service user or root and MUST NOT be
+writable by other users. The profile MUST satisfy the existing private TargetProfile
+file checks. This is Operator's selector directory, not an Interceptor Environment
+Blueprint directory; no environment scripts or configuration are executed.
+
+Alternatively, submission MUST accept `--target-profile FILE --capabilities FILE`.
+`--environment` MUST be exclusive with both explicit selectors. Plain
+`--capabilities FILE` MUST continue to use the installed target profile at preparation.
+An explicitly selected profile MUST match the bundle target ID. Submission MUST
+retain its absolute file path and canonical digest in `run.json`; validation MUST
+recheck that private file and digest. Campaign preparation MUST use this selection
+and bind it into the immutable start-input fingerprint. Changed profiles MUST
+require a new submission. Bundle fields MUST NOT select profile paths.
+
+```sh
+# First create the native file using Interceptor's read-only capabilities command.
+interceptor capabilities --environment ./interceptor-environment > ./native.json
+operatorctl capabilities export --config /absolute/config.yaml \
+  --target-profile /absolute/target-profile.json --native ./native.json \
+  --output ./capabilities.json
+operatorctl capabilities export --environment ./environment --output ./export.json
+operatorctl submit --bundle ./scenario-bundle.json --environment ./environment \
+  --output ./runs/example
+```
+
+Capability export MUST verify the installed contract and native manifest, then
+produce only the existing allowlisted public projection. It MUST support
+`--native FILE` with an explicit or installed target profile, or verify/re-export
+`--capabilities FILE` with its companion. `--native` MUST be exclusive with
+`--environment` and `--capabilities`. The native source remains host-side.
+
+Publication MUST write and sync the companion before the new public file, sync
+the parent directory and never overwrite a public export. An existing companion
+MUST be a safe regular file with identical bytes. Failure MAY leave an incomplete
+output; import MUST reject unverified content. Success MUST emit one bounded
+`operator.dev/capability-export-receipt/v1alpha1` JSON object with target and digest
+identities. Export MUST NOT attach to a target, resolve credentials, contact Docker
+or confer execution permission. The output parent MUST already exist.

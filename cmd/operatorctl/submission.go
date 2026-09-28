@@ -20,10 +20,11 @@ func submissionCommand(ctx context.Context, args []string, stdout, stderr io.Wri
 	flags := flag.NewFlagSet(args[0], flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	config := flags.String("config", defaults.ConfigFile, "administrator configuration with installed contract pin")
-	var bundle, capabilities, artifacts, output, run *string
+	var bundle, artifacts, output, run *string
+	var selection targetFlags
 	if args[0] == "submit" {
 		bundle = flags.String("bundle", "", "ScenarioBundle JSON file")
-		capabilities = flags.String("capabilities", "", "authoring public export with native companion")
+		selection.bind(flags)
 		artifacts = flags.String("artifacts", "", "hash-named bundle artifact directory")
 		output = flags.String("output", "", "new run directory (parent must exist)")
 	} else {
@@ -32,7 +33,7 @@ func submissionCommand(ctx context.Context, args []string, stdout, stderr io.Wri
 	if flags.Parse(args[1:]) != nil {
 		return 2
 	}
-	if flags.NArg() != 0 || *config == "" || (run != nil && *run == "") || (bundle != nil && (*bundle == "" || *capabilities == "" || *output == "")) {
+	if flags.NArg() != 0 || !selection.valid() || *config == "" || (run != nil && *run == "") || (bundle != nil && (*bundle == "" || (selection.capabilities == "" && selection.environment == "") || *output == "")) {
 		fmt.Fprintln(stderr, "submit requires --bundle, --capabilities and --output; validate requires --run")
 		return 2
 	}
@@ -62,7 +63,15 @@ func submissionCommand(ctx context.Context, args []string, stdout, stderr io.Wri
 	if run != nil {
 		prepared, err = submission.Load(ctx, installed.Protocol(), absolute(*run))
 	} else {
-		prepared, err = submission.Read(ctx, installed.Protocol(), absolute(*bundle), absolute(*capabilities), absolute(*artifacts))
+		profile, public, e := selection.resolve()
+		if e != nil {
+			fmt.Fprintln(stderr, "invalid target selection")
+			return 1
+		}
+		prepared, err = submission.Read(ctx, installed.Protocol(), absolute(*bundle), public, absolute(*artifacts))
+		if err == nil && profile != "" {
+			err = prepared.SelectTarget(profile)
+		}
 		if err == nil {
 			err = prepared.Save(ctx, absolute(*output))
 		}

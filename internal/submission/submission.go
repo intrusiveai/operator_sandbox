@@ -17,13 +17,20 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/capabilities"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/staging"
+	"github.com/intrusiveai/operator_sandbox/internal/targetprofile"
 )
 
 const Version = "operator.dev/submission/v1alpha1"
 
 var ErrSubmission = errors.New("invalid, incomplete or changed submission")
 
+type TargetSelection struct {
+	ProfileFile string `json:"profile_file"`
+	Digest      string `json:"digest"`
+}
+
 type Receipt struct {
+	TargetSelection  *TargetSelection          `json:"target_selection,omitempty"`
 	APIVersion       string                    `json:"api_version"`
 	Status           string                    `json:"status"`
 	Contract         contracts.PackageIdentity `json:"contract"`
@@ -46,8 +53,26 @@ func (p *Prepared) TargetID() string { return p.authoring.TargetID() }
 
 func (p *Prepared) Receipt() Receipt {
 	r := p.receipt
+	if r.TargetSelection != nil {
+		value := *r.TargetSelection
+		r.TargetSelection = &value
+	}
 	r.OptionalGaps = append([]capabilities.Gap{}, r.OptionalGaps...)
 	return r
+}
+
+// SelectTarget captures an explicit administrator CLI selection. The bundle
+// cannot provide this selector. Load rechecks the private profile and its digest.
+func (p *Prepared) SelectTarget(file string) error {
+	profile, err := targetprofile.Load(file)
+	if err != nil {
+		return err
+	}
+	if profile.Settings().TargetID != p.TargetID() {
+		return ErrSubmission
+	}
+	p.receipt.TargetSelection = &TargetSelection{ProfileFile: file, Digest: profile.Digest()}
+	return nil
 }
 
 // Inputs returns frozen authoring inputs for a fresh live-target preparation.
@@ -237,6 +262,11 @@ func Load(ctx context.Context, protocol *contracts.Protocol, directory string) (
 	p, err := Read(ctx, protocol, filepath.Join(directory, "input/scenario-bundle.json"), filepath.Join(directory, "input/capabilities.json"), filepath.Join(directory, "input/artifacts"))
 	if err != nil {
 		return nil, err
+	}
+	if expected.TargetSelection != nil {
+		if err := p.SelectTarget(expected.TargetSelection.ProfileFile); err != nil {
+			return nil, err
+		}
 	}
 	want, _ := json.Marshal(p.receipt)
 	got, _ := json.Marshal(expected)

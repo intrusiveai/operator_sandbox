@@ -145,7 +145,11 @@ func LoadInputs(ctx context.Context, configPath string, defaults hostconfig.Path
 	if err != nil {
 		return nil, err
 	}
-	profile, err := targetprofile.Load(c.Target.ProfileFile)
+	profileFile := c.Target.ProfileFile
+	if target := submitted.Receipt().TargetSelection; target != nil {
+		profileFile = target.ProfileFile
+	}
+	profile, err := targetprofile.Load(profileFile)
 	if err != nil {
 		return nil, err
 	}
