@@ -274,6 +274,9 @@ func Save(ctx context.Context, request Request) (Snapshot, error) {
 	if err := request.validate(); err != nil {
 		return Snapshot{}, err
 	}
+	if err = campaign.CheckNotPurging(request.StateRoot, request.Selection.CampaignID); err != nil {
+		return Snapshot{}, err
+	}
 	raw, digest, err := encode(request)
 	if err != nil {
 		return Snapshot{}, err
@@ -303,7 +306,9 @@ func Save(ctx context.Context, request Request) (Snapshot, error) {
 	return Read(request.StateRoot, request.Selection.StartRequestID)
 }
 
-func Read(stateRoot, id string) (Snapshot, error) {
+func Read(stateRoot, id string) (Snapshot, error) { return readSnapshot(stateRoot, id, false) }
+
+func readSnapshot(stateRoot, id string, retiring bool) (Snapshot, error) {
 	var s Snapshot
 	root, dir, err := open(stateRoot, id, false)
 	if err != nil {
@@ -318,6 +323,9 @@ func Read(stateRoot, id string) (Snapshot, error) {
 		return s, ErrRecord
 	}
 	for _, name := range []string{"request.json", "owner.json", "accepted.json", "completion.json", "retired.json", "service.json"} {
+		if retiring && name == "retired.json" {
+			continue
+		}
 		if err := pending(root, name); err != nil {
 			return s, err
 		}

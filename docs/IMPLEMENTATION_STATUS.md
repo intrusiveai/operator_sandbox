@@ -1,6 +1,6 @@
 # Current implementation status
 
-Updated: 2026-09-28, following retained reporting/export and offline evidence import.
+Updated: 2026-09-28, following campaign retirement and purge.
 
 Operator's core campaign runtime and Attack Harness's Python runtime are
 implemented. Remaining administrative workflows, the HTTPS target adapter,
@@ -24,6 +24,7 @@ criteria have not yet been demonstrated.
 | Termination and recovery | Worker-independent termination using exact Docker identity; startup reconciliation for lost create replies, abandoned transient resources, native finalization and early attach failures. Recovery performs cleanup/reporting, never campaign resumption. |
 | Retained evidence | Live finalization, explicit late collection with recorded retries, verified archive reuse and offline archive import with immutable adoption records. |
 | Reports and exports | Deterministic, digest-bound report/export generations from verified journal prefixes and retained evidence; explicit coverage/uncertainty, portable exports and automatic worker reporting after execution completion. |
+| Campaign retirement/purge | Durable start retirement, exact service deregistration, locked inventories, per-campaign/all-campaign deletion, managed-copy registration and retry after partial filesystem deletion. Independent exports and reusable installation data are preserved. |
 | Attack Harness | Python bootstrap/input loading, both transports, all five codecs, dispatch/loop accounting, artifacts, feedback, restore continuation and bounded completion. Both architecture image candidates have been built; they are not approved releases. |
 
 Component guides provide the detailed behavior and validation boundaries:
@@ -34,18 +35,20 @@ Component guides provide the detailed behavior and validation boundaries:
   [campaign service](CAMPAIGN_SERVICE.md) and [startup recovery](STARTUP_RECOVERY.md).
 - [Providers](MODEL_PROVIDERS.md), [credentials](CREDENTIALS.md) and [skills](SKILLS.md).
 - [Evidence service](EVIDENCE_SERVICE.md), [late collection](LATE_EVIDENCE.md),
-  [offline import](EVIDENCE_IMPORT.md) and [reporting/export](REPORTING.md).
+  [offline import](EVIDENCE_IMPORT.md) and [reporting/export](REPORTING.md) and [campaign purge](PURGE.md).
 - [Attack Harness implementation status](../../attack_harness/IMPLEMENTATION_STATUS.md)
   and [acceptance matrix](../../attack_harness/ACCEPTANCE_MATRIX.md).
 
 ## Validation completed and its limits
 
 At the latest implementation boundary, the full Go suite, focused
-persistence/import/report/worker/CLI race tests, affected-package vet and Linux
+purge/start-request/supervisor/persistence/CLI race tests, affected-package vet and Linux
 AMD64/ARM64 CLI builds passed. Shared Go/Python fixtures and Attack Harness
 component tests have passed in their implementation stages. Tests use real
 journals, physical transports, native archive fixtures and scripted peers.
 
+A native macOS LaunchAgent retirement test also passed: it registered an unstarted
+job, confirmed its removal and rejected a delayed real worker invocation.
 Selected macOS ARM64 probes have exercised LaunchAgent execution and two-stage
 confinement with a test image. These are limited evidence: cross-compilation,
 component tests, candidate image builds and test-image probes do not qualify the
@@ -54,22 +57,18 @@ No complete live provider, secret-store or target qualification is claimed.
 
 ## Remaining implementation stages
 
-1. **Campaign retirement and purge.** Implement per-campaign/all-campaign purge,
-   retained-resource inventories and deletion safety. Reconcile the pre-claim
-   service-registration window so an unresolved registered job cannot become
-   executable after retirement.
-2. **Remaining administrative workflows.** Complete public capability export,
+1. **Remaining administrative workflows.** Complete public capability export,
    environment/target-profile selection, combined `operatorctl run`, read-only
    inspect/doctor workflows, frozen `--skill-set` selection, revocation handling
    and credential-resolution lifecycle audit.
-3. **Declarative HTTPS target adapter.** Implement its constrained mapping,
+2. **Declarative HTTPS target adapter.** Implement its constrained mapping,
    execution and evidence/report integration. Current native execution uses
    Interceptor; the HTTPS adapter remains a separate requirement.
-4. **Complete Operator/Attack Harness integration tests.** Add the complete real
+3. **Complete Operator/Attack Harness integration tests.** Add the complete real
    Go/Python process exchange matrix over both transports, including startup,
    attempt/feedback, restore, conclusion/stop and failure/capacity cases. Preserve
    component tests as supporting evidence.
-5. **Installation and release tooling.** Complete host installation/distribution,
+4. **Installation and release tooling.** Complete host installation/distribution,
    supported-package/build metadata, signed releases/update handling and release
    automation. Existing package build/check commands do not publish an approved
    `operator-contracts` 0.1.0 release or approve an image.
@@ -87,6 +86,5 @@ No complete live provider, secret-store or target qualification is claimed.
   [host runtime gates](../HOST_RUNTIME_PROFILES.md) and
   [product acceptance criteria](../OPERATOR_SANDBOX_SPEC.md#15-acceptance-criteria).
 
-The next implementation boundary is campaign retirement/purge, including the
-service-registration reconciliation needed to make deletion safe. Detailed
+The next major stage is the remaining administrative workflows listed above. Detailed
 historical commit boundaries remain available in Git history.

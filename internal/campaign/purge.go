@@ -77,3 +77,28 @@ func RemovePurgeTree(ctx context.Context, parent *os.Root, name string, device u
 	}
 	return syncDir(parent, ".")
 }
+
+// CheckNotPurging prevents new resource registrations from escaping an existing
+// deletion plan between explicit retries. Callers MUST hold a shared retention
+// lease through creation. Reading/reporting existing bytes remains permitted.
+func CheckNotPurging(stateRoot, id string) error {
+	if !validID(id) {
+		return ErrInvalid
+	}
+	root, e := os.OpenRoot(stateRoot)
+	if e != nil {
+		return e
+	}
+	defer root.Close()
+	if e = privateDir(root, "purges"); errors.Is(e, os.ErrNotExist) {
+		return nil
+	} else if e != nil {
+		return e
+	}
+	if _, e = root.Lstat("purges/" + id); errors.Is(e, os.ErrNotExist) {
+		return nil
+	} else if e != nil {
+		return e
+	}
+	return ErrClosed
+}

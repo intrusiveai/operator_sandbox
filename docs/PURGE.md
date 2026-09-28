@@ -73,6 +73,11 @@ identity even after ordinary start or journal files have been removed. A replace
 directory or changed/unconfirmed Docker state MUST block deletion. An incomplete
 unpublished plan MUST NOT authorize deletion; retry requires fresh preflight.
 
+While a purge transaction exists, new start/preparation records and managed-copy
+registrations for that campaign MUST be refused so they cannot escape the saved
+inventory. Reads, reports and explicit exports MAY use remaining intact evidence
+between purge invocations, under the existing exclusion locks.
+
 Purge MUST remove the retry plan last. It MUST report removed, already-absent and
 partial groups, returning exit 1 on failed preflight or incomplete deletion and
 exit 2 on invalid arguments. Successful removal, including an already-absent
@@ -84,3 +89,21 @@ Submitted run directories remain input projects. Their `start.json` lookup hints
 MUST remain intact after start records are purged: observation reports the missing
 record, and a later start requires explicit `--new-campaign`. A dangling lookup
 MUST NOT silently become permission to repeat the old campaign.
+
+For a refused `--all` preflight, `selected_ids` is a best-effort read-only inventory
+and `selection_complete` MUST be false. After locked whole-selection preflight it
+MUST be true. Fixed refusal codes distinguish busy resources, unconfirmed Docker
+inactivity, unconfirmed launch identity and invalid/incomplete inventory. Deletion
+results identify each successfully removed or partially removed group.
+
+## Validation boundary
+
+Tests cover pre-claim and interrupted preparation, a claimed worker killed without
+cleanup, incomplete retirement publication, whole-selection refusal, exact saved
+Docker identity, unconfirmed termination, directory replacement, active report/read
+exclusion, imported native archives, report generations, managed copies, partial
+filesystem deletion/retry and preserved complete/incomplete external exports.
+Scripted manager tests cover Linux and macOS removal/absence semantics. The opt-in
+native macOS test registers a LaunchAgent without starting its worker, retires it,
+confirms deregistration and rejects a delayed real worker invocation. These tests
+do not qualify production Docker execution or the full four-host runtime matrix.

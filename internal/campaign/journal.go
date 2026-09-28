@@ -129,6 +129,9 @@ func Create(stateRoot string, manifest RunManifest) (*Writer, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err = CheckNotPurging(stateRoot, manifest.CampaignID); err != nil {
+		return nil, err
+	}
 	// Freeze caller-owned maps/raw messages before retaining the manifest.
 	manifest, err = ParseManifest(raw)
 	if err != nil {

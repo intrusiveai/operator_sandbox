@@ -31,9 +31,9 @@ func fixture(t *testing.T, root, id string, bind bool) campaign.DockerBinding {
 	d := contracts.RawDigest([]byte("fixture"))
 	m := campaign.RunManifest{APIVersion: campaign.ManifestVersion, CampaignID: id, LaunchID: "launch-1", ContainerID: strings.Repeat("a", 64), InitialRevision: 3,
 		CreatedAt: "2026-09-23T12:00:00Z", HostPlatform: "darwin/arm64", ImagePlatform: "linux/arm64", Transport: "spool", RuntimeProfile: "operator-container/v1",
-		ImageDigest: d, ReleaseRecordDigest: d, Contract: campaign.ContractPin{"0.1.0", d, d, d}, EngineContextDigest: d, InputTreeDigest: d, SkillSetDigest: d, ScenarioBundleDigest: d, HostPolicyDigest: d, ModelProfileDigest: d, Target: campaign.TargetBinding{"interceptor/v1", "session-1", "worker-1", "diagnostic", d, d},
+		ImageDigest: d, ReleaseRecordDigest: d, Contract: campaign.ContractPin{Version: "0.1.0", Digest: d, CatalogDigest: d, OperationsDigest: d}, EngineContextDigest: d, InputTreeDigest: d, SkillSetDigest: d, ScenarioBundleDigest: d, HostPolicyDigest: d, ModelProfileDigest: d, Target: campaign.TargetBinding{Adapter: "interceptor/v1", SessionID: "session-1", WorkerInstanceID: "worker-1", NativeFeedbackProfile: "diagnostic", CapabilitySourceDigest: d, CapabilityProjectionDigest: d},
 		RemainingLimits: json.RawMessage(`{"campaign_time_ms":1000,"attempt_admissions":100,"model_tokens":1000,"model_turns":300,"artifact_bytes":10000,"artifact_objects":100,"snapshot_admissions":100,"snapshot_bytes":10000,"observation_reads":100,"observation_bytes":10000}`),
-		HarnessLimits:   json.RawMessage(`{"max_model_turns":300,"max_tool_calls":2000,"max_tool_calls_per_response":16,"max_invalid_tool_calls":50,"max_consecutive_invalid_tool_calls":5,"max_read_bytes":268435456,"max_no_progress_turns":10}`), Retention: campaign.Retention{"manual-purge", 16 << 20, campaign.MaxEventBytes}}
+		HarnessLimits:   json.RawMessage(`{"max_model_turns":300,"max_tool_calls":2000,"max_tool_calls_per_response":16,"max_invalid_tool_calls":50,"max_consecutive_invalid_tool_calls":5,"max_read_bytes":268435456,"max_no_progress_turns":10}`), Retention: campaign.Retention{Mode: "manual-purge", MaxJournalBytes: 16 << 20, MaxSegmentBytes: campaign.MaxEventBytes}}
 	w, e := campaign.Create(root, m)
 	if e != nil {
 		t.Fatal(e)
@@ -42,7 +42,7 @@ func fixture(t *testing.T, root, id string, bind bool) campaign.DockerBinding {
 	return binding(t, w, m, bind)
 }
 func binding(t *testing.T, w *campaign.Writer, m campaign.RunManifest, save bool) campaign.DockerBinding {
-	b := campaign.DockerBinding{campaign.BindingVersion, m.CampaignID, m.LaunchID, m.ContainerID, w.ManifestDigest(), "unix:///saved/docker.sock", "saved-daemon", strings.Repeat("b", 64), m.ImageDigest, m.DockerLabels()}
+	b := campaign.DockerBinding{APIVersion: campaign.BindingVersion, CampaignID: m.CampaignID, LaunchID: m.LaunchID, ContainerID: m.ContainerID, RunManifestDigest: w.ManifestDigest(), Endpoint: "unix:///saved/docker.sock", DaemonID: "saved-daemon", DockerContainerID: strings.Repeat("b", 64), ImageDigest: m.ImageDigest, Labels: m.DockerLabels()}
 	if save {
 		if e := w.SaveDockerBinding(b); e != nil {
 			t.Fatal(e)

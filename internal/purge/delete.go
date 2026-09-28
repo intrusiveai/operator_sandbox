@@ -7,6 +7,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/startrequest"
@@ -28,26 +29,55 @@ type CampaignResult struct {
 	Groups     []RemovedGroup `json:"groups"`
 }
 type Result struct {
-	APIVersion  string           `json:"api_version"`
-	All         bool             `json:"all"`
-	Selected    []string         `json:"selected_ids"`
-	Status      string           `json:"status"`
-	Code        string           `json:"code"`
-	Campaigns   []CampaignResult `json:"campaigns"`
-	Consequence string           `json:"consequence"`
+	SelectionComplete bool             `json:"selection_complete"`
+	APIVersion        string           `json:"api_version"`
+	All               bool             `json:"all"`
+	Selected          []string         `json:"selected_ids"`
+	Status            string           `json:"status"`
+	Code              string           `json:"code"`
+	Campaigns         []CampaignResult `json:"campaigns"`
+	Consequence       string           `json:"consequence"`
 }
 
 func result(selection Selection) Result {
 	r := Result{APIVersion: "operator.dev/purge-result/v1alpha1", All: selection.All, Selected: []string{}, Status: "refused", Code: "preflight_unconfirmed", Campaigns: []CampaignResult{}, Consequence: Consequence}
 	if selection.CampaignID != "" {
 		r.Selected = append(r.Selected, selection.CampaignID)
+		r.SelectionComplete = true
 	}
 	return r
 }
 func Run(ctx context.Context, root string, selection Selection, docker Docker, services Services) (Result, error) {
+	if !validSelection(root, selection) {
+		return result(selection), campaign.ErrInvalid
+	}
+	if e := ctx.Err(); e != nil {
+		return result(selection), e
+	}
+	if _, e := os.Lstat(root); errors.Is(e, os.ErrNotExist) {
+		out := result(selection)
+		out.SelectionComplete = true
+		out.Status, out.Code = "complete", "purged"
+		if !selection.All {
+			out.Campaigns = append(out.Campaigns, CampaignResult{selection.CampaignID, "already_absent", []RemovedGroup{}})
+		}
+		return out, nil
+	}
+
 	p, e := Prepare(ctx, root, selection, docker)
 	if e != nil {
-		return result(selection), e
+		out := refusedResult(root, selection)
+		switch {
+		case errors.Is(e, campaign.ErrActive):
+			out.Code = "busy"
+		case errors.Is(e, ErrDocker):
+			out.Code = "container_inactivity_unconfirmed"
+		case errors.Is(e, ErrIdentity):
+			out.Code = "launch_identity_unconfirmed"
+		default:
+			out.Code = "inventory_unconfirmed"
+		}
+		return out, e
 	}
 	defer p.Close()
 	r, e := p.Execute(ctx, services)
@@ -60,6 +90,7 @@ func Run(ctx context.Context, root string, selection Selection, docker Docker, s
 func (p *Plan) Execute(ctx context.Context, services Services) (out Result, err error) {
 	out = result(Selection{})
 	out.Code = "retirement_unconfirmed"
+	out.SelectionComplete = true
 	if p == nil || p.closed || !p.retention.ExclusiveFor(p.Root) {
 		return out, campaign.ErrActive
 	}
@@ -202,4 +233,40 @@ func removeGroup(ctx context.Context, g Group) error {
 	// Traversal checks each directory identity and device again, unlinks links,
 	// and restores write permission only inside this exclusively owned group.
 	return campaign.RemovePurgeTree(ctx, parent, filepath.Base(g.Path), g.Device)
+}
+
+// A refused all-selection may be unable to acquire its exclusions. Report IDs
+// visible in a read-only best-effort inventory, explicitly not a stable selection.
+func refusedResult(root string, selection Selection) Result {
+	out := result(selection)
+	if !selection.All {
+		return out
+	}
+	r, e := os.OpenRoot(root)
+	if e != nil {
+		return out
+	}
+	defer r.Close()
+	ids := map[string]bool{}
+	for _, kind := range []string{"campaigns", "attachments", "managed-copies", "purges"} {
+		ns, e := names(r, kind)
+		if e != nil {
+			continue
+		}
+		for _, id := range ns {
+			if validID(id) {
+				ids[id] = true
+			}
+		}
+	}
+	if starts, e := startrequest.Inventory(root); e == nil {
+		for _, s := range starts {
+			ids[s.Request.Selection.CampaignID] = true
+		}
+	}
+	for id := range ids {
+		out.Selected = append(out.Selected, id)
+	}
+	sort.Strings(out.Selected)
+	return out
 }

@@ -86,7 +86,8 @@ remains essential: corruption hashes are not signatures against that same UID.
 
 Campaign components use the artifacts, revision and report directories for
 retained state. Journal/result inventories, evidence retention and reporting/export
-are implemented. Administrative purge remains outstanding.
+are implemented. [Administrative purge](PURGE.md) removes complete managed groups
+after retirement and inactivity preflight.
 
 ## Append and commit rules
 
@@ -200,4 +201,4 @@ and emergency records; the launcher and broker integrate terminal checks before
 admission and dispatch. Reservations protect the logical write budget, not physical
 disk space against other host writers. [Transport](HOST_TRANSPORT.md), service
 timers, reporting and Attack Harness runtime integration are implemented. Campaign
-purge and full runtime qualification remain outstanding.
+purge is implemented; full runtime qualification remains outstanding.

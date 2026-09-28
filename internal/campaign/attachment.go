@@ -74,6 +74,9 @@ func CreateAttachment(stateRoot string, i AttachmentIntent) (*AttachmentWriter, 
 	if !i.valid() {
 		return nil, ErrInvalid
 	}
+	if e = CheckNotPurging(stateRoot, i.CampaignID); e != nil {
+		return nil, e
+	}
 	r, e := os.OpenRoot(stateRoot)
 	if e != nil {
 		return nil, e

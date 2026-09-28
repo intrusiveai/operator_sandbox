@@ -100,9 +100,12 @@ generation identities, visibility, coverage and incomplete-evidence semantics.
 
 Run `make setup` then `make test`. See [startup recovery](docs/STARTUP_RECOVERY.md)
 for cleanup and uncertainty rules, including native attach failures before a
-campaign journal exists. Campaign purge, remaining administrative workflows, the HTTPS target adapter,
+campaign journal exists. Remaining administrative workflows, the HTTPS target adapter,
 installation/release publication and full integration/external qualification remain
 outstanding; see [current implementation status](docs/IMPLEMENTATION_STATUS.md).
+[Campaign retirement and purge](docs/PURGE.md) now provide
+`operatorctl purge --campaign ID` and `operatorctl purge --all`, with locked
+preflight, service retirement and retryable partial deletion.
 Attack Harness tracks its implemented runtime and remaining qualification gates
 in its own repository.
 

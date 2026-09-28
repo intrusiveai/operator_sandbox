@@ -46,6 +46,9 @@ func BeginManagedCopy(ctx context.Context, root, id, output string) (copy *Manag
 			guard.Close()
 		}
 	}()
+	if e = campaign.CheckNotPurging(root, id); e != nil {
+		return nil, e
+	}
 	output, e = filepath.EvalSymlinks(output)
 	if e != nil {
 		return nil, e

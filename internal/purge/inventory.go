@@ -21,6 +21,8 @@ import (
 )
 
 var ErrUnconfirmed = errors.New("purge preflight could not confirm inactive managed resources")
+var ErrDocker = errors.Join(ErrUnconfirmed, errors.New("container inactivity unconfirmed"))
+var ErrIdentity = errors.Join(ErrUnconfirmed, errors.New("launch identity unconfirmed"))
 var idPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$`)
 var digestPattern = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
 var startPattern = regexp.MustCompile(`^[0-9a-f]{32}$`)
@@ -121,8 +123,12 @@ func names(root *os.Root, path string) ([]string, error) {
 	return ns, nil
 }
 
+func validSelection(root string, selection Selection) bool {
+	return absolute(root) && selection.All != (selection.CampaignID != "") && (selection.All || validID(selection.CampaignID))
+}
+
 func Prepare(ctx context.Context, root string, selection Selection, docker Docker) (plan *Plan, err error) {
-	if !absolute(root) || selection.All == (selection.CampaignID != "") || (!selection.All && !validID(selection.CampaignID)) {
+	if !validSelection(root, selection) {
 		return nil, campaign.ErrInvalid
 	}
 	p := &Plan{Root: root, docker: docker, Inventories: []Inventory{}}
@@ -205,7 +211,7 @@ func Prepare(ctx context.Context, root string, selection Selection, docker Docke
 				if kind == "campaigns" {
 					v.Binding, e = guard.DockerIdentity(ctx, id)
 					if e != nil {
-						return nil, e
+						return nil, errors.Join(ErrIdentity, e)
 					}
 				}
 			}
@@ -223,7 +229,7 @@ func Prepare(ctx context.Context, root string, selection Selection, docker Docke
 			}
 		}
 	}
-	starts, e := startrequest.InventoryExcept(root, covered)
+	starts, e := startrequest.InventoryRetiring(root, covered, p.retention)
 	if e != nil {
 		return nil, e
 	}
@@ -269,11 +275,11 @@ func Prepare(ctx context.Context, root string, selection Selection, docker Docke
 		v := inventories[id]
 		if v.Binding != nil {
 			if docker == nil {
-				return nil, ErrUnconfirmed
+				return nil, ErrDocker
 			}
 			state := docker.CheckInactive(ctx, *v.Binding)
 			if !state.Confirmed {
-				return nil, ErrUnconfirmed
+				return nil, ErrDocker
 			}
 			v.Inactivity = state.State
 		}

@@ -43,7 +43,7 @@ record `finished` before acceptance. Completion uses a fixed host reason code,
 never a raw provider/secret-store error. Detailed execution and native-effect
 outcomes remain in campaign evidence; `finished` is not an experiment-success claim.
 
-Read-only phases are `submitted`, `claimed`, `accepted`, `finished` or `failed`.
+Read-only phases are `submitted`, `claimed`, `accepted`, `finished`, `failed` or `retired`.
 These describe durable records, not process liveness. Missing or malformed records,
 identity mismatch and pending publications MUST be reported as uncertainty.
 
@@ -116,3 +116,8 @@ It MUST confirm absence after removal; manager failure, unreadable status or a
 scope mismatch MUST block purge. Reconciliation MUST NOT stop a target container.
 The root retention lock MUST remain outside campaign groups and MUST never be
 removed by purge. Live reporting/evidence work additionally uses campaign locks.
+
+An interrupted retirement publication MUST keep claims closed. Under the exclusive
+retention lease, an explicit purge retry MAY complete that same retirement fence
+using the verified request identity. It MUST NOT unlink an incomplete fence before
+publishing its replacement. Other damaged request/claim records remain uncertainty.

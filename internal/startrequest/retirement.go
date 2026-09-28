@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"sort"
+	"syscall"
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
@@ -88,27 +89,75 @@ func Retire(ctx context.Context, lease *campaign.RetentionLease, stateRoot, id, 
 	if !lease.ExclusiveFor(stateRoot) {
 		return Snapshot{}, campaign.ErrActive
 	}
-	s, e := Read(stateRoot, id)
+	s, e := readSnapshot(stateRoot, id, true)
 	if e != nil {
 		return s, e
 	}
 	if s.Digest != digest {
 		return s, ErrConflict
 	}
-	if s.Retired != nil {
-		return s, nil
-	}
 	root, _, e := open(stateRoot, id, false)
 	if e != nil {
 		return s, e
 	}
 	defer root.Close()
+	if s.Retired != nil {
+		if e = root.Remove("retired.json.pending"); e != nil && !errors.Is(e, os.ErrNotExist) {
+			return s, e
+		}
+		return s, syncDir(root)
+	}
 	r := Retirement{digest, time.Now().UTC().Format(time.RFC3339Nano)}
 	raw, _, e := encode(r)
-	if e == nil {
-		e = put(ctx, root, "retired.json", raw)
+	if e != nil {
+		return s, e
+	}
+	if e = ctx.Err(); e != nil {
+		return s, e
+	}
+	// A previous incomplete write already fences claims. Rewrite that same private
+	// pending inode under exclusive retirement, never unlink the fence first.
+	const name = "retired.json.pending"
+	flags := os.O_WRONLY | os.O_CREATE | os.O_EXCL | syscall.O_NOFOLLOW | syscall.O_NONBLOCK
+	f, e := root.OpenFile(name, flags, 0600)
+	if errors.Is(e, os.ErrExist) {
+		info, err := root.Lstat(name)
+		if err != nil || !info.Mode().IsRegular() || info.Mode().Perm()&0077 != 0 {
+			return s, ErrRecord
+		}
+		st, ok := info.Sys().(*syscall.Stat_t)
+		if !ok || st.Nlink != 1 || (st.Uid != 0 && st.Uid != uint32(os.Geteuid())) {
+			return s, ErrRecord
+		}
+		f, e = root.OpenFile(name, os.O_WRONLY|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, 0)
+		if e == nil {
+			actual, err := f.Stat()
+			if err != nil || !os.SameFile(info, actual) {
+				f.Close()
+				return s, ErrRecord
+			}
+			e = f.Truncate(0)
+			if e != nil {
+				f.Close()
+				return s, e
+			}
+		}
 	}
 	if e != nil {
+		return s, e
+	}
+	_, e = f.Write(raw)
+	e = errors.Join(e, f.Sync(), f.Close())
+	if e != nil {
+		return s, e
+	}
+	if e = ctx.Err(); e != nil {
+		return s, e
+	}
+	if e = root.Rename(name, "retired.json"); e != nil {
+		return s, e
+	}
+	if e = syncDir(root); e != nil {
 		return s, e
 	}
 	s.Retired = &r
@@ -117,10 +166,17 @@ func Retire(ctx context.Context, lease *campaign.RetentionLease, stateRoot, id, 
 
 // Inventory enumerates only verified host-owned start groups. An unknown or
 // damaged group cannot silently disappear from an all-campaign purge selection.
-func Inventory(stateRoot string) ([]Snapshot, error) { return InventoryExcept(stateRoot, nil) }
+func Inventory(stateRoot string) ([]Snapshot, error) { return inventory(stateRoot, nil, false) }
 
-// InventoryExcept skips only IDs already bound by a verified purge transaction.
-func InventoryExcept(stateRoot string, excluded map[string]bool) ([]Snapshot, error) {
+// InventoryRetiring skips transaction-bound IDs and reads interrupted retirement
+// fences only while the caller excludes every worker/submission.
+func InventoryRetiring(stateRoot string, excluded map[string]bool, lease *campaign.RetentionLease) ([]Snapshot, error) {
+	if !lease.ExclusiveFor(stateRoot) {
+		return nil, campaign.ErrActive
+	}
+	return inventory(stateRoot, excluded, true)
+}
+func inventory(stateRoot string, excluded map[string]bool, retiring bool) ([]Snapshot, error) {
 	root, e := os.OpenRoot(stateRoot)
 	if e != nil {
 		return nil, e
@@ -155,7 +211,7 @@ func InventoryExcept(stateRoot string, excluded map[string]bool) ([]Snapshot, er
 		if excluded[id] {
 			continue
 		}
-		s, e := Read(stateRoot, id)
+		s, e := readSnapshot(stateRoot, id, retiring)
 		if e != nil {
 			return nil, e
 		}

@@ -973,8 +973,9 @@ records, exact-identity stop confirmation, the administrative CLI and a terminal
 observer. The [campaign service foundation](docs/CAMPAIGN_SERVICE.md) now joins
 verified preparation, attempt/read/cleanup dispatch, the observer and bounded native
 closure/cleanup. [Snapshot/restore coordination](docs/SNAPSHOT_SERVICE.md) now
-preserves the live harness and cumulative accounting. Remaining tool routes and Docker launch
-orchestration MUST be completed before a full campaign can execute.
+preserves the live harness and cumulative accounting. All ordinary tool routes and
+Docker launch orchestration are implemented; full runtime qualification remains
+subject to the acceptance gates.
 
 Retain completed evidence until an administrator explicitly purges it. Host audit
 policy still defines active/deployment write budgets, segment sizes and a free-space
@@ -1015,6 +1016,17 @@ Missing data is reported unavailable, never reconstructed from another campaign.
 The CLI prints this consequence with its result. No model call or guest tool can
 invoke purge. Operator and Interceptor purge only their own data; deleting one
 component's evidence does not implicitly purge the other.
+
+The [purge implementation contract](docs/PURGE.md) defines inventory/exclusion,
+service retirement, registered managed copies and durable deletion plans. Before
+removing retained data, purge MUST fence delayed start claims, confirm the exact
+service registration is absent, and remove any confirmed inactive Docker remnant
+by its saved binding. It MUST never stop an active container implicitly. All selected
+groups MUST pass preflight before any evidence deletion; partial deletion MUST keep
+its saved identity for an explicit retry. Root lock files and dangling run lookup
+hints remain administrative metadata, not retained campaign evidence. A dangling
+run link MUST require explicit `--new-campaign`, never repeat the old execution.
+
 
 ## 10. Campaign lifecycle and immediate termination
 
