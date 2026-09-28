@@ -88,6 +88,7 @@ type journalHead struct {
 // Writer is created once, for a fresh campaign. No API reopens a writer from
 // retained evidence. Methods are serialized; the independent Docker reader is not.
 type Writer struct {
+	retention        *RetentionLease
 	mu               sync.Mutex
 	root             *os.Root
 	lockFile         *os.File
@@ -114,6 +115,16 @@ type Writer struct {
 // Create requires an existing private state root. A campaign ID is never reused,
 // even when an earlier preparation failed. Failed preparations remain inspectable.
 func Create(stateRoot string, manifest RunManifest) (*Writer, error) {
+	lease, err := AcquireRetentionLease(stateRoot, false)
+	if err != nil {
+		return nil, err
+	}
+	kept := false
+	defer func() {
+		if !kept {
+			lease.Close()
+		}
+	}()
 	raw, err := manifest.Bytes()
 	if err != nil {
 		return nil, err
@@ -145,7 +156,7 @@ func Create(stateRoot string, manifest RunManifest) (*Writer, error) {
 	if err != nil {
 		return nil, err
 	}
-	w := &Writer{root: r, manifest: manifest, manifestDigest: contracts.RawDigest(raw), revision: manifest.InitialRevision,
+	w := &Writer{retention: lease, root: r, manifest: manifest, manifestDigest: contracts.RawDigest(raw), revision: manifest.InitialRevision,
 		operations: map[string]OperationMark{}, hooks: diskHooks(), fence: NewFence(), reservations: newReservationBook()}
 	ok := false
 	defer func() {
@@ -177,6 +188,7 @@ func Create(stateRoot string, manifest RunManifest) (*Writer, error) {
 		return nil, err
 	}
 	ok = true
+	kept = true
 	return w, nil
 }
 
@@ -454,5 +466,6 @@ func (w *Writer) Close() error {
 	if w.root != nil {
 		errs = append(errs, w.root.Close())
 	}
+	errs = append(errs, w.retention.Close())
 	return errors.Join(errs...)
 }

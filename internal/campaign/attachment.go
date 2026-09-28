@@ -48,6 +48,7 @@ type AttachmentSnapshot struct {
 	InstanceID   string
 }
 type AttachmentWriter struct {
+	retention     *RetentionLease
 	root          *os.Root
 	lock          *os.File
 	snapshot      AttachmentSnapshot
@@ -55,9 +56,21 @@ type AttachmentWriter struct {
 	bindingDigest string
 }
 
-func (w *AttachmentWriter) Close() error { return errors.Join(w.lock.Close(), w.root.Close()) }
+func (w *AttachmentWriter) Close() error {
+	return errors.Join(w.lock.Close(), w.root.Close(), w.retention.Close())
+}
 
 func CreateAttachment(stateRoot string, i AttachmentIntent) (*AttachmentWriter, error) {
+	lease, e := AcquireRetentionLease(stateRoot, false)
+	if e != nil {
+		return nil, e
+	}
+	kept := false
+	defer func() {
+		if !kept {
+			lease.Close()
+		}
+	}()
 	if !i.valid() {
 		return nil, ErrInvalid
 	}
@@ -88,7 +101,7 @@ func CreateAttachment(stateRoot string, i AttachmentIntent) (*AttachmentWriter, 
 		group.Close()
 		return nil, e
 	}
-	w := &AttachmentWriter{root: group, lock: l}
+	w := &AttachmentWriter{retention: lease, root: group, lock: l}
 	raw, e := encode(i, ManifestLimit)
 	if e == nil {
 		available, err := filesystemAvailable(group)
@@ -106,6 +119,7 @@ func CreateAttachment(stateRoot string, i AttachmentIntent) (*AttachmentWriter, 
 		return nil, e
 	}
 	w.snapshot = AttachmentSnapshot{Intent: i, IntentDigest: contracts.RawDigest(raw)}
+	kept = true
 	return w, nil
 }
 func validAttachmentBinding(i AttachmentIntent, b AttachmentBinding) bool {
@@ -164,6 +178,16 @@ func AttachmentIDs(stateRoot string) ([]string, error) { return groupIDs(stateRo
 // the installation lease and must defer to any prepared campaign journal.
 func OpenAttachmentRecovery(stateRoot, id string) (*NativeRecovery, AttachmentSnapshot, error) {
 	var s AttachmentSnapshot
+	lease, e := AcquireRetentionLease(stateRoot, false)
+	if e != nil {
+		return nil, s, e
+	}
+	kept := false
+	defer func() {
+		if !kept {
+			lease.Close()
+		}
+	}()
 	if !validID(id) {
 		return nil, s, ErrInvalid
 	}
@@ -186,7 +210,7 @@ func OpenAttachmentRecovery(stateRoot, id string) (*NativeRecovery, AttachmentSn
 		g.Close()
 		return nil, s, e
 	}
-	a := &NativeRecovery{root: g, lock: l, manifest: RunManifest{CampaignID: id}, available: filesystemAvailable}
+	a := &NativeRecovery{retention: lease, root: g, lock: l, manifest: RunManifest{CampaignID: id}, available: filesystemAvailable}
 	fail := func(err error) (*NativeRecovery, AttachmentSnapshot, error) {
 		a.Close()
 		return nil, AttachmentSnapshot{}, err
@@ -240,5 +264,6 @@ func OpenAttachmentRecovery(stateRoot, id string) (*NativeRecovery, AttachmentSn
 	}
 	s.Digest = contracts.RawDigest(identity)
 	a.attachmentDigest = s.Digest
+	kept = true
 	return a, s, nil
 }

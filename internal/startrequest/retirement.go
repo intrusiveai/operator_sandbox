@@ -5,7 +5,9 @@ package startrequest
 import (
 	"context"
 	"errors"
+	"io"
 	"os"
+	"sort"
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
@@ -111,4 +113,53 @@ func Retire(ctx context.Context, lease *campaign.RetentionLease, stateRoot, id, 
 	}
 	s.Retired = &r
 	return s, nil
+}
+
+// Inventory enumerates only verified host-owned start groups. An unknown or
+// damaged group cannot silently disappear from an all-campaign purge selection.
+func Inventory(stateRoot string) ([]Snapshot, error) { return InventoryExcept(stateRoot, nil) }
+
+// InventoryExcept skips only IDs already bound by a verified purge transaction.
+func InventoryExcept(stateRoot string, excluded map[string]bool) ([]Snapshot, error) {
+	root, e := os.OpenRoot(stateRoot)
+	if e != nil {
+		return nil, e
+	}
+	defer root.Close()
+	if e = privateDir(root, "."); e != nil {
+		return nil, e
+	}
+	if e = privateDir(root, "starts"); errors.Is(e, os.ErrNotExist) {
+		return []Snapshot{}, nil
+	} else if e != nil {
+		return nil, e
+	}
+	dir, e := root.Open("starts")
+	if e != nil {
+		return nil, e
+	}
+	defer dir.Close()
+	names, e := dir.Readdirnames(100001)
+	if e != nil && !errors.Is(e, io.EOF) {
+		return nil, e
+	}
+	if len(names) > 100000 {
+		return nil, ErrRecord
+	}
+	sort.Strings(names)
+	result := make([]Snapshot, 0, len(names))
+	for _, id := range names {
+		if !idPattern.MatchString(id) {
+			return nil, ErrRecord
+		}
+		if excluded[id] {
+			continue
+		}
+		s, e := Read(stateRoot, id)
+		if e != nil {
+			return nil, e
+		}
+		result = append(result, s)
+	}
+	return result, nil
 }

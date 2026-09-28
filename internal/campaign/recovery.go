@@ -64,6 +64,11 @@ func Observe(ctx context.Context, stateRoot, campaignID string, visit func(Event
 }
 
 func inspect(ctx context.Context, stateRoot, campaignID string, visit func(Event) error, observing bool) (report Inspection, err error) {
+	lease, e := AcquireRetentionLease(stateRoot, false)
+	if e != nil {
+		return report, e
+	}
+	defer lease.Close()
 	if err := ctx.Err(); err != nil {
 		return report, err
 	}

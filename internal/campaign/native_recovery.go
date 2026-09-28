@@ -17,6 +17,7 @@ import (
 // cleanup pass. Campaign handles expose retained reads; both forms expose a
 // separate bounded audit, never an execution writer.
 type NativeRecovery struct {
+	retention         *RetentionLease
 	root              *os.Root
 	lock              *os.File
 	manifest          RunManifest
@@ -42,6 +43,16 @@ type nativeRecoveryResult struct {
 }
 
 func OpenNativeRecovery(stateRoot, id string) (*NativeRecovery, error) {
+	lease, err := AcquireRetentionLease(stateRoot, false)
+	if err != nil {
+		return nil, err
+	}
+	kept := false
+	defer func() {
+		if !kept {
+			lease.Close()
+		}
+	}()
 	r, err := openCampaign(stateRoot, id)
 	if err != nil {
 		return nil, err
@@ -57,9 +68,12 @@ func OpenNativeRecovery(stateRoot, id string) (*NativeRecovery, error) {
 		r.Close()
 		return nil, err
 	}
-	return &NativeRecovery{root: r, lock: l, manifest: m, digest: d, available: filesystemAvailable}, nil
+	kept = true
+	return &NativeRecovery{retention: lease, root: r, lock: l, manifest: m, digest: d, available: filesystemAvailable}, nil
 }
-func (r *NativeRecovery) Close() error { return errors.Join(r.lock.Close(), r.root.Close()) }
+func (r *NativeRecovery) Close() error {
+	return errors.Join(r.lock.Close(), r.root.Close(), r.retention.Close())
+}
 func (r *NativeRecovery) Inspect(ctx context.Context, visit func(Event) error) (Inspection, error) {
 	return inspectRoot(ctx, r.root, r.manifest.CampaignID, func(e Event) error {
 		if e.Kind == "journal.storage-policy" {
