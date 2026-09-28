@@ -2,6 +2,8 @@
 
 Run `make setup` and `make test-integration` with the sibling `attack_harness`
 checkout. `OPERATOR_TEST_HARNESS_SOURCE` MAY select another trusted source checkout.
+`make test-integration PYTHON=/absolute/python` selects the test interpreter;
+direct Go invocations MAY set `OPERATOR_TEST_PYTHON` to the same absolute path.
 The integration target MUST fail if the selected harness or Python dependencies
 are unavailable. Ordinary `go test` MUST skip these explicitly opt-in cases.
 
@@ -58,3 +60,17 @@ after a model intent is durable, independently kills its surviving Python proces
 and verifies that repeated cleanup preserves the incomplete journal prefix.
 Docker event delivery remains a fixture boundary; these tests do not qualify a
 live daemon restart or native host interruption.
+
+## History and reproducibility
+
+`TestPythonProcessLargeHistoryCompaction` crosses the production 1 MiB conversation
+threshold over both transports and checks that the next request suppresses tools,
+retains the full source history, charges another model turn, and then resumes with
+the objective and explicit summary provenance intact. Attack Harness's
+`test_history_stress.py` exercises three 200-segment compaction cycles for each of
+the five codecs. Synthetic model usage counts are fixtures, not tokenizer or live
+provider qualification.
+
+The [acceptance matrix](../../attack_harness/ACCEPTANCE_MATRIX.md) records exact
+source and development contract identities. A package/image built from older pins
+MUST NOT be described as having passed these tests.

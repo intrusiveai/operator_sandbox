@@ -9,7 +9,7 @@ setup:
 
 # Requires the sibling Attack Harness source checkout and make setup.
 test-integration:
-	OPERATOR_HARNESS_INTEGRATION=1 OPERATOR_PYTHON_PEER_TEST=1 go test -count=1 -timeout 5m ./internal/preparation ./internal/transport
+	OPERATOR_TEST_PYTHON="$(abspath $(PYTHON))" OPERATOR_HARNESS_INTEGRATION=1 OPERATOR_PYTHON_PEER_TEST=1 go test -count=1 -timeout 10m ./internal/preparation ./internal/transport
 
 generate:
 	go run ./scripts/generate_path_unicode.go

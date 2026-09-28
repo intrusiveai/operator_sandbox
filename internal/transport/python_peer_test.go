@@ -53,7 +53,11 @@ func testPythonPeer(t *testing.T, fifo bool) {
 	pump := make(chan error, 1)
 	go func() { pump <- s.Run(ctx) }()
 	defer func() { cancel(); <-pump }()
-	cmd := exec.CommandContext(ctx, filepath.Join(operator, ".venv/bin/python"), filepath.Join(harness, "tests/spool_peer.py"), dir, filepath.Join(operator, "schemas"))
+	python := os.Getenv("OPERATOR_TEST_PYTHON")
+	if python == "" {
+		python = filepath.Join(operator, ".venv/bin/python")
+	}
+	cmd := exec.CommandContext(ctx, python, filepath.Join(harness, "tests/spool_peer.py"), dir, filepath.Join(operator, "schemas"))
 	if fifo {
 		cmd.Args = append(cmd.Args, "fifo")
 	}

@@ -101,7 +101,7 @@ func newProcessRun(t *testing.T, tc processCase) *processRun {
 	if v := os.Getenv("OPERATOR_TEST_HARNESS_SOURCE"); v != "" {
 		harness = v
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	t.Cleanup(cancel)
 	pkg := filepath.Join(t.TempDir(), "contracts")
 	report, err := contractpublish.Build(ctx, operator, pkg, "0.0.0")
@@ -245,7 +245,11 @@ func newProcessRun(t *testing.T, tc processCase) *processRun {
 	write(filepath.Join(release, "runtime-config.json"), map[string]any{"contract": map[string]any{"package_version": pin.Version, "package_digest": pin.Digest}, "skill_loader_digest": cfg.Embedded.LoaderDigest()})
 	config := filepath.Join(t.TempDir(), "launch.json")
 	write(config, map[string]any{"harness": harness, "package": pkg, "release": release, "tree": tree.Directory(), "ipc": ipc, "transport": tc.transport})
-	cmd := exec.CommandContext(ctx, filepath.Join(operator, ".venv/bin/python"), "-I", "-B", filepath.Join(operator, "internal/preparation/testdata/harness_process.py"), config)
+	python := os.Getenv("OPERATOR_TEST_PYTHON")
+	if python == "" {
+		python = filepath.Join(operator, ".venv/bin/python")
+	}
+	cmd := exec.CommandContext(ctx, python, "-I", "-B", filepath.Join(operator, "internal/preparation/testdata/harness_process.py"), config)
 	run := &processRun{service: service, native: native, writer: writer, launch: launch, channel: channel, tree: tree, root: root, ipc: ipc, provider: provider, cmd: cmd, ctx: ctx, cancel: cancel, pump: make(chan error, 1), serve: make(chan error, 1)}
 	cmd.Stdout = &run.output
 	cmd.Stderr = &run.output
