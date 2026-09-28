@@ -42,12 +42,13 @@ func combinedRunWith(ctx context.Context, args []string, stdout, stderr io.Write
 	waitTimeout := f.Duration("wait-timeout", 35*time.Minute, "completion observer timeout")
 	fresh := f.Bool("new-campaign", false, "explicitly select a fresh campaign")
 	prompt := f.String("system-prompt", "", "replacement prompt")
+	skillSet := f.String("skill-set", "", "frozen SkillSetManifest file")
 	var skills, appends stringsFlag
 	f.Var(&skills, "skill", "installed skill digest (repeatable)")
 	f.Var(&appends, "system-prompt-append", "prompt extension (repeatable)")
 	var selection targetFlags
 	selection.bind(f)
-	if f.Parse(args) != nil || f.NArg() != 0 || *config == "" || *bundle == "" || *output == "" || !selection.valid() || (selection.capabilities == "" && selection.environment == "") || (*prompt != "" && len(appends) > 0) || len(skills) > 16 || len(appends) > 16 || *timeout <= 0 || *timeout > 10*time.Minute || *waitTimeout <= 0 || *waitTimeout > 24*time.Hour {
+	if f.Parse(args) != nil || f.NArg() != 0 || *config == "" || *bundle == "" || *output == "" || !selection.valid() || (selection.capabilities == "" && selection.environment == "") || (*prompt != "" && len(appends) > 0) || (*skillSet != "" && len(skills) > 0) || len(skills) > 16 || len(appends) > 16 || *timeout <= 0 || *timeout > 10*time.Minute || *waitTimeout <= 0 || *waitTimeout > 24*time.Hour {
 		return 2
 	}
 	empty := false
@@ -93,6 +94,9 @@ func combinedRunWith(ctx context.Context, args []string, stdout, stderr io.Write
 	}
 	if *prompt != "" {
 		startArgs = append(startArgs, "--system-prompt", *prompt)
+	}
+	if *skillSet != "" {
+		startArgs = append(startArgs, "--skill-set", *skillSet)
 	}
 	for _, s := range skills {
 		startArgs = append(startArgs, "--skill", s)

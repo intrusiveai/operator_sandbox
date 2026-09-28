@@ -221,10 +221,15 @@ func (b *Bundle) Install(ctx context.Context, p *contracts.Protocol, keyDirector
 		return err
 	}
 	defer r.Close()
+	lease, err := storeLease(store, true)
+	if err != nil {
+		return err
+	}
+	defer lease.Close()
 	name := strings.TrimPrefix(b.digest, "sha256:")
 	if err := r.Mkdir(name, 0700); errors.Is(err, os.ErrExist) {
 		var existing *Bundle
-		existing, err = LoadInstalled(ctx, p, keyDirectory, store, b.digest)
+		existing, err = loadInstalled(ctx, p, keyDirectory, store, b.digest)
 		if err == nil && !bytes.Equal(existing.raw, b.raw) {
 			return ErrSkill
 		}
@@ -279,6 +284,14 @@ func (b *Bundle) Install(ctx context.Context, p *contracts.Protocol, keyDirector
 }
 
 func LoadInstalled(ctx context.Context, p *contracts.Protocol, keyDirectory, store, digest string) (*Bundle, error) {
+	lease, err := storeLease(store, false)
+	if err != nil {
+		return nil, err
+	}
+	defer lease.Close()
+	return loadInstalled(ctx, p, keyDirectory, store, digest)
+}
+func loadInstalled(ctx context.Context, p *contracts.Protocol, keyDirectory, store, digest string) (*Bundle, error) {
 	if !digestPattern.MatchString(digest) {
 		return nil, ErrSkill
 	}

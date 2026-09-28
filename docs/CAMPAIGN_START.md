@@ -20,14 +20,15 @@ phase describes a retained request, not a running or accepted campaign. The
 installed private state root MUST already exist. `start` MUST perform the same
 preparation when no saved link exists, then submit its fixed worker entrypoint.
 
-Both commands accept repeatable `--skill DIGEST`, `--system-prompt FILE`, or
+Both commands accept repeatable `--skill DIGEST` or exclusive `--skill-set FILE`,
+plus `--system-prompt FILE` or
 repeatable `--system-prompt-append FILE`. Replacement and extension are exclusive.
 Omitted selections MUST reuse the saved selection; a fresh campaign MUST use the
 canonical defaults. An explicit changed selection or changed source content MUST
 conflict with the saved request. `--new-campaign` MUST select new identities and
 replace the run link while retaining the previous campaign and start records.
 An unreadable or dangling link MUST NOT silently initiate another campaign.
-The frozen skill-set selector remains an outstanding CLI integration item.
+Frozen-set verification and loader matching MUST follow [the skill contract](SKILLS.md#frozen-sets-and-reversible-removal).
 
 `start` MUST return a `operator.dev/start-observation/v1alpha1` object, including
 the start-request ID, campaign ID, request digest, phase, service-submission

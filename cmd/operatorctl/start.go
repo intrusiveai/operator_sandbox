@@ -75,6 +75,7 @@ func startCampaignWith(ctx context.Context, action string, args []string, stdout
 	config := f.String("config", defaults.ConfigFile, "administrator configuration file")
 	fresh := f.Bool("new-campaign", false, "select a fresh campaign instead of the saved start")
 	replacement := f.String("system-prompt", "", "replacement prompt file")
+	skillSet := f.String("skill-set", "", "frozen SkillSetManifest file")
 	var skills, appends stringsFlag
 	f.Var(&skills, "skill", "installed signed skill digest (repeatable)")
 	f.Var(&appends, "system-prompt-append", "prompt extension file (repeatable)")
@@ -84,7 +85,7 @@ func startCampaignWith(ctx context.Context, action string, args []string, stdout
 	}
 	provided := map[string]bool{}
 	f.Visit(func(f *flag.Flag) { provided[f.Name] = true })
-	if f.NArg() != 0 || *runDir == "" || *config == "" || (provided["system-prompt"] && *replacement == "") || (*replacement != "" && len(appends) > 0) || *timeout <= 0 || *timeout > 10*time.Minute || len(skills) > 16 || len(appends) > 16 {
+	if f.NArg() != 0 || (provided["skill-set"] && (*skillSet == "" || provided["skill"])) || *runDir == "" || *config == "" || (provided["system-prompt"] && *replacement == "") || (*replacement != "" && len(appends) > 0) || *timeout <= 0 || *timeout > 10*time.Minute || len(skills) > 16 || len(appends) > 16 {
 		fmt.Fprintln(stderr, "invalid campaign start arguments")
 		return 2
 	}
@@ -118,7 +119,15 @@ func startCampaignWith(ctx context.Context, action string, args []string, stdout
 	} else {
 		selection = hostrun.NewSelection(directory)
 	}
+	if provided["skill-set"] {
+		selection.SkillSetFile, err = filepath.Abs(*skillSet)
+		if err != nil {
+			return 2
+		}
+		selection.SkillDigests = []string{}
+	}
 	if provided["skill"] {
+		selection.SkillSetFile = ""
 		selection.SkillDigests = append([]string(nil), skills...)
 	}
 	if provided["system-prompt"] {

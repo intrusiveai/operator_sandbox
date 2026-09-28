@@ -59,8 +59,8 @@ No complete live provider, secret-store or target qualification is claimed.
 
 1. **Remaining administrative workflows.** Public capability export and
    environment/target-profile selection, combined `operatorctl run` and read-only
-   inspect/doctor are implemented. Complete frozen `--skill-set` selection, skill removal
-   and credential-resolution lifecycle audit.
+   inspect/doctor, frozen `--skill-set` selection and reversible skill removal are
+   implemented. Complete credential-resolution lifecycle audit.
 2. **Declarative HTTPS target adapter.** Implement its constrained mapping,
    execution and evidence/report integration. Current native execution uses
    Interceptor; the HTTPS adapter remains a separate requirement.

@@ -18,14 +18,15 @@ import (
 
 func skillCommand(ctx context.Context, args []string, stdout, stderr io.Writer, defaults hostconfig.Paths) int {
 	if len(args) == 0 {
-		fmt.Fprintln(stderr, "usage: operatorctl skill keygen|build|import|check [options]")
+		fmt.Fprintln(stderr, "usage: operatorctl skill keygen|build|import|check|set|remove [options]")
 		return 2
 	}
 	command := args[0]
 	flags := flag.NewFlagSet("skill "+command, flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	config := flags.String("config", defaults.ConfigFile, "installed administrator configuration")
-	var project, source, digest *string
+	var project, source, digest, loader, output *string
+	var selections stringsFlag
 	switch command {
 	case "keygen":
 	case "build":
@@ -33,7 +34,11 @@ func skillCommand(ctx context.Context, args []string, stdout, stderr io.Writer, 
 		source = flags.String("source", "", "instruction-only skill directory")
 	case "import":
 		source = flags.String("source", "", "signed bundle directory from this installation")
-	case "check":
+	case "set":
+		loader = flags.String("loader-digest", "", "approved image instruction-loader digest")
+		output = flags.String("output", "", "new frozen SkillSetManifest JSON file")
+		flags.Var(&selections, "skill", "installed bundle digest (repeatable)")
+	case "check", "remove":
 		digest = flags.String("skill", "", "installed manifest digest")
 	default:
 		fmt.Fprintln(stderr, "unknown skill command")
@@ -42,7 +47,7 @@ func skillCommand(ctx context.Context, args []string, stdout, stderr io.Writer, 
 	if flags.Parse(args[1:]) != nil {
 		return 2
 	}
-	if flags.NArg() != 0 || *config == "" || (project != nil && *project == "") || (source != nil && *source == "") || (digest != nil && *digest == "") {
+	if flags.NArg() != 0 || *config == "" || (project != nil && *project == "") || (source != nil && *source == "") || (digest != nil && *digest == "") || (loader != nil && *loader == "") || (output != nil && *output == "") {
 		fmt.Fprintln(stderr, "missing or invalid skill arguments")
 		return 2
 	}
@@ -63,13 +68,47 @@ func skillCommand(ctx context.Context, args []string, stdout, stderr io.Writer, 
 		}
 		return 0
 	}
+	store := filepath.Join(loaded.Config.State.Root, "skills")
+	if command == "remove" {
+		removed, err := skills.Remove(ctx, store, *digest)
+		if err != nil {
+			fmt.Fprintln(stderr, "skill removal failed; retry explicit removal:", err)
+			return 1
+		}
+		status := "already_absent"
+		if removed {
+			status = "removed"
+		}
+		if json.NewEncoder(stdout).Encode(map[string]string{"api_version": "operator.dev/skill-removal/v1alpha1", "manifest_digest": *digest, "status": status}) != nil {
+			return 1
+		}
+		return 0
+	}
 	c := loaded.Config.Contract
 	installed, err := contractstore.Load(ctx, c.Directory, contracts.PackageIdentity{Version: c.Version, Digest: c.Digest})
 	if err != nil {
 		fmt.Fprintln(stderr, "cannot verify installed contract:", err)
 		return 1
 	}
-	store := filepath.Join(loaded.Config.State.Root, "skills")
+	if command == "set" {
+		selected, err := skills.Select(ctx, installed.Protocol(), keyDirectory, store, *loader, selections)
+		if err != nil {
+			fmt.Fprintln(stderr, "skill selection failed:", err)
+			return 1
+		}
+		name, err := filepath.Abs(*output)
+		if err != nil {
+			return 2
+		}
+		if err = selected.Save(ctx, name); err != nil {
+			fmt.Fprintln(stderr, "cannot publish frozen skill set:", err)
+			return 1
+		}
+		if json.NewEncoder(stdout).Encode(map[string]string{"api_version": "operator.dev/skill-set-receipt/v1alpha1", "manifest_digest": contracts.RawDigest(selected.Manifest())}) != nil {
+			return 1
+		}
+		return 0
+	}
 	var b *skills.Bundle
 	if source != nil {
 		dir, e := filepath.Abs(*source)

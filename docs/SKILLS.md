@@ -98,3 +98,45 @@ Selection returns frozen copies suitable for staging. Campaign preparation/start
 wiring and the image's instruction loader are implemented separately.
 
 Campaign/session purge MUST NOT delete this installation-wide skill store.
+
+## Frozen sets and reversible removal
+
+```sh
+operatorctl skill set --skill sha256:<bundle-digest> \
+  --loader-digest sha256:<approved-image-loader-digest> --output ./skill-set.json
+operatorctl campaign prepare --run ./runs/example --skill-set ./skill-set.json
+operatorctl campaign start --run ./runs/example
+operatorctl skill remove --skill sha256:<bundle-digest>
+```
+
+`skill set` MUST validate every explicitly selected installed signed bundle and
+publish the canonical shared SkillSetManifest to a new file. Omitting `--skill`
+MUST produce the canonical empty set. The administrator MUST supply the loader
+implementation digest associated with the intended image; selecting a different
+image loader MUST fail before native attachment or harness launch. Publication
+MUST NOT overwrite existing files. Build/import MUST remain the commands for adding
+skills to the installed store.
+
+`campaign prepare`, `campaign start` and `run` MUST accept `--skill-set FILE`,
+exclusive with individual `--skill` selections. Offline preparation MUST validate
+the bounded manifest, recompute its loading digest from verified installed bundles
+and compare all descriptors. The file path and exact bytes MUST participate in
+start identity. An omitted selection MUST reuse the saved selection; changes MUST
+require explicit new-campaign selection. Online preparation MUST reverify bundles
+and match the frozen loader digest to the approved image. A set file MUST NOT
+supply trust keys or permit ambient skill discovery.
+
+`skill remove` MUST remove only the selected hash-named installed bundle tree and
+return `operator.dev/skill-removal/v1alpha1` with `removed` or `already_absent`.
+Removal MUST serialize against store capture/publication, use bounded no-follow
+same-device traversal and preserve other bundles, signing keys and campaign data.
+Busy/unsafe/partial removal MUST fail with an actionable diagnostic and remain
+retryable. Incomplete installed copies MUST be removable even when their manifests
+or signatures cannot be validated. Removal MUST NOT require a usable contract
+package or signing key.
+
+Running campaigns MUST keep their frozen skill inputs. An administrator who wants
+to stop such a campaign MUST use the existing campaign termination command.
+Future selections of a missing bundle MUST fail until the administrator builds or
+imports it again. The same valid digest MUST be eligible for reinstallation and
+selection. Changing a future campaign's list MUST only affect that new campaign.

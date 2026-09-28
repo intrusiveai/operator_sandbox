@@ -9,6 +9,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
@@ -147,5 +148,30 @@ func TestMissingReferencedRequestCannotSilentlyStartAgain(t *testing.T) {
 	code, _, _ := invokeStart(t, context.Background(), "start", []string{"--run", dir}, paths, deps)
 	if code != 1 || *calls != 0 {
 		t.Fatal("dangling reference became execution", code, *calls)
+	}
+}
+
+func TestFrozenSkillSetSelectorIsExclusiveAndSaved(t *testing.T) {
+	dir, paths, deps, calls := startFixture(t)
+	code, _, _ := invokeStart(t, context.Background(), "prepare", []string{"--run", dir, "--skill-set", "set.json", "--skill", "sha256:" + strings.Repeat("a", 64)}, paths, deps)
+	if code != 2 || *calls != 0 {
+		t.Fatal(code, *calls)
+	}
+	code, prepared, diag := invokeStart(t, context.Background(), "prepare", []string{"--run", dir, "--skill-set", "set.json"}, paths, deps)
+	if code != 0 {
+		t.Fatal(code, diag)
+	}
+	saved, err := startrequest.Read(paths.StateRoot, prepared.StartRequestID)
+	expected, _ := filepath.Abs("set.json")
+	if err != nil || saved.Request.Selection.SkillSetFile != expected || len(saved.Request.Selection.SkillDigests) != 0 {
+		t.Fatal(saved, err)
+	}
+	code, reused, diag := invokeStart(t, context.Background(), "prepare", []string{"--run", dir}, paths, deps)
+	if code != 0 || reused.StartRequestID != prepared.StartRequestID {
+		t.Fatal(code, diag)
+	}
+	code, _, _ = invokeStart(t, context.Background(), "prepare", []string{"--run", dir, "--skill-set", "different.json"}, paths, deps)
+	if code != 1 {
+		t.Fatal("changed prepared selection", code)
 	}
 }

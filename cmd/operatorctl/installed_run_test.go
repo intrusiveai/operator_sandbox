@@ -14,7 +14,9 @@ import (
 	"testing"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/contractstore"
 	"github.com/intrusiveai/operator_sandbox/internal/hostrun"
+	"github.com/intrusiveai/operator_sandbox/internal/skills"
 	"github.com/intrusiveai/operator_sandbox/internal/submission"
 )
 
@@ -79,6 +81,31 @@ credentials:
 	if err != nil {
 		t.Fatal(err)
 	}
+	installed, err := contractstore.Load(context.Background(), dir, pin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	empty, err := skills.Select(context.Background(), installed.Protocol(), "/unused/keys", "/unused/store", "sha256:"+strings.Repeat("a", 64), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	setPath := filepath.Join(source, "set.json")
+	put(setPath, empty.Manifest())
+	selected.SkillSetFile = setPath
+	withSet, err := load()
+	if err != nil || withSet.Fingerprint() == first.Fingerprint() {
+		t.Fatal("set not fingerprinted", err)
+	}
+	put(setPath, append(empty.Manifest(), ' '))
+	changedSet, err := load()
+	if err != nil || changedSet.Fingerprint() == withSet.Fingerprint() {
+		t.Fatal("changed set not fingerprinted", err)
+	}
+	put(setPath, []byte(`{}`))
+	if _, err := load(); err == nil {
+		t.Fatal("invalid set accepted offline")
+	}
+	selected.SkillSetFile = ""
 	second, err := load()
 	if err != nil || first.Fingerprint() != second.Fingerprint() {
 		t.Fatal("unstable fingerprint", err)

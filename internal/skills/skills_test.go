@@ -295,3 +295,124 @@ func TestSignedInventoryCannotBeRenamedRepairedOrExtended(t *testing.T) {
 		})
 	}
 }
+
+func TestFrozenSetBindsLoaderAndExactBundleDescriptors(t *testing.T) {
+	ctx := context.Background()
+	p := protocol(t)
+	base := t.TempDir()
+	keys, store, source := filepath.Join(base, "keys"), filepath.Join(base, "store"), filepath.Join(base, "source")
+	if _, err := Keygen(ctx, keys); err != nil {
+		t.Fatal(err)
+	}
+	put(t, filepath.Join(source, "SKILL.md"), skillText("example"))
+	b, err := Build(ctx, p, keys, "project", source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Install(ctx, p, keys, store); err != nil {
+		t.Fatal(err)
+	}
+	loader := "sha256:" + strings.Repeat("a", 64)
+	set, err := Select(ctx, p, keys, store, loader, []string{b.digest})
+	if err != nil {
+		t.Fatal(err)
+	}
+	frozen, err := Frozen(ctx, p, keys, store, set.Manifest())
+	if err != nil || frozen.LoaderDigest() != loader {
+		t.Fatal(err)
+	}
+	for _, field := range []string{"loading_digest", "loader_digest", "skill_id", "size_bytes"} {
+		var m map[string]any
+		_ = json.Unmarshal(set.Manifest(), &m)
+		switch field {
+		case "loading_digest", "loader_digest":
+			m[field] = "sha256:" + strings.Repeat("b", 64)
+		case "skill_id":
+			m["skills"].([]any)[0].(map[string]any)[field] = "other"
+		case "size_bytes":
+			m["skills"].([]any)[0].(map[string]any)["manifest"].(map[string]any)[field] = 1
+		}
+		raw, _ := json.Marshal(m)
+		if _, err := Frozen(ctx, p, keys, store, raw); err == nil {
+			t.Fatal("accepted changed", field)
+		}
+	}
+	empty, err := Select(ctx, p, "/missing/keys", "/missing/store", loader, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Frozen(ctx, p, "/missing/keys", "/missing/store", empty.Manifest()); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRemoveReinstallAndFrozenCopy(t *testing.T) {
+	ctx := context.Background()
+	p := protocol(t)
+	base := t.TempDir()
+	keys, store, source := filepath.Join(base, "keys"), filepath.Join(base, "store"), filepath.Join(base, "source")
+	if _, err := Keygen(ctx, keys); err != nil {
+		t.Fatal(err)
+	}
+	put(t, filepath.Join(source, "SKILL.md"), skillText("example"))
+	b, err := Build(ctx, p, keys, "project", source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Install(ctx, p, keys, store); err != nil {
+		t.Fatal(err)
+	}
+	selected, err := Select(ctx, p, keys, store, "sha256:"+strings.Repeat("a", 64), []string{b.digest})
+	if err != nil {
+		t.Fatal(err)
+	}
+	lease, err := storeLease(store, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = Remove(ctx, store, b.digest); err == nil {
+		t.Fatal("removed during capture")
+	}
+	lease.Close()
+	if removed, err := Remove(ctx, store, b.digest); err != nil || !removed {
+		t.Fatal(removed, err)
+	}
+	if _, err := LoadInstalled(ctx, p, keys, store, b.digest); err == nil {
+		t.Fatal("selected absent bundle")
+	}
+	if len(selected.Contents()) != 1 {
+		t.Fatal("removal altered frozen campaign inputs")
+	}
+	if removed, err := Remove(ctx, store, b.digest); err != nil || removed {
+		t.Fatal("absent", removed, err)
+	}
+	if err = b.Install(ctx, p, keys, store); err != nil {
+		t.Fatal("cannot add back", err)
+	}
+	if _, err := Frozen(ctx, p, keys, store, selected.Manifest()); err != nil {
+		t.Fatal("re-added bundle blocked", err)
+	}
+	// Partial/corrupt stored copies can be explicitly removed without validating
+	// their now-incomplete signature or inventory, then installed afresh.
+	if err := os.Remove(filepath.Join(store, b.digest[7:], "manifest.json")); err != nil {
+		t.Fatal(err)
+	}
+	if removed, err := Remove(ctx, store, b.digest); err != nil || !removed {
+		t.Fatal(removed, err)
+	}
+	if err = b.Install(ctx, p, keys, store); err != nil {
+		t.Fatal(err)
+	}
+	external := t.TempDir()
+	sentinel := filepath.Join(external, "keep")
+	put(t, sentinel, []byte("keep"))
+	if err := os.Symlink(external, filepath.Join(store, b.digest[7:], "files", "link")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Remove(ctx, store, b.digest); err != nil {
+		t.Fatal(err)
+	}
+	if raw, err := os.ReadFile(sentinel); err != nil || string(raw) != "keep" {
+		t.Fatal("followed link", err)
+	}
+}

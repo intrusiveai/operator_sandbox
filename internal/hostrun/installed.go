@@ -34,6 +34,7 @@ import (
 // Selection comes from a host-owned durable start request. IDs and the Operator
 // version are assigned by the installed frontend; no bundle supplies these fields.
 type Selection struct {
+	SkillSetFile     string   `json:"skill_set_file,omitempty"`
 	RunDirectory     string   `json:"run_directory"`
 	CampaignID       string   `json:"campaign_id"`
 	LaunchID         string   `json:"launch_id"`
@@ -80,6 +81,9 @@ func validateSelection(s Selection) error {
 	if !filepath.IsAbs(s.RunDirectory) || filepath.Clean(s.RunDirectory) != s.RunDirectory || !selectedID.MatchString(s.CampaignID) || !selectedID.MatchString(s.LaunchID) || !selectedID.MatchString(s.WorkerInstanceID) || !fullHex.MatchString(s.ContainerID) || !campaign.ValidStopRequest(s.StartRequestID, "start") || len(s.SkillDigests) > 16 || len(s.AppendFiles) > 16 {
 		return ErrSession
 	}
+	if s.SkillSetFile != "" && (!filepath.IsAbs(s.SkillSetFile) || filepath.Clean(s.SkillSetFile) != s.SkillSetFile || len(s.SkillSetFile) > 4096 || len(s.SkillDigests) > 0) {
+		return ErrSession
+	}
 	seen := map[string]bool{}
 	for _, digest := range s.SkillDigests {
 		if !selectedDigest.MatchString(digest) || seen[digest] {
@@ -106,6 +110,7 @@ type InstalledInputs struct {
 	profile          *targetprofile.Profile
 	model            *modelprovider.Profile
 	credentialConfig credentials.Config
+	skillSet         []byte
 	replacement      []byte
 	appends          [][]byte
 	fingerprint      string
@@ -155,6 +160,16 @@ func LoadInputs(ctx context.Context, configPath string, defaults hostconfig.Path
 	}
 	if profile.Settings().TargetID != submitted.TargetID() {
 		return nil, ErrSession
+	}
+	var skillSet []byte
+	if selected.SkillSetFile != "" {
+		skillSet, err = staging.Capture(ctx, selected.SkillSetFile, contracts.ControlLimit)
+		if err != nil {
+			return nil, err
+		}
+		if _, err = skills.Frozen(ctx, p, filepath.Join(filepath.Dir(loaded.Path), "skill-signing"), filepath.Join(c.State.Root, "skills"), skillSet); err != nil {
+			return nil, err
+		}
 	}
 	model, err := modelprovider.Load(c.Model.ProfileFile)
 	if err != nil {
@@ -206,7 +221,11 @@ func LoadInputs(ctx context.Context, configPath string, defaults hostconfig.Path
 	for _, raw := range appends {
 		promptParts = append(promptParts, contracts.RawDigest(raw))
 	}
-	identityRaw, err := json.Marshal(map[string]any{"selection": selected, "config_path": loaded.Path, "config_digest": loaded.Digest, "effective_config": loaded.Config, "contract": submitted.Receipt().Contract, "submission": submitted.Receipt(), "target_profile_digest": profile.Digest(), "model_profile_digest": model.Digest(), "credential_configuration_digest": contracts.RawDigest(credentialRaw), "replacement_digest": contracts.RawDigest(replacement), "append_digests": promptParts})
+	identity := map[string]any{"selection": selected, "config_path": loaded.Path, "config_digest": loaded.Digest, "effective_config": loaded.Config, "contract": submitted.Receipt().Contract, "submission": submitted.Receipt(), "target_profile_digest": profile.Digest(), "model_profile_digest": model.Digest(), "credential_configuration_digest": contracts.RawDigest(credentialRaw), "replacement_digest": contracts.RawDigest(replacement), "append_digests": promptParts}
+	if len(skillSet) > 0 {
+		identity["skill_set_digest"] = contracts.RawDigest(skillSet)
+	}
+	identityRaw, err := json.Marshal(identity)
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +233,7 @@ func LoadInputs(ctx context.Context, configPath string, defaults hostconfig.Path
 	if err != nil {
 		return nil, err
 	}
-	return &InstalledInputs{loaded: loaded, selected: selected, protocol: p, submitted: submitted, profile: profile, model: model, credentialConfig: credentialConfig, replacement: replacement, appends: appends, fingerprint: fingerprint}, nil
+	return &InstalledInputs{loaded: loaded, selected: selected, protocol: p, submitted: submitted, profile: profile, model: model, credentialConfig: credentialConfig, skillSet: skillSet, replacement: replacement, appends: appends, fingerprint: fingerprint}, nil
 }
 
 // Open consumes these frozen inputs, acquires startup ownership, validates the
@@ -270,7 +289,15 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 	if err != nil {
 		return nil, err
 	}
-	selectedSkills, err := skills.Select(ctx, p, filepath.Join(filepath.Dir(loaded.Path), "skill-signing"), filepath.Join(c.State.Root, "skills"), embedded.LoaderDigest(), selected.SkillDigests)
+	var selectedSkills *skills.Selection
+	if len(i.skillSet) > 0 {
+		selectedSkills, err = skills.Frozen(ctx, p, filepath.Join(filepath.Dir(loaded.Path), "skill-signing"), filepath.Join(c.State.Root, "skills"), i.skillSet)
+		if err == nil && selectedSkills.LoaderDigest() != embedded.LoaderDigest() {
+			err = skills.ErrSkill
+		}
+	} else {
+		selectedSkills, err = skills.Select(ctx, p, filepath.Join(filepath.Dir(loaded.Path), "skill-signing"), filepath.Join(c.State.Root, "skills"), embedded.LoaderDigest(), selected.SkillDigests)
+	}
 	if err != nil {
 		return nil, err
 	}

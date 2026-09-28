@@ -423,8 +423,10 @@ mount root, verifies the set and records loaded identities. It does not discover
 plugins or scan ambient directories. Reference reads use only manifest-listed
 files. Skills cannot set tools, environment, launch arguments, policies or code
 paths. Requests in skill prose to execute code cannot create an execution tool.
-Skills and prompts are unchanged across revisions. Revocation may stop a campaign,
-but never hot-swaps its inputs. Instruction-only does not mean semantically benign.
+Skills and prompts MUST remain unchanged across revisions. `skill remove` MUST
+remove an installed bundle for future selections while preserving frozen campaign
+inputs. Build/import MUST permit adding that same valid digest back. Administrators
+MUST use campaign termination to stop running work. Instruction-only does not mean semantically benign.
 
 ### 5.3 Default and selected system prompt
 
@@ -1677,7 +1679,7 @@ native gates; schemas must cover boundary cases rather than merely mirror code.
 | OC-AC-011 | Direct CLI Docker kill during worker death, blocked model/target calls and full audit disk meets the five-second target when Docker responds. API/VM failure returns bounded unconfirmed status; wrong/reused names or mismatched daemon/container bindings are never signaled. |
 | OC-AC-012 | Kill confirmation includes Docker-confirmed container exit; teardown/remote failures remain explicit and cannot launch replacements or reopen admission. |
 | OC-AC-013 | Duplicate/concurrent/lost-ack starts preserve one campaign; restart and journal reconciliation never resume failed execution or replay unknown mutations. |
-| OC-AC-014 | `skill build` and attachment are independent, digest-idempotent and noninteractive; exact/empty/duplicate/invalid/revoked/oversize sets and file ingress attacks are covered. |
+| OC-AC-014 | `skill build` and attachment are independent, digest-idempotent and noninteractive; exact/empty/duplicate/invalid/missing/oversize sets, removal and reinstallation and file ingress attacks are covered. |
 | OC-AC-015 | Default/replace/append prompt bytes and manifest digests match golden vectors; edits after acceptance, hostile replacements and skill loading do not alter authority. |
 | OC-AC-016 | Complete submitted bundle/reference provenance survives preparation, omission/compaction is explicit and no protected host/target content enters guest context. |
 | OC-AC-017 | Attempt translation matches fixed native goldens; invalid payload/media/selector/lineage gets no target contact; unknown outcomes are not retried as corrected submissions. |
@@ -1687,7 +1689,7 @@ native gates; schemas must cover boundary cases rather than merely mirror code.
 | OC-AC-021 | HTTPS mapping rejects arbitrary destinations/redirects/headers and unsupported setup/state operations; reports retain its actual evidence assurance. |
 | OC-AC-022 | User-authored and generator-authored bundles use one strict validator; objectives-only input works without fabricated scenarios or generator metadata. Missing required capabilities/references fail before launch; optional gaps and requested-policy narrowing are explicit. No submission can select runtime credentials, tools or destinations. |
 | OC-AC-023 | Report retries/late evidence never execute attacks; reports separate observed facts, guest claims, inference, incomplete audit and cleanup uncertainty. |
-| OC-AC-024 | Release/skill updates, revocations, retention and offline installation preserve pinned active inputs, scope-specific signing and referenced evidence. Bundle edits require a new immutable input identity and cannot modify an active campaign. |
+| OC-AC-024 | Release/skill updates, skill removal/reinstallation, retention and offline installation preserve pinned active inputs, scope-specific signing and referenced evidence. Bundle edits require a new immutable input identity and cannot modify an active campaign. |
 | OC-AC-025 | CLI disconnect/observer interrupt does not stop accepted work; status/wait/JSON receipts, read-only doctor and fenced startup are demonstrated. |
 | OC-AC-026 | Local image selection uses Docker content with `--pull=never` and treats latest as a local tag. Cover missing image, local tag change, immutable ID launch, image removal, cached/uncached HTTPS release lookup, bad origin/TLS/redirect/status/metadata/digest, minimum version, exact contract/platform/profile mismatch, offline valid-cache reuse and accepted-start pinning. |
 | OC-AC-027 | Create/list/inspect/restore tools preserve campaign ID and description, discover retained earlier-session checkpoints and support context-preserving branch restores (Sections 10.3–10.4). |

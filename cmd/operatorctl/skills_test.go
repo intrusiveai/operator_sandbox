@@ -47,6 +47,18 @@ func TestSkillCommands(t *testing.T) {
 	call(0, "skill", "build", "--project", "demo", "--source", source)
 	bundle := filepath.Join(paths.StateRoot, "skills", strings.TrimPrefix(receipt.Digest, "sha256:"))
 	call(0, "skill", "import", "--source", bundle)
+	setFile := filepath.Join(source, "frozen.json")
+	call(0, "skill", "set", "--skill", receipt.Digest, "--loader-digest", "sha256:"+strings.Repeat("a", 64), "--output", setFile)
+	call(1, "skill", "set", "--skill", receipt.Digest, "--loader-digest", "sha256:"+strings.Repeat("a", 64), "--output", setFile)
+	// Keep the instruction source inventory unchanged for subsequent rebuild.
+	if err := os.Remove(setFile); err != nil {
+		t.Fatal(err)
+	}
+	call(0, "skill", "remove", "--skill", receipt.Digest)
+	call(0, "skill", "remove", "--skill", receipt.Digest)
+	call(1, "skill", "check", "--skill", receipt.Digest)
+	call(0, "skill", "build", "--project", "demo", "--source", source)
+	call(0, "skill", "check", "--skill", receipt.Digest)
 	call(1, "skill", "check", "--skill", "../../escape")
 	call(2, "skill", "build", "--source", source)
 	call(2, "skill", "keygen", "--unknown")

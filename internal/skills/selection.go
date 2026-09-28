@@ -5,6 +5,7 @@ package skills
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"sort"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
@@ -41,6 +42,13 @@ func Select(ctx context.Context, p *contracts.Protocol, keyDirectory, store, loa
 	if _, ok := p.PackageIdentity(); !ok {
 		return nil, ErrSkill
 	}
+	if len(digests) > 0 {
+		lease, err := storeLease(store, false)
+		if err != nil {
+			return nil, err
+		}
+		defer lease.Close()
+	}
 	s := &Selection{bundles: []*Bundle{}}
 	seen := map[string]bool{}
 	total := 0
@@ -49,7 +57,7 @@ func Select(ctx context.Context, p *contracts.Protocol, keyDirectory, store, loa
 			return nil, ErrSkill
 		}
 		seen[digest] = true
-		b, err := LoadInstalled(ctx, p, keyDirectory, store, digest)
+		b, err := loadInstalled(ctx, p, keyDirectory, store, digest)
 		if err != nil {
 			return nil, err
 		}
@@ -84,4 +92,37 @@ func Select(ctx context.Context, p *contracts.Protocol, keyDirectory, store, loa
 		return nil, ErrSkill
 	}
 	return s, nil
+}
+
+// Frozen verifies a complete supplied SkillSetManifest against the current
+// installation's signed bundles. A manifest cannot introduce signing trust.
+func Frozen(ctx context.Context, p *contracts.Protocol, keys, store string, raw []byte) (*Selection, error) {
+	if p == nil {
+		return nil, ErrSkill
+	}
+	m, err := p.ValidateSkillSet(raw)
+	if err != nil {
+		return nil, ErrSkill
+	}
+	digests := []string{}
+	for _, item := range m["skills"].([]any) {
+		digests = append(digests, item.(map[string]any)["bundle_digest"].(string))
+	}
+	selected, err := Select(ctx, p, keys, store, m["loader_digest"].(string), digests)
+	if err != nil {
+		return nil, err
+	}
+	canonicalRaw, err := contracts.Canonicalize(raw, contracts.ControlLimit)
+	if err != nil || !bytes.Equal(canonicalRaw, selected.Manifest()) {
+		return nil, ErrSkill
+	}
+	return selected, nil
+}
+
+func (s *Selection) LoaderDigest() string {
+	var m struct {
+		Loader string `json:"loader_digest"`
+	}
+	_ = json.Unmarshal(s.raw, &m)
+	return m.Loader
 }
