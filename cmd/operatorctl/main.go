@@ -40,6 +40,9 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 }
 
 func runWithDefaults(ctx context.Context, args []string, stdout, stderr io.Writer, defaults hostconfig.Paths) int {
+	if len(args) > 0 && (args[0] == "report" || args[0] == "export") {
+		return reportCampaign(ctx, args[0], args[1:], stdout, stderr, defaults)
+	}
 	if len(args) >= 3 && args[0] == "campaign" && args[1] == "evidence" && args[2] == "import" {
 		return importCampaignEvidence(ctx, args[3:], stdout, stderr, defaults)
 	}
@@ -81,6 +84,7 @@ func runWithDefaults(ctx context.Context, args []string, stdout, stderr io.Write
 		fmt.Fprintln(stderr, "usage: operatorctl submit --bundle FILE --capabilities FILE [--artifacts DIR] --output DIR [--config PATH]\n       operatorctl validate --run DIR [--config PATH]\n       operatorctl config check [--config PATH]\n       operatorctl contract check --package-dir DIR --package-version VERSION --package-digest SHA256\n       operatorctl campaign terminate --campaign ID [--config PATH] [--state-root DIR] [--mode immediate] [--reason user-request] [--request-id HEX32] [--docker-bin PATH]")
 		fmt.Fprintln(stderr, "       operatorctl campaign evidence collect --campaign ID [--config PATH] [--state-root DIR] [--docker-bin PATH]")
 		fmt.Fprintln(stderr, "       operatorctl campaign evidence import --campaign ID --session ID --archive FILE [--max-archive-bytes N] [--state-root DIR]")
+		fmt.Fprintln(stderr, "       operatorctl report|export --run DIR | --campaign ID [--state-root DIR] [--output DIR]")
 		fmt.Fprintln(stderr, "       operatorctl campaign status|logs|wait --campaign ID [--config PATH] [--state-root DIR]")
 		fmt.Fprintln(stderr, "       operatorctl campaign prepare|start --run DIR [--config PATH] [--new-campaign] [--skill DIGEST] [--system-prompt FILE | --system-prompt-append FILE]")
 		fmt.Fprintln(stderr, "       operatorctl skill keygen|build|import|check [options]")

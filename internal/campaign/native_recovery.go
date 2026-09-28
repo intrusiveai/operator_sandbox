@@ -81,6 +81,24 @@ func (r *NativeRecovery) ReadContent(d ContentDescriptor) ([]byte, error) {
 	return readRetainedContent(r.root, d)
 }
 
+// RecoveryResult verifies an existing cleanup audit without claiming work.
+func (r *NativeRecovery) RecoveryResult() ([]byte, error) {
+	if e := privateDir(r.root, "native-recovery"); e != nil {
+		if errors.Is(e, os.ErrNotExist) {
+			return nil, nil
+		}
+		return nil, e
+	}
+	if _, e := readFile(r.root, "native-recovery/intent.json", ManifestLimit); e != nil {
+		return nil, ErrCorrupt
+	}
+	fresh, raw, e := r.Begin()
+	if fresh {
+		return nil, ErrCorrupt
+	}
+	return raw, e
+}
+
 // Begin never reclaims an existing intent. A lost process/reply remains unknown;
 // a later invocation can read the result but cannot dispatch a second cleanup pass.
 func (r *NativeRecovery) Begin() (fresh bool, result []byte, err error) {

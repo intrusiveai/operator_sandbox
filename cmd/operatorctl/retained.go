@@ -14,6 +14,7 @@ import (
 
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
 	"github.com/intrusiveai/operator_sandbox/internal/nativerecovery"
+	"github.com/intrusiveai/operator_sandbox/internal/reporting"
 	"github.com/intrusiveai/operator_sandbox/internal/startrequest"
 )
 
@@ -54,6 +55,48 @@ func retainedSelection(ctx context.Context, run, id, root, config string, defaul
 		return "", "", errors.New("invalid root")
 	}
 	return root, id, nil
+}
+
+func reportCampaign(ctx context.Context, action string, args []string, stdout, stderr io.Writer, defaults hostconfig.Paths) int {
+	flags := flag.NewFlagSet(action, flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	id := flags.String("campaign", "", "campaign ID")
+	run := flags.String("run", "", "saved run directory")
+	root := flags.String("state-root", "", "private state root")
+	config := flags.String("config", "", "administrator configuration")
+	var output string
+	if action == "export" {
+		flags.StringVar(&output, "output", "", "new export directory")
+	}
+	if flags.Parse(args) != nil {
+		return 2
+	}
+	empty := false
+	flags.Visit(func(f *flag.Flag) {
+		if f.Value.String() == "" {
+			empty = true
+		}
+	})
+	if empty || flags.NArg() != 0 || (action == "export" && output == "") {
+		fmt.Fprintln(stderr, "invalid report/export arguments")
+		return 2
+	}
+	selected, campaignID, e := retainedSelection(ctx, *run, *id, *root, *config, defaults)
+	if e != nil {
+		fmt.Fprintln(stderr, "cannot resolve retained campaign")
+		return 2
+	}
+	result, e := reporting.Generate(ctx, selected, campaignID, output)
+	if result.APIVersion != "" {
+		if json.NewEncoder(stdout).Encode(result) != nil {
+			return 1
+		}
+	}
+	if e != nil {
+		fmt.Fprintln(stderr, "report/export could not be published; retained evidence is unchanged")
+		return 1
+	}
+	return 0
 }
 
 func importCampaignEvidence(ctx context.Context, args []string, stdout, stderr io.Writer, defaults hostconfig.Paths) int {

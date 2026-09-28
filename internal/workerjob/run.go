@@ -11,6 +11,7 @@ import (
 
 	"github.com/intrusiveai/operator_sandbox/internal/hostrun"
 	"github.com/intrusiveai/operator_sandbox/internal/hostworker"
+	"github.com/intrusiveai/operator_sandbox/internal/reporting"
 	"github.com/intrusiveai/operator_sandbox/internal/startrequest"
 )
 
@@ -27,6 +28,8 @@ type Result struct {
 	CompletionRecording string             `json:"completion_recording"`
 	Accepted            *hostrun.Receipt   `json:"accepted,omitempty"`
 	Execution           *hostworker.Result `json:"-"`
+	Reporting           string             `json:"reporting"`
+	Report              *reporting.Receipt `json:"report,omitempty"`
 }
 type preparedRun interface {
 	Receipt() hostrun.Receipt
@@ -46,13 +49,32 @@ func (i installedInputs) Open(ctx context.Context, version string) (preparedRun,
 type loader func(context.Context, startrequest.Request) (verifiedInputs, error)
 
 func Run(ctx context.Context, stateRoot, requestID, requestDigest, operatorVersion string) (Result, error) {
-	return run(ctx, stateRoot, requestID, requestDigest, operatorVersion, func(ctx context.Context, r startrequest.Request) (verifiedInputs, error) {
+	result, err := run(ctx, stateRoot, requestID, requestDigest, operatorVersion, func(ctx context.Context, r startrequest.Request) (verifiedInputs, error) {
 		inputs, err := hostrun.LoadInputs(ctx, r.ConfigurationFile, r.Defaults(), r.Selection)
 		if err != nil {
 			return nil, err
 		}
 		return installedInputs{inputs}, nil
 	})
+	finishReport(stateRoot, &result, reporting.Generate)
+	return result, err
+}
+
+// Execution completion is durable before this bounded, independently retryable
+// report pass. Reporting failure never changes execution success or cleanup.
+func finishReport(root string, result *Result, generate func(context.Context, string, string, string) (reporting.Receipt, error)) {
+	result.Reporting = "not_started"
+	if result.Execution == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+	receipt, err := generate(ctx, root, result.CampaignID, "")
+	result.Reporting = "report_failed"
+	if err == nil {
+		result.Reporting = "generated"
+		result.Report = &receipt
+	}
 }
 func run(ctx context.Context, stateRoot, requestID, requestDigest, operatorVersion string, load loader) (result Result, runErr error) {
 	result = Result{APIVersion: "operator.dev/worker-job/v1alpha1", StartRequestID: requestID, Phase: "unclaimed", Code: "claim_rejected", CompletionRecording: "not_attempted"}

@@ -1372,6 +1372,10 @@ existing exploratory origin for unlisted hypotheses or objectives-only input.
 
 ### 11.4 Evidence-based reporting
 
+Report generation and portable exports MUST implement
+[Retained reports and portable exports](docs/REPORTING.md), including immutable
+document bindings, visibility inventories and incomplete-source handling.
+
 Operator produces deterministic local summaries and exportable source records from
 finalized execution and retained evidence. Reports separate attempted delivery,
 observed delivery, target response, oracle/predicate scope, demonstrated effects,

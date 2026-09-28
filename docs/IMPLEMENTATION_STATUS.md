@@ -1,6 +1,29 @@
 # Implementation phase handoff
 
-## Latest boundary: explicit late native evidence collection
+## Latest boundary: retained reporting, export and offline archive import
+
+`campaign evidence import` validates administrator-supplied native archives against
+saved session/checkpoint lineage and retains immutable adoption records. Its local
+acceptance ceiling can exceed the original API limit without changing execution
+policy. Imports never contact a target, Docker, a provider or a secret store.
+
+`report` and `export` now create deterministic digest-bound generations from
+verified journal prefixes and retained evidence. They preserve prior generations,
+rehash native archives, separate attempts/scoped observations/harness claims, and
+make coverage, unknown operations and cleanup uncertainty explicit. Exported
+copies have relative content identities, omission inventories and a final completion
+manifest. Host control settings remain private. The installed worker attempts
+reporting after durable execution completion, independently of execution success.
+
+See [reporting/export](REPORTING.md) and [offline evidence import](EVIDENCE_IMPORT.md).
+The full Go suite, focused persistence/import/report/worker/CLI race tests, affected
+package vet and Linux AMD64/ARM64 CLI builds pass. Native archive fixtures and
+scripted peers provide validation; no new live infrastructure qualification is claimed.
+
+The next major boundary is campaign purge. Installation/release publication and
+external host/provider/Interceptor qualification remain separate outstanding work.
+
+## Completed boundary: explicit late native evidence collection
 
 `campaign evidence collect --campaign ID` now verifies retained preparation,
 policy, selections, journal integrity and exact Docker inactivity before fetching

@@ -249,11 +249,7 @@ func validEvidenceOutcome(v campaign.EvidenceOutcome, t nativeevidence.Target, p
 }
 func collectEvidenceSession(ctx context.Context, a *campaign.NativeRecovery, f facts, policy campaign.EvidencePolicy, target nativeevidence.Target, adopted map[string]campaign.NativeEvidence, peer EvidencePeer) (out campaign.EvidenceOutcome, err error) {
 	out = campaign.EvidenceOutcome{SessionID: target.Identity.SessionID, State: "missing", LocalMaxBytes: policy.MaxArchiveBytes, NativeMaxBytes: target.NativeMaxBytes}
-	raw, _ := json.Marshal(struct {
-		Policy campaign.EvidencePolicy `json:"policy"`
-		Target nativeevidence.Target   `json:"target"`
-	}{policy, target})
-	digest, e := contracts.CanonicalDigest(raw, campaign.ManifestLimit)
+	digest, e := selectionDigest(policy, target)
 	if e != nil {
 		return out, e
 	}

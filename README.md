@@ -92,11 +92,16 @@ host power/event lifetime and confirmed container/transport cleanup.
 Late collection is available through `operatorctl campaign evidence collect --campaign ID`.
 See [late evidence collection](docs/LATE_EVIDENCE.md) for saved-policy limits,
 explicit retries, per-session outcomes and retained archive reuse.
+Administrator-exported native archives can be adopted with
+`operatorctl campaign evidence import`; see [offline import](docs/EVIDENCE_IMPORT.md).
+`operatorctl report` and `operatorctl export` produce immutable local summaries
+and portable evidence copies. See [reporting/export](docs/REPORTING.md) for
+generation identities, visibility, coverage and incomplete-evidence semantics.
 
 Run `make setup` then `make test`. See [startup recovery](docs/STARTUP_RECOVERY.md)
 for cleanup and uncertainty rules, including native attach failures before a
-campaign journal exists. Operator reporting/export/purge, archive import,
-contract publication and external runtime qualification remain pending.
+campaign journal exists. Campaign purge, installation/release publication and
+external runtime qualification remain pending.
 Attack Harness tracks its implemented runtime and remaining qualification gates
 in its own repository.
 
