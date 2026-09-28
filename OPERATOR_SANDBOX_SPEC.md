@@ -1,6 +1,6 @@
 # Intrusive AI Operator Sandbox Product Specification
 
-Status: core runtime and administrator workflows implemented; HTTPS adapter, release publication and full integration/runtime qualification outstanding\
+Status: core runtime, administrator workflows and HTTPS adapter implemented; release publication and full integration/runtime qualification outstanding\
 Date: 2026-09-28\
 Product API family: `operator.dev`; existing data schemas remain individually versioned  
 Container runtime profile: `operator-container/v1` — Docker with Linux FIFO / macOS file-spool transport; qualification pending

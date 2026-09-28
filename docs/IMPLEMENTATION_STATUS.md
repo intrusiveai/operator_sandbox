@@ -1,10 +1,10 @@
 # Current implementation status
 
-Updated: 2026-09-28, following the administrator-workflow stage.
+Updated: 2026-09-28, following the declarative HTTPS target stage.
 
 Operator's core campaign runtime and Attack Harness's Python runtime are
-implemented. Administrator workflows are complete. The HTTPS target adapter,
-installation/release work and complete integration/native qualification are still
+implemented. Administrator workflows and the declarative HTTPS target adapter are
+complete. Installation/release work and complete integration/native qualification are still
 outstanding. This page distinguishes implemented components from qualified releases;
 requirements in the product spec remain mandatory even when their acceptance
 criteria have not yet been demonstrated.
@@ -18,6 +18,7 @@ criteria have not yet been demonstrated.
 | Image and launch | Local Docker image selection, fixed HTTPS compatibility lookup/cache, stopped-image embedded-file inspection, pinned launch identity, private staging, Docker confinement settings and startup verification. |
 | Transport and persistence | Linux FIFOs, macOS file spools, framing/ACKs, bounded queues, deadlines and spool size checks; durable journals, reservations, cumulative accounting, duplicate protection and terminal fencing. |
 | Native campaign service | All 13 ordinary routes: artifact upload, model relay, attempt execution, bounded feedback reads, injection cleanup, state/snapshots, assessments, conclusions and stop acknowledgement. |
+| Declarative HTTPS targets | Administrator-owned mappings, public capability projection, fixed destinations with DNS/IP and TLS checks, audited credentials, bounded JSON/text requests/responses, campaign lineage and duplicate suppression, filtered feedback, local-only recovery and observer-assurance reports. |
 | Restore and harness loop | Healthy restores preserve the harness and its context, adopt the replacement native session/revision, retain cumulative charges and skip remaining calls in the old model-response batch. Attempt numbering and finite-loop/finalization rules are integrated. |
 | Providers and secrets | Five codec families: Chat Completions, OpenAI Responses, Anthropic Messages, Bedrock Converse and Gemini GenerateContent. Host transports cover OpenAI, Azure OpenAI, LiteLLM, Anthropic, Bedrock and Gemini Developer/Vertex. Credential backends cover AWS Secrets Manager, Azure Key Vault, Google Secret Manager and Vault. |
 | Supervised execution | Prepare/start/status/logs/wait, durable start requests/run links, permanent worker claims, systemd/LaunchAgent submission, signal handling and macOS caffeinate/lifetime handling. |
@@ -35,6 +36,7 @@ Component guides provide the detailed behavior and validation boundaries:
 - [Campaign start](CAMPAIGN_START.md), [launch](HOST_LAUNCH.md),
   [campaign service](CAMPAIGN_SERVICE.md) and [startup recovery](STARTUP_RECOVERY.md).
 - [Administrator run/diagnostics](ADMIN_WORKFLOWS.md) and [submission selectors](SUBMISSION.md).
+- [HTTPS targets](HTTPS_TARGETS.md) and [example private profile](../examples/https-target-profile.json).
 - [Providers](MODEL_PROVIDERS.md), [credentials](CREDENTIALS.md) and [skills](SKILLS.md).
 - [Evidence service](EVIDENCE_SERVICE.md), [late collection](LATE_EVIDENCE.md),
   [offline import](EVIDENCE_IMPORT.md) and [reporting/export](REPORTING.md) and [campaign purge](PURGE.md).
@@ -44,10 +46,12 @@ Component guides provide the detailed behavior and validation boundaries:
 ## Validation completed and its limits
 
 At the latest implementation boundary, the full Go suite, focused
-skill-store/credential/provider/startup/CLI race tests, repository-wide vet and
+HTTPS execution/preparation/feedback/capability/profile race tests, repository-wide vet and
 Linux AMD64/ARM64 and macOS AMD64/ARM64 CLI builds passed. Shared Go/Python fixtures and Attack Harness
 component tests have passed in their implementation stages. Tests use real
-journals, physical transports, native archive fixtures and scripted peers.
+journals, physical transports, native archive fixtures, local TLS servers and scripted peers.
+HTTPS tests cover successful and failed requests, cancellation after transmission,
+duplicate suppression, response selection/limits, feedback policy and report assurance.
 
 A native macOS LaunchAgent retirement test also passed: it registered an unstarted
 job, confirmed its removal and rejected a delayed real worker invocation.
@@ -59,14 +63,11 @@ No complete live provider, secret-store or target qualification is claimed.
 
 ## Remaining implementation stages
 
-1. **Declarative HTTPS target adapter.** Implement its constrained mapping,
-   execution and evidence/report integration. Current native execution uses
-   Interceptor; the HTTPS adapter remains a separate requirement.
-2. **Complete Operator/Attack Harness integration tests.** Add the complete real
+1. **Complete Operator/Attack Harness integration tests.** Add the complete real
    Go/Python process exchange matrix over both transports, including startup,
    attempt/feedback, restore, conclusion/stop and failure/capacity cases. Preserve
    component tests as supporting evidence.
-3. **Installation and release tooling.** Complete host installation/distribution,
+2. **Installation and release tooling.** Complete host installation/distribution,
    supported-package/build metadata, signed releases/update handling and release
    automation. Existing package build/check commands do not publish an approved
    `operator-contracts` 0.1.0 release or approve an image.
@@ -84,5 +85,5 @@ No complete live provider, secret-store or target qualification is claimed.
   [host runtime gates](../HOST_RUNTIME_PROFILES.md) and
   [product acceptance criteria](../OPERATOR_SANDBOX_SPEC.md#15-acceptance-criteria).
 
-The next major stage is the declarative HTTPS target adapter. Detailed
+The next major stage is complete Operator/Attack Harness process integration tests. Detailed
 historical commit boundaries remain available in Git history.

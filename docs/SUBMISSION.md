@@ -79,11 +79,16 @@ operatorctl submit --bundle ./scenario-bundle.json --environment ./environment \
   --output ./runs/example
 ```
 
-Capability export MUST verify the installed contract and native manifest, then
+Interceptor capability export MUST verify the installed contract and native manifest, then
 produce only the existing allowlisted public projection. It MUST support
 `--native FILE` with an explicit or installed target profile, or verify/re-export
 `--capabilities FILE` with its companion. `--native` MUST be exclusive with
 `--environment` and `--capabilities`. The native source remains host-side.
+
+For `https/v1`, export MUST derive the public projection and its source companion
+from the private profile, or verify/re-export an existing public export with its
+companion. `--native` MUST be rejected with an HTTPS profile. See
+[HTTPS targets](HTTPS_TARGETS.md) for the complete administrator workflow.
 
 Publication MUST write and sync the companion before the new public file, sync
 the parent directory and never overwrite a public export. An existing companion

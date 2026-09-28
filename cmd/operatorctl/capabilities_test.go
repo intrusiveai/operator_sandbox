@@ -11,7 +11,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/capabilities"
 	"github.com/intrusiveai/operator_sandbox/internal/submission"
+	"github.com/intrusiveai/operator_sandbox/schemas"
 )
 
 const adminTarget = `{"api_version":"operator.dev/target-profile/v1alpha1","id":"local","target_id":"delivery-example","adapter":"interceptor/v1","allow_target_stop":false,"scopes":{"operation_ids":["invoke"],"caller_principal_ids":[],"routes":[],"allow_retained_injections":false},"feedback":{"ceiling":"black-box","allowed_kinds":["target_output"],"max_attempt_bytes":1048576},"operation_timeout_ms":30000}`
@@ -55,5 +58,44 @@ func TestCapabilityExportAndEnvironmentSubmission(t *testing.T) {
 	call(1, "validate", "--run", output)
 	if _, err := os.Stat(paths.StateRoot); !os.IsNotExist(err) {
 		t.Fatal("offline workflow created campaign state", err)
+	}
+}
+
+func TestHTTPSCapabilityExportFromPrivateProfile(t *testing.T) {
+	dir, pin := installedContract(t)
+	paths := configPaths(t)
+	writeConfig(t, paths.ConfigFile, fmt.Sprintf("engine: {image: test}\ncontract: {directory: %q, version: %q, digest: %q}\n", dir, pin.Version, pin.Digest))
+	env := t.TempDir()
+	profile := filepath.Join(env, "target-profile.json")
+	raw, err := os.ReadFile("../../examples/https-target-profile.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = os.WriteFile(profile, raw, 0600); err != nil {
+		t.Fatal(err)
+	}
+	public := filepath.Join(env, "capabilities.json")
+	var out, stderr bytes.Buffer
+	code := runWithDefaults(context.Background(), []string{"capabilities", "export", "--target-profile", profile, "--output", public}, &out, &stderr, paths)
+	if code != 0 {
+		t.Fatal(code, stderr.String())
+	}
+	c, err := contracts.LoadCatalog(schemas.Files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var settings struct {
+		TargetID string `json:"target_id"`
+	}
+	_ = json.Unmarshal(raw, &settings)
+	exported, err := capabilities.LoadExport(context.Background(), c, public, settings.TargetID)
+	if err != nil || exported.Adapter() != "https/v1" {
+		t.Fatal(exported, err)
+	}
+	if bytes.Contains(exported.PublicJSON(), []byte("agent.example.com")) || bytes.Contains(exported.NativeJSON(), []byte("authentication")) {
+		t.Fatal("private mapping leaked")
+	}
+	if _, err := os.Stat(paths.StateRoot); !os.IsNotExist(err) {
+		t.Fatal("offline export created campaign state", err)
 	}
 }

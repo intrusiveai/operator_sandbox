@@ -91,7 +91,15 @@ func (p *Plan) runHTTPS(ctx context.Context, a *campaign.Attempts) (Result, erro
 	}
 	errors := []any{}
 	if out.Code != "" {
-		errors = append(errors, map[string]string{"code": out.Code, "instance_path": "", "message": "The HTTPS operation did not produce complete permitted feedback."})
+		// The wire result uses the shared error vocabulary. Adapter-specific
+		// diagnostics remain in profile-filtered operation_error feedback.
+		code := "OBSERVATION_UNAVAILABLE"
+		if out.Status == "unknown" {
+			code = "OUTCOME_UNKNOWN"
+		} else if out.Contact == "none" || out.Code == "HTTPS_STATUS_FAILED" || out.Code == "HTTPS_REDIRECT_REJECTED" {
+			code = "DELIVERY_FAILED"
+		}
+		errors = append(errors, map[string]string{"code": code, "instance_path": "", "message": "The HTTPS operation did not produce complete permitted feedback."})
 	}
 	raw, err := json.Marshal(map[string]any{"api_version": "operator.dev/engine-attempt-result/v1alpha2", "kind": "EngineAttemptResult", "request_id": p.request.RequestID, "attempt_id": p.request.AttemptID, "receipt_id": receiptID, "status": out.Status, "stage": stage, "target_contact": out.Contact, "invocation_state": invocation, "cleanup_state": "not-needed", "retry_disposition": retry, "errors": errors, "feedback": json.RawMessage(receipt.ManifestJSON())})
 	if err == nil {

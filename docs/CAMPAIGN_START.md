@@ -47,12 +47,18 @@ worker failure. Observation MUST tolerate a bounded 250 ms atomic-publication
 window without accepting unfinished records. No read operation grants permission
 to resume a claimed campaign.
 
-Online preparation MUST persist the attach intent and verified native routing
+For Interceptor, online preparation MUST persist the attach intent and verified native routing
 records before using the target to build its campaign journal. A preparation
 failure MUST retain these campaign-scoped records for the next startup's
 [reconciliation](STARTUP_RECOVERY.md#native-attach-before-campaign-preparation).
 Failure or cleanup MUST NOT clear the original worker claim or allow retrying the
 same campaign. A lost attach reply remains explicitly unconfirmed.
+
+For `https/v1`, preparation MUST freeze the administrator mapping and verify its
+public capability projection without contacting the target. Execution MUST use
+only the mapped application operations. Native attachment, injection cleanup,
+snapshots, restore and target stop MUST be unavailable; recovery MUST finalize
+local records without sending another application request. See [HTTPS targets](HTTPS_TARGETS.md).
 
 ## OS service binding
 

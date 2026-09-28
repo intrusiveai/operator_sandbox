@@ -17,6 +17,9 @@ create an alternate foreground execution path. `--timeout` bounds acceptance
 (default 135 seconds, maximum ten minutes); `--wait-timeout` bounds the optional
 completion observer (default 35 minutes, maximum 24 hours).
 
+Both `interceptor/v1` and `https/v1` target profiles MUST use this workflow.
+For HTTPS profile creation and capability export, see [HTTPS targets](HTTPS_TARGETS.md).
+
 A new output MUST follow normal submission publication. An existing output MUST
 be fully revalidated and match the newly supplied inputs and explicit profile
 selection exactly. It MUST NOT be overwritten or repaired. Matching repeated

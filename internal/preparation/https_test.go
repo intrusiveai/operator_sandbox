@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"encoding/pem"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"slices"
@@ -165,5 +166,111 @@ func TestHTTPSProductionLaunchOmitsUnsupportedTools(t *testing.T) {
 		if slices.Contains(v.Operations, name) {
 			t.Fatal("advertised", name)
 		}
+	}
+}
+
+func TestHTTPSFailuresCloseExecutionAndRetainOutcome(t *testing.T) {
+	for _, mode := range []string{"status", "disconnect", "oversize", "cancel"} {
+		t.Run(mode, func(t *testing.T) {
+			var calls atomic.Int32
+			requestContext, cancelRequest := context.WithCancel(context.Background())
+			defer cancelRequest()
+			srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				calls.Add(1)
+				_, _ = io.Copy(io.Discard, r.Body)
+				switch mode {
+				case "status":
+					w.WriteHeader(http.StatusInternalServerError)
+				case "disconnect":
+					conn, _, _ := w.(http.Hijacker).Hijack()
+					conn.Close()
+				case "oversize":
+					_, _ = w.Write(bytes.Repeat([]byte("x"), 4097))
+				case "cancel":
+					cancelRequest()
+					select {
+					case <-r.Context().Done():
+					case <-time.After(time.Second):
+					}
+				}
+			}))
+			defer srv.Close()
+			var root string
+			s, p, r, w, launch := serviceWithSettings(t, 0, []string{"engine.attempt_execute"}, func(c *campaignservice.Config) {
+				root = c.StateRoot
+				var e error
+				c.HTTPS, e = httpstarget.New(c.Prepared.Target().Profile().HTTPS(), nil, time.Second)
+				if e != nil {
+					t.Fatal(e)
+				}
+				c.Peer = nil
+			}, func(in *preparation.Input) { httpsInput(t, in, srv) })
+			if e := s.Admit(context.Background(), launch); e != nil {
+				t.Fatal(e)
+			}
+			q := httpsWire(p, 1, w.Manifest().ReleaseRecordDigest)
+			// Terminal failures may cancel delivery of the response to the guest;
+			// the journal must still contain the final correlated outcome.
+			_, _ = s.Handle(requestContext, q, 1)
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+			terminal, e := s.Shutdown(ctx)
+			if e != nil || terminal.TargetStop != "not-applicable" {
+				t.Fatal(terminal, e)
+			}
+			select {
+			case <-r.killed:
+			default:
+				t.Fatal("harness termination not independent")
+			}
+			if _, e := s.Handle(context.Background(), q, 2); e == nil {
+				t.Fatal("failed execution reopened")
+			}
+			if calls.Load() != 1 {
+				t.Fatal("request repeated", calls.Load())
+			}
+			if e = w.Close(); e != nil {
+				t.Fatal(e)
+			}
+			receipt, e := reporting.Generate(ctx, root, "campaign-1", "")
+			if e != nil {
+				t.Fatal(e)
+			}
+			report := reportResult(t, root, receipt)
+			if len(report.Attempts) != 1 {
+				t.Fatal(report)
+			}
+			expected := "failed"
+			if mode == "disconnect" || mode == "cancel" {
+				expected = "unknown"
+			}
+			if report.Attempts[0].State != expected || report.Attempts[0].Invocation != expected || report.Attempts[0].Feedback == nil || report.Assurance != "declared-observer" {
+				t.Fatal(report)
+			}
+		})
+	}
+}
+func TestHTTPSInterruptedPreparationRecoveryNeverContactsNative(t *testing.T) {
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { t.Error("recovery contacted target") }))
+	defer srv.Close()
+	in := fixture(t)
+	httpsInput(t, &in, srv)
+	target, e := preparation.Build(in)
+	if e != nil {
+		t.Fatal(e)
+	}
+	w, launch, root := preparedLaunch(t, target, "engine.attempt_execute")
+	if _, e = target.Persist(w, launch.EngineContext); e != nil {
+		t.Fatal(e)
+	}
+	w.Close()
+	// Empty peer would be invalid if any native query were attempted.
+	out, e := nativerecovery.Run(context.Background(), root, "campaign-1", true, &peer{})
+	if e != nil || out.State != "finalized" || out.Closure != "not-applicable" {
+		t.Fatal(out, e)
+	}
+	again, e := nativerecovery.Run(context.Background(), root, "campaign-1", true, &peer{})
+	if e != nil || again != out {
+		t.Fatal(again, e)
 	}
 }

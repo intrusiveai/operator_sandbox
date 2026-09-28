@@ -162,3 +162,37 @@ func TestDNSPinningAndMixedAnswers(t *testing.T) {
 		t.Fatal(out)
 	}
 }
+
+func TestCredentialFailurePreventsContactAndDisclosure(t *testing.T) {
+	var calls atomic.Int32
+	c, _ := testClient(t, func(w http.ResponseWriter, r *http.Request) { calls.Add(1) })
+	s := c.mapping.Settings()
+	s.Authentication = Authentication{Mode: "bearer", CredentialID: "credential"}
+	c.mapping = parsed(t, s)
+	for _, value := range []string{"", "secret\nInjected: header", strings.Repeat("x", 8193)} {
+		c.secrets = secretFunc(func(context.Context, string) (credentials.Resolution, error) {
+			return credentials.Resolution{Value: value}, nil
+		})
+		out := c.Execute(context.Background(), "chat", []byte("x"), "text/plain")
+		if calls.Load() != 0 || out.Contact != "none" || len(out.Content) != 0 || !strings.HasPrefix(out.Code, "HTTPS_CREDENTIAL_") {
+			t.Fatal(out)
+		}
+	}
+}
+func TestCanceledBeforeRequestDoesNotContactTarget(t *testing.T) {
+	var calls atomic.Int32
+	c, _ := testClient(t, func(http.ResponseWriter, *http.Request) { calls.Add(1) })
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	out := c.Execute(ctx, "chat", []byte("x"), "text/plain")
+	if out.Contact != "none" || out.Code != "HTTPS_CANCELED" || calls.Load() != 0 {
+		t.Fatal(out)
+	}
+}
+func TestInvalidCustomCA(t *testing.T) {
+	s := fixture()
+	s.CACertificatesPEM = "invalid certificate"
+	if _, e := New(parsed(t, s), nil, time.Second); e == nil {
+		t.Fatal("invalid CA accepted")
+	}
+}

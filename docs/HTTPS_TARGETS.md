@@ -10,6 +10,34 @@ response selection, network policy and bounds. The mapping MUST NOT enter
 harness mounts, public capability exports or reports. Retained preparation MUST
 use a redacted policy and the private mapping's digest.
 
+## Administrator workflow
+
+Start from [the example profile](../examples/https-target-profile.json), edit its
+target ID, destination, operation mapping and limits, and keep it private:
+
+```sh
+mkdir -p ./https-environment
+cp ./examples/https-target-profile.json ./https-environment/target-profile.json
+chmod 600 ./https-environment/target-profile.json
+operatorctl capabilities export \
+  --target-profile ./https-environment/target-profile.json \
+  --output ./https-environment/capabilities.json
+operatorctl submit --bundle ./scenario-bundle.json \
+  --environment ./https-environment --output ./runs/https-example
+operatorctl campaign start --run ./runs/https-example
+```
+
+The submission MUST use the exported target ID and typed capability references.
+Exports include a hash-named source companion; administrators MUST keep it beside
+the public JSON. HTTPS export MUST derive capabilities offline from the private
+profile without contacting the application or requiring a native export.
+Authenticated mappings MUST name a credential ID in Operator's private credential
+configuration. The existing `operatorctl run` convenience workflow MAY replace
+the separate submit/start commands. Standard installed contract, model profile,
+Attack Harness image and release-compatibility requirements apply.
+
+## Mapping fields
+
 The mapping MUST contain these fields:
 
 | Field | Contract |
@@ -71,6 +99,11 @@ The client MUST distinguish failure before any possible request transmission
 from uncertain outcomes after transmission might have begun. A response-size
 failure or malformed response after dispatch MUST NOT imply the target did not
 execute. Only selected bounded feedback and fixed diagnostic codes MAY be retained.
+Shared attempt results MUST use the existing shared error vocabulary; detailed
+`HTTPS_*` codes MUST appear only in permitted `operation_error` feedback. A
+failed or uncertain dispatched attempt MUST close execution and MUST NOT trigger
+an automatic retry. HTTP response acceptance records application-level observation,
+not proof that a remote side effect succeeded or failed.
 
 ## Campaign integration requirements
 
