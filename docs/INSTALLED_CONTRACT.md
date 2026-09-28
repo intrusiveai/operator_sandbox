@@ -99,7 +99,7 @@ diagnostics do not echo package contents.
 
 ## Preparation integration and remaining gates
 
-The future distribution/launcher must select its supported package directory/pin,
+The installed launcher MUST select its supported package directory/pin,
 call this loader, and take `imagerelease.Requirements.Contract` from the verified
 protocol's `PackageIdentity()`. The running Operator application version must also
 come from the installed executable. Neither an image manifest nor an HTTPS
@@ -110,8 +110,8 @@ also inspect the immutable image's embedded package/engine metadata and enforce
 the fixed runtime policy. This loader establishes byte integrity and offline schema
 loading; it does not establish source-code conformance, release approval or runtime
 qualification. Production package publication, supported-package metadata/build
-version packaging, image-file inspection and launch integration remain separate
-implementation work. Tests use explicitly identified `0.0.0` fixtures.
+version packaging remain outstanding. Image-file inspection and launch integration
+are implemented. Tests use explicitly identified `0.0.0` fixtures.
 
 Tests cover real development-schema loading, independent pin failures before payload
 reads, malformed manifests, source immutability, same-size tampering, missing/extra

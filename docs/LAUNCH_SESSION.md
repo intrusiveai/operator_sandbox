@@ -82,4 +82,5 @@ The resulting `InstalledRun` owns its native/model/credential clients through Ru
 or Cancel, then closes them. The installed state and release-cache directories
 must already exist with the documented private permissions. This API does not
 install services, create administrator accounts or automatically pull an image.
-Durable start-key publication and supervised CLI dispatch are the next integration.
+[Durable start-key publication](START_REQUESTS.md) and
+[supervised CLI dispatch](CAMPAIGN_START.md) are implemented.

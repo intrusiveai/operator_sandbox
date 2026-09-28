@@ -5,8 +5,8 @@ decisions. The [attempt bookkeeping helpers](ATTEMPT_BOOKKEEPING_CONTRACT.md)
 implement allocation and in-memory admission transitions with 40 shared Go/Python
 traces. The [loop accounting helpers](HARNESS_LOOP_ACCOUNTING_CONTRACT.md) implement
 finite-loop configuration, read/progress accounting, batch skipping and bounded
-finalization with 129 shared cases. Durable dispatcher integration, actual timers
-and full runtime conformance remain pending. These rules supplement
+finalization with 129 shared cases. Durable dispatcher integration and actual timers
+are implemented; complete process/native conformance remains outstanding. These rules supplement
 SHARED_CONTRACT.md without a new broker operation.
 
 ## 1. Campaign-wide attempt numbering
@@ -210,4 +210,5 @@ consecutive versus 50 cumulative invalid calls; successful reset of streak only;
 repeat/overlapping read charges versus novel-byte progress; EOF and unused read
 reservation; refusal/compaction/no-tool turns; repeated restore/snapshot and forged
 progress; restore-skipped tool accounting; bounded model-free finalization and
-host-stop precedence. Operator/Attack Harness runtime tests remain implementation work.
+host-stop precedence. Operator/Attack Harness component and scripted-peer runtime tests are implemented;
+complete process/native conformance remains outstanding.

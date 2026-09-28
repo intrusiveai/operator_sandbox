@@ -41,7 +41,7 @@ allowances. Every allowance must fit its ceiling. Campaign model turns and
 observation bytes must also fit the corresponding harness limits. These are
 explicit projections; no missing-field defaults are inferred. Advertised operations
 must be sorted, unique and present in the installed registry. The current development
-registry has 12 operations; model generation remains publication work.
+registry has 13 operations, including model generation.
 
 Host `terminate` is valid throughout the launch, including startup. Its body has
 `reason`, optional `stop_receipt`, and `exit_required: true`. Reasons are
@@ -131,8 +131,8 @@ pins its loading implementation. `loading_digest` is the canonical digest of the
 SkillSetManifest object with only `loading_digest` omitted; the descriptor's
 `object_digest` covers the complete object. The
 [canonical identity contract](CANONICAL_IDENTITY_CONTRACT.md) implements these
-computations and launch checks. Bundle/loader authenticity and publication
-signatures remain subsequent implementation work.
+computations and launch checks. Local skill signing/verification and pinned instruction-loader checks are
+implemented. Executable release signing/publication remains outstanding.
 
 The shared library exposes matching Go / Python entry points:
 
@@ -157,8 +157,9 @@ and maintain live transport sequences. Guest echoes never replace those checks.
 The input-content stage implements EngineContext and prompt provenance. The
 canonical identity stage adds digest verification through its separate API;
 the package integrity stage implements verification against a caller-approved pin.
-Host-private RunManifest, model codec contracts, release/distribution tooling and
-transport/runtime qualification remain outstanding.
+Host-private RunManifest, all five native model codec families and package
+build/check tooling are implemented. Production distribution/publication and
+complete process/native qualification remain outstanding.
 
 Both language runners consume the same 102 cases in
 [startup-manifests.json](fixtures/startup-manifests.json), including oversized-frame

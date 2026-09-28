@@ -1,15 +1,16 @@
 # Shared host/harness contract
 
-Status: accepted design, 2026-09-16; contract package publication and runtime
-implementation remain pending. This is the authoritative Operator-owned source
-for shared host/harness wire semantics, identity, startup, manifest delivery and
-completion. Component specs describe their responsibilities and reference these
-rules; they must not define competing wire contracts.
+Status: accepted design; schemas, shared validators/fixtures and host/harness
+runtime integration implemented as of 2026-09-28. Package publication and complete
+process/native qualification remain outstanding. This is the authoritative
+Operator-owned source for shared wire semantics, identity, startup, manifest
+delivery and completion. Component specs MUST reference these rules rather than
+define competing wire contracts. See [implementation status](../docs/IMPLEMENTATION_STATUS.md).
 
-Approval fixes the design below. It does not claim that all JSON Schemas, Go/Python
-bindings, validators or fixtures exist or pass. Publish package `0.1.0` only after
-the remaining schemas and semantic checks are authored and both conformance
-runners pass. Existing attempt/feedback schemas remain active as specified below.
+JSON Schemas, Go/Python bindings, semantic validators and shared fixtures are
+implemented. Publish package `0.1.0` only after both conformance runners and the
+required Section 12 conformance tests pass. Existing attempt/feedback schemas
+remain active as specified below.
 The closed ScenarioBundle and TargetCapabilityManifest schemas are now in the
 catalog. Their [capability mapping](CAPABILITY_EXPORT_CONTRACT.md) and reference-chain
 fixtures define compatibility-based admission and opt-in exact projection pins;
@@ -26,7 +27,7 @@ The [startup/manifest stage](STARTUP_MANIFEST_CONTRACT.md) supplies closed contr
 messages, successful-transcript checks, bounded input/skill inventories and shared
 raw-descriptor/path validation. The [input-content stage](ENGINE_INPUT_CONTRACT.md)
 adds EngineContext, prompt provenance/composition and launch byte consistency.
-Runtime gates remain separate work.
+Full runtime qualification remains separate work.
 The [canonical identity stage](CANONICAL_IDENTITY_CONTRACT.md) implements `jcs-v1`,
 raw/canonical digest helpers, canonical launch bindings and artifact-content checks.
 The [package integrity stage](PACKAGE_INTEGRITY_CONTRACT.md) adds the closed package
@@ -36,17 +37,20 @@ The [transport codec stage](TRANSPORT_CODEC_CONTRACT.md) implements bounded FIFO
 frames, spool naming, lane validation, consecutive sequences and cumulative ACK
 checks. The [host transport layer](../docs/HOST_TRANSPORT.md) implements physical
 FIFO/spool I/O, queues and startup/transfer/operation/campaign deadlines. Python
-peer I/O, broker integration and Docker qualification remain runtime work.
+peer I/O and broker integration are implemented; complete process exchanges and
+Docker qualification remain outstanding.
 The [attempt bookkeeping stage](ATTEMPT_BOOKKEEPING_CONTRACT.md) implements
 campaign-wide allocation and in-memory duplicate/admission/result transitions.
 The [loop accounting stage](HARNESS_LOOP_ACCOUNTING_CONTRACT.md) implements
 finite-loop limits, read/progress accounting, batch skipping and bounded finalization.
-Durable history, dispatch, verified event sources and timers remain runtime work.
+Durable history, dispatch, verified event sources and timers are integrated into
+the host service and harness runtime.
 The [model codec stage](MODEL_CODEC_CONTRACT.md) supplies typed model relay,
-a pinned Chat Completions text/function subset,
-trusted policy binding and correlated native continuation segments. Other codecs
-and real provider/route qualification remain implementation work.
-Complete message bindings/schemas, stateful checks and transport conformance remain outstanding.
+trusted policy binding and correlated native continuation segments for Chat
+Completions, OpenAI Responses, Anthropic Messages, Bedrock Converse and Gemini
+GenerateContent. Their schemas, bindings and stateful checks are implemented.
+Real provider/route qualification and complete process transport conformance
+remain outstanding.
 
 ## 1. One owner and one pinned package
 
@@ -657,7 +661,8 @@ single-call batches, malformed arguments in skipped calls, duplicate transition
 results, every supported provider's call-ID/name correlation and required result
 order, budget accounting and compaction preserving the complete tool segment.
 Structural vectors are in `fixtures/restore-batch-not-executed.json`; state-machine
-and real-provider codec qualification remain implementation work.
+and dispatcher tests are implemented. Complete process and real-provider
+qualification remain outstanding.
 
 ## 10. Structured conclusion
 
@@ -809,22 +814,18 @@ containment, real-provider behavior or Operator runtime implementation.
 Attempt numbering after rejection and harness-loop defaults/accounting are resolved
 by [Harness execution rules](HARNESS_EXECUTION_RULES.md). Attempt allocation and
 admission transitions have [shared semantic traces](ATTEMPT_BOOKKEEPING_CONTRACT.md);
-finite-loop/progress/finalization accounting also has
+finite-loop/progress/finalization accounting has
 [shared semantic traces](HARNESS_LOOP_ACCOUNTING_CONTRACT.md). Durable runtime
-integration, progress/finalization timer enforcement and full cross-language
-transport conformance remain implementation work. Host physical transport timers
-are implemented separately in `internal/transport`.
+integration and progress/finalization timers are implemented. Complete cross-language
+process transport conformance and native qualification remain outstanding.
 
-The package shape, startup/manifest flow, identity/deadline rules and completion
-semantics and macOS physical spool mapping above are accepted. Remaining work
-is to qualify and package the initial native codec and implement any additional
-advertised codec profiles, integrate the host-private
-RunManifest and durable journal into runtime admission, and complete
-the operation registry, extend the existing offline
-catalog and Go/Python validation foundation with semantic validators and fixtures;
-port the required existing data contracts; and pass Section 12 conformance before
-publishing package `0.1.0`. Do not substitute approval of this document for that
-evidence or claim that the host/harness runtime has been implemented.
+The package, startup/manifest flow, identity/deadline rules, completion semantics
+and physical transports are implemented. The operation registry, closed schemas,
+semantic validators, fixtures, five native codec families and host-private
+RunManifest/journal admission are available. Reproducible package build/check tooling
+is implemented. Complete Section 12 conformance before
+publishing package `0.1.0`; passing component tests or building a development
+package does not establish complete runtime qualification.
 
 Interceptor's native APIs remain separately versioned; Operator is the adapter.
 This contract introduces no additional lifecycle service, gateway, harness restart

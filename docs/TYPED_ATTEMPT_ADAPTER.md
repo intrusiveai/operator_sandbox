@@ -2,7 +2,7 @@
 
 `internal/attemptadapter` connects validated shared attempt requests to the durable
 native executor. The [campaign service](CAMPAIGN_SERVICE.md) now supplies its live
-callbacks; campaign start CLI and Docker launch remain separate work.
+callbacks; the campaign start CLI and Docker launcher provide orchestration.
 
 ## Preparation
 
@@ -72,7 +72,8 @@ After terminal failure, the ordinary executor stops. Its confirmed-created handl
 are available to the separate bounded terminal-cleanup controller; `Run` does not
 reopen execution to perform cleanup or collect additional failure feedback.
 The campaign service wires independent termination, native closure and bounded
-terminal cleanup. Reporting-only evidence provenance and publication remain pending.
+terminal cleanup. The [evidence service](EVIDENCE_SERVICE.md) implements reporting-only provenance
+and publication; [retained reporting/export](REPORTING.md) consumes verified evidence.
 Final attempt receipt publication is performed by the broker before any reply.
 
 Tests exercise all these translations and failure boundaries against a scripted

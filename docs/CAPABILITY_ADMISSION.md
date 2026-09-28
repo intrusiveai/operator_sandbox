@@ -54,7 +54,7 @@ configuration and native provenance stay out of public execution choices.
    must evaluate actual scopes/routes; it must not populate decisions simply by
    copying every exported capability. `attemptadapter.Resolve` now implements
    concrete operation/injection scope resolution and derives this policy. Its
-   configuration and campaign preparation wiring remain broker work.
+   configuration and campaign preparation wiring are implemented by the host service.
 5. `Check` compares the unchanged bundle and verified authoring/live exports.
    Required dependencies must be usable. Optional dependencies and suggestions
    yield sorted, explained gaps; unavailable optional objective/scenario routes
@@ -73,7 +73,7 @@ withholds that kind. The native profile remains unchanged for native requests.
 The implementation tests the profile/allowed-kind portions of all shared feedback
 translation vectors. The [feedback projection](FEEDBACK_PROJECTION.md) additionally
 tests all complete vectors and implements selection, byte filtering and immutable
-receipt reads. Durable receipt publication remains broker work.
+receipt reads. The [attempt broker](ATTEMPT_BROKER.md) implements durable receipt publication.
 
 Recheck readiness, current policy and compatibility before launch; keep the result
 and live execution projection with immutable inputs. Later effects still require

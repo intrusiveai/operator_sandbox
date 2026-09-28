@@ -179,7 +179,7 @@ use an independent byte-set oracle. Regenerate with
 `python3 scripts/generate_loop_fixtures.py`.
 
 These helpers have no persistence, provider/network I/O, native execution or
-container lifecycle. Dispatcher integration must add saved-result lookup,
+container lifecycle. The host service and harness dispatcher now integrate saved-result lookup,
 durable host accounting, verified event sources, bounded histories, actual
 correlated result segments, timers and independent termination. Full fake-broker /
 fake-harness transport conformance and runtime qualification remain outstanding.

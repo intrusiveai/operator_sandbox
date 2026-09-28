@@ -90,7 +90,7 @@ establish a parent, thread or known turn.
 
 The shared contract requires the harness to skip later calls from the model response
 containing a successful restore. This host stage MUST preserve the correlated
-transition result; the future harness dispatcher MUST produce explicit skipped-call
+transition result; the harness dispatcher MUST produce explicit skipped-call
 results. No extra revision acknowledgement is required.
 
 ## Validation boundary
@@ -102,6 +102,6 @@ tests MUST continue on the same launch with increasing channel sequences through
 restore and subsequent attempts.
 
 These tests use real host journals, shared validators and file spools with scripted
-native/Docker peers. Live runtime qualification remains separate. Artifact upload,
-model relay, assessment/conclusion/stop dispatch and launcher/control integration
-remain subsequent service stages.
+native/Docker peers. Artifact upload, model relay, assessment/conclusion/stop
+dispatch and launcher/control integration are implemented. Complete process/native
+qualification remains outstanding.

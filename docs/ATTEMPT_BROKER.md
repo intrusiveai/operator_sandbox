@@ -65,7 +65,7 @@ Its separate post-closure controller uses confirmed handles, bounded deadlines
 and pre-reserved audit capacity without reopening guest admission or bypassing the
 ordinary executor's fence. It also wires native closure and independent Docker
 termination. The [state service](SNAPSHOT_SERVICE.md) coordinates healthy restore
-and rebinding. Remaining ordinary routes are the next service stage.
+and rebinding. All 13 ordinary routes now have service handlers.
 
 Tests use the real journal, compiled attempt adapter and scripted native peer.
 They cover rejection numbering, duplicate concurrency, publication/settlement loss,

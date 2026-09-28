@@ -8,7 +8,7 @@ It does not start a campaign or
 serve as the harness-facing policy broker. Shared Operator/Attack Harness schemas
 and Interceptor's existing API are unchanged.
 The [phase handoff](IMPLEMENTATION_STATUS.md) summarizes completed scope and the
-remaining host interpretation, campaign-broker and runtime gates.
+implemented host/broker integration and remaining live qualification gates.
 
 The authoritative native contracts remain Interceptor's
 [local integration guide](../../interceptor_sandbox/docs/local-api.md) and
@@ -25,7 +25,7 @@ Requests use POST and JSON, with `Accept-Encoding: identity`. Redirects and enco
 responses are rejected. Response headers are bounded to 16 KiB. This initial client
 bounds both complete JSON request and response envelopes to **5 MiB**, checking
 actual response reads even when Content-Length is absent or incorrect. Larger
-artifact envelopes are not supported by this stage; future artifact admission must
+artifact envelopes are not supported by this stage; artifact admission MUST
 account for base64/envelope overhead and this client ceiling before dispatch.
 Evidence archives use the separate streaming transfer described below.
 Snapshot list/inspect responses have the narrower native **4 MiB** complete-envelope
@@ -94,8 +94,9 @@ The returned `Attachment` contains a small routing projection plus the original
 native metadata/capability JSON for host validation and audit. These are protected
 host data: session metadata can include host paths. They are never a guest response.
 Full native capability digest verification, native-to-public capability projection,
-feedback narrowing and target admission remain required adapter work; matching
-declared digests alone does not establish those properties.
+feedback narrowing and target admission are implemented by the host
+[capability](CAPABILITY_ADMISSION.md) and [attempt](TYPED_ATTEMPT_ADAPTER.md) layers;
+matching declared digests alone does not establish those properties.
 
 `Client.Status(ctx, campaignID)` checks the integrated instance ID, active binding,
 retained session membership, phase, closure/store flags and optional terminal
@@ -286,9 +287,10 @@ evidence or declaring completeness, run the structural inspection below, then
 verify native manifests/journal hashes,
 campaign/session lineage and native completeness markers. The receipt identifies
 the requested session; archive identity is not established by the HTTP digest.
-This stage does not extract archives, publish evidence, expose it to the harness,
-or implement final reports/import/recovery. `StageEvidence` accepts host-selected retained streams for this same verifier;
-the administrative import CLI remains pending.
+This client does not extract archives or expose protected native evidence to the
+harness. `StageEvidence` accepts host-selected retained streams for the same
+verifier. [Evidence retention](EVIDENCE_SERVICE.md), [offline import](EVIDENCE_IMPORT.md),
+[reporting](REPORTING.md) and [recovery](STARTUP_RECOVERY.md) are implemented callers.
 
 ### Archive inspection without extraction
 
@@ -318,9 +320,10 @@ footers, trailing payloads, concatenated archives and extra padding are rejected
 Structural success is deliberately distinct from native evidence validity. Native
 JSON version/identity checks, journal chains, manifest/reference checks, execution
 records and completeness/provenance interpretation remain a separate verifier gate.
-Until that gate exists, inspected archives remain uncommitted temporary inputs.
+The implemented `VerifyProvenance` gate below supplies those checks; structural
+inspection alone leaves archives as uncommitted temporary inputs.
 
-## Validation and pending integration
+## Validation and integration status
 
 Tests use copied native fixtures with [recorded provenance](../internal/interceptor/testdata/README.md),
 controlled responses and a real loopback HTTP test server. They cover exact native
@@ -351,7 +354,8 @@ mutation and uses reconciliation only for cleanup after uncertainty.
 Native provenance validation and publication are implemented by the verifier and
 [campaign evidence service](EVIDENCE_SERVICE.md). Typed experiment routing,
 capability/policy checks, reconciliation, polling and terminal fencing have host
-library integrations. Production campaign start and Docker launch remain pending.
+library integrations. Installed campaign preparation/start and Docker launch are
+implemented; live Interceptor/host qualification remains outstanding.
 
 ### Native provenance verification
 

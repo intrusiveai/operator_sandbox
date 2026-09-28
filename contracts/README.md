@@ -193,25 +193,17 @@ receipt checks, preserved argument strings and provider qualification limits.
 
 Structural validation is one gate. Receipt lookup, operation identity, digests,
 cross-field constraints, authorization, profile filtering and lifecycle rules
-still require semantic validators. Schema `format` annotations are not a substitute
-for those checks. This library is not yet sufficient to admit campaign execution.
+are covered by additional semantic validators and host runtime policy checks.
+Schema `format` annotations are not a substitute for those checks; structural
+validation alone cannot admit campaign execution.
 
-Before publishing `0.1.0`, qualify the first native model route and package its
-codec/tool projections; complete the operation registry,
-native identity verification, typed message bindings, distribution/install tooling
-and the full shared conformance suite. Package manifest/digest verification is
-implemented, but publication remains gated on that work. Message framing and
-sequence/ACK checks are implemented. The separate
-[host transport layer](../docs/HOST_TRANSPORT.md) implements physical FIFO/spool
-I/O, bounded queues and transport/startup/operation/campaign timers. Python peer
-I/O and full fake-broker/fake-harness integration tests remain outstanding. No changes to
-Interceptor's native API are needed for this foundation.
-Attempt bookkeeping and finite-loop/progress/finalization accounting have shared
-semantic traces. The separate [host persistence foundation](../docs/CAMPAIGN_PERSISTENCE.md)
-now defines the host-private RunManifest and implements durable journal writes and
-recovery inspection. The [durable attempt layer](../docs/DURABLE_ATTEMPT_ADMISSION.md)
-connects attempt counters/results to that journal with audit-capacity reservations,
-free-space checks and a terminal fence. The [Docker termination layer](../docs/DOCKER_TERMINATION.md)
-adds independent stop confirmation, an administrative CLI and bounded emergency
-records. Native dispatch, model/other-operation accounting, launcher/observer integration, event-source verification and
-progress/finalization timer integration remain outstanding.
+The 13-operation registry, native identity verification, typed message bindings,
+all five native codec families and package build/check tools are implemented.
+Shared semantic fixtures pass in Go and Python. The physical host/Python transports,
+durable journals, native/model dispatch, accounting, launch/termination observers
+and progress/finalization timers are integrated. Before publishing `0.1.0`, complete
+the required shared process conformance, first native model-route qualification
+and distribution/install tooling. Full provider/target and native host
+qualification remain separate release gates. Package integrity checks and
+component tests alone do not qualify a runtime. See
+[current implementation status](../docs/IMPLEMENTATION_STATUS.md) for remaining work.

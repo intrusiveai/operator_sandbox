@@ -67,4 +67,5 @@ retries are governed separately and remain disabled.
 Tests exercise all backend request/selection rules with synthetic peers, including
 Vault over local TLS, sink rotation, Proxy mode, checksum failures, redaction and
 cancellation. They do not establish cloud connectivity or live workload identity
-qualification. Provider wiring and lifecycle audit remain separate integration work.
+qualification. Installed provider wiring is implemented. Credential-resolution lifecycle audit
+and live secret-store qualification remain outstanding.

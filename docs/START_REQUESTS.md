@@ -55,7 +55,8 @@ must be reconciled before purge; deletion must not make a pending job executable
 Tests cover immutable replay/conflict, concurrent claims, acceptance/completion
 ordering, partial/corrupt/unsafe files, competing publication and a claimed child
 process killed without cleanup. Run-directory links and the fixed worker entrypoint are now implemented;
-OS supervisor submission remains the next integration.
+[OS supervisor submission](CAMPAIGN_START.md) is implemented. Reconciliation of
+the pre-claim service-registration window remains outstanding.
 
 ## Run-directory links and worker dispatch
 

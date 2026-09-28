@@ -3,9 +3,9 @@
 Status: agreed container contract; native/effective profile mapping updated
 2026-09-21. Operator's [host adapter and projection](../docs/FEEDBACK_PROJECTION.md)
 now implement selection, native receipt checks, filtering and bounded reads.
-Durable receipt publication, campaign service wiring and the harness runtime
-remain implementation work. The current attempt request/result schemas define this
-integration.
+Durable receipt publication, campaign service wiring and harness feedback handling
+are implemented; complete process/native qualification remains outstanding.
+The current attempt request/result schemas define this integration.
 `catalog.json` maps their absolute schema URNs to local files for offline resolution.
 Closed schemas validate structure; the semantic rules below also require validators.
 

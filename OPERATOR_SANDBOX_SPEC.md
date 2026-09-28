@@ -1,7 +1,7 @@
 # Intrusive AI Operator Sandbox Product Specification
 
-Status: initial container-based design draft; not implemented or qualified  
-Date: 2026-09-19  
+Status: core runtime implemented; remaining workflows, release publication and full runtime qualification outstanding\
+Date: 2026-09-28\
 Product API family: `operator.dev`; existing data schemas remain individually versioned  
 Container runtime profile: `operator-container/v1` — Docker with Linux FIFO / macOS file-spool transport; qualification pending
 
@@ -26,12 +26,15 @@ The accepted [shared host/harness contract](schemas/SHARED_CONTRACT.md) is the
 single authority for the pipe envelope, identities, startup/manifest exchange,
 deadlines, errors, restore results and completion. Operator owns its versioned
 `operator-contracts` package; both ends pin its version and content digest.
-Package publication, Go/Python conformance and runtime implementation remain
-outstanding. MUST denotes a requirement, not proof of implementation.
+Closed schemas, Go/Python validators and shared fixtures, and the host/harness runtimes
+are implemented. Package publication and complete process/native conformance remain
+outstanding. See [current implementation status](docs/IMPLEMENTATION_STATUS.md) for
+completed work and remaining gates. MUST denotes a requirement, not proof of acceptance.
 
 The [host transport implementation](docs/HOST_TRANSPORT.md) supplies FIFO/spool
 I/O, bounded queues, deadlines and confirmed-exit transport cleanup. Its integration
-with Docker, startup verification and the durable broker remains implementation work.
+with Docker, startup verification and the durable broker is implemented and tested
+with scripted peers; full native host qualification remains outstanding.
 
 ## 2. Principal requirements and boundaries
 
@@ -118,7 +121,8 @@ Interceptor run on the same physical machine and use its local Docker installati
 A small release-owned native component may install Python's final confinement.
 The [host runtime profiles](HOST_RUNTIME_PROFILES.md) define the support matrix,
 confirmed supported versions, selected MVP controls and remaining implementation
-gates. Initial feasibility testing remains pending; OS/Docker versions are not an
+gates. Selected service/confinement probes have passed; complete production-image
+testing on all four host tuples remains outstanding. OS/Docker versions are not an
 admission allowlist.
 
 ### 3.2 Security properties and limits
@@ -344,7 +348,7 @@ The [image preparation layer](docs/IMAGE_PREPARATION.md) implements local native
 image resolution, selector/pin rechecks, fixed-origin release lookup and private
 cache validation. The [host configuration loader](docs/HOST_CONFIGURATION.md)
 implements private YAML loading and read-only CLI validation. Embedded release-file
-inspection and container creation/start remain launcher integration work.
+inspection and container creation/start are integrated into the installed launcher.
 
 ### 5.1.2 Spool size configuration
 
@@ -699,7 +703,8 @@ truncated and whether all requested categories were collected. The harness must
 pass decoded permitted content and limitations into model context, label summaries
 and omitted ranges, and verify full-object hashes only for fully assembled bytes.
 See the shared contract for exact schemas, category states, boundary and retention
-semantics. This is an agreed spec; Operator broker/SDK implementation remains pending.
+semantics. Operator broker and Attack Harness feedback handling are implemented;
+complete live integration qualification remains outstanding.
 
 ### 8.2 Interceptor integration
 
@@ -1605,12 +1610,12 @@ and the [shared spool rules](schemas/SHARED_CONTRACT.md#41-macos-file-spool-wire
 Use Section 10.2 Docker termination, then remove resources only after confirmed exit.
 No worker/daemon recovery resumes failed campaign execution.
 
-Implement the accepted [shared contract](schemas/SHARED_CONTRACT.md): author the
-remaining closed schemas, catalog/registry, semantic validators and shared Go/Python
-vectors. Publish `operator-contracts` 0.1.0 only after both runners pass, before
-independent host/guest integration. Approval fixes the design, not implementation status.
-Raw byte digests, Operator canonical-object digests, OCI digests and native
-Interceptor digests are separate recipes. Release/runtime claims require tests.
+The accepted [shared contract](schemas/SHARED_CONTRACT.md) has closed schemas, an
+offline catalog/registry, semantic validators and shared Go/Python vectors. Package
+build/check tooling and runtime integration are implemented. Publish
+`operator-contracts` 0.1.0 only after both runners and the required conformance
+gates pass. Raw byte digests, Operator canonical-object digests, OCI digests and
+native Interceptor digests are separate recipes. Release/runtime claims require tests.
 
 ## 14. Implementation sequence
 
@@ -1630,15 +1635,17 @@ Interceptor digests are separate recipes. Release/runtime claims require tests.
 6. **Release gates:** real providers, cross-architecture containment, crash/fault
    tests, installation/offline updates, capacity and end-to-end usability.
 
-Nothing in this draft is marked implemented. Do not substitute mock/schema
-success for native container, journal, provider or Interceptor evidence.
+The [implementation status](docs/IMPLEMENTATION_STATUS.md) records completed
+components and remaining work against this sequence. Component and scripted-peer
+tests do not replace native container, provider or Interceptor qualification.
 
 ## 15. Acceptance criteria
 
-The `OC-AC` implementation acceptance criteria are
-currently **not implemented / not run**. Unit/contract tests complement the named
-native gates; final schemas must expand boundary cases rather than merely mirror
-implementation code.
+The `OC-AC` criteria below remain the acceptance contract. Many components have
+passing unit, contract and scripted integration tests; the complete acceptance
+matrix has not passed. See [implementation status](docs/IMPLEMENTATION_STATUS.md)
+for evidence and outstanding gates. Unit/contract tests complement the named
+native gates; schemas must cover boundary cases rather than merely mirror code.
 
 | ID | Required evidence |
 |---|---|
@@ -1676,7 +1683,9 @@ implementation code.
 | OC-AC-032 | Per-campaign and all-campaign purge remove complete managed evidence without cross-campaign dependencies; active/read/export/report work blocks deletion. Retention is administrator-controlled; external exports/configuration/images survive; missing evidence and partial deletion are explicit. |
 | OC-AC-033 | macOS caffeinate assertion is verified before execution, remains continuous through healthy restore, and releases after cleanup or host exit. Display sleep/lock remain allowed. Helper loss, changed/unreadable sleep state, logout and Docker interruption close admission and trigger independent Docker termination with retained uncertainty. Idle evidence service does not inhibit sleep; recovery never resumes execution. |
 
-Gap 7 retains initial implementation/feasibility tests and the remaining service
-decision. [Host profiles](HOST_RUNTIME_PROFILES.md) record the confirmed supported
-versions, selected Docker/seccomp baseline and accepted spool rules. Runtime capability checks enforce
-required behavior without an OS/Docker version certification allowlist.
+The host-service decisions are resolved and service submission/lifecycle handling
+are implemented. Installation packaging and full four-host runtime qualification
+remain outstanding. [Host profiles](HOST_RUNTIME_PROFILES.md) record the confirmed
+supported versions, selected Docker/seccomp baseline and accepted spool rules.
+Runtime capability checks enforce required behavior without an OS/Docker version
+certification allowlist.

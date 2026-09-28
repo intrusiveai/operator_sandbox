@@ -1,7 +1,8 @@
 # Explicit injection cleanup contract
 
-Status: accepted container contract. Operator and Attack Harness runtime implementation is
-pending. The closed request/result schemas are registered in `catalog.json`;
+Status: accepted container contract. Operator cleanup dispatch and Attack Harness
+tool handling are implemented; complete live integration qualification is outstanding.
+The closed request/result schemas are registered in `catalog.json`;
 these semantic rules also require host validation and package conformance tests.
 
 ## Tool and wire shape
@@ -119,4 +120,5 @@ positive/negative vectors are in `fixtures/injection-cleanup.json`.
 
 Run structural checks with `python3 schemas/validate_cleanup_fixtures.py`
 from the Operator directory, with the `jsonschema` package installed. This does
-not substitute for the pending host/guest semantic conformance runners.
+not replace the shared semantic/broker suites or complete process/native
+qualification. See [implementation status](../docs/IMPLEMENTATION_STATUS.md).

@@ -2,8 +2,8 @@
 
 This document defines the implemented launch-input schemas and Go/Python validation.
 It supplements [startup/manifests](STARTUP_MANIFEST_CONTRACT.md) and the
-[shared contract](SHARED_CONTRACT.md). Runtime preparation, provider codecs,
-contract package publication remain separate work. Canonical verification is
+[shared contract](SHARED_CONTRACT.md). Runtime preparation and all five native provider codec families are implemented;
+contract package publication and full runtime qualification remain outstanding. Canonical verification is
 implemented by the additional [identity validation layer](CANONICAL_IDENTITY_CONTRACT.md).
 
 ## EngineContext

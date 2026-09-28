@@ -33,4 +33,5 @@ Tests use a scripted provider with real launch validation and durable journals.
 They cover frozen-policy rejection, usage settlement, duplicate replay across
 restore, turn exhaustion, lost replies, missing usage, response-model mismatch,
 input-token bound violations, oversized responses and independent cancellation.
-The [host provider transports](MODEL_PROVIDERS.md) and [credential resolver](CREDENTIALS.md) now implement private profile loading and native transport dependencies. Service startup still needs their concrete wiring. Additional Go/Python codecs and live provider qualification remain integration work.
+The [host provider transports](MODEL_PROVIDERS.md) and [credential resolver](CREDENTIALS.md) now implement private profile loading and native transport dependencies. Installed service startup wires both dependencies. All five native Go/Python codec
+families are implemented; live provider qualification remains outstanding.

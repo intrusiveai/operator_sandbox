@@ -3,7 +3,7 @@
 Status: implemented in `internal/staging`. This stage copies prepared inventory
 bytes into service-owned directories for the three read-only Docker mounts. The
 campaign preparation CLI, input admission, launch binding and Docker mount wiring
-remain integration work. Shared Operator/Attack Harness schemas are unchanged.
+are implemented callers. Shared Operator/Attack Harness schemas are unchanged.
 
 ## Preparation interface
 
@@ -97,8 +97,8 @@ do not prevent the host owner from changing backing files.
 Failed creation attempts remove their own partial directory. If cleanup fails, the
 error identifies the retained stage path and no usable `Tree` is returned. A host
 crash can leave an orphan; startup recovery must treat unbound stages as cleanup
-work, never resume them or infer campaign acceptance from a receipt. Recovery
-enumeration and durable campaign association remain launcher integration work.
+work, never resume them or infer campaign acceptance from a receipt. [Startup recovery](STARTUP_RECOVERY.md) now verifies durable campaign association
+and cleans abandoned transient resources without resuming execution.
 
 `Tree.Discard()` verifies the wrapper inode, restores directory write permissions
 and deletes that exact tree. Call it only before mounting or after independently

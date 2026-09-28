@@ -112,7 +112,7 @@ lost create/start replies, unconfirmed termination, durable startup uncertainty,
 single-use execution and cleanup. Linux FIFO I/O has separate transport tests.
 These tests do not qualify an actual Docker/Python deployment.
 
-The next executable-service boundary supplies administrative run preparation,
-production model-provider configuration, accepted-start deduplication, single-host
-campaign serialization, signal handling and systemd/LaunchAgent installation. No
-`operatorctl campaign start` command is exposed by this library boundary yet.
+[Installed campaign preparation/start](CAMPAIGN_START.md) supplies administrative
+run preparation, provider/credential binding, accepted-start deduplication,
+single-host campaign serialization, signals and systemd/LaunchAgent submission.
+Host installation packaging and full native qualification remain outstanding.

@@ -127,8 +127,8 @@ campaign deadlines, malformed paths, size excess, and confirmed-exit cleanup.
 Cancellation is tested while the I/O mutex is held. Fake monotonic clocks make
 deadline boundary tests deterministic.
 
-Docker launch/permission/confinement qualification, the Python peer, full Go/Python
-physical exchanges remain subsequent work. The host worker now connects broker
+The Python physical peer is implemented. Complete Go/Python process exchanges and
+Docker launch/permission/confinement qualification remain outstanding. The host worker now connects broker
 dispatch and durable traffic audit. Transport schedules transfer, startup, idle,
 operation and campaign deadlines; the service separately bounds finalization.
 Meaningful model-loop progress remains an Attack Harness responsibility. No Docker

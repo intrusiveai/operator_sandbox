@@ -2,8 +2,8 @@
 
 Status: implemented in `internal/campaignservice`, with integration tests in
 `internal/preparation`. This host library connects frozen preparation, ordinary
-attempt/feedback/cleanup dispatch, transport and terminal handling. Campaign start
-CLI and Docker creation/bootstrap are subsequent implementation stages.
+attempt/feedback/cleanup dispatch, transport and terminal handling. [Campaign start CLI](CAMPAIGN_START.md) and
+[Docker creation/bootstrap](HOST_LAUNCH.md) are implemented callers.
 [Snapshot/restore](SNAPSHOT_SERVICE.md), [artifacts](ARTIFACT_SERVICE.md),
 [model relay](MODEL_SERVICE.md) and [assessment/completion](COMPLETION_SERVICE.md)
 are implemented on this foundation.
@@ -90,7 +90,7 @@ Callers MUST treat successful `Wait` as completion of the controllers, not proof
 that every outcome was confirmed; they MUST inspect both returned result records
 and writer failure state. A caller's wait timeout MUST NOT cancel the Docker observer.
 
-## Validation and next boundary
+## Validation and integration status
 
 Tests join real preparation, manifests, journals, the ordinary broker and physical
 file-spool transport to a scripted native peer and Docker termination interface.
@@ -100,9 +100,9 @@ native status loss, blocked ordinary work, closure uncertainty, confirmed-inject
 cleanup and lost deletion replies. These tests do not qualify Docker or a live
 Interceptor/Attack Harness deployment.
 
-The ordinary service routes and bounded graceful finalization are implemented.
-Reporting, Docker launch/control orchestration,
-OS service lifetime and runtime qualification remain required follow-on work.
+The ordinary service routes, bounded graceful finalization, reporting, Docker
+launch/control and OS service lifetime handling are implemented. Host installation
+packaging and full runtime qualification remain outstanding.
 
 ## Native evidence collection
 

@@ -1,12 +1,13 @@
 # Operator Sandbox Container Guest Contract
 
-Status: container design draft, 2026-09-16; no image, launcher or harness qualified  
+Status: container ABI, launcher and harness implemented, 2026-09-28; full production runtime qualification outstanding\
 Owner: this container design; paired with [the product specification](OPERATOR_SANDBOX_SPEC.md)
 
 The accepted [shared host/harness contract](schemas/SHARED_CONTRACT.md) governs
 wire semantics and data exchange. This document defines runtime responsibilities;
-the package, validators/fixtures and actual launcher remain to be implemented and
-qualified. Both ends must pin the exact package version and content digest.
+the package, validators/fixtures and actual launcher are implemented. Approved
+release publication and full runtime qualification remain outstanding; see
+[current implementation status](docs/IMPLEMENTATION_STATUS.md). Both ends must pin the exact package version and content digest.
 
 ## 1. Decisions
 
@@ -468,7 +469,9 @@ Python operation and denied bypasses, Linux FIFO opening/EOF, macOS spool isolat
 atomicity/bounds, descriptor leakage, mount/network state, journal failure handling,
 worker-independent Docker kill and image/release-cache drift on all four supported
 Linux/macOS host tuples. Docker API/VM failure must report unconfirmed termination. Keep startup-only exceptions distinguishable
-from live permissions. All such tests remain unimplemented and unrun.
+from live permissions. Component and scripted-peer tests cover portions of these requirements; the
+complete production-image/native host matrix remains outstanding. See
+[current implementation status](docs/IMPLEMENTATION_STATUS.md) for evidence boundaries.
 D1 is resolved: Docker mounts/permissions and two-stage seccomp are the MVP controls.
 Spool write access is limited to the fixed outbound transport view. These checks
 verify implementation behavior; no recurring OS/Docker version matrix is required.

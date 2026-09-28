@@ -10,7 +10,7 @@ remains authoritative. These host-only records do not change the shared wire pac
 ## Preparation interface
 
 The [host configuration loader](HOST_CONFIGURATION.md) supplies installation
-settings to the future launcher/preparation command:
+settings to the installed launcher/preparation command:
 
 - The configured `engine.image` selector and selected local Unix Docker endpoint.
 - The actual host platform and installed `operator-container/v1` policy identity.
@@ -26,8 +26,9 @@ immutable copy of the approved response bytes. A cached approval alone cannot
 satisfy a missing local image. Close the client after preparation calls finish.
 
 The [installed contract loader](INSTALLED_CONTRACT.md) now supplies filesystem
-verification and a pinned protocol. Distribution-supported package/version selection
-and exposing preparation through the campaign CLI remain integration work. No caller
+verification and a pinned protocol. Preparation is exposed through the campaign
+CLI. Production distribution-supported package/version metadata remains release
+work. No caller
 can configure a different release URL or TLS policy through this API.
 
 ## Read-only Docker resolution
@@ -53,8 +54,8 @@ budget, shortened by the caller's deadline; it uses bounded output.
 Before accepting prepared inputs, `VerifySelection` resolves their original selector
 again. A different image or daemon requires re-preparation and revalidation.
 Once a campaign is accepted, `VerifyImage` checks availability by its immutable ID
-and saved daemon. It does not follow subsequent tag changes. The future launcher
-must create by that ID with pulling forbidden and inspect the created container's
+and saved daemon. It does not follow subsequent tag changes. The launcher
+MUST create by that ID with pulling forbidden and inspect the created container's
 image before start.
 
 ## HTTPS approval and compatibility
@@ -122,13 +123,13 @@ responses, canceled lookups, cache corruption, link handling, failed publication
 concurrent writes and compatible offline reuse. Docker and HTTPS are controlled
 test doubles; they do not qualify a production image, Docker host or release service.
 
-Before launch, implement immutable engine-file inspection without guest execution,
-verify the embedded manifest/package against this approval, prepare/freeze campaign
-inputs through the [host staging layer](INPUT_STAGING.md), enforce fixed Docker
-policy and complete confinement/startup checks. The
-image build, live Python confinement and full host/runtime qualification remain
-separate work. A release record identifies installed runtime policy; it supplies
-no executable code, Docker flags, filesystem mounts or downloaded shared contract.
+The installed launcher inspects immutable engine files without guest execution,
+verifies the embedded manifest/package, freezes inputs through the
+[staging layer](INPUT_STAGING.md), and enforces Docker/startup policy. Attack Harness
+image candidates are built; approved image publication and full production-image
+confinement/host qualification remain outstanding. A release record identifies
+installed runtime policy; it supplies no executable code, Docker flags, filesystem
+mounts or downloaded shared contract.
 
 ## Embedded metadata and launch-input binding
 

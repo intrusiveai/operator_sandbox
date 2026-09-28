@@ -152,11 +152,11 @@ signal it. `Writer.Close` also closes the signal. The first reason remains stabl
 
 Unknown outcomes signal before attempting their result write. Admission and
 dispatch methods recheck the signal after committing, so a stop during persistence
-does not produce a fresh dispatch grant. The future executor must check it again
+does not produce a fresh dispatch grant. The executor MUST check it again
 at the external-call boundary. The runtime must observe the signal and initiate
 independent Docker termination without waiting for more journal work; that Docker
 handler is now available in the [Docker termination layer](DOCKER_TERMINATION.md);
-the future launcher must arm it before admission.
+the launcher MUST arm it before admission.
 
 Committed duplicates remain identifiable. Uncommitted in-memory transitions never
 produce success responses, and a failed ledger cannot admit more work. Read-only
@@ -173,11 +173,10 @@ reservation competition, free-space exhaustion and failed writes at every bounda
 They also verify a terminal signal while the journal mutex is held, stop during
 dispatch persistence, and abrupt process exit with a dispatched unknown operation.
 
-Remaining runtime work includes the broker's actual transport/envelope audit,
-service wiring for the implemented authorization/native adapter and its step audit,
-model/other-operation accounting,
-progress/finalization timer integration and wiring the implemented
-[emergency records/Docker observer](DOCKER_TERMINATION.md) into launch and dispatch.
-The [host transport layer](HOST_TRANSPORT.md) now
-supplies FIFO/spool queues and startup/transfer/operation/campaign timers. None of the
-new APIs starts a container or sends a native request.
+The broker now integrates transport/envelope audit, native authorization/dispatch
+and step audit, model/ordinary-operation accounting and service finalization timers.
+The launcher arms the [Docker observer](DOCKER_TERMINATION.md) before admission.
+The [host transport layer](HOST_TRANSPORT.md) supplies physical queues and
+startup/transfer/operation/campaign timers. This bookkeeping package itself does
+not start containers or send native requests. Full runtime qualification remains
+outstanding.

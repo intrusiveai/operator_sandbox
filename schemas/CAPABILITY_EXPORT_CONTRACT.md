@@ -4,9 +4,10 @@ Status: accepted MVP contract, 2026-09-21. The closed public capability and bund
 schemas are in the offline catalog. The Go host capability/bundle library verifies
 and projects native exports, checks compatible submissions and preserves live
 binding/policy records; see the [implementation guide](../docs/CAPABILITY_ADMISSION.md).
-The fixture runner checks the reference chain. CLI/broker integration, complete
-Go/Python publication conformance and runtime qualification remain implementation
-prerequisites. Existing Attack Harness tool schemas are unchanged.
+The fixture runner checks the reference chain. Submission/validation/start and
+broker integration are implemented.
+The public capability-export CLI, complete process/native conformance and package
+publication remain outstanding. Existing Attack Harness tool schemas are unchanged.
 
 ## 1. Public export
 
@@ -169,6 +170,7 @@ bundle. Run `python3 schemas/validate_capability_fixtures.py` with `jsonschema`.
 Positive/negative checks include objectives-only input, required/optional refs,
 namespace mistakes, source/projection integrity, unrelated live changes and exact
 pins. The fixture mapper is a conformance aid, not a production authorization layer.
-Full runtime policy/route checks, Go/Python SDK generation, general JCS validation
-and end-to-end Operator/Attack Harness execution remain the shared publication/implementation
-gates. This contract does not claim that those systems are implemented.
+Native runtime policy/route checks and Go/Python structural, semantic and JCS
+validation are implemented. Public capability-export CLI integration, complete
+Operator/Attack Harness process tests, live target qualification and release
+publication remain outstanding. See [implementation status](../docs/IMPLEMENTATION_STATUS.md).

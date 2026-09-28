@@ -3,18 +3,22 @@
 Date: 2026-09-21. Scope: current working-tree specifications, schema files and
 Interceptor implementation. External scenario-generation services are excluded.
 This review changes no product requirements, runtime code or existing contracts.
-Operator and Attack Harness are not implemented, so findings distinguish an existing native
-response conflict from rules that must be settled before their implementation.
+At the time of this review, Operator and Attack Harness were not implemented.
+The original findings and test observations below retain that historical context.
+
+**Current status (2026-09-28):** the core Operator and Attack Harness runtimes are
+implemented. C1–C5 have code/contract resolutions; complete live integration
+qualification remains outstanding. See [current implementation status](../docs/IMPLEMENTATION_STATUS.md)
+for the remaining workflows and release gates.
 
 ## Summary
 
-The closure response conflict is fixed; the feedback translation and public
-capability/bundle contracts are resolved. C5's configurable archive limit is
-implemented in Interceptor and specified for Operator. C3 remains open below. Operator's
-adapters and full shared-package conformance still need implementation.
-The normal transport/startup/restore/completion design is mutually
-consistent in the inspected documents. That is a static conclusion, not proof of
-an operational end-to-end connection.
+The closure shape, feedback translation and public capability/bundle contracts are
+resolved. Operator implements their native adapters, status polling and evidence
+collection/import. Shared schemas/validators/fixtures are implemented. Full process
+conformance and live target qualification remain outstanding; the historical
+static review and component tests below do not establish an operational
+end-to-end deployment.
 
 ## C1. Closure response changes shape when the target stops
 
@@ -57,8 +61,8 @@ Attack Harness and Interceptor integration documents agree on this mapping. All 
 translation fixtures pass, covering all nine native/requested combinations plus
 host/selection narrowing. Interceptor's `TestFeedback*` tests pass, including the
 new diagnostic-session narrowing and retained-read regression test. No native
-runtime change was needed. Operator adapter implementation and end-to-end
-projection/read enforcement remain pending. The original finding follows.
+runtime change was needed. Operator now implements adapter projection/read
+enforcement; complete live qualification remains outstanding. The original finding follows.
 
 **Adapter contract gap, with native rejection reproduced.** The submitted bundle
 can request black-box feedback against a target configured for diagnostic feedback.
@@ -87,6 +91,11 @@ states. Test all requested/native combinations and same-campaign retained reads.
 Do not restart a target merely to narrow the harness's view.
 
 ## C3. No required Operator observation loop for independent target failure
+
+**Implementation update (2026-09-28):** the [campaign service](../docs/CAMPAIGN_SERVICE.md)
+implements independent one-second native status polling and terminal fencing,
+with scripted-peer tests covering status loss during blocked ordinary work.
+Live target qualification remains outstanding. The original finding follows.
 
 **Lifecycle communication gap.** Interceptor updates its local status when a native
 limit, connector failure or target exit occurs. It exposes that information through
@@ -122,9 +131,9 @@ The reference-chain fixture uses the native delivery-example export verified by
 Interceptor's own test, its actual Go digest preimage, a public projection and a
 submitted bundle. All 40 capability/bundle checks pass, including namespace,
 digest, required/optional and compatible-change cases. Component docs agree.
-Production adapters, general JCS/Go/Python validators and runtime qualification
-remain pending; this closes the design/reference ambiguity, not those delivery
-gates. The original finding follows.
+Native production adapters and general JCS/Go/Python validators are now
+implemented. Public capability-export CLI and complete live qualification remain
+outstanding. The original finding follows.
 
 **Input compatibility gap exposed by standalone bundle submission.** Bundle authors
 must provide target/source identity, required capability IDs, action IDs and
@@ -167,8 +176,8 @@ streamed size/hash verification, explicit collection gaps and later retained imp
 The example native client now streams/verifies downloads instead of buffering them.
 Evidence/localapi/hostrun/CLI package tests and example-client tests pass, including
 an archive above the old ceiling, exact boundaries, cleanup and successful later
-export. Tests use native fixtures/fakes, not a Docker campaign. Operator runtime
-collection remains to be implemented. The original finding follows for context.
+export. Tests use native fixtures/fakes, not a Docker campaign. Operator now implements runtime collection, explicit late collection and retained
+archive import; complete live target qualification remains outstanding. The original finding follows for context.
 
 **Capacity gap to decide, not a malformed-response bug.** Interceptor's single
 `/v1/evidence` archive has a hard 256 MiB ceiling. Above that size the API returns
@@ -200,7 +209,7 @@ admitted campaign storage; keep streamed bounded reads and disk checks. Treat
 protected native archives separately from the 16 MiB guest-artifact limit, and
 surface a specific evidence-capacity outcome instead of a generic retryable failure.
 
-## Existing prerequisites, not newly discovered regressions
+## Prerequisites recorded at the original review
 
 - Complete the shared package: envelope/control/startup, manifests, ScenarioBundle,
   capability projection, registry, conclusion/stop schemas, Go/Python validators and
@@ -226,4 +235,5 @@ restore revision adoption and skipped model calls, retained injection cleanup,
 snapshot allowance/metadata, campaign completion and native lifecycle routing.
 Existing native-parent-after-rollback/new-root rules are already documented and are
 not reported as a new gap. No Docker or complete Operator–Attack Harness end-to-end run was
-performed; those components are not implemented in these repositories.
+performed during the original review; those components were not yet implemented
+at that time. Their current status is recorded above.

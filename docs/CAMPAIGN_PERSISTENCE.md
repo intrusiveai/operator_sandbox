@@ -1,8 +1,9 @@
 # Host campaign persistence
 
-Status: implemented in Go under `internal/campaign`. This is the first host runtime
-foundation; it does not yet start Docker, dispatch tools, or run the harness.
-The shared host/harness wire contract and its 56-schema catalog are unchanged.
+Status: implemented in Go under `internal/campaign`. This package provides
+persistence; Docker launch, tool dispatch and harness orchestration are implemented
+in its [host worker](HOST_LAUNCH.md) and [campaign service](CAMPAIGN_SERVICE.md) callers.
+The shared host/harness wire contract remains separately versioned.
 
 ## Immutable launch records
 
@@ -83,9 +84,9 @@ preparations or retained evidence. `os.Root` confines file resolution; readers
 reject symlink/nonregular journal and content files. Private service ownership
 remains essential: corruption hashes are not signatures against that same UID.
 
-The artifacts, revision and report directories are reserved for subsequent host
-components. Final journal/result inventories, evidence exports and administrative
-purge commands remain runtime work.
+Campaign components use the artifacts, revision and report directories for
+retained state. Journal/result inventories, evidence retention and reporting/export
+are implemented. Administrative purge remains outstanding.
 
 ## Append and commit rules
 
@@ -176,8 +177,8 @@ Cancellation stops scanning without changing files or the worker.
 Operations without a committed result are reported as `UNKNOWN`, including
 intent-only operations. The result preserves their last recorded state. Inspection
 never returns execution permission or an open writer. Recovery remains cleanup
-and reporting only, including when all persisted records are intact. Separate
-cleanup/reconciliation recording is still to be integrated with the host lifecycle.
+and reporting only, including when all persisted records are intact. [Startup recovery](STARTUP_RECOVERY.md) now integrates separate cleanup and
+reconciliation records with the host lifecycle.
 
 ## Validation and remaining integration
 
@@ -191,15 +192,12 @@ Run `make test` and `go test -race ./internal/campaign`. The filesystem tests ru
 on the current macOS ARM64 host; cross-compilation checks the other three targets.
 Neither substitutes for Docker/transport qualification or a power-loss test.
 
-The [durable attempt admission layer](DURABLE_ATTEMPT_ADMISSION.md) now persists
-attempt observations/charges/results, reserves their future journal capacity,
-checks filesystem free space and signals a lock-independent terminal fence.
-The [Docker termination layer](DOCKER_TERMINATION.md) now supplies the independent
-kill observer and bounded emergency records. Before real external dispatch, wire
-its terminal-state checks and observer into launch/admission and complete the
-remaining operation/accounting integration.
-The reservations protect the logical write budget; they do not reserve physical
-disk space against other host writers. The [host transport layer](HOST_TRANSPORT.md)
-now implements FIFO/spool I/O, bounded queues, transport/operation deadlines and
-confirmed-exit transport cleanup. The launcher, broker integration, progress/
-finalization timers, report/purge paths and Attack Harness runtime are subsequent stages.
+The [durable attempt admission layer](DURABLE_ATTEMPT_ADMISSION.md) persists
+attempt observations/charges/results, reserves audit capacity, checks free space
+and signals a lock-independent terminal fence. The
+[Docker termination layer](DOCKER_TERMINATION.md) supplies the independent observer
+and emergency records; the launcher and broker integrate terminal checks before
+admission and dispatch. Reservations protect the logical write budget, not physical
+disk space against other host writers. [Transport](HOST_TRANSPORT.md), service
+timers, reporting and Attack Harness runtime integration are implemented. Campaign
+purge and full runtime qualification remain outstanding.

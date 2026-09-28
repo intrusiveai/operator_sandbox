@@ -1,7 +1,9 @@
 # Operator host runtime profiles
 
 Status: platform/transport/termination and MVP containment decisions accepted,
-2026-09-17; file-spool rules accepted; service details and implementation feasibility remain pending.
+file-spool and service-lifetime decisions accepted. Transport, supervised launch and
+lifecycle handling are implemented as of 2026-09-28; installation packaging and
+full native qualification remain outstanding. See [implementation status](docs/IMPLEMENTATION_STATUS.md).
 
 This document supplies the host-specific requirements for `operator-container/v1`.
 The [product spec](OPERATOR_SANDBOX_SPEC.md), [guest contract](GUEST_CONTAINER_SPEC.md)
@@ -22,8 +24,9 @@ independent container termination; those gates below remain open.
 | macOS x86_64 (Intel) | `darwin/amd64` | Docker Desktop | `linux/amd64` | Regular-file spool |
 | macOS ARM64 (Apple Silicon) | `darwin/arm64` | Docker Desktop | `linux/arm64` | Regular-file spool |
 
-These are the supported host OS/architecture targets. Initial Operator/Attack Harness
-implementation and feasibility tests remain pending.
+These are the supported host OS/architecture targets. Operator and Attack Harness
+runtimes are implemented; complete production-image tests on all four tuples
+remain outstanding.
 Cross-architecture emulation, remote daemons and other desktop runtimes are outside
 the initial matrix. Linux Docker Desktop is not the selected Linux profile.
 Docker Desktop runs the Linux guest kernel on macOS; guest paths and Python/syscall
@@ -60,8 +63,8 @@ required versions. The agreed initial entries, selected on 2026-09-17, are:
 | Docker Engine on Linux | 29.8.1 |
 | Docker Desktop on macOS | 4.91.0, including its bundled Engine 29.8.0 |
 
-This records the agreed support baseline; Operator's initial end-to-end feasibility
-tests have not yet run. Sources: [Ubuntu point release](https://lists.ubuntu.com/archives/ubuntu-announce/2026-August/000326.html),
+This records the agreed support baseline. Selected macOS ARM64 service/confinement
+probes have passed; complete production-image feasibility tests remain outstanding. Sources: [Ubuntu point release](https://lists.ubuntu.com/archives/ubuntu-announce/2026-August/000326.html),
 [Apple releases](https://support.apple.com/en-us/100100),
 [Docker Engine releases](https://docs.docker.com/engine/release-notes/29/), and
 [Docker Desktop releases](https://docs.docker.com/desktop/release-notes/#4910).
@@ -315,7 +318,7 @@ D1 is resolved by Sections 1.1–1.2, D2 by Section 2 and shared contract Sectio
 | ID | Decision | Recommended starting point / constraint |
 |---|---|---|
 | D1 | Confirmed supported versions and MVP containment — resolved | Section 1.1 records the informational version baseline. Section 1.2 selects Docker mounts/permissions and two-stage seccomp; additional filesystem policy, separate user-namespace remapping and a kernel-enforced FIFO reopen ban are not required. |
-| D2 | File-spool protocol — resolved | Atomic sequence-named files, cumulative consumption acknowledgements, producer cleanup, 10 ms polling and five-second transport deadlines. Host-process size checks run every second with configurable `spool.max_bytes` (default 512 MiB); excess triggers Docker termination. Shutdown/startup cleanup removes inactive spools. Host transport and launch-worker termination/cleanup integration are available; executable service installation, the Python peer and initial feasibility tests remain pending. |
+| D2 | File-spool protocol — resolved | Atomic sequence-named files, cumulative consumption acknowledgements, producer cleanup, 10 ms polling and five-second transport deadlines. Host-process size checks run every second with configurable `spool.max_bytes` (default 512 MiB); excess triggers Docker termination. Shutdown/startup cleanup removes inactive spools. Host transport and launch-worker termination/cleanup integration are available; supervised service submission and the Python peer are implemented. Installation packaging, complete Go/Python process exchanges and full native qualification remain outstanding. |
 | D3 | Host installation, service identity and lifecycle — resolved | Linux starts with systemd. macOS uses the logged-in Docker Desktop user and a per-user LaunchAgent, private Library configuration/state, and `caffeinate -i -w <pid>` during active work and cleanup. Screen lock is allowed; logout, actual sleep and Docker interruption end execution. Recovery is cleanup/reporting only. See Section 3.1. |
 
 Initial feasibility testing verifies immutable input/skill/manifest publication
@@ -352,5 +355,5 @@ does not impose recurring certification of every OS/Docker version combination:
    and closure on helper failure or a changed sleep/wake marker. Distinguish simulated
    interruptions from tests of physical sleep/logout/Docker restart.
 
-These tests are implementation work. Neither the support matrix nor passing
+The complete native test matrix remains outstanding. Neither the support matrix nor passing
 Interceptor's own tests closes gap 7 without Operator/Attack Harness evidence on these tuples.

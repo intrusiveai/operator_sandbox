@@ -100,8 +100,9 @@ generation identities, visibility, coverage and incomplete-evidence semantics.
 
 Run `make setup` then `make test`. See [startup recovery](docs/STARTUP_RECOVERY.md)
 for cleanup and uncertainty rules, including native attach failures before a
-campaign journal exists. Campaign purge, installation/release publication and
-external runtime qualification remain pending.
+campaign journal exists. Campaign purge, remaining administrative workflows, the HTTPS target adapter,
+installation/release publication and full integration/external qualification remain
+outstanding; see [current implementation status](docs/IMPLEMENTATION_STATUS.md).
 Attack Harness tracks its implemented runtime and remaining qualification gates
 in its own repository.
 
@@ -114,17 +115,19 @@ its permitted operations, and retains host journals, evidence and local reports.
 - [Public capability export](schemas/CAPABILITY_EXPORT_CONTRACT.md): copyable typed
   references, compatibility-based admission, optional exact pins and tested fixtures.
 - [Accepted shared host/harness contract](schemas/SHARED_CONTRACT.md): authoritative wire, startup,
-  manifest and completion rules; package publication and full conformance remain pending.
+  manifest and completion rules; shared fixtures pass, while package publication and
+  complete process/native conformance remain outstanding.
 - [Product specification](OPERATOR_SANDBOX_SPEC.md): requirements, interfaces,
   lifecycle, journaling and acceptance criteria.
-- [Container guest contract](GUEST_CONTAINER_SPEC.md): proposed Python image,
+- [Container guest contract](GUEST_CONTAINER_SPEC.md): Python image ABI,
   filesystem, Linux FIFO/macOS spool transport and startup restrictions.
 - [Attack Harness specification](../attack_harness/GUEST_ARTIFACT_LAYOUT_SPEC.md):
   companion Python harness and container image design.
 
 Interceptor provides the
 [local MVP integration contract](../interceptor_sandbox/docs/local-api.md);
-Operator runtime implementation follows the shared-contract foundation.
+Operator and Attack Harness runtimes build on the shared-contract foundation;
+full integration and native qualification remain outstanding.
 
 ## Docker MVP deployment
 
@@ -139,7 +142,7 @@ x86_64 and ARM64/AArch64 on both OSes. Journaling remains mandatory; administrat
 termination calls Docker directly without campaign-worker cooperation. Runtime
 qualification is pending.
 
-See [host runtime profiles](HOST_RUNTIME_PROFILES.md) for the support matrix and remaining decisions.
+See [host runtime profiles](HOST_RUNTIME_PROFILES.md) for the support matrix and remaining qualification gates.
 
 The MVP uses Docker mounts/permissions and two-stage seccomp. Additional filesystem
 policy and separate user-namespace remapping are optional. Confirmed supported

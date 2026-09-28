@@ -61,6 +61,6 @@ configuration MUST pin the installed package. The Attack Harness image MUST use
 the same package identity and matching Python validator implementation.
 
 Building or checking a package verifies content integrity. Release `0.1.0`
-qualification still requires the remaining native model codecs and complete
-host/harness conformance tests; a successful build alone does not qualify a runtime
+qualification still requires live provider-route qualification and complete
+host/harness conformance tests. All five native codec families are implemented; a successful build alone does not qualify a runtime
 or a provider route. Use `0.0.0` for the current development snapshots.

@@ -63,7 +63,7 @@ The harness still owns its local model-response batch, invalid-call, no-progress
 and input-read loop state under the shared harness execution rules. This host
 service does not infer those guest-local events from ordinary messages.
 
-## Validation and remaining integration
+## Validation and integration status
 
 Tests exercise conclusion upload/record/stop through a physical file spool after
 restore; original attribution on replay; unknown and out-of-range references;
@@ -71,10 +71,10 @@ record rate limits; cyclic hypotheses; mismatched conclusion binding; explicit
 unavailable output; bounded finalization and independent termination. They use
 real journals and shared validators with scripted native/provider/Docker peers.
 
-All 13 ordinary routes now have service handlers. Campaign launch orchestration,
-production provider binding/credential resolution,
-report generation, Attack Harness execution and runtime qualification remain
-separate integration work. Stop acceptance does not mark those tasks complete.
+All 13 ordinary routes have service handlers. Campaign launch, provider/credential
+binding, reporting and Attack Harness execution are implemented. Full runtime
+qualification remains outstanding. A stop acknowledgement alone establishes neither
+completed finalization nor a successful report.
 
 Native evidence verification and finalization are now implemented in the
 [evidence service](EVIDENCE_SERVICE.md), independently of stop acceptance.

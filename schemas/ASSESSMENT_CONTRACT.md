@@ -2,8 +2,8 @@
 
 This fixes concrete fields and validation rules for Shared Contract §§8, 10 and
 11. All assessments remain guest assertions. They cannot overwrite host execution
-facts, protected evidence, budget counters or final campaign status. Package
-publication and broker/harness runtime implementation remain pending.
+facts, protected evidence, budget counters or final campaign status. Broker and harness runtime handling are implemented. Package
+publication and complete process/native qualification remain outstanding.
 
 ## Typed records
 

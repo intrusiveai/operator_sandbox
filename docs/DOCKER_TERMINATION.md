@@ -3,7 +3,7 @@
 Status: implemented in `internal/dockercontrol`, `internal/termination`,
 `internal/campaign/termination.go` and `cmd/operatorctl`. This stage provides the
 administrative command and a terminal-fence observer. Container creation/start,
-the campaign service and native execution are subsequent stages. Tests use a fake
+the campaign service and native execution now use this layer. Tests use a fake
 Docker executable; real Docker and host-profile qualification remain pending.
 
 The same restricted Docker subprocess wrapper now supports
@@ -130,7 +130,7 @@ or guest acknowledgement is a prerequisite for issuing the kill.
 
 ## Runtime integration
 
-Before admission, the future launcher must save the binding, establish its validity,
+Before admission, the launcher MUST save the binding, establish its validity,
 and arm `Service.Watch` with that binding and the shared `campaign.Fence`. The
 observer freezes the binding before waiting. It uses the saved in-memory copy on
 failure, so a later state-filesystem stall cannot prevent the live kill attempt.
@@ -138,7 +138,7 @@ Fence closure and service cancellation each trigger one bounded termination atte
 with a fresh context. It does not wait for the worker, pump or journal to finish.
 
 Administrative stop reaches a separate worker through persisted terminal state and
-the actual container stop. The future launcher/broker must check the stop-intent
+the actual container stop. The launcher/broker MUST check the stop-intent
 gate, in-memory fence and exact Docker state at launch and external-dispatch
 boundaries, and fence raced work. A running container alone can never override a
 recorded terminal decision. Already dispatched native work can remain unknown.
@@ -147,7 +147,8 @@ This command stops the harness container and retains it for evidence. It does no
 remove Docker resources, delete transport storage, stop the native Interceptor
 target or purge campaign artifacts. The [host worker](HOST_LAUNCH.md) supplies those lifecycle steps after confirmed
 exit and records removal/cleanup separately. Its macOS power lease lasts through
-cleanup. Host service installation and administrative reporting remain pending.
+cleanup. Administrative reporting and supervised service submission are implemented;
+host installation packaging and full native qualification remain outstanding.
 A stop overlapping an unconfirmed start uses `startup_outcome_unconfirmed`; that
 outcome does not authorize removal or transient-directory cleanup.
 

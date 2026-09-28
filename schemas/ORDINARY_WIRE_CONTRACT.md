@@ -26,8 +26,8 @@ exact bodies. `make generate` regenerates envelopes and schema-ID constants;
 path is accepted. Model generation uses the implemented closed schemas and
 shared native-codec fixtures. [Startup and manifest metadata](STARTUP_MANIFEST_CONTRACT.md)
 now have schemas and shared validation. [Input content](ENGINE_INPUT_CONTRACT.md)
-adds EngineContext and prompt provenance; provider codecs and runtime gates
-remain publication/implementation work.
+adds EngineContext and prompt provenance; all five native codec families and host/harness
+runtime integration are implemented, with full qualification/publication outstanding.
 Records and conclusion content are defined in the
 [assessment contract](ASSESSMENT_CONTRACT.md).
 
@@ -78,9 +78,9 @@ digest and any claimed canonical form before publishing an immutable receipt.
 
 The validators implement per-message limits, base64 checks, chunk arithmetic and
 request/result correlation. The [identity validation layer](CANONICAL_IDENTITY_CONTRACT.md)
-adds complete artifact size/digest and claimed canonical-form checks. Upload
+adds complete artifact size/digest and claimed canonical-form checks. The [artifact service](../docs/ARTIFACT_SERVICE.md) implements upload
 storage, contiguous-offset tracking, trusted declaration lookup at commit and
-durable publication remain runtime work.
+durable publication.
 
 ## Snapshots and remaining limits
 
@@ -159,8 +159,8 @@ Committed and unavailable conclusion variants are closed and exclusive. The resu
 must repeat the conclusion state, close execution admission and require exit within
 5,000 ms, with finalization still pending. The runtime must verify committed receipts
 and matching finish reason before accepting stop. The [assessment stage](ASSESSMENT_CONTRACT.md) implements conclusion content,
-record append and completion-chain consistency checks; runtime receipt lookup and
-durable stop acceptance remain outstanding.
+record append and completion-chain consistency checks; the [completion service](../docs/COMPLETION_SERVICE.md) implements runtime receipt
+lookup and durable stop acceptance. The harness implements bounded finalization.
 
 [Spool ACK](engine-spool-ack.schema.json) syntax is also implemented with a 1,024-byte
 ceiling. Initial null and zero positions remain distinct. The transport must still
