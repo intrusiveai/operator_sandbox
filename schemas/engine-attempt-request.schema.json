@@ -82,7 +82,8 @@
           "const": "operator-engine"
         },
         "release_digest": {
-          "$ref": "#/$defs/digest"
+          "$ref": "#/$defs/digest",
+          "description": "The frozen EngineContext.release.release_record_digest; identifies the validated compatibility response. The container image digest is bound separately by startup."
         }
       }
     },

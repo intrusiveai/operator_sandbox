@@ -27,3 +27,17 @@ replacement and ordered-extension prompts, passive references, empty/selected
 skills and an input manifest larger than a control frame. The model receives the
 exact staged prompt and selected skill instructions. The real Python loop reaches
 an accepted stop acknowledgement. No fabricated guest startup transcript is used.
+
+## Campaign coverage
+
+`TestPythonProcessCampaigns` exercises objectives-only, scenario-guided and
+exploratory campaigns on both transports. A controlled model requests hypothesis
+records, local reference reads, multipart artifact publication, two related
+attempts, receipt-scoped feedback reads and a structured conclusion. Later model
+responses depend on the actual earlier receipt IDs and feedback bytes. The tests
+verify retained reports and accepted stop acknowledgement. The HTTPS variants use
+the production HTTPS adapter and a local TLS server, preserving observer assurance.
+
+The joined test discovered a release-identity disagreement: attempts MUST use the
+compatibility-record digest in `generator.release_digest`, as defined by the shared
+contract. Host and harness component fixtures alone had not detected that mismatch.

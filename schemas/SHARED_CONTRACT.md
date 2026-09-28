@@ -11,6 +11,10 @@ JSON Schemas, Go/Python bindings, semantic validators and shared fixtures are
 implemented. Publish package `0.1.0` only after both conformance runners and the
 required Section 12 conformance tests pass. Existing attempt/feedback schemas
 remain active as specified below.
+In every attempt, `generator.release_digest` MUST equal the frozen
+`EngineContext.release.release_record_digest`. It identifies the validated
+compatibility response. `release.image_digest` separately pins the harness image
+through startup and MUST NOT be substituted for this field.
 The closed ScenarioBundle and TargetCapabilityManifest schemas are now in the
 catalog. Their [capability mapping](CAPABILITY_EXPORT_CONTRACT.md) and reference-chain
 fixtures define compatibility-based admission and opt-in exact projection pins;
