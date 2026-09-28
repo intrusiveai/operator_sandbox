@@ -110,10 +110,7 @@ func publish(ctx context.Context, path string, value any) error {
 	if e = ctx.Err(); e != nil {
 		return e
 	}
-	if e = parent.Link(name+".pending", name); e != nil {
-		return e
-	}
-	if e = parent.Remove(name + ".pending"); e != nil {
+	if e = parent.Rename(name+".pending", name); e != nil {
 		return e
 	}
 	return syncDir(parent)
@@ -156,7 +153,7 @@ func validateInventory(root string, v Inventory) error {
 	seen := map[string]bool{}
 	starts := map[string]bool{}
 	for _, s := range v.Starts {
-		if !startPattern.MatchString(s.ID) || len(s.Digest) != 71 || starts[s.ID] {
+		if !startPattern.MatchString(s.ID) || !digestPattern.MatchString(s.Digest) || starts[s.ID] {
 			return ErrUnconfirmed
 		}
 		starts[s.ID] = true

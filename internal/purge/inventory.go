@@ -22,6 +22,7 @@ import (
 
 var ErrUnconfirmed = errors.New("purge preflight could not confirm inactive managed resources")
 var idPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$`)
+var digestPattern = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
 var startPattern = regexp.MustCompile(`^[0-9a-f]{32}$`)
 
 const maxEntries = 100000
@@ -65,6 +66,7 @@ type Plan struct {
 	runs        []*startrequest.RunLock
 	docker      Docker
 	closed      bool
+	remove      func(context.Context, Group) error
 }
 
 func (p *Plan) Close() error {
@@ -123,7 +125,7 @@ func Prepare(ctx context.Context, root string, selection Selection, docker Docke
 	if !absolute(root) || selection.All == (selection.CampaignID != "") || (!selection.All && !validID(selection.CampaignID)) {
 		return nil, campaign.ErrInvalid
 	}
-	p := &Plan{Root: root, docker: docker}
+	p := &Plan{Root: root, docker: docker, Inventories: []Inventory{}}
 	defer func() {
 		if err != nil {
 			p.Close()
@@ -155,6 +157,18 @@ func Prepare(ctx context.Context, root string, selection Selection, docker Docke
 	pending, e := readPending(r, root)
 	if e != nil {
 		return nil, e
+	}
+	purgeIDs, e := names(r, "purges")
+	if e != nil {
+		return nil, e
+	}
+	for _, id := range purgeIDs {
+		if !validID(id) {
+			return nil, ErrUnconfirmed
+		}
+		if selected(id) {
+			add(id)
+		}
 	}
 	covered := map[string]bool{}
 	for id, v := range pending {
@@ -268,6 +282,9 @@ func Prepare(ctx context.Context, root string, selection Selection, docker Docke
 			if e = verifyGroup(ctx, g, true); e != nil {
 				return nil, e
 			}
+		}
+		if e = validateInventory(root, *v); e != nil {
+			return nil, e
 		}
 		p.Inventories = append(p.Inventories, *v)
 	}
