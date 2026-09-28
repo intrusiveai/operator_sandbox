@@ -1,6 +1,6 @@
 # Intrusive AI Operator Sandbox Product Specification
 
-Status: core runtime implemented; remaining workflows, release publication and full runtime qualification outstanding\
+Status: core runtime and administrator workflows implemented; HTTPS adapter, release publication and full integration/runtime qualification outstanding\
 Date: 2026-09-28\
 Product API family: `operator.dev`; existing data schemas remain individually versioned  
 Container runtime profile: `operator-container/v1` — Docker with Linux FIFO / macOS file-spool transport; qualification pending
@@ -577,7 +577,9 @@ worst-case reservations. Cancellation does not establish that no tokens were use
 The [host credential configuration](docs/CREDENTIALS.md) defines installed
 profiles, private loading and backend authentication. Keep one host resolver for AWS Secrets Manager, Azure Key Vault, Google Cloud
 Secret Manager and HashiCorp Vault, using workload identity or configured Vault
-Agent/Proxy bootstrap. Production credentials do not arrive through campaign
+Agent/Proxy bootstrap. Secret-store resolutions MUST follow the
+[campaign audit contract](docs/CREDENTIALS.md#campaign-resolution-audit), including
+recorded failures/cache hits and withholding values after an audit failure. Production credentials do not arrive through campaign
 files, skill content, CLI secret values or guest environment. Provider/target
 credentials and private endpoints never enter guest files, diagnostics, audit
 authority fields or crash dumps. Explicit synthetic test credentials are separate

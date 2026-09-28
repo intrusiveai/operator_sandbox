@@ -222,6 +222,7 @@ func (r *Resolver) Resolve(ctx context.Context, credentialID string) (Resolution
 	}
 	if cached, ok := r.cache[credentialID]; ok && r.now().Before(cached.expires) {
 		result := cached.result
+		result.cached = true
 		r.mu.Unlock()
 		return result, nil
 	}

@@ -305,7 +305,19 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 	if err != nil {
 		return nil, err
 	}
-	provider, err := modelprovider.New(ctx, model, resolver)
+	var auditWriter *campaign.Writer
+	audited := resolver.WithAudit(func(event credentials.AuditEvent) error {
+		if auditWriter == nil {
+			return credentials.ErrAudit
+		}
+		metadata, err := json.Marshal(event)
+		if err != nil {
+			return err
+		}
+		_, err = auditWriter.Append(campaign.Entry{RunRevision: auditWriter.Revision(), Kind: "credential.resolution", Metadata: metadata})
+		return err
+	})
+	provider, err := modelprovider.New(ctx, model, audited)
 	if err != nil {
 		resolver.Close()
 		return nil, err
@@ -338,6 +350,7 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 		return nil, err
 	}
 	owned = false
+	auditWriter = session.writer
 	metadata, _ := json.Marshal(map[string]string{"configuration_digest": loaded.Digest, "private_model_profile_digest": model.Digest(), "bundle_digest": submitted.Receipt().BundleDigest})
 	if _, err = session.writer.Append(campaign.Entry{RunRevision: session.writer.Revision(), Kind: "campaign.installation-selected", Metadata: metadata}); err != nil {
 		return nil, errors.Join(err, session.Cancel())

@@ -1,9 +1,9 @@
 # Current implementation status
 
-Updated: 2026-09-28, following campaign retirement and purge.
+Updated: 2026-09-28, following the administrator-workflow stage.
 
 Operator's core campaign runtime and Attack Harness's Python runtime are
-implemented. Remaining administrative workflows, the HTTPS target adapter,
+implemented. Administrator workflows are complete. The HTTPS target adapter,
 installation/release work and complete integration/native qualification are still
 outstanding. This page distinguishes implemented components from qualified releases;
 requirements in the product spec remain mandatory even when their acceptance
@@ -24,6 +24,7 @@ criteria have not yet been demonstrated.
 | Termination and recovery | Worker-independent termination using exact Docker identity; startup reconciliation for lost create replies, abandoned transient resources, native finalization and early attach failures. Recovery performs cleanup/reporting, never campaign resumption. |
 | Retained evidence | Live finalization, explicit late collection with recorded retries, verified archive reuse and offline archive import with immutable adoption records. |
 | Reports and exports | Deterministic, digest-bound report/export generations from verified journal prefixes and retained evidence; explicit coverage/uncertainty, portable exports and automatic worker reporting after execution completion. |
+| Administrator workflows | Public capability export, environment/private-profile selectors, combined run with saved-request reuse, read-only inspect/doctor, frozen skill-set creation/selection, reversible skill removal and campaign credential-resolution audit. |
 | Campaign retirement/purge | Durable start retirement, exact service deregistration, locked inventories, per-campaign/all-campaign deletion, managed-copy registration and retry after partial filesystem deletion. Independent exports and reusable installation data are preserved. |
 | Attack Harness | Python bootstrap/input loading, both transports, all five codecs, dispatch/loop accounting, artifacts, feedback, restore continuation and bounded completion. Both architecture image candidates have been built; they are not approved releases. |
 
@@ -33,6 +34,7 @@ Component guides provide the detailed behavior and validation boundaries:
   and [shared wire contract](../schemas/SHARED_CONTRACT.md).
 - [Campaign start](CAMPAIGN_START.md), [launch](HOST_LAUNCH.md),
   [campaign service](CAMPAIGN_SERVICE.md) and [startup recovery](STARTUP_RECOVERY.md).
+- [Administrator run/diagnostics](ADMIN_WORKFLOWS.md) and [submission selectors](SUBMISSION.md).
 - [Providers](MODEL_PROVIDERS.md), [credentials](CREDENTIALS.md) and [skills](SKILLS.md).
 - [Evidence service](EVIDENCE_SERVICE.md), [late collection](LATE_EVIDENCE.md),
   [offline import](EVIDENCE_IMPORT.md) and [reporting/export](REPORTING.md) and [campaign purge](PURGE.md).
@@ -42,8 +44,8 @@ Component guides provide the detailed behavior and validation boundaries:
 ## Validation completed and its limits
 
 At the latest implementation boundary, the full Go suite, focused
-purge/start-request/supervisor/persistence/CLI race tests, affected-package vet and Linux
-AMD64/ARM64 CLI builds passed. Shared Go/Python fixtures and Attack Harness
+skill-store/credential/provider/startup/CLI race tests, repository-wide vet and
+Linux AMD64/ARM64 and macOS AMD64/ARM64 CLI builds passed. Shared Go/Python fixtures and Attack Harness
 component tests have passed in their implementation stages. Tests use real
 journals, physical transports, native archive fixtures and scripted peers.
 
@@ -57,18 +59,14 @@ No complete live provider, secret-store or target qualification is claimed.
 
 ## Remaining implementation stages
 
-1. **Remaining administrative workflows.** Public capability export and
-   environment/target-profile selection, combined `operatorctl run` and read-only
-   inspect/doctor, frozen `--skill-set` selection and reversible skill removal are
-   implemented. Complete credential-resolution lifecycle audit.
-2. **Declarative HTTPS target adapter.** Implement its constrained mapping,
+1. **Declarative HTTPS target adapter.** Implement its constrained mapping,
    execution and evidence/report integration. Current native execution uses
    Interceptor; the HTTPS adapter remains a separate requirement.
-3. **Complete Operator/Attack Harness integration tests.** Add the complete real
+2. **Complete Operator/Attack Harness integration tests.** Add the complete real
    Go/Python process exchange matrix over both transports, including startup,
    attempt/feedback, restore, conclusion/stop and failure/capacity cases. Preserve
    component tests as supporting evidence.
-4. **Installation and release tooling.** Complete host installation/distribution,
+3. **Installation and release tooling.** Complete host installation/distribution,
    supported-package/build metadata, signed releases/update handling and release
    automation. Existing package build/check commands do not publish an approved
    `operator-contracts` 0.1.0 release or approve an image.
@@ -86,5 +84,5 @@ No complete live provider, secret-store or target qualification is claimed.
   [host runtime gates](../HOST_RUNTIME_PROFILES.md) and
   [product acceptance criteria](../OPERATOR_SANDBOX_SPEC.md#15-acceptance-criteria).
 
-The next major stage is the remaining administrative workflows listed above. Detailed
+The next major stage is the declarative HTTPS target adapter. Detailed
 historical commit boundaries remain available in Git history.

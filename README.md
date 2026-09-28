@@ -100,7 +100,7 @@ generation identities, visibility, coverage and incomplete-evidence semantics.
 
 Run `make setup` then `make test`. See [startup recovery](docs/STARTUP_RECOVERY.md)
 for cleanup and uncertainty rules, including native attach failures before a
-campaign journal exists. Remaining administrative workflows, the HTTPS target adapter,
+campaign journal exists. Administrator workflows are implemented. The HTTPS target adapter,
 installation/release publication and full integration/external qualification remain
 outstanding; see [current implementation status](docs/IMPLEMENTATION_STATUS.md).
 [Campaign retirement and purge](docs/PURGE.md) now provide

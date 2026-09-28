@@ -67,5 +67,34 @@ retries are governed separately and remain disabled.
 Tests exercise all backend request/selection rules with synthetic peers, including
 Vault over local TLS, sink rotation, Proxy mode, checksum failures, redaction and
 cancellation. They do not establish cloud connectivity or live workload identity
-qualification. Installed provider wiring is implemented. Credential-resolution lifecycle audit
-and live secret-store qualification remain outstanding.
+qualification. Installed provider wiring and campaign credential-resolution audit
+are implemented; live secret-store qualification remains outstanding.
+
+## Campaign resolution audit
+
+The installed model client MUST resolve secret-store credentials through the
+campaign-bound audited resolver. Each resolution invocation, including cache hits,
+backend initialization/read/selection failures and cancellation, MUST synchronously
+append `credential.resolution` to the campaign journal before returning a credential
+to the provider. The event MUST use the current campaign revision. The journal's
+standard envelope supplies campaign, launch, sequence and recording identity.
+
+Metadata MUST contain only the configured opaque credential/profile IDs, backend
+kind, `outcome` (`resolved` or `failed`), fixed `code` (`ok`, `resolution_failed`
+or `canceled`), `cache_hit` and timestamps. A successful event MAY contain the
+SHA-256 digest of a nonempty backend version string. It MUST NOT contain the raw
+version string, locator, value, selected JSON field, endpoint, remote exception,
+HTTP header or token. Unknown requested IDs MUST be omitted from metadata.
+
+A failed audit append MUST invalidate that credential's cache entry, withhold its
+value and fail the model operation through the existing terminal model-failure
+path. The resolver MUST NOT fall back to an unaudited request or stale cached value.
+A failed append cannot itself guarantee a durable audit event; normal journal
+failure/termination semantics MUST apply. Provider/target responses and report
+inventories MUST continue to use the existing visibility and redaction rules.
+
+Secret-store resolution occurs during model requests, after the campaign writer is
+available. Offline configuration validation MUST NOT resolve credentials. Provider
+routes using workload identity directly retain their existing provider-operation
+records; they MUST NOT fabricate secret-store resolution events. Live cloud and
+Vault qualification remain external acceptance gates.

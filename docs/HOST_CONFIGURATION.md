@@ -20,7 +20,7 @@ The initial loader accepts exactly these fields:
 | Field | Meaning and default |
 | --- | --- |
 | `engine.image` | Required local image selector: name/tag, repository reference with full SHA-256 digest, or full image ID. |
-| `target.profile_file` | Optional clean absolute path to the private administrator TargetProfile; required for campaign preparation. See [campaign preparation](CAMPAIGN_PREPARATION.md). |
+| `target.profile_file` | Optional clean absolute path to the default private administrator TargetProfile; required at preparation unless submission explicitly selected another profile. See [campaign preparation](CAMPAIGN_PREPARATION.md). |
 | `docker.endpoint` | Canonical local `unix:///` socket. Linux default: `unix:///var/run/docker.sock`; macOS default: `unix://<home>/.docker/run/docker.sock`. Configure rootless/custom socket locations explicitly. |
 | `docker.executable` | Optional absolute Docker CLI path; omitted means resolve from the administrator/service `PATH` when constructing the Docker client. |
 | `state.root` | Linux default: `/var/lib/operator`; macOS default: `<home>/Library/Application Support/Operator/data`. |

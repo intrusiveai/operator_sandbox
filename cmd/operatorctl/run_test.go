@@ -142,6 +142,11 @@ func TestDoctorRedactsPrivateConfigurationAndDoesNotCreateState(t *testing.T) {
 	if json.Unmarshal(out.Bytes(), &result) != nil || len(result.Checks) < 6 {
 		t.Fatal(out.String())
 	}
+	for _, check := range result.Checks {
+		if check.Name == "target_profile" && (check.Status != "not_checked" || check.Action != "select_explicit_submission_target") {
+			t.Fatal("explicit submission profile wrongly blocked", check)
+		}
+	}
 	if _, err := os.Stat(paths.StateRoot); !os.IsNotExist(err) {
 		t.Fatal("doctor created state", err)
 	}

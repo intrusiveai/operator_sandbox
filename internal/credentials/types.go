@@ -64,6 +64,7 @@ type ValueSelection struct {
 }
 
 type Resolution struct {
+	cached         bool
 	CredentialID   string    `json:"credential_id"`
 	ProfileID      string    `json:"profile_id"`
 	BackendVersion string    `json:"backend_version,omitempty"`

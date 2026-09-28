@@ -52,7 +52,9 @@ cancellation rules apply unchanged.
 status codes and actionable fixed remediation identifiers. It MUST validate private
 configuration, installed contract, target/model profiles, credential reference
 configuration, state directory ownership/permissions and supported host architecture.
-It MUST NOT print configuration contents, locators, raw errors or private endpoints.
+An omitted default target profile MUST be marked `not_checked` with guidance to
+select an explicit submission target. It MUST NOT print configuration contents,
+locators, raw errors or private endpoints.
 
 By default it MUST also perform bounded, read-only local Docker daemon/image
 inspection using the configured endpoint and native image platform. `--offline`
