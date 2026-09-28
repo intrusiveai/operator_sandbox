@@ -162,11 +162,11 @@ func observeCampaign(ctx context.Context, action string, args []string, stdout, 
 			fmt.Fprintln(stderr, "campaign observation failed:", err)
 			return 1
 		}
-		if action != "wait" || result.TerminalRecorded || (start != nil && start.Completion != nil) {
+		if action != "wait" || result.TerminalRecorded || (start != nil && (start.Completion != nil || start.Retired != nil)) {
 			if err := encoder.Encode(result); err != nil {
 				return 1
 			}
-			if action == "wait" && start != nil && start.Completion != nil && start.Completion.Status == "failed" {
+			if action == "wait" && start != nil && (start.Retired != nil || (start.Completion != nil && start.Completion.Status == "failed")) {
 				return 1
 			}
 			return 0

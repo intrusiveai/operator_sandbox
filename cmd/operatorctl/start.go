@@ -30,10 +30,11 @@ type startReceipt struct {
 	Submission     string                   `json:"service_submission"`
 	Accepted       *hostrun.Receipt         `json:"accepted,omitempty"`
 	Completion     *startrequest.Completion `json:"completion,omitempty"`
+	Retired        *startrequest.Retirement `json:"retired,omitempty"`
 }
 
 func describeStart(s startrequest.Snapshot, submission string) startReceipt {
-	return startReceipt{"operator.dev/start-observation/v1alpha1", s.Request.Selection.StartRequestID, s.Request.Selection.CampaignID, s.Digest, s.Phase(), submission, s.Accepted, s.Completion}
+	return startReceipt{"operator.dev/start-observation/v1alpha1", s.Request.Selection.StartRequestID, s.Request.Selection.CampaignID, s.Digest, s.Phase(), submission, s.Accepted, s.Completion, s.Retired}
 }
 
 type stringsFlag []string
@@ -165,7 +166,7 @@ func startCampaignWith(ctx context.Context, action string, args []string, stdout
 		return 1
 	}
 	submission := "not_requested"
-	if action == "start" && snapshot.Claim == nil && snapshot.Completion == nil {
+	if action == "start" && snapshot.Claim == nil && snapshot.Completion == nil && snapshot.Retired == nil {
 		submission = "submitted"
 		if err := deps.submit(ctx, request.StateRoot, request.Selection.StartRequestID, snapshot.Digest); err != nil {
 			submission = "unconfirmed"
@@ -199,11 +200,11 @@ func startCampaignWith(ctx context.Context, action string, args []string, stdout
 			fmt.Fprintln(stderr, "cannot read campaign acceptance:", err)
 			return 1
 		}
-		if snapshot.Accepted != nil || snapshot.Completion != nil {
+		if snapshot.Accepted != nil || snapshot.Completion != nil || snapshot.Retired != nil {
 			if json.NewEncoder(stdout).Encode(describeStart(snapshot, submission)) != nil {
 				return 1
 			}
-			if snapshot.Completion != nil && snapshot.Completion.Status == "failed" {
+			if snapshot.Retired != nil || (snapshot.Completion != nil && snapshot.Completion.Status == "failed") {
 				return 1
 			}
 			return 0

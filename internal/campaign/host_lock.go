@@ -20,6 +20,10 @@ type HostLease struct {
 }
 
 func AcquireHostLease(stateRoot string) (*HostLease, error) {
+	return acquireLease(stateRoot, "execution.lock", syscall.LOCK_EX)
+}
+
+func acquireLease(stateRoot, name string, mode int) (*HostLease, error) {
 	root, err := os.OpenRoot(stateRoot)
 	if err != nil {
 		return nil, err
@@ -28,7 +32,6 @@ func AcquireHostLease(stateRoot string) (*HostLease, error) {
 	if err = privateDir(root, "."); err != nil {
 		return nil, err
 	}
-	const name = "execution.lock"
 	f, err := root.OpenFile(name, os.O_CREATE|os.O_EXCL|os.O_RDWR, 0600)
 	if errors.Is(err, os.ErrExist) {
 		f, err = openRegular(root, name, os.O_RDWR)
@@ -50,7 +53,7 @@ func AcquireHostLease(stateRoot string) (*HostLease, error) {
 	if !valid || !info.Mode().IsRegular() || info.Mode().Perm()&0077 != 0 || st.Nlink != 1 || (st.Uid != 0 && st.Uid != uint32(os.Geteuid())) {
 		return nil, ErrInvalid
 	}
-	if err = syscall.Flock(int(f.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
+	if err = syscall.Flock(int(f.Fd()), mode|syscall.LOCK_NB); err != nil {
 		if errors.Is(err, syscall.EWOULDBLOCK) {
 			return nil, ErrActive
 		}

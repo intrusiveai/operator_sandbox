@@ -29,6 +29,7 @@ const Limit = 256 << 10
 
 var ErrRecord = errors.New("invalid or incomplete start request")
 var ErrConflict = errors.New("start key already binds different inputs")
+var ErrRetired = errors.New("start request retired; execution cannot resume")
 var ErrClaimed = errors.New("start request already claimed; execution cannot resume")
 var idPattern = regexp.MustCompile(`^[0-9a-f]{32}$`)
 var digestPattern = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
@@ -78,15 +79,25 @@ type Completion struct {
 	Status        string `json:"status"` // finished or failed
 	Code          string `json:"code"`   // fixed host code, never a private error string
 }
+type Retirement struct {
+	RequestDigest string `json:"request_digest"`
+	RecordedAt    string `json:"recorded_at"`
+}
+
 type Snapshot struct {
-	Request    Request          `json:"request"`
-	Digest     string           `json:"request_digest"`
-	Claim      *Claim           `json:"claim,omitempty"`
-	Accepted   *hostrun.Receipt `json:"accepted,omitempty"`
-	Completion *Completion      `json:"completion,omitempty"`
+	Retired    *Retirement          `json:"retired,omitempty"`
+	Service    *ServiceRegistration `json:"service,omitempty"`
+	Request    Request              `json:"request"`
+	Digest     string               `json:"request_digest"`
+	Claim      *Claim               `json:"claim,omitempty"`
+	Accepted   *hostrun.Receipt     `json:"accepted,omitempty"`
+	Completion *Completion          `json:"completion,omitempty"`
 }
 
 func (s Snapshot) Phase() string {
+	if s.Retired != nil {
+		return "retired"
+	}
 	if s.Completion != nil {
 		return s.Completion.Status
 	}
@@ -100,6 +111,7 @@ func (s Snapshot) Phase() string {
 }
 
 type Owner struct {
+	lease    *campaign.RetentionLease
 	root     *os.Root
 	snapshot Snapshot
 	mu       sync.Mutex
@@ -251,6 +263,11 @@ func pending(root *os.Root, name string) error {
 // return the original digest; changed inputs conflict. Partial publication remains
 // uncertain and is never silently repaired or given another execution identity.
 func Save(ctx context.Context, request Request) (Snapshot, error) {
+	lease, err := campaign.AcquireRetentionLease(request.StateRoot, false)
+	if err != nil {
+		return Snapshot{}, err
+	}
+	defer lease.Close()
 	if err := ctx.Err(); err != nil {
 		return Snapshot{}, err
 	}
@@ -300,7 +317,7 @@ func Read(stateRoot, id string) (Snapshot, error) {
 	if s.Request.validate() != nil || s.Request.StateRoot != stateRoot || s.Request.Selection.StartRequestID != id {
 		return s, ErrRecord
 	}
-	for _, name := range []string{"request.json", "owner.json", "accepted.json", "completion.json"} {
+	for _, name := range []string{"request.json", "owner.json", "accepted.json", "completion.json", "retired.json", "service.json"} {
 		if err := pending(root, name); err != nil {
 			return s, err
 		}
@@ -335,6 +352,9 @@ func Read(stateRoot, id string) (Snapshot, error) {
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return s, err
 	}
+	if err := readAdministration(dir, &s); err != nil {
+		return s, err
+	}
 	return s, nil
 }
 func timestamp(s string) bool {
@@ -348,6 +368,16 @@ func matches(s Snapshot, r hostrun.Receipt) bool {
 // ClaimOnce grants the first worker a one-time claim. A second worker, including
 // one started after the first process died, receives no execution authority.
 func ClaimOnce(ctx context.Context, stateRoot, id, expectedDigest string) (*Owner, error) {
+	lease, err := campaign.AcquireRetentionLease(stateRoot, false)
+	if err != nil {
+		return nil, err
+	}
+	kept := false
+	defer func() {
+		if !kept {
+			lease.Close()
+		}
+	}()
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -357,6 +387,9 @@ func ClaimOnce(ctx context.Context, stateRoot, id, expectedDigest string) (*Owne
 	}
 	if s.Digest != expectedDigest {
 		return nil, ErrConflict
+	}
+	if s.Retired != nil {
+		return nil, ErrRetired
 	}
 	if s.Claim != nil || s.Completion != nil {
 		return nil, ErrClaimed
@@ -378,7 +411,8 @@ func ClaimOnce(ctx context.Context, stateRoot, id, expectedDigest string) (*Owne
 		return nil, err
 	}
 	s.Claim = &claim
-	return &Owner{root: root, snapshot: s}, nil
+	kept = true
+	return &Owner{root: root, snapshot: s, lease: lease}, nil
 }
 func (o *Owner) Close() error {
 	o.mu.Lock()
@@ -387,7 +421,7 @@ func (o *Owner) Close() error {
 		return nil
 	}
 	o.closed = true
-	return o.root.Close()
+	return errors.Join(o.root.Close(), o.lease.Close())
 }
 func (o *Owner) Accept(ctx context.Context, r hostrun.Receipt) error {
 	o.mu.Lock()

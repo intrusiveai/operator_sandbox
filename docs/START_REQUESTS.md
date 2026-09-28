@@ -55,8 +55,8 @@ must be reconciled before purge; deletion must not make a pending job executable
 Tests cover immutable replay/conflict, concurrent claims, acceptance/completion
 ordering, partial/corrupt/unsafe files, competing publication and a claimed child
 process killed without cleanup. Run-directory links and the fixed worker entrypoint are now implemented;
-[OS supervisor submission](CAMPAIGN_START.md) is implemented. Reconciliation of
-the pre-claim service-registration window remains outstanding.
+[OS supervisor submission](CAMPAIGN_START.md) is implemented. Administrative retirement handles
+the pre-claim service-registration window without restarting execution.
 
 ## Run-directory links and worker dispatch
 
@@ -95,3 +95,24 @@ separate from experiment success and complete evidence.
 set it with `go build -ldflags '-X main.operatorVersion=VERSION' ./cmd/operatorctl`;
 the initial source version is `0.1.0`. A version label does not qualify a platform,
 image, provider or secret store.
+
+## Administrative retirement
+
+Start publication and service submission MUST hold a shared installation retention
+lease. A claimed worker MUST hold that lease until its completion record is saved
+and its owner closes. Administrative retirement MUST acquire the exclusive lease;
+it MUST refuse live workers and overlapping submitters without stopping them.
+
+Retirement MUST save `retired.json`, bound to the immutable request digest, before
+service removal. The `retired` observation phase MUST reject resubmission and all
+late worker claims, including requests that never had an owner. A failed service
+removal MUST leave retirement durable and retryable; it MUST NOT resume execution.
+New submissions MUST save the service platform/user scope before manager contact.
+Legacy requests without that record MUST still probe their deterministic service
+name in the current installed user scope rather than infer absence.
+
+Service reconciliation MUST use the saved scope and exact request-derived name.
+It MUST confirm absence after removal; manager failure, unreadable status or a
+scope mismatch MUST block purge. Reconciliation MUST NOT stop a target container.
+The root retention lock MUST remain outside campaign groups and MUST never be
+removed by purge. Live reporting/evidence work additionally uses campaign locks.

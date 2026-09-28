@@ -91,8 +91,8 @@ Each manager command MUST have a bounded 15-second submission context. A failed
 command MUST be reported as unconfirmed: a worker may already exist. An already
 claimed request MUST NOT be resubmitted. A lost reply before the permanent claim
 may leave a registered, unstarted job; that outcome requires inspection of the
-same saved request and service, never a replacement execution. Automated
-reconciliation of that pre-claim service-registration window remains pending.
+same saved request and service, never a replacement execution. Administrative retirement now durably rejects late claims and reconciles the
+exact service registration before purge; see [start-request retirement](START_REQUESTS.md#administrative-retirement).
 
 Scripted manager tests validate arguments, escaping, input binding, permanent
 claims and uncertain replies. The opt-in `OPERATOR_LIVE_SERVICE_TEST=1 go test

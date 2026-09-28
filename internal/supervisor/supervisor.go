@@ -20,6 +20,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
 	"github.com/intrusiveai/operator_sandbox/internal/startrequest"
 )
@@ -34,6 +35,7 @@ type Client struct {
 	goos       string
 	uid        int
 	run        command
+	query      func(context.Context, string, ...string) ([]byte, error)
 }
 
 // New pins the installed executable. The service manager inherits its own
@@ -46,7 +48,7 @@ func New(executable string) (*Client, error) {
 	if err != nil || !info.Mode().IsRegular() || info.Mode().Perm()&0111 == 0 || info.Mode().Perm()&0022 != 0 {
 		return nil, ErrInstallation
 	}
-	return &Client{executable: executable, goos: runtime.GOOS, uid: os.Geteuid(), run: runCommand}, nil
+	return &Client{executable: executable, goos: runtime.GOOS, uid: os.Geteuid(), run: runCommand, query: queryCommand}, nil
 }
 
 func runCommand(ctx context.Context, executable string, args ...string) error {
@@ -64,12 +66,23 @@ func absolute(p string) bool {
 // Context cancellation only stops the short submission command. It cannot cancel
 // a worker already owned by the manager. Every failure is potentially uncertain.
 func (c *Client) Submit(ctx context.Context, stateRoot, id, digest string) error {
+	lease, err := campaign.AcquireRetentionLease(stateRoot, false)
+	if err != nil {
+		return err
+	}
+	defer lease.Close()
 	snapshot, err := startrequest.Read(stateRoot, id)
 	if err != nil || snapshot.Digest != digest {
 		return startrequest.ErrRecord
 	}
+	if snapshot.Retired != nil {
+		return startrequest.ErrRetired
+	}
 	if snapshot.Claim != nil || snapshot.Completion != nil {
 		return nil
+	}
+	if err := startrequest.RegisterService(ctx, stateRoot, id, digest, c.goos, c.uid); err != nil {
+		return err
 	}
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
