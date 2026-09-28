@@ -29,8 +29,17 @@ type evidenceResultEnvelope struct {
 // BeginEvidence reads the latest verified attempt, or claims a session's first
 // late collection. Existing incomplete attempts never become fresh claims.
 func (r *NativeRecovery) BeginEvidence(session, selectionDigest string) (bool, *EvidenceResult, error) {
+	return r.evidenceHistory(session, selectionDigest, true)
+}
+
+// ReadEvidence reads collection history without creating directories or claims.
+func (r *NativeRecovery) ReadEvidence(session, selectionDigest string) (*EvidenceResult, error) {
+	_, result, err := r.evidenceHistory(session, selectionDigest, false)
+	return result, err
+}
+func (r *NativeRecovery) evidenceHistory(session, selectionDigest string, create bool) (bool, *EvidenceResult, error) {
 	base := "evidence-recovery/" + session
-	fresh, result, e := r.beginEvidenceAt(session, selectionDigest, base)
+	fresh, result, e := r.evidenceAt(session, selectionDigest, base, create)
 	if e != nil || fresh {
 		return fresh, result, e
 	}
@@ -44,7 +53,7 @@ func (r *NativeRecovery) BeginEvidence(session, selectionDigest string) (bool, *
 		if _, e = r.root.Lstat(base + "/retries/" + name + "/intent.json"); e != nil {
 			return false, nil, ErrCorrupt
 		}
-		fresh, result, e = r.beginEvidenceAt(session, selectionDigest, base+"/retries/"+name)
+		fresh, result, e = r.evidenceAt(session, selectionDigest, base+"/retries/"+name, false)
 		if e != nil || fresh {
 			return false, nil, ErrCorrupt
 		}
@@ -111,10 +120,22 @@ func EvidenceRetryable(out EvidenceOutcome) bool {
 	return true
 }
 func (r *NativeRecovery) beginEvidenceAt(session, selectionDigest, dir string) (bool, *EvidenceResult, error) {
+	return r.evidenceAt(session, selectionDigest, dir, true)
+}
+func (r *NativeRecovery) evidenceAt(session, selectionDigest, dir string, create bool) (bool, *EvidenceResult, error) {
 	if r.attachmentDigest != "" || r.evidenceClaim != "" || !validID(session) || !validDigest(selectionDigest) {
 		return false, nil, ErrInvalid
 	}
 	for _, d := range []string{"evidence-recovery", "evidence-recovery/" + session, dir} {
+		if !create {
+			if e := privateDir(r.root, d); e != nil {
+				if errors.Is(e, os.ErrNotExist) {
+					return false, nil, nil
+				}
+				return false, nil, e
+			}
+			continue
+		}
 		if e := mkdir(r.root, d); e != nil {
 			return false, nil, e
 		}
@@ -173,6 +194,9 @@ func (r *NativeRecovery) beginEvidenceAt(session, selectionDigest, dir string) (
 	names, e := directoryNames(r.root, dir)
 	if e != nil || len(names) != 0 {
 		return false, nil, ErrCorrupt
+	}
+	if !create {
+		return false, nil, nil
 	}
 	if e = r.evidenceSpace(2 * MaxContentBytes); e != nil {
 		return false, nil, e

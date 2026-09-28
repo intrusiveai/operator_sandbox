@@ -1523,6 +1523,7 @@ policy, inactivity checks and per-invocation bounded retries.
 
 
 Later collection/reporting may ingest an administrator-exported retained archive
+using [Offline native evidence import](docs/EVIDENCE_IMPORT.md)
 after increasing the applicable limit, using
 `interceptor logs export <session-id> --output <path> --evidence-max-bytes <bytes>`.
 Validate the supplied archive's size, digest, native identities and membership in
