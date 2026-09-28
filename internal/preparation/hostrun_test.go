@@ -22,6 +22,10 @@ import (
 
 type composedDocker struct{ workerDocker }
 
+func (d *composedDocker) ResolveCreate(context.Context, campaign.CreateIntent) (campaign.DockerBinding, error) {
+	return campaign.DockerBinding{}, dockercontrol.ErrLaunch
+}
+
 func (d *composedDocker) CheckInactive(context.Context, campaign.DockerBinding) dockercontrol.Inactivity {
 	return dockercontrol.Inactivity{Confirmed: true, State: "absent"}
 }

@@ -35,15 +35,17 @@ func (c *Client) Create(ctx context.Context, p *LaunchPlan) (campaign.DockerBind
 	}
 	args := append([]string{"--config", p.directory}, p.args...)
 	raw, err := c.run(ctx, p.image.Endpoint, args...)
-	if err != nil {
-		return campaign.DockerBinding{}, ErrLaunch
-	}
 	id := strings.TrimSpace(string(raw))
 	if len(id) != 64 || !imageDigest.MatchString("sha256:"+id) {
 		return campaign.DockerBinding{}, ErrLaunch
 	}
-	p.actualID.Store(id)
 	b := campaign.DockerBinding{APIVersion: campaign.BindingVersion, CampaignID: p.manifest.CampaignID, LaunchID: p.manifest.LaunchID, ContainerID: p.manifest.ContainerID, RunManifestDigest: p.manifestDigest, Endpoint: p.image.Endpoint, DaemonID: p.image.DaemonID, DockerContainerID: id, ImageDigest: p.image.ImageID, Labels: p.manifest.DockerLabels()}
+	if err != nil {
+		// Retain a complete reply for cleanup, but never authorize StartCreated
+		// after a failed command, even if the caller saves the returned binding.
+		return b, ErrLaunch
+	}
+	p.actualID.Store(id)
 	item, code := c.inspect(ctx, b)
 	if code != "" || item.Status != "created" || item.Running || item.Paused || item.Restarting || item.RestartPolicy != "no" || item.AutoRemove {
 		return b, ErrLaunch

@@ -79,6 +79,11 @@ func inspect(ctx context.Context, stateRoot, campaignID string, visit func(Event
 		}
 		defer lockFile.Close()
 	}
+	return inspectRoot(ctx, r, campaignID, visit, observing)
+}
+
+// The caller owns the root and, for strict inspection, its writer lock.
+func inspectRoot(ctx context.Context, r *os.Root, campaignID string, visit func(Event) error, observing bool) (report Inspection, err error) {
 	m, digest, err := loadManifest(r, campaignID)
 	if err != nil {
 		return report, err

@@ -12,8 +12,8 @@ For each private campaign group:
 2. Read the saved exact Docker binding independently of journal health.
 3. A complete journal without a launch start intent and without a Docker binding
    establishes that this preparation never reached container creation. Missing
-   identity after a start intent, or damaged evidence without identity, blocks
-   acquisition.
+   identity after a start intent requires the discovery procedure below. Damaged
+   evidence without identity MUST block acquisition.
 4. Query the saved local Docker endpoint and verify its daemon ID. List all
    container states using the full saved container ID, with nontruncated IDs and
    a fixed output format. An empty successful result followed by a matching
@@ -36,16 +36,52 @@ successful kill establishes historical native outcomes or complete evidence.
 
 The read-only `dockercontrol.CheckInactive` probe does not change administrative
 termination semantics: a failed inspect still cannot be reported as a confirmed
-kill. It also does not repair missing start identity or silently adopt a different
-container. Explicit recovery of an unknown create requires separate identity
-reconciliation before the startup gate can admit another worker.
+kill. Administrative termination MUST continue to require a saved full binding;
+it MUST NOT discover replacement identities while an execution worker is active.
+
+## Lost create replies
+
+When the binding is absent after a start intent, the startup gate MUST use
+`campaign.ReadCreateIntent` to require a complete verified journal and exactly one
+start intent at the manifest's initial revision. The intent's image MUST match the
+manifest. Its saved local endpoint and daemon identity MUST pass validation.
+
+`dockercontrol.ResolveCreate` MUST query that daemon using all three fixed
+campaign, launch and logical-container labels, all container states and full IDs.
+Labels only select candidates. The response MUST contain exactly one full ID;
+inspection MUST independently verify its image, required labels, disabled restart
+policy and disabled auto-removal. The daemon identity MUST match before discovery
+and after inspection. No container name or current Docker context participates.
+
+An empty listing MUST remain unresolved: it cannot establish that an interrupted
+create will never finish. Multiple matches, malformed replies, missing candidates,
+changed identities, cancellation and lookup failures MUST also block admission.
+Discovery MUST NOT create, start, retry, kill or remove a container.
+
+Before cleanup, `campaign.SaveRecoveredDockerBinding` MUST take the campaign writer
+lock, verify the complete journal again, match the binding to the original intent
+and manifest, and atomically publish the absent `launch/docker-binding.json`.
+Conflicting, corrupt and partial publications MUST remain untouched. Exact repeats
+are idempotent. The original journal MUST remain unchanged. This binding grants
+cleanup identity only; it does not authorize campaign restart.
+
+The gate MUST then use the existing exact-ID termination/removal path and confirm
+absence. If cleanup fails, the recovered binding MUST remain available for later
+administrative termination or startup cleanup. The returned recovery row MUST set
+`binding_recovered: true` when that acquisition recovered the identity. Subsequent
+acquisitions MUST use the saved binding directly.
+
+If Docker create itself returns a complete full ID alongside an error, the launcher
+MUST retain the binding for cleanup and MUST fail the launch. That error MUST NOT
+grant `StartCreated` permission, even after the binding is saved.
 
 This gate handles container execution. Recovery of transient mount directories,
-native target finalization, report publication and CLI/service composition remain
+native target finalization and report publication remain
 separate lifecycle work; none can resume failed execution.
 
 Tests use real campaign files/locks and scripted Docker replies. They cover live
 writers, orphan termination, previously removed containers, damaged evidence,
-unknown create identity, daemon mismatch, failed kill/removal, invalid directory
+lost-create discovery, no-match/multiple-match uncertainty, preserved identity
+after cleanup failure, daemon mismatch, failed kill/removal, invalid directory
 entries and lease release on failure. Live Docker recovery qualification remains
 part of runtime validation.

@@ -1043,6 +1043,14 @@ submission MUST follow [Campaign startup](docs/CAMPAIGN_START.md).
 `--new-campaign` explicitly creates a new intent/ledger for a fresh execution.
 No accepted campaign is reopened, and no unresolved start silently duplicates it.
 
+Startup cleanup MUST follow [Startup recovery](docs/STARTUP_RECOVERY.md). After a
+lost Docker create reply, Operator MUST recover an absent binding only from a complete
+verified start intent and one independently verified container on the saved
+daemon. Operator MUST persist the full binding before cleanup, leave original
+journal records unchanged, and confirm exact-ID absence before a new launch.
+No match, multiple matches, damaged evidence or uncertain identity MUST block
+admission. Recovery MUST NOT start the old container or resume its campaign.
+
 The host-supervised worker owns a durable fencing identity independent of the
 CLI process. The per-OS service account, supervisor and state layout are fixed by
 the installed host profile (see HOST_RUNTIME_PROFILES.md). The launcher accepts typed, peer-authenticated local requests, not

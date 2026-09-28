@@ -1,6 +1,25 @@
 # Implementation phase handoff
 
-## Latest boundary: two-stage confinement startup feasibility
+## Latest boundary: lost-create identity reconciliation
+
+Startup now discovers a lost Docker create reply only from a complete verified
+start intent and one matching full container identity on the original daemon.
+It persists the binding under the campaign writer lock before exact-ID cleanup.
+Ambiguous/missing candidates and damaged or partial evidence block admission;
+cleanup failure retains the recovered identity. A complete ID returned alongside
+a create error is retained without granting start permission. Journal contents
+are preserved and campaigns never resume. See [startup recovery](STARTUP_RECOVERY.md).
+
+Focused filesystem and scripted Docker tests cover discovery, changed identity,
+active writers, interrupted publication, repeated cleanup and failure retention.
+The full Go suite, focused campaign/Docker/startup race tests and affected-package
+vet pass. Native lost-reply Docker qualification remains outstanding. Operator's next
+lifecycle work is transient resource cleanup and native target finalization after
+worker loss, followed by reporting/export and campaign purge. Attack Harness's
+runtime is implemented separately; its remaining qualification and publication
+gates are tracked in that repository's implementation status and acceptance matrix.
+
+## Completed boundary: two-stage confinement startup feasibility
 
 The real Distroless ARM64 confinement probe exposed a missing `openat2` allowance
 in Docker's pre-Python startup path. The startup policy now permits it; the
@@ -19,7 +38,8 @@ observer-only timeout, and short publication races have focused tests.
 
 See [campaign startup](CAMPAIGN_START.md). Live macOS LaunchAgent worker dispatch
 has a passing opt-in test; Linux service qualification, pre-claim service-registration reconciliation, frozen skill-set selection,
-installation packaging and the Python runtime remain outstanding.
+and installation packaging remain outstanding. The Python runtime has since been
+implemented in Attack Harness; external qualification remains outstanding.
 
 ## Completed boundary: run links and worker dispatch
 
@@ -74,8 +94,8 @@ writers and missing identity after a start intent, independently terminates acti
 orphan containers, and removes confirmed stopped containers. Exact-ID absence is
 verified against the saved daemon; inspect errors never imply absence. Damaged
 journals remain retained and explicitly incomplete. The gate is ready for the
-executable start composition; unknown creates without a saved binding still need
-explicit recovery before another launch. See [startup recovery](STARTUP_RECOVERY.md).
+executable start composition. Lost-create discovery is implemented at the latest
+boundary above. See [startup recovery](STARTUP_RECOVERY.md).
 
 ## Campaign observers
 

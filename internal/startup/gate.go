@@ -21,14 +21,16 @@ type Docker interface {
 	termination.Killer
 	CheckInactive(context.Context, campaign.DockerBinding) dockercontrol.Inactivity
 	RemoveStopped(context.Context, campaign.DockerBinding) error
+	ResolveCreate(context.Context, campaign.CreateIntent) (campaign.DockerBinding, error)
 }
 
 type Prior struct {
-	CampaignID    string                   `json:"campaign_id"`
-	JournalIntact bool                     `json:"journal_intact"`
-	State         string                   `json:"state"`
-	Inactivity    dockercontrol.Inactivity `json:"inactivity"`
-	Termination   *termination.Receipt     `json:"termination,omitempty"`
+	CampaignID       string                   `json:"campaign_id"`
+	JournalIntact    bool                     `json:"journal_intact"`
+	State            string                   `json:"state"`
+	Inactivity       dockercontrol.Inactivity `json:"inactivity"`
+	Termination      *termination.Receipt     `json:"termination,omitempty"`
+	BindingRecovered bool                     `json:"binding_recovered,omitempty"`
 }
 
 // Gate owns the same installation-wide lease needed by the new worker. Callers
@@ -55,8 +57,8 @@ func (g *Gate) Claim(stateRoot string) bool {
 
 // Acquire serializes new workers, inspects old groups, and confirms exact Docker
 // inactivity. Active orphan containers are independently terminated; stopped ones
-// are removed by full binding. Missing identity after a start intent blocks the
-// new worker. Damaged evidence stays retained and explicitly marked incomplete.
+// are removed by full binding. Lost create replies require verified discovery
+// before cleanup. Damaged evidence stays retained and explicitly incomplete.
 func Acquire(ctx context.Context, stateRoot string, docker Docker) (*Gate, []Prior, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, nil, err
@@ -107,7 +109,18 @@ func Acquire(ctx context.Context, stateRoot string, docker Docker) (*Gate, []Pri
 				p.State = "never-created"
 				continue
 			}
-			return nil, records, ErrUnresolved
+			if !errors.Is(bindingErr, os.ErrNotExist) || !p.JournalIntact || !started {
+				return nil, records, ErrUnresolved
+			}
+			intent, err := campaign.ReadCreateIntent(ctx, stateRoot, id)
+			if err != nil {
+				return nil, records, ErrUnresolved
+			}
+			b, err = docker.ResolveCreate(ctx, intent)
+			if err != nil || b.CampaignID != id || campaign.SaveRecoveredDockerBinding(ctx, stateRoot, b) != nil {
+				return nil, records, ErrUnresolved
+			}
+			p.BindingRecovered = true
 		}
 		p.Inactivity = docker.CheckInactive(ctx, b)
 		if !p.Inactivity.Confirmed && p.Inactivity.State == "active" {

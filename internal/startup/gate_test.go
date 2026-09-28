@@ -34,6 +34,16 @@ type recoveryDocker struct {
 	state                              string
 	kills, removes                     int
 	mismatch, failedKill, failedRemove bool
+	discover                           bool
+	discoveries                        int
+}
+
+func (d *recoveryDocker) ResolveCreate(_ context.Context, intent campaign.CreateIntent) (campaign.DockerBinding, error) {
+	d.discoveries++
+	if !d.discover {
+		return campaign.DockerBinding{}, dockercontrol.ErrLaunch
+	}
+	return intent.Binding(strings.Repeat("b", 64))
 }
 
 func (d *recoveryDocker) CheckInactive(_ context.Context, b campaign.DockerBinding) dockercontrol.Inactivity {
@@ -74,7 +84,8 @@ func gateFixture(t *testing.T, withBinding, started bool) (string, *campaign.Wri
 	}
 	t.Cleanup(func() { w.Close() })
 	if started {
-		if _, err := w.Append(campaign.Entry{RunRevision: 3, Kind: "launch.start-intent", Metadata: json.RawMessage(`{}`)}); err != nil {
+		metadata, _ := json.Marshal(map[string]any{"image_id": m.ImageDigest, "endpoint": "unix:///saved/socket", "daemon_id": "saved-daemon"})
+		if _, err := w.Append(campaign.Entry{RunRevision: 3, Kind: "launch.start-intent", Metadata: metadata}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -212,4 +223,51 @@ func TestGateClaimIsBoundToRootAndSingleWorker(t *testing.T) {
 	if gate.Claim(root) {
 		t.Fatal("closed gate claimed")
 	}
+}
+
+func TestGateRecoversLostCreateBindingBeforeCleanup(t *testing.T) {
+	for _, state := range []string{"created", "active"} {
+		t.Run(state, func(t *testing.T) {
+			root, w := gateFixture(t, false, true)
+			w.Close()
+			d := &recoveryDocker{state: state, discover: true}
+			gate, rows, err := Acquire(context.Background(), root, d)
+			if err != nil || len(rows) != 1 || !rows[0].BindingRecovered || rows[0].State != "container-absent" {
+				t.Fatal(rows, err)
+			}
+			gate.Close()
+			b, err := campaign.ReadDockerBinding(root, "campaign-1")
+			if err != nil || b.DockerContainerID != strings.Repeat("b", 64) || d.discoveries != 1 || d.removes != 1 {
+				t.Fatal(b, d, err)
+			}
+			if d.kills != map[bool]int{true: 1, false: 0}[state == "active"] {
+				t.Fatal(d)
+			}
+			// Repeated cleanup uses the immutable recovered ID; no rediscovery.
+			gate, rows, err = Acquire(context.Background(), root, d)
+			if err != nil || rows[0].BindingRecovered || d.discoveries != 1 {
+				t.Fatal(rows, err)
+			}
+			gate.Close()
+		})
+	}
+}
+
+func TestGateRetainsRecoveredIdentityAfterCleanupFailure(t *testing.T) {
+	root, w := gateFixture(t, false, true)
+	w.Close()
+	d := &recoveryDocker{state: "active", discover: true, failedKill: true}
+	gate, rows, err := Acquire(context.Background(), root, d)
+	if err == nil || gate != nil || !rows[0].BindingRecovered || d.removes != 0 {
+		t.Fatal(rows, err)
+	}
+	if _, err := campaign.ReadDockerBinding(root, "campaign-1"); err != nil {
+		t.Fatal(err)
+	}
+	d.failedKill = false
+	gate, _, err = Acquire(context.Background(), root, d)
+	if err != nil || d.discoveries != 1 {
+		t.Fatal(d, err)
+	}
+	gate.Close()
 }
