@@ -1515,8 +1515,11 @@ execution deadline. Host configuration may select bounded deadlines up to five
 minutes per session and thirty minutes overall. Collection MUST record one outcome
 for every selected source/replacement session, including sessions skipped when the
 batch deadline expires. Archive publication MUST follow native provenance
-verification and durable file storage, with a journal adoption record distinguishing
-published evidence from incomplete/orphaned files.
+verification and durable file storage, with a live-journal adoption record or an
+immutable late-collection adoption record distinguishing published evidence from
+incomplete/orphaned files. Explicit late collection MUST follow
+[Late native evidence collection](docs/LATE_EVIDENCE.md), including saved identity,
+policy, inactivity checks and per-invocation bounded retries.
 
 
 Later collection/reporting may ingest an administrator-exported retained archive

@@ -17,17 +17,20 @@ import (
 // cleanup pass. Campaign handles expose retained reads; both forms expose a
 // separate bounded audit, never an execution writer.
 type NativeRecovery struct {
-	root             *os.Root
-	lock             *os.File
-	manifest         RunManifest
-	digest           string
-	attachmentDigest string
-	started, failed  bool
-	sequence         int
-	records          []string
-	minimumFreeBytes int64
-	usedBytes        int64
-	available        func(*os.Root) (int64, error)
+	root              *os.Root
+	lock              *os.File
+	manifest          RunManifest
+	digest            string
+	attachmentDigest  string
+	evidenceClaim     string
+	evidenceIdentity  string
+	evidenceDirectory string
+	started, failed   bool
+	sequence          int
+	records           []string
+	minimumFreeBytes  int64
+	usedBytes         int64
+	available         func(*os.Root) (int64, error)
 }
 
 const nativeRecoveryBudget = 140*(512<<10) + 2*ManifestLimit

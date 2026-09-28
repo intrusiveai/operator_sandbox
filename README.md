@@ -89,10 +89,14 @@ The [implementation phase handoff](docs/IMPLEMENTATION_STATUS.md) describes thes
 completed foundations, including artifact/model/completion service routes.
 The [host launch worker](docs/HOST_LAUNCH.md) adds fixed Docker policy, live bootstrap,
 host power/event lifetime and confirmed container/transport cleanup.
+Late collection is available through `operatorctl campaign evidence collect --campaign ID`.
+See [late evidence collection](docs/LATE_EVIDENCE.md) for saved-policy limits,
+explicit retries, per-session outcomes and retained archive reuse.
+
 Run `make setup` then `make test`. See [startup recovery](docs/STARTUP_RECOVERY.md)
 for cleanup and uncertainty rules, including native attach failures before a
-campaign journal exists. Operator reporting/export/purge, late evidence
-collection, contract publication and external runtime qualification remain pending.
+campaign journal exists. Operator reporting/export/purge, archive import,
+contract publication and external runtime qualification remain pending.
 Attack Harness tracks its implemented runtime and remaining qualification gates
 in its own repository.
 

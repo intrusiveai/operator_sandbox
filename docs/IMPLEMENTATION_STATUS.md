@@ -1,6 +1,28 @@
 # Implementation phase handoff
 
-## Latest boundary: native attach reconciliation before preparation
+## Latest boundary: explicit late native evidence collection
+
+`campaign evidence collect --campaign ID` now verifies retained preparation,
+policy, selections, journal integrity and exact Docker inactivity before fetching
+missing Interceptor archives. It uses the same streaming transfer and native
+provenance checks as live finalization. The original execution journal remains
+unchanged; immutable late-collection results adopt verified bytes separately.
+Source and replacement sessions retain their identities and checkpoint lineage.
+
+Verified archives are rehashed and reused. Later explicit invocations may retry
+transient/interrupted reads while retaining all prior outcomes; unchanged capacity
+failures do not cause repeated downloads. Startup does not collect archives.
+See [late evidence collection](LATE_EVIDENCE.md).
+
+The full Go suite, focused evidence/recovery/CLI race tests and affected-package
+vet pass. The CLI compiles for Linux AMD64 and ARM64. Tests use retained native
+archive fixtures and scripted peers; they do not qualify live Interceptor or
+native host execution.
+
+The next major boundary is retained reporting/export and archive import, followed
+by campaign purge. Native host/provider/Interceptor qualification remains separate.
+
+## Completed boundary: native attach reconciliation before preparation
 
 Installed startup now writes a durable attach intent before native contact and
 records the returned session and matching Interceptor instance before preparation.

@@ -160,8 +160,10 @@ reservation does not prevent other host processes from consuming storage. Any
 later write failure remains explicit uncertainty. Recovery records belong to the
 same independently purgeable campaign group.
 
-This pass records target closure/cleanup/stop. Late native evidence collection,
-report publication and explicit administrator-directed reconciliation remain later
+This pass records target closure/cleanup/stop. Administrators MUST initiate late
+native evidence collection through the separate
+[collection command](LATE_EVIDENCE.md). Startup MUST NOT fetch archives.
+Report publication and further administrator-directed reconciliation remain later
 work. No recovery outcome grants execution permission.
 
 Tests use real campaign files/locks and scripted Docker replies. They cover live
