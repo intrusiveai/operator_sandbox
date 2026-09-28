@@ -108,10 +108,13 @@ func (p *workerPower) Close() {
 	}
 }
 
-func cachedApproval(t *testing.T, p *contracts.Protocol) (imagerelease.Prepared, imagerelease.Requirements) {
+func cachedApproval(t *testing.T, p *contracts.Protocol, hostPlatform ...string) (imagerelease.Prepared, imagerelease.Requirements) {
 	t.Helper()
 	pin, _ := p.PackageIdentity()
 	platform := "darwin/" + goruntime.GOARCH
+	if len(hostPlatform) > 0 {
+		platform = hostPlatform[0]
+	}
 	h := imagerelease.Requirements{OperatorVersion: "0.1.0", Contract: pin, HostPlatform: platform, RuntimeProfile: "operator-container/v1"}
 	image := dockercontrol.ImagePin{Selector: "harness:latest", Endpoint: "unix:///fixture/docker.sock", DaemonID: "daemon-1", ImageID: contracts.RawDigest([]byte("approved test image")), HostPlatform: platform, ImagePlatform: "linux/" + goruntime.GOARCH}
 	record := imagerelease.Record{APIVersion: "intrusive.ai/engine-release/v1alpha1", ImageDigest: image.ImageID, MinimumOperatorVersion: "0.1.0", ContractPackageVersion: pin.Version, ContractPackageDigest: pin.Digest, RuntimeProfile: h.RuntimeProfile, Platform: image.ImagePlatform}

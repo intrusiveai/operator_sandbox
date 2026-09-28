@@ -27,10 +27,10 @@ type embeddedInspector map[string][]byte
 func (files embeddedInspector) ReadReleaseFiles(_ context.Context, pin dockercontrol.ImagePin) (dockercontrol.ReleaseFiles, error) {
 	return dockercontrol.ReleaseFiles{Files: files, Endpoint: pin.Endpoint, DaemonID: pin.DaemonID, ContainerID: strings.Repeat("f", 64), Removed: true}, nil
 }
-func launchConfig(t *testing.T, target *preparation.Target, codec string) preparation.LaunchConfig {
+func launchConfig(t *testing.T, target *preparation.Target, codec string, hostPlatform ...string) preparation.LaunchConfig {
 	t.Helper()
 	p := target.Protocol()
-	image, h := cachedApproval(t, p)
+	image, h := cachedApproval(t, p, hostPlatform...)
 	codecs := []string{"openai-chat-text-tools-v1", "openai-responses-text-tools-v1", "anthropic-messages-text-tools-v1", "bedrock-converse-text-tools-v1", "gemini-text-tools-v1"}
 	tools := map[string]json.RawMessage{}
 	operations := []string{}
