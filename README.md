@@ -90,7 +90,8 @@ completed foundations, including artifact/model/completion service routes.
 The [host launch worker](docs/HOST_LAUNCH.md) adds fixed Docker policy, live bootstrap,
 host power/event lifetime and confirmed container/transport cleanup.
 Run `make setup` then `make test`. See [startup recovery](docs/STARTUP_RECOVERY.md)
-for cleanup and uncertainty rules. Operator reporting/export/purge, late evidence
+for cleanup and uncertainty rules, including native attach failures before a
+campaign journal exists. Operator reporting/export/purge, late evidence
 collection, contract publication and external runtime qualification remain pending.
 Attack Harness tracks its implemented runtime and remaining qualification gates
 in its own repository.

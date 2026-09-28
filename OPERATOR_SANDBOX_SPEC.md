@@ -1043,6 +1043,13 @@ submission MUST follow [Campaign startup](docs/CAMPAIGN_START.md).
 `--new-campaign` explicitly creates a new intent/ledger for a fresh execution.
 No accepted campaign is reopened, and no unresolved start silently duplicates it.
 
+Before Interceptor attach, installed startup MUST durably record the campaign's
+attach intent, frozen input identity and original target-stop permission. It MUST
+persist the returned native binding and matching instance identity before campaign
+preparation. Attachment-only failures MUST participate in startup reconciliation
+as defined in [Startup recovery](docs/STARTUP_RECOVERY.md#native-attach-before-campaign-preparation).
+Missing identity MUST remain unconfirmed; recovery MUST NOT reattach or resume.
+
 Startup cleanup MUST follow [Startup recovery](docs/STARTUP_RECOVERY.md). After a
 lost Docker create reply, Operator MUST recover an absent binding only from a complete
 verified start intent and one independently verified container on the saved

@@ -1,4 +1,4 @@
-# Startup container reconciliation
+# Startup reconciliation
 
 `internal/startup.Acquire` returns an installation-wide worker lease only after
 prior campaign execution has been reconciled. The new worker MUST retain this
@@ -170,3 +170,53 @@ lost-create discovery, no-match/multiple-match uncertainty, preserved identity
 after cleanup failure, daemon mismatch, failed kill/removal, invalid directory
 entries and lease release on failure. Live Docker recovery qualification remains
 part of runtime validation.
+
+## Native attach before campaign preparation
+
+Installed startup MUST retain a private `attachments/<campaign-id>/` group before
+its first Interceptor attach. The immutable `intent.json` MUST record the selected
+campaign, launch, start-request and worker IDs, frozen input fingerprint, original
+`allow_target_stop` permission and journal minimum-free-space floor. Creating an
+existing group MUST fail; neither startup nor recovery may attach that campaign
+again. Publication MUST use synced, no-replace records under a writer lock.
+
+A successful attach MUST be followed by durable `binding.json`, containing the
+returned session identity, native revision, feedback profile, environment,
+application and capability digests. It MUST bind the intent digest. A matching
+status response MUST then produce `instance.json`, binding the Interceptor
+instance ID to the binding-record digest. Preparation MUST NOT continue until
+both records are durable and status is ready. A matching terminal status MUST
+retain its identity while rejecting startup. No credential or capability payload
+is required in this bounded routing record.
+
+Startup MUST inventory attachment-only groups alongside campaign groups, including
+failed starts that never created a journal. It MUST retain the campaign ID as used.
+Before native finalization it MUST take the attachment writer lock. For an existing
+campaign group, an intact prepared journal MUST take precedence and use ordinary
+native recovery. A damaged journal MUST NOT authorize attachment-based cleanup.
+Early recovery MUST independently refuse any prepared journal or launch intent;
+it MUST hold any unprepared campaign's writer lock through cleanup.
+
+When both original routing records are intact, early recovery MUST reuse the
+bounded native finalization procedure: verify current instance/session/revision,
+verify native target and permission pins, close execution, and stop the target
+only if the frozen permission allows it. It MUST NOT delete injections: no harness
+attempt was admitted in this preparation window. The attachment snapshot digest
+MUST bind the intent digest, binding digest and saved instance ID. The outcome and
+its separate `attachments/<campaign-id>/native-recovery/` audit MUST bind that
+snapshot instead of a nonexistent run manifest.
+
+A missing attach reply or unsaved instance ID MUST remain
+`attachment_identity_unconfirmed`. Recovery MUST durably record this outcome
+without contacting Interceptor, inferring identity from its current status,
+reattaching or resuming. An interrupted recovery claim MUST remain
+`prior_recovery_unconfirmed`; it MUST NOT dispatch again. Corrupt or partially
+published routing records MUST fail reconciliation. Repeated startup MUST verify
+and return the original recovery outcome without a second cleanup pass.
+
+Attachment records MUST remain retained after failed preparation, successful
+handoff and cleanup. They belong to the same independently purgeable campaign
+as its journal and start-request records, even if no campaign journal exists.
+Administrator cleanup of an uncertain target remains explicit; this mechanism
+MUST NOT infer that an unconfirmed attach was harmless. It does not resume a
+failed worker or change the one-time start-request claim.

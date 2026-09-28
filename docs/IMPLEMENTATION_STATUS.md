@@ -1,6 +1,23 @@
 # Implementation phase handoff
 
-## Latest boundary: native finalization after worker loss
+## Latest boundary: native attach reconciliation before preparation
+
+Installed startup now writes a durable attach intent before native contact and
+records the returned session and matching Interceptor instance before preparation.
+Startup inventories attachment-only failures, preserves frozen stop permission,
+and reuses bounded, non-replayable closure/stop recovery for verified identities.
+A prepared campaign journal takes precedence. Lost replies or unsaved identities
+produce explicit uncertainty without native contact or reattachment.
+
+Tests cover dispatch ordering, publication failures, active writers, changed
+identity/policy, partial preparation, journal handoff and interrupted cleanup.
+The full Go suite, focused recovery race tests and affected-package vet pass.
+Affected packages compile for Linux AMD64 and ARM64; these builds do not qualify
+native execution on those hosts.
+Late evidence collection is the next lifecycle boundary, followed by
+reporting/export and campaign purge. Native runtime qualification remains separate.
+
+## Completed boundary: native finalization after worker loss
 
 Installed startup now performs a bounded, separately journaled native cleanup pass
 after Docker and transient-resource reconciliation. It verifies retained target
@@ -17,9 +34,6 @@ purge and native runtime qualification remain outstanding.
 The full Go suite, focused recovery race tests and affected-package vet pass.
 Affected packages compile for Linux AMD64 and ARM64; these builds do not qualify
 native execution on those hosts.
-The earlier preparation window between native attach and durable campaign
-preparation also needs separate reconciliation; this pass requires verified
-retained preparation and does not infer a binding when that record is absent.
 
 ## Completed boundary: abandoned transient filesystem cleanup
 

@@ -163,6 +163,19 @@ func Acquire(ctx context.Context, stateRoot string, docker Docker) (*Gate, []Pri
 	if err := ctx.Err(); err != nil {
 		return nil, records, err
 	}
+	attachmentIDs, err := campaign.AttachmentIDs(stateRoot)
+	if err != nil {
+		return nil, records, err
+	}
+	known := map[string]bool{}
+	for _, row := range records {
+		known[row.CampaignID] = true
+	}
+	for _, id := range attachmentIDs {
+		if !known[id] {
+			records = append(records, Prior{CampaignID: id, State: "attachment-only"})
+		}
+	}
 	accepted = true
 	return &Gate{lease: lease, stateRoot: stateRoot, prior: append([]Prior(nil), records...)}, records, nil
 }
@@ -174,11 +187,27 @@ func (g *Gate) FinalizeNative(ctx context.Context, peer nativerecovery.Peer) ([]
 		return nil, ErrUnresolved
 	}
 	rows := append([]Prior(nil), g.prior...)
+	attachmentIDs, err := campaign.AttachmentIDs(g.stateRoot)
+	if err != nil {
+		return rows, err
+	}
+	attachments := map[string]bool{}
+	for _, id := range attachmentIDs {
+		attachments[id] = true
+	}
 	for i := range rows {
 		if err := ctx.Err(); err != nil {
 			return rows, err
 		}
 		p := &rows[i]
+		if p.State == "attachment-only" {
+			out, err := nativerecovery.RunAttachment(ctx, g.stateRoot, p.CampaignID, peer)
+			p.Native = &out
+			if err != nil {
+				return rows, err
+			}
+			continue
+		}
 		if !p.JournalIntact {
 			p.Native = &nativerecovery.Outcome{CampaignID: p.CampaignID, State: "unconfirmed", Reason: "evidence_unavailable", Closure: "unconfirmed", Cleanup: "unconfirmed", TargetStop: "unconfirmed"}
 			continue
@@ -187,6 +216,13 @@ func (g *Gate) FinalizeNative(ctx context.Context, peer nativerecovery.Peer) ([]
 		p.Native = &out
 		if err != nil {
 			return rows, err
+		}
+		if attachments[p.CampaignID] && out.State == "not-prepared" {
+			out, err = nativerecovery.RunAttachment(ctx, g.stateRoot, p.CampaignID, peer)
+			p.Native = &out
+			if err != nil {
+				return rows, err
+			}
 		}
 	}
 	return rows, nil

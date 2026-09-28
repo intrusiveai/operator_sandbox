@@ -13,13 +13,15 @@ import (
 	"github.com/intrusiveai/operator_sandbox/contracts"
 )
 
-// NativeRecovery holds the dead campaign's writer lock for a single cleanup pass.
-// It exposes retained reads and a separate bounded audit, never an execution writer.
+// NativeRecovery holds a dead campaign or early attachment writer lock for one
+// cleanup pass. Campaign handles expose retained reads; both forms expose a
+// separate bounded audit, never an execution writer.
 type NativeRecovery struct {
 	root             *os.Root
 	lock             *os.File
 	manifest         RunManifest
 	digest           string
+	attachmentDigest string
 	started, failed  bool
 	sequence         int
 	records          []string
@@ -86,6 +88,9 @@ func (r *NativeRecovery) Begin() (fresh bool, result []byte, err error) {
 		return false, nil, err
 	}
 	intent, _ := encode(map[string]string{"campaign_id": r.manifest.CampaignID, "run_manifest_digest": r.digest}, ManifestLimit)
+	if r.attachmentDigest != "" {
+		intent, _ = encode(map[string]string{"campaign_id": r.manifest.CampaignID, "attachment_digest": r.attachmentDigest}, ManifestLimit)
+	}
 	old, e := readFile(r.root, "native-recovery/intent.json", ManifestLimit)
 	if e == nil {
 		if string(old) != string(intent) {

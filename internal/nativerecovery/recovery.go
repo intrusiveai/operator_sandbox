@@ -22,7 +22,8 @@ type Peer interface {
 }
 type Outcome struct {
 	CampaignID       string `json:"campaign_id"`
-	ManifestDigest   string `json:"run_manifest_digest"`
+	ManifestDigest   string `json:"run_manifest_digest,omitempty"`
+	AttachmentDigest string `json:"attachment_digest,omitempty"`
 	State            string `json:"state"`
 	Reason           string `json:"reason"`
 	Closure          string `json:"closure"`
@@ -65,6 +66,11 @@ func Run(ctx context.Context, root, id string, containerAbsent bool, peer Peer) 
 		out.ManifestDigest = f.digest
 		return out, nil
 	}
+	return finalize(ctx, a, f, peer, out)
+}
+
+func finalize(ctx context.Context, a *campaign.NativeRecovery, f facts, peer Peer, out Outcome) (result Outcome, err error) {
+	id := out.CampaignID
 	if f.allowStop {
 		out.TargetStop = "unconfirmed"
 	}
@@ -79,7 +85,7 @@ func Run(ctx context.Context, root, id string, containerAbsent bool, peer Peer) 
 			return out, nil
 		}
 		var previous Outcome
-		if interceptor.DecodeTypedBody(saved, &previous, campaign.ManifestLimit) != nil || previous.CampaignID != id || previous.ManifestDigest != f.digest {
+		if interceptor.DecodeTypedBody(saved, &previous, campaign.ManifestLimit) != nil || previous.CampaignID != id || previous.ManifestDigest != out.ManifestDigest || previous.AttachmentDigest != out.AttachmentDigest {
 			return out, campaign.ErrCorrupt
 		}
 		return previous, nil

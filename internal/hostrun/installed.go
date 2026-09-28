@@ -287,11 +287,11 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 			err = errors.Join(err, cleanup())
 		}
 	}()
-	attached, err := native.Attach(ctx, selected.CampaignID, selected.WorkerInstanceID, profile.Settings().AllowTargetStop)
-	if err != nil {
-		return nil, err
-	}
-	status, err := native.Status(ctx, selected.CampaignID)
+	attached, status, err := attachRecorded(ctx, c.State.Root, campaign.AttachmentIntent{
+		CampaignID: selected.CampaignID, LaunchID: selected.LaunchID, StartRequestID: selected.StartRequestID,
+		WorkerInstanceID: selected.WorkerInstanceID, InputsFingerprint: i.Fingerprint(),
+		AllowTargetStop: profile.Settings().AllowTargetStop, MinimumFreeBytes: c.Journal.MinimumFreeBytes,
+	}, native)
 	if err != nil {
 		return nil, err
 	}
