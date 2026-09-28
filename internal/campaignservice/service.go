@@ -173,6 +173,11 @@ func New(ctx context.Context, c Config) (*Service, error) {
 		return nil, err
 	}
 	s.broker = b
+	policy := campaign.EvidencePolicy{MaxArchiveBytes: c.Evidence.MaxArchiveBytes, TimeoutNS: int64(c.Evidence.Timeout), TotalTimeoutNS: int64(c.Evidence.TotalTimeout)}
+	if _, err = w.Append(campaign.Entry{RunRevision: m.InitialRevision, Kind: "evidence.policy", Metadata: marshal(policy)}); err != nil {
+		w.Fence().Stop(err)
+		return nil, err
+	}
 	if err = s.rememberEvidenceTarget(c.Prepared.Target(), nil); err != nil {
 		w.Fence().Stop(err)
 		return nil, err

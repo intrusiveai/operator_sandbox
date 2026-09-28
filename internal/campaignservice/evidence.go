@@ -5,13 +5,13 @@ package campaignservice
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"slices"
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
+	"github.com/intrusiveai/operator_sandbox/internal/nativeevidence"
 	"github.com/intrusiveai/operator_sandbox/internal/preparation"
 )
 
@@ -23,24 +23,9 @@ type EvidenceConfig struct {
 	Timeout         time.Duration
 	TotalTimeout    time.Duration
 }
-type EvidencePeer interface {
-	DownloadEvidence(context.Context, interceptor.EvidenceRequest, string) (*interceptor.EvidenceDownload, error)
-}
-type evidenceTarget struct {
-	Identity       interceptor.EvidenceIdentity `json:"identity"`
-	NativeMaxBytes int64                        `json:"native_max_bytes"`
-	Reservation    string                       `json:"reservation"`
-}
-type EvidenceOutcome struct {
-	SessionID      string `json:"session_id"`
-	State          string `json:"state"` // complete, partial, missing or invalid
-	Reason         string `json:"reason,omitempty"`
-	ArchivePath    string `json:"archive_path,omitempty"`
-	ArchiveDigest  string `json:"archive_digest,omitempty"`
-	LocalMaxBytes  int64  `json:"local_max_bytes"`
-	NativeMaxBytes int64  `json:"native_max_bytes"`
-	Recorded       bool   `json:"recorded"`
-}
+type EvidencePeer = nativeevidence.Peer
+type evidenceTarget = nativeevidence.Target
+type EvidenceOutcome = nativeevidence.Outcome
 
 func (s *Service) rememberEvidenceTarget(t *preparation.Target, cp *interceptor.Checkpoint) error {
 	id, maximum := t.NativeEvidence()
@@ -63,7 +48,7 @@ func (s *Service) rememberEvidenceTarget(t *preparation.Target, cp *interceptor.
 			return nil
 		}
 	}
-	target := evidenceTarget{id, maximum, "evidence:" + contracts.RawDigest([]byte(id.SessionID))[7:]}
+	target := evidenceTarget{Identity: id, NativeMaxBytes: maximum, Reservation: "evidence:" + contracts.RawDigest([]byte(id.SessionID))[7:]}
 	// Keep the independently verified binding available for best-effort collection
 	// even if its journal reservation fails and execution must terminate.
 	s.evidenceTargets = append(s.evidenceTargets, target)
@@ -94,7 +79,9 @@ func (s *Service) collectEvidence() []EvidenceOutcome {
 			outcome.Reason = "storage_unavailable"
 		default:
 			child, cancel := context.WithTimeout(ctx, s.config.Evidence.Timeout)
-			s.collectSession(child, peer, directory, target, &outcome)
+			outcome = nativeevidence.Collect(child, peer, directory, target, s.config.Evidence.MaxArchiveBytes, func(ctx context.Context, v *interceptor.VerifiedEvidence) (campaign.NativeEvidence, error) {
+				return s.writer.RetainEvidence(ctx, v, target.Reservation)
+			})
 			cancel()
 		}
 		// A successful archive-adoption event and this per-session result are separate
@@ -108,71 +95,6 @@ func (s *Service) collectEvidence() []EvidenceOutcome {
 		outcomes = append(outcomes, outcome)
 	}
 	return outcomes
-}
-func (s *Service) collectSession(ctx context.Context, peer EvidencePeer, directory string, target evidenceTarget, out *EvidenceOutcome) {
-	deadline, _ := ctx.Deadline()
-	download, err := peer.DownloadEvidence(ctx, interceptor.EvidenceRequest{CampaignID: target.Identity.CampaignID, SessionID: target.Identity.SessionID, MaxArchiveBytes: out.LocalMaxBytes, InterceptorMaxBytes: target.NativeMaxBytes, Deadline: deadline}, directory)
-	if err != nil {
-		out.Reason = evidenceReason(err)
-		return
-	}
-	if download == nil {
-		out.Reason = "export_unavailable"
-		return
-	}
-	defer func() {
-		if download.Close() != nil {
-			out.Reason = "temporary_cleanup_failed"
-		}
-	}()
-	archive, err := download.InspectArchive(ctx, interceptor.DefaultArchiveLimits(min(out.LocalMaxBytes, target.NativeMaxBytes)))
-	if err != nil {
-		out.State = "invalid"
-		if ctx.Err() != nil {
-			out.State = "missing"
-			err = ctx.Err()
-		}
-		out.Reason = evidenceReason(err)
-		return
-	}
-	verified, err := archive.VerifyProvenance(ctx, target.Identity)
-	if err != nil {
-		out.State = "invalid"
-		if ctx.Err() != nil {
-			out.State = "missing"
-			err = ctx.Err()
-		}
-		out.Reason = evidenceReason(err)
-		return
-	}
-	retained, err := s.writer.RetainEvidence(ctx, verified, target.Reservation)
-	if err != nil {
-		out.Reason = "retention_failed"
-		return
-	}
-	out.State = retained.Provenance.State
-	out.ArchivePath = retained.Path
-	out.ArchiveDigest = retained.Provenance.Transfer.SHA256
-}
-func evidenceReason(err error) string {
-	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
-		return "collection_deadline"
-	}
-	if errors.Is(err, interceptor.ErrProvenance) {
-		return "provenance_invalid"
-	}
-	var e *interceptor.EvidenceError
-	if errors.As(err, &e) {
-		return e.Kind
-	}
-	var remote *interceptor.RemoteError
-	if errors.As(err, &remote) {
-		if remote.Response.Status == 413 && remote.Response.Code() == "evidence_limit_exceeded" {
-			return "evidence_limit_exceeded"
-		}
-		return "export_rejected"
-	}
-	return "export_unavailable"
 }
 
 // Detached copies prevent callers of Wait from mutating retained outcomes.

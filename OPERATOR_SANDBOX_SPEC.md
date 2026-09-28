@@ -1480,6 +1480,13 @@ from harness artifact/observation-read quotas and ordinary control-frame limits.
 The ceiling applies to each native session archive, not the entire campaign;
 collect and attribute source and replacement sessions independently.
 
+Before selecting native evidence or admitting execution, Operator MUST journal an
+`evidence.policy` record containing the effective local archive limit and per-session
+and total collection deadlines. Host records MUST encode those durations as exact
+integer nanoseconds. Late collection MUST use this frozen policy and each saved
+native ceiling; current installation configuration MUST NOT silently replace them.
+Live and late collection MUST share archive transfer and provenance validation.
+
 Interceptor enforces its ceiling while creating the tar, including headers,
 padding and trailer. A capacity failure returns HTTP 413 in the ordinary native
 response envelope with body fields `code: evidence_limit_exceeded`,

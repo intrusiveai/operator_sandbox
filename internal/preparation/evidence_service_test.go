@@ -99,9 +99,15 @@ func TestServiceEvidenceRetainsCompleteAndPartialNativeExports(t *testing.T) {
 			if err = w.Close(); err != nil {
 				t.Fatal(err)
 			}
-			adopted, completed := 0, 0
+			adopted, completed, policies := 0, 0, 0
 			inspection, err := campaign.Inspect(root, "campaign-1", func(e campaign.Event) error {
 				switch e.Kind {
+				case "evidence.policy":
+					policies++
+					var policy campaign.EvidencePolicy
+					if json.Unmarshal(e.Metadata, &policy) != nil || !policy.Valid() || policy.MaxArchiveBytes != 4<<30 || policy.TimeoutNS != int64(time.Second) || policy.TotalTimeoutNS != int64(time.Second) {
+						t.Fatal(policy)
+					}
 				case "evidence.adopted":
 					adopted++
 				case "evidence.collection-result":
@@ -113,7 +119,7 @@ func TestServiceEvidenceRetainsCompleteAndPartialNativeExports(t *testing.T) {
 				}
 				return nil
 			})
-			if err != nil || !inspection.JournalIntact || adopted != 1 || completed != 1 {
+			if err != nil || !inspection.JournalIntact || adopted != 1 || completed != 1 || policies != 1 {
 				t.Fatal(inspection, err, adopted, completed)
 			}
 		})

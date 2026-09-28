@@ -46,57 +46,15 @@ func (w *Writer) RetainEvidence(ctx context.Context, v *interceptor.VerifiedEvid
 	if err := w.ready(); err != nil {
 		return NativeEvidence{}, err
 	}
-	if v == nil || ctx.Err() != nil {
-		return NativeEvidence{}, ErrInvalid
-	}
-	p := v.Receipt()
-	if !p.Identity.Valid() || p.Identity.CampaignID != w.manifest.CampaignID || p.Transfer.CampaignID != w.manifest.CampaignID || p.Transfer.SessionID != p.Identity.SessionID || p.Transfer.Bytes <= 0 || !validDigest(p.Transfer.SHA256) || !validDigest(p.BundleDigest) {
-		return NativeEvidence{}, ErrInvalid
-	}
-	directory := "native-evidence/" + p.Identity.SessionID
-	for _, d := range []string{"native-evidence", directory} {
-		if err := mkdir(w.root, d); err != nil {
-			return NativeEvidence{}, err
-		}
-	}
-	name := directory + "/" + strings.TrimPrefix(p.Transfer.SHA256, "sha256:") + ".tar"
+	floor := int64(-1)
 	if w.spaceConfigured {
-		free, err := w.hooks.available(w.root)
-		if err != nil || free < w.minimumFreeBytes || p.Transfer.Bytes > free-w.minimumFreeBytes {
-			return NativeEvidence{}, ErrInvalid
-		}
+		floor = w.minimumFreeBytes
 	}
-	reader, err := v.Reader()
+	record, err := retainEvidence(ctx, w.root, w.manifest.CampaignID, v, floor, w.hooks)
 	if err != nil {
 		return NativeEvidence{}, err
 	}
-	temp := name + ".pending"
-	f, err := w.root.OpenFile(temp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
-	if err != nil {
-		return NativeEvidence{}, err
-	}
-	defer func() { f.Close(); _ = w.root.Remove(temp) }()
-	h := sha256.New()
-	n, err := io.CopyBuffer(io.MultiWriter(f, h), io.LimitReader(evidenceContextReader{ctx, reader}, p.Transfer.Bytes+1), make([]byte, 64<<10))
-	if err != nil || n != p.Transfer.Bytes || "sha256:"+hex.EncodeToString(h.Sum(nil)) != p.Transfer.SHA256 {
-		return NativeEvidence{}, ErrCorrupt
-	}
-	if err = w.hooks.sync(f); err != nil {
-		return NativeEvidence{}, err
-	}
-	if err = f.Close(); err != nil {
-		return NativeEvidence{}, err
-	}
-	if err = ctx.Err(); err != nil {
-		return NativeEvidence{}, err
-	}
-	if err = w.root.Link(temp, name); err != nil {
-		return NativeEvidence{}, err
-	}
-	if err = w.hooks.syncDir(w.root, directory); err != nil {
-		return NativeEvidence{}, err
-	}
-	record := NativeEvidence{Path: name, Provenance: p}
+	p := record.Provenance
 	raw, err := json.Marshal(record)
 	if err != nil || len(raw) > MaxContentBytes {
 		return NativeEvidence{}, ErrInvalid
@@ -111,6 +69,62 @@ func (w *Writer) RetainEvidence(ctx context.Context, v *interceptor.VerifiedEvid
 		return NativeEvidence{}, err
 	}
 	return record, nil
+}
+
+// retainEvidence publishes bytes only. Its caller must commit an adoption record.
+func retainEvidence(ctx context.Context, root *os.Root, campaignID string, v *interceptor.VerifiedEvidence, minimumFreeBytes int64, hooks ioHooks) (NativeEvidence, error) {
+	if v == nil || ctx.Err() != nil {
+		return NativeEvidence{}, ErrInvalid
+	}
+	p := v.Receipt()
+	if !p.Identity.Valid() || p.Identity.CampaignID != campaignID || p.Transfer.CampaignID != campaignID || p.Transfer.SessionID != p.Identity.SessionID || p.Transfer.Bytes <= 0 || !validDigest(p.Transfer.SHA256) || !validDigest(p.BundleDigest) {
+		return NativeEvidence{}, ErrInvalid
+	}
+	directory := "native-evidence/" + p.Identity.SessionID
+	for _, d := range []string{"native-evidence", directory} {
+		if err := mkdir(root, d); err != nil {
+			return NativeEvidence{}, err
+		}
+	}
+	name := directory + "/" + strings.TrimPrefix(p.Transfer.SHA256, "sha256:") + ".tar"
+	if minimumFreeBytes >= 0 {
+		free, err := hooks.available(root)
+		if err != nil || free < minimumFreeBytes || p.Transfer.Bytes > free-minimumFreeBytes {
+			return NativeEvidence{}, ErrInvalid
+		}
+	}
+	reader, err := v.Reader()
+	if err != nil {
+		return NativeEvidence{}, err
+	}
+	temp := name + ".pending"
+	f, err := root.OpenFile(temp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	if err != nil {
+		return NativeEvidence{}, err
+	}
+	defer func() { f.Close(); _ = root.Remove(temp) }()
+	h := sha256.New()
+	n, err := io.CopyBuffer(io.MultiWriter(f, h), io.LimitReader(evidenceContextReader{ctx, reader}, p.Transfer.Bytes+1), make([]byte, 64<<10))
+	if err != nil || n != p.Transfer.Bytes || "sha256:"+hex.EncodeToString(h.Sum(nil)) != p.Transfer.SHA256 {
+		return NativeEvidence{}, ErrCorrupt
+	}
+	if err = hooks.sync(f); err != nil {
+		return NativeEvidence{}, err
+	}
+	if err = f.Close(); err != nil {
+		return NativeEvidence{}, err
+	}
+	if err = ctx.Err(); err != nil {
+		return NativeEvidence{}, err
+	}
+	if err = root.Link(temp, name); err != nil {
+		return NativeEvidence{}, err
+	}
+	if err = hooks.syncDir(root, directory); err != nil {
+		return NativeEvidence{}, err
+	}
+	return NativeEvidence{Path: name, Provenance: p}, nil
+
 }
 
 type evidenceContextReader struct {
@@ -134,16 +148,19 @@ func (w *Writer) VerifyRetainedEvidence(ctx context.Context, record NativeEviden
 	if err := w.ready(); err != nil {
 		return err
 	}
+	return verifyRetainedEvidence(ctx, w.root, w.manifest.CampaignID, record)
+}
+func verifyRetainedEvidence(ctx context.Context, root *os.Root, campaignID string, record NativeEvidence) error {
 	p := record.Provenance
-	if !p.Identity.Valid() || p.Identity.CampaignID != w.manifest.CampaignID || !validDigest(p.Transfer.SHA256) || p.Transfer.Bytes <= 0 || record.Path != path.Join("native-evidence", p.Identity.SessionID, strings.TrimPrefix(p.Transfer.SHA256, "sha256:")+".tar") {
+	if !p.Identity.Valid() || p.Identity.CampaignID != campaignID || !validDigest(p.Transfer.SHA256) || p.Transfer.Bytes <= 0 || record.Path != path.Join("native-evidence", p.Identity.SessionID, strings.TrimPrefix(p.Transfer.SHA256, "sha256:")+".tar") {
 		return ErrInvalid
 	}
 	for _, d := range []string{"native-evidence", path.Dir(record.Path)} {
-		if err := privateDir(w.root, d); err != nil {
+		if err := privateDir(root, d); err != nil {
 			return err
 		}
 	}
-	f, err := openRegular(w.root, record.Path, os.O_RDONLY)
+	f, err := openRegular(root, record.Path, os.O_RDONLY)
 	if err != nil {
 		return err
 	}
