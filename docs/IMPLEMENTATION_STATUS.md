@@ -58,8 +58,8 @@ No complete live provider, secret-store or target qualification is claimed.
 ## Remaining implementation stages
 
 1. **Remaining administrative workflows.** Public capability export and
-   environment/target-profile selection are implemented. Complete combined `operatorctl run`, read-only
-   inspect/doctor workflows, frozen `--skill-set` selection, revocation handling
+   environment/target-profile selection, combined `operatorctl run` and read-only
+   inspect/doctor are implemented. Complete frozen `--skill-set` selection, skill removal
    and credential-resolution lifecycle audit.
 2. **Declarative HTTPS target adapter.** Implement its constrained mapping,
    execution and evidence/report integration. Current native execution uses

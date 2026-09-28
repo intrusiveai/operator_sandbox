@@ -155,3 +155,6 @@ Retained injections can be explicitly removed through the
 [typed cleanup contract](schemas/INJECTION_CLEANUP_CONTRACT.md), including after a
 healthy restore, without rolling back the target. The host broker and initial
 service route and healthy campaign restore coordination are implemented.
+
+[Administrator workflows](docs/ADMIN_WORKFLOWS.md) define combined `run`,
+read-only `inspect` and installation `doctor` commands.

@@ -17,6 +17,10 @@ import (
 )
 
 func submissionCommand(ctx context.Context, args []string, stdout, stderr io.Writer, defaults hostconfig.Paths) int {
+	return submissionCommandWith(ctx, args, stdout, stderr, defaults, false)
+}
+
+func submissionCommandWith(ctx context.Context, args []string, stdout, stderr io.Writer, defaults hostconfig.Paths, reuse bool) int {
 	flags := flag.NewFlagSet(args[0], flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	config := flags.String("config", defaults.ConfigFile, "administrator configuration with installed contract pin")
@@ -73,7 +77,11 @@ func submissionCommand(ctx context.Context, args []string, stdout, stderr io.Wri
 			err = prepared.SelectTarget(profile)
 		}
 		if err == nil {
-			err = prepared.Save(ctx, absolute(*output))
+			if reuse {
+				err = prepared.SaveOrVerify(ctx, installed.Protocol(), absolute(*output))
+			} else {
+				err = prepared.Save(ctx, absolute(*output))
+			}
 		}
 	}
 	if err != nil {

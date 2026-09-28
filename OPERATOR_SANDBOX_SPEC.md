@@ -1433,7 +1433,8 @@ operatorctl purge --all
 
 `--artifacts` may be omitted for an empty inventory. Capability export is read-only
 and secret-free. `operatorctl run --bundle ... --environment ... --output ...`
-performs submission, validation, preparation, execution and finalization using the
+MUST follow [the administrator workflow contract](docs/ADMIN_WORKFLOWS.md) and
+perform submission, validation, preparation, execution and finalization using the
 same saved-state contracts; reference files use the same optional `--artifacts`
 argument. At new-campaign start, resolve and validate the locally installed
 `engine.image` under Section 5.1.1 before freezing accepted launch inputs.

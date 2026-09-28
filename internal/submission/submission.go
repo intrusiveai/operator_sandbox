@@ -165,6 +165,26 @@ func Read(ctx context.Context, protocol *contracts.Protocol, bundlePath, capabil
 	return p, nil
 }
 
+// SaveOrVerify gives the combined run frontend an idempotent submission step.
+// It never repairs or overwrites an existing directory, even after interruption.
+func (p *Prepared) SaveOrVerify(ctx context.Context, protocol *contracts.Protocol, directory string) error {
+	if _, err := os.Lstat(directory); errors.Is(err, os.ErrNotExist) {
+		return p.Save(ctx, directory)
+	} else if err != nil {
+		return err
+	}
+	saved, err := Load(ctx, protocol, directory)
+	if err != nil {
+		return err
+	}
+	expected, _ := json.Marshal(p.Receipt())
+	actual, _ := json.Marshal(saved.Receipt())
+	if !bytes.Equal(expected, actual) {
+		return ErrSubmission
+	}
+	return nil
+}
+
 // Save claims a new output directory exclusively; run.json is the completion
 // marker, written after every input is fsynced. Existing runs are never replaced.
 // Failed output remains visibly incomplete for inspection; Load rejects it.

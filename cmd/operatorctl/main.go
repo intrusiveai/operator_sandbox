@@ -40,6 +40,15 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 }
 
 func runWithDefaults(ctx context.Context, args []string, stdout, stderr io.Writer, defaults hostconfig.Paths) int {
+	if len(args) > 0 && args[0] == "run" {
+		return combinedRun(ctx, args[1:], stdout, stderr, defaults)
+	}
+	if len(args) > 0 && args[0] == "doctor" {
+		return doctor(ctx, args[1:], stdout, stderr, defaults)
+	}
+	if len(args) > 0 && args[0] == "inspect" {
+		return observeCampaign(ctx, "status", args[1:], stdout, stderr, defaults)
+	}
 	if len(args) >= 2 && args[0] == "capabilities" && args[1] == "export" {
 		return exportCapabilities(ctx, args[2:], stdout, stderr, defaults)
 	}
@@ -95,6 +104,10 @@ func runWithDefaults(ctx context.Context, args []string, stdout, stderr io.Write
 		fmt.Fprintln(stderr, "       operatorctl campaign status|logs|wait --campaign ID [--config PATH] [--state-root DIR]")
 		fmt.Fprintln(stderr, "       operatorctl campaign prepare|start --run DIR [--config PATH] [--new-campaign] [--skill DIGEST] [--system-prompt FILE | --system-prompt-append FILE]")
 		fmt.Fprintln(stderr, "       operatorctl skill keygen|build|import|check [options]")
+		fmt.Fprintln(stderr, "       operatorctl run --bundle FILE (--environment DIR | --capabilities FILE [--target-profile FILE]) --output DIR [--wait]")
+		fmt.Fprintln(stderr, "       operatorctl capabilities export (--native FILE | --environment DIR | --capabilities FILE) --output FILE [--target-profile FILE]")
+		fmt.Fprintln(stderr, "       operatorctl inspect --run DIR | --campaign ID [--state-root DIR]")
+		fmt.Fprintln(stderr, "       operatorctl doctor [--config PATH] [--offline]")
 		fmt.Fprintln(stderr, "       operatorctl contract build --source DIR --output DIR --package-version VERSION")
 		return 2
 	}
