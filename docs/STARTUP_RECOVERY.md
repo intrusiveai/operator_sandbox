@@ -98,8 +98,71 @@ Cleanup MUST leave journals, artifacts, submitted source inputs, reports, bindin
 and unrelated launch entries unchanged. It MUST never reopen transport or replay
 remaining messages. Returned recovery rows MUST include the cleanup result.
 
-Native target finalization and report publication remain separate lifecycle work;
-none can resume failed execution.
+## Native target finalization
+
+Installed startup MUST call `Gate.FinalizeNative` while retaining the installation
+lease, after Docker/transient reconciliation and before preparing a fresh campaign.
+`internal/nativerecovery` MUST hold the old campaign's writer lock and consume only
+a complete verified journal. Damaged evidence MUST produce an explicitly
+unconfirmed native outcome without target contact. Existing terminal results MUST
+be retained as previous finalization outcomes, including any uncertainty.
+
+Recovery MUST reconstruct the initial Interceptor instance, session, capability,
+environment, application and administrator target-stop pins from retained
+preparation. Recovery MUST advance the cleanup binding only through journaled
+`state.replacement-verified` records; an unrecorded replacement or a merely different
+current session MUST NOT authorize a new cleanup binding.
+Fresh API status and native session status MUST match the selected identity and
+policy before mutation. Recovery MUST NOT attach, restore, invoke the target,
+generate model requests, or reopen native/harness admission.
+
+Each campaign MUST have at most one automatic native recovery pass, with a shared
+30-second deadline. A durable `native-recovery/intent.json` MUST claim that pass
+before contact. Repeated startup MUST read its saved outcome; a claim without a
+result remains unknown and MUST NOT dispatch again. Missing intent alongside other
+recovery files MUST be treated as damaged evidence, not as a new claim opportunity.
+
+The pass MUST confirm native execution closure before cleanup. If closure was
+previously attempted, it MUST use current status to confirm it or retain uncertainty,
+without submitting a replacement close. Cleanup MUST use only IDs from successful
+journaled `injection.arm` operations, at most 64 per pass. Historical successful
+deletions do not erase those candidates because a restore can reintroduce them.
+Previously dispatched terminal cleanup or unresolved ordinary deletions MUST NOT
+be repeated. A lost new deletion reply MUST end the deletion loop. Confirmed counts,
+remaining candidates and bounded/unconfirmed/not-retried states MUST remain explicit.
+
+Target stop MUST require the original administrator opt-in and confirmed closure.
+A previously attempted stop MUST NOT be resent. Already stopped status may confirm
+stopping, but MUST NOT imply injection cleanup or evidence collection succeeded.
+Remote unavailability or changed identity MUST be reported as unconfirmed; no
+fallback target or current configuration may substitute for the saved binding.
+
+Recovery MUST preserve the original journal and write separate private audit files:
+
+```
+native-recovery/
+  intent.json
+  step-001.json
+  ...
+  result.json
+```
+
+There MUST be at most 140 step records of at most 512 KiB, each containing a bounded
+request, response or fixed failure reason. Intent publication MUST precede each
+external mutation. Any record failure MUST prohibit subsequent dispatch from that
+handle. The final result MUST bind the step inventory by digest; subsequent reads
+MUST verify every step and reject missing, changed, extra or partial records.
+These bounded recovery records are separate from the closed execution journal's
+budget. Before claiming the pass and before every step publication, recovery MUST
+check free space for its remaining audit allowance (70 MiB plus two 256 KiB
+metadata files) and the original journal's minimum-free-space floor. This logical
+reservation does not prevent other host processes from consuming storage. Any
+later write failure remains explicit uncertainty. Recovery records belong to the
+same independently purgeable campaign group.
+
+This pass records target closure/cleanup/stop. Late native evidence collection,
+report publication and explicit administrator-directed reconciliation remain later
+work. No recovery outcome grants execution permission.
 
 Tests use real campaign files/locks and scripted Docker replies. They cover live
 writers, orphan termination, previously removed containers, damaged evidence,

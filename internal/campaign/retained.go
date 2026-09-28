@@ -4,6 +4,7 @@ package campaign
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
@@ -39,10 +40,14 @@ func (w *Writer) ReadContent(d ContentDescriptor) ([]byte, error) {
 	if err := w.ready(); err != nil {
 		return nil, err
 	}
+	return readRetainedContent(w.root, d)
+}
+
+func readRetainedContent(root *os.Root, d ContentDescriptor) ([]byte, error) {
 	if !retainedPath.MatchString(d.Path) || d.SizeBytes < 0 || d.SizeBytes > MaxContentBytes || !validDigest(d.Digest) {
 		return nil, ErrInvalid
 	}
-	raw, err := readFile(w.root, d.Path, MaxContentBytes)
+	raw, err := readFile(root, d.Path, MaxContentBytes)
 	if err != nil || int64(len(raw)) != d.SizeBytes || contracts.RawDigest(raw) != d.Digest {
 		return nil, ErrCorrupt
 	}

@@ -2,9 +2,10 @@
 
 Implementation specification with shared contracts, host persistence and transport,
 and independent administrative termination.
-The campaign service and Docker launch/bootstrap worker libraries are implemented.
-Executable campaign preparation/start, host-service installation and runtime
-qualification remain pending.
+The campaign service, Docker launch/bootstrap worker, executable preparation/start,
+and systemd/launchd dispatch are implemented. Startup recovery verifies residual
+container identity, reclaims transient files, and performs bounded native cleanup.
+Installation packaging and external runtime qualification remain pending.
 
 The [shared validation foundation](contracts/README.md) now provides Go/Python
 strict JSON decoders, offline validation of the current schema catalog and shared
@@ -88,8 +89,11 @@ The [implementation phase handoff](docs/IMPLEMENTATION_STATUS.md) describes thes
 completed foundations, including artifact/model/completion service routes.
 The [host launch worker](docs/HOST_LAUNCH.md) adds fixed Docker policy, live bootstrap,
 host power/event lifetime and confirmed container/transport cleanup.
-Run `make setup` then `make test`. Contract publication and
-the remaining Operator/Attack Harness runtime implementation remain pending.
+Run `make setup` then `make test`. See [startup recovery](docs/STARTUP_RECOVERY.md)
+for cleanup and uncertainty rules. Operator reporting/export/purge, late evidence
+collection, contract publication and external runtime qualification remain pending.
+Attack Harness tracks its implemented runtime and remaining qualification gates
+in its own repository.
 
 Operator accepts structured objectives and optional scenarios from users or external
 generators, runs a custom Python harness in a network-disabled container, brokers

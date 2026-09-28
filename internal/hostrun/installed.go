@@ -245,6 +245,12 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 			return nil, ErrSession
 		}
 	}
+	recoveryPeer := interceptor.New()
+	recovered, err = gate.FinalizeNative(ctx, recoveryPeer)
+	recoveryPeer.Close()
+	if err != nil {
+		return nil, err
+	}
 	release, err := imagerelease.Open(c.Cache.ReleaseDirectory)
 	if err != nil {
 		return nil, err

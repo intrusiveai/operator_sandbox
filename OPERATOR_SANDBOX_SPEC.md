@@ -1054,6 +1054,11 @@ After confirmed container absence, startup MUST reclaim transient transport and
 generated policy files under the campaign writer lock. Staged input copies MUST
 remain until complete journaled retention is verified. Cleanup MUST follow the
 bounded traversal and separate receipt rules in [Startup recovery](docs/STARTUP_RECOVERY.md#transient-filesystem-cleanup).
+Installed startup MUST also perform the bounded
+[native recovery finalization](docs/STARTUP_RECOVERY.md#native-target-finalization)
+pass using verified retained identities and the original target-stop permission.
+It MUST preserve unknown outcomes, avoid mutation replay and retain recovery audit
+records independently of the closed execution journal.
 
 The host-supervised worker owns a durable fencing identity independent of the
 CLI process. The per-OS service account, supervisor and state layout are fixed by

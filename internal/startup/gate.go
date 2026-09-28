@@ -12,6 +12,7 @@ import (
 
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
+	"github.com/intrusiveai/operator_sandbox/internal/nativerecovery"
 	"github.com/intrusiveai/operator_sandbox/internal/termination"
 )
 
@@ -32,6 +33,7 @@ type Prior struct {
 	Termination      *termination.Receipt       `json:"termination,omitempty"`
 	BindingRecovered bool                       `json:"binding_recovered,omitempty"`
 	Transient        *campaign.TransientCleanup `json:"transient,omitempty"`
+	Native           *nativerecovery.Outcome    `json:"native,omitempty"`
 }
 
 // Gate owns the same installation-wide lease needed by the new worker. Callers
@@ -41,6 +43,8 @@ type Gate struct {
 	stateRoot string
 	claimed   atomic.Bool
 	closed    atomic.Bool
+	finalized atomic.Bool
+	prior     []Prior
 }
 
 func (g *Gate) Close() error {
@@ -160,5 +164,30 @@ func Acquire(ctx context.Context, stateRoot string, docker Docker) (*Gate, []Pri
 		return nil, records, err
 	}
 	accepted = true
-	return &Gate{lease: lease, stateRoot: stateRoot}, records, nil
+	return &Gate{lease: lease, stateRoot: stateRoot, prior: append([]Prior(nil), records...)}, records, nil
+}
+
+// FinalizeNative runs only while this gate owns startup, before a fresh worker
+// claims it. A damaged journal permits Docker cleanup but never native mutation.
+func (g *Gate) FinalizeNative(ctx context.Context, peer nativerecovery.Peer) ([]Prior, error) {
+	if g == nil || g.closed.Load() || g.claimed.Load() || !g.finalized.CompareAndSwap(false, true) {
+		return nil, ErrUnresolved
+	}
+	rows := append([]Prior(nil), g.prior...)
+	for i := range rows {
+		if err := ctx.Err(); err != nil {
+			return rows, err
+		}
+		p := &rows[i]
+		if !p.JournalIntact {
+			p.Native = &nativerecovery.Outcome{CampaignID: p.CampaignID, State: "unconfirmed", Reason: "evidence_unavailable", Closure: "unconfirmed", Cleanup: "unconfirmed", TargetStop: "unconfirmed"}
+			continue
+		}
+		out, err := nativerecovery.Run(ctx, g.stateRoot, p.CampaignID, p.State == "container-absent" || p.State == "never-created", peer)
+		p.Native = &out
+		if err != nil {
+			return rows, err
+		}
+	}
+	return rows, nil
 }

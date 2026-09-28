@@ -1,6 +1,27 @@
 # Implementation phase handoff
 
-## Latest boundary: abandoned transient filesystem cleanup
+## Latest boundary: native finalization after worker loss
+
+Installed startup now performs a bounded, separately journaled native cleanup pass
+after Docker and transient-resource reconciliation. It verifies retained target
+and policy pins, uses only verified restore bindings, closes admission, deletes up
+to 64 known injections and honors the frozen target-stop opt-in. A permanent claim
+and audited request/result pairs prevent automatic replay after interruption.
+Completed live finalization is reused, including its uncertainty. The recovery
+result binds its step inventory; corruption cannot become a fresh dispatch grant.
+
+Integration tests reuse real preparation/journals and a scripted native peer for
+closure, injection provenance, restore, changed identity, policy checks, limits,
+lost replies and startup ownership. Late evidence collection, reporting/export,
+purge and native runtime qualification remain outstanding.
+The full Go suite, focused recovery race tests and affected-package vet pass.
+Affected packages compile for Linux AMD64 and ARM64; these builds do not qualify
+native execution on those hosts.
+The earlier preparation window between native attach and durable campaign
+preparation also needs separate reconciliation; this pass requires verified
+retained preparation and does not infer a binding when that record is absent.
+
+## Completed boundary: abandoned transient filesystem cleanup
 
 Startup now removes the fixed transport and generated-policy directories after
 container absence, under the campaign writer lock. It preserves unarchived input
