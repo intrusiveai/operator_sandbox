@@ -1,11 +1,12 @@
 # Current implementation status
 
-Updated: 2026-09-28, following the declarative HTTPS target stage.
+Updated: 2026-09-28, following the Go/Python process integration stage.
 
 Operator's core campaign runtime and Attack Harness's Python runtime are
 implemented. Administrator workflows and the declarative HTTPS target adapter are
-complete. Installation/release work and complete integration/native qualification are still
-outstanding. This page distinguishes implemented components from qualified releases;
+complete. Deterministic Go/Python process integration is covered over both transports.
+Installation/release work and external native qualification are still outstanding.
+This page distinguishes implemented components from qualified releases;
 requirements in the product spec remain mandatory even when their acceptance
 criteria have not yet been demonstrated.
 
@@ -27,6 +28,7 @@ criteria have not yet been demonstrated.
 | Reports and exports | Deterministic, digest-bound report/export generations from verified journal prefixes and retained evidence; explicit coverage/uncertainty, portable exports and automatic worker reporting after execution completion. |
 | Administrator workflows | Public capability export, environment/private-profile selectors, combined run with saved-request reuse, read-only inspect/doctor, frozen skill-set creation/selection, reversible skill removal and campaign credential-resolution audit. |
 | Campaign retirement/purge | Durable start retirement, exact service deregistration, locked inventories, per-campaign/all-campaign deletion, managed-copy registration and retry after partial filesystem deletion. Independent exports and reusable installation data are preserved. |
+| Process integration | Production Python entrypoint joined to the Go host over FIFO/spool: large startup inventories, prompt/skill selection, all campaign modes, HTTPS feedback, conclusions/stop, restore lineage and retained injection cleanup, process loss, spool pressure and large-history compaction. |
 | Attack Harness | Python bootstrap/input loading, both transports, all five codecs, dispatch/loop accounting, artifacts, feedback, restore continuation and bounded completion. Both architecture image candidates have been built; they are not approved releases. |
 
 Component guides provide the detailed behavior and validation boundaries:
@@ -36,6 +38,7 @@ Component guides provide the detailed behavior and validation boundaries:
 - [Campaign start](CAMPAIGN_START.md), [launch](HOST_LAUNCH.md),
   [campaign service](CAMPAIGN_SERVICE.md) and [startup recovery](STARTUP_RECOVERY.md).
 - [Administrator run/diagnostics](ADMIN_WORKFLOWS.md) and [submission selectors](SUBMISSION.md).
+- [Go/Python process integration](PROCESS_INTEGRATION.md).
 - [HTTPS targets](HTTPS_TARGETS.md) and [example private profile](../examples/https-target-profile.json).
 - [Providers](MODEL_PROVIDERS.md), [credentials](CREDENTIALS.md) and [skills](SKILLS.md).
 - [Evidence service](EVIDENCE_SERVICE.md), [late collection](LATE_EVIDENCE.md),
@@ -45,13 +48,19 @@ Component guides provide the detailed behavior and validation boundaries:
 
 ## Validation completed and its limits
 
-At the latest implementation boundary, the full Go suite, focused
-HTTPS execution/preparation/feedback/capability/profile race tests, repository-wide vet and
-Linux AMD64/ARM64 and macOS AMD64/ARM64 CLI builds passed. Shared Go/Python fixtures and Attack Harness
-component tests have passed in their implementation stages. Tests use real
-journals, physical transports, native archive fixtures, local TLS servers and scripted peers.
-HTTPS tests cover successful and failed requests, cancellation after transmission,
-duplicate suppression, response selection/limits, feedback policy and report assurance.
+At this boundary, the full Go suite passed with the optional Python process and
+transport tests enabled. Attack Harness's 82 tests, the shared Python suite's 28
+tests, repository-wide Go vet, schema generator checks and shared fixtures passed.
+Focused race tests covered restore/failure handling, history compaction and the
+Python FIFO/spool peers. Previous HTTPS-stage checks also built the CLI for Linux
+AMD64/ARM64 and macOS AMD64/ARM64.
+
+Process tests use the production Python entrypoint and Go service, real journals,
+physical transports and a local TLS target. Models, native Interceptor, Docker and
+image approval are controlled fixtures; a test-only adapter relocates Python's
+fixed paths and replaces confinement installation. These tests do not qualify a
+production image. The [integration guide](PROCESS_INTEGRATION.md) describes the
+boundaries; Attack Harness's acceptance matrix records matching source/package pins.
 
 A native macOS LaunchAgent retirement test also passed: it registered an unstarted
 job, confirmed its removal and rejected a delayed real worker invocation.
@@ -63,11 +72,7 @@ No complete live provider, secret-store or target qualification is claimed.
 
 ## Remaining implementation stages
 
-1. **Complete Operator/Attack Harness integration tests.** Add the complete real
-   Go/Python process exchange matrix over both transports, including startup,
-   attempt/feedback, restore, conclusion/stop and failure/capacity cases. Preserve
-   component tests as supporting evidence.
-2. **Installation and release tooling.** Complete host installation/distribution,
+1. **Installation and release tooling.** Complete host installation/distribution,
    supported-package/build metadata, signed releases/update handling and release
    automation. Existing package build/check commands do not publish an approved
    `operator-contracts` 0.1.0 release or approve an image.
@@ -85,5 +90,5 @@ No complete live provider, secret-store or target qualification is claimed.
   [host runtime gates](../HOST_RUNTIME_PROFILES.md) and
   [product acceptance criteria](../OPERATOR_SANDBOX_SPEC.md#15-acceptance-criteria).
 
-The next major stage is complete Operator/Attack Harness process integration tests. Detailed
+The next major stage is installation and release tooling. Detailed
 historical commit boundaries remain available in Git history.

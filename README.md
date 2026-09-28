@@ -102,8 +102,10 @@ Run `make setup` then `make test`. See [startup recovery](docs/STARTUP_RECOVERY.
 for cleanup and uncertainty rules, including native attach failures before a
 campaign journal exists. Administrator workflows and the
 [declarative HTTPS target adapter](docs/HTTPS_TARGETS.md) are implemented.
-Installation/release publication and full integration/external qualification remain
-outstanding; see [current implementation status](docs/IMPLEMENTATION_STATUS.md).
+The [Go/Python process integration suite](docs/PROCESS_INTEGRATION.md) covers both
+transports through campaign completion and interruption. Installation/release
+publication and external qualification remain outstanding; see
+[current implementation status](docs/IMPLEMENTATION_STATUS.md).
 [Campaign retirement and purge](docs/PURGE.md) now provide
 `operatorctl purge --campaign ID` and `operatorctl purge --all`, with locked
 preflight, service retirement and retryable partial deletion.
@@ -120,7 +122,7 @@ its permitted operations, and retains host journals, evidence and local reports.
   references, compatibility-based admission, optional exact pins and tested fixtures.
 - [Accepted shared host/harness contract](schemas/SHARED_CONTRACT.md): authoritative wire, startup,
   manifest and completion rules; shared fixtures pass, while package publication and
-  complete process/native conformance remain outstanding.
+  native runtime qualification remain outstanding.
 - [Product specification](OPERATOR_SANDBOX_SPEC.md): requirements, interfaces,
   lifecycle, journaling and acceptance criteria.
 - [Container guest contract](GUEST_CONTAINER_SPEC.md): Python image ABI,
@@ -131,7 +133,8 @@ its permitted operations, and retains host journals, evidence and local reports.
 Interceptor provides the
 [local MVP integration contract](../interceptor_sandbox/docs/local-api.md);
 Operator and Attack Harness runtimes build on the shared-contract foundation;
-full integration and native qualification remain outstanding.
+deterministic process integration is covered; real target and native host
+qualification remain outstanding.
 
 ## Docker MVP deployment
 

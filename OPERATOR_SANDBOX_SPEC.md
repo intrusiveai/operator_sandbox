@@ -1,6 +1,6 @@
 # Intrusive AI Operator Sandbox Product Specification
 
-Status: core runtime, administrator workflows and HTTPS adapter implemented; release publication and full integration/runtime qualification outstanding\
+Status: core runtime, administrator workflows, HTTPS adapter and deterministic process integration implemented; release publication and native qualification outstanding\
 Date: 2026-09-28\
 Product API family: `operator.dev`; existing data schemas remain individually versioned  
 Container runtime profile: `operator-container/v1` — Docker with Linux FIFO / macOS file-spool transport; qualification pending
@@ -27,8 +27,9 @@ single authority for the pipe envelope, identities, startup/manifest exchange,
 deadlines, errors, restore results and completion. Operator owns its versioned
 `operator-contracts` package; both ends pin its version and content digest.
 Closed schemas, Go/Python validators and shared fixtures, and the host/harness runtimes
-are implemented. Package publication and complete process/native conformance remain
-outstanding. See [current implementation status](docs/IMPLEMENTATION_STATUS.md) for
+are implemented. Deterministic Go/Python process integration covers both transports.
+Package publication and native runtime qualification remain outstanding. See
+[current implementation status](docs/IMPLEMENTATION_STATUS.md) for
 completed work and remaining gates. MUST denotes a requirement, not proof of acceptance.
 
 The [host transport implementation](docs/HOST_TRANSPORT.md) supplies FIFO/spool
