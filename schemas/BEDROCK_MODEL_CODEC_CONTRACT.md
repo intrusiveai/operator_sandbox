@@ -38,6 +38,11 @@ Filtered, truncated, malformed and context-limit results MUST NOT dispatch calls
 Missing/null whole usage MUST yield `usage-unknown`, retain reservations and end
 exploration. No model completion implicitly concludes the campaign.
 
+A response MAY include `usage.serverToolUsage` as an empty object, as observed in
+live Nova Lite responses on 2026-09-28. This exact native field MUST be preserved.
+A populated or null object MUST be rejected: hosted-tool execution and accounting
+remain unsupported. An empty object MUST NOT change the token accounting below.
+
 Charged input MUST equal `inputTokens + cacheReadInputTokens + cacheWriteInputTokens`
 with omitted cache counts treated as zero; charged output MUST equal `outputTokens`.
 AWS documents the separate cache counts in its

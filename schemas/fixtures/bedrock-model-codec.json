@@ -121,6 +121,471 @@
     }
   },
   {
+    "name": "bedrock: empty native server tool usage",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "bedrock-converse-text-tools-v1",
+      "profile_id": "fixture-bedrock",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture.model-v1:0",
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "tools": [
+        {
+          "toolSpec": {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "inputSchema": {
+              "json": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "bedrock-converse-text-tools-v1",
+      "profile_id": "fixture-bedrock",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "system": [
+          {
+            "text": "Frozen instructions."
+          }
+        ],
+        "messages": [
+          {
+            "role": "user",
+            "content": [
+              {
+                "text": "Inspect the target."
+              }
+            ]
+          }
+        ],
+        "inferenceConfig": {
+          "maxTokens": 2048
+        },
+        "toolConfig": {
+          "tools": [
+            {
+              "toolSpec": {
+                "name": "snapshot_list",
+                "description": "List snapshots.",
+                "inputSchema": {
+                  "json": {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          ],
+          "toolChoice": {
+            "auto": {}
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "bedrock-converse-text-tools-v1",
+      "profile_id": "fixture-bedrock",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "output": {
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "text": "Ready."
+              }
+            ]
+          }
+        },
+        "stopReason": "end_turn",
+        "metrics": {
+          "latencyMs": 100
+        },
+        "usage": {
+          "inputTokens": 100,
+          "outputTokens": 20,
+          "totalTokens": 120,
+          "cacheReadInputTokens": 30,
+          "cacheWriteInputTokens": 10,
+          "cacheDetails": [
+            {
+              "ttl": "1h",
+              "inputTokens": 0
+            },
+            {
+              "ttl": "5m",
+              "inputTokens": 10
+            }
+          ],
+          "serverToolUsage": {}
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "text",
+    "output_limit": 2048,
+    "metrics": {
+      "known": true,
+      "input_tokens": 140,
+      "output_tokens": 20,
+      "total_tokens": 160,
+      "tool_calls": 0
+    }
+  },
+  {
+    "name": "bedrock: populated server tool usage rejected",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "bedrock-converse-text-tools-v1",
+      "profile_id": "fixture-bedrock",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture.model-v1:0",
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "tools": [
+        {
+          "toolSpec": {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "inputSchema": {
+              "json": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "bedrock-converse-text-tools-v1",
+      "profile_id": "fixture-bedrock",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "system": [
+          {
+            "text": "Frozen instructions."
+          }
+        ],
+        "messages": [
+          {
+            "role": "user",
+            "content": [
+              {
+                "text": "Inspect the target."
+              }
+            ]
+          }
+        ],
+        "inferenceConfig": {
+          "maxTokens": 2048
+        },
+        "toolConfig": {
+          "tools": [
+            {
+              "toolSpec": {
+                "name": "snapshot_list",
+                "description": "List snapshots.",
+                "inputSchema": {
+                  "json": {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          ],
+          "toolChoice": {
+            "auto": {}
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "bedrock-converse-text-tools-v1",
+      "profile_id": "fixture-bedrock",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "output": {
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "text": "Ready."
+              }
+            ]
+          }
+        },
+        "stopReason": "end_turn",
+        "metrics": {
+          "latencyMs": 100
+        },
+        "usage": {
+          "inputTokens": 100,
+          "outputTokens": 20,
+          "totalTokens": 120,
+          "cacheReadInputTokens": 30,
+          "cacheWriteInputTokens": 10,
+          "cacheDetails": [
+            {
+              "ttl": "1h",
+              "inputTokens": 0
+            },
+            {
+              "ttl": "5m",
+              "inputTokens": 10
+            }
+          ],
+          "serverToolUsage": {
+            "webSearchRequests": 1
+          }
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "bedrock: unknown zero server tool counter rejected",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "bedrock-converse-text-tools-v1",
+      "profile_id": "fixture-bedrock",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture.model-v1:0",
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "tools": [
+        {
+          "toolSpec": {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "inputSchema": {
+              "json": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "bedrock-converse-text-tools-v1",
+      "profile_id": "fixture-bedrock",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "system": [
+          {
+            "text": "Frozen instructions."
+          }
+        ],
+        "messages": [
+          {
+            "role": "user",
+            "content": [
+              {
+                "text": "Inspect the target."
+              }
+            ]
+          }
+        ],
+        "inferenceConfig": {
+          "maxTokens": 2048
+        },
+        "toolConfig": {
+          "tools": [
+            {
+              "toolSpec": {
+                "name": "snapshot_list",
+                "description": "List snapshots.",
+                "inputSchema": {
+                  "json": {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          ],
+          "toolChoice": {
+            "auto": {}
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "bedrock-converse-text-tools-v1",
+      "profile_id": "fixture-bedrock",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "output": {
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "text": "Ready."
+              }
+            ]
+          }
+        },
+        "stopReason": "end_turn",
+        "metrics": {
+          "latencyMs": 100
+        },
+        "usage": {
+          "inputTokens": 100,
+          "outputTokens": 20,
+          "totalTokens": 120,
+          "cacheReadInputTokens": 30,
+          "cacheWriteInputTokens": 10,
+          "cacheDetails": [
+            {
+              "ttl": "1h",
+              "inputTokens": 0
+            },
+            {
+              "ttl": "5m",
+              "inputTokens": 10
+            }
+          ],
+          "serverToolUsage": {
+            "futureCounter": 0
+          }
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "bedrock: null server tool usage rejected",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "bedrock-converse-text-tools-v1",
+      "profile_id": "fixture-bedrock",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture.model-v1:0",
+      "prompt": "Frozen instructions.",
+      "max_tokens": 2048,
+      "tools": [
+        {
+          "toolSpec": {
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "inputSchema": {
+              "json": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "bedrock-converse-text-tools-v1",
+      "profile_id": "fixture-bedrock",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "system": [
+          {
+            "text": "Frozen instructions."
+          }
+        ],
+        "messages": [
+          {
+            "role": "user",
+            "content": [
+              {
+                "text": "Inspect the target."
+              }
+            ]
+          }
+        ],
+        "inferenceConfig": {
+          "maxTokens": 2048
+        },
+        "toolConfig": {
+          "tools": [
+            {
+              "toolSpec": {
+                "name": "snapshot_list",
+                "description": "List snapshots.",
+                "inputSchema": {
+                  "json": {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          ],
+          "toolChoice": {
+            "auto": {}
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "bedrock-converse-text-tools-v1",
+      "profile_id": "fixture-bedrock",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "output": {
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "text": "Ready."
+              }
+            ]
+          }
+        },
+        "stopReason": "end_turn",
+        "metrics": {
+          "latencyMs": 100
+        },
+        "usage": {
+          "inputTokens": 100,
+          "outputTokens": 20,
+          "totalTokens": 120,
+          "cacheReadInputTokens": 30,
+          "cacheWriteInputTokens": 10,
+          "cacheDetails": [
+            {
+              "ttl": "1h",
+              "inputTokens": 0
+            },
+            {
+              "ttl": "5m",
+              "inputTokens": 10
+            }
+          ],
+          "serverToolUsage": null
+        }
+      }
+    },
+    "valid": false
+  },
+  {
     "name": "bedrock: inclusive total does not double charge",
     "mode": "bound",
     "policy": {

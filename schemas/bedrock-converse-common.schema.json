@@ -377,6 +377,12 @@
           "minimum": 0,
           "maximum": 9007199254740991
         },
+        "serverToolUsage": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {},
+          "required": []
+        },
         "cacheDetails": {
           "type": "array",
           "items": {

@@ -149,7 +149,7 @@ def bedrock_documents(name,model):
     tool=obj(dict(toolSpec=obj(dict(name=name,description=text(8192),inputSchema=obj(dict(json={'type':'object'})),strict={'const':False}),['name','inputSchema'])))
     tools=array(r('tool'),0,128)
     tool_config=obj(dict(tools=array(r('tool'),1,128),toolChoice={'oneOf':[obj(dict(auto=obj({}))),obj(dict(any=obj({})))]}))
-    usage=obj(dict(inputTokens=integer(),outputTokens=integer(),totalTokens=integer(),cacheReadInputTokens=integer(),cacheWriteInputTokens=integer(),
+    usage=obj(dict(inputTokens=integer(),outputTokens=integer(),totalTokens=integer(),cacheReadInputTokens=integer(),cacheWriteInputTokens=integer(),serverToolUsage=obj({}),
         cacheDetails=array(obj(dict(inputTokens=integer(),ttl={'enum':['1h','5m']})),0,2)),['inputTokens','outputTokens','totalTokens'])
     settings=obj(dict(max_tokens=integer(1),tools_digest={'$ref':WIRE+'digest'}))
     request=obj(dict(system=array(obj(dict(text=text(131072))),1,1),messages=array(r('message'),1,4096),

@@ -40,6 +40,10 @@ def case(name,mutate=lambda p,q,r:None,valid=True,disposition='text',base=None,m
 
 
 case('native text with separate caches',counts=metrics())
+case('empty native server tool usage',lambda p,q,r:r['response']['usage'].update(serverToolUsage={}),counts=metrics())
+case('populated server tool usage rejected',lambda p,q,r:r['response']['usage'].update(serverToolUsage={'webSearchRequests':1}),False)
+case('unknown zero server tool counter rejected',lambda p,q,r:r['response']['usage'].update(serverToolUsage={'futureCounter':0}),False)
+case('null server tool usage rejected',lambda p,q,r:r['response']['usage'].update(serverToolUsage=None),False)
 case('inclusive total does not double charge',lambda p,q,r:r['response']['usage'].update(totalTokens=160),counts=metrics())
 case('multiple tools',base=with_calls([call(),call('tool-2')]),disposition='tool-calls',counts=metrics(count=2))
 case('tool-free generation',lambda p,q,r:q['request'].pop('toolConfig'))
