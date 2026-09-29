@@ -196,6 +196,11 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 		}
 		runErr = errors.Join(runErr, recordErr)
 	}()
+	// AfterFunc is asynchronous, even for an already canceled context. Do not
+	// classify a create as uncertain when execution was canceled before Run.
+	if err = life.Err(); err != nil {
+		return result, err
+	}
 	release, err = w.power.Acquire(ctx)
 	if err != nil {
 		return result, err

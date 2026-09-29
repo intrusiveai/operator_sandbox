@@ -147,7 +147,7 @@ func TestComposedSessionCancelAndPrelaunchFailureAreTerminal(t *testing.T) {
 					ctx, cancel := context.WithCancel(context.Background())
 					cancel()
 					result, err := s.Run(ctx)
-					if err == nil || result.ContainerCleanup != "not-created" {
+					if !errors.Is(err, context.Canceled) || result.LaunchPhase != "prepare" || result.ContainerCleanup != "not-created" || result.TransportCleanup != "removed" || result.InputCleanup != "removed" {
 						t.Fatal(result, err)
 					}
 				}
