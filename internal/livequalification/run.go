@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/internal/credentials"
+	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 )
 
 var ErrCheck = errors.New("qualification checks failed or were interrupted")
@@ -42,17 +43,26 @@ func (q *Prepared) run(ctx context.Context, id Identity, sink Sink, factories ma
 		_ = e.emit("run", "failed", "canceled")
 		return ErrCheck
 	}
-	if q.plan.Kind != "secret-store" {
-		_ = e.emit("run", "not_run", "provider_probe_pending")
-		return ErrCheck
-	}
 	resolver, err := credentials.New(q.config, factories)
 	if err != nil {
 		_ = e.emit("run", "failed", "resolver_initialization_failed")
 		return ErrCheck
 	}
 	defer resolver.Close()
-	if err = e.secrets(ctx, resolver); err != nil {
+	if q.plan.Kind == "provider" {
+		audited := resolver.WithAudit(func(credentials.AuditEvent) error {
+			return e.emit("provider_credential", "observed", "credential_resolution_attempted")
+		})
+		client, initErr := modelprovider.New(ctx, q.profile, audited)
+		if initErr != nil {
+			return e.failedCheck("run", "provider_initialization_failed")
+		}
+		defer client.Close()
+		err = e.provider(ctx, client)
+	} else {
+		err = e.secrets(ctx, resolver)
+	}
+	if err != nil {
 		return ErrCheck
 	}
 	if err = e.emit("run", "completed", "selected_checks_finished"); err != nil || e.failed {

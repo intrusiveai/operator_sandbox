@@ -123,6 +123,11 @@ func Prepare(p Plan) (*Prepared, error) {
 	} else {
 		return nil, ErrPlan
 	}
+	if p.Kind == "provider" {
+		if _, err := newConversation(q); err != nil {
+			return nil, ErrPlan
+		}
+	}
 	return q, nil
 }
 func (q *Prepared) reference(id string) (credentials.HostCredentialRef, bool) {

@@ -28,8 +28,8 @@ MUST NOT imply live qualification. Release source/contract identity fields MUST
 identify the executing build; empty development-build fields leave that identity
 unqualified.
 
-Live execution tooling and detailed service setup are being completed. No live
-provider or secret-store combination is qualified by the local preflight tests.
+No live provider or secret-store combination is qualified by local preflight or
+controlled fixture tests.
 
 ## Explicit secret-store execution
 
@@ -69,3 +69,52 @@ Read [credential configuration](CREDENTIALS.md) for the existing private profile
 format. The plan MUST select an existing credential; preflight does not resolve it.
 Pre-canceled calls MUST NOT be labeled as in-flight cancellation qualification.
 Actual in-flight faults and SDK identity selection require separate live evidence.
+
+## Provider conversation probes
+
+```json
+{
+  "api_version": "operator.dev/live-qualification/v1alpha1",
+  "case_id": "provider-route-01",
+  "kind": "provider",
+  "declared_auth_mode": "secret-store",
+  "model_profile_file": "/absolute/private/model.json",
+  "credentials_file": "/absolute/private/credentials.yaml",
+  "timeout_seconds": 120,
+  "maximum_model_calls": 3,
+  "maximum_output_tokens": 1024
+}
+```
+
+A provider probe MUST make at most three potentially billable generations, with
+no retry. This plan's output cap MUST be positive and no greater than the selected
+profile's cap; it MUST also accommodate any selected thinking budget. Input is a
+fixed harmless prompt plus a single package-owned `snapshot_list` declaration.
+No target or campaign is created and no returned tool is dispatched. The simulated
+tool result contains an empty snapshot list. Models that refuse, truncate, omit
+usage, return malformed calls, or choose an unexpected disposition MUST fail the
+probe; the tool MUST NOT spend extra calls trying to persuade them.
+
+The three exchanges MUST cover text, a single tool call after that text, and text
+after the simulated tool result. Every request/result MUST pass the production
+shared codec validator, including model aliases, token accounting, tool correlation
+and native continuation. In-memory native history MUST retain opaque provider
+reasoning blocks. Only validated numeric usage MUST enter the evidence. Exceeding
+the profile's declared prompt-token allowance MUST stop subsequent calls; this
+allowance is a checked reservation, not a provider-side input-token limiter.
+
+The tool MUST test pre-canceled generation separately. A generation transport error
+MUST be recorded as `uncertain` and MUST end the probe without retry. This does not
+establish that a provider stopped remote computation or billing. Controlled
+in-flight cancellation and ambiguous-outcome qualification MUST remain `not_run`
+unless separately demonstrated with fault-injection evidence.
+
+Provider `declared_auth_mode` MUST be `secret-store` for key-based profiles.
+Workload profiles omit `credentials_file` and use AWS (`web-identity`,
+`container-role`, `instance-role`), Azure (`workload-identity`, `managed-identity`),
+or Vertex (`external-account`, `metadata-identity`) labels as applicable.
+See [model profiles](MODEL_PROVIDERS.md) for provider/codec/endpoint selection.
+
+A successful command means the selected automated checks completed. It MUST NOT
+be interpreted as blanket qualification of a provider, model family, authentication
+mechanism or untested fault case. Missing results remain unqualified.
