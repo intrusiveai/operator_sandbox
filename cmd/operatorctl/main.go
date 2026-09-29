@@ -40,6 +40,9 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 }
 
 func runWithDefaults(ctx context.Context, args []string, stdout, stderr io.Writer, defaults hostconfig.Paths) int {
+	if len(args) >= 2 && args[0] == "release" {
+		return releaseCommand(ctx, args[1], args[2:], stdout, stderr)
+	}
 	if len(args) > 0 && args[0] == "run" {
 		return combinedRun(ctx, args[1:], stdout, stderr, defaults)
 	}
