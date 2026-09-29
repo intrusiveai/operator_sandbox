@@ -18,6 +18,8 @@ class ReleaseMetadataTest(unittest.TestCase):
         self.assertEqual([m["Path"] for m in modules], ["a", "b"])
         with self.assertRaises(ValueError):
             builder.module_stream('{"Path":"a","Replace":{"Path":"/tmp/local"}}')
+        packages = builder.module_stream('{"Module":null} {"Module":{"Path":"a","Version":"v2"}} {"Module":{"Path":"a","Version":"v2"}}')
+        self.assertEqual(packages, [{"Path": "a", "Version": "v2"}])
         sbom = builder.sbom(modules, "0.1.0", "linux/arm64", "a" * 40)
         self.assertEqual(sbom["spdxVersion"], "SPDX-2.3")
         self.assertEqual(len(sbom["packages"]), 3)

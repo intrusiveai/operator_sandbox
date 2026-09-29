@@ -28,6 +28,10 @@ def module_stream(raw):
     while raw.strip():
         item, end = decoder.raw_decode(raw.lstrip())
         raw = raw.lstrip()[end:]
+        if "Module" in item:
+            item = item["Module"]
+        if not item or "Path" not in item:
+            continue
         if "Replace" in item:
             raise ValueError("release dependencies cannot use replacements")
         values.append(item)
@@ -101,7 +105,7 @@ def build(root, output, version, platforms, python):
                               "-X", "github.com/intrusiveai/operator_sandbox/internal/contractstore.SupportedVersion=" + expected["package_version"],
                               "-X", "github.com/intrusiveai/operator_sandbox/internal/contractstore.SupportedDigest=" + expected["package_digest"]])
             target_env = dict(env, GOOS=goos, GOARCH=arch)
-            modules = module_stream(run(["go", "list", "-mod=readonly", "-deps", "-f", "{{with .Module}}{{json .}}{{end}}", "./cmd/operatorctl"], root, target_env))
+            modules = module_stream(run(["go", "list", "-mod=readonly", "-deps", "-json=Module", "./cmd/operatorctl"], root, target_env))
             run(["go", "build", "-mod=readonly", "-trimpath", "-buildvcs=false", "-ldflags", flags,
                  "-o", str(dest / "bin/operatorctl"), "./cmd/operatorctl"], root, target_env)
             write_json(dest / "sbom.spdx.json", sbom(modules, version, platform, commit))
