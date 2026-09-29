@@ -1,5 +1,7 @@
 # Live provider and secret-store qualification
 
+See [setup instructions and examples](LIVE_QUALIFICATION_SETUP.md) before live use.
+
 Qualification MUST use explicit administrator-selected nonproduction resources.
 `operatorctl qualify --plan /absolute/private/plan.json` validates configuration
 locally without initializing cloud identities or sending service requests.

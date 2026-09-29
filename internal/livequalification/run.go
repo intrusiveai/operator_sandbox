@@ -50,8 +50,11 @@ func (q *Prepared) run(ctx context.Context, id Identity, sink Sink, factories ma
 	}
 	defer resolver.Close()
 	if q.plan.Kind == "provider" {
-		audited := resolver.WithAudit(func(credentials.AuditEvent) error {
-			return e.emit("provider_credential", "observed", "credential_resolution_attempted")
+		audited := resolver.WithAudit(func(event credentials.AuditEvent) error {
+			record := e.q.record(e.id, "provider_credential", "observed", event.Code)
+			record.Backend = event.Backend
+			record.CacheHit = &event.CacheHit
+			return e.sink(record)
 		})
 		client, initErr := modelprovider.New(ctx, q.profile, audited)
 		if initErr != nil {

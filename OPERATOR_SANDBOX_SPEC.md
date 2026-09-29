@@ -557,6 +557,14 @@ Converse, Gemini Developer API, Vertex Gemini, Azure OpenAI and LiteLLM.
 Each route/model/codec/authentication combination needs explicit qualification;
 a codec test does not qualify all its cloud variants.
 
+Qualification MUST provide local-only configuration preflight and an explicit live
+opt-in. `operatorctl qualify --plan FILE [--live --output NEW_FILE]` MUST use
+production adapters, bounded deadlines/call budgets, private plans and sanitized
+append-only evidence. It MUST NOT mutate remote secrets, replay uncertain model
+calls, or equate synthetic/pre-canceled tests with live in-flight qualification.
+The [qualification contract](docs/LIVE_QUALIFICATION.md) defines probe behavior;
+[setup instructions](docs/LIVE_QUALIFICATION_SETUP.md) define administrator inputs.
+
 The guest builds a supported native request through a local codec and receives
 one complete bounded native result. Preserve system instructions, text and
 client function boundaries, tool IDs/order, finish reasons, usage and supported
@@ -1717,8 +1725,8 @@ native gates; schemas must cover boundary cases rather than merely mirror code.
 | OC-AC-033 | macOS caffeinate assertion is verified before execution, remains continuous through healthy restore, and releases after cleanup or host exit. Display sleep/lock remain allowed. Helper loss, changed/unreadable sleep state, logout and Docker interruption close admission and trigger independent Docker termination with retained uncertainty. Idle evidence service does not inhibit sleep; recovery never resumes execution. |
 
 The host-service decisions are resolved and service submission/lifecycle handling
-are implemented. Installation packaging and full four-host runtime qualification
-remain outstanding. [Host profiles](HOST_RUNTIME_PROFILES.md) record the confirmed
+and installation packaging are implemented. Full four-host runtime qualification
+remains outstanding. [Host profiles](HOST_RUNTIME_PROFILES.md) record the confirmed
 supported versions, selected Docker/seccomp baseline and accepted spool rules.
 Runtime capability checks enforce required behavior without an OS/Docker version
 certification allowlist.

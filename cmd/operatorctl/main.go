@@ -106,7 +106,7 @@ func runWithDefaults(ctx context.Context, args []string, stdout, stderr io.Write
 		return checkConfig(args[2:], stdout, stderr, defaults)
 	}
 	if len(args) < 2 || args[0] != "campaign" || args[1] != "terminate" {
-		fmt.Fprintln(stderr, "usage: operatorctl submit --bundle FILE --capabilities FILE [--artifacts DIR] --output DIR [--config PATH]\n       operatorctl validate --run DIR [--config PATH]\n       operatorctl config check [--config PATH]\n       operatorctl contract check --package-dir DIR --package-version VERSION --package-digest SHA256\n       operatorctl campaign terminate --campaign ID [--config PATH] [--state-root DIR] [--mode immediate] [--reason user-request] [--request-id HEX32] [--docker-bin PATH]")
+		fmt.Fprintln(stderr, "usage: operatorctl qualify --plan FILE [--live --output FILE]\n       operatorctl submit --bundle FILE --capabilities FILE [--artifacts DIR] --output DIR [--config PATH]\n       operatorctl validate --run DIR [--config PATH]\n       operatorctl config check [--config PATH]\n       operatorctl contract check --package-dir DIR --package-version VERSION --package-digest SHA256\n       operatorctl campaign terminate --campaign ID [--config PATH] [--state-root DIR] [--mode immediate] [--reason user-request] [--request-id HEX32] [--docker-bin PATH]")
 		fmt.Fprintln(stderr, "       operatorctl purge (--campaign ID | --all) [--config PATH] [--state-root DIR] [--docker-bin PATH]")
 		fmt.Fprintln(stderr, "       operatorctl campaign evidence collect --campaign ID [--config PATH] [--state-root DIR] [--docker-bin PATH]")
 		fmt.Fprintln(stderr, "       operatorctl campaign evidence import --campaign ID --session ID --archive FILE [--max-archive-bytes N] [--state-root DIR]")

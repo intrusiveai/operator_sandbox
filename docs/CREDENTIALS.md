@@ -98,3 +98,10 @@ available. Offline configuration validation MUST NOT resolve credentials. Provid
 routes using workload identity directly retain their existing provider-operation
 records; they MUST NOT fabricate secret-store resolution events. Live cloud and
 Vault qualification remain external acceptance gates.
+
+## Live qualification
+
+Use the opt-in [qualification command](LIVE_QUALIFICATION.md) and
+[setup guide](LIVE_QUALIFICATION_SETUP.md) for read-only store, cache, expiry,
+rotation and negative-fixture probes. Live service and identity qualification
+remain pending until actual runner evidence is collected.

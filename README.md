@@ -164,3 +164,10 @@ service route and healthy campaign restore coordination are implemented.
 
 [Administrator workflows](docs/ADMIN_WORKFLOWS.md) define combined `run`,
 read-only `inspect` and installation `doctor` commands.
+
+## Live service qualification
+
+`operatorctl qualify --plan FILE` performs offline preflight. Add
+`--live --output NEW_FILE` to run bounded service probes with sanitized evidence.
+See [setup instructions](docs/LIVE_QUALIFICATION_SETUP.md) for the four secret stores
+and all provider routes. Live infrastructure qualification remains pending.

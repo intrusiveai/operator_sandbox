@@ -1,0 +1,10 @@
+{
+  "api_version": "operator.dev/live-qualification/v1alpha1",
+  "case_id": "azure-openai-chat-workload-identity",
+  "kind": "provider",
+  "declared_auth_mode": "managed-identity",
+  "model_profile_file": "/REPLACE/private/azure-openai-chat-workload-identity-model.json",
+  "timeout_seconds": 120,
+  "maximum_model_calls": 3,
+  "maximum_output_tokens": 1024
+}

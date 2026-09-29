@@ -1,0 +1,18 @@
+{
+  "api_version": "operator.dev/model-provider-profile/v1alpha1",
+  "id": "vertex-gemini-gemini-workload-identity",
+  "provider": "vertex-gemini",
+  "codec_id": "gemini-text-tools-v1",
+  "model": "REPLACE-model",
+  "authentication": "workload-identity",
+  "maximum_prompt_tokens": 32768,
+  "maximum_completion_tokens": 4096,
+  "maximum_response_bytes": 1048576,
+  "codec_options": {
+    "thinking_config": {},
+    "response_models": [
+      "REPLACE-model"
+    ]
+  },
+  "endpoint": "https://REPLACE.example/models/REPLACE-model:generateContent"
+}

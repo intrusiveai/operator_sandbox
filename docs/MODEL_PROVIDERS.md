@@ -89,8 +89,9 @@ results MUST produce a sanitized uncertain failure and MUST NOT trigger a retry.
 
 Transport implementations and synthetic TLS/signing tests cover all listed families.
 All five native codec families have shared Go/Python semantic validators.
-Executable profile/startup integration and the Attack Harness loop MUST be
-completed before campaign admission can advertise these routes. Synthetic
+Executable profile/startup integration and the Attack Harness loop are implemented.
+The opt-in [qualification tooling](LIVE_QUALIFICATION.md) exercises native text/tool
+conversations and usage through these adapters. Synthetic
 transport/contract coverage alone does not qualify live providers,
 model versions, authentication or reasoning continuation.
 

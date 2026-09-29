@@ -1,0 +1,10 @@
+{
+  "api_version": "operator.dev/live-qualification/v1alpha1",
+  "case_id": "hashicorp-vault-01",
+  "kind": "secret-store",
+  "declared_auth_mode": "proxy",
+  "credentials_file": "/REPLACE/private/hashicorp-vault-credentials.json",
+  "credential_id": "qualification-secret",
+  "failure_credential_id": "qualification-missing",
+  "timeout_seconds": 60
+}

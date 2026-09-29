@@ -8,7 +8,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/intrusiveai/operator_sandbox/internal/contractstore"
 	"github.com/intrusiveai/operator_sandbox/internal/livequalification"
@@ -33,7 +32,7 @@ func qualifyCommand(ctx context.Context, args []string, stdout, stderr io.Writer
 		if *output == "" {
 			return 2
 		}
-		file, err := os.OpenFile(*output, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+		file, err := livequalification.CreateEvidence(*output)
 		if err != nil {
 			fmt.Fprintln(stderr, "cannot create new qualification evidence file")
 			return 1

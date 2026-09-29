@@ -1,6 +1,6 @@
 # Current implementation status
 
-Updated: 2026-09-28, following the installation and release-tooling stage.
+Updated: 2026-09-28, following opt-in live-qualification tooling.
 
 Operator's core campaign runtime and Attack Harness's Python runtime are
 implemented. Administrator workflows and the declarative HTTPS target adapter are
@@ -85,6 +85,20 @@ No complete live provider, secret-store or target qualification is claimed.
 The planned core implementation stages are complete. The next stage is native/live
 qualification and approved release publication. Failures discovered during that
 qualification still require correction before declaring the product release-ready.
+
+## Live-qualification tooling
+
+`operatorctl qualify` provides local-only preflight and explicit bounded live runs.
+It reuses the four production store adapters and all five model codecs across the
+twelve provider/codec/authentication combinations. Sanitized append-only evidence
+records checks, usage, build identity and explicit omissions; remote values and
+native payloads are excluded. Release templates include all store and route plans.
+See [setup instructions](LIVE_QUALIFICATION_SETUP.md) and the
+[tooling validation record](LIVE_QUALIFICATION_VALIDATION.md).
+
+Live calls have not been run in this stage. The administrator will provision test
+services and runner identities next. Successful local probes do not resolve the
+remaining live-service, fault, identity-renewal or native host qualification gates.
 
 ## Remaining external qualification and publication
 
