@@ -104,6 +104,9 @@ func Validate(config Config) error {
 		if profile.TimeoutSeconds < 1 || profile.TimeoutSeconds > 60 || profile.MaxValueBytes < 1 || profile.MaxValueBytes > 1<<20 || profile.MaxCacheTTLSeconds < 0 || profile.MaxCacheTTLSeconds > 3600 {
 			return fmt.Errorf("profile %q has an out-of-bounds timeout, value, or cache limit", profile.ID)
 		}
+		if profile.AWSProfile != "" && (profile.BackendKind != "aws-secrets-manager" || !ValidAWSProfile(profile.AWSProfile)) {
+			return errors.New("invalid AWS named profile selection")
+		}
 		if profile.BackendKind == "aws-secrets-manager" && profile.Region == "" {
 			return fmt.Errorf("AWS profile %q requires region", profile.ID)
 		}

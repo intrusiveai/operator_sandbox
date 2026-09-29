@@ -90,7 +90,7 @@ qualification still require correction before declaring the product release-read
 
 `operatorctl qualify` provides local-only preflight and explicit bounded live runs.
 It reuses the four production store adapters and all five model codecs across the
-twelve provider/codec/authentication combinations. Sanitized append-only evidence
+thirteen provider/codec/authentication combinations (including explicit AWS named profiles). Sanitized append-only evidence
 records checks, usage, build identity and explicit omissions; remote values and
 native payloads are excluded. Release templates include all store and route plans.
 See [setup instructions](LIVE_QUALIFICATION_SETUP.md) and the

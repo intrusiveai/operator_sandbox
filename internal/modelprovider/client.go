@@ -46,7 +46,7 @@ func New(ctx context.Context, profile *Profile, resolver Resolver) (*Client, err
 	}
 	c := &Client{profile: s, resolver: resolver, http: boundedHTTP()}
 	if s.Provider == "bedrock-converse" {
-		cfg, err := credentials.AWSWorkloadConfig(ctx, s.Region)
+		cfg, err := credentials.AWSConfig(ctx, s.Region, s.AWSProfile)
 		if err != nil {
 			return nil, ErrProfile
 		}

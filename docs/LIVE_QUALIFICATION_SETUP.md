@@ -32,7 +32,7 @@ thinking budget. Never run a loop that automatically retries failed probes.
 
 Installed releases contain `templates/qualification/`; source checkouts contain
 [release/templates/qualification](../release/templates/qualification).
-The templates include all four stores and twelve provider/codec/authentication
+The templates include all four stores and thirteen provider/codec/authentication
 combinations. They are deliberately populated with `REPLACE` placeholders.
 
 ```sh
@@ -72,7 +72,11 @@ These adapters intentionally use the workload authentication described in
 supported credential source for these probes:
 
 - **AWS:** static access-key environment variables are rejected; shared credential
-  and config files are excluded. Select `instance-role`, `container-role` or
+  and config files are excluded in workload mode. An explicitly selected `aws_profile`
+  enables named-profile authentication from local SDK files, including SSO; set
+  the plan mode to `named-profile`. Use `aws sso login --profile NAME` before testing
+  an SSO profile. The `aws-named-profile-*` and `bedrock-named-profile-*` templates
+  cover this path. For workload mode select `instance-role`, `container-role` or
   `web-identity` to match the runner. The runtime platform supplies metadata/container
   credentials; federated runners supply their configured role and web-identity token
   file. Consult [AWS credential providers](https://docs.aws.amazon.com/sdkref/latest/guide/standardized-credentials.html).
@@ -125,6 +129,7 @@ Use the complete HTTPS operation URL supplied for your actual service/deployment
 | `anthropic-messages-anthropic-secret-store` | `/messages`; selected model, explicit API version and API-key secret |
 | `gemini-api-gemini-secret-store` | Exact `/models/<model>:generateContent` endpoint and API-key secret |
 | `vertex-gemini-gemini-workload-identity` | Full project/location/model HTTPS endpoint and Google workload identity |
+| `bedrock-named-profile` | Enabled model ID, region, `authentication:"aws-profile"`, explicit `aws_profile`; renew SSO before running |
 | `bedrock-converse-bedrock-workload-identity` | Enabled model ID, AWS region and workload identity; no endpoint override |
 | `azure-openai-chat-*` / `azure-openai-responses-*` | Actual deployment operation URL; optional `api-version` query; API-key secret or Azure identity with model inference access |
 | `litellm-chat-secret-store` / `litellm-responses-secret-store` | HTTPS proxy operation URL, proxy model alias and bearer-key secret |

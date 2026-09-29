@@ -1,0 +1,10 @@
+{
+  "api_version": "operator.dev/live-qualification/v1alpha1",
+  "case_id": "aws-named-profile",
+  "kind": "secret-store",
+  "declared_auth_mode": "named-profile",
+  "credentials_file": "/REPLACE/private/aws-named-profile-credentials.json",
+  "credential_id": "qualification-secret",
+  "failure_credential_id": "qualification-missing",
+  "timeout_seconds": 60
+}

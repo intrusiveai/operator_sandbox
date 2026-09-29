@@ -574,6 +574,11 @@ translates between provider families. No streaming, provider-hosted tools,
 arbitrary URLs, persistent provider state, HTTP shim or synthetic API keys.
 
 The [host provider profile](docs/MODEL_PROVIDERS.md) implements route selection.
+Bedrock MAY select `authentication:"aws-profile"` with a private `aws_profile`;
+AWS Secrets Manager MAY select `aws_profile` in its store configuration. These
+explicit selections MUST use the same SDK named-profile resolver, fail without
+fallback when unavailable, and keep selectors/credentials out of guest inputs and
+evidence. Without explicit selection, AWS shared files MUST remain excluded.
 ModelProviderProfile selects trusted endpoint/model/deployment, exact codecs,
 supported features, limits and credential references. Guest requests cannot
 override headers, route, region, cloud project, provider or credentials. Disable
@@ -582,7 +587,8 @@ worst-case reservations. Cancellation does not establish that no tokens were use
 
 The [host credential configuration](docs/CREDENTIALS.md) defines installed
 profiles, private loading and backend authentication. Keep one host resolver for AWS Secrets Manager, Azure Key Vault, Google Cloud
-Secret Manager and HashiCorp Vault, using workload identity or configured Vault
+Secret Manager and HashiCorp Vault, using workload identity, explicitly selected AWS
+named profiles, or configured Vault
 Agent/Proxy bootstrap. Secret-store resolutions MUST follow the
 [campaign audit contract](docs/CREDENTIALS.md#campaign-resolution-audit), including
 recorded failures/cache hits and withholding values after an audit failure. Production credentials do not arrive through campaign

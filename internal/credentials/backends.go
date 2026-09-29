@@ -46,7 +46,7 @@ type awsSecretsClient interface {
 type awsBackend struct{ client awsSecretsClient }
 
 func newAWSBackend(ctx context.Context, profile SecretStoreProfile) (Backend, error) {
-	cfg, err := AWSWorkloadConfig(ctx, profile.Region)
+	cfg, err := AWSConfig(ctx, profile.Region, profile.AWSProfile)
 	if err != nil {
 		return nil, err
 	}
@@ -228,13 +228,45 @@ func (b *gcpBackend) Close() error {
 	return nil
 }
 
+// ValidAWSProfile validates an opaque SDK profile name, never a path or command.
+func ValidAWSProfile(name string) bool {
+	return name != "" && len(name) <= 128 && strings.TrimSpace(name) == name && strings.IndexFunc(name, func(r rune) bool { return r < 32 || r == 127 }) < 0
+}
+
 func AWSWorkloadConfig(ctx context.Context, region string) (aws.Config, error) {
-	if os.Getenv("AWS_ACCESS_KEY_ID") != "" || os.Getenv("AWS_SECRET_ACCESS_KEY") != "" || os.Getenv("AWS_SESSION_TOKEN") != "" {
-		return aws.Config{}, errors.New("AWS secret store requires workload identity")
+	return AWSConfig(ctx, region, "")
+}
+
+// AWSConfig enables shared files only for an explicitly selected profile. Missing
+// or credential-free profiles fail rather than falling back to ambient identities.
+func AWSConfig(ctx context.Context, region, profile string) (aws.Config, error) {
+	invalid := errors.New("AWS credential configuration unavailable")
+	if ctx.Err() != nil || (profile != "" && !ValidAWSProfile(profile)) {
+		return aws.Config{}, invalid
 	}
-	cfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(region), awsconfig.WithSharedConfigFiles([]string{}), awsconfig.WithSharedCredentialsFiles([]string{}))
+	if os.Getenv("AWS_ACCESS_KEY_ID") != "" || os.Getenv("AWS_SECRET_ACCESS_KEY") != "" || os.Getenv("AWS_SESSION_TOKEN") != "" {
+		return aws.Config{}, invalid
+	}
+	options := []func(*awsconfig.LoadOptions) error{awsconfig.WithRegion(region)}
+	if profile == "" {
+		options = append(options, awsconfig.WithSharedConfigFiles([]string{}), awsconfig.WithSharedCredentialsFiles([]string{}))
+	} else {
+		options = append(options, awsconfig.WithSharedConfigProfile(profile))
+	}
+	cfg, err := awsconfig.LoadDefaultConfig(ctx, options...)
 	if err != nil {
-		return aws.Config{}, err
+		return aws.Config{}, invalid
+	}
+	if profile != "" {
+		selected := false
+		for _, source := range cfg.ConfigSources {
+			if shared, ok := source.(awsconfig.SharedConfig); ok && shared.Profile == profile {
+				selected = shared.Credentials.HasKeys() || shared.Source != nil || shared.CredentialSource != "" || shared.CredentialProcess != "" || shared.WebIdentityTokenFile != "" || shared.SSOSession != nil || shared.SSOStartURL != ""
+			}
+		}
+		if !selected {
+			return aws.Config{}, invalid
+		}
 	}
 	return cfg, nil
 }

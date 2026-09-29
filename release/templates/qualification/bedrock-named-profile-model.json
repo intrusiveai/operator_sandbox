@@ -1,0 +1,14 @@
+{
+  "api_version": "operator.dev/model-provider-profile/v1alpha1",
+  "id": "bedrock-named-profile",
+  "provider": "bedrock-converse",
+  "codec_id": "bedrock-converse-text-tools-v1",
+  "model": "REPLACE-model",
+  "authentication": "aws-profile",
+  "maximum_prompt_tokens": 32768,
+  "maximum_completion_tokens": 4096,
+  "maximum_response_bytes": 1048576,
+  "codec_options": {},
+  "region": "us-east-1",
+  "aws_profile": "REPLACE-profile"
+}

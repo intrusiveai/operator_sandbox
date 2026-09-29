@@ -87,9 +87,16 @@ func Prepare(p Plan) (*Prepared, error) {
 				return nil, ErrPlan
 			}
 		}
-		modes := map[string][]string{"aws-secrets-manager": {"web-identity", "container-role", "instance-role"}, "azure-key-vault": {"workload-identity", "managed-identity"}, "gcp-secret-manager": {"external-account", "metadata-identity"}, "hashicorp-vault": {"token-sink", "proxy"}}
+		modes := map[string][]string{"aws-secrets-manager": {"web-identity", "container-role", "instance-role", "named-profile"}, "azure-key-vault": {"workload-identity", "managed-identity"}, "gcp-secret-manager": {"external-account", "metadata-identity"}, "hashicorp-vault": {"token-sink", "proxy"}}
 		if !contains(modes[q.backend], p.DeclaredAuthMode) {
 			return nil, ErrPlan
+		}
+		if q.backend == "aws-secrets-manager" {
+			for _, store := range q.config.Profiles {
+				if store.ID == ref.StoreProfileID && (store.AWSProfile != "") != (p.DeclaredAuthMode == "named-profile") {
+					return nil, ErrPlan
+				}
+			}
 		}
 		if q.backend == "hashicorp-vault" {
 			for _, store := range q.config.Profiles {
@@ -110,7 +117,11 @@ func Prepare(p Plan) (*Prepared, error) {
 		if p.MaximumOutputTokens > s.MaximumCompletionTokens {
 			return nil, ErrPlan
 		}
-		if s.Authentication == "secret-store" {
+		if s.Authentication == "aws-profile" {
+			if p.CredentialsFile != "" || p.DeclaredAuthMode != "named-profile" {
+				return nil, ErrPlan
+			}
+		} else if s.Authentication == "secret-store" {
 			if _, ok := q.reference(s.CredentialID); !ok || p.DeclaredAuthMode != "secret-store" {
 				return nil, ErrPlan
 			}

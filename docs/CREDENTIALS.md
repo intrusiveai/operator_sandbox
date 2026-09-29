@@ -41,7 +41,7 @@ Profiles MUST choose one of:
 
 | Backend | Profile configuration | Locator | Authentication |
 | --- | --- | --- | --- |
-| `aws-secrets-manager` | `region` | matching `region`, `secret_id`; optional `version_id` or `version_stage` | SDK web identity, container or instance role; static environment keys and shared credential/config files are excluded. |
+| `aws-secrets-manager` | `region` | matching `region`, `secret_id`; optional `version_id` or `version_stage` | SDK web identity, container/instance role, or explicitly selected `aws_profile`; static environment keys are rejected. Shared files are enabled only for an explicit named profile. |
 | `azure-key-vault` | HTTPS `vault_url` | matching `vault_url`, `secret_name`, optional `version` | Workload identity or managed identity. |
 | `gcp-secret-manager` | No extra route field | `project`, `secret_name`, `version` | Metadata identity or ADC external-account workload federation; user/service-account-key ADC is rejected. |
 | `hashicorp-vault` | HTTPS `vault_url`; optional `vault_namespace`, `vault_ca_certificate`; exactly one of `vault_token_file` or `vault_proxy: true` | `mount`, safe `path`, optional positive integer `version` | Configured Agent token sink or authenticating Proxy. |
@@ -105,3 +105,18 @@ Use the opt-in [qualification command](LIVE_QUALIFICATION.md) and
 [setup guide](LIVE_QUALIFICATION_SETUP.md) for read-only store, cache, expiry,
 rotation and negative-fixture probes. Live service and identity qualification
 remain pending until actual runner evidence is collected.
+
+### Explicit AWS named profiles
+
+An AWS store profile MAY set `aws_profile` to an administrator-selected local SDK
+profile name (for example an IAM Identity Center/SSO profile). If omitted, shared
+AWS config/credential files MUST remain excluded. Named selection MUST use the
+SDK's explicit profile option, override ambient `AWS_PROFILE`, reject missing or
+credential-free profiles, and retain the configured region. Static credential
+environment variables MUST be rejected in either mode to avoid ambiguous selection.
+The selected profile can use SSO, shared-file credentials, an assume-role chain,
+web identity or an administrator-configured SDK credential process/source. Profiles
+and any credential-process configuration are trusted host configuration. No login
+or browser interaction is automatic; the administrator renews SSO with `aws sso
+login --profile NAME` when needed. AWS profile names MUST stay out of guest inputs,
+audit records and reports. Profile selectors on non-AWS stores MUST be rejected.

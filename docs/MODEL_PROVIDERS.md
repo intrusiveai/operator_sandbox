@@ -67,7 +67,7 @@ constructing this projection does not authorize a campaign.
 | `vertex-gemini` | `gemini-text-tools-v1` | Google workload identity |
 | `azure-openai` | Chat or Responses codec | Secret-store `Api-Key` or Azure workload identity |
 | `litellm` | Chat or Responses codec | Secret-store bearer key |
-| `bedrock-converse` | `bedrock-converse-text-tools-v1` | AWS workload identity and explicit `region` |
+| `bedrock-converse` | `bedrock-converse-text-tools-v1` | AWS workload identity or explicit named profile, and `region` |
 
 HTTP profiles MUST supply the complete HTTPS request endpoint, including the
 selected deployment/model path where required. Its suffix MUST match the native
@@ -83,7 +83,7 @@ Generation MUST validate the selected model, generation ceiling and non-streamin
 non-persistent controls before contact. Shared codec validation MUST independently
 bind prompt, tools, native history, allowed fields and result semantics. The
 transport MUST preserve exact HTTP native request/result bytes for every route,
-including Bedrock. Bedrock MUST use the AWS SDK workload identity, regional
+including Bedrock. Bedrock MUST use the selected AWS SDK credentials, regional
 endpoint resolver and SigV4 signer without decoding/reconstructing native bodies. Cancellation, HTTP errors, malformed or oversized
 results MUST produce a sanitized uncertain failure and MUST NOT trigger a retry.
 
@@ -99,3 +99,13 @@ Native API references: [OpenAI Responses](https://developers.openai.com/api/refe
 [Anthropic Messages](https://platform.claude.com/docs/en/api/messages/create),
 [Gemini generateContent](https://ai.google.dev/api/generate-content), and
 [Bedrock Converse](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html).
+
+### Bedrock with an explicit local AWS profile
+
+A Bedrock host profile MAY use `authentication:"aws-profile"` plus a nonempty
+`aws_profile` name. This is distinct from `workload-identity`; all other provider
+families MUST reject this authentication mode and selector. The selector MUST bind
+the private profile digest and MUST NOT appear in the public model projection.
+Both Bedrock and Secrets Manager MUST share the named-profile behavior defined in
+[CREDENTIALS.md](CREDENTIALS.md#explicit-aws-named-profiles). Bedrock still uses its
+regional endpoint resolver and SigV4 signing, with no endpoint override or retry.

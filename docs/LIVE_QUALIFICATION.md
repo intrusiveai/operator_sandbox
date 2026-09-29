@@ -62,7 +62,7 @@ Authentication labels accepted for secret probes:
 
 | Store | `declared_auth_mode` |
 |---|---|
-| AWS Secrets Manager | `web-identity`, `container-role`, `instance-role` |
+| AWS Secrets Manager | `web-identity`, `container-role`, `instance-role`, `named-profile` |
 | Azure Key Vault | `workload-identity`, `managed-identity` |
 | Google Secret Manager | `external-account`, `metadata-identity` |
 | Vault | `token-sink`, `proxy` |
@@ -120,3 +120,10 @@ See [model profiles](MODEL_PROVIDERS.md) for provider/codec/endpoint selection.
 A successful command means the selected automated checks completed. It MUST NOT
 be interpreted as blanket qualification of a provider, model family, authentication
 mechanism or untested fault case. Missing results remain unqualified.
+
+For explicit AWS local profiles, set `declared_auth_mode:"named-profile"`. Bedrock
+requires `authentication:"aws-profile"` and `aws_profile` in its private model
+profile; Secrets Manager requires `aws_profile` in its store profile. These fields
+MUST agree with the declared mode. Bedrock named-profile plans MUST omit
+`credentials_file` because they do not use a model API key. Qualification evidence
+records the mode and digest, never the local profile name.

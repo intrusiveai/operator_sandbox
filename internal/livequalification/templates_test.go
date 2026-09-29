@@ -36,8 +36,8 @@ func installedTemplates(t *testing.T) string {
 func TestEveryDistributedPlanValidatesOffline(t *testing.T) {
 	dir := installedTemplates(t)
 	plans, _ := filepath.Glob(filepath.Join(dir, "*-plan.json"))
-	if len(plans) != 16 {
-		t.Fatalf("expected 12 provider and 4 secret plans, got %d", len(plans))
+	if len(plans) != 18 {
+		t.Fatalf("expected 13 provider and 5 secret plans, got %d", len(plans))
 	}
 	for _, plan := range plans {
 		t.Run(filepath.Base(plan), func(t *testing.T) {
@@ -96,6 +96,38 @@ func TestStrictPlanLoading(t *testing.T) {
 		os.WriteFile(name, bad, 0600)
 		if _, err := Load(name); err == nil {
 			t.Fatal("accepted malformed plan")
+		}
+	}
+}
+
+func TestNamedProfilePlanModeMustMatch(t *testing.T) {
+	dir := installedTemplates(t)
+	for _, name := range []string{"aws-named-profile-plan.json", "bedrock-named-profile-plan.json"} {
+		raw, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var plan Plan
+		if err = json.Unmarshal(raw, &plan); err != nil {
+			t.Fatal(err)
+		}
+		plan.DeclaredAuthMode = "instance-role"
+		if _, err = Prepare(plan); err == nil {
+			t.Fatal("named profile accepted as instance role")
+		}
+	}
+	for _, name := range []string{"aws-secrets-manager-plan.json", "bedrock-converse-bedrock-workload-identity-plan.json"} {
+		raw, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var plan Plan
+		if err = json.Unmarshal(raw, &plan); err != nil {
+			t.Fatal(err)
+		}
+		plan.DeclaredAuthMode = "named-profile"
+		if _, err = Prepare(plan); err == nil {
+			t.Fatal("workload accepted as named profile")
 		}
 	}
 }

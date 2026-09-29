@@ -68,6 +68,9 @@ func providerFixture(t *testing.T, codec, provider, auth string) (*Prepared, []b
 	}
 	suffix := map[string]string{"openai-chat-text-tools-v1": "/chat/completions", "openai-responses-text-tools-v1": "/responses", "anthropic-messages-text-tools-v1": "/messages", "gemini-text-tools-v1": "/models/fixture-model:generateContent"}[codec]
 	s := modelprovider.Settings{APIVersion: modelprovider.Version, ID: "probe", Provider: provider, Codec: codec, Model: "fixture-model", Endpoint: "https://private.example" + suffix, Authentication: auth, MaximumPromptTokens: 32768, MaximumCompletionTokens: 4096, MaximumResponseBytes: 1 << 20, CodecOptions: jsonBytes(options)}
+	if auth == "aws-profile" {
+		s.AWSProfile = "test-selected-profile"
+	}
 	if auth == "secret-store" {
 		s.CredentialID = "probe"
 	}
@@ -86,7 +89,7 @@ func providerFixture(t *testing.T, codec, provider, auth string) (*Prepared, []b
 	return q, jsonBytes(textResult), jsonBytes(toolResult)
 }
 func TestEveryProviderRouteConversation(t *testing.T) {
-	routes := [][3]string{{"openai-chat-text-tools-v1", "openai-chat", "secret-store"}, {"openai-responses-text-tools-v1", "openai-responses", "secret-store"}, {"anthropic-messages-text-tools-v1", "anthropic-messages", "secret-store"}, {"bedrock-converse-text-tools-v1", "bedrock-converse", "workload-identity"}, {"gemini-text-tools-v1", "gemini-api", "secret-store"}, {"gemini-text-tools-v1", "vertex-gemini", "workload-identity"}}
+	routes := [][3]string{{"bedrock-converse-text-tools-v1", "bedrock-converse", "aws-profile"}, {"openai-chat-text-tools-v1", "openai-chat", "secret-store"}, {"openai-responses-text-tools-v1", "openai-responses", "secret-store"}, {"anthropic-messages-text-tools-v1", "anthropic-messages", "secret-store"}, {"bedrock-converse-text-tools-v1", "bedrock-converse", "workload-identity"}, {"gemini-text-tools-v1", "gemini-api", "secret-store"}, {"gemini-text-tools-v1", "vertex-gemini", "workload-identity"}}
 	for _, provider := range []string{"azure-openai", "litellm"} {
 		for _, codec := range []string{"openai-chat-text-tools-v1", "openai-responses-text-tools-v1"} {
 			routes = append(routes, [3]string{codec, provider, "secret-store"})

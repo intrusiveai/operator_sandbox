@@ -18,6 +18,7 @@ type Config struct {
 }
 
 type SecretStoreProfile struct {
+	AWSProfile             string   `yaml:"aws_profile,omitempty" json:"aws_profile,omitempty"`
 	APIVersion             string   `yaml:"api_version" json:"api_version"`
 	Kind                   string   `yaml:"kind" json:"kind"`
 	ID                     string   `yaml:"id" json:"id"`

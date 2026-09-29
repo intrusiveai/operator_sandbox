@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/credentials"
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
@@ -27,6 +28,7 @@ var id = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$`)
 // Settings never crosses into guest inputs. The full request endpoint, cloud
 // scope and credential reference are administrator-owned and frozen before launch.
 type Settings struct {
+	AWSProfile              string          `json:"aws_profile,omitempty"`
 	APIVersion              string          `json:"api_version"`
 	ID                      string          `json:"id"`
 	Provider                string          `json:"provider"`
@@ -91,7 +93,14 @@ func Parse(raw []byte) (*Profile, error) {
 	if !supported || s.MaximumPromptTokens < 1 || s.MaximumCompletionTokens < 1 || s.MaximumPromptTokens > contracts.MaxSafeInteger/2 || s.MaximumCompletionTokens > contracts.MaxSafeInteger/2 || s.MaximumResponseBytes < 1 || s.MaximumResponseBytes > contracts.OrdinaryLimit {
 		return nil, ErrProfile
 	}
+	if s.AWSProfile != "" && (s.Authentication != "aws-profile" || s.Provider != "bedrock-converse" || !credentials.ValidAWSProfile(s.AWSProfile)) {
+		return nil, ErrProfile
+	}
 	switch s.Authentication {
+	case "aws-profile":
+		if s.Provider != "bedrock-converse" || s.CredentialID != "" || !credentials.ValidAWSProfile(s.AWSProfile) {
+			return nil, ErrProfile
+		}
 	case "secret-store":
 		if !id.MatchString(s.CredentialID) || s.Provider == "bedrock-converse" || s.Provider == "vertex-gemini" {
 			return nil, ErrProfile
