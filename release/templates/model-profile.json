@@ -1,0 +1,17 @@
+{
+  "api_version": "operator.dev/model-provider-profile/v1alpha1",
+  "id": "campaign-model",
+  "provider": "openai-chat",
+  "codec_id": "openai-chat-text-tools-v1",
+  "model": "administrator-selected-model",
+  "endpoint": "https://api.openai.com/v1/chat/completions",
+  "authentication": "secret-store",
+  "credential_id": "model-key",
+  "maximum_prompt_tokens": 32768,
+  "maximum_completion_tokens": 4096,
+  "maximum_response_bytes": 1048576,
+  "codec_options": {
+    "instruction_role": "developer",
+    "response_models": ["administrator-selected-model"]
+  }
+}

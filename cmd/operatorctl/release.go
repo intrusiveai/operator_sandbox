@@ -23,6 +23,7 @@ func releaseCommand(ctx context.Context, action string, args []string, stdout, s
 	f.SetOutput(stderr)
 	directory := f.String("directory", "", "release directory")
 	output := f.String("output", "", "new output archive")
+	archive := f.String("archive", "", "local signed archive to inspect")
 	keyring := f.String("keyring", "", "independently installed OpenPGP public keyring")
 	verifier := f.String("gpgv", "", "absolute gpgv path; default administrator PATH")
 	version := f.String("version", "", "host release version")
@@ -30,12 +31,24 @@ func releaseCommand(ctx context.Context, action string, args []string, stdout, s
 	commit := f.String("source-commit", "", "source Git commit")
 	contractVersion := f.String("contract-version", "", "approved contract version")
 	contractDigest := f.String("contract-digest", "", "approved contract digest")
-	if f.Parse(args) != nil || f.NArg() != 0 || *directory == "" {
+	if f.Parse(args) != nil || f.NArg() != 0 || (*directory == "" && (action != "check" || *archive == "")) || (*directory != "" && *archive != "") {
 		return 2
 	}
 	dir, err := filepath.Abs(*directory)
 	if err != nil {
 		return 2
+	}
+	if *archive != "" {
+		temp, e := os.MkdirTemp("", "operator-release-check-")
+		if e != nil {
+			return 1
+		}
+		defer os.RemoveAll(temp)
+		dir = filepath.Join(temp, "content")
+		if err = hostrelease.Extract(ctx, *archive, dir); err != nil {
+			fmt.Fprintln(stderr, "invalid release archive:", err)
+			return 1
+		}
 	}
 	var result any
 	switch action {

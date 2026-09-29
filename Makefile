@@ -1,6 +1,6 @@
 PYTHON ?= .venv/bin/python
 
-.PHONY: setup test generate test-integration
+.PHONY: setup test generate test-integration release-candidate
 
 setup:
 	python3 -m venv .venv
@@ -25,7 +25,12 @@ test:
 	$(PYTHON) scripts/generate_envelopes.py --check
 	$(PYTHON) scripts/generate_schema_ids.py --check
 	go test ./...
+	python3 -m unittest discover -s scripts/tests
 	PYTHONPATH=contracts/python $(PYTHON) -m unittest discover -s contracts/python/tests -v
 	$(PYTHON) schemas/validate_cleanup_fixtures.py
 	$(PYTHON) schemas/validate_feedback_fixtures.py
 	$(PYTHON) schemas/validate_capability_fixtures.py
+
+# Build-only candidates; explicit publisher signing and qualification are separate.
+release-candidate:
+	python3 scripts/build_host_release.py --version $(VERSION) --output $(OUTPUT)

@@ -1,0 +1,65 @@
+name: verify-host-candidates
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
+        with:
+          go-version: '1.26.5'
+          cache: true
+      - name: Prepare locked dependencies
+        run: make setup
+      - name: Verify shared contracts and host behavior
+        run: |
+          make test
+          go vet ./...
+          go test -race ./internal/hostrelease ./internal/contractstore ./internal/supervisor
+          python3 -m unittest discover -s scripts/tests
+  candidates:
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [linux/amd64, linux/arm64, darwin/amd64, darwin/arm64]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
+        with:
+          go-version: '1.26.5'
+          cache: true
+      - name: Prepare locked build and validator dependencies
+        run: make setup
+      - name: Build twice and compare signed payload inventory
+        env:
+          TARGET_PLATFORM: ${{ matrix.platform }}
+        run: |
+          python3 scripts/build_host_release.py --version 0.1.0 --platform "$TARGET_PLATFORM" --output dist/first
+          python3 scripts/build_host_release.py --version 0.1.0 --platform "$TARGET_PLATFORM" --output dist/second
+          diff -r dist/first dist/second
+      - name: Exercise native installed package
+        if: matrix.platform == 'linux/amd64'
+        run: python3 scripts/test_installed_release.py --candidate dist/first/linux-amd64
+      - name: Preserve candidate file modes
+        run: tar -C dist/first -cf dist/host-candidate.tar .
+      - name: Retain unapproved host candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: host-candidate-${{ strategy.job-index }}
+          path: dist/host-candidate.tar
+          if-no-files-found: error
+          retention-days: 14

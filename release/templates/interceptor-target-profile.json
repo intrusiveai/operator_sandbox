@@ -1,0 +1,23 @@
+{
+  "api_version": "operator.dev/target-profile/v1alpha1",
+  "id": "local",
+  "target_id": "delivery-example",
+  "adapter": "interceptor/v1",
+  "allow_target_stop": false,
+  "scopes": {
+    "operation_ids": [
+      "invoke"
+    ],
+    "caller_principal_ids": [],
+    "routes": [],
+    "allow_retained_injections": false
+  },
+  "feedback": {
+    "ceiling": "black-box",
+    "allowed_kinds": [
+      "target_output"
+    ],
+    "max_attempt_bytes": 1048576
+  },
+  "operation_timeout_ms": 30000
+}

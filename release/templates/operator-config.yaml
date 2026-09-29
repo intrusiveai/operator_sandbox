@@ -1,0 +1,39 @@
+# Install as a private (0600) file in the documented host configuration directory.
+# Choose an image already available to the local Docker installation.
+engine:
+  image: registry.example.com/intrusive/attack_harness:1.2.3
+
+spool:
+  max_bytes: 536870912
+
+evidence:
+  max_archive_bytes: 4294967296
+
+journal:
+  max_bytes: 8589934592
+  segment_bytes: 16777216
+  minimum_free_bytes: 268435456
+
+# Campaign preparation requires a private profile; select its installed location.
+# target:
+#   profile_file: /etc/operator/targets/local-interceptor.json
+
+# Optional settings below have OS-specific defaults. See docs/HOST_CONFIGURATION.md.
+# docker:
+#   endpoint: unix:///var/run/docker.sock
+#   executable: /usr/bin/docker
+# state:
+#   root: /var/lib/operator
+# cache:
+#   release_directory: /var/lib/operator/cache/releases
+
+# Optional campaign defaults; bundle requests can only narrow them.
+# limits:
+#   max_attempt_admissions: 100
+#   max_active_seconds: 1800
+#   max_model_tokens: 250000
+#   max_snapshot_admissions: 20
+#   max_snapshot_bytes: 1073741824
+#   harness:
+#     max_model_turns: 300
+#     max_tool_calls: 2000

@@ -163,6 +163,16 @@ func Extract(ctx context.Context, archive, destination string) (err error) {
 		if h.Typeflag != tar.TypeReg || !validPath(h.Name) || seen[h.Name] || len(seen) >= MaxFiles+2 || h.Size < 0 || h.Size > MaxFileBytes || len(h.PAXRecords) > 0 {
 			return ErrRelease
 		}
+		limit := MaxFileBytes
+		if h.Name == "release.json" {
+			limit = ManifestLimit
+		}
+		if h.Name == "release.sig" {
+			limit = SignatureLimit
+		}
+		if h.Size > limit {
+			return ErrRelease
+		}
 		mode := int64(0600)
 		if h.Name == "bin/operatorctl" {
 			mode = 0700

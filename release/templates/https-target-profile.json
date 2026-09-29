@@ -1,0 +1,35 @@
+{
+  "api_version": "operator.dev/target-profile/v1alpha1",
+  "id": "https-agent",
+  "target_id": "https-agent",
+  "adapter": "https/v1",
+  "allow_target_stop": false,
+  "scopes": {
+    "operation_ids": ["chat"],
+    "caller_principal_ids": [],
+    "routes": [],
+    "allow_retained_injections": false
+  },
+  "feedback": {
+    "ceiling": "diagnostic",
+    "allowed_kinds": ["target_output", "operation_error"],
+    "max_attempt_bytes": 1048576
+  },
+  "operation_timeout_ms": 30000,
+  "https": {
+    "api_version": "operator.dev/https-mapping/v1alpha1",
+    "origin": "https://agent.example.com",
+    "allowed_private_cidrs": [],
+    "authentication": {"mode": "none"},
+    "operations": [{
+      "id": "chat",
+      "method": "POST",
+      "path": "/chat",
+      "input": {"format": "json", "field": ["input", "text"], "fixed": {"mode": "test"}},
+      "response": {"format": "json", "field": ["answer", "text"]},
+      "maximum_input_bytes": 65536,
+      "maximum_request_bytes": 524288,
+      "maximum_response_bytes": 1048576
+    }]
+  }
+}
