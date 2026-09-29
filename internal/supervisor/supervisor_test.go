@@ -150,3 +150,52 @@ func TestSupervisorRejectsChangedDefinitionAndRequest(t *testing.T) {
 		t.Fatal(err, calls)
 	}
 }
+
+func TestSupervisorRetainsReleasePathAcrossLinkSwitch(t *testing.T) {
+	root := t.TempDir()
+	old := filepath.Join(root, "release-one", "operatorctl")
+	next := filepath.Join(root, "release-two", "operatorctl")
+	for _, name := range []string{old, next} {
+		if err := os.Mkdir(filepath.Dir(name), 0700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(name, []byte("executable fixture"), 0700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	link := filepath.Join(root, "operatorctl")
+	if err := os.Symlink(old, link); err != nil {
+		t.Fatal(err)
+	}
+	client, err := New(link)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// macOS temporary paths themselves can contain symlinked ancestors.
+	pinned, err := filepath.EvalSymlinks(old)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(link); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(next, link); err != nil {
+		t.Fatal(err)
+	}
+	client.goos, client.uid = "linux", 501
+	var dispatched []string
+	client.run = func(_ context.Context, _ string, args ...string) error {
+		dispatched = args
+		return nil
+	}
+	s := saved(t)
+	if err := client.Submit(context.Background(), s.Request.StateRoot, s.Request.Selection.StartRequestID, s.Digest); err != nil {
+		t.Fatal(err)
+	}
+	for i, value := range dispatched {
+		if value == "--" && i+1 < len(dispatched) && dispatched[i+1] == pinned {
+			return
+		}
+	}
+	t.Fatalf("registered worker did not retain original release: %v", dispatched)
+}

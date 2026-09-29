@@ -63,7 +63,11 @@ local records without sending another application request. See [HTTPS targets](H
 ## OS service binding
 
 The administrator MUST install `operatorctl` at a stable absolute executable path
-that is not group/world writable. They MUST provision the configured private
+that is not group/world writable. Registration MUST resolve any executable symlink
+and save the concrete release path in the service command. Switching the CLI link
+MUST NOT redirect a previously registered worker. Administrators MUST retain that
+release's executable while any registered worker can still invoke it; release
+files MUST NOT be overwritten in place. They MUST provision the configured private
 state root and configuration, contract package, profiles, local Docker image and
 Docker access for the same account that submits campaigns. CLI startup MUST NOT
 change accounts, run sudo, or prompt for service-manager authorization.

@@ -44,6 +44,13 @@ func New(executable string) (*Client, error) {
 	if !absolute(executable) {
 		return nil, ErrInstallation
 	}
+	// An administrator may switch a stable CLI link during an update. A
+	// registered worker must retain the concrete release path selected now.
+	resolved, err := filepath.EvalSymlinks(executable)
+	if err != nil || !absolute(resolved) {
+		return nil, ErrInstallation
+	}
+	executable = resolved
 	info, err := os.Stat(executable)
 	if err != nil || !info.Mode().IsRegular() || info.Mode().Perm()&0111 == 0 || info.Mode().Perm()&0022 != 0 {
 		return nil, ErrInstallation
