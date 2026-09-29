@@ -31,7 +31,7 @@ def module_stream(raw):
         if "Replace" in item:
             raise ValueError("release dependencies cannot use replacements")
         values.append(item)
-    return sorted(values, key=lambda m: m["Path"])
+    return sorted({m["Path"]: m for m in values}.values(), key=lambda m: m["Path"])
 
 
 def sbom(modules, version, platform, commit):
@@ -73,7 +73,6 @@ def build(root, output, version, platforms, python):
     if run(["go", "env", "GOVERSION"], root, env) != TOOLCHAIN:
         raise ValueError("release builds require " + TOOLCHAIN)
     run(["go", "mod", "verify"], root, env)
-    modules = module_stream(run(["go", "list", "-m", "-json", "all"], root, env))
     expected = json.loads((root / "release/contract-lock.json").read_text())["package"]
     output.mkdir(mode=0o700, parents=True)
     with tempfile.TemporaryDirectory(prefix="operator-release-build-") as temp:
@@ -102,6 +101,7 @@ def build(root, output, version, platforms, python):
                               "-X", "github.com/intrusiveai/operator_sandbox/internal/contractstore.SupportedVersion=" + expected["package_version"],
                               "-X", "github.com/intrusiveai/operator_sandbox/internal/contractstore.SupportedDigest=" + expected["package_digest"]])
             target_env = dict(env, GOOS=goos, GOARCH=arch)
+            modules = module_stream(run(["go", "list", "-mod=readonly", "-deps", "-f", "{{with .Module}}{{json .}}{{end}}", "./cmd/operatorctl"], root, target_env))
             run(["go", "build", "-mod=readonly", "-trimpath", "-buildvcs=false", "-ldflags", flags,
                  "-o", str(dest / "bin/operatorctl"), "./cmd/operatorctl"], root, target_env)
             write_json(dest / "sbom.spdx.json", sbom(modules, version, platform, commit))
@@ -134,7 +134,7 @@ def main():
     p.add_argument("--python", type=Path, help="prepared interpreter with locked contract dependencies")
     a = p.parse_args()
     build(a.source.resolve(), a.output.resolve(), a.version, a.platform or PLATFORMS,
-          (a.python or a.source / ".venv/bin/python").resolve())
+          (a.python or a.source / ".venv/bin/python").absolute())
 
 
 if __name__ == "__main__":

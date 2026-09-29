@@ -136,7 +136,7 @@ development candidate; tooling MUST NOT silently label it an approved `0.1.0` pa
 Every candidate MUST include an SPDX 2.3 dependency inventory and an in-toto/SLSA
 provenance statement binding the binary digest, source commit, toolchain, target
 platform and contract. Unknown dependency licensing MUST remain `NOASSERTION`.
-The inventory describes the Go module graph/toolchain, not a vulnerability scan or
+The inventory describes compiled Go modules and the toolchain, not a vulnerability scan or
 an inventory of the host OS. The publisher's signature authenticates these files;
 locally generated provenance does not independently attest a trusted CI builder.
 
