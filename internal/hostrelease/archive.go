@@ -19,6 +19,10 @@ import (
 
 // VerifyDirectory authenticates the manifest before trusting any inventory entry.
 func VerifyDirectory(ctx context.Context, directory, verifier, keyring string) (Manifest, error) {
+	info, err := os.Lstat(directory)
+	if err != nil || !info.IsDir() {
+		return Manifest{}, ErrRelease
+	}
 	raw, err := staging.Capture(ctx, filepath.Join(directory, "release.json"), ManifestLimit)
 	if err != nil {
 		return Manifest{}, err

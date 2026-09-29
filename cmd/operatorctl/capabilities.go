@@ -81,7 +81,7 @@ func exportCapabilities(ctx context.Context, args []string, stdout, stderr io.Wr
 		return 1
 	}
 	c := loaded.Config.Contract
-	installed, err := contractstore.Load(ctx, c.Directory, contracts.PackageIdentity{Version: c.Version, Digest: c.Digest})
+	installed, err := contractstore.LoadRuntime(ctx, c.Directory, contracts.PackageIdentity{Version: c.Version, Digest: c.Digest})
 	if err != nil {
 		fmt.Fprintln(stderr, "cannot verify installed contract")
 		return 1

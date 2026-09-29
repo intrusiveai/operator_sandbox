@@ -18,6 +18,9 @@ import (
 // A version string is not evidence of platform/provider qualification.
 var operatorVersion = "0.1.0"
 
+// Release builds set these independently of administrator configuration.
+var releaseSourceCommit string
+
 // workerCommand is a fixed supervisor entrypoint. The only work selector is a
 // private durable request; it accepts no command, environment or guest payload.
 func workerCommand(ctx context.Context, args []string, stdout, stderr io.Writer) int {

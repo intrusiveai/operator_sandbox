@@ -16,6 +16,7 @@ import (
 	"syscall"
 
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/contractstore"
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
 	"github.com/intrusiveai/operator_sandbox/internal/termination"
@@ -40,6 +41,9 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 }
 
 func runWithDefaults(ctx context.Context, args []string, stdout, stderr io.Writer, defaults hostconfig.Paths) int {
+	if len(args) > 0 && args[0] == "install" {
+		return installCommand(ctx, args[1:], stdout, stderr, defaults)
+	}
 	if len(args) >= 2 && args[0] == "release" {
 		return releaseCommand(ctx, args[1], args[2:], stdout, stderr)
 	}
@@ -74,7 +78,7 @@ func runWithDefaults(ctx context.Context, args []string, stdout, stderr io.Write
 		return workerCommand(ctx, args[1:], stdout, stderr)
 	}
 	if len(args) == 1 && args[0] == "version" {
-		if json.NewEncoder(stdout).Encode(map[string]string{"api_version": "operator.dev/version/v1alpha1", "version": operatorVersion}) != nil {
+		if json.NewEncoder(stdout).Encode(map[string]string{"api_version": "operator.dev/version/v1alpha1", "version": operatorVersion, "source_commit": releaseSourceCommit, "contract_version": contractstore.SupportedVersion, "contract_digest": contractstore.SupportedDigest}) != nil {
 			return 1
 		}
 		return 0

@@ -142,7 +142,7 @@ func LoadInputs(ctx context.Context, configPath string, defaults hostconfig.Path
 		return nil, err
 	}
 	c := loaded.Config
-	installed, err := contractstore.Load(ctx, c.Contract.Directory, contracts.PackageIdentity{Version: c.Contract.Version, Digest: c.Contract.Digest})
+	installed, err := contractstore.LoadRuntime(ctx, c.Contract.Directory, contracts.PackageIdentity{Version: c.Contract.Version, Digest: c.Contract.Digest})
 	if err != nil {
 		return nil, err
 	}

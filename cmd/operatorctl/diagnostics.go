@@ -51,7 +51,7 @@ func doctor(ctx context.Context, args []string, stdout, stderr io.Writer, defaul
 	add("configuration", err, "check_private_configuration")
 	if err == nil {
 		c := loaded.Config
-		_, err = contractstore.Load(ctx, c.Contract.Directory, contracts.PackageIdentity{Version: c.Contract.Version, Digest: c.Contract.Digest})
+		_, err = contractstore.LoadRuntime(ctx, c.Contract.Directory, contracts.PackageIdentity{Version: c.Contract.Version, Digest: c.Contract.Digest})
 		add("installed_contract", err, "install_matching_contract_package")
 		if c.Target.ProfileFile == "" {
 			checks = append(checks, diagnosticCheck{Name: "target_profile", Status: "not_checked", Action: "select_explicit_submission_target"})
