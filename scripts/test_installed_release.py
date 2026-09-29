@@ -44,7 +44,7 @@ def main():
                 archives.append(next(output.glob("*.tar.gz")))
                 manifests.append(json.loads((copied / "release.json").read_text()))
             executable = a.candidate.resolve() / "bin/operatorctl"
-            common = ["--root", root / "installation", "--config", root / "config/config.yaml",
+            common = ["--root", root / "installation with spaces and 'quote", "--config", root / "config/config.yaml",
                       "--state-root", root / "state", "--image", "fixture/local:harness", "--keyring", keyring]
             first = json.loads(run([executable, "install", "--archive", archives[0], *common], env))
             command = Path(first["command"])
@@ -71,6 +71,7 @@ def main():
             corrupted.write_bytes(archives[0].read_bytes()[:100])
             rejected = subprocess.run([str(x) for x in [command, "install", "--archive", corrupted, *common]], env=env, capture_output=True)
             assert rejected.returncode != 0
+            assert json.loads(run([command, "version"], env))["version"] == manifests[0]["version"]
             print(json.dumps({"status": "installed-package-tests-passed", "versions": [m["version"] for m in manifests],
                               "platform": manifests[0]["platform"], "native_runtime_qualified": False}))
         finally:

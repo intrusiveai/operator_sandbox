@@ -182,6 +182,15 @@ func TestOpenPGPSignatureUsesOnlyInstalledKeyring(t *testing.T) {
 	if err := VerifySignature(context.Background(), verifier, wrong, raw, sig); err == nil {
 		t.Fatal("used ambient trusted key")
 	}
+	if err := os.Chmod(keyring, 0666); err != nil {
+		t.Fatal(err)
+	}
+	if err := VerifySignature(context.Background(), verifier, keyring, raw, sig); err == nil {
+		t.Fatal("accepted writable trust store")
+	}
+	if err := os.Chmod(keyring, 0600); err != nil {
+		t.Fatal(err)
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	if err := VerifySignature(ctx, verifier, keyring, raw, sig); err == nil {

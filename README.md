@@ -5,7 +5,8 @@ and independent administrative termination.
 The campaign service, Docker launch/bootstrap worker, executable preparation/start,
 and systemd/launchd dispatch are implemented. Startup recovery verifies residual
 container identity, reclaims transient files, and performs bounded native cleanup.
-Installation packaging and external runtime qualification remain pending.
+Installation and signed-release tooling are implemented; approved publication and
+external runtime qualification remain pending. See [host installation](docs/HOST_DISTRIBUTION.md).
 
 The [shared validation foundation](contracts/README.md) now provides Go/Python
 strict JSON decoders, offline validation of the current schema catalog and shared
@@ -103,8 +104,9 @@ for cleanup and uncertainty rules, including native attach failures before a
 campaign journal exists. Administrator workflows and the
 [declarative HTTPS target adapter](docs/HTTPS_TARGETS.md) are implemented.
 The [Go/Python process integration suite](docs/PROCESS_INTEGRATION.md) covers both
-transports through campaign completion and interruption. Installation/release
-publication and external qualification remain outstanding; see
+transports through campaign completion and interruption. Installation/update and
+release build/signing tools are implemented. Approved publication and external
+qualification remain outstanding; see
 [current implementation status](docs/IMPLEMENTATION_STATUS.md).
 [Campaign retirement and purge](docs/PURGE.md) now provide
 `operatorctl purge --campaign ID` and `operatorctl purge --all`, with locked

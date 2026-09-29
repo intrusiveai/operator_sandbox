@@ -109,8 +109,10 @@ The release response must match that verified package pin. Before guest executio
 also inspect the immutable image's embedded package/engine metadata and enforce
 the fixed runtime policy. This loader establishes byte integrity and offline schema
 loading; it does not establish source-code conformance, release approval or runtime
-qualification. Production package publication, supported-package metadata/build
-version packaging remain outstanding. Image-file inspection and launch integration
+qualification. Supported-package metadata/build version packaging is implemented by the
+[host distribution tools](HOST_DISTRIBUTION.md). Runtime admission checks the
+compiled supported pin; explicit inspection tools can verify a future package.
+Approved production package publication remains outstanding. Image-file inspection and launch integration
 are implemented. Tests use explicitly identified `0.0.0` fixtures.
 
 Tests cover real development-schema loading, independent pin failures before payload

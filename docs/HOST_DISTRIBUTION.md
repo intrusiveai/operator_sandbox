@@ -5,7 +5,8 @@
 Host releases MUST use publisher-controlled OpenPGP detached signatures. The
 administrator MUST obtain the trusted public keyring independently of incoming
 release files. Verification MUST use only that explicitly selected keyring,
-without ambient keys, key discovery or network access. SHA-1/MD5 signatures MUST
+without ambient keys, key discovery or network access. The keyring MUST be owned
+by the administrator/service user or root and MUST NOT be group/world writable. SHA-1/MD5 signatures MUST
 be rejected. Private signing keys MUST remain outside packages and images.
 
 `operatorctl release manifest` MUST bind the host version, platform, source commit,
@@ -166,7 +167,7 @@ explicit administrator update to the trusted keyring, independently authenticate
 both architecture harness build reports, identical host source/version/contracts,
 matching harness compatibility pins and compatible minimum Operator versions.
 By default it MUST only validate. `--create-draft` MAY create a GitHub draft for an
-existing version tag; it MUST NOT publish the draft or the HTTPS image approval.
+existing version tag identifying the signed source commit; it MUST NOT publish the draft or the HTTPS image approval.
 Pass each platform using repeated `--signed-directory` and both reports using
 repeated `--harness-report`, plus `--operatorctl` and `--keyring`. Draft checksum
 assets MUST be named `<platform>-SHA256SUMS[.asc]` to avoid collisions.
@@ -174,3 +175,23 @@ assets MUST be named `<platform>-SHA256SUMS[.asc]` to avoid collisions.
 Administrators MUST supply publisher keys, protected release credentials and final
 qualification evidence before approved publication. Release tooling MUST not
 fabricate those external approvals or upgrade development contract status.
+
+## Validation and limits
+
+Host-release tests MUST cover authentic and altered OpenPGP signatures, independent
+keyring selection, malformed archives, exact contract contents, fresh installation,
+repeat installation, upgrades/downgrades, incompatible platforms, corrupted input,
+interrupted publication/activation, retained evidence and unchanged configuration.
+Worker registration tests MUST demonstrate that changing the selected release does
+not redirect a previously registered command. An already-canceled worker MUST
+perform prelaunch cleanup without attempting container creation.
+
+`python3 scripts/test_installed_release.py --candidate DIR [--upgrade NEWER_DIR]`
+MUST exercise real native binaries and signatures in temporary directories, using
+a freshly generated test-only key. It MUST NOT provision machine accounts, alter
+system paths or contact Docker. `--upgrade` MUST additionally check the newly
+selected version, usability of the old binary and explicit downgrade enforcement.
+Linux account/service provisioning MUST use command fixtures in ordinary tests;
+actual native Linux provisioning and all four production runtime tuples still
+require external qualification. GnuPG MUST be available when recording signature
+acceptance; a skipped GPG test MUST NOT count as a passing signature check.

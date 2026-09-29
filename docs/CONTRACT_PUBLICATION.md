@@ -64,3 +64,10 @@ Building or checking a package verifies content integrity. Release `0.1.0`
 qualification still requires live provider-route qualification and complete
 host/harness conformance tests. All five native codec families are implemented; a successful build alone does not qualify a runtime
 or a provider route. Use `0.0.0` for the current development snapshots.
+
+The [host distribution builder](HOST_DISTRIBUTION.md) reproduces the independently
+pinned `release/contract-lock.json`, tests both languages in the generated source
+layout and embeds the exact package in each host candidate. The binary and signed
+release manifest carry the same version/digest. Publication preflight MUST require
+matching pins in both architecture Attack Harness image-build reports. These tools
+distribute matching candidates; they do not grant production qualification.

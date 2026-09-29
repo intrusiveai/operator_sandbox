@@ -1,11 +1,12 @@
 # Current implementation status
 
-Updated: 2026-09-28, following the Go/Python process integration stage.
+Updated: 2026-09-28, following the installation and release-tooling stage.
 
 Operator's core campaign runtime and Attack Harness's Python runtime are
 implemented. Administrator workflows and the declarative HTTPS target adapter are
 complete. Deterministic Go/Python process integration is covered over both transports.
-Installation/release work and external native qualification are still outstanding.
+Installation, explicit updates and release build/signing tooling are implemented.
+Approved publication and external native qualification remain outstanding.
 This page distinguishes implemented components from qualified releases;
 requirements in the product spec remain mandatory even when their acceptance
 criteria have not yet been demonstrated.
@@ -28,6 +29,7 @@ criteria have not yet been demonstrated.
 | Reports and exports | Deterministic, digest-bound report/export generations from verified journal prefixes and retained evidence; explicit coverage/uncertainty, portable exports and automatic worker reporting after execution completion. |
 | Administrator workflows | Public capability export, environment/private-profile selectors, combined run with saved-request reuse, read-only inspect/doctor, frozen skill-set creation/selection, reversible skill removal and campaign credential-resolution audit. |
 | Campaign retirement/purge | Durable start retirement, exact service deregistration, locked inventories, per-campaign/all-campaign deletion, managed-copy registration and retry after partial filesystem deletion. Independent exports and reusable installation data are preserved. |
+| Installation/releases | Signed local archives, immutable versioned installations, Linux service-account provisioning, atomic activation and retries, explicit downgrades, retained configuration/evidence, compiled supported-contract pins, four-platform reproducible builds, SPDX/provenance and draft-publication preflight. |
 | Process integration | Production Python entrypoint joined to the Go host over FIFO/spool: large startup inventories, prompt/skill selection, all campaign modes, HTTPS feedback, conclusions/stop, restore lineage and retained injection cleanup, process loss, spool pressure and large-history compaction. |
 | Attack Harness | Python bootstrap/input loading, both transports, all five codecs, dispatch/loop accounting, artifacts, feedback, restore continuation and bounded completion. Both architecture image candidates have been built; they are not approved releases. |
 
@@ -38,6 +40,7 @@ Component guides provide the detailed behavior and validation boundaries:
 - [Campaign start](CAMPAIGN_START.md), [launch](HOST_LAUNCH.md),
   [campaign service](CAMPAIGN_SERVICE.md) and [startup recovery](STARTUP_RECOVERY.md).
 - [Administrator run/diagnostics](ADMIN_WORKFLOWS.md) and [submission selectors](SUBMISSION.md).
+- [Host distribution and installation](HOST_DISTRIBUTION.md).
 - [Go/Python process integration](PROCESS_INTEGRATION.md).
 - [HTTPS targets](HTTPS_TARGETS.md) and [example private profile](../examples/https-target-profile.json).
 - [Providers](MODEL_PROVIDERS.md), [credentials](CREDENTIALS.md) and [skills](SKILLS.md).
@@ -48,7 +51,7 @@ Component guides provide the detailed behavior and validation boundaries:
 
 ## Validation completed and its limits
 
-At this boundary, the full Go suite passed with the optional Python process and
+At the preceding process-integration boundary, the full Go suite passed with the optional Python process and
 transport tests enabled. Attack Harness's 82 tests, the shared Python suite's 28
 tests, repository-wide Go vet, schema generator checks and shared fixtures passed.
 Focused race tests covered restore/failure handling, history compaction and the
@@ -70,12 +73,11 @@ component tests, candidate image builds and test-image probes do not qualify the
 production Operator/Attack Harness combination on all four supported host tuples.
 No complete live provider, secret-store or target qualification is claimed.
 
-## Remaining implementation stages
+## Implementation stage boundary
 
-1. **Installation and release tooling.** Complete host installation/distribution,
-   supported-package/build metadata, signed releases/update handling and release
-   automation. Existing package build/check commands do not publish an approved
-   `operator-contracts` 0.1.0 release or approve an image.
+The planned core implementation stages are complete. The next stage is native/live
+qualification and approved release publication. Failures discovered during that
+qualification still require correction before declaring the product release-ready.
 
 ## Remaining external qualification and publication
 
@@ -90,5 +92,5 @@ No complete live provider, secret-store or target qualification is claimed.
   [host runtime gates](../HOST_RUNTIME_PROFILES.md) and
   [product acceptance criteria](../OPERATOR_SANDBOX_SPEC.md#15-acceptance-criteria).
 
-The next major stage is installation and release tooling. Detailed
+The next major stage is external qualification and approved publication. Detailed
 historical commit boundaries remain available in Git history.

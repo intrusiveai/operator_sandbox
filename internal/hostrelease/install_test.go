@@ -132,3 +132,25 @@ func TestInstallRejectsUntrustedAndIncompatibleRelease(t *testing.T) {
 		t.Fatal("wrong platform accepted", err)
 	}
 }
+
+func TestNewFilePublicationDoesNotReplaceAndReclaimsInterruptedLinks(t *testing.T) {
+	root := t.TempDir()
+	name := filepath.Join(root, "config.yaml")
+	if err := writeNew(name, []byte("original"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := writeNew(name, []byte("replacement"), 0600); !os.IsExist(err) {
+		t.Fatal("overwrote existing configuration", err)
+	}
+	temp := filepath.Join(root, ".operator-new-interrupted")
+	if err := os.Link(name, temp); err != nil {
+		t.Fatal(err)
+	}
+	if err := reclaimNewFiles(root); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(name)
+	if err != nil || string(raw) != "original" {
+		t.Fatal("lost published configuration", err)
+	}
+}

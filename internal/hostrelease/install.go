@@ -64,13 +64,49 @@ func syncDirectory(name string) error {
 	return errors.Join(d.Sync(), d.Close())
 }
 func writeNew(name string, raw []byte, mode os.FileMode) error {
-	f, e := os.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_EXCL|syscall.O_NOFOLLOW, mode)
-	if e != nil {
-		return e
+	parent := filepath.Dir(name)
+	f, err := os.CreateTemp(parent, ".operator-new-")
+	if err != nil {
+		return err
 	}
-	_, e = f.Write(raw)
-	return errors.Join(e, f.Sync(), f.Close(), syncDirectory(filepath.Dir(name)))
+	temporary := f.Name()
+	defer os.Remove(temporary)
+	if err = f.Chmod(mode); err != nil {
+		f.Close()
+		return err
+	}
+	_, err = f.Write(raw)
+	err = errors.Join(err, f.Sync(), f.Close())
+	if err != nil {
+		return err
+	}
+	// Link publishes complete bytes without replacing a concurrent admin edit.
+	if err = os.Link(temporary, name); err != nil {
+		return err
+	}
+	if err = os.Remove(temporary); err != nil {
+		return err
+	}
+	return syncDirectory(parent)
 }
+func reclaimNewFiles(parent string) error {
+	entries, err := os.ReadDir(parent)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		if strings.HasPrefix(entry.Name(), ".operator-new-") {
+			if entry.IsDir() {
+				return ErrInstall
+			}
+			if err = os.Remove(filepath.Join(parent, entry.Name())); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func lowerVersion(a, b string) bool {
 	av, bv := strings.Split(a, "."), strings.Split(b, ".")
 	for i := range av {
@@ -93,7 +129,7 @@ func Install(ctx context.Context, o InstallOptions) (InstallReceipt, error) {
 	return install(ctx, o, func(string) error { return nil })
 }
 func install(ctx context.Context, o InstallOptions, boundary func(string) error) (result InstallReceipt, err error) {
-	if !cleanAbsolute(o.Root) || !cleanAbsolute(o.ConfigFile) || !cleanAbsolute(o.StateRoot) || within(o.Root, o.StateRoot) || within(o.StateRoot, o.Root) || within(o.ConfigFile, o.Root) || within(o.ConfigFile, o.StateRoot) || o.Image == "" {
+	if !cleanAbsolute(o.Root) || !cleanAbsolute(o.ConfigFile) || !cleanAbsolute(o.StateRoot) || within(o.Root, o.StateRoot) || within(o.StateRoot, o.Root) || within(o.ConfigFile, o.Root) || o.Image == "" {
 		return result, ErrInstall
 	}
 	if err = privateDirectory(o.Root); err != nil {
@@ -114,7 +150,7 @@ func install(ctx context.Context, o InstallOptions, boundary func(string) error)
 		return result, err
 	}
 	for _, entry := range entries {
-		if strings.HasPrefix(entry.Name(), ".stage-") || strings.HasPrefix(entry.Name(), ".switch-") {
+		if strings.HasPrefix(entry.Name(), ".stage-") || strings.HasPrefix(entry.Name(), ".switch-") || strings.HasPrefix(entry.Name(), ".operator-new-") {
 			if err = os.RemoveAll(filepath.Join(o.Root, entry.Name())); err != nil {
 				return result, err
 			}
@@ -207,6 +243,9 @@ func install(ctx context.Context, o InstallOptions, boundary func(string) error)
 		return result, err
 	}
 	if err = privateDirectory(filepath.Dir(o.ConfigFile)); err != nil {
+		return result, err
+	}
+	if err = reclaimNewFiles(filepath.Dir(o.ConfigFile)); err != nil {
 		return result, err
 	}
 	config := []byte(fmt.Sprintf("engine:\n  image: %q\nstate:\n  root: %q\ncontract:\n  directory: %q\n  version: %q\n  digest: %q\n", o.Image, o.StateRoot, filepath.Join(destination, "contract"), m.Contract.Version, m.Contract.Digest))

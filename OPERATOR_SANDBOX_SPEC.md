@@ -1,6 +1,6 @@
 # Intrusive AI Operator Sandbox Product Specification
 
-Status: core runtime, administrator workflows, HTTPS adapter and deterministic process integration implemented; release publication and native qualification outstanding\
+Status: core runtime, administrator workflows, HTTPS adapter, process integration and installation/release tooling implemented; approved publication and native qualification outstanding\
 Date: 2026-09-28\
 Product API family: `operator.dev`; existing data schemas remain individually versioned  
 Container runtime profile: `operator-container/v1` — Docker with Linux FIFO / macOS file-spool transport; qualification pending
@@ -1579,7 +1579,15 @@ from an external interpretation of a report.
 Publish signed Linux and macOS host distributions for amd64 and arm64, with reproducible toolchain pins,
 release checksums/SBOMs and offline installation with a complete compatible artifact
 inventory. Executable release publication MUST remain separate from local instruction-only skill installation.
-Verify host release signatures and freshness/rollback policy before activation. Attack Harness images use the HTTPS release approval and compatibility
+Host distributions MUST use publisher-controlled OpenPGP detached signatures over
+an exact release-file manifest, verified against an independently installed public
+keyring. Installation/updates MUST use explicit local archives and retain immutable
+release directories. Activation MUST switch the selected version atomically and
+reject downgrades unless explicitly requested; no automatic download or age-based
+expiry is required. Linux installation MUST create the dedicated service account
+and systemd prerequisites; Docker socket permission grants MUST be explicit.
+The [host distribution contract](docs/HOST_DISTRIBUTION.md) defines packaging,
+trust, provisioning, offline installation, updates and publication tooling. Attack Harness images use the HTTPS release approval and compatibility
 cache policy in Section 5.1.1.
 Active runs retain their pinned image, submitted bundle and reference inputs. No executable release keys or production credentials ship in images.
 

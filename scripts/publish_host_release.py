@@ -74,6 +74,10 @@ def main():
         harnesses = [json.loads(file.read_text()) for file in a.harness_report]
         version = check_candidates(hosts, harnesses)
         if a.create_draft:
+            tag_commit = subprocess.check_output(["gh", "api", "repos/intrusiveai/operator_sandbox/commits/v" + version,
+                                                 "--jq", ".sha"], text=True).strip()
+            if tag_commit != hosts[0]["source_commit"]:
+                raise ValueError("release tag does not identify the signed source commit")
             notes = Path(temp) / "notes.md"
             notes.write_text("Signed host candidates with matching harness contract pins.\n\n"
                              "Native host/provider/target qualification and image release approval "

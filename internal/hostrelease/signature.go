@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"syscall"
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/internal/staging"
@@ -26,6 +27,14 @@ const SignatureLimit = 64 << 10
 // temporary home excludes ambient keyrings and is removed after verification.
 func VerifySignature(ctx context.Context, verifier, keyring string, manifest, signature []byte) error {
 	if len(manifest) == 0 || len(manifest) > ManifestLimit || len(signature) == 0 || len(signature) > SignatureLimit || !filepath.IsAbs(verifier) || filepath.Clean(verifier) != verifier {
+		return ErrSignature
+	}
+	info, err := os.Lstat(keyring)
+	if err != nil {
+		return ErrSignature
+	}
+	st, ok := info.Sys().(*syscall.Stat_t)
+	if !ok || !info.Mode().IsRegular() || info.Mode().Perm()&0022 != 0 || (st.Uid != 0 && st.Uid != uint32(os.Geteuid())) {
 		return ErrSignature
 	}
 	trusted, err := staging.Capture(ctx, keyring, 4<<20)

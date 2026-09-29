@@ -2,8 +2,8 @@
 
 Status: platform/transport/termination and MVP containment decisions accepted,
 file-spool and service-lifetime decisions accepted. Transport, supervised launch and
-lifecycle handling are implemented as of 2026-09-28; installation packaging and
-full native qualification remain outstanding. See [implementation status](docs/IMPLEMENTATION_STATUS.md).
+lifecycle handling and installation packaging are implemented as of 2026-09-28;
+full native qualification and approved publication remain outstanding. See [implementation status](docs/IMPLEMENTATION_STATUS.md).
 
 This document supplies the host-specific requirements for `operator-container/v1`.
 The [product spec](OPERATOR_SANDBOX_SPEC.md), [guest contract](GUEST_CONTAINER_SPEC.md)

@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -124,6 +125,9 @@ func provisionLinux(ctx context.Context, grantDocker bool, d provisionDependenci
 
 func provisionTmpfiles() error {
 	name := "/etc/tmpfiles.d/operator.conf"
+	if err := reclaimNewFiles(filepath.Dir(name)); err != nil {
+		return err
+	}
 	raw := []byte("d /run/operator 0700 operator operator -\n")
 	f, err := os.OpenFile(name, os.O_RDONLY|syscall.O_NOFOLLOW, 0)
 	if os.IsNotExist(err) {
