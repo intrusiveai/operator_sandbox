@@ -42,7 +42,7 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 
 func runWithDefaults(ctx context.Context, args []string, stdout, stderr io.Writer, defaults hostconfig.Paths) int {
 	if len(args) > 0 && args[0] == "qualify" {
-		return qualifyCommand(args[1:], stdout, stderr)
+		return qualifyCommand(ctx, args[1:], stdout, stderr)
 	}
 	if len(args) > 0 && args[0] == "install" {
 		return installCommand(ctx, args[1:], stdout, stderr, defaults)
