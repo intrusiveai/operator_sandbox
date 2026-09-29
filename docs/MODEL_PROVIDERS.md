@@ -109,3 +109,7 @@ the private profile digest and MUST NOT appear in the public model projection.
 Both Bedrock and Secrets Manager MUST share the named-profile behavior defined in
 [CREDENTIALS.md](CREDENTIALS.md#explicit-aws-named-profiles). Bedrock still uses its
 regional endpoint resolver and SigV4 signing, with no endpoint override or retry.
+
+The [live Nova Lite named-profile probe](qualification/aws-2026-09-28/README.md)
+passed the three native exchanges with contract `0.0.1`; this is scoped evidence,
+not qualification of every Bedrock model or identity mode.

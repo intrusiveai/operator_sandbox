@@ -1,5 +1,11 @@
 # Live-qualification tooling validation
 
+**Subsequent live result:** the selected AWS named-profile Bedrock conversation and
+Secrets Manager read/cache probes passed after a shared Bedrock schema correction.
+See the [AWS qualification record](qualification/aws-2026-09-28/README.md).
+The tables below describe the original tooling-only boundary; their workload
+identity rows remain unqualified.
+
 Date: 2026-09-28. Host: macOS ARM64. This record covers the tooling's controlled
 tests, **not** live cloud qualification. No billable model calls or remote secret
 mutations were performed. The administrator will configure live resources next.

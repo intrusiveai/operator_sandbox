@@ -96,9 +96,13 @@ native payloads are excluded. Release templates include all store and route plan
 See [setup instructions](LIVE_QUALIFICATION_SETUP.md) and the
 [tooling validation record](LIVE_QUALIFICATION_VALIDATION.md).
 
-Live calls have not been run in this stage. The administrator will provision test
-services and runner identities next. Successful local probes do not resolve the
-remaining live-service, fault, identity-renewal or native host qualification gates.
+Selected live AWS named-profile probes now pass: Nova Lite Converse text/tool
+continuation and Secrets Manager read/cache/expiry. The run found and corrected an
+empty Bedrock server-tool-usage metadata incompatibility; both projects now pin
+contract `0.0.1`. The [AWS record](qualification/aws-2026-09-28/README.md) retains
+initial failure and successful evidence with exact source/package identities.
+Other service/authentication combinations, fault/renewal cases and native container
+qualification remain outstanding.
 
 ## Remaining external qualification and publication
 

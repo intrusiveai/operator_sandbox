@@ -1,5 +1,9 @@
 # Setting up live qualification
 
+The first AWS named-profile run is documented in the
+[live result record](qualification/aws-2026-09-28/README.md), including the Bedrock
+compatibility correction and remaining qualification limits.
+
 ## What to prepare
 
 The tooling is ready to run; live resources are administrator-provisioned. Start
