@@ -195,3 +195,6 @@ Linux account/service provisioning MUST use command fixtures in ordinary tests;
 actual native Linux provisioning and all four production runtime tuples still
 require external qualification. GnuPG MUST be available when recording signature
 acceptance; a skipped GPG test MUST NOT count as a passing signature check.
+
+See [recorded release validation](RELEASE_VALIDATION.md) for tested source identities,
+reproducibility results and the remaining external qualification boundaries.

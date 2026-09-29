@@ -51,6 +51,13 @@ Component guides provide the detailed behavior and validation boundaries:
 
 ## Validation completed and its limits
 
+The installation stage passed the full Go suite/vet, focused race tests and real
+macOS ARM64 signed-package installation/update tests. All four host platforms built
+twice with identical payloads. Generated contract packages passed both language
+suites. [Release validation](RELEASE_VALIDATION.md) records exact source/digests and
+distinguishes local installation tests from outstanding native qualification.
+
+
 At the preceding process-integration boundary, the full Go suite passed with the optional Python process and
 transport tests enabled. Attack Harness's 82 tests, the shared Python suite's 28
 tests, repository-wide Go vet, schema generator checks and shared fixtures passed.
