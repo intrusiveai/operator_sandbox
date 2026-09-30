@@ -203,7 +203,7 @@ func LoadInputs(ctx context.Context, configPath string, defaults hostconfig.Path
 			return nil, err
 		}
 	}
-	if model.Settings().Authentication == "secret-store" {
+	if model.Settings().UsesStoredCredential() {
 		found := false
 		for _, ref := range credentialConfig.Credentials {
 			if ref.CredentialID == model.Settings().CredentialID {

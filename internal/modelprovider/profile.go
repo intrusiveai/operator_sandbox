@@ -28,6 +28,7 @@ var id = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$`)
 // Settings never crosses into guest inputs. The full request endpoint, cloud
 // scope and credential reference are administrator-owned and frozen before launch.
 type Settings struct {
+	APIKeyEnvironment       string          `json:"api_key_env,omitempty"`
 	AWSProfile              string          `json:"aws_profile,omitempty"`
 	APIVersion              string          `json:"api_version"`
 	ID                      string          `json:"id"`
@@ -93,15 +94,37 @@ func Parse(raw []byte) (*Profile, error) {
 	if !supported || s.MaximumPromptTokens < 1 || s.MaximumCompletionTokens < 1 || s.MaximumPromptTokens > contracts.MaxSafeInteger/2 || s.MaximumCompletionTokens > contracts.MaxSafeInteger/2 || s.MaximumResponseBytes < 1 || s.MaximumResponseBytes > contracts.OrdinaryLimit {
 		return nil, ErrProfile
 	}
+	if s.Authentication == "api-key" {
+		s.Authentication = "secret-store"
+	}
 	if s.AWSProfile != "" && (s.Authentication != "aws-profile" || s.Provider != "bedrock-converse" || !credentials.ValidAWSProfile(s.AWSProfile)) {
 		return nil, ErrProfile
 	}
+	if s.APIKeyEnvironment != "" && (s.Authentication != "api-key-env" || !regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]{0,127}$`).MatchString(s.APIKeyEnvironment)) {
+		return nil, ErrProfile
+	}
 	switch s.Authentication {
+	case "none":
+		if s.Provider != "litellm" || s.CredentialID != "" {
+			return nil, ErrProfile
+		}
+	case "workload-token":
+		if s.Provider != "anthropic-messages" || !id.MatchString(s.CredentialID) {
+			return nil, ErrProfile
+		}
+	case "api-key-env":
+		if s.Provider == "bedrock-converse" || s.CredentialID != "" || s.APIKeyEnvironment == "" {
+			return nil, ErrProfile
+		}
+	case "aws-environment":
+		if s.Provider != "bedrock-converse" || s.CredentialID != "" {
+			return nil, ErrProfile
+		}
 	case "aws-profile":
 		if s.Provider != "bedrock-converse" || s.CredentialID != "" || !credentials.ValidAWSProfile(s.AWSProfile) {
 			return nil, ErrProfile
 		}
-	case "secret-store":
+	case "secret-store", "api-key":
 		if !id.MatchString(s.CredentialID) || s.Provider == "bedrock-converse" {
 			return nil, ErrProfile
 		}
@@ -163,4 +186,9 @@ func Parse(raw []byte) (*Profile, error) {
 		return nil, ErrProfile
 	}
 	return &Profile{s, canonical, contracts.RawDigest(canonical)}, nil
+}
+
+// UsesStoredCredential identifies modes requiring the host secret resolver.
+func (s Settings) UsesStoredCredential() bool {
+	return s.Authentication == "secret-store" || s.Authentication == "api-key" || s.Authentication == "workload-token"
 }

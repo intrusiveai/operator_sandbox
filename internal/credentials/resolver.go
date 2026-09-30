@@ -78,7 +78,7 @@ func Validate(config Config) error {
 	}
 	profiles := map[string]SecretStoreProfile{}
 	for _, profile := range config.Profiles {
-		if profile.APIVersion != StoreProfileVersion || profile.Kind != "SecretStoreProfile" || !stableID.MatchString(profile.ID) {
+		if (profile.APIVersion != StoreProfileVersion && profile.APIVersion != "interceptor.dev/secret-store-profile/v1alpha1") || profile.Kind != "SecretStoreProfile" || !stableID.MatchString(profile.ID) {
 			return fmt.Errorf("secret-store profile %q has invalid identity or schema", profile.ID)
 		}
 		switch profile.BackendKind {
@@ -107,6 +107,9 @@ func Validate(config Config) error {
 		if profile.AWSProfile != "" && (profile.BackendKind != "aws-secrets-manager" || !ValidAWSProfile(profile.AWSProfile)) {
 			return errors.New("invalid AWS named profile selection")
 		}
+		if profile.BackendKind == "aws-secrets-manager" && ((profile.Authentication == "aws-profile" && profile.AWSProfile == "") || (profile.AWSProfile != "" && profile.Authentication != "" && profile.Authentication != "aws-profile")) {
+			return errors.New("conflicting AWS authentication selection")
+		}
 		if !ValidStoreAuthentication(profile.BackendKind, profile.Authentication) {
 			return errors.New("invalid secret-store authentication selection")
 		}
@@ -134,7 +137,7 @@ func Validate(config Config) error {
 	}
 	seen := map[string]bool{}
 	for _, ref := range config.Credentials {
-		if ref.APIVersion != CredentialRefVersion || ref.Kind != "HostCredentialRef" || !stableID.MatchString(ref.CredentialID) {
+		if (ref.APIVersion != CredentialRefVersion && ref.APIVersion != "interceptor.dev/host-credential-ref/v1alpha1") || ref.Kind != "HostCredentialRef" || !stableID.MatchString(ref.CredentialID) {
 			return fmt.Errorf("credential %q has invalid identity or schema", ref.CredentialID)
 		}
 		if seen[ref.CredentialID] {

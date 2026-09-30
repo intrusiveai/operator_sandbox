@@ -217,7 +217,7 @@ func validNative(n *nativeManifest) bool {
 	}
 	for _, provider := range n.ModelProviders {
 		ids = append(ids, provider.Kind)
-		if !allowed(provider.Kind, "openai-chat", "openai-responses", "bedrock-converse", "litellm", "anthropic-messages", "gemini-api", "vertex-gemini", "azure-openai") || !subset(provider.Codecs, "openai_chat_completions", "openai_responses", "aws_bedrock_converse", "anthropic_messages", "google_generate_content") || !subset(provider.AuthenticationModes, "none", "api-key", "workload-token", "workload-identity") || provider.ModelSelection != "exact-host-allowlist" {
+		if !allowed(provider.Kind, "openai-chat", "openai-responses", "bedrock-converse", "litellm", "anthropic-messages", "gemini-api", "vertex-gemini", "azure-openai") || !subset(provider.Codecs, "openai_chat_completions", "openai_responses", "aws_bedrock_converse", "anthropic_messages", "google_generate_content") || !subset(provider.AuthenticationModes, "none", "api-key", "api-key-env", "workload-token", "workload-identity", "aws-profile", "aws-environment", "azure-cli", "azure-client-secret", "google-adc") || provider.ModelSelection != "exact-host-allowlist" {
 			return false
 		}
 	}

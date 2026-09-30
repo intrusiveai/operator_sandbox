@@ -580,7 +580,7 @@ explicit selections MUST use the same SDK named-profile resolver, fail without
 fallback when unavailable, and keep selectors/credentials out of guest inputs and
 evidence. Without explicit selection, AWS shared files MUST remain excluded.
 Vertex Gemini and Azure OpenAI MUST support model API keys resolved through any
-supported secret store as well as cloud workload identities. Vertex MUST also
+supported secret store, explicitly named host environment variables, or cloud workload identities. Vertex MUST also
 support explicit local Google ADC; Azure MUST also support explicit Azure CLI
 and service-principal client-secret authentication. The same local identity modes
 MUST be available for their secret stores. The [identity contract](docs/CREDENTIALS.md#google-and-azure-identity-selection)
@@ -590,6 +590,13 @@ supported features, limits and credential references. Guest requests cannot
 override headers, route, region, cloud project, provider or credentials. Disable
 hidden SDK retries for possibly dispatched calls; preserve unknown outcomes and
 worst-case reservations. Cancellation does not establish that no tokens were used.
+
+Both components MUST implement the aligned selectors and GitHub OIDC bootstrap
+paths in [Host authentication](docs/HOST_AUTHENTICATION.md). Operator model
+profiles MUST support explicit `api-key-env` with `api_key_env`; host environment
+API keys are permitted and MUST remain outside guest inputs and retained evidence.
+Secret-store-backed model keys SHOULD remain the default. AWS MUST additionally
+support explicit `aws-environment` for action-exported role sessions and local keys.
 
 The [host credential configuration](docs/CREDENTIALS.md) defines installed
 profiles, private loading and backend authentication. Keep one host resolver for AWS Secrets Manager, Azure Key Vault, Google Cloud

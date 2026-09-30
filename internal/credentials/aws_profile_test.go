@@ -71,3 +71,33 @@ func TestAWSProfileSelectorValidation(t *testing.T) {
 		}
 	}
 }
+
+func TestAWSEnvironmentIdentitySelectsActionSessionWithoutFallback(t *testing.T) {
+	t.Setenv("AWS_ACCESS_KEY_ID", "action-key")
+	t.Setenv("AWS_SECRET_ACCESS_KEY", "action-secret")
+	t.Setenv("AWS_SESSION_TOKEN", "action-session")
+	t.Setenv("AWS_PROFILE", "ambient-missing-profile")
+	cfg, err := AWSIdentityConfig(context.Background(), "us-east-2", "", "aws-environment")
+	if err != nil {
+		t.Fatal(err)
+	}
+	value, err := cfg.Credentials.Retrieve(context.Background())
+	if err != nil || value.AccessKeyID != "action-key" || value.SessionToken != "action-session" {
+		t.Fatal("action session not selected")
+	}
+	if _, err = AWSIdentityConfig(context.Background(), "us-east-2", "selected", "aws-environment"); err == nil {
+		t.Fatal("mixed sources accepted")
+	}
+	t.Setenv("AWS_SECRET_ACCESS_KEY", "")
+	if _, err = AWSIdentityConfig(context.Background(), "us-east-2", "", "aws-environment"); err == nil {
+		t.Fatal("incomplete environment fell back")
+	}
+}
+func TestCredentialSchemaNamespacesArePortable(t *testing.T) {
+	config := validConfig()
+	config.Profiles[0].APIVersion = "interceptor.dev/secret-store-profile/v1alpha1"
+	config.Credentials[0].APIVersion = "interceptor.dev/host-credential-ref/v1alpha1"
+	if err := Validate(config); err != nil {
+		t.Fatal(err)
+	}
+}

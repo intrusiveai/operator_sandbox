@@ -27,6 +27,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	awscredentials "github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	vault "github.com/hashicorp/vault/api"
 )
@@ -46,7 +47,7 @@ type awsSecretsClient interface {
 type awsBackend struct{ client awsSecretsClient }
 
 func newAWSBackend(ctx context.Context, profile SecretStoreProfile) (Backend, error) {
-	cfg, err := AWSConfig(ctx, profile.Region, profile.AWSProfile)
+	cfg, err := AWSIdentityConfig(ctx, profile.Region, profile.AWSProfile, profile.Authentication)
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +262,44 @@ func AWSWorkloadConfig(ctx context.Context, region string) (aws.Config, error) {
 // AWSConfig enables shared files only for an explicitly selected profile. Missing
 // or credential-free profiles fail rather than falling back to ambient identities.
 func AWSConfig(ctx context.Context, region, profile string) (aws.Config, error) {
+	mode := "workload-identity"
+	if profile != "" {
+		mode = "aws-profile"
+	}
+	return AWSIdentityConfig(ctx, region, profile, mode)
+}
+
+// AWSIdentityConfig selects a single host credential source. Environment mode
+// supports the temporary session exported by GitHub's AWS OIDC action, as well
+// as explicitly selected local access keys. It never falls back to another source.
+func AWSIdentityConfig(ctx context.Context, region, profile, authentication string) (aws.Config, error) {
+	if authentication == "" {
+		authentication = "workload-identity"
+		if profile != "" {
+			authentication = "aws-profile"
+		}
+	}
 	invalid := errors.New("AWS credential configuration unavailable")
+	if ctx.Err() != nil {
+		return aws.Config{}, invalid
+	}
+	if authentication == "aws-environment" {
+		key, secret, token := os.Getenv("AWS_ACCESS_KEY_ID"), os.Getenv("AWS_SECRET_ACCESS_KEY"), os.Getenv("AWS_SESSION_TOKEN")
+		if profile != "" || key == "" || secret == "" {
+			return aws.Config{}, invalid
+		}
+		if region == "" {
+			region = os.Getenv("AWS_REGION")
+			if region == "" {
+				region = os.Getenv("AWS_DEFAULT_REGION")
+			}
+		}
+		return aws.Config{Region: region, Credentials: aws.NewCredentialsCache(awscredentials.NewStaticCredentialsProvider(key, secret, token))}, nil
+	}
+	if authentication != "workload-identity" && authentication != "aws-profile" || (authentication == "aws-profile") != (profile != "") {
+		return aws.Config{}, invalid
+	}
+
 	if ctx.Err() != nil || (profile != "" && !ValidAWSProfile(profile)) {
 		return aws.Config{}, invalid
 	}

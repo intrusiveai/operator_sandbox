@@ -1,8 +1,9 @@
 # Cloud authentication setup
 
 Operator separates **model authentication** from **secret-store authentication**.
-A model API key is a stored secret; an independently configured cloud identity (or
-Vault Agent/Proxy) retrieves it. The store MAY belong to a different cloud than the
+A model API key SHOULD be stored in a secret store; an independently configured
+cloud identity (or Vault Agent/Proxy) retrieves it. Explicit `api-key-env` also
+supports a named host environment variable. The store MAY belong to a different cloud than the
 model. For example, an AWS named profile can read a Vertex key from Secrets Manager.
 Direct cloud-identity model authentication does not require a stored model key.
 
@@ -15,6 +16,8 @@ SHOULD receive the resource-scoped roles below rather than administrator roles.
 
 | Destination | Private `authentication` selector | Credential source |
 |---|---|---|
+| HTTP model routes | `api-key-env` | Explicit `api_key_env` host variable |
+| Bedrock | `aws-environment` | Host AWS access-key pair and optional session token |
 | Vertex Gemini | `secret-store` | `credential_id` referencing an API key in any supported store |
 | Vertex Gemini | `google-adc` | Google SDK Application Default Credentials, including local user, service-account, impersonated or federated ADC |
 | Vertex Gemini | `workload-identity` | Attached metadata identity or external-account workload federation |
@@ -221,3 +224,12 @@ Use [qualification setup](LIVE_QUALIFICATION_SETUP.md) for bounded, explicit pro
 Offline preflight MUST not log in or resolve secrets. Each route/authentication
 combination needs its own live evidence. Synthetic tests of these new local modes
 do not establish Google or Azure cloud qualification.
+
+## Foreground execution, environment keys and CI federation
+
+Both components now use the [shared host authentication contract](HOST_AUTHENTICATION.md).
+Foreground execution inherits the calling environment. Optional services require
+explicit account setup. For model environment keys, replace `credential_id` with
+`api_key_env: "MODEL_API_KEY"` and select `authentication: "api-key-env"`.
+The variable value MUST remain host-only. Model API keys do not authenticate
+Secret Manager or Key Vault; those still use their separately selected identity.

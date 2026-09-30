@@ -14,7 +14,7 @@ stores, terminate processes, replay operations, collect archives, or claim recov
 work. Active writers MUST prevent generation. `--run` MUST resolve the saved start
 link; it MUST NOT accept an additional campaign/config/state-root selector.
 
-The supervised worker MUST attempt local report generation after execution and
+The campaign worker MUST attempt local report generation after execution and
 its durable completion recording, with a separate five-minute timeout. It MUST
 return `reporting: generated | report_failed | not_started` separately from
 execution and completion-recording status. A report error MUST NOT convert an

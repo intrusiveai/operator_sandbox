@@ -174,6 +174,7 @@ func TestHTTPFailuresNeverReplayOrExposePrivateText(t *testing.T) {
 					fmt.Fprint(w, "data: private-provider-secret\n")
 				case "compression":
 					w.Header().Set("Content-Encoding", "gzip")
+					w.Header().Set("Content-Type", "application/json")
 					fmt.Fprint(w, `{}`)
 				case "duplicate-json":
 					fmt.Fprint(w, `{"a":1,"a":2}`)
@@ -248,5 +249,108 @@ func TestProfileAndNativeOverrideRejections(t *testing.T) {
 		if _, err := c.Generate(context.Background(), []byte(raw)); !errors.Is(err, ErrRequest) {
 			t.Fatal("guest override accepted", err)
 		}
+	}
+}
+
+func TestExplicitEnvironmentKeysAndUnauthenticatedGateway(t *testing.T) {
+	for _, provider := range []string{"openai-chat", "azure-openai", "vertex-gemini", "anthropic-messages", "litellm"} {
+		t.Run(provider, func(t *testing.T) {
+			expected := "first"
+			count := 0
+			server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				count++
+				header, prefix := "Authorization", "Bearer "
+				switch provider {
+				case "azure-openai":
+					header, prefix = "Api-Key", ""
+				case "vertex-gemini":
+					header, prefix = "X-Goog-Api-Key", ""
+				case "anthropic-messages":
+					header, prefix = "X-Api-Key", ""
+				}
+				if r.Header.Get(header) != prefix+expected {
+					t.Error("wrong host credential header")
+				}
+				w.Header().Set("Content-Type", "application/json")
+				fmt.Fprint(w, `{}`)
+			}))
+			defer server.Close()
+			s := profile(t, provider, server.URL).Settings()
+			s.Authentication = "api-key-env"
+			s.CredentialID = ""
+			s.APIKeyEnvironment = "OPERATOR_TEST_MODEL_KEY"
+			raw, _ := json.Marshal(s)
+			p, err := Parse(raw)
+			if err != nil {
+				t.Fatal(err)
+			}
+			c, err := New(context.Background(), p, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			c.http = server.Client()
+			defer c.Close()
+			for _, key := range []string{"first", "rotated"} {
+				expected = key
+				t.Setenv(s.APIKeyEnvironment, key)
+				if _, err = c.Generate(context.Background(), nativeRequest(s.Codec)); err != nil {
+					t.Fatal(err)
+				}
+			}
+			t.Setenv(s.APIKeyEnvironment, "")
+			if _, err = c.Generate(context.Background(), nativeRequest(s.Codec)); err == nil || count != 2 {
+				t.Fatal("missing key dispatched")
+			}
+			if provider == "litellm" {
+				s.Authentication = "none"
+				s.APIKeyEnvironment = ""
+				raw, _ = json.Marshal(s)
+				p, err = Parse(raw)
+				if err != nil {
+					t.Fatal(err)
+				}
+				c, err = New(context.Background(), p, nil)
+				if err != nil {
+					t.Fatal(err)
+				}
+				c.http = &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+					if r.Header.Get("Authorization") != "" {
+						t.Error("unauthenticated route sent authorization")
+					}
+					return &http.Response{StatusCode: 200, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(`{}`))}, nil
+				})}
+				if _, err = c.Generate(context.Background(), nativeRequest(s.Codec)); err != nil {
+					t.Fatal(err)
+				}
+			}
+		})
+	}
+}
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
+
+func TestAnthropicStoredBearerUsesAuthorization(t *testing.T) {
+	p := profile(t, "anthropic-messages", "https://provider.invalid")
+	s := p.Settings()
+	s.Authentication = "workload-token"
+	raw, _ := json.Marshal(s)
+	p, err := Parse(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, err := New(context.Background(), p, &secretResolver{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.http = &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		if r.Header.Get("Authorization") != "Bearer synthetic-test-key" || r.Header.Get("X-Api-Key") != "" {
+			t.Error("bearer treated as API key")
+		}
+		return &http.Response{StatusCode: 200, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(`{}`))}, nil
+	})}
+	if _, err = c.Generate(context.Background(), nativeRequest(s.Codec)); err != nil {
+		t.Fatal(err)
 	}
 }

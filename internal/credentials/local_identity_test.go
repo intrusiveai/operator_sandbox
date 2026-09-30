@@ -156,12 +156,56 @@ func TestAzureExplicitCLIAndServicePrincipal(t *testing.T) {
 
 func TestStoreAuthenticationSelectors(t *testing.T) {
 	for _, backend := range []string{"aws-secrets-manager", "azure-key-vault", "gcp-secret-manager", "hashicorp-vault"} {
-		for _, mode := range []string{"", "workload-identity", "google-adc", "azure-cli", "azure-client-secret", "secret-store", "bogus"} {
-			want := mode == "" || (backend == "azure-key-vault" && (mode == "workload-identity" || mode == "azure-cli" || mode == "azure-client-secret")) || (backend == "gcp-secret-manager" && (mode == "workload-identity" || mode == "google-adc"))
+		for _, mode := range []string{"", "workload-identity", "google-adc", "azure-cli", "azure-client-secret", "aws-environment", "secret-store", "bogus"} {
+			want := mode == "" || backend == "aws-secrets-manager" && (mode == "workload-identity" || mode == "aws-environment") || (backend == "azure-key-vault" && (mode == "workload-identity" || mode == "azure-cli" || mode == "azure-client-secret")) || (backend == "gcp-secret-manager" && (mode == "workload-identity" || mode == "google-adc"))
 			config := Config{Profiles: []SecretStoreProfile{{APIVersion: StoreProfileVersion, Kind: "SecretStoreProfile", ID: "test", BackendKind: backend, Authentication: mode, Region: "us-east-2", VaultURL: "https://vault.example", VaultProxy: true, AllowedLocatorPrefixes: []string{"test"}}}}
 			if got := Validate(config) == nil; got != want {
 				t.Fatalf("%s %s accepted=%v", backend, mode, got)
 			}
 		}
+	}
+}
+
+// GitHub's Google action publishes external-account ADC with a credential-source
+// URL and Authorization header. Exercise that format through the official SDK.
+func TestGitHubGoogleExternalAccountExchange(t *testing.T) {
+	requests := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/github-oidc":
+			if r.Header.Get("Authorization") != "Bearer synthetic-job-token" {
+				t.Error("missing job bootstrap header")
+			}
+			fmt.Fprint(w, `{"value":"synthetic-subject-token"}`)
+		case "/sts":
+			requests++
+			if err := r.ParseForm(); err != nil || r.Form.Get("subject_token") != "synthetic-subject-token" {
+				t.Error("wrong subject token")
+			}
+			fmt.Fprint(w, `{"access_token":"synthetic-federated-token","issued_token_type":"urn:ietf:params:oauth:token-type:access_token","token_type":"Bearer","expires_in":3600}`)
+		default:
+			t.Error("unexpected identity request")
+		}
+	}))
+	defer server.Close()
+	file := filepath.Join(t.TempDir(), "gha-creds.json")
+	raw, _ := json.Marshal(map[string]any{"type": "external_account", "audience": "//iam.googleapis.com/projects/123/locations/global/workloadIdentityPools/test/providers/github", "subject_token_type": "urn:ietf:params:oauth:token-type:jwt", "token_url": server.URL + "/sts", "credential_source": map[string]any{"url": server.URL + "/github-oidc", "headers": map[string]string{"Authorization": "Bearer synthetic-job-token"}, "format": map[string]string{"type": "json", "subject_token_field_name": "value"}}})
+	if err := os.WriteFile(file, raw, 0600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("GOOGLE_APPLICATION_CREDENTIALS", file)
+	for _, mode := range []string{"workload-identity", "google-adc"} {
+		identity, err := GoogleIdentity(context.Background(), mode)
+		if err != nil {
+			t.Fatal(err)
+		}
+		token, err := identity.TokenSource.Token()
+		if err != nil || token.AccessToken != "synthetic-federated-token" {
+			t.Fatal("federated exchange failed", err)
+		}
+	}
+	if requests != 2 {
+		t.Fatal("exchange did not run")
 	}
 }

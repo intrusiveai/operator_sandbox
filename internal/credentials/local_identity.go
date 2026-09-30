@@ -16,6 +16,8 @@ import (
 // SDK/CLI credentials are enabled only by an explicit administrator selection.
 func ValidStoreAuthentication(backend, authentication string) bool {
 	switch backend {
+	case "aws-secrets-manager":
+		return authentication == "" || authentication == "workload-identity" || authentication == "aws-profile" || authentication == "aws-environment"
 	case "azure-key-vault":
 		return authentication == "" || authentication == "workload-identity" || authentication == "azure-cli" || authentication == "azure-client-secret"
 	case "gcp-secret-manager":

@@ -47,3 +47,7 @@ The source copy used the legacy Go module name; substitute its declared module
 prefix when regenerating. Set `OPERATOR_EVIDENCE_FIXTURE_DIR` to this directory and
 run only `TestOperatorEvidenceFixture`. Capture timestamps and generated IDs vary;
 all three archives must be regenerated together to preserve lineage.
+
+`capability-authentication.json` is the updated native export from Interceptor
+with explicit local/OIDC/environment authentication modes. The older delivery
+fixture remains paired with its historical ScenarioBundle digests. Both must decode.

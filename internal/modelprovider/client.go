@@ -16,6 +16,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -42,12 +43,12 @@ func New(ctx context.Context, profile *Profile, resolver Resolver) (*Client, err
 		return nil, ErrProfile
 	}
 	s := profile.Settings()
-	if s.Authentication == "secret-store" && resolver == nil {
+	if s.UsesStoredCredential() && resolver == nil {
 		return nil, ErrProfile
 	}
 	c := &Client{profile: s, resolver: resolver, http: boundedHTTP()}
 	if s.Provider == "bedrock-converse" {
-		cfg, err := credentials.AWSConfig(ctx, s.Region, s.AWSProfile)
+		cfg, err := credentials.AWSIdentityConfig(ctx, s.Region, s.AWSProfile, s.Authentication)
 		if err != nil {
 			return nil, ErrProfile
 		}
@@ -61,7 +62,7 @@ func New(ctx context.Context, profile *Profile, resolver Resolver) (*Client, err
 		c.profile.Endpoint = destination.String()
 		c.sign = awsSign(cfg.Credentials, s.Region)
 
-	} else if s.Authentication != "secret-store" {
+	} else if !s.UsesStoredCredential() && s.Authentication != "api-key-env" && s.Authentication != "none" {
 		switch s.Provider {
 		case "azure-openai":
 			identity, err := credentials.AzureIdentity(s.Authentication)
@@ -124,15 +125,21 @@ func (c *Client) Generate(ctx context.Context, raw []byte) ([]byte, error) {
 
 	header, prefix := "Authorization", "Bearer "
 	var token, quota string
-	if c.profile.Authentication == "secret-store" {
-		resolved, err := c.resolver.Resolve(ctx, c.profile.CredentialID)
-		if err != nil {
-			return nil, ErrProvider
+	if c.profile.UsesStoredCredential() || c.profile.Authentication == "api-key-env" {
+		if c.profile.Authentication == "api-key-env" {
+			token = os.Getenv(c.profile.APIKeyEnvironment)
+		} else {
+			resolved, err := c.resolver.Resolve(ctx, c.profile.CredentialID)
+			if err != nil {
+				return nil, ErrProvider
+			}
+			token = resolved.Value
 		}
-		token = resolved.Value
 		switch c.profile.Provider {
 		case "anthropic-messages":
-			header, prefix = "X-Api-Key", ""
+			if c.profile.Authentication != "workload-token" {
+				header, prefix = "X-Api-Key", ""
+			}
 		case "gemini-api", "vertex-gemini":
 			header, prefix = "X-Goog-Api-Key", ""
 		case "azure-openai":
@@ -143,13 +150,13 @@ func (c *Client) Generate(ctx context.Context, raw []byte) ([]byte, error) {
 		if err != nil {
 			return nil, ErrProvider
 		}
-	} else if c.sign == nil {
+	} else if c.bearer != nil {
 		token, err = c.bearer(ctx)
 		if err != nil {
 			return nil, ErrProvider
 		}
 	}
-	if (c.sign == nil && token == "") || strings.ContainsAny(token, "\x00\r\n") || ctx.Err() != nil {
+	if (c.sign == nil && c.profile.Authentication != "none" && token == "") || len(token) > 1<<20 || strings.ContainsAny(token, "\x00\r\n") || ctx.Err() != nil {
 		return nil, ErrProvider
 	}
 	// A non-rewindable reader plus disabled keepalive/redirects prevents net/http
@@ -166,7 +173,7 @@ func (c *Client) Generate(ctx context.Context, raw []byte) ([]byte, error) {
 		if err := c.sign(ctx, req, raw); err != nil {
 			return nil, ErrProvider
 		}
-	} else {
+	} else if token != "" {
 		req.Header.Set(header, prefix+token)
 	}
 	if quota != "" {

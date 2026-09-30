@@ -28,8 +28,13 @@ provider/codec/authentication combinations and out-of-bounds limits.
 
 `maximum_prompt_tokens` MUST be a qualified upper bound, including message/tool
 framing; it is used for conservative campaign reservations. Profiles MUST set
-positive token bounds and a response-byte limit at most 4 MiB. Secrets MUST resolve
-through the [host credential resolver](CREDENTIALS.md).
+positive token bounds and a response-byte limit at most 4 MiB. Secret-store mode MUST resolve keys
+through the [host credential resolver](CREDENTIALS.md). Explicit `api-key-env` MUST
+read only the named `api_key_env` host variable at each model dispatch, reject
+missing, overlong or invalid header values before sending, and never expose the
+value to the harness or retained evidence. `api_key_env` MUST be absent for other
+modes. See the [shared authentication contract](HOST_AUTHENTICATION.md) for the
+complete mode matrix, including GitHub OIDC, bearer tokens and LiteLLM without auth.
 
 Profiles MUST include a closed `codec_options` object for their native family:
 

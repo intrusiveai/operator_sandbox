@@ -138,7 +138,11 @@ MUST reject workload labels. The `google-adc` label denotes the selected discove
 mechanism; it does not prove whether ADC resolved a user, service account or
 federated identity. Actual identity attribution requires separate evidence.
 
-Vertex API-key plans MUST use `secret-store`, a private model `credential_id`,
+Vertex secret-store API-key plans MUST use `secret-store`, a private model `credential_id`,
 and a matching `credentials_file`, just like Azure API-key plans. Store selection
 MUST be independent of model provider. Setup documentation MUST identify separate
 inference and secret-read permissions; see [cloud authentication setup](CLOUD_AUTHENTICATION.md).
+
+Explicit environment-key plans MUST declare `api-key-env`, select `api_key_env`
+in the model profile, and omit `credentials_file`. AWS action-session plans MUST
+declare `aws-environment` and select that mode in the model/store profile.

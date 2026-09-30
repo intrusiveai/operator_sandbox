@@ -75,7 +75,7 @@ These adapters intentionally use the workload authentication described in
 [CREDENTIALS.md](CREDENTIALS.md). A successful cloud CLI login alone is **not** a
 supported credential source for these probes:
 
-- **AWS:** static access-key environment variables are rejected; shared credential
+- **AWS:** `aws-environment` explicitly accepts access-key/session environment values; workload/profile modes reject them; shared credential
   and config files are excluded in workload mode. An explicitly selected `aws_profile`
   enables named-profile authentication from local SDK files, including SSO; set
   the plan mode to `named-profile`. Use `aws sso login --profile NAME` before testing

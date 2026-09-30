@@ -121,3 +121,8 @@ An interrupted retirement publication MUST keep claims closed. Under the exclusi
 retention lease, an explicit purge retry MAY complete that same retirement fence
 using the verified request identity. It MUST NOT unlink an incomplete fence before
 publishing its replacement. Other damaged request/claim records remain uncertainty.
+
+New start requests MUST bind `execution_mode` (`foreground` or `service`).
+Omitted mode in legacy records denotes service execution. A saved selection MUST
+not change mode or resume execution. Foreground retirement MUST skip manager
+reconciliation because no service may register that request.

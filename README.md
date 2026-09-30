@@ -171,3 +171,11 @@ read-only `inspect` and installation `doctor` commands.
 `--live --output NEW_FILE` to run bounded service probes with sanitized evidence.
 See [setup instructions](docs/LIVE_QUALIFICATION_SETUP.md) for the four secret stores
 and all provider routes. Live infrastructure qualification remains pending.
+
+## Foreground execution and cloud identity
+
+`operatorctl campaign start` and `operatorctl run` execute in the foreground by
+default. Use `--service` for optional independent service execution. Both modes
+use the same durable campaign worker and never resume interrupted campaigns.
+See [host authentication](docs/HOST_AUTHENTICATION.md) for aligned Operator/Interceptor
+selectors, GitHub OIDC, and explicit environment API keys.

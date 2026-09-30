@@ -67,7 +67,7 @@ func doctor(ctx context.Context, args []string, stdout, stderr io.Writer, defaul
 		} else {
 			err = nil
 		}
-		if err == nil && modelErr == nil && model.Settings().Authentication == "secret-store" {
+		if err == nil && modelErr == nil && model.Settings().UsesStoredCredential() {
 			found := false
 			for _, ref := range cc.Credentials {
 				if ref.CredentialID == model.Settings().CredentialID {

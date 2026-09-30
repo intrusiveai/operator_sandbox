@@ -87,7 +87,7 @@ func Prepare(p Plan) (*Prepared, error) {
 				return nil, ErrPlan
 			}
 		}
-		modes := map[string][]string{"aws-secrets-manager": {"web-identity", "container-role", "instance-role", "named-profile"}, "azure-key-vault": {"workload-identity", "managed-identity", "azure-cli", "azure-client-secret"}, "gcp-secret-manager": {"external-account", "metadata-identity", "google-adc"}, "hashicorp-vault": {"token-sink", "proxy"}}
+		modes := map[string][]string{"aws-secrets-manager": {"web-identity", "container-role", "instance-role", "named-profile", "aws-environment"}, "azure-key-vault": {"workload-identity", "managed-identity", "azure-cli", "azure-client-secret"}, "gcp-secret-manager": {"external-account", "metadata-identity", "google-adc"}, "hashicorp-vault": {"token-sink", "proxy"}}
 		if !contains(modes[q.backend], p.DeclaredAuthMode) {
 			return nil, ErrPlan
 		}
@@ -102,7 +102,7 @@ func Prepare(p Plan) (*Prepared, error) {
 		}
 		if q.backend == "aws-secrets-manager" {
 			for _, store := range q.config.Profiles {
-				if store.ID == ref.StoreProfileID && (store.AWSProfile != "") != (p.DeclaredAuthMode == "named-profile") {
+				if store.ID == ref.StoreProfileID && ((store.AWSProfile != "") != (p.DeclaredAuthMode == "named-profile") || (store.Authentication == "aws-environment") != (p.DeclaredAuthMode == "aws-environment")) {
 					return nil, ErrPlan
 				}
 			}
@@ -130,12 +130,12 @@ func Prepare(p Plan) (*Prepared, error) {
 			if p.CredentialsFile != "" || p.DeclaredAuthMode != "named-profile" {
 				return nil, ErrPlan
 			}
-		} else if contains([]string{"google-adc", "azure-cli", "azure-client-secret"}, s.Authentication) {
+		} else if contains([]string{"google-adc", "azure-cli", "azure-client-secret", "aws-environment", "api-key-env", "none"}, s.Authentication) {
 			if p.CredentialsFile != "" || p.DeclaredAuthMode != s.Authentication {
 				return nil, ErrPlan
 			}
-		} else if s.Authentication == "secret-store" {
-			if _, ok := q.reference(s.CredentialID); !ok || p.DeclaredAuthMode != "secret-store" {
+		} else if s.UsesStoredCredential() {
+			if _, ok := q.reference(s.CredentialID); !ok || (p.DeclaredAuthMode != s.Authentication && !(s.Authentication == "secret-store" && p.DeclaredAuthMode == "api-key")) {
 				return nil, ErrPlan
 			}
 		} else {
