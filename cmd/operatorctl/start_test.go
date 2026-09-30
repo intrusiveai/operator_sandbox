@@ -59,24 +59,24 @@ func invokeStart(t *testing.T, ctx context.Context, action string, args []string
 func TestPrepareStartAndRepeatUseOneDurableIntent(t *testing.T) {
 	dir, paths, deps, calls := startFixture(t)
 	ctx := context.Background()
-	args := []string{"--run", dir, "--system-prompt-append", "instructions.txt"}
+	args := []string{"--service", "--run", dir, "--system-prompt-append", "instructions.txt"}
 	code, prepared, diag := invokeStart(t, ctx, "prepare", args, paths, deps)
 	if code != 0 || prepared.Phase != "submitted" || *calls != 0 {
 		t.Fatal(code, prepared, diag)
 	}
-	code, started, diag := invokeStart(t, ctx, "start", []string{"--run", dir}, paths, deps)
+	code, started, diag := invokeStart(t, ctx, "start", []string{"--service", "--run", dir}, paths, deps)
 	if code != 0 || started.Accepted == nil || started.StartRequestID != prepared.StartRequestID || *calls != 1 {
 		t.Fatal(code, started, diag)
 	}
-	code, repeated, diag := invokeStart(t, ctx, "start", []string{"--run", dir}, paths, deps)
+	code, repeated, diag := invokeStart(t, ctx, "start", []string{"--service", "--run", dir}, paths, deps)
 	if code != 0 || repeated.CampaignID != started.CampaignID || *calls != 1 {
 		t.Fatal(code, repeated, diag)
 	}
-	code, _, _ = invokeStart(t, ctx, "start", []string{"--run", dir, "--system-prompt", "changed.txt"}, paths, deps)
+	code, _, _ = invokeStart(t, ctx, "start", []string{"--service", "--run", dir, "--system-prompt", "changed.txt"}, paths, deps)
 	if code != 1 || *calls != 1 {
 		t.Fatal("changed input executed", code, *calls)
 	}
-	code, next, diag := invokeStart(t, ctx, "prepare", []string{"--run", dir, "--new-campaign"}, paths, deps)
+	code, next, diag := invokeStart(t, ctx, "prepare", []string{"--service", "--run", dir, "--new-campaign"}, paths, deps)
 	if code != 0 || next.CampaignID == started.CampaignID || *calls != 1 {
 		t.Fatal(code, next, diag)
 	}
@@ -95,7 +95,7 @@ func TestUncertainSubmissionRetainsExactLookupAndCancellationIsObserverOnly(t *t
 				}
 				return nil
 			}
-			code, result, _ := invokeStart(t, context.Background(), "start", []string{"--run", dir, "--timeout", "1ms"}, paths, deps)
+			code, result, _ := invokeStart(t, context.Background(), "start", []string{"--service", "--run", dir, "--timeout", "1ms"}, paths, deps)
 			if code != 1 || result.StartRequestID == "" || result.Accepted != nil {
 				t.Fatal(code, result)
 			}
@@ -115,7 +115,7 @@ func TestUncertainSubmissionRetainsExactLookupAndCancellationIsObserverOnly(t *t
 
 func TestRunObserversReportPreJournalFailureAndPinTheSavedRoot(t *testing.T) {
 	dir, paths, deps, _ := startFixture(t)
-	_, prepared, _ := invokeStart(t, context.Background(), "prepare", []string{"--run", dir}, paths, deps)
+	_, prepared, _ := invokeStart(t, context.Background(), "prepare", []string{"--service", "--run", dir}, paths, deps)
 	owner, err := startrequest.ClaimOnce(context.Background(), paths.StateRoot, prepared.StartRequestID, prepared.RequestDigest)
 	if err != nil {
 		t.Fatal(err)
@@ -141,11 +141,11 @@ func TestRunObserversReportPreJournalFailureAndPinTheSavedRoot(t *testing.T) {
 
 func TestMissingReferencedRequestCannotSilentlyStartAgain(t *testing.T) {
 	dir, paths, deps, calls := startFixture(t)
-	_, prepared, _ := invokeStart(t, context.Background(), "prepare", []string{"--run", dir}, paths, deps)
+	_, prepared, _ := invokeStart(t, context.Background(), "prepare", []string{"--service", "--run", dir}, paths, deps)
 	if err := os.Remove(filepath.Join(paths.StateRoot, "starts", prepared.StartRequestID, "request.json")); err != nil {
 		t.Fatal(err)
 	}
-	code, _, _ := invokeStart(t, context.Background(), "start", []string{"--run", dir}, paths, deps)
+	code, _, _ := invokeStart(t, context.Background(), "start", []string{"--service", "--run", dir}, paths, deps)
 	if code != 1 || *calls != 0 {
 		t.Fatal("dangling reference became execution", code, *calls)
 	}
@@ -153,11 +153,11 @@ func TestMissingReferencedRequestCannotSilentlyStartAgain(t *testing.T) {
 
 func TestFrozenSkillSetSelectorIsExclusiveAndSaved(t *testing.T) {
 	dir, paths, deps, calls := startFixture(t)
-	code, _, _ := invokeStart(t, context.Background(), "prepare", []string{"--run", dir, "--skill-set", "set.json", "--skill", "sha256:" + strings.Repeat("a", 64)}, paths, deps)
+	code, _, _ := invokeStart(t, context.Background(), "prepare", []string{"--service", "--run", dir, "--skill-set", "set.json", "--skill", "sha256:" + strings.Repeat("a", 64)}, paths, deps)
 	if code != 2 || *calls != 0 {
 		t.Fatal(code, *calls)
 	}
-	code, prepared, diag := invokeStart(t, context.Background(), "prepare", []string{"--run", dir, "--skill-set", "set.json"}, paths, deps)
+	code, prepared, diag := invokeStart(t, context.Background(), "prepare", []string{"--service", "--run", dir, "--skill-set", "set.json"}, paths, deps)
 	if code != 0 {
 		t.Fatal(code, diag)
 	}
@@ -166,12 +166,60 @@ func TestFrozenSkillSetSelectorIsExclusiveAndSaved(t *testing.T) {
 	if err != nil || saved.Request.Selection.SkillSetFile != expected || len(saved.Request.Selection.SkillDigests) != 0 {
 		t.Fatal(saved, err)
 	}
-	code, reused, diag := invokeStart(t, context.Background(), "prepare", []string{"--run", dir}, paths, deps)
+	code, reused, diag := invokeStart(t, context.Background(), "prepare", []string{"--service", "--run", dir}, paths, deps)
 	if code != 0 || reused.StartRequestID != prepared.StartRequestID {
 		t.Fatal(code, diag)
 	}
-	code, _, _ = invokeStart(t, context.Background(), "prepare", []string{"--run", dir, "--skill-set", "different.json"}, paths, deps)
+	code, _, _ = invokeStart(t, context.Background(), "prepare", []string{"--service", "--run", dir, "--skill-set", "different.json"}, paths, deps)
 	if code != 1 {
 		t.Fatal("changed prepared selection", code)
+	}
+}
+
+func TestForegroundOwnsWorkerLifetimeAndNeverReplays(t *testing.T) {
+	for _, cancelRun := range []bool{false, true} {
+		t.Run(map[bool]string{false: "finished", true: "cancelled"}[cancelRun], func(t *testing.T) {
+			dir, paths, deps, serviceCalls := startFixture(t)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			runs := 0
+			deps.run = func(ctx context.Context, root, id, digest string) error {
+				runs++
+				owner, err := startrequest.ClaimOnce(ctx, root, id, digest)
+				if err != nil {
+					return err
+				}
+				defer owner.Close()
+				if cancelRun {
+					cancel()
+					<-ctx.Done()
+					return errors.Join(ctx.Err(), owner.Finish(context.Background(), "failed", "execution_failed"))
+				}
+				saved, err := startrequest.Read(root, id)
+				if err != nil {
+					return err
+				}
+				if err := owner.Accept(ctx, hostrun.Receipt{APIVersion: "operator.dev/campaign-start/v1alpha1", CampaignID: saved.Request.Selection.CampaignID, LaunchID: saved.Request.Selection.LaunchID, StartRequestID: id, ManifestDigest: contracts.RawDigest([]byte("manifest")), Status: "accepted"}); err != nil {
+					return err
+				}
+				return owner.Finish(ctx, "finished", "execution_closed")
+			}
+			code, receipt, diag := invokeStart(t, ctx, "start", []string{"--run", dir}, paths, deps)
+			want := 0
+			if cancelRun {
+				want = 1
+			}
+			if code != want || runs != 1 || *serviceCalls != 0 || receipt.Completion == nil {
+				t.Fatal(code, receipt, diag, runs, *serviceCalls)
+			}
+			code, again, diag := invokeStart(t, context.Background(), "start", []string{"--run", dir}, paths, deps)
+			if code != want || runs != 1 || again.StartRequestID != receipt.StartRequestID {
+				t.Fatal(code, again, diag, runs)
+			}
+			code, _, _ = invokeStart(t, context.Background(), "start", []string{"--run", dir, "--service"}, paths, deps)
+			if code != 1 || *serviceCalls != 0 {
+				t.Fatal("changed execution mode replayed")
+			}
+		})
 	}
 }

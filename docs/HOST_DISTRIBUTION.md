@@ -38,7 +38,8 @@ The installer MUST preserve versioned binaries/contracts and existing configurat
 skills, campaign pins, journals, reports and evidence. It MUST NOT resume campaigns.
 
 Linux installation MUST provision a dedicated `operator` service account and the
-systemd user-manager prerequisites. Granting access to the Docker socket MUST be
+private filesystem paths. The optional `--service` provisioning flag MUST enable
+systemd user-manager prerequisites; foreground operation MUST NOT require a service manager. Granting access to the Docker socket MUST be
 an explicit administrator choice. macOS MUST use the logged-in Docker Desktop
 user. Both profiles MUST retain the existing private configuration/state locations.
 Installation MUST NOT embed credentials in templates.
@@ -75,14 +76,15 @@ sudo /path/to/verified/bin/operatorctl install provision-linux --grant-docker-ac
 Provisioning MUST create a missing `operator` system account with home
 `/var/lib/operator` and shell `/usr/sbin/nologin`. An existing conflicting account
 MUST fail without modification. It MUST prepare `/opt/operator`, `/etc/operator`,
-`/var/lib/operator` and `/run/operator`, enable systemd lingering and start the user
-manager. It MUST install `/etc/tmpfiles.d/operator.conf` so `/run/operator` is
+`/var/lib/operator` and `/run/operator`. Only `--service` MUST enable systemd
+lingering and start the user manager. It MUST install `/etc/tmpfiles.d/operator.conf` so `/run/operator` is
 recreated privately after reboot. Docker group membership MUST be changed only with the explicit flag;
 Docker itself MUST already be installed. Adding membership to an existing running
 user manager may require an administrator-controlled restart when campaigns are
 idle. Provisioning MUST NOT restart or terminate existing campaign services.
 
-Linux administrators MUST run campaign/install commands as `operator`, with
+Linux administrators MUST run campaign/install commands as the configured account
+(`operator` for the provisioned installation). Optional service execution requires
 `XDG_RUNTIME_DIR=/run/user/<operator-uid>` and
 `DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/<operator-uid>/bus`. For example:
 

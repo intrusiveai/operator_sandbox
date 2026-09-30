@@ -21,11 +21,12 @@ func installCommand(ctx context.Context, args []string, stdout, stderr io.Writer
 	if len(args) > 0 && args[0] == "provision-linux" {
 		f := flag.NewFlagSet("install provision-linux", flag.ContinueOnError)
 		f.SetOutput(stderr)
+		service := f.Bool("service", false, "also enable the optional systemd user manager")
 		grant := f.Bool("grant-docker-access", false, "explicitly add operator to the docker group")
 		if f.Parse(args[1:]) != nil || f.NArg() != 0 {
 			return 2
 		}
-		result, err := hostrelease.ProvisionLinux(ctx, *grant)
+		result, err := hostrelease.ProvisionLinux(ctx, *grant, *service)
 		if err != nil {
 			fmt.Fprintln(stderr, "Linux provisioning failed:", err)
 			return 1

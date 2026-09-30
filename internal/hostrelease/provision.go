@@ -52,7 +52,7 @@ func provisionDirectory(name string, uid, gid int) error {
 	}
 	return errors.Join(f.Chown(uid, gid), f.Chmod(0700), f.Sync())
 }
-func ProvisionLinux(ctx context.Context, grantDocker bool) (ProvisionReceipt, error) {
+func ProvisionLinux(ctx context.Context, grantDocker, service bool) (ProvisionReceipt, error) {
 	query := func(ctx context.Context, bin string, args ...string) ([]byte, error) {
 		cmd := exec.CommandContext(ctx, bin, args...)
 		cmd.WaitDelay = 100 * time.Millisecond
@@ -64,9 +64,9 @@ func ProvisionLinux(ctx context.Context, grantDocker bool) (ProvisionReceipt, er
 		cmd.WaitDelay = 100 * time.Millisecond
 		return cmd.Run()
 	}
-	return provisionLinux(ctx, grantDocker, provisionDependencies{runtime.GOOS, os.Geteuid(), query, run, provisionDirectory, provisionTmpfiles})
+	return provisionLinux(ctx, grantDocker, service, provisionDependencies{runtime.GOOS, os.Geteuid(), query, run, provisionDirectory, provisionTmpfiles})
 }
-func provisionLinux(ctx context.Context, grantDocker bool, d provisionDependencies) (r ProvisionReceipt, err error) {
+func provisionLinux(ctx context.Context, grantDocker, service bool, d provisionDependencies) (r ProvisionReceipt, err error) {
 	if d.goos != "linux" || d.euid != 0 {
 		return r, ErrInstall
 	}
@@ -114,13 +114,19 @@ func provisionLinux(ctx context.Context, grantDocker bool, d provisionDependenci
 	if err = d.tmpfiles(); err != nil {
 		return r, err
 	}
-	if err = d.run(ctx, "/usr/bin/loginctl", "enable-linger", "operator"); err != nil {
-		return r, ErrInstall
+	if service {
+		if err = d.run(ctx, "/usr/bin/loginctl", "enable-linger", "operator"); err != nil {
+			return r, ErrInstall
+		}
+		if err = d.run(ctx, "/usr/bin/systemctl", "start", "user@"+strconv.Itoa(uid)+".service"); err != nil {
+			return r, ErrInstall
+		}
 	}
-	if err = d.run(ctx, "/usr/bin/systemctl", "start", "user@"+strconv.Itoa(uid)+".service"); err != nil {
-		return r, ErrInstall
+	runtimeDirectory := "/run/operator"
+	if service {
+		runtimeDirectory = "/run/user/" + strconv.Itoa(uid)
 	}
-	return ProvisionReceipt{"operator.dev/linux-provision/v1alpha1", "operator", uid, created, grantDocker, "/run/user/" + strconv.Itoa(uid)}, nil
+	return ProvisionReceipt{"operator.dev/linux-provision/v1alpha1", "operator", uid, created, grantDocker, runtimeDirectory}, nil
 }
 
 func provisionTmpfiles() error {

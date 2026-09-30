@@ -10,10 +10,12 @@ operatorctl doctor --config /absolute/config.yaml
 operatorctl doctor --config /absolute/config.yaml --offline
 ```
 
-`run` MUST reuse the submission validator, durable start request, supervised worker
+`run` MUST reuse the submission validator, durable start request, campaign worker
 and observer implementations. It MUST accept the same bundle/artifact/target
-selectors as `submit` and prompt/skill selectors as campaign start. It MUST NOT
-create an alternate foreground execution path. `--timeout` bounds acceptance
+selectors as `submit` and prompt/skill selectors as campaign start. It MUST default to foreground execution using the same worker as optional
+`--service` execution. Foreground cancellation MUST stop that execution and perform
+cleanup. `--wait` is redundant for new foreground execution; with `--service`
+it attaches a read-only observer. `--timeout` bounds service acceptance
 (default 135 seconds, maximum ten minutes); `--wait-timeout` bounds the optional
 completion observer (default 35 minutes, maximum 24 hours).
 
@@ -33,7 +35,7 @@ Stage receipts MUST NOT be interleaved with that object. Human diagnostics MUST 
 to stderr. Failure after start publication MUST preserve its lookup key whenever
 the underlying start operation returns one. An uncertain service response MUST
 remain a failure, never trigger a replacement execution. Closing or canceling
-`--wait` MUST only end observation; it MUST NOT terminate the worker. A status of
+`--service --wait` MUST only end observation; it MUST NOT terminate the worker. A status of
 `accepted` does not establish experiment success or ongoing worker health;
 `execution_closed` describes retained closure, not scenario success. The worker
 owns finalization and report publication.

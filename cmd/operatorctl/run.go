@@ -37,6 +37,7 @@ func combinedRunWith(ctx context.Context, args []string, stdout, stderr io.Write
 	bundle := f.String("bundle", "", "ScenarioBundle JSON")
 	artifacts := f.String("artifacts", "", "bundle artifact directory")
 	output := f.String("output", "", "new or identical submitted run directory")
+	service := f.Bool("service", false, "run independently under the OS service manager")
 	wait := f.Bool("wait", false, "observe completion without owning the worker")
 	timeout := f.Duration("timeout", workerjob.PreparationTimeout+15*time.Second, "acceptance timeout")
 	waitTimeout := f.Duration("wait-timeout", 35*time.Minute, "completion observer timeout")
@@ -89,6 +90,9 @@ func combinedRunWith(ctx context.Context, args []string, stdout, stderr io.Write
 	result.Submission = &submitted
 	result.Status = "start_failed"
 	startArgs := []string{"--run", directory, "--config", *config, "--timeout", timeout.String()}
+	if *service {
+		startArgs = append(startArgs, "--service")
+	}
 	if *fresh {
 		startArgs = append(startArgs, "--new-campaign")
 	}
@@ -118,6 +122,10 @@ func combinedRunWith(ctx context.Context, args []string, stdout, stderr io.Write
 	}
 	if result.Start == nil {
 		return finish(1)
+	}
+	if result.Start.Completion != nil && !*wait {
+		result.Status = "execution_closed"
+		return finish(0)
 	}
 	result.Status = "accepted"
 	if !*wait {

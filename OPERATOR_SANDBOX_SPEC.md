@@ -40,7 +40,7 @@ with scripted peers; full native host qualification remains outstanding.
 ## 2. Principal requirements and boundaries
 
 1. Provide one CLI for staged or end-to-end input submission, validation,
-   execution, evidence collection and reporting. Accepted campaigns outlive their terminal.
+   execution, evidence collection and reporting. Foreground execution is the default; optional service execution outlives its submitting terminal.
 2. A structured ScenarioBundle supplies objectives, optional hypotheses, candidate
    surfaces, coverage goals and evidence expectations. The harness owns tactical
    choices and payloads, including experiments for objectives-only submissions.
@@ -1114,8 +1114,9 @@ pass using verified retained identities and the original target-stop permission.
 It MUST preserve unknown outcomes, avoid mutation replay and retain recovery audit
 records independently of the closed execution journal.
 
-The host-supervised worker owns a durable fencing identity independent of the
-CLI process. The per-OS service account, supervisor and state layout are fixed by
+The campaign worker MUST own a durable fencing identity. Foreground execution
+MUST run that worker in the CLI process; explicit service execution MUST run the
+same worker independently of the submitting CLI. The per-OS service account, supervisor and state layout are fixed by
 the installed host profile (see HOST_RUNTIME_PROFILES.md). The launcher accepts typed, peer-authenticated local requests, not
 arbitrary commands. Before each launch/admission, verify the active fence. A
 terminal decision invalidates pending launch intents and kills any raced launch.
@@ -1468,9 +1469,11 @@ perform submission, validation, preparation, execution and finalization using th
 same saved-state contracts; reference files use the same optional `--artifacts`
 argument. At new-campaign start, resolve and validate the locally installed
 `engine.image` under Section 5.1.1 before freezing accepted launch inputs.
-The supervised worker owns accepted execution/finalization and local report
-publication. The CLI returns a receipt; `--wait` attaches an observer. Closing an
-observer does not terminate a campaign. Status/logs/wait work from another terminal.
+The worker owns execution/finalization and local report publication.
+`start` and `run` MUST default to foreground execution and return after finalization;
+canceling their owning process MUST terminate execution and perform cleanup.
+`--service` MUST select independent service execution; `--service --wait` attaches
+an observer. Closing an observer MUST NOT terminate a campaign. Status/logs/wait work from another terminal.
 Read-only campaign-ID observer commands and their committed-prefix semantics
 MUST follow [Campaign observation](docs/CAMPAIGN_OBSERVATION.md).
 Start success means accepted and owned, not successful simulation. JSON mode emits
@@ -1605,7 +1608,8 @@ keyring. Installation/updates MUST use explicit local archives and retain immuta
 release directories. Activation MUST switch the selected version atomically and
 reject downgrades unless explicitly requested; no automatic download or age-based
 expiry is required. Linux installation MUST create the dedicated service account
-and systemd prerequisites; Docker socket permission grants MUST be explicit.
+and private filesystem paths; systemd prerequisites MUST be provisioned only
+when `install provision-linux --service` is explicitly requested; Docker socket permission grants MUST be explicit.
 The [host distribution contract](docs/HOST_DISTRIBUTION.md) defines packaging,
 trust, provisioning, offline installation, updates and publication tooling. Attack Harness images use the HTTPS release approval and compatibility
 cache policy in Section 5.1.1.

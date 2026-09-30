@@ -38,7 +38,7 @@ func readAdministration(dir string, s *Snapshot) error {
 	}
 	var service ServiceRegistration
 	if _, e := read(dir, "service.json", &service); e == nil {
-		if !service.valid(s.Digest) {
+		if s.Request.ExecutionMode == "foreground" || !service.valid(s.Digest) {
 			return ErrRecord
 		}
 		s.Service = &service
@@ -61,7 +61,7 @@ func RegisterService(ctx context.Context, stateRoot, id, digest, platform string
 		return ErrRetired
 	}
 	r := ServiceRegistration{digest, platform, uid}
-	if digest != s.Digest || !r.valid(s.Digest) {
+	if s.Request.ExecutionMode == "foreground" || digest != s.Digest || !r.valid(s.Digest) {
 		return ErrRecord
 	}
 	if s.Service != nil {

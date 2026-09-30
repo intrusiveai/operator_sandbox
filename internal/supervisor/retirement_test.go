@@ -80,3 +80,34 @@ func TestRetiredServiceRequiresConfirmedAbsence(t *testing.T) {
 		})
 	}
 }
+
+func TestForegroundRetirementNeedsNoServiceManager(t *testing.T) {
+	ctx := context.Background()
+	old := saved(t)
+	request := old.Request
+	request.Selection.StartRequestID = strings.Repeat("a", 32)
+	request.Selection.CampaignID = strings.Repeat("b", 32)
+	request.ExecutionMode = "foreground"
+	s, e := startrequest.Save(ctx, request)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if e = startrequest.RegisterService(ctx, request.StateRoot, request.Selection.StartRequestID, s.Digest, "linux", 501); e == nil {
+		t.Fatal("foreground registered as a service")
+	}
+	lease, e := campaign.AcquireRetentionLease(request.StateRoot, true)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer lease.Close()
+	if _, e = startrequest.Retire(ctx, lease, request.StateRoot, request.Selection.StartRequestID, s.Digest); e != nil {
+		t.Fatal(e)
+	}
+	c := &Client{goos: "linux", uid: 501, query: func(context.Context, string, ...string) ([]byte, error) {
+		t.Fatal("contacted manager")
+		return nil, nil
+	}}
+	if e = c.ReconcileRetired(ctx, lease, request.StateRoot, request.Selection.StartRequestID, s.Digest); e != nil {
+		t.Fatal(e)
+	}
+}

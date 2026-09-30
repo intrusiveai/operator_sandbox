@@ -265,7 +265,7 @@ qualification are still required; fake subprocess tests do not qualify a host pr
 ## 3.1 macOS service lifetime and idle-sleep prevention
 
 Operator and Interceptor run as the logged-in Docker Desktop user. An installed
-background service uses a per-user launchd LaunchAgent; foreground CLI execution
+background service optionally uses a per-user launchd LaunchAgent; default foreground CLI execution
 has the same lifetime rules. Screen lock and display sleep are supported. Campaigns
 are not required to survive logout, host sleep or Docker interruption. Campaign
 launch jobs use `KeepAlive=false` and `RunAtLoad=false`: starting execution is an
@@ -319,7 +319,7 @@ D1 is resolved by Sections 1.1–1.2, D2 by Section 2 and shared contract Sectio
 |---|---|---|
 | D1 | Confirmed supported versions and MVP containment — resolved | Section 1.1 records the informational version baseline. Section 1.2 selects Docker mounts/permissions and two-stage seccomp; additional filesystem policy, separate user-namespace remapping and a kernel-enforced FIFO reopen ban are not required. |
 | D2 | File-spool protocol — resolved | Atomic sequence-named files, cumulative consumption acknowledgements, producer cleanup, 10 ms polling and five-second transport deadlines. Host-process size checks run every second with configurable `spool.max_bytes` (default 512 MiB); excess triggers Docker termination. Shutdown/startup cleanup removes inactive spools. Host transport and launch-worker termination/cleanup integration are available; supervised service submission and the Python peer are implemented. Installation packaging, complete Go/Python process exchanges and full native qualification remain outstanding. |
-| D3 | Host installation, service identity and lifecycle — resolved | Linux starts with systemd. macOS uses the logged-in Docker Desktop user and a per-user LaunchAgent, private Library configuration/state, and `caffeinate -i -w <pid>` during active work and cleanup. Screen lock is allowed; logout, actual sleep and Docker interruption end execution. Recovery is cleanup/reporting only. See Section 3.1. |
+| D3 | Host installation, service identity and lifecycle — resolved | Both components default to foreground execution. Optional services use Linux systemd or a macOS per-user LaunchAgent. macOS uses the logged-in Docker Desktop user, private Library configuration/state, and `caffeinate -i -w <pid>` during active work and cleanup. Screen lock is allowed; logout, actual sleep and Docker interruption end execution. Recovery is cleanup/reporting only. See Section 3.1. |
 
 Initial feasibility testing verifies immutable input/skill/manifest publication
 through Docker Desktop sharing: permissions, case/Unicode collisions and no writable

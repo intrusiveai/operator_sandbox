@@ -51,6 +51,7 @@ func TestCombinedRunReusesStartAndPreservesUncertainReceipt(t *testing.T) {
 	for _, uncertain := range []bool{false, true} {
 		t.Run(fmt.Sprint(uncertain), func(t *testing.T) {
 			paths, args := runFixture(t)
+			args = append(args, "--service")
 			calls := 0
 			deps := startDependencies{freeze: func(_ context.Context, file string, p hostconfig.Paths, s hostrun.Selection) (startrequest.Request, error) {
 				return startrequest.Request{APIVersion: startrequest.Version, ConfigurationFile: file, StateRoot: p.StateRoot, DockerEndpoint: p.DockerEndpoint, InputsFingerprint: contracts.RawDigest([]byte("inputs")), Selection: s}, nil

@@ -36,6 +36,7 @@ var digestPattern = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
 var codePattern = regexp.MustCompile(`^[a-z][a-z0-9_-]{0,127}$`)
 
 type Request struct {
+	ExecutionMode     string            `json:"execution_mode,omitempty"` // empty is a legacy service request
 	APIVersion        string            `json:"api_version"`
 	ConfigurationFile string            `json:"configuration_file"`
 	StateRoot         string            `json:"state_root"`
@@ -55,7 +56,7 @@ func New(inputs *hostrun.InstalledInputs) (Request, error) {
 }
 
 func (r Request) validate() error {
-	if r.APIVersion != Version || r.Selection.Validate() != nil || !absolute(r.ConfigurationFile) || !absolute(r.StateRoot) || campaign.ValidateDockerEndpoint(r.DockerEndpoint) != nil || !digestPattern.MatchString(r.InputsFingerprint) {
+	if (r.ExecutionMode != "" && r.ExecutionMode != "foreground" && r.ExecutionMode != "service") || r.APIVersion != Version || r.Selection.Validate() != nil || !absolute(r.ConfigurationFile) || !absolute(r.StateRoot) || campaign.ValidateDockerEndpoint(r.DockerEndpoint) != nil || !digestPattern.MatchString(r.InputsFingerprint) {
 		return ErrRecord
 	}
 	return nil

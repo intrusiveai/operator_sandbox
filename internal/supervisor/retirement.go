@@ -53,6 +53,9 @@ func (c *Client) ReconcileRetired(ctx context.Context, lease *campaign.Retention
 	if e != nil || s.Digest != digest || s.Retired == nil {
 		return startrequest.ErrRecord
 	}
+	if s.Request.ExecutionMode == "foreground" {
+		return nil
+	}
 	if s.Service != nil && (s.Service.Platform != c.goos || s.Service.UID != c.uid) {
 		return ErrRetirement
 	}

@@ -38,7 +38,7 @@ func TestLinuxProvisioningCreatesRestrictedAccountAndExplicitDockerGrant(t *test
 			dirs = append(dirs, name)
 			return nil
 		}, func() error { return nil }}
-		result, err := provisionLinux(context.Background(), grant, deps)
+		result, err := provisionLinux(context.Background(), grant, grant, deps)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -46,7 +46,7 @@ func TestLinuxProvisioningCreatesRestrictedAccountAndExplicitDockerGrant(t *test
 			t.Fatal(result, dirs)
 		}
 		all := strings.Join(calls, "\n")
-		if strings.Contains(all, "usermod") != grant || !strings.Contains(all, "--shell /usr/sbin/nologin") || !strings.Contains(all, "enable-linger operator") || !strings.Contains(all, "start user@991.service") {
+		if strings.Contains(all, "usermod") != grant || !strings.Contains(all, "--shell /usr/sbin/nologin") || strings.Contains(all, "enable-linger operator") != grant || strings.Contains(all, "start user@991.service") != grant {
 			t.Fatal(all)
 		}
 	}
@@ -55,11 +55,11 @@ func TestProvisionRejectsConflictingAccountWithoutChangingIt(t *testing.T) {
 	d := provisionDependencies{"linux", 0, func(context.Context, string, ...string) ([]byte, error) {
 		return []byte("operator:x:1000:1000::/home/person:/bin/bash\n"), nil
 	}, func(context.Context, string, ...string) error { t.Fatal("mutated conflicting account"); return nil }, func(string, int, int) error { t.Fatal("changed directories"); return nil }, func() error { t.Fatal("changed tmpfiles"); return nil }}
-	if _, err := provisionLinux(context.Background(), true, d); err == nil {
+	if _, err := provisionLinux(context.Background(), true, false, d); err == nil {
 		t.Fatal("accepted conflicting account")
 	}
 	d.goos = "darwin"
-	if _, err := provisionLinux(context.Background(), false, d); err == nil {
+	if _, err := provisionLinux(context.Background(), false, false, d); err == nil {
 		t.Fatal("provisioned macOS")
 	}
 }

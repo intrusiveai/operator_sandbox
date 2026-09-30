@@ -1,7 +1,7 @@
-# Campaign preparation and service startup
+# Campaign preparation and execution
 
 The CLI MUST persist a typed start request and its submitted-run link before
-contacting the OS service manager. A worker MUST permanently claim that exact
+starting execution in the foreground or contacting the optional OS service manager. A worker MUST permanently claim that exact
 request once, revalidate its frozen input fingerprint, finish online preparation,
 and persist acceptance before creating the harness container.
 
@@ -18,7 +18,12 @@ input fingerprint. It MUST NOT contact Docker, Interceptor, model providers,
 secret stores, the release service or the OS service manager. Its `submitted`
 phase describes a retained request, not a running or accepted campaign. The
 installed private state root MUST already exist. `start` MUST perform the same
-preparation when no saved link exists, then submit its fixed worker entrypoint.
+preparation when no saved link exists, then execute the existing worker in the foreground.
+`--service` MUST explicitly select independent OS-service execution. The selected
+mode MUST be frozen in the start request, reused on subsequent calls, and never
+changed for that campaign. `prepare --service` reserves a service-backed start;
+omitted mode in older saved requests MUST retain its original service semantics.
+Both modes MUST use the same claim, validation, execution, cleanup and reporting code.
 
 Both commands accept repeatable `--skill DIGEST` or exclusive `--skill-set FILE`,
 plus `--system-prompt FILE` or
@@ -32,7 +37,14 @@ Frozen-set verification and loader matching MUST follow [the skill contract](SKI
 
 `start` MUST return a `operator.dev/start-observation/v1alpha1` object, including
 the start-request ID, campaign ID, request digest, phase, service-submission
-outcome and optional accepted/completion records. Successful service submission
+outcome and optional accepted/completion records. A new foreground invocation
+MUST stay attached through execution and finalization, inherit its calling process
+environment, and propagate SIGINT/SIGTERM/SIGHUP into worker cleanup. It MUST
+return a completion receipt even after cancellation where retained records remain
+readable. Repeating a claimed start MUST observe it without starting another worker.
+Foreground execution MUST NOT contact a service manager; neither may its purge.
+
+For `--service`, successful service submission
 MUST NOT imply campaign acceptance. The default acceptance wait is 135 seconds;
 `--timeout` accepts a positive duration up to ten minutes. Timeout, cancellation
 or an uncertain service reply MUST return nonzero with the saved lookup key.
@@ -60,7 +72,7 @@ only the mapped application operations. Native attachment, injection cleanup,
 snapshots, restore and target stop MUST be unavailable; recovery MUST finalize
 local records without sending another application request. See [HTTPS targets](HTTPS_TARGETS.md).
 
-## OS service binding
+## Optional OS service binding
 
 The administrator MUST install `operatorctl` at a stable absolute executable path
 that is not group/world writable. Registration MUST resolve any executable symlink
@@ -72,7 +84,7 @@ state root and configuration, contract package, profiles, local Docker image and
 Docker access for the same account that submits campaigns. CLI startup MUST NOT
 change accounts, run sudo, or prompt for service-manager authorization.
 
-Linux MUST submit a transient systemd service through `/usr/bin/systemd-run`.
+When `--service` is selected, Linux MUST submit a transient systemd service through `/usr/bin/systemd-run`.
 Non-root installations MUST have an available user service manager; root uses
 the system manager. The fixed service name is
 `operator-campaign-<start-request-id>`. Submission MUST use `Type=exec`,
@@ -81,7 +93,7 @@ disabled argument environment expansion. There are no boot/login timers or
 enabled units. The service manager owns the worker after submission, as defined
 by [systemd's transient-service contract](https://github.com/systemd/systemd/blob/main/man/systemd-run.xml).
 
-macOS MUST submit to the logged-in account's `gui/<uid>` launchd domain. Root
+When `--service` is selected, macOS MUST submit to the logged-in account's `gui/<uid>` launchd domain. Root
 submission MUST fail. The generated LaunchAgent definition MUST reside privately
 in `starts/<start-request-id>/worker.plist`, with label
 `ai.intrusive.operator.campaign.<start-request-id>`, `RunAtLoad=false`,

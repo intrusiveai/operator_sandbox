@@ -45,6 +45,7 @@ func (f *stringsFlag) Set(value string) error { *f = append(*f, value); return n
 type startDependencies struct {
 	freeze func(context.Context, string, hostconfig.Paths, hostrun.Selection) (startrequest.Request, error)
 	submit func(context.Context, string, string, string) error
+	run    func(context.Context, string, string, string) error
 }
 
 func startCampaign(ctx context.Context, action string, args []string, stdout, stderr io.Writer, defaults hostconfig.Paths) int {
@@ -64,6 +65,9 @@ func startCampaign(ctx context.Context, action string, args []string, stdout, st
 			return err
 		}
 		return client.Submit(ctx, root, id, digest)
+	}, run: func(ctx context.Context, root, id, digest string) error {
+		_, err := workerjob.Run(ctx, root, id, digest, operatorVersion)
+		return err
 	}}
 	return startCampaignWith(ctx, action, args, stdout, stderr, defaults, deps)
 }
@@ -73,6 +77,7 @@ func startCampaignWith(ctx context.Context, action string, args []string, stdout
 	f.SetOutput(stderr)
 	runDir := f.String("run", "", "submitted run directory")
 	config := f.String("config", defaults.ConfigFile, "administrator configuration file")
+	service := f.Bool("service", false, "run independently under the OS service manager")
 	fresh := f.Bool("new-campaign", false, "select a fresh campaign instead of the saved start")
 	replacement := f.String("system-prompt", "", "replacement prompt file")
 	skillSet := f.String("skill-set", "", "frozen SkillSetManifest file")
@@ -161,6 +166,13 @@ func startCampaignWith(ctx context.Context, action string, args []string, stdout
 		fmt.Fprintln(stderr, "campaign input validation failed:", err)
 		return 1
 	}
+	request.ExecutionMode = "foreground"
+	if *service {
+		request.ExecutionMode = "service"
+	}
+	if readErr == nil && !*fresh && !provided["service"] {
+		request.ExecutionMode = saved.Request.ExecutionMode
+	}
 	if readErr == nil && !*fresh && !reflect.DeepEqual(request, saved.Request) {
 		fmt.Fprintln(stderr, "campaign inputs changed; use --new-campaign for a new execution")
 		return 1
@@ -175,7 +187,8 @@ func startCampaignWith(ctx context.Context, action string, args []string, stdout
 		return 1
 	}
 	submission := "not_requested"
-	if action == "start" && snapshot.Claim == nil && snapshot.Completion == nil && snapshot.Retired == nil {
+	foreground := request.ExecutionMode == "foreground"
+	if action == "start" && !foreground && snapshot.Claim == nil && snapshot.Completion == nil && snapshot.Retired == nil {
 		submission = "submitted"
 		if err := deps.submit(ctx, request.StateRoot, request.Selection.StartRequestID, snapshot.Digest); err != nil {
 			submission = "unconfirmed"
@@ -187,6 +200,25 @@ func startCampaignWith(ctx context.Context, action string, args []string, stdout
 	}
 	if action == "prepare" {
 		if json.NewEncoder(stdout).Encode(describeStart(snapshot, submission)) != nil {
+			return 1
+		}
+		return 0
+	}
+	if foreground && snapshot.Claim == nil && snapshot.Completion == nil && snapshot.Retired == nil {
+		// Execute the same permanently claimed worker used by the service entrypoint.
+		// The caller context owns its lifetime; cleanup/reporting use bounded independent contexts.
+		runErr := deps.run(ctx, request.StateRoot, request.Selection.StartRequestID, snapshot.Digest)
+		readCtx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		latest, readErr := startrequest.Observe(readCtx, request.StateRoot, request.Selection.StartRequestID)
+		if readErr == nil {
+			snapshot = latest
+		}
+		if json.NewEncoder(stdout).Encode(describeStart(snapshot, submission)) != nil {
+			return 1
+		}
+		if runErr != nil || readErr != nil || snapshot.Completion == nil || snapshot.Completion.Status != "finished" {
+			fmt.Fprintln(stderr, "foreground worker did not finish successfully; inspect the saved campaign; execution will not resume")
 			return 1
 		}
 		return 0
