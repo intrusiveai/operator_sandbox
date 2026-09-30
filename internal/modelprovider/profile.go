@@ -102,7 +102,15 @@ func Parse(raw []byte) (*Profile, error) {
 			return nil, ErrProfile
 		}
 	case "secret-store":
-		if !id.MatchString(s.CredentialID) || s.Provider == "bedrock-converse" || s.Provider == "vertex-gemini" {
+		if !id.MatchString(s.CredentialID) || s.Provider == "bedrock-converse" {
+			return nil, ErrProfile
+		}
+	case "google-adc":
+		if s.Provider != "vertex-gemini" || s.CredentialID != "" {
+			return nil, ErrProfile
+		}
+	case "azure-cli", "azure-client-secret":
+		if s.Provider != "azure-openai" || s.CredentialID != "" {
 			return nil, ErrProfile
 		}
 	case "workload-identity":

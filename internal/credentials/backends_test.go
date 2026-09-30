@@ -71,7 +71,7 @@ func TestCloudBackendRequests(t *testing.T) {
 		t.Fatal("Azure request/response failed", err)
 	}
 	g := &gcpFake{}
-	gb := gcpBackend{g}
+	gb := gcpBackend{client: g}
 	raw, version, err = gb.Read(ctx, SecretStoreProfile{}, Locator{Project: "project", SecretName: "secret", Version: "latest"})
 	if err != nil || string(raw) != "gcp-test-secret" || version != "3" || g.name != "projects/project/secrets/secret/versions/latest" {
 		t.Fatal("GCP request/response failed", err)

@@ -87,9 +87,18 @@ func Prepare(p Plan) (*Prepared, error) {
 				return nil, ErrPlan
 			}
 		}
-		modes := map[string][]string{"aws-secrets-manager": {"web-identity", "container-role", "instance-role", "named-profile"}, "azure-key-vault": {"workload-identity", "managed-identity"}, "gcp-secret-manager": {"external-account", "metadata-identity"}, "hashicorp-vault": {"token-sink", "proxy"}}
+		modes := map[string][]string{"aws-secrets-manager": {"web-identity", "container-role", "instance-role", "named-profile"}, "azure-key-vault": {"workload-identity", "managed-identity", "azure-cli", "azure-client-secret"}, "gcp-secret-manager": {"external-account", "metadata-identity", "google-adc"}, "hashicorp-vault": {"token-sink", "proxy"}}
 		if !contains(modes[q.backend], p.DeclaredAuthMode) {
 			return nil, ErrPlan
+		}
+		for _, store := range q.config.Profiles {
+			if store.ID == ref.StoreProfileID && (q.backend == "azure-key-vault" || q.backend == "gcp-secret-manager") {
+				local := store.Authentication != "" && store.Authentication != "workload-identity"
+				declaredLocal := contains([]string{"google-adc", "azure-cli", "azure-client-secret"}, p.DeclaredAuthMode)
+				if local != declaredLocal || (local && store.Authentication != p.DeclaredAuthMode) {
+					return nil, ErrPlan
+				}
+			}
 		}
 		if q.backend == "aws-secrets-manager" {
 			for _, store := range q.config.Profiles {
@@ -119,6 +128,10 @@ func Prepare(p Plan) (*Prepared, error) {
 		}
 		if s.Authentication == "aws-profile" {
 			if p.CredentialsFile != "" || p.DeclaredAuthMode != "named-profile" {
+				return nil, ErrPlan
+			}
+		} else if contains([]string{"google-adc", "azure-cli", "azure-client-secret"}, s.Authentication) {
+			if p.CredentialsFile != "" || p.DeclaredAuthMode != s.Authentication {
 				return nil, ErrPlan
 			}
 		} else if s.Authentication == "secret-store" {

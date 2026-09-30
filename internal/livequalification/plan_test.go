@@ -42,3 +42,48 @@ func TestPlanOfflineAndSanitized(t *testing.T) {
 		}
 	}
 }
+
+func TestLocalAuthenticationPlansMustMatchSelection(t *testing.T) {
+	dir := installedTemplates(t)
+	for _, tc := range []struct{ file, mode, wrong string }{
+		{"gcp-secret-manager-plan.json", "google-adc", "external-account"},
+		{"azure-key-vault-plan.json", "azure-cli", "managed-identity"},
+		{"azure-key-vault-plan.json", "azure-client-secret", "azure-cli"},
+	} {
+		raw, _ := os.ReadFile(filepath.Join(dir, tc.file))
+		var p Plan
+		json.Unmarshal(raw, &p)
+		data, _ := os.ReadFile(p.CredentialsFile)
+		var cfg credentials.Config
+		json.Unmarshal(data, &cfg)
+		cfg.Profiles[0].Authentication = tc.mode
+		data, _ = json.Marshal(cfg)
+		os.WriteFile(p.CredentialsFile, data, 0600)
+		p.DeclaredAuthMode = tc.mode
+		if _, err := Prepare(p); err != nil {
+			t.Fatal(tc.mode, err)
+		}
+		p.DeclaredAuthMode = tc.wrong
+		if _, err := Prepare(p); err == nil {
+			t.Fatal("mismatched store auth accepted")
+		}
+	}
+	for _, tc := range []struct{ provider, codec, mode string }{
+		{"vertex-gemini", "gemini-text-tools-v1", "google-adc"},
+		{"azure-openai", "openai-chat-text-tools-v1", "azure-cli"},
+		{"azure-openai", "openai-responses-text-tools-v1", "azure-client-secret"},
+	} {
+		q, _, _ := providerFixture(t, tc.codec, tc.provider, tc.mode)
+		p := q.plan
+		p.DeclaredAuthMode = tc.mode
+		p.ModelProfileFile = filepath.Join(t.TempDir(), "model.json")
+		os.WriteFile(p.ModelProfileFile, q.profile.JSON(), 0600)
+		if _, err := Prepare(p); err != nil {
+			t.Fatal(tc.mode, err)
+		}
+		p.DeclaredAuthMode = "workload-identity"
+		if _, err := Prepare(p); err == nil {
+			t.Fatal("mismatched provider auth accepted")
+		}
+	}
+}

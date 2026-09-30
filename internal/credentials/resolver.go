@@ -107,6 +107,9 @@ func Validate(config Config) error {
 		if profile.AWSProfile != "" && (profile.BackendKind != "aws-secrets-manager" || !ValidAWSProfile(profile.AWSProfile)) {
 			return errors.New("invalid AWS named profile selection")
 		}
+		if !ValidStoreAuthentication(profile.BackendKind, profile.Authentication) {
+			return errors.New("invalid secret-store authentication selection")
+		}
 		if profile.BackendKind == "aws-secrets-manager" && profile.Region == "" {
 			return fmt.Errorf("AWS profile %q requires region", profile.ID)
 		}

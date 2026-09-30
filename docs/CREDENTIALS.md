@@ -42,8 +42,8 @@ Profiles MUST choose one of:
 | Backend | Profile configuration | Locator | Authentication |
 | --- | --- | --- | --- |
 | `aws-secrets-manager` | `region` | matching `region`, `secret_id`; optional `version_id` or `version_stage` | SDK web identity, container/instance role, or explicitly selected `aws_profile`; static environment keys are rejected. Shared files are enabled only for an explicit named profile. |
-| `azure-key-vault` | HTTPS `vault_url` | matching `vault_url`, `secret_name`, optional `version` | Workload identity or managed identity. |
-| `gcp-secret-manager` | No extra route field | `project`, `secret_name`, `version` | Metadata identity or ADC external-account workload federation; user/service-account-key ADC is rejected. |
+| `azure-key-vault` | HTTPS `vault_url` | matching `vault_url`, `secret_name`, optional `version` | Workload/managed identity (default), explicit `azure-cli`, or explicit `azure-client-secret`. |
+| `gcp-secret-manager` | No extra route field | `project`, `secret_name`, `version` | Metadata identity or ADC external-account federation (default); explicit `google-adc` also permits local user, service-account-key and impersonated ADC. |
 | `hashicorp-vault` | HTTPS `vault_url`; optional `vault_namespace`, `vault_ca_certificate`; exactly one of `vault_token_file` or `vault_proxy: true` | `mount`, safe `path`, optional positive integer `version` | Configured Agent token sink or authenticating Proxy. |
 
 Vault token sinks MUST be bounded private regular files and MUST be reread for
@@ -120,3 +120,41 @@ and any credential-process configuration are trusted host configuration. No logi
 or browser interaction is automatic; the administrator renews SSO with `aws sso
 login --profile NAME` when needed. AWS profile names MUST stay out of guest inputs,
 audit records and reports. Profile selectors on non-AWS stores MUST be rejected.
+
+
+## Google and Azure identity selection
+
+Google and Azure store profiles MAY set `authentication`. Omitted or
+`workload-identity` MUST preserve workload/managed identity behavior. Other backends
+MUST reject this field; AWS retains its separate `aws_profile` selector.
+
+- Google `google-adc` MUST use the SDK's Application Default Credentials (ADC)
+  discovery, including `GOOGLE_APPLICATION_CREDENTIALS`, local gcloud ADC, and
+  attached identities. It MUST allow SDK-supported user, service-account,
+  impersonated and federated credentials. The workload-only mode MUST continue
+  rejecting local user and service-account-key ADC. Invalid selected ADC MUST fail
+  rather than falling back to another mechanism.
+- Azure `azure-cli` MUST use `AzureCLICredential` and the administrator's existing
+  CLI login. It MUST NOT start interactive login or fall back to managed identity.
+- Azure `azure-client-secret` MUST use `ClientSecretCredential` with host-only
+  `AZURE_TENANT_ID`, `AZURE_CLIENT_ID` and `AZURE_CLIENT_SECRET`. Missing or invalid
+  configuration MUST fail without falling back to CLI or workload identity.
+- Google quota attribution MUST use `GOOGLE_CLOUD_QUOTA_PROJECT` when set, otherwise
+  ADC `quota_project_id`. Invalid header values MUST be rejected. This metadata
+  MUST remain host-private. Secret reads MUST create context-bound Google clients
+  under the current read deadline and close them after each uncached read; a
+  canceled initialization context MUST NOT poison later reads or token refresh.
+
+These identity selectors MUST also serve the host model adapters. Secret-store
+identity and model authentication MUST be independently selectable: an API key for
+one cloud MAY be retrieved from another supported store. Model keys MUST remain
+secret-store values, referenced by `credential_id`, never literal profile fields.
+Store access itself MUST use the selected cloud identity or Vault Agent/Proxy;
+a model API key MUST NOT be treated as a secret-store login.
+
+SDK credential files, CLI caches, executable lookup paths and host environment are
+administrator-controlled bootstrap inputs. They MUST be available to the actual
+Operator process account. Workers started through the service manager do not
+inherit terminal credentials; administrators MUST provision its account/environment
+separately. Credentials MUST NOT be copied into start records or generated service
+files. Local login renewal remains an explicit administrator action.

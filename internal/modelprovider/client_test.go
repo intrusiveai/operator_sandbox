@@ -128,7 +128,7 @@ func TestEveryHTTPProviderPreservesNativeBytesAndHostAuth(t *testing.T) {
 			transport := client.http.Transport.(*http.Transport)
 			transport.TLSClientConfig = server.Client().Transport.(*http.Transport).TLSClientConfig.Clone()
 			if provider == "vertex-gemini" {
-				client.bearer = func(context.Context) (string, error) { return "synthetic-test-key", nil }
+				client.googleBearer = func(context.Context) (string, string, error) { return "synthetic-test-key", "", nil }
 			}
 			raw := nativeRequest(p.settings.Codec)
 			out, err := client.Generate(context.Background(), raw)

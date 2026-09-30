@@ -86,7 +86,7 @@ type azureBackend struct {
 }
 
 func newAzureBackend(_ context.Context, profile SecretStoreProfile) (Backend, error) {
-	credential, err := AzureWorkloadIdentity()
+	credential, err := AzureIdentity(profile.Authentication)
 	if err != nil {
 		return nil, err
 	}
@@ -121,22 +121,43 @@ func (b *azureBackend) Read(ctx context.Context, _ SecretStoreProfile, locator L
 type gcpSecretsClient interface {
 	AccessSecretVersion(context.Context, *secretmanagerpb.AccessSecretVersionRequest, ...gax.CallOption) (*secretmanagerpb.AccessSecretVersionResponse, error)
 }
-type gcpBackend struct{ client gcpSecretsClient }
+type gcpBackend struct {
+	client         gcpSecretsClient // Injected client for deterministic backend tests.
+	authentication string
+}
 
-func newGCPBackend(ctx context.Context, _ SecretStoreProfile) (Backend, error) {
-	identity, err := GoogleWorkloadIdentity(ctx)
+func newGCPBackend(ctx context.Context, profile SecretStoreProfile) (Backend, error) {
+	if ctx.Err() != nil || !ValidStoreAuthentication("gcp-secret-manager", profile.Authentication) {
+		return nil, errors.New("Google credential configuration unavailable")
+	}
+	return &gcpBackend{authentication: profile.Authentication}, nil
+}
+
+// OAuth token sources bind the supplied context. Create the client under the
+// current read deadline, not the resolver's already-finished setup context.
+func googleSecretClient(ctx context.Context, authentication string) (*secretmanager.Client, error) {
+	identity, err := GoogleIdentity(ctx, authentication)
 	if err != nil {
 		return nil, err
 	}
-	client, err := secretmanager.NewClient(ctx, option.WithCredentials(identity))
+	quota, err := GoogleQuotaProject(identity)
 	if err != nil {
 		return nil, err
 	}
-	return &gcpBackend{client: client}, nil
+	return secretmanager.NewClient(ctx, option.WithCredentials(identity), option.WithQuotaProject(quota))
 }
 func (b *gcpBackend) Read(ctx context.Context, _ SecretStoreProfile, locator Locator) ([]byte, string, error) {
+	client := b.client
+	if client == nil {
+		live, err := googleSecretClient(ctx, b.authentication)
+		if err != nil {
+			return nil, "", err
+		}
+		defer live.Close()
+		client = live
+	}
 	name := fmt.Sprintf("projects/%s/secrets/%s/versions/%s", locator.Project, locator.SecretName, locator.Version)
-	response, err := b.client.AccessSecretVersion(ctx, &secretmanagerpb.AccessSecretVersionRequest{Name: name})
+	response, err := client.AccessSecretVersion(ctx, &secretmanagerpb.AccessSecretVersionRequest{Name: name})
 	if err != nil {
 		return nil, "", err
 	}
@@ -286,16 +307,26 @@ func AzureWorkloadIdentity() (azcore.TokenCredential, error) {
 }
 
 func GoogleWorkloadIdentity(ctx context.Context) (*google.Credentials, error) {
+	return GoogleIdentity(ctx, "workload-identity")
+}
+
+// GoogleIdentity keeps workload-only admission separate from explicitly selected
+// ADC, which also permits local user, service-account and impersonated credentials.
+func GoogleIdentity(ctx context.Context, authentication string) (*google.Credentials, error) {
+	invalid := errors.New("Google credential configuration unavailable")
+	if ctx.Err() != nil || !ValidStoreAuthentication("gcp-secret-manager", authentication) {
+		return nil, invalid
+	}
 	identity, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/cloud-platform")
 	if err != nil {
-		return nil, err
+		return nil, invalid
 	}
-	if len(identity.JSON) > 0 {
+	if authentication != "google-adc" && len(identity.JSON) > 0 {
 		var kind struct {
 			Type string `json:"type"`
 		}
 		if json.Unmarshal(identity.JSON, &kind) != nil || kind.Type != "external_account" {
-			return nil, errors.New("Google secret store requires workload identity")
+			return nil, invalid
 		}
 	}
 	return identity, nil

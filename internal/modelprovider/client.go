@@ -29,11 +29,12 @@ type Resolver interface {
 	Resolve(context.Context, string) (credentials.Resolution, error)
 }
 type Client struct {
-	profile  Settings
-	resolver Resolver
-	http     *http.Client
-	sign     func(context.Context, *http.Request, []byte) error
-	bearer   func(context.Context) (string, error)
+	profile      Settings
+	resolver     Resolver
+	http         *http.Client
+	sign         func(context.Context, *http.Request, []byte) error
+	bearer       func(context.Context) (string, error)
+	googleBearer func(context.Context) (token, quota string, err error)
 }
 
 func New(ctx context.Context, profile *Profile, resolver Resolver) (*Client, error) {
@@ -60,10 +61,10 @@ func New(ctx context.Context, profile *Profile, resolver Resolver) (*Client, err
 		c.profile.Endpoint = destination.String()
 		c.sign = awsSign(cfg.Credentials, s.Region)
 
-	} else if s.Authentication == "workload-identity" {
+	} else if s.Authentication != "secret-store" {
 		switch s.Provider {
 		case "azure-openai":
-			identity, err := credentials.AzureWorkloadIdentity()
+			identity, err := credentials.AzureIdentity(s.Authentication)
 			if err != nil {
 				return nil, ErrProfile
 			}
@@ -72,16 +73,20 @@ func New(ctx context.Context, profile *Profile, resolver Resolver) (*Client, err
 				return token.Token, err
 			}
 		case "vertex-gemini":
-			c.bearer = func(ctx context.Context) (string, error) {
-				identity, err := credentials.GoogleWorkloadIdentity(ctx)
+			c.googleBearer = func(ctx context.Context) (string, string, error) {
+				identity, err := credentials.GoogleIdentity(ctx, s.Authentication)
 				if err != nil {
-					return "", err
+					return "", "", err
+				}
+				quota, err := credentials.GoogleQuotaProject(identity)
+				if err != nil {
+					return "", "", err
 				}
 				token, err := identity.TokenSource.Token()
 				if err != nil {
-					return "", err
+					return "", "", err
 				}
-				return token.AccessToken, nil
+				return token.AccessToken, quota, nil
 			}
 		default:
 			return nil, ErrProfile
@@ -118,7 +123,7 @@ func (c *Client) Generate(ctx context.Context, raw []byte) ([]byte, error) {
 	defer cancel()
 
 	header, prefix := "Authorization", "Bearer "
-	var token string
+	var token, quota string
 	if c.profile.Authentication == "secret-store" {
 		resolved, err := c.resolver.Resolve(ctx, c.profile.CredentialID)
 		if err != nil {
@@ -128,10 +133,15 @@ func (c *Client) Generate(ctx context.Context, raw []byte) ([]byte, error) {
 		switch c.profile.Provider {
 		case "anthropic-messages":
 			header, prefix = "X-Api-Key", ""
-		case "gemini-api":
+		case "gemini-api", "vertex-gemini":
 			header, prefix = "X-Goog-Api-Key", ""
 		case "azure-openai":
 			header, prefix = "Api-Key", ""
+		}
+	} else if c.googleBearer != nil {
+		token, quota, err = c.googleBearer(ctx)
+		if err != nil {
+			return nil, ErrProvider
 		}
 	} else if c.sign == nil {
 		token, err = c.bearer(ctx)
@@ -158,6 +168,9 @@ func (c *Client) Generate(ctx context.Context, raw []byte) ([]byte, error) {
 		}
 	} else {
 		req.Header.Set(header, prefix+token)
+	}
+	if quota != "" {
+		req.Header.Set("X-Goog-User-Project", quota)
 	}
 	if c.profile.Provider == "anthropic-messages" {
 		req.Header.Set("Anthropic-Version", c.profile.APIVersionHeader)

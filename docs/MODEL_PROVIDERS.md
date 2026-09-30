@@ -64,8 +64,8 @@ constructing this projection does not authorize a campaign.
 | `openai-responses` | `openai-responses-text-tools-v1` | Secret-store bearer key |
 | `anthropic-messages` | `anthropic-messages-text-tools-v1` | Secret-store `X-Api-Key`; explicit `anthropic_version` date |
 | `gemini-api` | `gemini-text-tools-v1` | Secret-store `X-Goog-Api-Key` |
-| `vertex-gemini` | `gemini-text-tools-v1` | Google workload identity |
-| `azure-openai` | Chat or Responses codec | Secret-store `Api-Key` or Azure workload identity |
+| `vertex-gemini` | `gemini-text-tools-v1` | Secret-store `X-Goog-Api-Key`, Google workload identity, or explicit `google-adc` |
+| `azure-openai` | Chat or Responses codec | Secret-store `Api-Key`, Azure workload identity, `azure-cli`, or `azure-client-secret` |
 | `litellm` | Chat or Responses codec | Secret-store bearer key |
 | `bedrock-converse` | `bedrock-converse-text-tools-v1` | AWS workload identity or explicit named profile, and `region` |
 
@@ -113,3 +113,27 @@ regional endpoint resolver and SigV4 signing, with no endpoint override or retry
 The [live Nova Lite named-profile probe](qualification/aws-2026-09-28/README.md)
 passed the three native exchanges with contract `0.0.1`; this is scoped evidence,
 not qualification of every Bedrock model or identity mode.
+
+
+## Google and Azure authentication
+
+`vertex-gemini` MUST accept `authentication:"secret-store"` with a
+`credential_id`, and MUST send the resolved key only in `X-Goog-Api-Key`.
+`azure-openai` MUST support the same configuration with `Api-Key` for both Chat
+and Responses. API keys MUST NOT enter URLs, native request bodies or public
+model projections. The selected endpoint MUST match the key's service/resource;
+Vertex standard and express-mode endpoints MAY be explicitly configured.
+
+Vertex MAY select `google-adc`; Azure MAY select `azure-cli` or
+`azure-client-secret`. These modes MUST reject `credential_id`, MUST retain
+`workload-identity` support, and MUST use the shared
+[identity selection rules](CREDENTIALS.md#google-and-azure-identity-selection).
+Provider-incompatible modes MUST fail local validation. The private profile digest
+MUST bind the selector. Identity requests MUST use bearer tokens; Vertex MUST add
+`X-Goog-User-Project` when its ADC/environment selects a quota project. API-key
+requests MUST NOT attach that ADC quota header or resolve an ambient identity.
+
+Google token acquisition MUST use the current generation context, including after
+a previous request has ended. Azure token requests MUST use the
+`https://cognitiveservices.azure.com/.default` scope. Failure MUST remain sanitized
+and MUST NOT retry the model request or switch authentication modes.
