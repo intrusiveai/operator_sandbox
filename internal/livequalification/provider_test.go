@@ -89,12 +89,14 @@ func providerFixture(t *testing.T, codec, provider, auth string) (*Prepared, []b
 	return q, jsonBytes(textResult), jsonBytes(toolResult)
 }
 func TestEveryProviderRouteConversation(t *testing.T) {
-	routes := [][3]string{{"bedrock-converse-text-tools-v1", "bedrock-converse", "aws-profile"}, {"openai-chat-text-tools-v1", "openai-chat", "secret-store"}, {"openai-responses-text-tools-v1", "openai-responses", "secret-store"}, {"anthropic-messages-text-tools-v1", "anthropic-messages", "secret-store"}, {"bedrock-converse-text-tools-v1", "bedrock-converse", "workload-identity"}, {"gemini-text-tools-v1", "gemini-api", "secret-store"}, {"gemini-text-tools-v1", "vertex-gemini", "workload-identity"}}
+	routes := [][3]string{{"gemini-text-tools-v1", "vertex-gemini", "secret-store"}, {"gemini-text-tools-v1", "vertex-gemini", "google-adc"}, {"bedrock-converse-text-tools-v1", "bedrock-converse", "aws-profile"}, {"openai-chat-text-tools-v1", "openai-chat", "secret-store"}, {"openai-responses-text-tools-v1", "openai-responses", "secret-store"}, {"anthropic-messages-text-tools-v1", "anthropic-messages", "secret-store"}, {"bedrock-converse-text-tools-v1", "bedrock-converse", "workload-identity"}, {"gemini-text-tools-v1", "gemini-api", "secret-store"}, {"gemini-text-tools-v1", "vertex-gemini", "workload-identity"}}
 	for _, provider := range []string{"azure-openai", "litellm"} {
 		for _, codec := range []string{"openai-chat-text-tools-v1", "openai-responses-text-tools-v1"} {
 			routes = append(routes, [3]string{codec, provider, "secret-store"})
 			if provider == "azure-openai" {
-				routes = append(routes, [3]string{codec, provider, "workload-identity"})
+				for _, auth := range []string{"workload-identity", "azure-cli", "azure-client-secret"} {
+					routes = append(routes, [3]string{codec, provider, auth})
+				}
 			}
 		}
 	}

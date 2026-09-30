@@ -63,8 +63,8 @@ Authentication labels accepted for secret probes:
 | Store | `declared_auth_mode` |
 |---|---|
 | AWS Secrets Manager | `web-identity`, `container-role`, `instance-role`, `named-profile` |
-| Azure Key Vault | `workload-identity`, `managed-identity` |
-| Google Secret Manager | `external-account`, `metadata-identity` |
+| Azure Key Vault | `workload-identity`, `managed-identity`, `azure-cli`, `azure-client-secret` |
+| Google Secret Manager | `external-account`, `metadata-identity`, `google-adc` |
 | Vault | `token-sink`, `proxy` |
 
 Read [credential configuration](CREDENTIALS.md) for the existing private profile
@@ -127,3 +127,18 @@ profile; Secrets Manager requires `aws_profile` in its store profile. These fiel
 MUST agree with the declared mode. Bedrock named-profile plans MUST omit
 `credentials_file` because they do not use a model API key. Qualification evidence
 records the mode and digest, never the local profile name.
+
+## Explicit local identity qualification
+
+Provider profiles selecting `google-adc`, `azure-cli` or `azure-client-secret`
+MUST use exactly that `declared_auth_mode` and omit `credentials_file`. Google and
+Azure secret-store plans MUST match their store's explicit local authentication
+selector. Workload selectors MUST reject local-mode labels, and local selectors
+MUST reject workload labels. The `google-adc` label denotes the selected discovery
+mechanism; it does not prove whether ADC resolved a user, service account or
+federated identity. Actual identity attribution requires separate evidence.
+
+Vertex API-key plans MUST use `secret-store`, a private model `credential_id`,
+and a matching `credentials_file`, just like Azure API-key plans. Store selection
+MUST be independent of model provider. Setup documentation MUST identify separate
+inference and secret-read permissions; see [cloud authentication setup](CLOUD_AUTHENTICATION.md).

@@ -93,9 +93,11 @@ install an automatically loaded login job. The installed `launchctl(1)` and
 
 Both managers MUST receive only `_worker --state-root ... --request-id ...
 --request-digest ...`. Arbitrary commands, shell strings, submitted environment
-variables and credentials MUST NOT be forwarded. Provider workload identity
+variables and credentials MUST NOT be forwarded. Provider and secret-store
+authentication (workload identities, local login caches and bootstrap environment)
 MUST be configured for the service account/manager independently of a terminal's
-environment. Worker diagnostics MUST remain bounded and omit raw provider errors.
+environment; see [cloud authentication setup](CLOUD_AUTHENTICATION.md). Worker
+diagnostics MUST remain bounded and omit raw provider errors.
 SIGINT, SIGTERM and SIGHUP MUST cancel the worker into terminal cleanup.
 
 Each manager command MUST have a bounded 15-second submission context. A failed

@@ -114,7 +114,6 @@ The [live Nova Lite named-profile probe](qualification/aws-2026-09-28/README.md)
 passed the three native exchanges with contract `0.0.1`; this is scoped evidence,
 not qualification of every Bedrock model or identity mode.
 
-
 ## Google and Azure authentication
 
 `vertex-gemini` MUST accept `authentication:"secret-store"` with a
@@ -137,3 +136,6 @@ Google token acquisition MUST use the current generation context, including afte
 a previous request has ended. Azure token requests MUST use the
 `https://cognitiveservices.azure.com/.default` scope. Failure MUST remain sanitized
 and MUST NOT retry the model request or switch authentication modes.
+
+Administrator login, model access, API-key restrictions and all four secret-store
+read permissions are specified in [cloud authentication setup](CLOUD_AUTHENTICATION.md).

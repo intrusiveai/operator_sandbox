@@ -104,6 +104,16 @@ initial failure and successful evidence with exact source/package identities.
 Other service/authentication combinations, fault/renewal cases and native container
 qualification remain outstanding.
 
+### Local Google/Azure authentication
+
+Vertex API keys and explicit Google ADC are implemented alongside workload identity.
+Azure OpenAI retains API keys for Chat/Responses and now supports explicit Azure
+CLI and service-principal client-secret credentials. Google Secret Manager and
+Azure Key Vault share the corresponding local identity selectors. Quota attribution,
+private profile binding and matching qualification labels are implemented.
+[Setup and permissions](CLOUD_AUTHENTICATION.md) cover model access and all four
+secret stores. Live Google/Azure combinations remain unqualified until explicitly run.
+
 ## Remaining external qualification and publication
 
 - Exercise every advertised provider route and all four secret stores with live

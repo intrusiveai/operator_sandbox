@@ -36,8 +36,8 @@ func installedTemplates(t *testing.T) string {
 func TestEveryDistributedPlanValidatesOffline(t *testing.T) {
 	dir := installedTemplates(t)
 	plans, _ := filepath.Glob(filepath.Join(dir, "*-plan.json"))
-	if len(plans) != 18 {
-		t.Fatalf("expected 13 provider and 5 secret plans, got %d", len(plans))
+	if len(plans) != 27 {
+		t.Fatalf("expected 19 provider and 8 secret plans, got %d", len(plans))
 	}
 	for _, plan := range plans {
 		t.Run(filepath.Base(plan), func(t *testing.T) {

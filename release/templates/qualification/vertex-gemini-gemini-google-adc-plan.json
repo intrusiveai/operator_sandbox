@@ -1,0 +1,10 @@
+{
+  "api_version": "operator.dev/live-qualification/v1alpha1",
+  "case_id": "vertex-gemini-gemini-google-adc",
+  "kind": "provider",
+  "declared_auth_mode": "google-adc",
+  "model_profile_file": "/REPLACE/private/vertex-gemini-gemini-google-adc-model.json",
+  "timeout_seconds": 120,
+  "maximum_model_calls": 3,
+  "maximum_output_tokens": 1024
+}

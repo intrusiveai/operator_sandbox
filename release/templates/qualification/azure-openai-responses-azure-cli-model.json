@@ -1,0 +1,18 @@
+{
+  "api_version": "operator.dev/model-provider-profile/v1alpha1",
+  "id": "azure-openai-responses-azure-cli",
+  "provider": "azure-openai",
+  "codec_id": "openai-responses-text-tools-v1",
+  "model": "REPLACE-model",
+  "authentication": "azure-cli",
+  "maximum_prompt_tokens": 32768,
+  "maximum_completion_tokens": 4096,
+  "maximum_response_bytes": 1048576,
+  "codec_options": {
+    "reasoning": null,
+    "response_models": [
+      "REPLACE-model"
+    ]
+  },
+  "endpoint": "https://REPLACE.example/responses"
+}

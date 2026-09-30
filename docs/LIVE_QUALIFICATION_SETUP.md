@@ -36,7 +36,7 @@ thinking budget. Never run a loop that automatically retries failed probes.
 
 Installed releases contain `templates/qualification/`; source checkouts contain
 [release/templates/qualification](../release/templates/qualification).
-The templates include all four stores and thirteen provider/codec/authentication
+The templates include all four stores and nineteen provider/codec/authentication
 combinations. They are deliberately populated with `REPLACE` placeholders.
 
 ```sh
@@ -84,14 +84,14 @@ supported credential source for these probes:
   `web-identity` to match the runner. The runtime platform supplies metadata/container
   credentials; federated runners supply their configured role and web-identity token
   file. Consult [AWS credential providers](https://docs.aws.amazon.com/sdkref/latest/guide/standardized-credentials.html).
-- **Azure:** workload identity is attempted when configured, otherwise managed
-  identity. A managed-identity VM is a simple first setup; workload identity needs
-  the configured tenant/client and federated token file. Declare the actual runner
-  mode. See [Azure Identity](https://learn.microsoft.com/en-us/azure/developer/go/sdk/authentication/authentication-overview).
-- **Google:** use metadata identity or an ADC `external_account` federation
-  configuration, typically selected through `GOOGLE_APPLICATION_CREDENTIALS`.
-  User ADC and service-account-key JSON are rejected. See
-  [Workload Identity Federation](https://docs.cloud.google.com/iam/docs/workload-identity-federation).
+- **Azure:** use workload/managed identity, or explicitly select `azure-cli` after
+  `az login`, or `azure-client-secret` with host tenant/client/secret variables.
+  Both Azure OpenAI and Key Vault support these identity modes. Model API keys use
+  the separate `secret-store` mode. See [permissions and setup](CLOUD_AUTHENTICATION.md).
+- **Google:** use metadata/federated workload identity, or explicitly select
+  `google-adc` for local user, impersonated or service-account ADC. Vertex also
+  accepts model API keys through `secret-store`. See
+  [permissions and setup](CLOUD_AUTHENTICATION.md).
 - **Vault:** the example uses `vault_proxy:true`. For an Agent token sink, remove
   that field and set `vault_token_file` to a private absolute path; change the plan
   to `declared_auth_mode:"token-sink"`. An administrator-installed CA can be selected
@@ -132,16 +132,17 @@ Use the complete HTTPS operation URL supplied for your actual service/deployment
 | `openai-responses-responses-secret-store` | `/responses`; selected model and bearer-key secret |
 | `anthropic-messages-anthropic-secret-store` | `/messages`; selected model, explicit API version and API-key secret |
 | `gemini-api-gemini-secret-store` | Exact `/models/<model>:generateContent` endpoint and API-key secret |
-| `vertex-gemini-gemini-workload-identity` | Full project/location/model HTTPS endpoint and Google workload identity |
+| `vertex-gemini-gemini-*` | Full HTTPS model endpoint; workload identity, `google-adc`, or API key from a secret store |
 | `bedrock-named-profile` | Enabled model ID, region, `authentication:"aws-profile"`, explicit `aws_profile`; renew SSO before running |
 | `bedrock-converse-bedrock-workload-identity` | Enabled model ID, AWS region and workload identity; no endpoint override |
 | `azure-openai-chat-*` / `azure-openai-responses-*` | Actual deployment operation URL; optional `api-version` query; API-key secret or Azure identity with model inference access |
 | `litellm-chat-secret-store` / `litellm-responses-secret-store` | HTTPS proxy operation URL, proxy model alias and bearer-key secret |
 
-For each Azure codec, both secret-store and workload-identity plans are included.
-LiteLLM Chat and Responses are distinct qualification routes. Vertex, Bedrock and
-Azure workload plans omit `credentials_file`; the runner's identity authenticates
-directly. Model access is separate from secret-store read access.
+For each Azure codec, secret-store, workload-identity, azure-cli and
+azure-client-secret plans are included.
+LiteLLM Chat and Responses are distinct qualification routes. All direct-identity
+plans (workload or local) omit `credentials_file`; the runner's selected identity
+authenticates directly. Model access is separate from secret-store read access.
 
 Set `codec_options.response_models` to exact permitted response aliases; do not
 weaken validation to accept arbitrary names. Bedrock has no response alias list:
@@ -195,3 +196,18 @@ The provider client has deterministic TLS tests for those failure behaviors. Rea
 service fault and identity-renewal evidence must be collected on suitable test
 infrastructure before those rows can be marked qualified. There is no all-provider
 live pass claim in this tooling stage.
+
+### Local Google/Azure template selection
+
+The installed templates include `vertex-gemini-gemini-google-adc-*`,
+`vertex-gemini-gemini-secret-store-*`, `azure-openai-{chat,responses}-azure-cli-*`
+and `azure-openai-{chat,responses}-azure-client-secret-*` model/plan pairs.
+Secret-store pairs include `gcp-secret-manager-google-adc-*`,
+`azure-key-vault-azure-cli-*` and `azure-key-vault-azure-client-secret-*`.
+
+Administrators MUST replace all placeholders, select an existing model/deployment
+and permitted response-model IDs, and supply private files before live opt-in.
+A key-based plan's `model-key-credentials.json` is a template, not a requirement to
+use Vault: replace it with a configuration for any supported store, preserving
+`qualification-model-key`. [Cloud authentication setup](CLOUD_AUTHENTICATION.md)
+includes an AWS-store/Vertex-key example and local Google/Azure login instructions.

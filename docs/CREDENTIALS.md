@@ -95,7 +95,7 @@ inventories MUST continue to use the existing visibility and redaction rules.
 
 Secret-store resolution occurs during model requests, after the campaign writer is
 available. Offline configuration validation MUST NOT resolve credentials. Provider
-routes using workload identity directly retain their existing provider-operation
+routes using cloud identities directly retain their existing provider-operation
 records; they MUST NOT fabricate secret-store resolution events. Live cloud and
 Vault qualification remain external acceptance gates.
 
@@ -120,7 +120,6 @@ and any credential-process configuration are trusted host configuration. No logi
 or browser interaction is automatic; the administrator renews SSO with `aws sso
 login --profile NAME` when needed. AWS profile names MUST stay out of guest inputs,
 audit records and reports. Profile selectors on non-AWS stores MUST be rejected.
-
 
 ## Google and Azure identity selection
 
@@ -158,3 +157,6 @@ Operator process account. Workers started through the service manager do not
 inherit terminal credentials; administrators MUST provision its account/environment
 separately. Credentials MUST NOT be copied into start records or generated service
 files. Local login renewal remains an explicit administrator action.
+
+Administrator login, model access, API-key restrictions and all four secret-store
+read permissions are specified in [cloud authentication setup](CLOUD_AUTHENTICATION.md).

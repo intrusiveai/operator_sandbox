@@ -1,5 +1,17 @@
 # Live-qualification tooling validation
 
+**Local authentication expansion (2026-09-30):** explicit Google ADC, Vertex API
+keys, Azure CLI and Azure service-principal modes have deterministic coverage.
+The expanded template set contains 27 plans: 19 provider routes and 8 secret-store
+plans. Validation passed on macOS ARM64: `go test ./...`, `go vet ./...`, and
+focused race tests for `internal/credentials`, `internal/modelprovider` and
+`internal/livequalification`. Synthetic OAuth/CLI/TLS tests cover user and
+service-account ADC, quota headers, Azure CLI scopes, explicit identity selection,
+Vertex/Azure API-key headers, cancellation and private projections. All 19
+provider conversations and 27 distributed plans pass offline checks. No live
+Google/Azure calls or secret mutations were performed. The original tooling-only
+tables below remain historical.
+
 **Subsequent live result:** the selected AWS named-profile Bedrock conversation and
 Secrets Manager read/cache probes passed after a shared Bedrock schema correction.
 See the [AWS qualification record](qualification/aws-2026-09-28/README.md).
