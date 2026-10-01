@@ -74,8 +74,13 @@ def check_correlation(request,response):
     check_request(request);check_response(response);counts=metrics(response)
     require(not counts['known'] or counts['output_tokens']<=request['max_output_tokens'])
     require(request['tool_choice']!='none' or not counts['tool_calls'])
-    for key in ('instructions','max_output_tokens','tools','tool_choice'):
+    for key in ('instructions','max_output_tokens','tool_choice'):
         if response.get(key) is not None:require(equal(response[key],request[key]))
+    if 'tools' in response:
+        # Ignore only the response-only null default; retain the native objects.
+        echo=[{k:v for k,v in tool.items() if k!='output_schema' or v is not None}
+              for tool in response['tools']]
+        require(equal(echo,request['tools']))
     if isinstance(request['reasoning'],dict) and isinstance(response.get('reasoning'),dict):
         for key,value in request['reasoning'].items():
             if value is not None:require(equal(value,response['reasoning'].get(key)))

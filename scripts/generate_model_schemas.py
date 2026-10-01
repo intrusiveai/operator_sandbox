@@ -184,7 +184,8 @@ def gemini_documents(name,model):
     detail=array(obj(dict(modality={'const':'TEXT'},tokenCount=integer())),0,1)
     usage=obj(dict(promptTokenCount=integer(),candidatesTokenCount=integer(),thoughtsTokenCount=integer(),totalTokenCount=integer(),
         cachedContentTokenCount=integer(),toolUsePromptTokenCount={'const':0},promptTokensDetails=detail,cacheTokensDetails=detail,
-        candidatesTokensDetails=detail,toolUsePromptTokensDetails=dict(type='array',maxItems=0),serviceTier=text(128)),['promptTokenCount','totalTokenCount'])
+        candidatesTokensDetails=detail,toolUsePromptTokensDetails=dict(type='array',maxItems=0),serviceTier=text(128),
+        trafficType={'enum':['TRAFFIC_TYPE_UNSPECIFIED','ON_DEMAND','PROVISIONED_THROUGHPUT','ON_DEMAND_PRIORITY','ON_DEMAND_FLEX']}),['promptTokenCount','totalTokenCount'])
     finish=['STOP','MAX_TOKENS','SAFETY','RECITATION','LANGUAGE','OTHER','BLOCKLIST','PROHIBITED_CONTENT','SPII',
         'MALFORMED_FUNCTION_CALL','IMAGE_SAFETY','IMAGE_PROHIBITED_CONTENT','IMAGE_OTHER','NO_IMAGE','IMAGE_RECITATION',
         'UNEXPECTED_TOOL_CALL','TOO_MANY_TOOL_CALLS','MISSING_THOUGHT_SIGNATURE','MALFORMED_RESPONSE','ESCALATION','PUP_LIMITED_DISABLED']
@@ -225,6 +226,12 @@ def responses_documents(name,model):
     result=obj(dict(type={'const':'function_call_output'},call_id=opaque,output=text(),caller=direct),['type','call_id','output'])
     tool=obj(dict(type={'const':'function'},name=name,parameters={'type':'object'},strict={'const':False},description=nullable(text(8192))),['type','name','parameters','strict'])
     tools=array(r('tool'),0,128)
+    echoed_tool=obj(dict(tool['properties'],output_schema={'type':'null'}),tool['required'])
+    zero={'type':'integer','const':0}
+    tool_usage=obj(dict(image_gen=obj(dict(input_tokens=zero,output_tokens=zero,total_tokens=zero,
+        input_tokens_details=obj(dict(image_tokens=zero,text_tokens=zero)),
+        output_tokens_details=obj(dict(image_tokens=zero,text_tokens=zero)))),
+        web_search=obj(dict(num_requests=zero))),[])
     reasoning=obj(dict(effort=nullable({'enum':['none','minimal','low','medium','high','xhigh','max']}),
         summary=nullable({'enum':['auto','concise','detailed']}),context=nullable({'enum':['auto','current_turn','all_turns']}),
         mode=nullable({'enum':['standard','pro']})),[])
@@ -241,11 +248,13 @@ def responses_documents(name,model):
         completed_at=nullable({'type':'number','minimum':0,'maximum':MAX}),model=model,status={'enum':['completed','incomplete','failed','cancelled']},
         output=array(output_item,0,1024),usage=nullable(r('usage')),error=nullable(obj(dict(code=text(128,1),message=text()))),
         incomplete_details=nullable(obj(dict(reason=nullable({'enum':['max_output_tokens','max_messages','content_filter','steered']})),[])),
-        instructions=nullable(text(131072)),tools=tools,tool_choice={'enum':['auto','none','required']},parallel_tool_calls={'const':True},
+        instructions=nullable(text(131072)),tools=array(r('echoed_tool'),0,128),tool_choice={'enum':['auto','none','required']},parallel_tool_calls={'const':True},
         max_output_tokens=nullable(integer(1)),store={'const':False},background=nullable({'const':False}),previous_response_id={'type':'null'},
         conversation={'type':'null'},prompt={'type':'null'},max_tool_calls={'type':'null'},moderation={'type':'null'},
         metadata=nullable(obj({})),reasoning=nullable(r('reasoning')),text=nullable(r('text_config')),truncation=nullable({'const':'disabled'}),
         temperature=nullable({'type':'number','minimum':0,'maximum':2}),top_p=nullable({'type':'number','minimum':0,'maximum':1}),
+        frequency_penalty={'type':'number','const':0},presence_penalty={'type':'number','const':0},
+        billing=obj(dict(payer=text(128,1))),tool_usage=tool_usage,
         top_logprobs=nullable({'const':0}),service_tier=nullable(text(128)),user=nullable(text(256)),safety_identifier=nullable(text(256)),
         prompt_cache_key=nullable(text(512)),prompt_cache_retention=nullable({'enum':['in_memory','24h']}),
         prompt_cache_options=nullable(obj(dict(mode={'const':'implicit'},ttl={'const':'30m'},comparison_response_id={'type':'null'}),['mode','ttl'])),
@@ -255,7 +264,7 @@ def responses_documents(name,model):
     policy=obj(dict(binding,request_model=model,response_models=dict(array(model,1,32),uniqueItems=True),prompt=text(131072),
         max_output_tokens=integer(1),reasoning=nullable(r('reasoning')),tools=tools))
     return {'openai-responses-common':{'$defs':dict(call=call,text=txt,refusal=refusal,message=message,reasoning_item=reasoning_item,user=user,result=result,
-        tool=tool,reasoning=reasoning,text_config=text_config,usage=usage,settings=settings)},
+        tool=tool,echoed_tool=echoed_tool,reasoning=reasoning,text_config=text_config,usage=usage,settings=settings)},
         'openai-responses-request':request,'openai-responses-response':response},policy
 
 

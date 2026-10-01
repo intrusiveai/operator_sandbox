@@ -342,6 +342,15 @@
           "type": "string",
           "minLength": 0,
           "maxLength": 128
+        },
+        "trafficType": {
+          "enum": [
+            "TRAFFIC_TYPE_UNSPECIFIED",
+            "ON_DEMAND",
+            "PROVISIONED_THROUGHPUT",
+            "ON_DEMAND_PRIORITY",
+            "ON_DEMAND_FLEX"
+          ]
         }
       },
       "required": [

@@ -393,6 +393,51 @@
         "strict"
       ]
     },
+    "echoed_tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "function"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        "parameters": {
+          "type": "object"
+        },
+        "strict": {
+          "const": false
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 8192
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "output_schema": {
+          "type": "null"
+        }
+      },
+      "required": [
+        "type",
+        "name",
+        "parameters",
+        "strict"
+      ]
+    },
     "reasoning": {
       "type": "object",
       "additionalProperties": false,

@@ -66,7 +66,12 @@ include `candidatesTokenCount + thoughtsTokenCount`. These optional protobuf
 counts MAY be omitted only as zero; their sum with input MUST equal the supplied
 `totalTokenCount`. The output sum MUST fit the request cap. Present text modality
 breakdowns MUST match their totals. Hosted-tool usage MUST be absent or zero.
-All totals MUST fit the shared safe integer range.
+All totals MUST fit the shared safe integer range. Optional
+`usageMetadata.trafficType` MUST be one of `TRAFFIC_TYPE_UNSPECIFIED`, `ON_DEMAND`,
+`PROVISIONED_THROUGHPUT`, `ON_DEMAND_PRIORITY` or `ON_DEMAND_FLEX`, as defined by
+[Vertex UsageMetadata](https://docs.cloud.google.com/php/docs/reference/cloud-ai-platform/latest/V1.GenerateContentResponse.UsageMetadata.TrafficType).
+It MUST remain metadata and MUST NOT change token accounting. Null, numeric and
+unknown traffic types MUST fail.
 
 Missing/null whole usage MUST remain unknown, retain reservations and terminate
 exploration. Prompt blocking and safety/recitation outcomes MUST yield `filtered`;

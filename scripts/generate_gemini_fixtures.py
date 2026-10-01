@@ -36,6 +36,11 @@ def case(name,mutate=lambda p,q,r:None,valid=True,disposition='text',base=None,m
 
 
 case('native text including thinking tokens',counts=metrics())
+for traffic in ('TRAFFIC_TYPE_UNSPECIFIED','ON_DEMAND','PROVISIONED_THROUGHPUT','ON_DEMAND_PRIORITY','ON_DEMAND_FLEX'):
+    case('traffic metadata '+traffic,lambda p,q,r,traffic=traffic:r['response']['usageMetadata'].update(trafficType=traffic),counts=metrics())
+for traffic in ('unknown',None,1):
+    case('invalid traffic metadata '+str(traffic),lambda p,q,r,traffic=traffic:r['response']['usageMetadata'].update(trafficType=traffic),False)
+
 case('multiple same-name tools without IDs',base=with_calls([call(),call()]),disposition='tool-calls',counts=metrics(count=2))
 case('explicit IDs',base=with_calls([call(identifier='c1'),call(identifier='c2')]),disposition='tool-calls')
 case('tool suppression',lambda p,q,r:q['request']['toolConfig']['functionCallingConfig'].update(mode='NONE'))

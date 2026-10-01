@@ -39,6 +39,30 @@ def case(name,mutate=lambda p,q,r:None,valid=True,disposition='text',base=None,m
 
 
 case('native text with usage details',counts=metrics())
+# Synthetic shapes from live qualification; no captured prompts or response values.
+def live_metadata(p,q,r):
+    v=r['response']
+    v.update(frequency_penalty=0,presence_penalty=0,billing=dict(payer='developer'),
+        tool_usage=dict(image_gen=dict(input_tokens=0,output_tokens=0,total_tokens=0,
+            input_tokens_details=dict(image_tokens=0,text_tokens=0),
+            output_tokens_details=dict(image_tokens=0,text_tokens=0)),web_search=dict(num_requests=0)))
+    for tool in v['tools']:tool['output_schema']=None
+
+live=case('provider default echo metadata',live_metadata,counts=metrics())
+case('provider defaults on tool call',live_metadata,base=with_calls(),disposition='tool-calls',counts=metrics(count=1))
+for name,mutate in [
+    ('nonnull output schema',lambda p,q,r:r['response']['tools'][0].update(output_schema={})),
+    ('changed name with null output schema',lambda p,q,r:r['response']['tools'][0].update(name='changed')),
+    ('changed parameters with null output schema',lambda p,q,r:r['response']['tools'][0].update(parameters={})),
+    ('nonnull sampling penalty',lambda p,q,r:r['response'].update(frequency_penalty=0.5)),
+    ('hosted tool usage',lambda p,q,r:r['response']['tool_usage']['web_search'].update(num_requests=1)),
+    ('hosted image usage',lambda p,q,r:r['response']['tool_usage']['image_gen'].update(output_tokens=1)),
+    ('boolean tool counter',lambda p,q,r:r['response']['tool_usage']['web_search'].update(num_requests=False)),
+    ('unknown tool usage',lambda p,q,r:r['response']['tool_usage'].update(shell={})),
+    ('unbounded payer',lambda p,q,r:r['response']['billing'].update(payer='x'*129)),
+]:case(name,mutate,False,base=live['result'])
+case('output schema in request',lambda p,q,r:q['request']['tools'][0].update(output_schema=None),False)
+
 case('parallel call batch',base=with_calls([call(),call('call-2')]),disposition='tool-calls',counts=metrics(count=2))
 case('missing whole usage',lambda p,q,r:r['response'].pop('usage'),disposition='usage-unknown',counts=metrics(False))
 case('null whole usage',lambda p,q,r:r['response'].update(usage=None),disposition='usage-unknown',counts=metrics(False))

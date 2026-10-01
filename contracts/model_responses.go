@@ -166,8 +166,25 @@ func responsesCorrelationOK(request, response map[string]any) bool {
 	if request["tool_choice"] == "none" && m.ToolCalls > 0 {
 		return false
 	}
-	for _, key := range []string{"instructions", "max_output_tokens", "tools", "tool_choice"} {
+	for _, key := range []string{"instructions", "max_output_tokens", "tool_choice"} {
 		if value, ok := response[key]; ok && value != nil && !modelToolsEqual(value, request[key]) {
+			return false
+		}
+	}
+	if tools, ok := response["tools"].([]any); ok {
+		// A null output_schema is a provider-added echo default, not a changed
+		// declaration. Compare copies so retained native response bytes stay intact.
+		echo := make([]any, len(tools))
+		for i, value := range tools {
+			tool := map[string]any{}
+			for key, field := range value.(map[string]any) {
+				if key != "output_schema" || field != nil {
+					tool[key] = field
+				}
+			}
+			echo[i] = tool
+		}
+		if !modelToolsEqual(echo, request["tools"]) {
 			return false
 		}
 	}

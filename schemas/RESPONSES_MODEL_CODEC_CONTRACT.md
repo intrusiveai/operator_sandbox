@@ -58,7 +58,18 @@ Refusals and actionable calls MUST NOT coexist in one response. Returned IDs
 MUST NOT reuse history IDs; suppressed-tool requests MUST NOT return calls.
 Supplied prompt, tool catalog, choice and output-ceiling echoes MUST match the
 request. Explicit reasoning settings echoed by the provider MUST match as well;
-additional supported resolved defaults MAY be retained.
+additional supported resolved defaults MAY be retained. Echoed function declarations
+MAY add `output_schema: null`; comparison MUST ignore only that null field, using
+copies without changing retained native response bytes. Requests MUST NOT add it;
+nonnull output schemas or any changed declaration MUST fail.
+
+Response-only `frequency_penalty` and `presence_penalty` MUST be zero when present.
+Optional `billing` MUST contain only a bounded nonempty `payer` string and MUST NOT
+change usage accounting or authentication. Optional `tool_usage` MAY contain only
+the closed image-generation token counters/details and web-search request counter;
+every counter MUST be integer zero. Nonzero hosted-tool usage and unknown fields
+MUST fail. These metadata shapes reflect the 2026-09-30 live qualification capture;
+they do not enable hosted tools or new request controls.
 
 Input/output token totals MUST use native `input_tokens` and `output_tokens`;
 their sum MUST equal `total_tokens`. Cache-read/write detail counts MUST each fit

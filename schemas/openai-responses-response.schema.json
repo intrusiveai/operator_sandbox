@@ -144,7 +144,7 @@
     "tools": {
       "type": "array",
       "items": {
-        "$ref": "urn:operator:schema:openai-responses-common:v1alpha1#/$defs/tool"
+        "$ref": "urn:operator:schema:openai-responses-common:v1alpha1#/$defs/echoed_tool"
       },
       "minItems": 0,
       "maxItems": 128
@@ -265,6 +265,109 @@
           "type": "null"
         }
       ]
+    },
+    "frequency_penalty": {
+      "type": "number",
+      "const": 0
+    },
+    "presence_penalty": {
+      "type": "number",
+      "const": 0
+    },
+    "billing": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "payer": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      },
+      "required": [
+        "payer"
+      ]
+    },
+    "tool_usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "image_gen": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "input_tokens": {
+              "type": "integer",
+              "const": 0
+            },
+            "output_tokens": {
+              "type": "integer",
+              "const": 0
+            },
+            "total_tokens": {
+              "type": "integer",
+              "const": 0
+            },
+            "input_tokens_details": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "image_tokens": {
+                  "type": "integer",
+                  "const": 0
+                },
+                "text_tokens": {
+                  "type": "integer",
+                  "const": 0
+                }
+              },
+              "required": [
+                "image_tokens",
+                "text_tokens"
+              ]
+            },
+            "output_tokens_details": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "image_tokens": {
+                  "type": "integer",
+                  "const": 0
+                },
+                "text_tokens": {
+                  "type": "integer",
+                  "const": 0
+                }
+              },
+              "required": [
+                "image_tokens",
+                "text_tokens"
+              ]
+            }
+          },
+          "required": [
+            "input_tokens",
+            "output_tokens",
+            "total_tokens",
+            "input_tokens_details",
+            "output_tokens_details"
+          ]
+        },
+        "web_search": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "num_requests": {
+              "type": "integer",
+              "const": 0
+            }
+          },
+          "required": [
+            "num_requests"
+          ]
+        }
+      },
+      "required": []
     },
     "top_logprobs": {
       "anyOf": [

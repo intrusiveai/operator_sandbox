@@ -127,6 +127,1003 @@
     }
   },
   {
+    "name": "gemini: traffic metadata TRAFFIC_TYPE_UNSPECIFIED",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-gemini",
+      "response_models": [
+        "fixture-gemini-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "thinking_config": {
+        "thinkingBudget": -1,
+        "includeThoughts": true
+      },
+      "tools": [
+        {
+          "functionDeclarations": [
+            {
+              "name": "snapshot_list",
+              "description": "List snapshots.",
+              "parametersJsonSchema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "systemInstruction": {
+          "parts": [
+            {
+              "text": "Frozen instructions."
+            }
+          ]
+        },
+        "contents": [
+          {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Inspect the target."
+              }
+            ]
+          }
+        ],
+        "generationConfig": {
+          "maxOutputTokens": 2048,
+          "candidateCount": 1,
+          "thinkingConfig": {
+            "thinkingBudget": -1,
+            "includeThoughts": true
+          }
+        },
+        "tools": [
+          {
+            "functionDeclarations": [
+              {
+                "name": "snapshot_list",
+                "description": "List snapshots.",
+                "parametersJsonSchema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            ]
+          }
+        ],
+        "toolConfig": {
+          "functionCallingConfig": {
+            "mode": "AUTO"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "candidates": [
+          {
+            "index": 0,
+            "content": {
+              "role": "model",
+              "parts": [
+                {
+                  "text": "Ready."
+                }
+              ]
+            },
+            "finishReason": "STOP"
+          }
+        ],
+        "modelVersion": "fixture-gemini-001",
+        "responseId": "native-1",
+        "usageMetadata": {
+          "promptTokenCount": 100,
+          "candidatesTokenCount": 20,
+          "thoughtsTokenCount": 40,
+          "totalTokenCount": 160,
+          "cachedContentTokenCount": 30,
+          "trafficType": "TRAFFIC_TYPE_UNSPECIFIED"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "text",
+    "output_limit": 2048,
+    "metrics": {
+      "known": true,
+      "input_tokens": 100,
+      "output_tokens": 60,
+      "total_tokens": 160,
+      "tool_calls": 0
+    }
+  },
+  {
+    "name": "gemini: traffic metadata ON_DEMAND",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-gemini",
+      "response_models": [
+        "fixture-gemini-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "thinking_config": {
+        "thinkingBudget": -1,
+        "includeThoughts": true
+      },
+      "tools": [
+        {
+          "functionDeclarations": [
+            {
+              "name": "snapshot_list",
+              "description": "List snapshots.",
+              "parametersJsonSchema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "systemInstruction": {
+          "parts": [
+            {
+              "text": "Frozen instructions."
+            }
+          ]
+        },
+        "contents": [
+          {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Inspect the target."
+              }
+            ]
+          }
+        ],
+        "generationConfig": {
+          "maxOutputTokens": 2048,
+          "candidateCount": 1,
+          "thinkingConfig": {
+            "thinkingBudget": -1,
+            "includeThoughts": true
+          }
+        },
+        "tools": [
+          {
+            "functionDeclarations": [
+              {
+                "name": "snapshot_list",
+                "description": "List snapshots.",
+                "parametersJsonSchema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            ]
+          }
+        ],
+        "toolConfig": {
+          "functionCallingConfig": {
+            "mode": "AUTO"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "candidates": [
+          {
+            "index": 0,
+            "content": {
+              "role": "model",
+              "parts": [
+                {
+                  "text": "Ready."
+                }
+              ]
+            },
+            "finishReason": "STOP"
+          }
+        ],
+        "modelVersion": "fixture-gemini-001",
+        "responseId": "native-1",
+        "usageMetadata": {
+          "promptTokenCount": 100,
+          "candidatesTokenCount": 20,
+          "thoughtsTokenCount": 40,
+          "totalTokenCount": 160,
+          "cachedContentTokenCount": 30,
+          "trafficType": "ON_DEMAND"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "text",
+    "output_limit": 2048,
+    "metrics": {
+      "known": true,
+      "input_tokens": 100,
+      "output_tokens": 60,
+      "total_tokens": 160,
+      "tool_calls": 0
+    }
+  },
+  {
+    "name": "gemini: traffic metadata PROVISIONED_THROUGHPUT",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-gemini",
+      "response_models": [
+        "fixture-gemini-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "thinking_config": {
+        "thinkingBudget": -1,
+        "includeThoughts": true
+      },
+      "tools": [
+        {
+          "functionDeclarations": [
+            {
+              "name": "snapshot_list",
+              "description": "List snapshots.",
+              "parametersJsonSchema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "systemInstruction": {
+          "parts": [
+            {
+              "text": "Frozen instructions."
+            }
+          ]
+        },
+        "contents": [
+          {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Inspect the target."
+              }
+            ]
+          }
+        ],
+        "generationConfig": {
+          "maxOutputTokens": 2048,
+          "candidateCount": 1,
+          "thinkingConfig": {
+            "thinkingBudget": -1,
+            "includeThoughts": true
+          }
+        },
+        "tools": [
+          {
+            "functionDeclarations": [
+              {
+                "name": "snapshot_list",
+                "description": "List snapshots.",
+                "parametersJsonSchema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            ]
+          }
+        ],
+        "toolConfig": {
+          "functionCallingConfig": {
+            "mode": "AUTO"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "candidates": [
+          {
+            "index": 0,
+            "content": {
+              "role": "model",
+              "parts": [
+                {
+                  "text": "Ready."
+                }
+              ]
+            },
+            "finishReason": "STOP"
+          }
+        ],
+        "modelVersion": "fixture-gemini-001",
+        "responseId": "native-1",
+        "usageMetadata": {
+          "promptTokenCount": 100,
+          "candidatesTokenCount": 20,
+          "thoughtsTokenCount": 40,
+          "totalTokenCount": 160,
+          "cachedContentTokenCount": 30,
+          "trafficType": "PROVISIONED_THROUGHPUT"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "text",
+    "output_limit": 2048,
+    "metrics": {
+      "known": true,
+      "input_tokens": 100,
+      "output_tokens": 60,
+      "total_tokens": 160,
+      "tool_calls": 0
+    }
+  },
+  {
+    "name": "gemini: traffic metadata ON_DEMAND_PRIORITY",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-gemini",
+      "response_models": [
+        "fixture-gemini-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "thinking_config": {
+        "thinkingBudget": -1,
+        "includeThoughts": true
+      },
+      "tools": [
+        {
+          "functionDeclarations": [
+            {
+              "name": "snapshot_list",
+              "description": "List snapshots.",
+              "parametersJsonSchema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "systemInstruction": {
+          "parts": [
+            {
+              "text": "Frozen instructions."
+            }
+          ]
+        },
+        "contents": [
+          {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Inspect the target."
+              }
+            ]
+          }
+        ],
+        "generationConfig": {
+          "maxOutputTokens": 2048,
+          "candidateCount": 1,
+          "thinkingConfig": {
+            "thinkingBudget": -1,
+            "includeThoughts": true
+          }
+        },
+        "tools": [
+          {
+            "functionDeclarations": [
+              {
+                "name": "snapshot_list",
+                "description": "List snapshots.",
+                "parametersJsonSchema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            ]
+          }
+        ],
+        "toolConfig": {
+          "functionCallingConfig": {
+            "mode": "AUTO"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "candidates": [
+          {
+            "index": 0,
+            "content": {
+              "role": "model",
+              "parts": [
+                {
+                  "text": "Ready."
+                }
+              ]
+            },
+            "finishReason": "STOP"
+          }
+        ],
+        "modelVersion": "fixture-gemini-001",
+        "responseId": "native-1",
+        "usageMetadata": {
+          "promptTokenCount": 100,
+          "candidatesTokenCount": 20,
+          "thoughtsTokenCount": 40,
+          "totalTokenCount": 160,
+          "cachedContentTokenCount": 30,
+          "trafficType": "ON_DEMAND_PRIORITY"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "text",
+    "output_limit": 2048,
+    "metrics": {
+      "known": true,
+      "input_tokens": 100,
+      "output_tokens": 60,
+      "total_tokens": 160,
+      "tool_calls": 0
+    }
+  },
+  {
+    "name": "gemini: traffic metadata ON_DEMAND_FLEX",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-gemini",
+      "response_models": [
+        "fixture-gemini-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "thinking_config": {
+        "thinkingBudget": -1,
+        "includeThoughts": true
+      },
+      "tools": [
+        {
+          "functionDeclarations": [
+            {
+              "name": "snapshot_list",
+              "description": "List snapshots.",
+              "parametersJsonSchema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "systemInstruction": {
+          "parts": [
+            {
+              "text": "Frozen instructions."
+            }
+          ]
+        },
+        "contents": [
+          {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Inspect the target."
+              }
+            ]
+          }
+        ],
+        "generationConfig": {
+          "maxOutputTokens": 2048,
+          "candidateCount": 1,
+          "thinkingConfig": {
+            "thinkingBudget": -1,
+            "includeThoughts": true
+          }
+        },
+        "tools": [
+          {
+            "functionDeclarations": [
+              {
+                "name": "snapshot_list",
+                "description": "List snapshots.",
+                "parametersJsonSchema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            ]
+          }
+        ],
+        "toolConfig": {
+          "functionCallingConfig": {
+            "mode": "AUTO"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "candidates": [
+          {
+            "index": 0,
+            "content": {
+              "role": "model",
+              "parts": [
+                {
+                  "text": "Ready."
+                }
+              ]
+            },
+            "finishReason": "STOP"
+          }
+        ],
+        "modelVersion": "fixture-gemini-001",
+        "responseId": "native-1",
+        "usageMetadata": {
+          "promptTokenCount": 100,
+          "candidatesTokenCount": 20,
+          "thoughtsTokenCount": 40,
+          "totalTokenCount": 160,
+          "cachedContentTokenCount": 30,
+          "trafficType": "ON_DEMAND_FLEX"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "text",
+    "output_limit": 2048,
+    "metrics": {
+      "known": true,
+      "input_tokens": 100,
+      "output_tokens": 60,
+      "total_tokens": 160,
+      "tool_calls": 0
+    }
+  },
+  {
+    "name": "gemini: invalid traffic metadata unknown",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-gemini",
+      "response_models": [
+        "fixture-gemini-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "thinking_config": {
+        "thinkingBudget": -1,
+        "includeThoughts": true
+      },
+      "tools": [
+        {
+          "functionDeclarations": [
+            {
+              "name": "snapshot_list",
+              "description": "List snapshots.",
+              "parametersJsonSchema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "systemInstruction": {
+          "parts": [
+            {
+              "text": "Frozen instructions."
+            }
+          ]
+        },
+        "contents": [
+          {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Inspect the target."
+              }
+            ]
+          }
+        ],
+        "generationConfig": {
+          "maxOutputTokens": 2048,
+          "candidateCount": 1,
+          "thinkingConfig": {
+            "thinkingBudget": -1,
+            "includeThoughts": true
+          }
+        },
+        "tools": [
+          {
+            "functionDeclarations": [
+              {
+                "name": "snapshot_list",
+                "description": "List snapshots.",
+                "parametersJsonSchema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            ]
+          }
+        ],
+        "toolConfig": {
+          "functionCallingConfig": {
+            "mode": "AUTO"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "candidates": [
+          {
+            "index": 0,
+            "content": {
+              "role": "model",
+              "parts": [
+                {
+                  "text": "Ready."
+                }
+              ]
+            },
+            "finishReason": "STOP"
+          }
+        ],
+        "modelVersion": "fixture-gemini-001",
+        "responseId": "native-1",
+        "usageMetadata": {
+          "promptTokenCount": 100,
+          "candidatesTokenCount": 20,
+          "thoughtsTokenCount": 40,
+          "totalTokenCount": 160,
+          "cachedContentTokenCount": 30,
+          "trafficType": "unknown"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "gemini: invalid traffic metadata None",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-gemini",
+      "response_models": [
+        "fixture-gemini-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "thinking_config": {
+        "thinkingBudget": -1,
+        "includeThoughts": true
+      },
+      "tools": [
+        {
+          "functionDeclarations": [
+            {
+              "name": "snapshot_list",
+              "description": "List snapshots.",
+              "parametersJsonSchema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "systemInstruction": {
+          "parts": [
+            {
+              "text": "Frozen instructions."
+            }
+          ]
+        },
+        "contents": [
+          {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Inspect the target."
+              }
+            ]
+          }
+        ],
+        "generationConfig": {
+          "maxOutputTokens": 2048,
+          "candidateCount": 1,
+          "thinkingConfig": {
+            "thinkingBudget": -1,
+            "includeThoughts": true
+          }
+        },
+        "tools": [
+          {
+            "functionDeclarations": [
+              {
+                "name": "snapshot_list",
+                "description": "List snapshots.",
+                "parametersJsonSchema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            ]
+          }
+        ],
+        "toolConfig": {
+          "functionCallingConfig": {
+            "mode": "AUTO"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "candidates": [
+          {
+            "index": 0,
+            "content": {
+              "role": "model",
+              "parts": [
+                {
+                  "text": "Ready."
+                }
+              ]
+            },
+            "finishReason": "STOP"
+          }
+        ],
+        "modelVersion": "fixture-gemini-001",
+        "responseId": "native-1",
+        "usageMetadata": {
+          "promptTokenCount": 100,
+          "candidatesTokenCount": 20,
+          "thoughtsTokenCount": 40,
+          "totalTokenCount": 160,
+          "cachedContentTokenCount": 30,
+          "trafficType": null
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "gemini: invalid traffic metadata 1",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-gemini",
+      "response_models": [
+        "fixture-gemini-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "thinking_config": {
+        "thinkingBudget": -1,
+        "includeThoughts": true
+      },
+      "tools": [
+        {
+          "functionDeclarations": [
+            {
+              "name": "snapshot_list",
+              "description": "List snapshots.",
+              "parametersJsonSchema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "systemInstruction": {
+          "parts": [
+            {
+              "text": "Frozen instructions."
+            }
+          ]
+        },
+        "contents": [
+          {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Inspect the target."
+              }
+            ]
+          }
+        ],
+        "generationConfig": {
+          "maxOutputTokens": 2048,
+          "candidateCount": 1,
+          "thinkingConfig": {
+            "thinkingBudget": -1,
+            "includeThoughts": true
+          }
+        },
+        "tools": [
+          {
+            "functionDeclarations": [
+              {
+                "name": "snapshot_list",
+                "description": "List snapshots.",
+                "parametersJsonSchema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              }
+            ]
+          }
+        ],
+        "toolConfig": {
+          "functionCallingConfig": {
+            "mode": "AUTO"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "gemini-text-tools-v1",
+      "profile_id": "fixture-gemini",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "candidates": [
+          {
+            "index": 0,
+            "content": {
+              "role": "model",
+              "parts": [
+                {
+                  "text": "Ready."
+                }
+              ]
+            },
+            "finishReason": "STOP"
+          }
+        ],
+        "modelVersion": "fixture-gemini-001",
+        "responseId": "native-1",
+        "usageMetadata": {
+          "promptTokenCount": 100,
+          "candidatesTokenCount": 20,
+          "thoughtsTokenCount": 40,
+          "totalTokenCount": 160,
+          "cachedContentTokenCount": 30,
+          "trafficType": 1
+        }
+      }
+    },
+    "valid": false
+  },
+  {
     "name": "gemini: multiple same-name tools without IDs",
     "mode": "bound",
     "policy": {
