@@ -37,7 +37,7 @@ def projection_digest(capabilities):
 
 
 def project(source, source_raw, target_id):
-    if source['api_version'] not in ['interceptor.dev/capability-manifest/v1alpha1', 'interceptor.dev/capability-manifest/v1alpha2']:
+    if source['api_version'] not in ['interceptor.dev/capability-manifest/v1alpha3']:
         raise ValueError('unsupported native capability version')
     if source.get('delivery_schema_profile') not in [None, 'interceptor.delivery-schema/v1']:
         raise ValueError('unsupported delivery profile')

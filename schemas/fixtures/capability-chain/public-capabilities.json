@@ -2,9 +2,9 @@
   "schema_version": "operator.dev/target-capability-manifest/v1alpha1",
   "source": {
     "adapter": "interceptor/v1",
-    "schema_version": "interceptor.dev/capability-manifest/v1alpha2",
-    "capability_source_digest": "sha256:3d623d0b9e6efeff7ee442f68c4439d5c4ec586f0864ac31c1a7d2bb7cd88511",
-    "raw_digest": "sha256:4e22ac4ac3f02629ec06879c19b62532fd14819a0c5ae31fd94c9d1fed426900"
+    "schema_version": "interceptor.dev/capability-manifest/v1alpha3",
+    "capability_source_digest": "sha256:d948076ee132b1f34d6ffb4e22059c664e1f1a985cf64ade37822a29fc0c4de1",
+    "raw_digest": "sha256:5ac52ab281acb27c9c42a16092abc31a018163f2bd2bce6d30e58beb99e3b1f3"
   },
   "capabilities": {
     "target_id": "delivery-example",

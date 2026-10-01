@@ -89,9 +89,17 @@ JSON-marshal the supported native Go representation with `Digest` set to the emp
 string (the field remains present), preserving its struct field order, map-key
 ordering, escaping, omission and null semantics. Hash those bytes. This is NOT
 JCS or a hash of the formatted export file. Keep the raw-file hash separately.
-The supported inputs are capability-manifest/v1alpha1 and /v1alpha2; delivery
-contracts require the v1alpha2 `interceptor.delivery-schema/v1` profile. Missing
-legacy delivery information remains an explicit limitation, not an inferred schema.
+The supported native input MUST be `interceptor.dev/capability-manifest/v1alpha3`.
+Delivery contracts MUST carry the `interceptor.delivery-schema/v1` profile;
+exports without delivery information MUST leave it absent and MUST NOT infer schemas.
+The native contract MUST exclude model-adapter catalogs, authentication methods
+and upstream provider configuration. Provider/authentication catalog changes
+MUST NOT contribute fields or values to the testing manifest or its digest;
+release and environment identity changes remain ordinary source provenance.
+Operator MUST validate target testing capabilities without a provider/authentication
+vocabulary.
+Administrators MUST update both components together and re-export capabilities
+and native companions for new submissions. Retained evidence MUST NOT be rewritten.
 
 | Native source | Public projection / rules |
 |---|---|

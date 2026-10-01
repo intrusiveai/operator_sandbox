@@ -135,10 +135,11 @@ func TestNativeRejections(t *testing.T) {
 			s := records(v["services"])[0]
 			s["endpoints"] = append(s["endpoints"].([]any), s["endpoints"].([]any)[0])
 		},
-		"unknown surface":   func(v map[string]any) { records(v["injection_profiles"])[0]["surface"] = "future" },
-		"unknown placement": func(v map[string]any) { records(v["injection_profiles"])[0]["placements"] = []string{"execute"} },
-		"unknown provider":  func(v map[string]any) { records(v["model_providers"])[0]["kind"] = "future" },
-		"unknown feedback":  func(v map[string]any) { v["feedback"].(map[string]any)["kinds"] = []string{"future"} },
+		"unknown surface":             func(v map[string]any) { records(v["injection_profiles"])[0]["surface"] = "future" },
+		"unknown placement":           func(v map[string]any) { records(v["injection_profiles"])[0]["placements"] = []string{"execute"} },
+		"unexpected provider catalog": func(v map[string]any) { v["model_providers"] = []any{} },
+		"obsolete version":            func(v map[string]any) { v["api_version"] = "interceptor.dev/capability-manifest/v1alpha2" },
+		"unknown feedback":            func(v map[string]any) { v["feedback"].(map[string]any)["kinds"] = []string{"future"} },
 		"invalid delivery": func(v map[string]any) {
 			records(v["operations"])[0]["delivery"].(map[string]any)["input"].(map[string]any)["schema"] = map[string]any{"$ref": "https://invalid.example/schema"}
 		},
@@ -188,10 +189,9 @@ func TestImportRejectsTampering(t *testing.T) {
 		t.Fatal("ignored companion raw hash")
 	}
 }
-func TestLegacyAndProjectionNormalization(t *testing.T) {
+func TestMissingDeliveryAndProjectionNormalization(t *testing.T) {
 	c := catalogForTest(t)
 	raw := nativeVariant(t, func(v map[string]any) {
-		v["api_version"] = "interceptor.dev/capability-manifest/v1alpha1"
 		delete(v, "delivery_schema_profile")
 		for _, op := range records(v["operations"]) {
 			delete(op, "delivery")

@@ -122,15 +122,11 @@ func uniqueIDs(values []string) bool {
 }
 
 func validNative(n *nativeManifest) bool {
-	if !allowed(n.APIVersion, "interceptor.dev/capability-manifest/v1alpha1", "interceptor.dev/capability-manifest/v1alpha2") || n.Kind != "CapabilityManifest" || !digestPattern.MatchString(n.EnvironmentDigest) || !digestPattern.MatchString(n.ApplicationDigest) {
+	if n.APIVersion != "interceptor.dev/capability-manifest/v1alpha3" || n.Kind != "CapabilityManifest" || !digestPattern.MatchString(n.EnvironmentDigest) || !digestPattern.MatchString(n.ApplicationDigest) {
 		return false
 	}
-	deliveryVersion := n.APIVersion == "interceptor.dev/capability-manifest/v1alpha2"
-	if deliveryVersion {
-		if n.DeliverySchemaProfile != nativedelivery.SchemaProfile {
-			return false
-		}
-	} else if n.DeliverySchemaProfile != "" {
+	deliveryVersion := n.DeliverySchemaProfile == nativedelivery.SchemaProfile
+	if n.DeliverySchemaProfile != "" && !deliveryVersion {
 		return false
 	}
 	if !allowed(n.Target.Interface, "http", "command", "stdio", "repl") || len(n.FeedbackProfiles) == 0 || !uniqueIDs(n.FeedbackProfiles) || !subset(n.FeedbackProfiles, "black-box", "diagnostic", "oracle-assisted") {
@@ -211,17 +207,10 @@ func validNative(n *nativeManifest) bool {
 	if !uniqueIDs(ids) {
 		return false
 	}
-	ids = nil
 	if !subset(n.Oracles, "attacker_sink_match", "output_contains", "model_output_contains", "tool_call_match", "service_state_match", "file_state_match", "event_match") {
 		return false
 	}
-	for _, provider := range n.ModelProviders {
-		ids = append(ids, provider.Kind)
-		if !allowed(provider.Kind, "openai-chat", "openai-responses", "bedrock-converse", "litellm", "anthropic-messages", "gemini-api", "vertex-gemini", "azure-openai") || !subset(provider.Codecs, "openai_chat_completions", "openai_responses", "aws_bedrock_converse", "anthropic_messages", "google_generate_content") || !subset(provider.AuthenticationModes, "none", "api-key", "api-key-env", "workload-token", "workload-identity", "aws-profile", "aws-environment", "azure-cli", "azure-client-secret", "google-adc") || provider.ModelSelection != "exact-host-allowlist" {
-			return false
-		}
-	}
-	if !uniqueIDs(ids) || !subset(n.Network.DNS.RecordTypes, "A") || !allowed(n.Network.DNS.UnknownPolicy, "", "nxdomain", "refused") || !allowed(n.Network.HTTPS.TrustMode, "", "auto", "bundle", "application-managed") || !allowed(n.Network.HTTPS.MinimumVersion, "", "TLS1.2") {
+	if !subset(n.Network.DNS.RecordTypes, "A") || !allowed(n.Network.DNS.UnknownPolicy, "", "nxdomain", "refused") || !allowed(n.Network.HTTPS.TrustMode, "", "auto", "bundle", "application-managed") || !allowed(n.Network.HTTPS.MinimumVersion, "", "TLS1.2") {
 		return false
 	}
 	return n.Limits.MaximumAttempts > 0 && n.Limits.MaximumArtifacts > 0 && n.Limits.MaximumArtifactBytes > 0 && n.Limits.MaximumInvocations > 0 && n.Limits.MaximumSnapshots >= 0

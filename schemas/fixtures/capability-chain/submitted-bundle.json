@@ -6,7 +6,7 @@
   },
   "target_requirements": {
     "target_id": "delivery-example",
-    "capability_source_digest": "sha256:3d623d0b9e6efeff7ee442f68c4439d5c4ec586f0864ac31c1a7d2bb7cd88511",
+    "capability_source_digest": "sha256:d948076ee132b1f34d6ffb4e22059c664e1f1a985cf64ade37822a29fc0c4de1",
     "required_capability_refs": [
       "operation:invoke"
     ]

@@ -573,6 +573,12 @@ fail explicitly. The host validates like-for-like requests; it never silently
 translates between provider families. No streaming, provider-hosted tools,
 arbitrary URLs, persistent provider state, HTTP shim or synthetic API keys.
 
+Operator MUST consume Interceptor's capability-manifest/v1alpha3 target testing
+contract as defined in [Capability export](schemas/CAPABILITY_EXPORT_CONTRACT.md).
+Model-adapter catalogs and upstream authentication configuration MUST remain
+outside that contract; Operator MUST NOT require a vocabulary of Interceptor's
+provider or authentication choices to admit a target.
+
 The [host provider profile](docs/MODEL_PROVIDERS.md) implements route selection.
 Bedrock MAY select `authentication:"aws-profile"` with a private `aws_profile`;
 AWS Secrets Manager MAY select `aws_profile` in its store configuration. These

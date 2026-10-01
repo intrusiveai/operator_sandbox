@@ -1,5 +1,5 @@
-// Native digest field order/omission rules from Interceptor capability.go at
-// 567e6e0546a8f797c1673f90ba749e907b3dc56f. Keep changes covered by native fixtures.
+// Native v1alpha3 digest field order/omission rules mirror Interceptor capability.go.
+// Keep changes covered by the captured native fixture and Go digest preimage.
 package capabilities
 
 import "github.com/intrusiveai/operator_sandbox/internal/nativedelivery"
@@ -29,7 +29,6 @@ type nativeManifest struct {
 	Services              []ServiceCapability       `json:"services"`
 	FileNamespaces        []FileNamespaceCapability `json:"file_namespaces,omitempty"`
 	Oracles               []string                  `json:"oracle_types"`
-	ModelProviders        []ModelProviderCapability `json:"model_providers"`
 	Network               NetworkCapability         `json:"network"`
 	SnapshotCapable       bool                      `json:"snapshot_capable"`
 	Limits                CapabilityLimits          `json:"limits"`
@@ -76,20 +75,6 @@ type FileNamespaceCapability struct {
 	AllowCreate  bool   `json:"allow_create"`
 	MaxFiles     int    `json:"max_files,omitempty"`
 	MaxFileBytes int64  `json:"max_file_bytes,omitempty"`
-}
-type ModelProviderCapability struct {
-	Kind                string   `json:"kind"`
-	Codecs              []string `json:"codecs"`
-	AuthenticationModes []string `json:"authentication_modes"`
-	ModelSelection      string   `json:"model_selection"`
-	Text                bool     `json:"text"`
-	ClientFunctions     bool     `json:"client_functions"`
-	StructuredOutput    bool     `json:"structured_output"`
-	Streaming           bool     `json:"streaming"`
-	Embeddings          bool     `json:"embeddings"`
-	Multimodal          bool     `json:"multimodal"`
-	ProviderHostedTools bool     `json:"provider_hosted_tools"`
-	ProviderStoredState bool     `json:"provider_stored_state"`
 }
 type NetworkCapability struct {
 	DNS   DNSCapability `json:"dns"`

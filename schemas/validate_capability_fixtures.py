@@ -151,6 +151,7 @@ for path in ROOT.glob('fixtures/scenario-bundle-*.json'):
     count += 1
 # No host routes or provider/authentication settings become public capability records.
 assert 'cross_vm_operations' not in public['capabilities']
+assert 'model_providers' not in native
 assert 'model_providers' not in public['capabilities']
 assert 'method' not in public['capabilities']['operations'][0]
 assert 'path' not in public['capabilities']['operations'][0]

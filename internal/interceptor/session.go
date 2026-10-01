@@ -78,7 +78,7 @@ func (c *Client) Attach(ctx context.Context, campaign, worker string, allowTarge
 	if err != nil {
 		return Attachment{}, invalidResponse()
 	}
-	for key, want := range map[string]string{"api_version": "interceptor.dev/capability-manifest/v1alpha2", "kind": "CapabilityManifest", "environment_digest": session.EnvironmentDigest, "application_digest": session.AppDigest, "digest": session.CapabilityManifestDigest} {
+	for key, want := range map[string]string{"api_version": "interceptor.dev/capability-manifest/v1alpha3", "kind": "CapabilityManifest", "environment_digest": session.EnvironmentDigest, "application_digest": session.AppDigest, "digest": session.CapabilityManifestDigest} {
 		var got string
 		if json.Unmarshal(caps[key], &got) != nil || got != want {
 			return Attachment{}, invalidResponse()
