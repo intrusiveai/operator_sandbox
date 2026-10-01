@@ -1,5 +1,10 @@
 # Setting up live qualification
 
+The [2026-09-30 local-cloud record](qualification/cloud-local-2026-09-30/README.md)
+covers AWS, Azure and Google secret stores plus five model routes, including the
+Responses/Vertex corrections in shared contract `0.0.2`. Its remaining-work list
+identifies the external resources still needed.
+
 The first AWS named-profile run is documented in the
 [live result record](qualification/aws-2026-09-28/README.md), including the Bedrock
 compatibility correction and remaining qualification limits.
@@ -71,9 +76,9 @@ cover the deliberately missing test secret with the `-missing` suffix.
 | Google Secret Manager | Project, secret name, enabled version and accessor identity | GCP VM with an attached service account and appropriate access scope, or a federated runner |
 | Vault | HTTPS KV-v2 endpoint, mount/path, read policy and Agent token sink or authenticating Proxy | Existing host with access to the Vault Agent/Proxy; can be the Mac |
 
-These adapters intentionally use the workload authentication described in
-[CREDENTIALS.md](CREDENTIALS.md). A successful cloud CLI login alone is **not** a
-supported credential source for these probes:
+Select an explicit authentication mode from [CREDENTIALS.md](CREDENTIALS.md).
+A CLI login is used only by its matching local mode; workload modes do not silently
+fall back to local credentials:
 
 - **AWS:** `aws-environment` explicitly accepts access-key/session environment values; workload/profile modes reject them; shared credential
   and config files are excluded in workload mode. An explicitly selected `aws_profile`

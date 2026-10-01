@@ -1,0 +1,28 @@
+{
+  "source_commit": "4f9806514e2df29a623f4e0a42469d2f25ca24e0",
+  "diagnostic_method": "one generation per route using production client and schema error locations; raw responses retained only in memory",
+  "maximum_output_tokens": 1024,
+  "routes": [
+    {
+      "route": "openai-responses",
+      "calls": 1,
+      "model": "gpt-4.1-mini-2025-04-14",
+      "unknown_fields": [
+        "tools/*/output_schema",
+        "presence_penalty",
+        "frequency_penalty",
+        "tool_usage",
+        "billing"
+      ]
+    },
+    {
+      "route": "vertex-gemini",
+      "calls": 1,
+      "model": "gemini-2.5-flash-lite",
+      "unknown_fields": [
+        "usageMetadata/trafficType"
+      ]
+    }
+  ],
+  "usage": "not retained as validated evidence"
+}

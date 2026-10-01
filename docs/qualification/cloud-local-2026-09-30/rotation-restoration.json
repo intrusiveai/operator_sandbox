@@ -1,0 +1,19 @@
+{
+  "method": "external administrator CLI coordinator; values compared in memory, never emitted",
+  "azure-key-vault": {
+    "rotation_probe_completed": true,
+    "original_value_restored_and_verified": true,
+    "versions_added": 2
+  },
+  "gcp-secret-manager": {
+    "rotation_probe_completed": true,
+    "original_value_restored_and_verified": true,
+    "versions_added": 2
+  },
+  "aws-secrets-manager": {
+    "remote_value_modified": false
+  },
+  "model_api_keys": {
+    "modified": false
+  }
+}
