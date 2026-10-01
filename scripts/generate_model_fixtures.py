@@ -45,6 +45,37 @@ def case(name, mutate=lambda p,q,r:None, valid=True, disposition='text', base=No
 
 
 case('native text and usage preserved')
+# Synthetic Azure metadata; never copied from live response content.
+def azure_metadata(p,q,r):
+    v=r['response']
+    v['prompt_filter_results']=[dict(prompt_index=0,content_filter_results=dict(jailbreak=dict(filtered=False,detected=False)))]
+    v['choices'][0]['content_filter_results']=dict(hate=dict(filtered=False,severity='safe'),protected_material_code=dict(filtered=False,detected=False))
+    v['routing']=dict(serving_pipereplica='fixture-replica')
+    v['usage']['latency_checkpoint']=dict(engine_tbt_ms=0.5,engine_ttft_ms=1,engine_ttlt_ms=2,pre_inference_ms=0,
+        service_tbt_ms=0.5,service_ttft_ms=1,service_ttlt_ms=2,user_visible_ttft_ms=1)
+
+azure=case('Azure safe annotations and bounded telemetry',azure_metadata)
+case('Azure safe tool response',azure_metadata,base=with_calls(),disposition='tool-calls')
+azure_calls=deepcopy(with_calls());azure_metadata(None,None,azure_calls)
+for location in ('prompt','completion'):
+    def filtered(p,q,r,location=location):
+        if location=='prompt':r['response']['prompt_filter_results'][0]['content_filter_results']['jailbreak']['filtered']=True
+        else:r['response']['choices'][0]['content_filter_results']['hate']['filtered']=True
+    case('Azure '+location+' filtering suppresses calls',filtered,base=azure_calls,disposition='filtered')
+    item=case('Azure '+location+' filtering rejects continuation',filtered,base=azure_calls,valid=False,mode='continuation')
+    item['tool_results']=[dict(tool_call_id='call-1',content='{}')]
+case('Azure detected but not filtered is advisory',lambda p,q,r:r['response']['prompt_filter_results'][0]['content_filter_results']['jailbreak'].update(detected=True),base=azure_calls,disposition='tool-calls')
+for label,mutate in [
+    ('unknown category',lambda p,q,r:r['response']['choices'][0]['content_filter_results'].update(unknown={})),
+    ('unknown severity',lambda p,q,r:r['response']['choices'][0]['content_filter_results']['hate'].update(severity='unknown')),
+    ('nonboolean filtering',lambda p,q,r:r['response']['choices'][0]['content_filter_results']['hate'].update(filtered=0)),
+    ('filter error',lambda p,q,r:r['response']['choices'][0]['content_filter_results'].update(error=dict(code='error',message='unavailable'))),
+    ('negative latency',lambda p,q,r:r['response']['usage']['latency_checkpoint'].update(engine_tbt_ms=-1)),
+    ('unknown latency',lambda p,q,r:r['response']['usage']['latency_checkpoint'].update(unknown=0)),
+    ('oversized replica',lambda p,q,r:r['response']['routing'].update(serving_pipereplica='x'*257)),
+    ('request annotation',lambda p,q,r:q['request'].update(prompt_filter_results=[])),
+]:case('Azure '+label,mutate,False,base=azure['result'])
+
 case('multiple native tools',base=with_calls([call(),call('call-2')]),disposition='tool-calls')
 case('system instruction role explicitly selected',lambda p,q,r:(p.update(instruction_role='system'),q['request']['messages'][0].update(role='system')))
 case('missing usage is explicit unknown',lambda p,q,r:r['response'].pop('usage'),disposition='usage-unknown')

@@ -114,6 +114,2295 @@
     "disposition": "text"
   },
   {
+    "name": "Azure safe annotations and bounded telemetry",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "instruction_role": "developer",
+      "prompt": "Frozen prompt. <Keep bytes> café\n",
+      "max_completion_tokens": 1024,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "snapshot_list",
+            "description": "List available snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "messages": [
+          {
+            "role": "developer",
+            "content": "Frozen prompt. <Keep bytes> café\n"
+          },
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_completion_tokens": 1024,
+        "stream": false,
+        "store": false,
+        "n": 1,
+        "parallel_tool_calls": true,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "snapshot_list",
+              "description": "List available snapshots.",
+              "parameters": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              },
+              "strict": false
+            }
+          }
+        ],
+        "tool_choice": "auto"
+      }
+    },
+    "result": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "model-receipt-1",
+      "response": {
+        "id": "chatcmpl-fixture",
+        "object": "chat.completion",
+        "created": 100,
+        "model": "fixture-model-2026",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "Ready.",
+              "refusal": null,
+              "annotations": []
+            },
+            "finish_reason": "stop",
+            "logprobs": null,
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "protected_material_code": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "total_tokens": 120,
+          "prompt_tokens_details": {
+            "cached_tokens": 10,
+            "audio_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 5,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          },
+          "latency_checkpoint": {
+            "engine_tbt_ms": 0.5,
+            "engine_ttft_ms": 1,
+            "engine_ttlt_ms": 2,
+            "pre_inference_ms": 0,
+            "service_tbt_ms": 0.5,
+            "service_ttft_ms": 1,
+            "service_ttlt_ms": 2,
+            "user_visible_ttft_ms": 1
+          }
+        },
+        "service_tier": "default",
+        "system_fingerprint": null,
+        "prompt_filter_results": [
+          {
+            "prompt_index": 0,
+            "content_filter_results": {
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "routing": {
+          "serving_pipereplica": "fixture-replica"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "text"
+  },
+  {
+    "name": "Azure safe tool response",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "instruction_role": "developer",
+      "prompt": "Frozen prompt. <Keep bytes> café\n",
+      "max_completion_tokens": 1024,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "snapshot_list",
+            "description": "List available snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "messages": [
+          {
+            "role": "developer",
+            "content": "Frozen prompt. <Keep bytes> café\n"
+          },
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_completion_tokens": 1024,
+        "stream": false,
+        "store": false,
+        "n": 1,
+        "parallel_tool_calls": true,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "snapshot_list",
+              "description": "List available snapshots.",
+              "parameters": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              },
+              "strict": false
+            }
+          }
+        ],
+        "tool_choice": "auto"
+      }
+    },
+    "result": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "model-receipt-1",
+      "response": {
+        "id": "chatcmpl-fixture",
+        "object": "chat.completion",
+        "created": 100,
+        "model": "fixture-model-2026",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": null,
+              "refusal": null,
+              "annotations": [],
+              "tool_calls": [
+                {
+                  "id": "call-1",
+                  "type": "function",
+                  "function": {
+                    "name": "snapshot_list",
+                    "arguments": "{}"
+                  }
+                }
+              ]
+            },
+            "finish_reason": "tool_calls",
+            "logprobs": null,
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "protected_material_code": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "total_tokens": 120,
+          "prompt_tokens_details": {
+            "cached_tokens": 10,
+            "audio_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 5,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          },
+          "latency_checkpoint": {
+            "engine_tbt_ms": 0.5,
+            "engine_ttft_ms": 1,
+            "engine_ttlt_ms": 2,
+            "pre_inference_ms": 0,
+            "service_tbt_ms": 0.5,
+            "service_ttft_ms": 1,
+            "service_ttlt_ms": 2,
+            "user_visible_ttft_ms": 1
+          }
+        },
+        "service_tier": "default",
+        "system_fingerprint": null,
+        "prompt_filter_results": [
+          {
+            "prompt_index": 0,
+            "content_filter_results": {
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "routing": {
+          "serving_pipereplica": "fixture-replica"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "tool-calls"
+  },
+  {
+    "name": "Azure prompt filtering suppresses calls",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "instruction_role": "developer",
+      "prompt": "Frozen prompt. <Keep bytes> café\n",
+      "max_completion_tokens": 1024,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "snapshot_list",
+            "description": "List available snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "messages": [
+          {
+            "role": "developer",
+            "content": "Frozen prompt. <Keep bytes> café\n"
+          },
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_completion_tokens": 1024,
+        "stream": false,
+        "store": false,
+        "n": 1,
+        "parallel_tool_calls": true,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "snapshot_list",
+              "description": "List available snapshots.",
+              "parameters": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              },
+              "strict": false
+            }
+          }
+        ],
+        "tool_choice": "auto"
+      }
+    },
+    "result": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "model-receipt-1",
+      "response": {
+        "id": "chatcmpl-fixture",
+        "object": "chat.completion",
+        "created": 100,
+        "model": "fixture-model-2026",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": null,
+              "refusal": null,
+              "annotations": [],
+              "tool_calls": [
+                {
+                  "id": "call-1",
+                  "type": "function",
+                  "function": {
+                    "name": "snapshot_list",
+                    "arguments": "{}"
+                  }
+                }
+              ]
+            },
+            "finish_reason": "tool_calls",
+            "logprobs": null,
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "protected_material_code": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "total_tokens": 120,
+          "prompt_tokens_details": {
+            "cached_tokens": 10,
+            "audio_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 5,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          },
+          "latency_checkpoint": {
+            "engine_tbt_ms": 0.5,
+            "engine_ttft_ms": 1,
+            "engine_ttlt_ms": 2,
+            "pre_inference_ms": 0,
+            "service_tbt_ms": 0.5,
+            "service_ttft_ms": 1,
+            "service_ttlt_ms": 2,
+            "user_visible_ttft_ms": 1
+          }
+        },
+        "service_tier": "default",
+        "system_fingerprint": null,
+        "prompt_filter_results": [
+          {
+            "prompt_index": 0,
+            "content_filter_results": {
+              "jailbreak": {
+                "filtered": true,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "routing": {
+          "serving_pipereplica": "fixture-replica"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "filtered"
+  },
+  {
+    "name": "Azure prompt filtering rejects continuation",
+    "mode": "continuation",
+    "policy": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "instruction_role": "developer",
+      "prompt": "Frozen prompt. <Keep bytes> café\n",
+      "max_completion_tokens": 1024,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "snapshot_list",
+            "description": "List available snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "messages": [
+          {
+            "role": "developer",
+            "content": "Frozen prompt. <Keep bytes> café\n"
+          },
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_completion_tokens": 1024,
+        "stream": false,
+        "store": false,
+        "n": 1,
+        "parallel_tool_calls": true,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "snapshot_list",
+              "description": "List available snapshots.",
+              "parameters": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              },
+              "strict": false
+            }
+          }
+        ],
+        "tool_choice": "auto"
+      }
+    },
+    "result": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "model-receipt-1",
+      "response": {
+        "id": "chatcmpl-fixture",
+        "object": "chat.completion",
+        "created": 100,
+        "model": "fixture-model-2026",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": null,
+              "refusal": null,
+              "annotations": [],
+              "tool_calls": [
+                {
+                  "id": "call-1",
+                  "type": "function",
+                  "function": {
+                    "name": "snapshot_list",
+                    "arguments": "{}"
+                  }
+                }
+              ]
+            },
+            "finish_reason": "tool_calls",
+            "logprobs": null,
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "protected_material_code": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "total_tokens": 120,
+          "prompt_tokens_details": {
+            "cached_tokens": 10,
+            "audio_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 5,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          },
+          "latency_checkpoint": {
+            "engine_tbt_ms": 0.5,
+            "engine_ttft_ms": 1,
+            "engine_ttlt_ms": 2,
+            "pre_inference_ms": 0,
+            "service_tbt_ms": 0.5,
+            "service_ttft_ms": 1,
+            "service_ttlt_ms": 2,
+            "user_visible_ttft_ms": 1
+          }
+        },
+        "service_tier": "default",
+        "system_fingerprint": null,
+        "prompt_filter_results": [
+          {
+            "prompt_index": 0,
+            "content_filter_results": {
+              "jailbreak": {
+                "filtered": true,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "routing": {
+          "serving_pipereplica": "fixture-replica"
+        }
+      }
+    },
+    "valid": false,
+    "tool_results": [
+      {
+        "tool_call_id": "call-1",
+        "content": "{}"
+      }
+    ]
+  },
+  {
+    "name": "Azure completion filtering suppresses calls",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "instruction_role": "developer",
+      "prompt": "Frozen prompt. <Keep bytes> café\n",
+      "max_completion_tokens": 1024,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "snapshot_list",
+            "description": "List available snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "messages": [
+          {
+            "role": "developer",
+            "content": "Frozen prompt. <Keep bytes> café\n"
+          },
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_completion_tokens": 1024,
+        "stream": false,
+        "store": false,
+        "n": 1,
+        "parallel_tool_calls": true,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "snapshot_list",
+              "description": "List available snapshots.",
+              "parameters": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              },
+              "strict": false
+            }
+          }
+        ],
+        "tool_choice": "auto"
+      }
+    },
+    "result": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "model-receipt-1",
+      "response": {
+        "id": "chatcmpl-fixture",
+        "object": "chat.completion",
+        "created": 100,
+        "model": "fixture-model-2026",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": null,
+              "refusal": null,
+              "annotations": [],
+              "tool_calls": [
+                {
+                  "id": "call-1",
+                  "type": "function",
+                  "function": {
+                    "name": "snapshot_list",
+                    "arguments": "{}"
+                  }
+                }
+              ]
+            },
+            "finish_reason": "tool_calls",
+            "logprobs": null,
+            "content_filter_results": {
+              "hate": {
+                "filtered": true,
+                "severity": "safe"
+              },
+              "protected_material_code": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "total_tokens": 120,
+          "prompt_tokens_details": {
+            "cached_tokens": 10,
+            "audio_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 5,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          },
+          "latency_checkpoint": {
+            "engine_tbt_ms": 0.5,
+            "engine_ttft_ms": 1,
+            "engine_ttlt_ms": 2,
+            "pre_inference_ms": 0,
+            "service_tbt_ms": 0.5,
+            "service_ttft_ms": 1,
+            "service_ttlt_ms": 2,
+            "user_visible_ttft_ms": 1
+          }
+        },
+        "service_tier": "default",
+        "system_fingerprint": null,
+        "prompt_filter_results": [
+          {
+            "prompt_index": 0,
+            "content_filter_results": {
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "routing": {
+          "serving_pipereplica": "fixture-replica"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "filtered"
+  },
+  {
+    "name": "Azure completion filtering rejects continuation",
+    "mode": "continuation",
+    "policy": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "instruction_role": "developer",
+      "prompt": "Frozen prompt. <Keep bytes> café\n",
+      "max_completion_tokens": 1024,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "snapshot_list",
+            "description": "List available snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "messages": [
+          {
+            "role": "developer",
+            "content": "Frozen prompt. <Keep bytes> café\n"
+          },
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_completion_tokens": 1024,
+        "stream": false,
+        "store": false,
+        "n": 1,
+        "parallel_tool_calls": true,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "snapshot_list",
+              "description": "List available snapshots.",
+              "parameters": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              },
+              "strict": false
+            }
+          }
+        ],
+        "tool_choice": "auto"
+      }
+    },
+    "result": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "model-receipt-1",
+      "response": {
+        "id": "chatcmpl-fixture",
+        "object": "chat.completion",
+        "created": 100,
+        "model": "fixture-model-2026",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": null,
+              "refusal": null,
+              "annotations": [],
+              "tool_calls": [
+                {
+                  "id": "call-1",
+                  "type": "function",
+                  "function": {
+                    "name": "snapshot_list",
+                    "arguments": "{}"
+                  }
+                }
+              ]
+            },
+            "finish_reason": "tool_calls",
+            "logprobs": null,
+            "content_filter_results": {
+              "hate": {
+                "filtered": true,
+                "severity": "safe"
+              },
+              "protected_material_code": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "total_tokens": 120,
+          "prompt_tokens_details": {
+            "cached_tokens": 10,
+            "audio_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 5,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          },
+          "latency_checkpoint": {
+            "engine_tbt_ms": 0.5,
+            "engine_ttft_ms": 1,
+            "engine_ttlt_ms": 2,
+            "pre_inference_ms": 0,
+            "service_tbt_ms": 0.5,
+            "service_ttft_ms": 1,
+            "service_ttlt_ms": 2,
+            "user_visible_ttft_ms": 1
+          }
+        },
+        "service_tier": "default",
+        "system_fingerprint": null,
+        "prompt_filter_results": [
+          {
+            "prompt_index": 0,
+            "content_filter_results": {
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "routing": {
+          "serving_pipereplica": "fixture-replica"
+        }
+      }
+    },
+    "valid": false,
+    "tool_results": [
+      {
+        "tool_call_id": "call-1",
+        "content": "{}"
+      }
+    ]
+  },
+  {
+    "name": "Azure detected but not filtered is advisory",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "instruction_role": "developer",
+      "prompt": "Frozen prompt. <Keep bytes> café\n",
+      "max_completion_tokens": 1024,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "snapshot_list",
+            "description": "List available snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "messages": [
+          {
+            "role": "developer",
+            "content": "Frozen prompt. <Keep bytes> café\n"
+          },
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_completion_tokens": 1024,
+        "stream": false,
+        "store": false,
+        "n": 1,
+        "parallel_tool_calls": true,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "snapshot_list",
+              "description": "List available snapshots.",
+              "parameters": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              },
+              "strict": false
+            }
+          }
+        ],
+        "tool_choice": "auto"
+      }
+    },
+    "result": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "model-receipt-1",
+      "response": {
+        "id": "chatcmpl-fixture",
+        "object": "chat.completion",
+        "created": 100,
+        "model": "fixture-model-2026",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": null,
+              "refusal": null,
+              "annotations": [],
+              "tool_calls": [
+                {
+                  "id": "call-1",
+                  "type": "function",
+                  "function": {
+                    "name": "snapshot_list",
+                    "arguments": "{}"
+                  }
+                }
+              ]
+            },
+            "finish_reason": "tool_calls",
+            "logprobs": null,
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "protected_material_code": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "total_tokens": 120,
+          "prompt_tokens_details": {
+            "cached_tokens": 10,
+            "audio_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 5,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          },
+          "latency_checkpoint": {
+            "engine_tbt_ms": 0.5,
+            "engine_ttft_ms": 1,
+            "engine_ttlt_ms": 2,
+            "pre_inference_ms": 0,
+            "service_tbt_ms": 0.5,
+            "service_ttft_ms": 1,
+            "service_ttlt_ms": 2,
+            "user_visible_ttft_ms": 1
+          }
+        },
+        "service_tier": "default",
+        "system_fingerprint": null,
+        "prompt_filter_results": [
+          {
+            "prompt_index": 0,
+            "content_filter_results": {
+              "jailbreak": {
+                "filtered": false,
+                "detected": true
+              }
+            }
+          }
+        ],
+        "routing": {
+          "serving_pipereplica": "fixture-replica"
+        }
+      }
+    },
+    "valid": true,
+    "disposition": "tool-calls"
+  },
+  {
+    "name": "Azure unknown category",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "instruction_role": "developer",
+      "prompt": "Frozen prompt. <Keep bytes> café\n",
+      "max_completion_tokens": 1024,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "snapshot_list",
+            "description": "List available snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "messages": [
+          {
+            "role": "developer",
+            "content": "Frozen prompt. <Keep bytes> café\n"
+          },
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_completion_tokens": 1024,
+        "stream": false,
+        "store": false,
+        "n": 1,
+        "parallel_tool_calls": true,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "snapshot_list",
+              "description": "List available snapshots.",
+              "parameters": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              },
+              "strict": false
+            }
+          }
+        ],
+        "tool_choice": "auto"
+      }
+    },
+    "result": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "model-receipt-1",
+      "response": {
+        "id": "chatcmpl-fixture",
+        "object": "chat.completion",
+        "created": 100,
+        "model": "fixture-model-2026",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "Ready.",
+              "refusal": null,
+              "annotations": []
+            },
+            "finish_reason": "stop",
+            "logprobs": null,
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "protected_material_code": {
+                "filtered": false,
+                "detected": false
+              },
+              "unknown": {}
+            }
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "total_tokens": 120,
+          "prompt_tokens_details": {
+            "cached_tokens": 10,
+            "audio_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 5,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          },
+          "latency_checkpoint": {
+            "engine_tbt_ms": 0.5,
+            "engine_ttft_ms": 1,
+            "engine_ttlt_ms": 2,
+            "pre_inference_ms": 0,
+            "service_tbt_ms": 0.5,
+            "service_ttft_ms": 1,
+            "service_ttlt_ms": 2,
+            "user_visible_ttft_ms": 1
+          }
+        },
+        "service_tier": "default",
+        "system_fingerprint": null,
+        "prompt_filter_results": [
+          {
+            "prompt_index": 0,
+            "content_filter_results": {
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "routing": {
+          "serving_pipereplica": "fixture-replica"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "Azure unknown severity",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "instruction_role": "developer",
+      "prompt": "Frozen prompt. <Keep bytes> café\n",
+      "max_completion_tokens": 1024,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "snapshot_list",
+            "description": "List available snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "messages": [
+          {
+            "role": "developer",
+            "content": "Frozen prompt. <Keep bytes> café\n"
+          },
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_completion_tokens": 1024,
+        "stream": false,
+        "store": false,
+        "n": 1,
+        "parallel_tool_calls": true,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "snapshot_list",
+              "description": "List available snapshots.",
+              "parameters": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              },
+              "strict": false
+            }
+          }
+        ],
+        "tool_choice": "auto"
+      }
+    },
+    "result": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "model-receipt-1",
+      "response": {
+        "id": "chatcmpl-fixture",
+        "object": "chat.completion",
+        "created": 100,
+        "model": "fixture-model-2026",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "Ready.",
+              "refusal": null,
+              "annotations": []
+            },
+            "finish_reason": "stop",
+            "logprobs": null,
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "unknown"
+              },
+              "protected_material_code": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "total_tokens": 120,
+          "prompt_tokens_details": {
+            "cached_tokens": 10,
+            "audio_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 5,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          },
+          "latency_checkpoint": {
+            "engine_tbt_ms": 0.5,
+            "engine_ttft_ms": 1,
+            "engine_ttlt_ms": 2,
+            "pre_inference_ms": 0,
+            "service_tbt_ms": 0.5,
+            "service_ttft_ms": 1,
+            "service_ttlt_ms": 2,
+            "user_visible_ttft_ms": 1
+          }
+        },
+        "service_tier": "default",
+        "system_fingerprint": null,
+        "prompt_filter_results": [
+          {
+            "prompt_index": 0,
+            "content_filter_results": {
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "routing": {
+          "serving_pipereplica": "fixture-replica"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "Azure nonboolean filtering",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "instruction_role": "developer",
+      "prompt": "Frozen prompt. <Keep bytes> café\n",
+      "max_completion_tokens": 1024,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "snapshot_list",
+            "description": "List available snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "messages": [
+          {
+            "role": "developer",
+            "content": "Frozen prompt. <Keep bytes> café\n"
+          },
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_completion_tokens": 1024,
+        "stream": false,
+        "store": false,
+        "n": 1,
+        "parallel_tool_calls": true,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "snapshot_list",
+              "description": "List available snapshots.",
+              "parameters": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              },
+              "strict": false
+            }
+          }
+        ],
+        "tool_choice": "auto"
+      }
+    },
+    "result": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "model-receipt-1",
+      "response": {
+        "id": "chatcmpl-fixture",
+        "object": "chat.completion",
+        "created": 100,
+        "model": "fixture-model-2026",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "Ready.",
+              "refusal": null,
+              "annotations": []
+            },
+            "finish_reason": "stop",
+            "logprobs": null,
+            "content_filter_results": {
+              "hate": {
+                "filtered": 0,
+                "severity": "safe"
+              },
+              "protected_material_code": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "total_tokens": 120,
+          "prompt_tokens_details": {
+            "cached_tokens": 10,
+            "audio_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 5,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          },
+          "latency_checkpoint": {
+            "engine_tbt_ms": 0.5,
+            "engine_ttft_ms": 1,
+            "engine_ttlt_ms": 2,
+            "pre_inference_ms": 0,
+            "service_tbt_ms": 0.5,
+            "service_ttft_ms": 1,
+            "service_ttlt_ms": 2,
+            "user_visible_ttft_ms": 1
+          }
+        },
+        "service_tier": "default",
+        "system_fingerprint": null,
+        "prompt_filter_results": [
+          {
+            "prompt_index": 0,
+            "content_filter_results": {
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "routing": {
+          "serving_pipereplica": "fixture-replica"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "Azure filter error",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "instruction_role": "developer",
+      "prompt": "Frozen prompt. <Keep bytes> café\n",
+      "max_completion_tokens": 1024,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "snapshot_list",
+            "description": "List available snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "messages": [
+          {
+            "role": "developer",
+            "content": "Frozen prompt. <Keep bytes> café\n"
+          },
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_completion_tokens": 1024,
+        "stream": false,
+        "store": false,
+        "n": 1,
+        "parallel_tool_calls": true,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "snapshot_list",
+              "description": "List available snapshots.",
+              "parameters": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              },
+              "strict": false
+            }
+          }
+        ],
+        "tool_choice": "auto"
+      }
+    },
+    "result": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "model-receipt-1",
+      "response": {
+        "id": "chatcmpl-fixture",
+        "object": "chat.completion",
+        "created": 100,
+        "model": "fixture-model-2026",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "Ready.",
+              "refusal": null,
+              "annotations": []
+            },
+            "finish_reason": "stop",
+            "logprobs": null,
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "protected_material_code": {
+                "filtered": false,
+                "detected": false
+              },
+              "error": {
+                "code": "error",
+                "message": "unavailable"
+              }
+            }
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "total_tokens": 120,
+          "prompt_tokens_details": {
+            "cached_tokens": 10,
+            "audio_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 5,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          },
+          "latency_checkpoint": {
+            "engine_tbt_ms": 0.5,
+            "engine_ttft_ms": 1,
+            "engine_ttlt_ms": 2,
+            "pre_inference_ms": 0,
+            "service_tbt_ms": 0.5,
+            "service_ttft_ms": 1,
+            "service_ttlt_ms": 2,
+            "user_visible_ttft_ms": 1
+          }
+        },
+        "service_tier": "default",
+        "system_fingerprint": null,
+        "prompt_filter_results": [
+          {
+            "prompt_index": 0,
+            "content_filter_results": {
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "routing": {
+          "serving_pipereplica": "fixture-replica"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "Azure negative latency",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "instruction_role": "developer",
+      "prompt": "Frozen prompt. <Keep bytes> café\n",
+      "max_completion_tokens": 1024,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "snapshot_list",
+            "description": "List available snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "messages": [
+          {
+            "role": "developer",
+            "content": "Frozen prompt. <Keep bytes> café\n"
+          },
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_completion_tokens": 1024,
+        "stream": false,
+        "store": false,
+        "n": 1,
+        "parallel_tool_calls": true,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "snapshot_list",
+              "description": "List available snapshots.",
+              "parameters": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              },
+              "strict": false
+            }
+          }
+        ],
+        "tool_choice": "auto"
+      }
+    },
+    "result": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "model-receipt-1",
+      "response": {
+        "id": "chatcmpl-fixture",
+        "object": "chat.completion",
+        "created": 100,
+        "model": "fixture-model-2026",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "Ready.",
+              "refusal": null,
+              "annotations": []
+            },
+            "finish_reason": "stop",
+            "logprobs": null,
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "protected_material_code": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "total_tokens": 120,
+          "prompt_tokens_details": {
+            "cached_tokens": 10,
+            "audio_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 5,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          },
+          "latency_checkpoint": {
+            "engine_tbt_ms": -1,
+            "engine_ttft_ms": 1,
+            "engine_ttlt_ms": 2,
+            "pre_inference_ms": 0,
+            "service_tbt_ms": 0.5,
+            "service_ttft_ms": 1,
+            "service_ttlt_ms": 2,
+            "user_visible_ttft_ms": 1
+          }
+        },
+        "service_tier": "default",
+        "system_fingerprint": null,
+        "prompt_filter_results": [
+          {
+            "prompt_index": 0,
+            "content_filter_results": {
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "routing": {
+          "serving_pipereplica": "fixture-replica"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "Azure unknown latency",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "instruction_role": "developer",
+      "prompt": "Frozen prompt. <Keep bytes> café\n",
+      "max_completion_tokens": 1024,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "snapshot_list",
+            "description": "List available snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "messages": [
+          {
+            "role": "developer",
+            "content": "Frozen prompt. <Keep bytes> café\n"
+          },
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_completion_tokens": 1024,
+        "stream": false,
+        "store": false,
+        "n": 1,
+        "parallel_tool_calls": true,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "snapshot_list",
+              "description": "List available snapshots.",
+              "parameters": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              },
+              "strict": false
+            }
+          }
+        ],
+        "tool_choice": "auto"
+      }
+    },
+    "result": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "model-receipt-1",
+      "response": {
+        "id": "chatcmpl-fixture",
+        "object": "chat.completion",
+        "created": 100,
+        "model": "fixture-model-2026",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "Ready.",
+              "refusal": null,
+              "annotations": []
+            },
+            "finish_reason": "stop",
+            "logprobs": null,
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "protected_material_code": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "total_tokens": 120,
+          "prompt_tokens_details": {
+            "cached_tokens": 10,
+            "audio_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 5,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          },
+          "latency_checkpoint": {
+            "engine_tbt_ms": 0.5,
+            "engine_ttft_ms": 1,
+            "engine_ttlt_ms": 2,
+            "pre_inference_ms": 0,
+            "service_tbt_ms": 0.5,
+            "service_ttft_ms": 1,
+            "service_ttlt_ms": 2,
+            "user_visible_ttft_ms": 1,
+            "unknown": 0
+          }
+        },
+        "service_tier": "default",
+        "system_fingerprint": null,
+        "prompt_filter_results": [
+          {
+            "prompt_index": 0,
+            "content_filter_results": {
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "routing": {
+          "serving_pipereplica": "fixture-replica"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "Azure oversized replica",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "instruction_role": "developer",
+      "prompt": "Frozen prompt. <Keep bytes> café\n",
+      "max_completion_tokens": 1024,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "snapshot_list",
+            "description": "List available snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "messages": [
+          {
+            "role": "developer",
+            "content": "Frozen prompt. <Keep bytes> café\n"
+          },
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_completion_tokens": 1024,
+        "stream": false,
+        "store": false,
+        "n": 1,
+        "parallel_tool_calls": true,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "snapshot_list",
+              "description": "List available snapshots.",
+              "parameters": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              },
+              "strict": false
+            }
+          }
+        ],
+        "tool_choice": "auto"
+      }
+    },
+    "result": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "model-receipt-1",
+      "response": {
+        "id": "chatcmpl-fixture",
+        "object": "chat.completion",
+        "created": 100,
+        "model": "fixture-model-2026",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "Ready.",
+              "refusal": null,
+              "annotations": []
+            },
+            "finish_reason": "stop",
+            "logprobs": null,
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "protected_material_code": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "total_tokens": 120,
+          "prompt_tokens_details": {
+            "cached_tokens": 10,
+            "audio_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 5,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          },
+          "latency_checkpoint": {
+            "engine_tbt_ms": 0.5,
+            "engine_ttft_ms": 1,
+            "engine_ttlt_ms": 2,
+            "pre_inference_ms": 0,
+            "service_tbt_ms": 0.5,
+            "service_ttft_ms": 1,
+            "service_ttlt_ms": 2,
+            "user_visible_ttft_ms": 1
+          }
+        },
+        "service_tier": "default",
+        "system_fingerprint": null,
+        "prompt_filter_results": [
+          {
+            "prompt_index": 0,
+            "content_filter_results": {
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "routing": {
+          "serving_pipereplica": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "Azure request annotation",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-model",
+      "response_models": [
+        "fixture-model-2026"
+      ],
+      "instruction_role": "developer",
+      "prompt": "Frozen prompt. <Keep bytes> café\n",
+      "max_completion_tokens": 1024,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "snapshot_list",
+            "description": "List available snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-model",
+        "messages": [
+          {
+            "role": "developer",
+            "content": "Frozen prompt. <Keep bytes> café\n"
+          },
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_completion_tokens": 1024,
+        "stream": false,
+        "store": false,
+        "n": 1,
+        "parallel_tool_calls": true,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "snapshot_list",
+              "description": "List available snapshots.",
+              "parameters": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              },
+              "strict": false
+            }
+          }
+        ],
+        "tool_choice": "auto",
+        "prompt_filter_results": []
+      }
+    },
+    "result": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "profile_id": "fixture-model-profile",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "model-receipt-1",
+      "response": {
+        "id": "chatcmpl-fixture",
+        "object": "chat.completion",
+        "created": 100,
+        "model": "fixture-model-2026",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "Ready.",
+              "refusal": null,
+              "annotations": []
+            },
+            "finish_reason": "stop",
+            "logprobs": null,
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "protected_material_code": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "total_tokens": 120,
+          "prompt_tokens_details": {
+            "cached_tokens": 10,
+            "audio_tokens": 0
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 5,
+            "audio_tokens": 0,
+            "accepted_prediction_tokens": 0,
+            "rejected_prediction_tokens": 0
+          },
+          "latency_checkpoint": {
+            "engine_tbt_ms": 0.5,
+            "engine_ttft_ms": 1,
+            "engine_ttlt_ms": 2,
+            "pre_inference_ms": 0,
+            "service_tbt_ms": 0.5,
+            "service_ttft_ms": 1,
+            "service_ttlt_ms": 2,
+            "user_visible_ttft_ms": 1
+          }
+        },
+        "service_tier": "default",
+        "system_fingerprint": null,
+        "prompt_filter_results": [
+          {
+            "prompt_index": 0,
+            "content_filter_results": {
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            }
+          }
+        ],
+        "routing": {
+          "serving_pipereplica": "fixture-replica"
+        }
+      }
+    },
+    "valid": false
+  },
+  {
     "name": "multiple native tools",
     "mode": "bound",
     "policy": {

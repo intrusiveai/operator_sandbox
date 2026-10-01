@@ -369,6 +369,67 @@
       },
       "required": []
     },
+    "content_filters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "blocked": {
+            "type": "boolean"
+          },
+          "source_type": {
+            "enum": [
+              "prompt",
+              "completion",
+              "response",
+              "pre_tool_call",
+              "post_tool_call"
+            ]
+          },
+          "content_filter_results": {
+            "$ref": "urn:operator:schema:openai-chat-common:v1alpha1#/$defs/azure_filter_results"
+          },
+          "content_filter_offsets": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "check_offset": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "start_offset": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "end_offset": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "check_offset",
+              "start_offset",
+              "end_offset"
+            ]
+          },
+          "content_filter_raw": {
+            "type": "array",
+            "maxItems": 0
+          }
+        },
+        "required": [
+          "blocked",
+          "source_type",
+          "content_filter_results"
+        ]
+      },
+      "minItems": 0,
+      "maxItems": 4096
+    },
     "top_logprobs": {
       "anyOf": [
         {

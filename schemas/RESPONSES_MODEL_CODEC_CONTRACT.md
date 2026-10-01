@@ -98,3 +98,17 @@ history IDs, refusal, incomplete/failed results, forbidden remote state and usag
 Host integration MUST test replay protection, restore accounting, unknown usage
 and excessive input. Live provider/model/credential and runtime qualification
 remain separate from these synthetic tests.
+
+## Azure safety annotations
+
+Responses MAY contain Azure's `content_filters` array with up to 4,096 entries.
+Each entry MUST contain boolean `blocked`, `source_type` (`prompt`, `completion`,
+`response`, `pre_tool_call` or `post_tool_call`) and the closed safety result subset
+in [the Chat contract](MODEL_CODEC_CONTRACT.md). Optional offsets MUST be
+nonnegative JSON-safe integers; optional `content_filter_raw` MUST be empty.
+Known-usage responses with any `blocked:true` or category `filtered:true` MUST
+produce `filtered` and MUST NOT construct tool continuations or dispatch calls,
+even when response status is `completed`. Missing usage remains `usage-unknown`.
+Detection alone is advisory. Annotations MUST remain intact in native evidence;
+unknown fields and unsupported filter-error payloads MUST fail validation.
+See [Azure's Responses extension](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/responses#content-filtering).

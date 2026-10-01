@@ -1,4 +1,5 @@
 """Stateless Responses history, encrypted reasoning and client function results."""
+from .model_azure import filtered as azure_filtered
 from .startup import require
 from .validation import ORDINARY_LIMIT, ContractError
 from .canonical import _canonical_value, _object_digest
@@ -93,6 +94,7 @@ def check_correlation(request,response):
 
 def disposition(response):
     if response.get('usage') is None:return 'usage-unknown'
+    if azure_filtered(response):return 'filtered'
     if response['status']!='completed':
         return 'filtered' if (response.get('incomplete_details') or {}).get('reason')=='content_filter' else 'truncated'
     if refusal(response['output']):return 'refusal'

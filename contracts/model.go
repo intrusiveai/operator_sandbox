@@ -362,9 +362,39 @@ func (p *Protocol) ModelDisposition(resultRaw []byte) (string, error) {
 	}
 	return chatDisposition(response), nil
 }
+
+// azureFiltered reads only the closed, schema-validated Azure annotations. A
+// blocked/filtered result must never dispatch tool calls, even with a normal
+// native finish reason. Detection without filtering is advisory.
+func azureFiltered(response map[string]any) bool {
+	annotations := []any{}
+	for _, key := range []string{"prompt_filter_results", "content_filters", "choices"} {
+		if items, ok := response[key].([]any); ok {
+			annotations = append(annotations, items...)
+		}
+	}
+	for _, value := range annotations {
+		annotation := value.(map[string]any)
+		if annotation["blocked"] == true {
+			return true
+		}
+		if results, ok := annotation["content_filter_results"].(map[string]any); ok {
+			for _, result := range results {
+				if result.(map[string]any)["filtered"] == true {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
 func chatDisposition(response map[string]any) string {
 	if response["usage"] == nil {
 		return "usage-unknown"
+	}
+	if azureFiltered(response) {
+		return "filtered"
 	}
 	choice := response["choices"].([]any)[0].(map[string]any)
 	switch choice["finish_reason"] {

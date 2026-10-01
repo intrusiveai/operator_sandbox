@@ -2327,6 +2327,3404 @@
     "valid": false
   },
   {
+    "name": "responses: Azure safe filtering metadata",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-responses",
+      "response_models": [
+        "fixture-responses-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "reasoning": {
+        "effort": "medium"
+      },
+      "tools": [
+        {
+          "type": "function",
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "parameters": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          "strict": false
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-responses",
+        "instructions": "Frozen instructions.",
+        "input": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_output_tokens": 2048,
+        "stream": false,
+        "store": false,
+        "parallel_tool_calls": true,
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "truncation": "disabled",
+        "reasoning": {
+          "effort": "medium"
+        },
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "text": {
+          "format": {
+            "type": "text"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "response-1",
+        "object": "response",
+        "created_at": 1800000000.25,
+        "model": "fixture-responses-001",
+        "status": "completed",
+        "output": [
+          {
+            "type": "message",
+            "id": "msg-1",
+            "role": "assistant",
+            "status": "completed",
+            "phase": "final_answer",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "Ready.",
+                "annotations": []
+              }
+            ]
+          }
+        ],
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 60,
+          "total_tokens": 160,
+          "input_tokens_details": {
+            "cached_tokens": 30,
+            "cache_write_tokens": 10
+          },
+          "output_tokens_details": {
+            "reasoning_tokens": 40
+          }
+        },
+        "error": null,
+        "incomplete_details": null,
+        "store": false,
+        "background": false,
+        "previous_response_id": null,
+        "conversation": null,
+        "metadata": {},
+        "instructions": "Frozen instructions.",
+        "parallel_tool_calls": true,
+        "max_output_tokens": 2048,
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "reasoning": {
+          "effort": "medium",
+          "summary": null,
+          "context": "all_turns",
+          "mode": "standard"
+        },
+        "text": {
+          "format": {
+            "type": "text"
+          },
+          "verbosity": "medium"
+        },
+        "truncation": "disabled",
+        "temperature": 1,
+        "top_p": 1,
+        "content_filters": [
+          {
+            "blocked": false,
+            "source_type": "prompt",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          },
+          {
+            "blocked": false,
+            "source_type": "completion",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          }
+        ]
+      }
+    },
+    "valid": true,
+    "disposition": "text",
+    "output_limit": 2048
+  },
+  {
+    "name": "responses: Azure safe tool response",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-responses",
+      "response_models": [
+        "fixture-responses-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "reasoning": {
+        "effort": "medium"
+      },
+      "tools": [
+        {
+          "type": "function",
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "parameters": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          "strict": false
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-responses",
+        "instructions": "Frozen instructions.",
+        "input": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_output_tokens": 2048,
+        "stream": false,
+        "store": false,
+        "parallel_tool_calls": true,
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "truncation": "disabled",
+        "reasoning": {
+          "effort": "medium"
+        },
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "text": {
+          "format": {
+            "type": "text"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "response-1",
+        "object": "response",
+        "created_at": 1800000000.25,
+        "model": "fixture-responses-001",
+        "status": "completed",
+        "output": [
+          {
+            "type": "function_call",
+            "call_id": "call-1",
+            "id": "item-call-1",
+            "name": "snapshot_list",
+            "arguments": "{}",
+            "status": "completed",
+            "caller": {
+              "type": "direct"
+            }
+          }
+        ],
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 60,
+          "total_tokens": 160,
+          "input_tokens_details": {
+            "cached_tokens": 30,
+            "cache_write_tokens": 10
+          },
+          "output_tokens_details": {
+            "reasoning_tokens": 40
+          }
+        },
+        "error": null,
+        "incomplete_details": null,
+        "store": false,
+        "background": false,
+        "previous_response_id": null,
+        "conversation": null,
+        "metadata": {},
+        "instructions": "Frozen instructions.",
+        "parallel_tool_calls": true,
+        "max_output_tokens": 2048,
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "reasoning": {
+          "effort": "medium",
+          "summary": null,
+          "context": "all_turns",
+          "mode": "standard"
+        },
+        "text": {
+          "format": {
+            "type": "text"
+          },
+          "verbosity": "medium"
+        },
+        "truncation": "disabled",
+        "temperature": 1,
+        "top_p": 1,
+        "content_filters": [
+          {
+            "blocked": false,
+            "source_type": "prompt",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          },
+          {
+            "blocked": false,
+            "source_type": "completion",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          }
+        ]
+      }
+    },
+    "valid": true,
+    "disposition": "tool-calls",
+    "output_limit": 2048
+  },
+  {
+    "name": "responses: Azure blocked suppresses calls",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-responses",
+      "response_models": [
+        "fixture-responses-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "reasoning": {
+        "effort": "medium"
+      },
+      "tools": [
+        {
+          "type": "function",
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "parameters": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          "strict": false
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-responses",
+        "instructions": "Frozen instructions.",
+        "input": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_output_tokens": 2048,
+        "stream": false,
+        "store": false,
+        "parallel_tool_calls": true,
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "truncation": "disabled",
+        "reasoning": {
+          "effort": "medium"
+        },
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "text": {
+          "format": {
+            "type": "text"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "response-1",
+        "object": "response",
+        "created_at": 1800000000.25,
+        "model": "fixture-responses-001",
+        "status": "completed",
+        "output": [
+          {
+            "type": "function_call",
+            "call_id": "call-1",
+            "id": "item-call-1",
+            "name": "snapshot_list",
+            "arguments": "{}",
+            "status": "completed",
+            "caller": {
+              "type": "direct"
+            }
+          }
+        ],
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 60,
+          "total_tokens": 160,
+          "input_tokens_details": {
+            "cached_tokens": 30,
+            "cache_write_tokens": 10
+          },
+          "output_tokens_details": {
+            "reasoning_tokens": 40
+          }
+        },
+        "error": null,
+        "incomplete_details": null,
+        "store": false,
+        "background": false,
+        "previous_response_id": null,
+        "conversation": null,
+        "metadata": {},
+        "instructions": "Frozen instructions.",
+        "parallel_tool_calls": true,
+        "max_output_tokens": 2048,
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "reasoning": {
+          "effort": "medium",
+          "summary": null,
+          "context": "all_turns",
+          "mode": "standard"
+        },
+        "text": {
+          "format": {
+            "type": "text"
+          },
+          "verbosity": "medium"
+        },
+        "truncation": "disabled",
+        "temperature": 1,
+        "top_p": 1,
+        "content_filters": [
+          {
+            "blocked": false,
+            "source_type": "prompt",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          },
+          {
+            "blocked": true,
+            "source_type": "completion",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          }
+        ]
+      }
+    },
+    "valid": true,
+    "disposition": "filtered",
+    "output_limit": 2048
+  },
+  {
+    "name": "responses: Azure blocked rejects continuation",
+    "mode": "responses-continuation",
+    "policy": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-responses",
+      "response_models": [
+        "fixture-responses-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "reasoning": {
+        "effort": "medium"
+      },
+      "tools": [
+        {
+          "type": "function",
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "parameters": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          "strict": false
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-responses",
+        "instructions": "Frozen instructions.",
+        "input": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_output_tokens": 2048,
+        "stream": false,
+        "store": false,
+        "parallel_tool_calls": true,
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "truncation": "disabled",
+        "reasoning": {
+          "effort": "medium"
+        },
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "text": {
+          "format": {
+            "type": "text"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "response-1",
+        "object": "response",
+        "created_at": 1800000000.25,
+        "model": "fixture-responses-001",
+        "status": "completed",
+        "output": [
+          {
+            "type": "function_call",
+            "call_id": "call-1",
+            "id": "item-call-1",
+            "name": "snapshot_list",
+            "arguments": "{}",
+            "status": "completed",
+            "caller": {
+              "type": "direct"
+            }
+          }
+        ],
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 60,
+          "total_tokens": 160,
+          "input_tokens_details": {
+            "cached_tokens": 30,
+            "cache_write_tokens": 10
+          },
+          "output_tokens_details": {
+            "reasoning_tokens": 40
+          }
+        },
+        "error": null,
+        "incomplete_details": null,
+        "store": false,
+        "background": false,
+        "previous_response_id": null,
+        "conversation": null,
+        "metadata": {},
+        "instructions": "Frozen instructions.",
+        "parallel_tool_calls": true,
+        "max_output_tokens": 2048,
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "reasoning": {
+          "effort": "medium",
+          "summary": null,
+          "context": "all_turns",
+          "mode": "standard"
+        },
+        "text": {
+          "format": {
+            "type": "text"
+          },
+          "verbosity": "medium"
+        },
+        "truncation": "disabled",
+        "temperature": 1,
+        "top_p": 1,
+        "content_filters": [
+          {
+            "blocked": false,
+            "source_type": "prompt",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          },
+          {
+            "blocked": true,
+            "source_type": "completion",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          }
+        ]
+      }
+    },
+    "valid": false,
+    "tool_results": [
+      {
+        "tool_call_id": "call-1",
+        "content": "{}"
+      }
+    ]
+  },
+  {
+    "name": "responses: Azure filtered suppresses calls",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-responses",
+      "response_models": [
+        "fixture-responses-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "reasoning": {
+        "effort": "medium"
+      },
+      "tools": [
+        {
+          "type": "function",
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "parameters": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          "strict": false
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-responses",
+        "instructions": "Frozen instructions.",
+        "input": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_output_tokens": 2048,
+        "stream": false,
+        "store": false,
+        "parallel_tool_calls": true,
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "truncation": "disabled",
+        "reasoning": {
+          "effort": "medium"
+        },
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "text": {
+          "format": {
+            "type": "text"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "response-1",
+        "object": "response",
+        "created_at": 1800000000.25,
+        "model": "fixture-responses-001",
+        "status": "completed",
+        "output": [
+          {
+            "type": "function_call",
+            "call_id": "call-1",
+            "id": "item-call-1",
+            "name": "snapshot_list",
+            "arguments": "{}",
+            "status": "completed",
+            "caller": {
+              "type": "direct"
+            }
+          }
+        ],
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 60,
+          "total_tokens": 160,
+          "input_tokens_details": {
+            "cached_tokens": 30,
+            "cache_write_tokens": 10
+          },
+          "output_tokens_details": {
+            "reasoning_tokens": 40
+          }
+        },
+        "error": null,
+        "incomplete_details": null,
+        "store": false,
+        "background": false,
+        "previous_response_id": null,
+        "conversation": null,
+        "metadata": {},
+        "instructions": "Frozen instructions.",
+        "parallel_tool_calls": true,
+        "max_output_tokens": 2048,
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "reasoning": {
+          "effort": "medium",
+          "summary": null,
+          "context": "all_turns",
+          "mode": "standard"
+        },
+        "text": {
+          "format": {
+            "type": "text"
+          },
+          "verbosity": "medium"
+        },
+        "truncation": "disabled",
+        "temperature": 1,
+        "top_p": 1,
+        "content_filters": [
+          {
+            "blocked": false,
+            "source_type": "prompt",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          },
+          {
+            "blocked": false,
+            "source_type": "completion",
+            "content_filter_results": {
+              "hate": {
+                "filtered": true,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          }
+        ]
+      }
+    },
+    "valid": true,
+    "disposition": "filtered",
+    "output_limit": 2048
+  },
+  {
+    "name": "responses: Azure filtered rejects continuation",
+    "mode": "responses-continuation",
+    "policy": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-responses",
+      "response_models": [
+        "fixture-responses-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "reasoning": {
+        "effort": "medium"
+      },
+      "tools": [
+        {
+          "type": "function",
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "parameters": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          "strict": false
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-responses",
+        "instructions": "Frozen instructions.",
+        "input": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_output_tokens": 2048,
+        "stream": false,
+        "store": false,
+        "parallel_tool_calls": true,
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "truncation": "disabled",
+        "reasoning": {
+          "effort": "medium"
+        },
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "text": {
+          "format": {
+            "type": "text"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "response-1",
+        "object": "response",
+        "created_at": 1800000000.25,
+        "model": "fixture-responses-001",
+        "status": "completed",
+        "output": [
+          {
+            "type": "function_call",
+            "call_id": "call-1",
+            "id": "item-call-1",
+            "name": "snapshot_list",
+            "arguments": "{}",
+            "status": "completed",
+            "caller": {
+              "type": "direct"
+            }
+          }
+        ],
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 60,
+          "total_tokens": 160,
+          "input_tokens_details": {
+            "cached_tokens": 30,
+            "cache_write_tokens": 10
+          },
+          "output_tokens_details": {
+            "reasoning_tokens": 40
+          }
+        },
+        "error": null,
+        "incomplete_details": null,
+        "store": false,
+        "background": false,
+        "previous_response_id": null,
+        "conversation": null,
+        "metadata": {},
+        "instructions": "Frozen instructions.",
+        "parallel_tool_calls": true,
+        "max_output_tokens": 2048,
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "reasoning": {
+          "effort": "medium",
+          "summary": null,
+          "context": "all_turns",
+          "mode": "standard"
+        },
+        "text": {
+          "format": {
+            "type": "text"
+          },
+          "verbosity": "medium"
+        },
+        "truncation": "disabled",
+        "temperature": 1,
+        "top_p": 1,
+        "content_filters": [
+          {
+            "blocked": false,
+            "source_type": "prompt",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          },
+          {
+            "blocked": false,
+            "source_type": "completion",
+            "content_filter_results": {
+              "hate": {
+                "filtered": true,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          }
+        ]
+      }
+    },
+    "valid": false,
+    "tool_results": [
+      {
+        "tool_call_id": "call-1",
+        "content": "{}"
+      }
+    ]
+  },
+  {
+    "name": "responses: Azure detection without filtering is advisory",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-responses",
+      "response_models": [
+        "fixture-responses-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "reasoning": {
+        "effort": "medium"
+      },
+      "tools": [
+        {
+          "type": "function",
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "parameters": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          "strict": false
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-responses",
+        "instructions": "Frozen instructions.",
+        "input": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_output_tokens": 2048,
+        "stream": false,
+        "store": false,
+        "parallel_tool_calls": true,
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "truncation": "disabled",
+        "reasoning": {
+          "effort": "medium"
+        },
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "text": {
+          "format": {
+            "type": "text"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "response-1",
+        "object": "response",
+        "created_at": 1800000000.25,
+        "model": "fixture-responses-001",
+        "status": "completed",
+        "output": [
+          {
+            "type": "function_call",
+            "call_id": "call-1",
+            "id": "item-call-1",
+            "name": "snapshot_list",
+            "arguments": "{}",
+            "status": "completed",
+            "caller": {
+              "type": "direct"
+            }
+          }
+        ],
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 60,
+          "total_tokens": 160,
+          "input_tokens_details": {
+            "cached_tokens": 30,
+            "cache_write_tokens": 10
+          },
+          "output_tokens_details": {
+            "reasoning_tokens": 40
+          }
+        },
+        "error": null,
+        "incomplete_details": null,
+        "store": false,
+        "background": false,
+        "previous_response_id": null,
+        "conversation": null,
+        "metadata": {},
+        "instructions": "Frozen instructions.",
+        "parallel_tool_calls": true,
+        "max_output_tokens": 2048,
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "reasoning": {
+          "effort": "medium",
+          "summary": null,
+          "context": "all_turns",
+          "mode": "standard"
+        },
+        "text": {
+          "format": {
+            "type": "text"
+          },
+          "verbosity": "medium"
+        },
+        "truncation": "disabled",
+        "temperature": 1,
+        "top_p": 1,
+        "content_filters": [
+          {
+            "blocked": false,
+            "source_type": "prompt",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": true
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          },
+          {
+            "blocked": false,
+            "source_type": "completion",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          }
+        ]
+      }
+    },
+    "valid": true,
+    "disposition": "tool-calls",
+    "output_limit": 2048
+  },
+  {
+    "name": "responses: Azure source response",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-responses",
+      "response_models": [
+        "fixture-responses-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "reasoning": {
+        "effort": "medium"
+      },
+      "tools": [
+        {
+          "type": "function",
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "parameters": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          "strict": false
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-responses",
+        "instructions": "Frozen instructions.",
+        "input": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_output_tokens": 2048,
+        "stream": false,
+        "store": false,
+        "parallel_tool_calls": true,
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "truncation": "disabled",
+        "reasoning": {
+          "effort": "medium"
+        },
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "text": {
+          "format": {
+            "type": "text"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "response-1",
+        "object": "response",
+        "created_at": 1800000000.25,
+        "model": "fixture-responses-001",
+        "status": "completed",
+        "output": [
+          {
+            "type": "message",
+            "id": "msg-1",
+            "role": "assistant",
+            "status": "completed",
+            "phase": "final_answer",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "Ready.",
+                "annotations": []
+              }
+            ]
+          }
+        ],
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 60,
+          "total_tokens": 160,
+          "input_tokens_details": {
+            "cached_tokens": 30,
+            "cache_write_tokens": 10
+          },
+          "output_tokens_details": {
+            "reasoning_tokens": 40
+          }
+        },
+        "error": null,
+        "incomplete_details": null,
+        "store": false,
+        "background": false,
+        "previous_response_id": null,
+        "conversation": null,
+        "metadata": {},
+        "instructions": "Frozen instructions.",
+        "parallel_tool_calls": true,
+        "max_output_tokens": 2048,
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "reasoning": {
+          "effort": "medium",
+          "summary": null,
+          "context": "all_turns",
+          "mode": "standard"
+        },
+        "text": {
+          "format": {
+            "type": "text"
+          },
+          "verbosity": "medium"
+        },
+        "truncation": "disabled",
+        "temperature": 1,
+        "top_p": 1,
+        "content_filters": [
+          {
+            "blocked": false,
+            "source_type": "response",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          },
+          {
+            "blocked": false,
+            "source_type": "completion",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          }
+        ]
+      }
+    },
+    "valid": true,
+    "disposition": "text",
+    "output_limit": 2048
+  },
+  {
+    "name": "responses: Azure source pre_tool_call",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-responses",
+      "response_models": [
+        "fixture-responses-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "reasoning": {
+        "effort": "medium"
+      },
+      "tools": [
+        {
+          "type": "function",
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "parameters": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          "strict": false
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-responses",
+        "instructions": "Frozen instructions.",
+        "input": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_output_tokens": 2048,
+        "stream": false,
+        "store": false,
+        "parallel_tool_calls": true,
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "truncation": "disabled",
+        "reasoning": {
+          "effort": "medium"
+        },
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "text": {
+          "format": {
+            "type": "text"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "response-1",
+        "object": "response",
+        "created_at": 1800000000.25,
+        "model": "fixture-responses-001",
+        "status": "completed",
+        "output": [
+          {
+            "type": "message",
+            "id": "msg-1",
+            "role": "assistant",
+            "status": "completed",
+            "phase": "final_answer",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "Ready.",
+                "annotations": []
+              }
+            ]
+          }
+        ],
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 60,
+          "total_tokens": 160,
+          "input_tokens_details": {
+            "cached_tokens": 30,
+            "cache_write_tokens": 10
+          },
+          "output_tokens_details": {
+            "reasoning_tokens": 40
+          }
+        },
+        "error": null,
+        "incomplete_details": null,
+        "store": false,
+        "background": false,
+        "previous_response_id": null,
+        "conversation": null,
+        "metadata": {},
+        "instructions": "Frozen instructions.",
+        "parallel_tool_calls": true,
+        "max_output_tokens": 2048,
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "reasoning": {
+          "effort": "medium",
+          "summary": null,
+          "context": "all_turns",
+          "mode": "standard"
+        },
+        "text": {
+          "format": {
+            "type": "text"
+          },
+          "verbosity": "medium"
+        },
+        "truncation": "disabled",
+        "temperature": 1,
+        "top_p": 1,
+        "content_filters": [
+          {
+            "blocked": false,
+            "source_type": "pre_tool_call",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          },
+          {
+            "blocked": false,
+            "source_type": "completion",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          }
+        ]
+      }
+    },
+    "valid": true,
+    "disposition": "text",
+    "output_limit": 2048
+  },
+  {
+    "name": "responses: Azure source post_tool_call",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-responses",
+      "response_models": [
+        "fixture-responses-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "reasoning": {
+        "effort": "medium"
+      },
+      "tools": [
+        {
+          "type": "function",
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "parameters": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          "strict": false
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-responses",
+        "instructions": "Frozen instructions.",
+        "input": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_output_tokens": 2048,
+        "stream": false,
+        "store": false,
+        "parallel_tool_calls": true,
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "truncation": "disabled",
+        "reasoning": {
+          "effort": "medium"
+        },
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "text": {
+          "format": {
+            "type": "text"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "response-1",
+        "object": "response",
+        "created_at": 1800000000.25,
+        "model": "fixture-responses-001",
+        "status": "completed",
+        "output": [
+          {
+            "type": "message",
+            "id": "msg-1",
+            "role": "assistant",
+            "status": "completed",
+            "phase": "final_answer",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "Ready.",
+                "annotations": []
+              }
+            ]
+          }
+        ],
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 60,
+          "total_tokens": 160,
+          "input_tokens_details": {
+            "cached_tokens": 30,
+            "cache_write_tokens": 10
+          },
+          "output_tokens_details": {
+            "reasoning_tokens": 40
+          }
+        },
+        "error": null,
+        "incomplete_details": null,
+        "store": false,
+        "background": false,
+        "previous_response_id": null,
+        "conversation": null,
+        "metadata": {},
+        "instructions": "Frozen instructions.",
+        "parallel_tool_calls": true,
+        "max_output_tokens": 2048,
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "reasoning": {
+          "effort": "medium",
+          "summary": null,
+          "context": "all_turns",
+          "mode": "standard"
+        },
+        "text": {
+          "format": {
+            "type": "text"
+          },
+          "verbosity": "medium"
+        },
+        "truncation": "disabled",
+        "temperature": 1,
+        "top_p": 1,
+        "content_filters": [
+          {
+            "blocked": false,
+            "source_type": "post_tool_call",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          },
+          {
+            "blocked": false,
+            "source_type": "completion",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          }
+        ]
+      }
+    },
+    "valid": true,
+    "disposition": "text",
+    "output_limit": 2048
+  },
+  {
+    "name": "responses: Azure unknown source",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-responses",
+      "response_models": [
+        "fixture-responses-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "reasoning": {
+        "effort": "medium"
+      },
+      "tools": [
+        {
+          "type": "function",
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "parameters": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          "strict": false
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-responses",
+        "instructions": "Frozen instructions.",
+        "input": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_output_tokens": 2048,
+        "stream": false,
+        "store": false,
+        "parallel_tool_calls": true,
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "truncation": "disabled",
+        "reasoning": {
+          "effort": "medium"
+        },
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "text": {
+          "format": {
+            "type": "text"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "response-1",
+        "object": "response",
+        "created_at": 1800000000.25,
+        "model": "fixture-responses-001",
+        "status": "completed",
+        "output": [
+          {
+            "type": "message",
+            "id": "msg-1",
+            "role": "assistant",
+            "status": "completed",
+            "phase": "final_answer",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "Ready.",
+                "annotations": []
+              }
+            ]
+          }
+        ],
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 60,
+          "total_tokens": 160,
+          "input_tokens_details": {
+            "cached_tokens": 30,
+            "cache_write_tokens": 10
+          },
+          "output_tokens_details": {
+            "reasoning_tokens": 40
+          }
+        },
+        "error": null,
+        "incomplete_details": null,
+        "store": false,
+        "background": false,
+        "previous_response_id": null,
+        "conversation": null,
+        "metadata": {},
+        "instructions": "Frozen instructions.",
+        "parallel_tool_calls": true,
+        "max_output_tokens": 2048,
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "reasoning": {
+          "effort": "medium",
+          "summary": null,
+          "context": "all_turns",
+          "mode": "standard"
+        },
+        "text": {
+          "format": {
+            "type": "text"
+          },
+          "verbosity": "medium"
+        },
+        "truncation": "disabled",
+        "temperature": 1,
+        "top_p": 1,
+        "content_filters": [
+          {
+            "blocked": false,
+            "source_type": "unknown",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          },
+          {
+            "blocked": false,
+            "source_type": "completion",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          }
+        ]
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "responses: Azure nonboolean blocked",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-responses",
+      "response_models": [
+        "fixture-responses-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "reasoning": {
+        "effort": "medium"
+      },
+      "tools": [
+        {
+          "type": "function",
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "parameters": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          "strict": false
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-responses",
+        "instructions": "Frozen instructions.",
+        "input": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_output_tokens": 2048,
+        "stream": false,
+        "store": false,
+        "parallel_tool_calls": true,
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "truncation": "disabled",
+        "reasoning": {
+          "effort": "medium"
+        },
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "text": {
+          "format": {
+            "type": "text"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "response-1",
+        "object": "response",
+        "created_at": 1800000000.25,
+        "model": "fixture-responses-001",
+        "status": "completed",
+        "output": [
+          {
+            "type": "message",
+            "id": "msg-1",
+            "role": "assistant",
+            "status": "completed",
+            "phase": "final_answer",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "Ready.",
+                "annotations": []
+              }
+            ]
+          }
+        ],
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 60,
+          "total_tokens": 160,
+          "input_tokens_details": {
+            "cached_tokens": 30,
+            "cache_write_tokens": 10
+          },
+          "output_tokens_details": {
+            "reasoning_tokens": 40
+          }
+        },
+        "error": null,
+        "incomplete_details": null,
+        "store": false,
+        "background": false,
+        "previous_response_id": null,
+        "conversation": null,
+        "metadata": {},
+        "instructions": "Frozen instructions.",
+        "parallel_tool_calls": true,
+        "max_output_tokens": 2048,
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "reasoning": {
+          "effort": "medium",
+          "summary": null,
+          "context": "all_turns",
+          "mode": "standard"
+        },
+        "text": {
+          "format": {
+            "type": "text"
+          },
+          "verbosity": "medium"
+        },
+        "truncation": "disabled",
+        "temperature": 1,
+        "top_p": 1,
+        "content_filters": [
+          {
+            "blocked": 1,
+            "source_type": "prompt",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          },
+          {
+            "blocked": false,
+            "source_type": "completion",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          }
+        ]
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "responses: Azure unknown category",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-responses",
+      "response_models": [
+        "fixture-responses-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "reasoning": {
+        "effort": "medium"
+      },
+      "tools": [
+        {
+          "type": "function",
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "parameters": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          "strict": false
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-responses",
+        "instructions": "Frozen instructions.",
+        "input": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_output_tokens": 2048,
+        "stream": false,
+        "store": false,
+        "parallel_tool_calls": true,
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "truncation": "disabled",
+        "reasoning": {
+          "effort": "medium"
+        },
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "text": {
+          "format": {
+            "type": "text"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "response-1",
+        "object": "response",
+        "created_at": 1800000000.25,
+        "model": "fixture-responses-001",
+        "status": "completed",
+        "output": [
+          {
+            "type": "message",
+            "id": "msg-1",
+            "role": "assistant",
+            "status": "completed",
+            "phase": "final_answer",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "Ready.",
+                "annotations": []
+              }
+            ]
+          }
+        ],
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 60,
+          "total_tokens": 160,
+          "input_tokens_details": {
+            "cached_tokens": 30,
+            "cache_write_tokens": 10
+          },
+          "output_tokens_details": {
+            "reasoning_tokens": 40
+          }
+        },
+        "error": null,
+        "incomplete_details": null,
+        "store": false,
+        "background": false,
+        "previous_response_id": null,
+        "conversation": null,
+        "metadata": {},
+        "instructions": "Frozen instructions.",
+        "parallel_tool_calls": true,
+        "max_output_tokens": 2048,
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "reasoning": {
+          "effort": "medium",
+          "summary": null,
+          "context": "all_turns",
+          "mode": "standard"
+        },
+        "text": {
+          "format": {
+            "type": "text"
+          },
+          "verbosity": "medium"
+        },
+        "truncation": "disabled",
+        "temperature": 1,
+        "top_p": 1,
+        "content_filters": [
+          {
+            "blocked": false,
+            "source_type": "prompt",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              },
+              "unknown": {}
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          },
+          {
+            "blocked": false,
+            "source_type": "completion",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          }
+        ]
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "responses: Azure nonempty raw filter",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-responses",
+      "response_models": [
+        "fixture-responses-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "reasoning": {
+        "effort": "medium"
+      },
+      "tools": [
+        {
+          "type": "function",
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "parameters": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          "strict": false
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-responses",
+        "instructions": "Frozen instructions.",
+        "input": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_output_tokens": 2048,
+        "stream": false,
+        "store": false,
+        "parallel_tool_calls": true,
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "truncation": "disabled",
+        "reasoning": {
+          "effort": "medium"
+        },
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "text": {
+          "format": {
+            "type": "text"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "response-1",
+        "object": "response",
+        "created_at": 1800000000.25,
+        "model": "fixture-responses-001",
+        "status": "completed",
+        "output": [
+          {
+            "type": "message",
+            "id": "msg-1",
+            "role": "assistant",
+            "status": "completed",
+            "phase": "final_answer",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "Ready.",
+                "annotations": []
+              }
+            ]
+          }
+        ],
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 60,
+          "total_tokens": 160,
+          "input_tokens_details": {
+            "cached_tokens": 30,
+            "cache_write_tokens": 10
+          },
+          "output_tokens_details": {
+            "reasoning_tokens": 40
+          }
+        },
+        "error": null,
+        "incomplete_details": null,
+        "store": false,
+        "background": false,
+        "previous_response_id": null,
+        "conversation": null,
+        "metadata": {},
+        "instructions": "Frozen instructions.",
+        "parallel_tool_calls": true,
+        "max_output_tokens": 2048,
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "reasoning": {
+          "effort": "medium",
+          "summary": null,
+          "context": "all_turns",
+          "mode": "standard"
+        },
+        "text": {
+          "format": {
+            "type": "text"
+          },
+          "verbosity": "medium"
+        },
+        "truncation": "disabled",
+        "temperature": 1,
+        "top_p": 1,
+        "content_filters": [
+          {
+            "blocked": false,
+            "source_type": "prompt",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": [
+              {}
+            ]
+          },
+          {
+            "blocked": false,
+            "source_type": "completion",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          }
+        ]
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "responses: Azure negative offset",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-responses",
+      "response_models": [
+        "fixture-responses-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "reasoning": {
+        "effort": "medium"
+      },
+      "tools": [
+        {
+          "type": "function",
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "parameters": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          "strict": false
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-responses",
+        "instructions": "Frozen instructions.",
+        "input": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_output_tokens": 2048,
+        "stream": false,
+        "store": false,
+        "parallel_tool_calls": true,
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "truncation": "disabled",
+        "reasoning": {
+          "effort": "medium"
+        },
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "text": {
+          "format": {
+            "type": "text"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "response-1",
+        "object": "response",
+        "created_at": 1800000000.25,
+        "model": "fixture-responses-001",
+        "status": "completed",
+        "output": [
+          {
+            "type": "message",
+            "id": "msg-1",
+            "role": "assistant",
+            "status": "completed",
+            "phase": "final_answer",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "Ready.",
+                "annotations": []
+              }
+            ]
+          }
+        ],
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 60,
+          "total_tokens": 160,
+          "input_tokens_details": {
+            "cached_tokens": 30,
+            "cache_write_tokens": 10
+          },
+          "output_tokens_details": {
+            "reasoning_tokens": 40
+          }
+        },
+        "error": null,
+        "incomplete_details": null,
+        "store": false,
+        "background": false,
+        "previous_response_id": null,
+        "conversation": null,
+        "metadata": {},
+        "instructions": "Frozen instructions.",
+        "parallel_tool_calls": true,
+        "max_output_tokens": 2048,
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "reasoning": {
+          "effort": "medium",
+          "summary": null,
+          "context": "all_turns",
+          "mode": "standard"
+        },
+        "text": {
+          "format": {
+            "type": "text"
+          },
+          "verbosity": "medium"
+        },
+        "truncation": "disabled",
+        "temperature": 1,
+        "top_p": 1,
+        "content_filters": [
+          {
+            "blocked": false,
+            "source_type": "prompt",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": -1,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          },
+          {
+            "blocked": false,
+            "source_type": "completion",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          }
+        ]
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "responses: Azure filter error",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-responses",
+      "response_models": [
+        "fixture-responses-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "reasoning": {
+        "effort": "medium"
+      },
+      "tools": [
+        {
+          "type": "function",
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "parameters": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          "strict": false
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-responses",
+        "instructions": "Frozen instructions.",
+        "input": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_output_tokens": 2048,
+        "stream": false,
+        "store": false,
+        "parallel_tool_calls": true,
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "truncation": "disabled",
+        "reasoning": {
+          "effort": "medium"
+        },
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "text": {
+          "format": {
+            "type": "text"
+          }
+        }
+      }
+    },
+    "result": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "response-1",
+        "object": "response",
+        "created_at": 1800000000.25,
+        "model": "fixture-responses-001",
+        "status": "completed",
+        "output": [
+          {
+            "type": "message",
+            "id": "msg-1",
+            "role": "assistant",
+            "status": "completed",
+            "phase": "final_answer",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "Ready.",
+                "annotations": []
+              }
+            ]
+          }
+        ],
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 60,
+          "total_tokens": 160,
+          "input_tokens_details": {
+            "cached_tokens": 30,
+            "cache_write_tokens": 10
+          },
+          "output_tokens_details": {
+            "reasoning_tokens": 40
+          }
+        },
+        "error": null,
+        "incomplete_details": null,
+        "store": false,
+        "background": false,
+        "previous_response_id": null,
+        "conversation": null,
+        "metadata": {},
+        "instructions": "Frozen instructions.",
+        "parallel_tool_calls": true,
+        "max_output_tokens": 2048,
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "reasoning": {
+          "effort": "medium",
+          "summary": null,
+          "context": "all_turns",
+          "mode": "standard"
+        },
+        "text": {
+          "format": {
+            "type": "text"
+          },
+          "verbosity": "medium"
+        },
+        "truncation": "disabled",
+        "temperature": 1,
+        "top_p": 1,
+        "content_filters": [
+          {
+            "blocked": false,
+            "source_type": "prompt",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              },
+              "error": {}
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          },
+          {
+            "blocked": false,
+            "source_type": "completion",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          }
+        ]
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "responses: Azure request annotation",
+    "mode": "bound",
+    "policy": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request_model": "fixture-responses",
+      "response_models": [
+        "fixture-responses-001"
+      ],
+      "prompt": "Frozen instructions.",
+      "max_output_tokens": 2048,
+      "reasoning": {
+        "effort": "medium"
+      },
+      "tools": [
+        {
+          "type": "function",
+          "name": "snapshot_list",
+          "description": "List snapshots.",
+          "parameters": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          "strict": false
+        }
+      ]
+    },
+    "request": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "request": {
+        "model": "fixture-responses",
+        "instructions": "Frozen instructions.",
+        "input": [
+          {
+            "role": "user",
+            "content": "Inspect the target."
+          }
+        ],
+        "max_output_tokens": 2048,
+        "stream": false,
+        "store": false,
+        "parallel_tool_calls": true,
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "truncation": "disabled",
+        "reasoning": {
+          "effort": "medium"
+        },
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "text": {
+          "format": {
+            "type": "text"
+          }
+        },
+        "content_filters": []
+      }
+    },
+    "result": {
+      "codec_id": "openai-responses-text-tools-v1",
+      "profile_id": "fixture-responses",
+      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "receipt_id": "receipt-1",
+      "response": {
+        "id": "response-1",
+        "object": "response",
+        "created_at": 1800000000.25,
+        "model": "fixture-responses-001",
+        "status": "completed",
+        "output": [
+          {
+            "type": "message",
+            "id": "msg-1",
+            "role": "assistant",
+            "status": "completed",
+            "phase": "final_answer",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "Ready.",
+                "annotations": []
+              }
+            ]
+          }
+        ],
+        "usage": {
+          "input_tokens": 100,
+          "output_tokens": 60,
+          "total_tokens": 160,
+          "input_tokens_details": {
+            "cached_tokens": 30,
+            "cache_write_tokens": 10
+          },
+          "output_tokens_details": {
+            "reasoning_tokens": 40
+          }
+        },
+        "error": null,
+        "incomplete_details": null,
+        "store": false,
+        "background": false,
+        "previous_response_id": null,
+        "conversation": null,
+        "metadata": {},
+        "instructions": "Frozen instructions.",
+        "parallel_tool_calls": true,
+        "max_output_tokens": 2048,
+        "tools": [
+          {
+            "type": "function",
+            "name": "snapshot_list",
+            "description": "List snapshots.",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "strict": false
+          }
+        ],
+        "tool_choice": "auto",
+        "reasoning": {
+          "effort": "medium",
+          "summary": null,
+          "context": "all_turns",
+          "mode": "standard"
+        },
+        "text": {
+          "format": {
+            "type": "text"
+          },
+          "verbosity": "medium"
+        },
+        "truncation": "disabled",
+        "temperature": 1,
+        "top_p": 1,
+        "content_filters": [
+          {
+            "blocked": false,
+            "source_type": "prompt",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          },
+          {
+            "blocked": false,
+            "source_type": "completion",
+            "content_filter_results": {
+              "hate": {
+                "filtered": false,
+                "severity": "safe"
+              },
+              "jailbreak": {
+                "filtered": false,
+                "detected": false
+              }
+            },
+            "content_filter_offsets": {
+              "check_offset": 0,
+              "start_offset": 0,
+              "end_offset": 0
+            },
+            "content_filter_raw": []
+          }
+        ]
+      }
+    },
+    "valid": false
+  },
+  {
     "name": "responses: parallel call batch",
     "mode": "bound",
     "policy": {

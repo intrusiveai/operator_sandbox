@@ -41,6 +41,9 @@
           },
           "logprobs": {
             "type": "null"
+          },
+          "content_filter_results": {
+            "$ref": "urn:operator:schema:openai-chat-common:v1alpha1#/$defs/azure_filter_results"
           }
         },
         "required": [
@@ -51,6 +54,43 @@
       },
       "minItems": 1,
       "maxItems": 1
+    },
+    "prompt_filter_results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "prompt_index": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "content_filter_results": {
+            "$ref": "urn:operator:schema:openai-chat-common:v1alpha1#/$defs/azure_filter_results"
+          }
+        },
+        "required": [
+          "prompt_index",
+          "content_filter_results"
+        ]
+      },
+      "minItems": 0,
+      "maxItems": 4096
+    },
+    "routing": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "serving_pipereplica": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      },
+      "required": [
+        "serving_pipereplica"
+      ]
     },
     "usage": {
       "anyOf": [

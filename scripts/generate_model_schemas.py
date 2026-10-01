@@ -26,6 +26,13 @@ def array(items, minimum=0, maximum=1024):
     return dict(type='array',items=items,minItems=minimum,maxItems=maximum)
 
 
+def azure_filter_results():
+    severity = obj(dict(filtered={'type':'boolean'},severity={'enum':['safe','low','medium','high']}))
+    detection = obj(dict(filtered={'type':'boolean'},detected={'type':'boolean'}))
+    return obj(dict(**{k:severity for k in ('hate','self_harm','sexual','violence')},
+                    **{k:detection for k in ('jailbreak','indirect_attack','protected_material_text','protected_material_code','profanity')}),[])
+
+
 def documents():
     name = dict(type='string',minLength=1,maxLength=64,pattern='^[A-Za-z0-9_-]+$',**{'not':{'pattern':'[\\r\\n]'}})
     opaque = {'$ref':WIRE+'id'}
@@ -42,7 +49,10 @@ def documents():
         obj(dict(role={'enum':['system','developer','user']},content=text())),
         assistant,
         obj(dict(role={'const':'tool'},tool_call_id=opaque,content=text()))]}
-    usage = obj(dict(prompt_tokens=integer(),completion_tokens=integer(),total_tokens=integer(),
+    latency = obj({k:dict(type='number',minimum=0,maximum=MAX) for k in
+        ('engine_tbt_ms','engine_ttft_ms','engine_ttlt_ms','pre_inference_ms',
+         'service_tbt_ms','service_ttft_ms','service_ttlt_ms','user_visible_ttft_ms')},[])
+    usage = obj(dict(latency_checkpoint=latency,prompt_tokens=integer(),completion_tokens=integer(),total_tokens=integer(),
                      prompt_tokens_details=nullable(obj(dict(cached_tokens=integer(),audio_tokens={'const':0}),[])),
                      completion_tokens_details=nullable(obj(dict(reasoning_tokens=integer(),audio_tokens={'const':0},
                          accepted_prediction_tokens={'const':0},rejected_prediction_tokens={'const':0}),[]))),
@@ -54,8 +64,11 @@ def documents():
                        tool_choice={'enum':['auto','none','required']}))
     response = obj(dict(id=opaque,object={'const':'chat.completion'},created=integer(),model=ref('model'),
                         choices=array(obj(dict(index={'const':0},message=ref('response_assistant'),
-                            finish_reason={'enum':['stop','tool_calls','length','content_filter']},logprobs={'type':'null'}),
+                            finish_reason={'enum':['stop','tool_calls','length','content_filter']},logprobs={'type':'null'},
+                            content_filter_results=ref('azure_filter_results')),
                             ['index','message','finish_reason']),1,1),
+                        prompt_filter_results=array(obj(dict(prompt_index=integer(),content_filter_results=ref('azure_filter_results'))),0,4096),
+                        routing=obj(dict(serving_pipereplica=text(256,1))),
                         usage=nullable(ref('usage')),system_fingerprint=nullable(text(256)),
                         service_tier=nullable({'enum':['auto','default','flex','scale','priority']})),
                    ['id','object','created','model','choices'])
@@ -63,7 +76,7 @@ def documents():
     settings = obj(dict(instruction_role={'enum':['system','developer']},max_completion_tokens=integer(1),
                         response_models=dict(array(ref('model'),1,32),uniqueItems=True),tools_digest={'$ref':WIRE+'digest'}))
     result = {
-        'openai-chat-common':{'$defs':dict(call=call,tool=tool,message=message,response_assistant=response_assistant,usage=usage,model=model,settings=settings)},
+        'openai-chat-common':{'$defs':dict(azure_filter_results=azure_filter_results(),call=call,tool=tool,message=message,response_assistant=response_assistant,usage=usage,model=model,settings=settings)},
         'openai-chat-request':request,
         'openai-chat-response':response,
         'engine-model-generate-request':obj(dict(binding,request={'$ref':PREFIX+'openai-chat-request:v1alpha1'})),
@@ -255,6 +268,11 @@ def responses_documents(name,model):
         temperature=nullable({'type':'number','minimum':0,'maximum':2}),top_p=nullable({'type':'number','minimum':0,'maximum':1}),
         frequency_penalty={'type':'number','const':0},presence_penalty={'type':'number','const':0},
         billing=obj(dict(payer=text(128,1))),tool_usage=tool_usage,
+        content_filters=array(obj(dict(blocked={'type':'boolean'},
+            source_type={'enum':['prompt','completion','response','pre_tool_call','post_tool_call']},
+            content_filter_results=ref('azure_filter_results'),
+            content_filter_offsets=obj(dict(check_offset=integer(),start_offset=integer(),end_offset=integer())),
+            content_filter_raw=dict(type='array',maxItems=0)),['blocked','source_type','content_filter_results']),0,4096),
         top_logprobs=nullable({'const':0}),service_tier=nullable(text(128)),user=nullable(text(256)),safety_identifier=nullable(text(256)),
         prompt_cache_key=nullable(text(512)),prompt_cache_retention=nullable({'enum':['in_memory','24h']}),
         prompt_cache_options=nullable(obj(dict(mode={'const':'implicit'},ttl={'const':'30m'},comparison_response_id={'type':'null'}),['mode','ttl'])),

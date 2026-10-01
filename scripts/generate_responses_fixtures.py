@@ -63,6 +63,35 @@ for name,mutate in [
 ]:case(name,mutate,False,base=live['result'])
 case('output schema in request',lambda p,q,r:q['request']['tools'][0].update(output_schema=None),False)
 
+def azure_metadata(p,q,r):
+    r['response']['content_filters']=[dict(blocked=False,source_type=source,
+        content_filter_results=dict(hate=dict(filtered=False,severity='safe'),jailbreak=dict(filtered=False,detected=False)),
+        content_filter_offsets=dict(check_offset=0,start_offset=0,end_offset=0),content_filter_raw=[]) for source in ('prompt','completion')]
+
+azure=case('Azure safe filtering metadata',azure_metadata)
+case('Azure safe tool response',azure_metadata,base=with_calls(),disposition='tool-calls')
+azure_calls=deepcopy(with_calls());azure_metadata(None,None,azure_calls)
+for field in ('blocked','filtered'):
+    def block(p,q,r,field=field):
+        entry=r['response']['content_filters'][1]
+        if field=='blocked':entry['blocked']=True
+        else:entry['content_filter_results']['hate']['filtered']=True
+    case('Azure '+field+' suppresses calls',block,base=azure_calls,disposition='filtered')
+    item=case('Azure '+field+' rejects continuation',block,base=azure_calls,valid=False,mode='responses-continuation')
+    item['tool_results']=[dict(tool_call_id='call-1',content='{}')]
+case('Azure detection without filtering is advisory',lambda p,q,r:r['response']['content_filters'][0]['content_filter_results']['jailbreak'].update(detected=True),base=azure_calls,disposition='tool-calls')
+for source in ('response','pre_tool_call','post_tool_call'):
+    case('Azure source '+source,lambda p,q,r,source=source:r['response']['content_filters'][0].update(source_type=source),base=azure['result'])
+for label,mutate in [
+    ('unknown source',lambda p,q,r:r['response']['content_filters'][0].update(source_type='unknown')),
+    ('nonboolean blocked',lambda p,q,r:r['response']['content_filters'][0].update(blocked=1)),
+    ('unknown category',lambda p,q,r:r['response']['content_filters'][0]['content_filter_results'].update(unknown={})),
+    ('nonempty raw filter',lambda p,q,r:r['response']['content_filters'][0].update(content_filter_raw=[{}])),
+    ('negative offset',lambda p,q,r:r['response']['content_filters'][0]['content_filter_offsets'].update(start_offset=-1)),
+    ('filter error',lambda p,q,r:r['response']['content_filters'][0]['content_filter_results'].update(error={})),
+    ('request annotation',lambda p,q,r:q['request'].update(content_filters=[])),
+]:case('Azure '+label,mutate,False,base=azure['result'])
+
 case('parallel call batch',base=with_calls([call(),call('call-2')]),disposition='tool-calls',counts=metrics(count=2))
 case('missing whole usage',lambda p,q,r:r['response'].pop('usage'),disposition='usage-unknown',counts=metrics(False))
 case('null whole usage',lambda p,q,r:r['response'].update(usage=None),disposition='usage-unknown',counts=metrics(False))

@@ -1,4 +1,5 @@
 """Pinned native Chat Completions subset; no provider I/O or dispatch authority."""
+from .model_azure import filtered as azure_filtered
 from .validation import ORDINARY_LIMIT, ContractError, decode
 from .startup import require
 from .canonical import _canonical_value, _object_digest, raw_digest
@@ -132,6 +133,7 @@ def validate_model_exchange(protocol, policy_raw, request_raw, result_raw):
 
 def disposition(response):
     if response.get('usage') is None: return 'usage-unknown'
+    if azure_filtered(response):return 'filtered'
     choice = response['choices'][0]
     if choice['finish_reason']=='length': return 'truncated'
     if choice['finish_reason']=='content_filter': return 'filtered'

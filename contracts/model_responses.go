@@ -222,6 +222,9 @@ func responsesDisposition(response map[string]any) string {
 	if response["usage"] == nil {
 		return "usage-unknown"
 	}
+	if azureFiltered(response) {
+		return "filtered"
+	}
 	if response["status"] != "completed" {
 		if details, ok := response["incomplete_details"].(map[string]any); ok && details["reason"] == "content_filter" {
 			return "filtered"

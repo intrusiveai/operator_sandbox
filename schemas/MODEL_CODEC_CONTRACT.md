@@ -1,6 +1,6 @@
 # Model relay and native codecs
 
-Status: typed `engine.model_generate` exchanges, Go/Python validators and 334 shared
+Status: typed `engine.model_generate` exchanges, Go/Python validators and shared
 cases are implemented for `openai-chat-text-tools-v1` and
 [`anthropic-messages-text-tools-v1`](ANTHROPIC_MODEL_CODEC_CONTRACT.md) and
 [`bedrock-converse-text-tools-v1`](BEDROCK_MODEL_CODEC_CONTRACT.md), and
@@ -90,6 +90,20 @@ explicitly; no continuation/reasoning item is silently discarded to fit this cod
 Hosted tools, custom tools, streaming chunks, additional choices, multimodal data,
 provider state and deprecated function-call execution are outside this profile.
 Adding a provider feature requires a versioned codec change and fixtures.
+
+Azure Chat responses MAY include `prompt_filter_results` (up to 4,096 entries),
+per-choice `content_filter_results`, a bounded `routing.serving_pipereplica` string,
+and the closed nonnegative `usage.latency_checkpoint` timing fields. These MUST
+remain in the native response; routing/timing metadata MUST NOT alter routing or
+token accounting. The shared safety subset accepts hate, self-harm, sexual and
+violence severity results (`safe`, `low`, `medium`, `high`), plus boolean detection
+results for jailbreak, indirect attack, protected text/code and profanity.
+Any `filtered:true` annotation MUST produce a nondispatching `filtered` outcome
+when usage is known, regardless of the finish reason. Missing usage retains the
+nondispatching `usage-unknown` outcome. `detected:true` alone is advisory.
+Unknown categories, malformed flags and unsupported filter-error payloads MUST
+fail validation. This subset follows [Azure's response annotations](https://learn.microsoft.com/en-us/rest/api/microsoft-foundry/azureopenai/chat);
+it does not claim support for all Azure filtering configurations.
 
 ## Trusted profile binding
 
@@ -188,7 +202,7 @@ not the truth of tool result text or transition receipt authority.
 
 ## Verification and publication boundary
 
-[model-codec.json](fixtures/model-codec.json) supplies 102 cases shared by Go/Python,
+[model-codec.json](fixtures/model-codec.json) supplies 117 cases shared by Go/Python,
 including native outcomes, usage uncertainty, route/profile/tool mutation rejection,
 duplicate IDs, orphan/reordered histories and complete continuation bytes. A restore
 continuation fixture carries the existing full restore result and structured skip
