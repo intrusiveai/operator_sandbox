@@ -7,7 +7,7 @@ its embedded schemas MUST match the selected source schemas.
 
 ```sh
 operatorctl contract build --source /absolute/operator_sandbox \
-  --output /absolute/new-contract-package --package-version 0.0.2
+  --output /absolute/new-contract-package --package-version 0.0.3
 ```
 
 The output MUST be a new directory. The receipt contains the exact package version
@@ -53,7 +53,7 @@ MUST NOT derive trust merely by reading an incoming `package.json`.
 
 ```sh
 operatorctl contract check --package-dir /absolute/new-contract-package \
-  --package-version 0.0.2 --package-digest sha256:<approved-package-digest>
+  --package-version 0.0.3 --package-digest sha256:<approved-package-digest>
 ```
 
 Operator's private `contract.directory`, `contract.version` and `contract.digest`
@@ -63,7 +63,7 @@ the same package identity and matching Python validator implementation.
 Building or checking a package verifies content integrity. Release `0.1.0`
 qualification still requires live provider-route qualification and complete
 host/harness conformance tests. All five native codec families are implemented; a successful build alone does not qualify a runtime
-or a provider route. The current development candidate is `0.0.2`; `release/contract-lock.json` binds
+or a provider route. The current development candidate is `0.0.3`; `release/contract-lock.json` binds
 its exact source and package digest.
 
 The [host distribution builder](HOST_DISTRIBUTION.md) reproduces the independently
