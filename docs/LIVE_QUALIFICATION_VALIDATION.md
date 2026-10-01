@@ -1,14 +1,16 @@
 # Live-qualification tooling validation
 
-**Current live results (2026-09-30):** selected local-auth probes passed for AWS
-Secrets Manager, Azure Key Vault and Google Secret Manager, including Azure/Google
-rotation and restoration. OpenAI Chat, OpenAI Responses, Anthropic Messages,
-Bedrock Converse and Vertex Gemini passed three-turn conversations. Responses and
-Vertex required the shared-contract corrections published as `0.0.2`; both host
-and harness release pins match. See the [local cloud qualification record](qualification/cloud-local-2026-09-30/README.md)
-for exact source/model/authentication combinations, failures, evidence and remaining
-gaps. The sections below record earlier validation boundaries and do not supersede
-that live record.
+**Current live results (2026-09-30):** Azure OpenAI Chat and Responses each passed
+with Azure CLI identity and with a Key Vault API key; Gemini Developer API passed
+with a Google Secret Manager key. Azure required the shared Go/Python contract
+correction published as `0.0.3`; Operator and Attack Harness release pins match.
+See the [Azure/Gemini record](qualification/azure-gemini-2026-09-30/README.md) for
+exact models, source identities, bounded call counts, initial failures and results.
+The earlier [local-cloud record](qualification/cloud-local-2026-09-30/README.md)
+records passing AWS/Azure/Google store checks, Azure/Google rotation, and OpenAI,
+Claude, Bedrock and Vertex conversations. LiteLLM, Vault, OIDC/managed identities
+and controlled live fault cases remain outstanding. The sections below preserve
+earlier validation boundaries and do not supersede these live records.
 
 **Local authentication expansion (2026-09-30):** explicit Google ADC, Vertex API
 keys, Azure CLI and Azure service-principal modes have deterministic coverage.

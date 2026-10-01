@@ -1,9 +1,11 @@
 # Setting up live qualification
 
-The [2026-09-30 local-cloud record](qualification/cloud-local-2026-09-30/README.md)
-covers AWS, Azure and Google secret stores plus five model routes, including the
-Responses/Vertex corrections in shared contract `0.0.2`. Its remaining-work list
-identifies the external resources still needed.
+The [Azure/Gemini record](qualification/azure-gemini-2026-09-30/README.md) covers
+Azure Chat/Responses with CLI and API-key authentication plus Gemini Developer API.
+The current shared contract pin is `0.0.3`. The earlier
+[local-cloud record](qualification/cloud-local-2026-09-30/README.md) covers three
+secret stores and OpenAI, Claude, Bedrock and Vertex. Their remaining-work lists
+identify unqualified routes, authentication mechanisms and fault cases.
 
 The first AWS named-profile run is documented in the
 [live result record](qualification/aws-2026-09-28/README.md), including the Bedrock
@@ -148,6 +150,13 @@ azure-client-secret plans are included.
 LiteLLM Chat and Responses are distinct qualification routes. All direct-identity
 plans (workload or local) omit `credentials_file`; the runner's selected identity
 authenticates directly. Model access is separate from secret-store read access.
+
+For Azure v1 routes, request `model` is the deployment name. Responses may echo
+that name; Chat may return the underlying model/version. The administrator MUST
+explicitly allow the expected aliases in `codec_options.response_models`.
+For Gemini, confirm current model availability in the selected key's project;
+a model listed in a template is not an availability guarantee. Match thinking
+settings to that model (`thinkingBudget` or `thinkingLevel`, never both).
 
 Set `codec_options.response_models` to exact permitted response aliases; do not
 weaken validation to accept arbitrary names. Bedrock has no response alias list:

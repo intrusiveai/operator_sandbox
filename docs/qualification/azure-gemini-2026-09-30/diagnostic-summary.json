@@ -1,0 +1,43 @@
+{
+  "source_commit": "21887d35c6f8c2291f54561f9f2411e0703c466e",
+  "diagnostic_method": "one generation per codec using a private Go overlay; retained field shapes, schema locations and HTTP status only; no raw responses",
+  "maximum_output_tokens": 1024,
+  "routes": [
+    {
+      "route": "azure-openai-chat",
+      "authentication": "secret-store",
+      "calls": 1,
+      "http_status": 200,
+      "unknown_fields": [
+        "prompt_filter_results",
+        "choices/*/content_filter_results",
+        "routing",
+        "usage/latency_checkpoint"
+      ]
+    },
+    {
+      "route": "azure-openai-responses",
+      "authentication": "secret-store",
+      "calls": 1,
+      "http_status": 200,
+      "unknown_fields": [
+        "content_filters"
+      ]
+    },
+    {
+      "route": "gemini-api",
+      "authentication": "secret-store",
+      "model": "gemini-2.5-flash-lite",
+      "calls": 1,
+      "http_status": 404,
+      "root_cause": "not_established"
+    }
+  ],
+  "model_catalog": {
+    "requests": 1,
+    "generation_calls": 0,
+    "status": "low_cost_models_listed",
+    "selected_model": "gemini-3.1-flash-lite"
+  },
+  "usage": "diagnostic usage not retained as validated evidence"
+}

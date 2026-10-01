@@ -106,8 +106,9 @@ and whitespace checks. This qualification did not require Interceptor changes.
 ## Still outstanding
 
 - Vault Agent token-sink and authenticating Proxy resources were not supplied.
-- Azure OpenAI deployments, Gemini Developer API keys and LiteLLM endpoints/keys
-  were not supplied; those routes remain unqualified.
+- Azure OpenAI and Gemini resources were supplied afterward and passed in the
+  [follow-up record](../azure-gemini-2026-09-30/README.md). LiteLLM endpoints/keys
+  remain outstanding.
 - AWS role/web-identity/environment sessions, Azure managed/workload/service-principal
   identities and Google metadata/federated identities need their corresponding
   runner configurations. No GitHub OIDC runner was exercised.
