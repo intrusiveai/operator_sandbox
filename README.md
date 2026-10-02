@@ -1,181 +1,158 @@
-# Operator Sandbox — container design
+<h1><img src="assets/operator-sandbox.png" alt="Operator Sandbox icon" width="48" height="48" align="absmiddle"> Operator Sandbox</h1>
 
-Implementation specification with shared contracts, host persistence and transport,
-and independent administrative termination.
-The campaign service, Docker launch/bootstrap worker, executable preparation/start,
-and systemd/launchd dispatch are implemented. Startup recovery verifies residual
-container identity, reclaims transient files, and performs bounded native cleanup.
-Installation and signed-release tooling are implemented; approved publication and
-external runtime qualification remain pending. See [host installation](docs/HOST_DISTRIBUTION.md).
+Operator Sandbox is an open-source platform for running security-testing campaigns
+against AI applications. You provide objectives and optional test scenarios;
+Operator runs an AI-powered [Attack Harness](https://github.com/intrusiveai/attack_harness)
+that develops experiments, submits them to the target, and uses the results to
+choose what to try next.
 
-The [shared validation foundation](contracts/README.md) now provides Go/Python
-strict JSON decoders, offline validation of the current schema catalog and shared
-conformance vectors. The [ordinary wire contract](schemas/ORDINARY_WIRE_CONTRACT.md)
-adds typed exchanges and stateless validation for 13 operations, plus spool ACKs. The [assessment contract](schemas/ASSESSMENT_CONTRACT.md)
-adds typed records, structured conclusions and completion-chain checks.
-The [startup/manifest contract](schemas/STARTUP_MANIFEST_CONTRACT.md) adds control
-messages, five-message transcript checks and bounded input/skill inventories.
-The [input-content contract](schemas/ENGINE_INPUT_CONTRACT.md) adds immutable
-EngineContext, prompt composition/provenance and launch input-byte validation.
-The [canonical identity contract](schemas/CANONICAL_IDENTITY_CONTRACT.md) adds
-matching Go/Python canonical JSON, launch digest and artifact-content checks.
-The [package integrity contract](schemas/PACKAGE_INTEGRITY_CONTRACT.md) adds manifest
-construction, exact payload verification and loading against a trusted package pin.
-The [transport codec contract](schemas/TRANSPORT_CODEC_CONTRACT.md) adds bounded
-FIFO framing, spool names, lane sequence tracking and consumption ACK checks.
-The [attempt bookkeeping contract](schemas/ATTEMPT_BOOKKEEPING_CONTRACT.md) adds
-campaign attempt allocation, duplicate/admission tracking and unknown-outcome closure.
-The [harness loop accounting contract](schemas/HARNESS_LOOP_ACCOUNTING_CONTRACT.md)
-adds finite-loop limits, read reservations, progress tracking and bounded finalization.
-The [model codec contract](schemas/MODEL_CODEC_CONTRACT.md) adds typed model relay
-exchanges, a pinned Chat Completions subset and correlated tool continuation checks.
-The [host persistence foundation](docs/CAMPAIGN_PERSISTENCE.md) adds immutable run
-manifests, exact Docker bindings, durable campaign journals and recovery inspection.
-The [durable attempt layer](docs/DURABLE_ATTEMPT_ADMISSION.md) connects submission,
-admission and result bookkeeping to that journal, reserves future audit capacity,
-and exposes a terminal signal independent of the writer lock.
-The [host transport layer](docs/HOST_TRANSPORT.md) adds physical FIFO/spool I/O,
-bounded queues, startup/transfer/operation deadlines, spool size checks and cleanup
-after confirmed container exit.
-The [Docker termination stage](docs/DOCKER_TERMINATION.md) adds the initial
-`operatorctl campaign terminate` command, exact daemon/container verification,
-a terminal-fence observer and bounded emergency evidence independent of the journal.
-The [image preparation stage](docs/IMAGE_PREPARATION.md) resolves native local
-image IDs, validates fixed-origin HTTPS release records and supports private cached
-approval with current compatibility checks.
-The [host configuration stage](docs/HOST_CONFIGURATION.md) adds strict private YAML
-loading, OS-specific local Docker/state defaults, `operatorctl config check` and
-configuration-aware termination with explicit recovery overrides.
-The [installed contract loader](docs/INSTALLED_CONTRACT.md) verifies a bounded
-filesystem inventory against an independent package pin, compiles the verified
-schemas offline and provides `operatorctl contract check`.
-The [immutable input staging layer](docs/INPUT_STAGING.md) copies exact campaign
-input/skill inventories into service-owned read-only trees, checks their bytes and
-layout, and provides verification and cleanup before Docker integration.
-The [native Interceptor client](docs/INTERCEPTOR_CLIENT.md) adds fixed-loopback
-attachment/status, exact v1alpha2 request encoding and closure confirmation,
-with bounded responses and explicit transport uncertainty. It also prepares
-restore/stop lifecycle requests, validates replacement bindings and decodes the
-separate lifecycle/native operation records for reconciliation without automatic
-replay. Snapshot helpers carry the remaining campaign byte allowance, verify native
-checkpoint integrity and provide bounded inventory pages and scoped inspection.
-Evidence download helpers stream into private temporary files, enforce configured
-archive limits and verify transfer length/digest before native archive validation.
-Archive inspection checks native member names, framing, regular-file/size limits
-and blob digests without extracting files. Native provenance checks and retained
-campaign export collection are implemented by the [evidence service](docs/EVIDENCE_SERVICE.md).
-The [capability admission layer](docs/CAPABILITY_ADMISSION.md) verifies native
-capability hashes and delivery contracts, projects/imports public exports, and
-checks bundle dependencies against live bindings and explicit host policy. It
-retains authoring/live provenance, optional gaps and separate native/effective
-feedback profiles.
-The [durable native executor](docs/NATIVE_EXECUTION.md) connects admitted steps to
-per-step journal reservations, pinned live target/Docker checks, one-time dispatch,
-terminal cancellation and reporting-only reconciliation.
-The [typed attempt adapter](docs/TYPED_ATTEMPT_ADAPTER.md) resolves concrete host
-scopes, validates artifact bytes/lineage/input contracts, compiles deterministic
-native commands and executes them through that journal with typed receipt checks.
-The [feedback projection](docs/FEEDBACK_PROJECTION.md) preserves native/effective
-profiles, filters permitted observations and provides bounded receipt-scoped reads.
-The [durable receipts](docs/DURABLE_RECEIPTS.md) and [attempt broker](docs/ATTEMPT_BROKER.md)
-retain feedback before reply, dispatch typed attempts and retained-injection cleanup,
-and enforce cumulative receipt-read budgets across restores.
-The [campaign preparation](docs/CAMPAIGN_PREPARATION.md) and
-[service foundation](docs/CAMPAIGN_SERVICE.md) add private target profiles, frozen
-inputs, verified startup admission, live source callbacks, physical spool dispatch
-and independent termination with bounded post-closure cleanup.
-The [snapshot service](docs/SNAPSHOT_SERVICE.md) adds cumulative checkpoint accounting,
-discovery and verified restore on the same harness and transport.
-The [implementation phase handoff](docs/IMPLEMENTATION_STATUS.md) describes these
-completed foundations, including artifact/model/completion service routes.
-The [host launch worker](docs/HOST_LAUNCH.md) adds fixed Docker policy, live bootstrap,
-host power/event lifetime and confirmed container/transport cleanup.
-Late collection is available through `operatorctl campaign evidence collect --campaign ID`.
-See [late evidence collection](docs/LATE_EVIDENCE.md) for saved-policy limits,
-explicit retries, per-session outcomes and retained archive reuse.
-Administrator-exported native archives can be adopted with
-`operatorctl campaign evidence import`; see [offline import](docs/EVIDENCE_IMPORT.md).
-`operatorctl report` and `operatorctl export` produce immutable local summaries
-and portable evidence copies. See [reporting/export](docs/REPORTING.md) for
-generation identities, visibility, coverage and incomplete-evidence semantics.
+Operator manages the campaign: it controls access to the target and model provider,
+enforces limits, and keeps journals, evidence, and reports for review. It supports
+prompt-injection testing through [Interceptor Sandbox](https://github.com/intrusiveai/interceptor_sandbox)
+and testing HTTP-accessible applications through a configured HTTPS adapter.
 
-Run `make setup` then `make test`. See [startup recovery](docs/STARTUP_RECOVERY.md)
-for cleanup and uncertainty rules, including native attach failures before a
-campaign journal exists. Administrator workflows and the
-[declarative HTTPS target adapter](docs/HTTPS_TARGETS.md) are implemented.
-The [Go/Python process integration suite](docs/PROCESS_INTEGRATION.md) covers both
-transports through campaign completion and interruption. Installation/update and
-release build/signing tools are implemented. Approved publication and external
-qualification remain outstanding; see
-[current implementation status](docs/IMPLEMENTATION_STATUS.md).
-[Campaign retirement and purge](docs/PURGE.md) now provide
-`operatorctl purge --campaign ID` and `operatorctl purge --all`, with locked
-preflight, service retirement and retryable partial deletion.
-Attack Harness tracks its implemented runtime and remaining qualification gates
-in its own repository.
+## How it works
 
-Operator accepts structured objectives and optional scenarios from users or external
-generators, runs a custom Python harness in a network-disabled container, brokers
-its permitted operations, and retains host journals, evidence and local reports.
+1. **Connect a target.** Use Interceptor Sandbox on the same host, or configure an
+   HTTPS target. A target profile defines the permitted interactions, and a
+   capability export describes what the target supports.
+2. **Describe the campaign.** Submit a JSON bundle containing objectives, optional
+   scenarios, and any supporting artifacts. You can write bundles yourself or
+   generate them with an external tool.
+3. **Run experiments.** Operator starts Attack Harness in a network-disabled
+   Docker container. The harness requests model calls and target operations
+   through Operator's defined tools. Operator applies the configured limits and
+   feedback permissions before returning results.
+4. **Review the evidence.** Operator records activity and retains campaign results.
+   Reports distinguish recorded observations, harness conclusions, and evidence
+   gaps so you can assess what the tests actually demonstrated.
 
-- [Objectives and scenarios submission](schemas/SCENARIO_BUNDLE_CONTRACT.md): public
-  input fields, validation, immutable staging and user-authored examples.
-- [Public capability export](schemas/CAPABILITY_EXPORT_CONTRACT.md): copyable typed
-  references, compatibility-based admission, optional exact pins and tested fixtures.
-- [Accepted shared host/harness contract](schemas/SHARED_CONTRACT.md): authoritative wire, startup,
-  manifest and completion rules; shared fixtures pass, while package publication and
-  native runtime qualification remain outstanding.
-- [Product specification](OPERATOR_SANDBOX_SPEC.md): requirements, interfaces,
-  lifecycle, journaling and acceptance criteria.
-- [Container guest contract](GUEST_CONTAINER_SPEC.md): Python image ABI,
-  filesystem, Linux FIFO/macOS spool transport and startup restrictions.
-- [Attack Harness specification](../attack_harness/GUEST_ARTIFACT_LAYOUT_SPEC.md):
-  companion Python harness and container image design.
+With Interceptor, the harness can create, list, and restore target snapshots to
+compare experiments while retaining its campaign context. Custom skills can add
+campaign guidance. Available operations depend on the selected target adapter.
 
-Interceptor provides the
-[local MVP integration contract](../interceptor_sandbox/docs/local-api.md);
-Operator and Attack Harness runtimes build on the shared-contract foundation;
-deterministic process integration is covered; real target and native host
-qualification remain outstanding.
+## Getting started
 
-## Docker MVP deployment
+The intended host platforms are **Linux and macOS on x86_64 and ARM64/AArch64**.
+Use Docker Engine on Linux or Docker Desktop on macOS.
 
-Administrators install the matching Linux Attack Harness image in local Docker Engine (Linux)
-or Docker Desktop (macOS) and configure
-Operator's `engine.image`. Operator resolves the full local Docker image ID and
-checks/caches the
-[HTTPS release compatibility record](schemas/ENGINE_RELEASE_CONTRACT.md) before launch.
-Linux hosts use private named FIFOs; macOS hosts use regular-file spools for
-ordinary/control traffic. Input/skill/manifests stay read-only. Host support targets
-x86_64 and ARM64/AArch64 on both OSes. Journaling remains mandatory; administrative
-termination calls Docker directly without campaign-worker cooperation. Runtime
-qualification is pending.
+**Development status:** core implementation and deterministic integration tests
+are in place, and selected live model-provider tests have passed. Full native
+runtime qualification and approved release publication remain pending. See
+[implementation status](docs/IMPLEMENTATION_STATUS.md) and
+[live qualification results](docs/LIVE_QUALIFICATION_VALIDATION.md) for details.
 
-See [host runtime profiles](HOST_RUNTIME_PROFILES.md) for the support matrix and remaining qualification gates.
+### 1. Set up Operator
 
-The MVP uses Docker mounts/permissions and two-stage seccomp. Additional filesystem
-policy and separate user-namespace remapping are optional. Confirmed supported
-OS/Docker versions are informational; startup checks required runtime capabilities.
+Follow the [installation guide](docs/HOST_DISTRIBUTION.md) to install `operatorctl`
+and its matching shared-contract package. For source builds and checks, see
+[Development](#development) below.
 
-Retained injections can be explicitly removed through the
-[typed cleanup contract](schemas/INJECTION_CLEANUP_CONTRACT.md), including after a
-healthy restore, without rolling back the target. The host broker and initial
-service route and healthy campaign restore coordination are implemented.
+Prepare the following configuration:
 
-[Administrator workflows](docs/ADMIN_WORKFLOWS.md) define combined `run`,
-read-only `inspect` and installation `doctor` commands.
+- **Harness image:** install a matching Attack Harness image in local Docker and
+  select it with `engine.image`. Operator uses the local image and validates its
+  release compatibility record before launch; it does not pull images for you.
+- **Model access:** choose a [model-provider profile](docs/MODEL_PROVIDERS.md) and
+  configure [host authentication](docs/HOST_AUTHENTICATION.md). Credentials stay
+  on the host.
+- **Target:** configure [Interceptor integration](docs/CAMPAIGN_PREPARATION.md) or
+  a [declarative HTTPS target](docs/HTTPS_TARGETS.md).
 
-## Live service qualification
+The installation creates a private configuration file. Its default location is
+`/etc/operator/config.yaml` on Linux and
+`~/Library/Application Support/Operator/config/config.yaml` on macOS. See the
+[configuration guide](docs/HOST_CONFIGURATION.md) and
+[example configuration](examples/operator-config.yaml) for available settings.
+The example is a starting point; campaign execution also needs the installed
+contract and model/target profile selections.
 
-`operatorctl qualify --plan FILE` performs offline preflight. Add
-`--live --output NEW_FILE` to run bounded service probes with sanitized evidence.
-See [setup instructions](docs/LIVE_QUALIFICATION_SETUP.md) for the four secret stores
-and all provider routes. Live infrastructure qualification remains pending.
+Check the configured installation:
 
-## Foreground execution and cloud identity
+```sh
+operatorctl config check
+operatorctl doctor
+```
 
-`operatorctl campaign start` and `operatorctl run` execute in the foreground by
-default. Use `--service` for optional independent service execution. Both modes
-use the same durable campaign worker and never resume interrupted campaigns.
-See [host authentication](docs/HOST_AUTHENTICATION.md) for aligned Operator/Interceptor
-selectors, GitHub OIDC, and explicit environment API keys.
+Use `--config /absolute/path/config.yaml` to select another configuration file.
+`doctor` checks installation prerequisites; it does not run a campaign or test
+live model credentials.
+
+### 2. Prepare a campaign
+
+Create an Operator environment directory containing `target-profile.json`,
+`capabilities.json`, and the capability export's native companion file. The
+[submission guide](docs/SUBMISSION.md#administrator-target-selectors-and-capability-export)
+explains how to export capabilities and assemble this directory. It is separate
+from an Interceptor environment blueprint.
+
+Write `scenario-bundle.json` using the
+[objectives and scenarios format](schemas/SCENARIO_BUNDLE_CONTRACT.md). Start from
+an [objectives-only example](schemas/fixtures/scenario-bundle-objectives-only.json)
+or a [scenario-guided example](schemas/fixtures/scenario-bundle-scenarios.json),
+then replace the example target and capability references with your own export.
+
+### 3. Run and inspect
+
+With the configuration, target, and inputs prepared:
+
+```sh
+mkdir -p runs
+operatorctl run --bundle ./scenario-bundle.json \
+  --environment ./environment --output ./runs/example
+```
+
+This validates the submission and runs the campaign in the foreground. Add
+`--artifacts ./bundle-artifacts` if the bundle references supporting files.
+Use a new output directory for a new submission. Optional `--service` execution
+is described in [administrator workflows](docs/ADMIN_WORKFLOWS.md).
+
+Inspect the campaign, generate a report, or export its retained evidence:
+
+```sh
+operatorctl inspect --run ./runs/example
+operatorctl report --run ./runs/example
+mkdir -p exports
+operatorctl export --run ./runs/example --output ./exports/example
+```
+
+Inspection is read-only. Generate reports and exports after execution closes.
+To stop a campaign from another terminal, use its ID from the run receipt or
+inspection output:
+
+```sh
+operatorctl campaign terminate --campaign CAMPAIGN_ID
+```
+
+Interrupted campaigns do not resume automatically. Retained evidence remains
+available for reporting and administrative cleanup.
+
+## Learn more
+
+- [Campaign start and lifecycle](docs/CAMPAIGN_START.md)
+- [Custom skills](docs/SKILLS.md)
+- [Reports and evidence exports](docs/REPORTING.md)
+- [Retained-data cleanup](docs/PURGE.md)
+- [Host runtime requirements](HOST_RUNTIME_PROFILES.md)
+- [Product specification](OPERATOR_SANDBOX_SPEC.md) and
+  [shared Operator–Attack Harness contract](schemas/SHARED_CONTRACT.md)
+
+## Development
+
+Use Go 1.26.5 and Python 3.12 or later. From this repository:
+
+```sh
+make setup
+make test
+go build -o build/operatorctl ./cmd/operatorctl
+```
+
+This builds a development CLI. A runnable campaign installation additionally
+requires the matching contract package, harness image, release compatibility
+metadata, and host configuration described above. See
+[release tooling](docs/HOST_DISTRIBUTION.md#reproducible-candidates-and-publication)
+for reproducible installation candidates.
+
+## License
+
+Operator Sandbox is licensed under the [GNU AGPL 3.0](LICENSE).
