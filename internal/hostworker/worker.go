@@ -149,15 +149,19 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 		// Existing monitors fence when the guest closes its transport/exits. Only
 		// an accepted stop plus an independently verified zero exit can classify
 		// that shutdown as normal; unrelated faults and cancellation remain errors.
-		if service != nil && normalStopCause(ctx, service.StopAccepted(), runErr) && c.Docker.Completed(context.Background(), result.Binding) {
-			runErr = nil
-		}
+		normalStop := service != nil && normalStopCause(ctx, service.StopAccepted(), runErr)
 		fence.Stop(runErr)
 		cancel()
 		if service != nil {
 			// The service already bounds native cleanup/evidence independently. Waiting
 			// does not delay its parallel Docker kill or release the power assertion early.
 			result.Terminal, result.Termination, err = service.Wait(context.Background())
+			// Transport closure can precede the guest's final exit. Verify the
+			// zero exit only after bounded shutdown confirms the stopped container,
+			// and before removal makes the exit status unavailable.
+			if normalStop && err == nil && c.Docker.Completed(context.Background(), result.Binding) {
+				runErr = nil
+			}
 			runErr = errors.Join(runErr, err)
 			result.StopAccepted = service.StopAccepted()
 		} else if result.Binding.DockerContainerID != "" {

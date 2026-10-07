@@ -90,7 +90,11 @@ func (d *workerDocker) Terminate(context.Context, campaign.DockerBinding) docker
 
 func (d *workerDocker) RemoveStopped(context.Context, campaign.DockerBinding) error { return nil }
 func (d *workerDocker) Completed(context.Context, campaign.DockerBinding) bool {
-	return d.mode == "requested stop"
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	// A successful guest's transport closes before its final exit. Completion
+	// must not be checked until terminal shutdown has confirmed that exit.
+	return d.mode == "requested stop" && d.kills > 0
 }
 
 type workerPower struct {
