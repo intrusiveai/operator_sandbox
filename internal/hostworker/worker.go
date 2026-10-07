@@ -31,6 +31,7 @@ type Docker interface {
 	StartCreated(context.Context, string, campaign.DockerBinding, *dockercontrol.LaunchPlan) error
 	WatchEvents(context.Context, campaign.DockerBinding, time.Time) error
 	RemoveStopped(context.Context, campaign.DockerBinding) error
+	Completed(context.Context, campaign.DockerBinding) bool
 }
 
 type Config struct {
@@ -145,6 +146,12 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 	var startPending atomic.Bool
 	terminalReserved := false
 	defer func() {
+		// Existing monitors fence when the guest closes its transport/exits. Only
+		// an accepted stop plus an independently verified zero exit can classify
+		// that shutdown as normal; unrelated faults and cancellation remain errors.
+		if service != nil && normalStopCause(ctx, service.StopAccepted(), runErr) && c.Docker.Completed(context.Background(), result.Binding) {
+			runErr = nil
+		}
 		fence.Stop(runErr)
 		cancel()
 		if service != nil {
@@ -186,6 +193,10 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 			}
 		}
 		runErr = errors.Join(runErr, w.plan.Discard())
+		runErr = errors.Join(runErr, ctx.Err())
+		if runErr == nil && !completedResult(result) {
+			runErr = ErrWorker
+		}
 		raw, _ := json.Marshal(result)
 		entry := campaign.Entry{RunRevision: writer.Revision(), Kind: "launch.terminal", Metadata: json.RawMessage(`{"execution_admission":"closed"}`), Content: []campaign.Content{{Role: "launch-result", MediaType: "application/json", Bytes: raw}}}
 		var recordErr error
@@ -320,6 +331,22 @@ type guardedRuntime struct {
 	Docker
 	power        *hostlifetime.Manager
 	startPending *atomic.Bool
+}
+
+func normalStopCause(ctx context.Context, accepted bool, err error) bool {
+	return ctx.Err() == nil && accepted && (errors.Is(err, dockercontrol.ErrEvents) ||
+		errors.Is(err, dockercontrol.ErrNotRunning) || errors.Is(err, transport.ErrClosed) ||
+		errors.Is(err, campaignservice.ErrService))
+}
+
+func completedResult(r Result) bool {
+	return r.StopAccepted && r.Termination.Outcome.Confirmed && !r.Termination.Outcome.KillAttempted &&
+		r.Termination.Outcome.State == "exited" && r.ContainerCleanup == "removed" &&
+		r.TransportCleanup == "removed" && r.InputCleanup == "removed" &&
+		(r.Terminal.Closure == "confirmed" || r.Terminal.Closure == "not-applicable") &&
+		(r.Terminal.CleanupState == "complete" || r.Terminal.CleanupState == "not-needed") &&
+		r.Terminal.CleanupRemaining == 0 &&
+		(r.Terminal.TargetStop == "confirmed" || r.Terminal.TargetStop == "not-applicable" || r.Terminal.TargetStop == "not-permitted")
 }
 
 func (r guardedRuntime) CheckRunning(ctx context.Context, b campaign.DockerBinding) error {

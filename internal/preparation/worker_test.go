@@ -89,6 +89,9 @@ func (d *workerDocker) Terminate(context.Context, campaign.DockerBinding) docker
 }
 
 func (d *workerDocker) RemoveStopped(context.Context, campaign.DockerBinding) error { return nil }
+func (d *workerDocker) Completed(context.Context, campaign.DockerBinding) bool {
+	return d.mode == "requested stop"
+}
 
 type workerPower struct {
 	closed     bool
@@ -240,7 +243,7 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 			case <-ctx.Done():
 				t.Fatal("worker did not finalize", ctx.Err())
 			}
-			if runErr == nil || docker.creates != 1 {
+			if (runErr == nil) != (mode == "requested stop") || docker.creates != 1 {
 				t.Fatal("missing terminal result", runErr, docker.creates)
 			}
 			if _, err = worker.Run(ctx); err == nil || docker.creates != 1 {

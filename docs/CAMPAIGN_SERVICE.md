@@ -1,5 +1,13 @@
 # Campaign service foundation
 
+An accepted Harness stop MUST NOT by itself mean successful host execution. The
+worker MUST independently verify the exact guest exited zero before removal, then
+confirm container, transport, input, target and injection cleanup. Only that normal
+shutdown MAY produce a successful worker completion. Cancellation, unrelated
+faults, forced termination, nonzero/unknown guest exits and unconfirmed cleanup
+MUST remain unsuccessful. This execution result MUST NOT imply an attack succeeded
+or that every scenario was exercised; reports retain those facts separately.
+
 Status: implemented in `internal/campaignservice`, with integration tests in
 `internal/preparation`. This host library connects frozen preparation, ordinary
 attempt/feedback/cleanup dispatch, transport and terminal handling. [Campaign start CLI](CAMPAIGN_START.md) and

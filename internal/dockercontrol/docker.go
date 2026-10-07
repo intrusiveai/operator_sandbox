@@ -24,6 +24,8 @@ import (
 const ConfirmationTimeout = 5 * time.Second
 const outputLimit = 64 << 10
 
+var ErrNotRunning = errors.New("Docker container is not running under the pinned lifecycle policy")
+
 type Outcome = campaign.TerminationOutcome
 
 type command func(context.Context, string, ...string) ([]byte, error)
@@ -244,7 +246,7 @@ func (c *Client) CheckRunning(ctx context.Context, b campaign.DockerBinding) err
 		return fmt.Errorf("Docker identity check failed: %s", code)
 	}
 	if !item.Running || item.Paused || item.Restarting || item.Status != "running" || item.RestartPolicy != "no" || item.AutoRemove {
-		return errors.New("Docker container is not running under the pinned lifecycle policy")
+		return ErrNotRunning
 	}
 	if code = c.daemon(ctx, b); code != "" {
 		return fmt.Errorf("Docker identity check failed: %s", code)
