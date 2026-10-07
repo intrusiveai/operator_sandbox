@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -47,6 +48,16 @@ func New(ctx context.Context, profile *Profile, resolver Resolver) (*Client, err
 		return nil, ErrProfile
 	}
 	c := &Client{profile: s, resolver: resolver, http: boundedHTTP()}
+	if s.CACertificatesPEM != "" {
+		roots, err := x509.SystemCertPool()
+		if err != nil {
+			roots = x509.NewCertPool()
+		}
+		if !roots.AppendCertsFromPEM([]byte(s.CACertificatesPEM)) {
+			return nil, ErrProfile
+		}
+		c.http.Transport.(*http.Transport).TLSClientConfig.RootCAs = roots
+	}
 	if s.Provider == "bedrock-converse" {
 		cfg, err := credentials.AWSIdentityConfig(ctx, s.Region, s.AWSProfile, s.Authentication)
 		if err != nil {

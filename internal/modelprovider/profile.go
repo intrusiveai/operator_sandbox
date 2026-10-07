@@ -6,6 +6,7 @@ package modelprovider
 
 import (
 	"bytes"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"net/url"
@@ -36,6 +37,7 @@ type Settings struct {
 	Codec                   string          `json:"codec_id"`
 	Model                   string          `json:"model"`
 	Endpoint                string          `json:"endpoint,omitempty"`
+	CACertificatesPEM       string          `json:"ca_certificates_pem,omitempty"`
 	Region                  string          `json:"region,omitempty"`
 	APIVersionHeader        string          `json:"anthropic_version,omitempty"`
 	Authentication          string          `json:"authentication"`
@@ -92,6 +94,9 @@ func Parse(raw []byte) (*Profile, error) {
 		}
 	}
 	if !supported || s.MaximumPromptTokens < 1 || s.MaximumCompletionTokens < 1 || s.MaximumPromptTokens > contracts.MaxSafeInteger/2 || s.MaximumCompletionTokens > contracts.MaxSafeInteger/2 || s.MaximumResponseBytes < 1 || s.MaximumResponseBytes > contracts.OrdinaryLimit {
+		return nil, ErrProfile
+	}
+	if s.CACertificatesPEM != "" && !x509.NewCertPool().AppendCertsFromPEM([]byte(s.CACertificatesPEM)) {
 		return nil, ErrProfile
 	}
 	if s.Authentication == "api-key" {

@@ -1,5 +1,12 @@
 # Host native model-provider transports
 
+A host-private model profile MAY include `ca_certificates_pem` for a private TLS
+provider or local test broker. Valid PEM certificates extend system trust only for
+that profile; HTTPS, hostname and certificate verification MUST remain enabled.
+Malformed trust data MUST fail profile loading. The exact certificate bytes MUST
+be bound to the private profile digest and MUST NOT enter Harness inputs or public
+model profiles. Omitting this field preserves the normal system-trust behavior.
+
 The private `model.profile_file` selected by host configuration MUST describe one
 fixed provider route. Its canonical SHA-256 identity binds the public model policy;
 its endpoint and credential configuration MUST NOT enter guest files or campaign
