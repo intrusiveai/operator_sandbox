@@ -7,9 +7,25 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/campaignservice"
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 )
+
+func TestWorkerStopCauseSurvivesInternalCancellation(t *testing.T) {
+	life, cancel := context.WithCancel(context.Background())
+	cancel()
+	for _, cause := range []error{dockercontrol.ErrEvents, dockercontrol.ErrNotRunning, errors.New("journal failure")} {
+		fence := campaign.NewFence()
+		fence.Stop(cause)
+		if got := stopCause(life, fence); got != cause {
+			t.Fatal("original stop cause lost", got, cause)
+		}
+	}
+	if got := stopCause(life, campaign.NewFence()); got != context.Canceled {
+		t.Fatal("external cancellation lost", got)
+	}
+}
 
 func TestNormalStopDoesNotHideCancellationOrUnrelatedFault(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())

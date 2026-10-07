@@ -313,7 +313,7 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 		case <-fence.Done():
 			return result, fence.Err()
 		case <-life.Done():
-			return result, life.Err()
+			return result, stopCause(life, fence)
 		case <-ticker.C:
 			if _, ok := c.Channel.Receive("control-out"); ok {
 				return result, ErrWorker
@@ -335,6 +335,16 @@ type guardedRuntime struct {
 	Docker
 	power        *hostlifetime.Manager
 	startPending *atomic.Bool
+}
+
+// Fence shutdown cancels the local context too. Retain its original cause
+// whichever select arm wins, instead of replacing a verified natural stop
+// (or a real fault) with generic internal cancellation.
+func stopCause(life context.Context, fence *campaign.Fence) error {
+	if err := fence.Err(); err != nil {
+		return err
+	}
+	return life.Err()
 }
 
 func normalStopCause(ctx context.Context, accepted bool, err error) bool {
