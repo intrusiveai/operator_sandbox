@@ -1,13 +1,31 @@
 name: verify-host-candidates
 on:
   pull_request:
+    types: [opened, synchronize, reopened, closed]
   push:
-    branches: [main]
+    branches: [main, 'candidate-v*']
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
+  context:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      mode: ${{ steps.release.outputs.mode }}
+      version: ${{ steps.release.outputs.version }}
+      branch: ${{ steps.release.outputs.branch }}
+      source: ${{ steps.release.outputs.source }}
+      pr: ${{ steps.release.outputs.pr }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - id: release
+        run: python3 scripts/publish_host_release.py context
   verify:
+    needs: context
+    if: needs.context.outputs.mode == 'verify' || needs.context.outputs.mode == 'publish'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -25,9 +43,10 @@ jobs:
           make test
           go vet ./...
           go test -race ./internal/hostrelease ./internal/contractstore ./internal/supervisor
-          python3 -m unittest discover -s scripts/tests
   candidates:
-    needs: verify
+    needs: [context, verify]
+    # main verifies merged code; it never rebuilds the promoted release.
+    if: github.ref != 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     strategy:
@@ -44,22 +63,97 @@ jobs:
           cache: true
       - name: Prepare locked build and validator dependencies
         run: make setup
-      - name: Build twice and compare signed payload inventory
+      - name: Build twice and compare payload inventory
         env:
           TARGET_PLATFORM: ${{ matrix.platform }}
+          RELEASE_VERSION: ${{ needs.context.outputs.version }}
         run: |
-          python3 scripts/build_host_release.py --version 0.1.0 --platform "$TARGET_PLATFORM" --output dist/first
-          python3 scripts/build_host_release.py --version 0.1.0 --platform "$TARGET_PLATFORM" --output dist/second
+          python3 scripts/build_host_release.py --version "$RELEASE_VERSION" --platform "$TARGET_PLATFORM" --output dist/first
+          python3 scripts/build_host_release.py --version "$RELEASE_VERSION" --platform "$TARGET_PLATFORM" --output dist/second
           diff -r dist/first dist/second
       - name: Exercise native installed package
         if: matrix.platform == 'linux/amd64'
         run: python3 scripts/test_installed_release.py --candidate dist/first/linux-amd64
       - name: Preserve candidate file modes
         run: tar -C dist/first -cf dist/host-candidate.tar .
-      - name: Retain unapproved host candidate
+      - name: Retain host candidate
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: host-candidate-${{ strategy.job-index }}
           path: dist/host-candidate.tar
           if-no-files-found: error
           retention-days: 14
+  publish:
+    needs: [context, candidates]
+    if: >-
+      needs.context.outputs.mode == 'publish' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      startsWith(github.ref, 'refs/heads/candidate-v') && !github.event.deleted
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: write
+    concurrency:
+      group: operator-release-v${{ needs.context.outputs.version }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Download this run's four verified candidates
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          mkdir -p dist/candidates
+          for index in 0 1 2 3; do
+            gh run download "$GITHUB_RUN_ID" --name "host-candidate-$index" --dir "dist/download-$index"
+            tar -xf "dist/download-$index/host-candidate.tar" -C dist/candidates
+          done
+      - name: Sign and publish rolling prerelease
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+          RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
+          RELEASE_SIGNING_PASSPHRASE: ${{ secrets.RELEASE_SIGNING_PASSPHRASE }}
+          RELEASE_SIGNING_FINGERPRINT: ${{ vars.RELEASE_SIGNING_FINGERPRINT }}
+          CANDIDATE_BRANCH: ${{ needs.context.outputs.branch }}
+          CANDIDATE_SOURCE: ${{ needs.context.outputs.source }}
+        run: |
+          test -n "$RELEASE_SIGNING_KEY" || { echo 'Configure RELEASE_SIGNING_KEY first'; exit 1; }
+          test -n "$RELEASE_SIGNING_FINGERPRINT" || { echo 'Configure RELEASE_SIGNING_FINGERPRINT first'; exit 1; }
+          export GNUPGHOME
+          GNUPGHOME=$(mktemp -d "$RUNNER_TEMP/operator-signing.XXXXXX")
+          trap 'gpgconf --kill gpg-agent; rm -rf "$GNUPGHOME"' EXIT
+          printf '%s' "$RELEASE_SIGNING_KEY" | gpg --batch --import
+          unset RELEASE_SIGNING_KEY
+          gpg --batch --output "$GNUPGHOME/publisher.gpg" --export "$RELEASE_SIGNING_FINGERPRINT"
+          python3 scripts/publish_host_release.py publish \
+            --directory dist/candidates --keyring "$GNUPGHOME/publisher.gpg" \
+            --signing-key "$RELEASE_SIGNING_FINGERPRINT" \
+            --branch "$CANDIDATE_BRANCH" --source "$CANDIDATE_SOURCE"
+  promote:
+    needs: context
+    if: >-
+      needs.context.outputs.mode == 'promote' && github.event_name == 'pull_request' &&
+      github.event.action == 'closed' && github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'main' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      startsWith(github.event.pull_request.head.ref, 'candidate-v')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: read
+    concurrency:
+      group: operator-release-v${{ needs.context.outputs.version }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Promote the merged candidate's existing artifacts
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+          RELEASE_PR: ${{ needs.context.outputs.pr }}
+        run: python3 scripts/publish_host_release.py promote --pr "$RELEASE_PR"

@@ -1,15 +1,48 @@
 import importlib.util
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "scripts"))
 spec = importlib.util.spec_from_file_location("builder", ROOT / "scripts/build_host_release.py")
 builder = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(builder)
+
+
+class UnattendedSigningTest(unittest.TestCase):
+    def test_encrypted_key_signs_manifest_and_checksum_without_prompt(self):
+        spec = importlib.util.spec_from_file_location("signer", ROOT / "scripts/sign_host_release.py")
+        signer = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(signer)
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+            home.chmod(0o700)
+            with patch.dict(os.environ, {"GNUPGHOME": str(home), "TEST_RELEASE_PASSPHRASE": "fixture-only"}):
+                try:
+                    subprocess.run(["gpg", "--batch", "--pinentry-mode", "loopback",
+                                    "--passphrase-fd", "0", "--quick-generate-key",
+                                    "Release CI Fixture <fixture@example.invalid>", "ed25519", "sign", "0"],
+                                   input="fixture-only\n", text=True, check=True, capture_output=True)
+                    listing = subprocess.check_output(["gpg", "--batch", "--with-colons", "--list-keys"], text=True)
+                    fingerprint = next(line.split(":")[9] for line in listing.splitlines() if line.startswith("fpr:"))
+                    subprocess.run(["gpg", "--batch", "--output", str(home / "trusted.gpg"), "--export", fingerprint], check=True)
+                    for name, armor in (("release.json", False), ("SHA256SUMS", True)):
+                        source = home / name
+                        source.write_text("fixture payload\n")
+                        signature = home / (name + ".sig")
+                        signer.sign(source, signature, fingerprint, "TEST_RELEASE_PASSPHRASE", armor=armor)
+                        subprocess.run(["gpgv", "--keyring", str(home / "trusted.gpg"),
+                                        str(signature), str(source)], check=True, capture_output=True)
+                    with self.assertRaises(ValueError):
+                        signer.sign(source, home / "missing.sig", fingerprint, "ABSENT_SIGNING_VARIABLE")
+                finally:
+                    subprocess.run(["gpgconf", "--homedir", str(home), "--kill", "gpg-agent"], check=False)
 
 
 class ReleaseMetadataTest(unittest.TestCase):
@@ -41,30 +74,21 @@ class ReleaseMetadataTest(unittest.TestCase):
             self.assertNotEqual(subprocess.run(command, capture_output=True).returncode, 0)
 
 class PublicationPreflightTest(unittest.TestCase):
-    def test_requires_all_platforms_matching_contracts_and_compatible_images(self):
-        spec = importlib.util.spec_from_file_location("publisher", ROOT / "scripts/publish_host_release.py")
-        publisher = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(publisher)
+    def test_requires_all_platforms_matching_source_and_contract(self):
+        from publish_host_release import PLATFORMS, check_candidates
         pin = {"package_version": "0.0.0", "package_digest": "sha256:" + "a" * 64}
-        hosts = [{"platform": p, "version": "0.1.0", "source_commit": "a" * 40, "contract": pin}
-                 for p in publisher.PLATFORMS]
-        images = []
-        for platform in ("linux/amd64", "linux/arm64"):
-            image = "sha256:" + "b" * 64
-            images.append({"api_version": "intrusive.ai/attack-harness-build-report/v1alpha1",
-                           "platform": platform, "contract": dict(pin), "oci": {"image_digest": image},
-                           "compatibility_candidate": {"image_digest": image, "platform": platform,
-                               "runtime_profile": "operator-container/v1", "minimum_operator_version": "0.1.0",
-                               "contract_package_version": pin["package_version"],
-                               "contract_package_digest": pin["package_digest"]}})
-        self.assertEqual(publisher.check_candidates(hosts, images), "0.1.0")
+        hosts = [{"platform": p, "version": "0.1.0", "source_commit": "a" * 40, "contract": dict(pin)}
+                 for p in PLATFORMS]
+        self.assertEqual(check_candidates(hosts), "0.1.0")
         with self.assertRaises(ValueError):
-            publisher.check_candidates(hosts[:3], images)
+            check_candidates(hosts[:3])
+        hosts[0]["source_commit"] = "b" * 40
         with self.assertRaises(ValueError):
-            publisher.check_candidates(hosts, images[:1])
-        images[0]["compatibility_candidate"]["minimum_operator_version"] = "0.2.0"
+            check_candidates(hosts)
+        hosts[0]["source_commit"] = "a" * 40
+        hosts[0]["contract"]["package_digest"] = "sha256:" + "b" * 64
         with self.assertRaises(ValueError):
-            publisher.check_candidates(hosts, images)
+            check_candidates(hosts)
 
 
 if __name__ == "__main__":

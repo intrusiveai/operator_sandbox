@@ -1615,6 +1615,12 @@ from an external interpretation of a report.
 Publish signed Linux and macOS host distributions for amd64 and arm64, with reproducible toolchain pins,
 release checksums/SBOMs and offline installation with a complete compatible artifact
 inventory. Executable release publication MUST remain separate from local instruction-only skill installation.
+Every successful push to `candidate-v<major.minor.patch>` MUST publish the version's
+rolling signed GitHub prerelease after Operator CI passes. Merging that candidate
+PR into `main` MUST promote the existing artifacts after source/tree and asset
+verification, without rebuilding. Attack Harness build reports and external native
+qualification MUST remain separate from this publication gate; campaign startup
+compatibility enforcement is unchanged. See [candidate release automation](docs/CANDIDATE_RELEASES.md).
 Host distributions MUST use publisher-controlled OpenPGP detached signatures over
 an exact release-file manifest, verified against an independently installed public
 keyring. Installation/updates MUST use explicit local archives and retain immutable

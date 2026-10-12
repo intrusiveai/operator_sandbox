@@ -60,3 +60,22 @@ needs a native administrator-run qualification. All four production host/contain
 tuples, live provider/secret-store/target routes, refreshed harness images and
 publisher-approved contract/image/executable publication remain external gates.
 A draft-release preflight cannot substitute for those gates.
+
+## Candidate publication workflow — 2026-10-11
+
+The rolling prerelease and candidate-to-main promotion path was exercised locally
+against a simulated GitHub service. Tests cover publication, replacement, exact
+asset preservation on promotion, repeated promotion, invalid branch versions,
+stale builds, interrupted uploads/retry, changed assets/tags and mismatched merge
+trees. Actionlint 1.7.7 passed for the updated workflow.
+
+A package smoke test reused all four real `stage5-final-a` candidates identified
+above, signed them with a disposable passphrase-protected GPG key using the new
+publisher, and passed the resulting 14 assets through simulated publication and
+promotion. All asset bytes were preserved, and the signed candidate inventory
+verified. This exercised packaging/signing with actual binaries; it did not rebuild
+or qualify their runtime and did not contact GitHub to publish them.
+
+Live Actions publication requires configured publisher credentials and repository
+settings from [candidate releases](CANDIDATE_RELEASES.md). No live release was
+created or promoted during this implementation.

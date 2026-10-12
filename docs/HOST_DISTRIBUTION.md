@@ -164,19 +164,31 @@ and emit independently signed `SHA256SUMS` for first-install bootstrap. It MUST
 not export private keys or publish an image approval. Key rotation MUST be an
 explicit administrator update to the trusted keyring, independently authenticated.
 
-`check_release_pair.py` MUST compare host and harness contract pins. The final
-`publish_host_release.py` preflight MUST require four signed host archives plus
-both architecture harness build reports, identical host source/version/contracts,
-matching harness compatibility pins and compatible minimum Operator versions.
-By default it MUST only validate. `--create-draft` MAY create a GitHub draft for an
-existing version tag identifying the signed source commit; it MUST NOT publish the draft or the HTTPS image approval.
-Pass each platform using repeated `--signed-directory` and both reports using
-repeated `--harness-report`, plus `--operatorctl` and `--keyring`. Draft checksum
-assets MUST be named `<platform>-SHA256SUMS[.asc]` to avoid collisions.
+GitHub Actions MUST publish a rolling signed prerelease for each successful push to
+`candidate-v<major.minor.patch>`, including merge commits. The branch version MUST
+supply the package version. Publication MUST require Operator CI, reproducible
+four-platform packages and OpenPGP signatures. Attack Harness reports and external
+runtime qualification MUST remain independent of this publication gate. Runtime
+startup MUST continue enforcing the image-release and shared-contract checks.
+`check_release_pair.py` remains an optional diagnostic for host/harness pairing.
 
-Administrators MUST supply publisher keys, protected release credentials and final
-qualification evidence before approved publication. Release tooling MUST not
-fabricate those external approvals or upgrade development contract status.
+The rolling release MUST use tag `v<version>` and prerelease status. Updates MUST
+replace only workflow-managed prereleases, using a draft while replacing assets;
+partial uploads MUST remain unpublished and repairable by an explicit rerun. A
+superseded candidate build MUST NOT overwrite the current candidate. Stable
+releases MUST NOT be overwritten or returned to prerelease status.
+
+When a same-repository candidate PR merges into `main`, the workflow MUST promote
+that existing release without rebuilding, uploading new assets or moving its tag.
+It MUST verify the candidate head, matching merge tree, complete uploaded asset
+inventory and SHA-256 digests. Missing, incomplete or mismatched prereleases MUST
+block promotion. Repeated promotion of the same release MUST be harmless.
+
+The publisher MUST retain the four signed archives, per-platform signed checksums,
+and a signed `candidate.json` inventory identifying source/version/contract and
+archive digests. The workflow MUST serialize publication and promotion per version.
+Release status MUST NOT claim native qualification or grant harness image approval.
+See [candidate release automation](CANDIDATE_RELEASES.md) for setup and recovery.
 
 ## Validation and limits
 
