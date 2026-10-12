@@ -43,10 +43,11 @@ class GitHubFixture:
         return copy.deepcopy(self.current)
 
     def assets(self, item):
-        return [{"id": index, "name": name, "state": "uploaded", "digest": "sha256:" + hashlib.sha256(data).hexdigest()}
+        return [{"id": index, "name": name, "state": "uploaded", "digest": "sha256:" + hashlib.sha256(data).hexdigest(),
+                 "browser_download_url": f"https://github.com/{self.repository}/releases/download/v{self.version}/{name}"}
                 for index, (name, data) in enumerate(sorted(self.uploaded.items()))]
 
-    def upload(self, tag, files):
+    def upload(self, tag, files, replace=False):
         for index, path in enumerate(files):
             self.uploaded[path.name] = path.read_bytes()
             if self.fail_upload and index == 1:

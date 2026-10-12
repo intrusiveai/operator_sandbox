@@ -179,16 +179,22 @@ superseded candidate build MUST NOT overwrite the current candidate. Stable
 releases MUST NOT be overwritten or returned to prerelease status.
 
 When a same-repository candidate PR merges into `main`, the workflow MUST promote
-that existing release without rebuilding, uploading new assets or moving its tag.
+that existing release without rebuilding, replacing signed package assets or moving its tag.
 It MUST verify the candidate head, matching merge tree, complete uploaded asset
 inventory and SHA-256 digests. Missing, incomplete or mismatched prereleases MUST
 block promotion. Repeated promotion of the same release MUST be harmless.
 
 The publisher MUST retain the four signed archives, per-platform signed checksums,
 and a signed `candidate.json` inventory identifying source/version/contract and
-archive digests. The workflow MUST serialize publication and promotion per version.
+archive digests. A separate mutable `release-index-entry.json` MUST describe the
+four actual GitHub archive URLs, filenames and hashes. The workflow MUST publish
+that entry through the reviewed releases-service reusable catalog publisher from
+the protected release tag: `rc` on candidate publication, `release` after the
+agreed CI/signing and candidate merge gates. It MUST wait for successful catalog
+publication and preserve the package identities on promotion. The workflow MUST
+serialize publication and promotion per version.
 Release status MUST NOT claim native qualification or grant harness image approval.
-See [candidate release automation](CANDIDATE_RELEASES.md) for setup and recovery.
+See [candidate release automation](../.github/maintainers/CANDIDATE_RELEASES.md) for setup and recovery.
 
 ## Validation and limits
 

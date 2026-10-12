@@ -1620,7 +1620,13 @@ rolling signed GitHub prerelease after Operator CI passes. Merging that candidat
 PR into `main` MUST promote the existing artifacts after source/tree and asset
 verification, without rebuilding. Attack Harness build reports and external native
 qualification MUST remain separate from this publication gate; campaign startup
-compatibility enforcement is unchanged. See [candidate release automation](docs/CANDIDATE_RELEASES.md).
+compatibility enforcement is unchanged. The pipeline MUST generate its release
+catalog entry from actual uploaded archives and publish it through the reviewed
+releases-service reusable workflow from a protected `v*` tag. Candidates MUST
+carry `rc`; stable promotion MUST carry `release` with unchanged archive identities.
+The caller MUST use Operator's production environment and scoped OIDC catalog
+role, wait for successful publication, and never publish image approval records.
+See [candidate release automation](.github/maintainers/CANDIDATE_RELEASES.md).
 Host distributions MUST use publisher-controlled OpenPGP detached signatures over
 an exact release-file manifest, verified against an independently installed public
 keyring. Installation/updates MUST use explicit local archives and retain immutable

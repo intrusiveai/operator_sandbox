@@ -5,12 +5,13 @@
 1. Create `candidate-v1.2.3`. Push changes directly or merge feature PRs into it.
    Every push runs Operator's tests and reproducible builds for Linux/macOS on
    AMD64/ARM64. After success, Actions signs the packages and publishes or replaces
-   the GitHub **Pre-release** named **Operator Sandbox 1.2.3**, at tag `v1.2.3`.
+   the GitHub **Pre-release** named **Operator Sandbox 1.2.3**, at tag `v1.2.3`,
+   then publishes its hidden `rc` catalog entry through the releases service.
 2. Wait for the candidate push's **publish** job to succeed. Open a PR from
    `candidate-v1.2.3` to `main`. Keep the candidate up to date with `main` before
    merging so that merging does not change the candidate's files.
 3. Merge the PR. Its closed/merged event promotes that same release to stable.
-   The uploaded files, signatures and candidate tag stay unchanged. Ordinary main
+   The uploaded packages, signatures and candidate tag stay unchanged. Catalog metadata changes from `rc` to `release`, making it eligible for the website listing. Ordinary main
    pushes run verification; they do not build replacement release packages.
 
 The numeric package version is `1.2.3` throughout. Prerelease is a GitHub release
@@ -63,10 +64,10 @@ Each release includes four platform archives (`linux-amd64.tar.gz`,
 executable, contract, configuration templates, documentation, SBOM, provenance and
 signed manifest. Each has `<platform>-SHA256SUMS` and `<platform>-SHA256SUMS.asc`.
 Verify those named checksum files before unpacking, as described in
-[host distribution](HOST_DISTRIBUTION.md).
+[host distribution](../../docs/HOST_DISTRIBUTION.md).
 
 `candidate.json` and its detached signature bind the four packages to their version,
-source commit and shared contract. Release metadata records the complete asset
+source commit and shared contract. Release metadata records the complete signed-package asset
 inventory and GitHub-reported SHA-256 digests for promotion checks.
 
 Operator CI and signatures govern publication. Attack Harness reports, release
@@ -104,3 +105,74 @@ local tests do not publish releases or configure GitHub.
 References: [GitHub release API](https://docs.github.com/en/rest/releases/releases),
 [merged PR events](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#pull_request),
 [release immutability](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
+
+## Releases service catalog
+
+After GitHub publication, the workflow MUST attach `release-index-entry.json`,
+generated from the four actual uploaded archive URLs, filenames and SHA-256 digests.
+Candidate entries MUST use `tags: ["rc"]`. Candidate-to-main promotion MUST retain
+those exact artifact identities and update only the catalog label to `["release"]`.
+Operator's existing passing CI/signing and reviewed candidate merge are the agreed
+publication gates; these labels do not assert additional native QA results.
+
+The parent workflow MUST dispatch `publish-catalog.yml` at the published `v*` tag
+and wait for the matching run to finish successfully. The tag caller MUST verify
+its source and catalog asset against the actual GitHub Release, and recheck the
+recorded merged candidate PR for stable entries, before calling the
+reviewed reusable publisher pinned to
+`fc4618b56a7862a410558e7824b3f5681e426714`. The reusable publisher validates the entry,
+merges it into S3, and verifies S3/public delivery. A dispatch acknowledgement,
+skipped run, failed run, or timeout MUST NOT count as publication success.
+
+That service revision MUST be available on GitHub. The caller workflow and helper
+MUST exist on both Operator's default branch and the selected tag before dispatch.
+The releases repository MUST permit this repository to use its reusable workflow.
+
+Configure the **production environment in intrusiveai/operator_sandbox** with:
+
+| Environment variable | Purpose |
+| --- | --- |
+| `AWS_REGION` | Region of the existing releases service. |
+| `CONTENT_BUCKET` | Existing releases content bucket. |
+| `CLOUDFRONT_DISTRIBUTION_ID` | Existing releases distribution. |
+| `CATALOG_PUBLISHER_ROLE_ARN` | Operator's catalog-only role from the service's `catalog_publisher_role_arns` output. |
+
+The environment MUST permit protected `v*` tags. Retain configured environment
+reviewers. GitHub OIDC supplies AWS credentials only to the reusable publisher;
+Operator MUST NOT publish image approval records or another product's catalog.
+No AWS access-key secrets, service-side Git writes or per-release site deployment
+are needed. Initial service deployment/role setup belongs to the releases repository;
+this change does not provision or alter that infrastructure.
+
+`/docs/releases/operator_sandbox.json` retains candidates and release history. The
+website displays only the first two entries labeled exactly `release`; an `rc`
+entry is readable in the catalog but hidden in the website listing. The publisher
+preserves other versions and refuses to demote or change a final version's artifacts.
+Never upload an entire locally reconstructed catalog over the live catalog.
+
+### Publication failures and recovery
+
+GitHub publication can succeed while catalog publication fails. Inspect the linked
+catalog run and fix its cause; do not rebuild or re-sign a stable release. If the
+entry is already correct, rerun that tagged caller. If metadata upload was interrupted,
+run `catalog-sync` from the reviewed checkout to recreate it from the existing assets:
+
+```sh
+GITHUB_REPOSITORY=intrusiveai/operator_sandbox \
+  python3 scripts/publish_host_release.py catalog-sync \
+  --tag v1.2.3 --source FULL_CANDIDATE_COMMIT_SHA
+```
+
+This uses an authenticated `gh` token with Contents and Actions write. Branch/PR
+workflows already have those permissions on `GITHUB_TOKEN`. The source must match
+the published tag; do not substitute the main merge commit. An already-stable release
+retains its `release` label on retries. The stable promotion job can also be rerun:
+it verifies the existing packages, then repairs/retries catalog publication.
+
+Publication waits up to 30 minutes, including environment approval. A timeout
+requests cancellation of a known run. Before retrying or updating the rolling tag,
+confirm that any timed-out or manually dispatched older catalog job has stopped.
+Do not run manual catalog repair concurrently with candidate replacement/promotion.
+After success, inspect the public catalog and website: candidate remains hidden;
+stable appears according to the first-two-release rule, with the exact download
+links and checksums. Website pages read the live catalog without a site deployment.

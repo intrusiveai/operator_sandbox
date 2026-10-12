@@ -90,9 +90,9 @@ jobs:
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       startsWith(github.ref, 'refs/heads/candidate-v') && !github.event.deleted
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 50
     permissions:
-      actions: read
+      actions: write
       contents: write
     concurrency:
       group: operator-release-v${{ needs.context.outputs.version }}
@@ -112,6 +112,7 @@ jobs:
             tar -xf "dist/download-$index/host-candidate.tar" -C dist/candidates
           done
       - name: Sign and publish rolling prerelease
+        id: publication
         env:
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
           RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
@@ -132,6 +133,13 @@ jobs:
             --directory dist/candidates --keyring "$GNUPGHOME/publisher.gpg" \
             --signing-key "$RELEASE_SIGNING_FINGERPRINT" \
             --branch "$CANDIDATE_BRANCH" --source "$CANDIDATE_SOURCE"
+      - name: Publish candidate catalog and wait for service verification
+        if: steps.publication.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: v${{ needs.context.outputs.version }}
+          RELEASE_SOURCE: ${{ needs.context.outputs.source }}
+        run: python3 scripts/publish_host_release.py catalog-sync --tag "$RELEASE_TAG" --source "$RELEASE_SOURCE"
   promote:
     needs: context
     if: >-
@@ -141,8 +149,9 @@ jobs:
       github.event.pull_request.head.repo.full_name == github.repository &&
       startsWith(github.event.pull_request.head.ref, 'candidate-v')
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 40
     permissions:
+      actions: write
       contents: write
       pull-requests: read
     concurrency:
@@ -157,3 +166,9 @@ jobs:
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
           RELEASE_PR: ${{ needs.context.outputs.pr }}
         run: python3 scripts/publish_host_release.py promote --pr "$RELEASE_PR"
+      - name: Publish stable catalog and wait for service verification
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: v${{ needs.context.outputs.version }}
+          RELEASE_SOURCE: ${{ needs.context.outputs.source }}
+        run: python3 scripts/publish_host_release.py catalog-sync --tag "$RELEASE_TAG" --source "$RELEASE_SOURCE"
