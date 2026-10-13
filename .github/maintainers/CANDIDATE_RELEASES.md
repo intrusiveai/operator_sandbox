@@ -58,6 +58,11 @@ role and environment; step 6 configures the required GitHub identity format.
 3. Save any changes. If an organization policy locks these settings, have the
    organization owner update the allowlist.
 
+Both workflows use SHA-pinned actions with native Node.js 24 support. If you
+allow individual SHAs, update the allowlist when those pins change. After pushing
+an action update, start a run at the updated commit; rerunning an older run uses
+its original workflow and can still show the Node.js 20 deprecation warning.
+
 GitHub creates `GITHUB_TOKEN` for each job automatically. **Do not create a secret
 named `GITHUB_TOKEN`.** The checked-in workflows request Contents and Actions
 write access only for the publishing jobs; the repository's default workflow
