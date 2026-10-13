@@ -1,6 +1,6 @@
 PYTHON ?= .venv/bin/python
 
-.PHONY: setup test generate test-integration release-candidate
+.PHONY: setup test generate test-integration release-candidate test-release-publisher
 
 setup:
 	python3 -m venv .venv
@@ -30,6 +30,13 @@ test:
 	$(PYTHON) schemas/validate_cleanup_fixtures.py
 	$(PYTHON) schemas/validate_feedback_fixtures.py
 	$(PYTHON) schemas/validate_capability_fixtures.py
+	$(MAKE) test-release-publisher
+
+# Catalog-only source export: no private modules or runtime toolchain downloads.
+test-release-publisher:
+	cd tools/release-publisher && GOWORK=off GOPROXY=off GOTOOLCHAIN=local go test -race ./...
+	cd tools/release-publisher && GOWORK=off GOPROXY=off GOTOOLCHAIN=local go vet ./...
+	cd tools/release-publisher && GOWORK=off GOPROXY=off GOTOOLCHAIN=local python3 -m unittest discover -s scripts/tests
 
 # Build-only candidates; explicit publisher signing and qualification are separate.
 release-candidate:

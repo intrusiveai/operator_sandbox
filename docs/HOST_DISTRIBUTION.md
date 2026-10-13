@@ -188,11 +188,14 @@ The publisher MUST retain the four signed archives, per-platform signed checksum
 and a signed `candidate.json` inventory identifying source/version/contract and
 archive digests. A separate mutable `release-index-entry.json` MUST describe the
 four actual GitHub archive URLs, filenames and hashes. The workflow MUST publish
-that entry through the reviewed releases-service reusable catalog publisher from
-the protected release tag: `rc` on candidate publication, `release` after the
-agreed CI/signing and candidate merge gates. It MUST wait for successful catalog
+that entry through the committed `tools/release-publisher` in its own ordinary
+`publish-catalog.yml` job, using Operator's `production` environment and scoped
+OIDC role from the protected release tag: `rc` on candidate publication, `release`
+after the agreed CI/signing and candidate merge gates. It MUST wait for successful catalog
 publication and preserve the package identities on promotion. The workflow MUST
-serialize publication and promotion per version.
+serialize publication and promotion per version. The workflow MUST validate before
+acquiring AWS credentials, fetch no private publisher code at runtime, and use
+the custom OIDC subject documented in the maintainer guide.
 Release status MUST NOT claim native qualification or grant harness image approval.
 See [candidate release automation](../.github/maintainers/CANDIDATE_RELEASES.md) for setup and recovery.
 

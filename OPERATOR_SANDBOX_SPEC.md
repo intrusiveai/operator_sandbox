@@ -1622,10 +1622,16 @@ verification, without rebuilding. Attack Harness build reports and external nati
 qualification MUST remain separate from this publication gate; campaign startup
 compatibility enforcement is unchanged. The pipeline MUST generate its release
 catalog entry from actual uploaded archives and publish it through the reviewed
-releases-service reusable workflow from a protected `v*` tag. Candidates MUST
-carry `rc`; stable promotion MUST carry `release` with unchanged archive identities.
+product-local `.github/workflows/publish-catalog.yml` ordinary job from a protected
+`v*` tag. The complete reviewed catalog publisher MUST be committed under
+`tools/release-publisher`, with its source revision and file hashes; publication
+MUST NOT fetch code or invoke workflows from the private releases repository.
+Candidates MUST carry `rc`; stable promotion MUST carry `release` with unchanged archive identities.
 The caller MUST use Operator's production environment and scoped OIDC catalog
-role, wait for successful publication, and never publish image approval records.
+role, validate entries before obtaining AWS credentials, wait for successful
+publication, and never publish image approval records. Its custom OIDC subject
+MUST contain, in order, `repository_id`, `repository_owner_id`, `environment`,
+`ref`, and `workflow_ref`; deployment MUST coordinate all affected OIDC consumers.
 See [candidate release automation](.github/maintainers/CANDIDATE_RELEASES.md).
 Host distributions MUST use publisher-controlled OpenPGP detached signatures over
 an exact release-file manifest, verified against an independently installed public

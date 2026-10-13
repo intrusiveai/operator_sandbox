@@ -30,7 +30,7 @@ class CatalogGitHub(GitHubFixture):
             self.request = data["inputs"]["request_id"]
             self.dispatched.append(data)
             # Simulate the tagged caller checking actual release assets before
-            # invoking the reusable service. No writes if validation fails.
+            # invoking the committed local publisher. No writes if validation fails.
             entry = release.catalog_context(self, data["ref"], self.tag)
             if self.conclusion == "success":
                 self.public_catalog = entry

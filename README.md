@@ -139,7 +139,8 @@ available for reporting and administrative cleanup.
 
 ## Development
 
-Use Go 1.26.5 and Python 3.12 or later. From this repository:
+Use Go 1.26.5 and Python 3.12 or later, plus GnuPG, Bash, jq and curl for
+release-tooling tests. From this repository:
 
 ```sh
 make setup
