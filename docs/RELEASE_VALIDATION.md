@@ -1,7 +1,8 @@
 # Installation and release-tooling validation
 
-Recorded 2026-09-28. This record covers implemented host distribution tools and
-local tests. It does not grant production image approval or native runtime qualification.
+This document retains dated validation evidence. Earlier entries describe the
+implementation tested at that time; current requirements are in
+[host distribution](HOST_DISTRIBUTION.md). It does not grant production image approval or native runtime qualification.
 
 ## Tested identities
 
@@ -50,8 +51,7 @@ contact Docker, publish a release or change campaign state outside test director
 
 ## Reproduction and remaining qualification
 
-Use [the distribution guide](HOST_DISTRIBUTION.md) for the build, signing and install
-commands. Build two separate outputs from the tested commit and compare them.
+Use [the distribution guide](HOST_DISTRIBUTION.md) for current build and install commands. Build two separate outputs from the tested commit and compare them.
 Then run `scripts/test_installed_release.py` on a native candidate, optionally
 providing a newer native candidate with `--upgrade`.
 

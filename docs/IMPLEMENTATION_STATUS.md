@@ -5,7 +5,7 @@ Updated: 2026-09-28, following opt-in live-qualification tooling.
 Operator's core campaign runtime and Attack Harness's Python runtime are
 implemented. Administrator workflows and the declarative HTTPS target adapter are
 complete. Deterministic Go/Python process integration is covered over both transports.
-Installation, explicit updates and release build/signing tooling are implemented.
+Installation, explicit updates and release build tooling are implemented.
 Approved publication and external native qualification remain outstanding.
 This page distinguishes implemented components from qualified releases;
 requirements in the product spec remain mandatory even when their acceptance
@@ -29,7 +29,7 @@ criteria have not yet been demonstrated.
 | Reports and exports | Deterministic, digest-bound report/export generations from verified journal prefixes and retained evidence; explicit coverage/uncertainty, portable exports and automatic worker reporting after execution completion. |
 | Administrator workflows | Public capability export, environment/private-profile selectors, combined run with saved-request reuse, read-only inspect/doctor, frozen skill-set creation/selection, reversible skill removal and campaign credential-resolution audit. |
 | Campaign retirement/purge | Durable start retirement, exact service deregistration, locked inventories, per-campaign/all-campaign deletion, managed-copy registration and retry after partial filesystem deletion. Independent exports and reusable installation data are preserved. |
-| Installation/releases | Signed local archives, immutable versioned installations, Linux service-account provisioning, atomic activation and retries, explicit downgrades, retained configuration/evidence, compiled supported-contract pins, four-platform reproducible builds, SPDX/provenance, rolling signed candidate prereleases and promotion of existing artifacts on candidate-to-main PR merge, and tag-dispatched product-local catalog publication with completion/public-delivery checks and reviewed publisher provenance. |
+| Installation/releases | Local archives with file-integrity checks, immutable versioned installations, Linux service-account provisioning, atomic activation and retries, explicit downgrades, retained configuration/evidence, compiled supported-contract pins, four-platform reproducible builds, SPDX/provenance, rolling candidate prereleases and promotion of existing artifacts on candidate-to-main PR merge, and tag-dispatched product-local catalog publication with completion/public-delivery checks and reviewed publisher provenance. |
 | Process integration | Production Python entrypoint joined to the Go host over FIFO/spool: large startup inventories, prompt/skill selection, all campaign modes, HTTPS feedback, conclusions/stop, restore lineage and retained injection cleanup, process loss, spool pressure and large-history compaction. |
 | Attack Harness | Python bootstrap/input loading, both transports, all five codecs, dispatch/loop accounting, artifacts, feedback, restore continuation and bounded completion. Both architecture image candidates have been built; they are not approved releases. |
 
@@ -52,7 +52,7 @@ Component guides provide the detailed behavior and validation boundaries:
 ## Validation completed and its limits
 
 The installation stage passed the full Go suite/vet, focused race tests and real
-macOS ARM64 signed-package installation/update tests. All four host platforms built
+macOS ARM64 package installation/update tests. All four host platforms built
 twice with identical payloads. Generated contract packages passed both language
 suites. [Release validation](RELEASE_VALIDATION.md) records exact source/digests and
 distinguishes local installation tests from outstanding native qualification.

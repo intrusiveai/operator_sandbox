@@ -17,21 +17,14 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/staging"
 )
 
-// VerifyDirectory authenticates the manifest before trusting any inventory entry.
-func VerifyDirectory(ctx context.Context, directory, verifier, keyring string) (Manifest, error) {
+// VerifyDirectory validates the manifest and checks every payload file.
+func VerifyDirectory(ctx context.Context, directory string) (Manifest, error) {
 	info, err := os.Lstat(directory)
 	if err != nil || !info.IsDir() {
 		return Manifest{}, ErrRelease
 	}
 	raw, err := staging.Capture(ctx, filepath.Join(directory, "release.json"), ManifestLimit)
 	if err != nil {
-		return Manifest{}, err
-	}
-	sig, err := staging.Capture(ctx, filepath.Join(directory, "release.sig"), SignatureLimit)
-	if err != nil {
-		return Manifest{}, err
-	}
-	if err = VerifySignature(ctx, verifier, keyring, raw, sig); err != nil {
 		return Manifest{}, err
 	}
 	m, err := DecodeManifest(raw)
@@ -42,7 +35,6 @@ func VerifyDirectory(ctx context.Context, directory, verifier, keyring string) (
 }
 
 // Archive emits sorted, normalized regular files. Output must not already exist.
-// Signature verification is mandatory again on the consuming installation.
 func Archive(ctx context.Context, directory, output string) (err error) {
 	raw, err := staging.Capture(ctx, filepath.Join(directory, "release.json"), ManifestLimit)
 	if err != nil {
@@ -54,10 +46,6 @@ func Archive(ctx context.Context, directory, output string) (err error) {
 	}
 	if err = CheckContents(ctx, directory, m); err != nil {
 		return err
-	}
-	sig, err := staging.Capture(ctx, filepath.Join(directory, "release.sig"), SignatureLimit)
-	if err != nil || len(sig) == 0 {
-		return ErrSignature
 	}
 	out, err := os.OpenFile(output, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
 	if err != nil {
@@ -77,7 +65,7 @@ func Archive(ctx context.Context, directory, output string) (err error) {
 		return err
 	}
 	defer root.Close()
-	entries := append([]File{{Path: "release.json", Size: int64(len(raw)), Mode: 0600}, {Path: "release.sig", Size: int64(len(sig)), Mode: 0600}}, m.Files...)
+	entries := append([]File{{Path: "release.json", Size: int64(len(raw)), Mode: 0600}}, m.Files...)
 	for _, f := range entries {
 		if err = ctx.Err(); err != nil {
 			return err
@@ -87,8 +75,6 @@ func Archive(ctx context.Context, directory, output string) (err error) {
 		}
 		if f.Path == "release.json" {
 			_, err = tw.Write(raw)
-		} else if f.Path == "release.sig" {
-			_, err = tw.Write(sig)
 		} else {
 			input, e := root.Open(f.Path)
 			if e != nil {
@@ -116,7 +102,7 @@ func Archive(ctx context.Context, directory, output string) (err error) {
 }
 
 // Extract accepts only the bounded file-only format emitted by Archive. It writes
-// to a fresh private directory; callers authenticate it before activation.
+// to a fresh private directory; callers validate its manifest and contents before activation.
 func Extract(ctx context.Context, archive, destination string) (err error) {
 	in, err := os.Open(archive)
 	if err != nil {
@@ -160,15 +146,12 @@ func Extract(ctx context.Context, archive, destination string) (err error) {
 		if e != nil {
 			return ErrRelease
 		}
-		if h.Typeflag != tar.TypeReg || !validPath(h.Name) || seen[h.Name] || len(seen) >= MaxFiles+2 || h.Size < 0 || h.Size > MaxFileBytes || len(h.PAXRecords) > 0 {
+		if h.Typeflag != tar.TypeReg || !validPath(h.Name) || seen[h.Name] || len(seen) >= MaxFiles+1 || h.Size < 0 || h.Size > MaxFileBytes || len(h.PAXRecords) > 0 {
 			return ErrRelease
 		}
 		limit := MaxFileBytes
 		if h.Name == "release.json" {
 			limit = ManifestLimit
-		}
-		if h.Name == "release.sig" {
-			limit = SignatureLimit
 		}
 		if h.Size > limit {
 			return ErrRelease
@@ -181,7 +164,7 @@ func Extract(ctx context.Context, archive, destination string) (err error) {
 			return ErrRelease
 		}
 		total += h.Size
-		if total > MaxReleaseBytes+ManifestLimit+SignatureLimit {
+		if total > MaxReleaseBytes+ManifestLimit {
 			return ErrRelease
 		}
 		seen[h.Name] = true
@@ -203,7 +186,7 @@ func Extract(ctx context.Context, archive, destination string) (err error) {
 	if e != nil || n != 0 {
 		return ErrRelease
 	}
-	if !seen["release.json"] || !seen["release.sig"] {
+	if !seen["release.json"] {
 		return ErrRelease
 	}
 	done = true

@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -51,13 +50,10 @@ func candidate(t *testing.T) (string, Manifest) {
 	if err = os.WriteFile(filepath.Join(root, "release.json"), raw, 0600); err != nil {
 		t.Fatal(err)
 	}
-	if err = os.WriteFile(filepath.Join(root, "release.sig"), []byte("signature fixture"), 0600); err != nil {
-		t.Fatal(err)
-	}
 	return root, m
 }
 func TestArchiveRoundTripAndInventory(t *testing.T) {
-	root, m := candidate(t)
+	root, _ := candidate(t)
 	ctx := context.Background()
 	temp := t.TempDir()
 	one, two := filepath.Join(temp, "one.tgz"), filepath.Join(temp, "two.tgz")
@@ -75,13 +71,13 @@ func TestArchiveRoundTripAndInventory(t *testing.T) {
 	if err := Extract(ctx, one, dest); err != nil {
 		t.Fatal(err)
 	}
-	if err := CheckContents(ctx, dest, m); err != nil {
+	if _, err := VerifyDirectory(ctx, dest); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(dest, "bin/operatorctl"), []byte("tampered"), 0700); err != nil {
 		t.Fatal(err)
 	}
-	if err := CheckContents(ctx, dest, m); err == nil {
+	if _, err := VerifyDirectory(ctx, dest); err == nil {
 		t.Fatal("accepted changed executable")
 	}
 	if err := Archive(ctx, root, one); err == nil {
@@ -117,7 +113,7 @@ func TestExtractRejectsUnsafeAndPartialArchives(t *testing.T) {
 		{Name: "link", Typeflag: tar.TypeSymlink, Linkname: "/tmp", Mode: 0600},
 		{Name: "pipe", Typeflag: tar.TypeFifo, Mode: 0600},
 		{Name: "file", Typeflag: tar.TypeReg, Mode: 04755},
-		{Name: "release.json", Typeflag: tar.TypeReg, Mode: 0600},
+		{Name: "file", Typeflag: tar.TypeReg, Mode: 0600},
 	} {
 		dir := t.TempDir()
 		var buf bytes.Buffer
@@ -137,63 +133,5 @@ func TestExtractRejectsUnsafeAndPartialArchives(t *testing.T) {
 		if _, err := os.Lstat(dest); !os.IsNotExist(err) {
 			t.Fatal("partial extraction retained")
 		}
-	}
-}
-func TestOpenPGPSignatureUsesOnlyInstalledKeyring(t *testing.T) {
-	gpg, err := exec.LookPath("gpg")
-	if err != nil {
-		t.Skip("gpg unavailable")
-	}
-	verifier, err := exec.LookPath("gpgv")
-	if err != nil {
-		t.Skip("gpgv unavailable")
-	}
-	// Short paths avoid macOS agent Unix-socket path limits.
-	home, err := os.MkdirTemp("/tmp", "operator-sign-test-")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(home)
-	defer exec.Command("gpgconf", "--homedir", home, "--kill", "gpg-agent").Run()
-	run := func(args ...string) {
-		t.Helper()
-		cmd := exec.Command(gpg, append([]string{"--homedir", home, "--batch", "--pinentry-mode", "loopback", "--passphrase", ""}, args...)...)
-		if out, err := cmd.CombinedOutput(); err != nil {
-			t.Fatalf("fixture GPG: %v: %s", err, out)
-		}
-	}
-	run("--quick-generate-key", "Operator Release Test <fixture@example.invalid>", "ed25519", "sign", "0")
-	keyring := filepath.Join(home, "trusted.gpg")
-	run("--output", keyring, "--export")
-	raw := []byte("release manifest fixture\n")
-	manifest := filepath.Join(home, "manifest.json")
-	os.WriteFile(manifest, raw, 0600)
-	sigfile := filepath.Join(home, "manifest.sig")
-	run("--output", sigfile, "--detach-sign", manifest)
-	sig, _ := os.ReadFile(sigfile)
-	if err := VerifySignature(context.Background(), verifier, keyring, raw, sig); err != nil {
-		t.Fatal(err)
-	}
-	if err := VerifySignature(context.Background(), verifier, keyring, append(raw, 'x'), sig); err == nil {
-		t.Fatal("accepted changed manifest")
-	}
-	wrong := filepath.Join(home, "wrong.gpg")
-	os.WriteFile(wrong, []byte("not a trusted key"), 0600)
-	if err := VerifySignature(context.Background(), verifier, wrong, raw, sig); err == nil {
-		t.Fatal("used ambient trusted key")
-	}
-	if err := os.Chmod(keyring, 0666); err != nil {
-		t.Fatal(err)
-	}
-	if err := VerifySignature(context.Background(), verifier, keyring, raw, sig); err == nil {
-		t.Fatal("accepted writable trust store")
-	}
-	if err := os.Chmod(keyring, 0600); err != nil {
-		t.Fatal(err)
-	}
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-	if err := VerifySignature(ctx, verifier, keyring, raw, sig); err == nil {
-		t.Fatal("ignored cancellation")
 	}
 }

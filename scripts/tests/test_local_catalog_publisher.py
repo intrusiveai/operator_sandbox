@@ -30,7 +30,7 @@ class LocalCatalogIntegrationTest(unittest.TestCase):
         publisher_fixture.OperatorCatalogTests.setUpClass()
         cls.addClassCleanup(publisher_fixture.OperatorCatalogTests.tearDownClass)
 
-    def test_rolling_candidate_promotion_and_retry_preserve_signed_assets(self):
+    def test_rolling_candidate_promotion_and_retry_preserve_package_assets(self):
         publisher = publisher_fixture.OperatorCatalogTests()
         self.addCleanup(publisher.doCleanups)
         publisher.setUp()
@@ -62,7 +62,7 @@ class LocalCatalogIntegrationTest(unittest.TestCase):
         release.sync_catalog(github, "v1.2.3", SECOND)
         candidate = json.loads(publisher.get(publisher.key))["releases"][0]
         self.assertNotEqual(candidate["artifacts"], first["artifacts"])
-        signed_assets = {k: v for k, v in github.uploaded.items() if k != release.CATALOG_ASSET}
+        package_assets = {k: v for k, v in github.uploaded.items() if k != release.CATALOG_ASSET}
 
         github.pr = pull(SECOND)
         release.promote(github, 42)
@@ -73,7 +73,7 @@ class LocalCatalogIntegrationTest(unittest.TestCase):
         self.assertEqual(entries[0]["tags"], ["release"])
         self.assertEqual(entries[0]["artifacts"], candidate["artifacts"])
         self.assertEqual(github.tag, SECOND)
-        self.assertEqual({k: v for k, v in github.uploaded.items() if k != release.CATALOG_ASSET}, signed_assets)
+        self.assertEqual({k: v for k, v in github.uploaded.items() if k != release.CATALOG_ASSET}, package_assets)
 
         release.sync_catalog(github, "v1.2.3", SECOND)
         self.assertEqual(publisher.get(publisher.key), promoted)

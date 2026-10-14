@@ -38,6 +38,6 @@ test-release-publisher:
 	cd tools/release-publisher && GOWORK=off GOPROXY=off GOTOOLCHAIN=local go vet ./...
 	cd tools/release-publisher && GOWORK=off GOPROXY=off GOTOOLCHAIN=local python3 -m unittest discover -s scripts/tests
 
-# Build-only candidates; explicit publisher signing and qualification are separate.
+# Build-only candidates; publication and qualification are separate.
 release-candidate:
 	python3 scripts/build_host_release.py --version $(VERSION) --output $(OUTPUT)

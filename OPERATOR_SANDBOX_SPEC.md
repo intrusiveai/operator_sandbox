@@ -1612,11 +1612,11 @@ from an external interpretation of a report.
 
 ## 13. Distribution, configuration and contract versioning
 
-Publish signed Linux and macOS host distributions for amd64 and arm64, with reproducible toolchain pins,
+Publish Linux and macOS host distributions for amd64 and arm64, with reproducible toolchain pins,
 release checksums/SBOMs and offline installation with a complete compatible artifact
 inventory. Executable release publication MUST remain separate from local instruction-only skill installation.
 Every successful push to `candidate-v<major.minor.patch>` MUST publish the version's
-rolling signed GitHub prerelease after Operator CI passes. Merging that candidate
+rolling GitHub prerelease after Operator CI passes. Merging that candidate
 PR into `main` MUST promote the existing artifacts after source/tree and asset
 verification, without rebuilding. Attack Harness build reports and external native
 qualification MUST remain separate from this publication gate; campaign startup
@@ -1633,18 +1633,18 @@ publication, and never publish image approval records. Its custom OIDC subject
 MUST contain, in order, `repository_id`, `repository_owner_id`, `environment`,
 `ref`, and `workflow_ref`; deployment MUST coordinate all affected OIDC consumers.
 See [candidate release automation](.github/maintainers/CANDIDATE_RELEASES.md).
-Host distributions MUST use publisher-controlled OpenPGP detached signatures over
-an exact release-file manifest, verified against an independently installed public
-keyring. Installation/updates MUST use explicit local archives and retain immutable
+Host distributions MUST include an exact release-file manifest with SHA-256
+digests. Installers MUST validate the manifest and every payload file before
+activation. Installation/updates MUST use explicit local archives and retain immutable
 release directories. Activation MUST switch the selected version atomically and
 reject downgrades unless explicitly requested; no automatic download or age-based
 expiry is required. Linux installation MUST create the dedicated service account
 and private filesystem paths; systemd prerequisites MUST be provisioned only
 when `install provision-linux --service` is explicitly requested; Docker socket permission grants MUST be explicit.
 The [host distribution contract](docs/HOST_DISTRIBUTION.md) defines packaging,
-trust, provisioning, offline installation, updates and publication tooling. Attack Harness images use the HTTPS release approval and compatibility
+integrity checks, provisioning, offline installation, updates and publication tooling. Attack Harness images use the HTTPS release approval and compatibility
 cache policy in Section 5.1.1.
-Active runs retain their pinned image, submitted bundle and reference inputs. No executable release keys or production credentials ship in images.
+Active runs retain their pinned image, submitted bundle and reference inputs. No production credentials ship in images.
 
 Trusted configuration and private state are resolved by the installed host
 profile. Linux uses `/etc/operator`, `/var/lib/operator` and `/run/operator`;
@@ -1760,7 +1760,7 @@ native gates; schemas must cover boundary cases rather than merely mirror code.
 | OC-AC-021 | HTTPS mapping rejects arbitrary destinations/redirects/headers and unsupported setup/state operations; reports retain its actual evidence assurance. |
 | OC-AC-022 | User-authored and generator-authored bundles use one strict validator; objectives-only input works without fabricated scenarios or generator metadata. Missing required capabilities/references fail before launch; optional gaps and requested-policy narrowing are explicit. No submission can select runtime credentials, tools or destinations. |
 | OC-AC-023 | Report retries/late evidence never execute attacks; reports separate observed facts, guest claims, inference, incomplete audit and cleanup uncertainty. |
-| OC-AC-024 | Release/skill updates, skill removal/reinstallation, retention and offline installation preserve pinned active inputs, executable release signatures, skill content digests and referenced evidence. Bundle edits require a new immutable input identity and cannot modify an active campaign. |
+| OC-AC-024 | Release/skill updates, skill removal/reinstallation, retention and offline installation preserve pinned active inputs, executable release file digests, skill content digests and referenced evidence. Bundle edits require a new immutable input identity and cannot modify an active campaign. |
 | OC-AC-025 | CLI disconnect/observer interrupt does not stop accepted work; status/wait/JSON receipts, read-only doctor and fenced startup are demonstrated. |
 | OC-AC-026 | Local image selection uses Docker content with `--pull=never` and treats latest as a local tag. Cover missing image, local tag change, immutable ID launch, image removal, cached/uncached HTTPS release lookup, bad origin/TLS/redirect/status/metadata/digest, minimum version, exact contract/platform/profile mismatch, offline valid-cache reuse and accepted-start pinning. |
 | OC-AC-027 | Create/list/inspect/restore tools preserve campaign ID and description, discover retained earlier-session checkpoints and support context-preserving branch restores (Sections 10.3–10.4). |
