@@ -133,3 +133,33 @@ fingerprint variable were returned; configure step 3 or confirm equivalent
 organization-scoped signing settings are available to this repository. These are
 point-in-time observations, not permanent deployment requirements. No settings
 were changed by these checks.
+
+## Package integrity and installation — 2026-10-13
+
+Source `12d2d4abe75f384a35cbd5181344e263f4e228bc` removes release signing from
+packaging and installation. The workflow change is separately committed on
+`main` as `ed471752a75c3217f3576f6ddae6aad646b7200d`. Current installation uses
+archive checksums and manifest/file validation; no release key setup is required.
+The earlier signing evidence above is historical.
+
+- The complete `make test` suite passed, including generated-file checks,
+  Go/Python contracts, release scripts, and the exported catalog publisher.
+  Focused installer/CLI race tests and vet also passed. Actionlint 1.7.12 passed
+  for the workflow change.
+- The production builder produced `0.0.1` packages for all four host platforms
+  on macOS ARM64 with Go 1.26.5 and Python 3.14.7. The existing `0.0.3` shared
+  contract pin remained `sha256:7d85bc39910f23b2c8f8de761f447be5dedc9c74d0833f358eadded20a07bfac`.
+- The actual publisher assembled all four archives, four checksum files and
+  `candidate.json`. All archive checksums and `operatorctl release check` calls
+  passed. A simulated GitHub publication/promotion retained all nine asset files
+  byte-for-byte and produced the four-platform catalog entry.
+- Real macOS ARM64 packages passed fresh installation, contract loading,
+  repeated installation, update from `0.0.1` to a local test-only `0.0.2`, explicit
+  downgrade, prior-binary retention, truncated-archive rejection, and preservation
+  of configuration/evidence. No keyring, signature, GPG invocation or system
+  installation was used.
+
+These checks exercise packaging and installation. Cross-builds do not qualify
+native container execution, and simulated publication does not establish live
+GitHub or releases-service delivery. See the candidate workflow runs for those
+publication results.
