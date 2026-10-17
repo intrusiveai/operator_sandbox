@@ -118,7 +118,7 @@ func NewLaunchPlan(ctx context.Context, parent string, image ImagePin, m campaig
 		}
 		p.args = append(p.args, "--mount", arg)
 	}
-	p.args = append(p.args, image.ImageID, "-I", "-S", "-B", "/opt/operator/engine/bootstrap.py")
+	p.args = append(p.args, image.ReferenceForDocker(), "-I", "-S", "-B", "/opt/operator/engine/bootstrap.py")
 	ok = true
 	return p, nil
 }

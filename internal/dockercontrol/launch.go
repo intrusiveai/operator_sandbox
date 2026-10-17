@@ -29,21 +29,27 @@ func (c *Client) Create(ctx context.Context, p *LaunchPlan) (campaign.DockerBind
 		return campaign.DockerBinding{}, err
 	}
 	// Reject image-declared volumes: Docker would silently add writable mounts.
-	volumes, err := c.run(ctx, p.image.Endpoint, "image", "inspect", "--platform", p.image.ImagePlatform, "--format", "{{json .Config.Volumes}}", "--", p.image.ImageID)
-	if err != nil || (strings.TrimSpace(string(volumes)) != "null" && strings.TrimSpace(string(volumes)) != "{}") {
+	volumes, err := c.run(ctx, p.image.Endpoint, "image", "inspect", "--platform", p.image.ImagePlatform, "--format", "{{json .Config.Volumes}}", "--", p.image.ReferenceForDocker())
+	if err != nil {
+		return campaign.DockerBinding{}, dockerFailure(ctx, "launch image volume check", ErrLaunch, err)
+	}
+	if strings.TrimSpace(string(volumes)) != "null" && strings.TrimSpace(string(volumes)) != "{}" {
 		return campaign.DockerBinding{}, ErrLaunch
 	}
 	args := append([]string{"--config", p.directory}, p.args...)
 	raw, err := c.run(ctx, p.image.Endpoint, args...)
 	id := strings.TrimSpace(string(raw))
 	if len(id) != 64 || !imageDigest.MatchString("sha256:"+id) {
+		if err != nil {
+			return campaign.DockerBinding{}, dockerFailure(ctx, "Harness container creation", ErrLaunch, err)
+		}
 		return campaign.DockerBinding{}, ErrLaunch
 	}
-	b := campaign.DockerBinding{APIVersion: campaign.BindingVersion, CampaignID: p.manifest.CampaignID, LaunchID: p.manifest.LaunchID, ContainerID: p.manifest.ContainerID, RunManifestDigest: p.manifestDigest, Endpoint: p.image.Endpoint, DaemonID: p.image.DaemonID, DockerContainerID: id, ImageDigest: p.image.ImageID, Labels: p.manifest.DockerLabels()}
+	b := campaign.DockerBinding{APIVersion: campaign.SelectedImageBindingVersion, CampaignID: p.manifest.CampaignID, LaunchID: p.manifest.LaunchID, ContainerID: p.manifest.ContainerID, RunManifestDigest: p.manifestDigest, Endpoint: p.image.Endpoint, DaemonID: p.image.DaemonID, DockerContainerID: id, ImageDigest: p.image.ImageID, Labels: p.manifest.DockerLabels()}
 	if err != nil {
 		// Retain a complete reply for cleanup, but never authorize StartCreated
 		// after a failed command, even if the caller saves the returned binding.
-		return b, ErrLaunch
+		return b, dockerFailure(ctx, "Harness container creation", ErrLaunch, err)
 	}
 	p.actualID.Store(id)
 	item, code := c.inspect(ctx, b)

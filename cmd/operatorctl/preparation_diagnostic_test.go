@@ -82,6 +82,14 @@ func TestPreparationDiagnosticProcess(t *testing.T) {
 	case len(a) > 0 && a[0] == "info":
 		fmt.Println(`"diagnostic-daemon"`)
 	case len(a) > 1 && a[0] == "image" && a[1] == "inspect":
+		if os.Getenv("OPERATOR_DIAGNOSTIC_FAULT") == "image-missing" {
+			fmt.Fprintln(os.Stderr, "No such image: "+diagnosticSecret)
+			os.Exit(1)
+		}
+		if os.Getenv("OPERATOR_DIAGNOSTIC_FAULT") == "image-timeout" {
+			time.Sleep(10 * time.Second)
+			os.Exit(1)
+		}
 		if strings.Contains(strings.Join(a, " "), "Config.Volumes") {
 			fmt.Println("null")
 		} else {
@@ -229,7 +237,7 @@ func diagnosticFixture(t *testing.T) (hostconfig.Paths, string) {
 }
 
 func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
-	for _, fault := range []string{"image", "attach"} {
+	for _, fault := range []string{"image", "image-missing", "image-timeout", "attach"} {
 		t.Run(fault, func(t *testing.T) {
 			var requests atomic.Int64
 			if fault == "attach" {
@@ -285,8 +293,9 @@ func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
 					if code != 1 || d == nil || !strings.Contains(stderr, d.Stage) || !strings.Contains(stderr, d.Message) || !strings.Contains(stderr, "preparation_failed") || !strings.Contains(stderr, "Execution will not resume.") {
 						t.Fatal(code, string(raw), stderr, d)
 					}
-					if fault == "image" {
-						if d.Stage != "local Harness image inspection" || !strings.Contains(d.Message, "cannot resolve local image") {
+					if strings.HasPrefix(fault, "image") {
+						expected := map[string]string{"image": "Docker daemon inspection: Docker command failed (exit 1)", "image-missing": "selected image inspection: image reference is not available in the local Docker store (exit 1)", "image-timeout": "selected image inspection: Docker command timed out"}[fault]
+						if d.Stage != "local Harness image inspection" || !strings.Contains(d.Message, expected) {
 							t.Fatal(d)
 						}
 					} else if d.Stage != "Interceptor attachment" || !strings.Contains(d.Message, "HTTP 409") {
@@ -390,7 +399,7 @@ func TestLocalCompatibilityWithoutReleaseService(t *testing.T) {
 			switch fault {
 			case "missing":
 				e = os.Remove(file)
-				want = "cannot inspect immutable image release files"
+				want = "embedded image file read: Docker command failed (exit 98)"
 			case "malformed":
 				e = os.WriteFile(file, []byte(`{"unexpected":"`+diagnosticSecret+`"}`), 0600)
 				want = "invalid embedded Harness compatibility record"

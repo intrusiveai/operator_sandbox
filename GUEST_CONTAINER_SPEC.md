@@ -91,7 +91,7 @@ Embedded compatibility record, immutable image metadata and installed host polic
 
 | Group | Required identities |
 |---|---|
-| Image | Full local Docker image/config ID and native platform; separately recorded registry index/manifest digests when available; source/build provenance and SBOM. |
+| Image | Platform-selected Docker image ID, native platform and separately verified immutable lookup reference; registry index/manifest inventory when available; source/build provenance and SBOM. |
 | Python | Interpreter version/ABI, standard library/native dependencies and exact application installation layout. |
 | Harness | Source revision, package digest, fixed bootstrap entrypoint, model codec set, tool catalog, skill loader and conclusion schema. |
 | Guidance | Embedded default prompt exact bytes, digest, size and media type. |

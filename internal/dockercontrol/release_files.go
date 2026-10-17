@@ -69,13 +69,19 @@ func (c *Client) ReadReleaseFiles(ctx context.Context, pin ImagePin) (result Rel
 		return c.run(ctx, pin.Endpoint, append([]string{"--config", directory}, args...)...)
 	}
 	// Volumes would conceal image files and leave extra Docker storage behind.
-	volumes, e := run(ctx, "image", "inspect", "--platform", pin.ImagePlatform, "--format", "{{json .Config.Volumes}}", "--", pin.ImageID)
-	if e != nil || (strings.TrimSpace(string(volumes)) != "null" && strings.TrimSpace(string(volumes)) != "{}") {
+	volumes, e := run(ctx, "image", "inspect", "--platform", pin.ImagePlatform, "--format", "{{json .Config.Volumes}}", "--", pin.ReferenceForDocker())
+	if e != nil {
+		return result, dockerFailure(ctx, "inspection image volume check", ErrReleaseFiles, e)
+	}
+	if strings.TrimSpace(string(volumes)) != "null" && strings.TrimSpace(string(volumes)) != "{}" {
 		return result, ErrReleaseFiles
 	}
-	raw, e := run(ctx, "container", "create", "--pull=never", "--platform", pin.ImagePlatform, "--network=none", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges=true", "--restart=no", "--user=65532:65532", "--label", inspectionLabel+"="+label, "--entrypoint=/usr/bin/python3", pin.ImageID, "-I", "-S", "-B")
+	raw, e := run(ctx, "container", "create", "--pull=never", "--platform", pin.ImagePlatform, "--network=none", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges=true", "--restart=no", "--user=65532:65532", "--label", inspectionLabel+"="+label, "--entrypoint=/usr/bin/python3", pin.ReferenceForDocker(), "-I", "-S", "-B")
 	id := strings.TrimSpace(string(raw))
 	if len(id) != 64 || !imageDigest.MatchString("sha256:"+id) {
+		if e != nil {
+			return result, dockerFailure(ctx, "stopped inspection container creation", ErrReleaseFiles, e)
+		}
 		return result, ErrReleaseFiles
 	}
 	result.ContainerID = id
@@ -84,9 +90,9 @@ func (c *Client) ReadReleaseFiles(ctx context.Context, pin ImagePin) (result Rel
 		if err != nil || daemon != pin.DaemonID {
 			return ErrImageIdentity
 		}
-		raw, err := run(ctx, "container", "inspect", "--format", inspectFormat, id)
+		raw, err := run(ctx, "container", "inspect", "--format", selectedInspectFormat, id)
 		if err != nil {
-			return ErrReleaseFiles
+			return dockerFailure(ctx, "stopped inspection container verification", ErrReleaseFiles, err)
 		}
 		value, err := contracts.Decode(raw, outputLimit)
 		object, ok := value.(map[string]any)
@@ -108,13 +114,17 @@ func (c *Client) ReadReleaseFiles(ctx context.Context, pin ImagePin) (result Rel
 	defer func() {
 		cleanup, stop := context.WithTimeout(context.Background(), ConfirmationTimeout)
 		defer stop()
-		if verify(cleanup) != nil {
-			err = errors.Join(err, ErrReleaseFiles)
+		if cleanupErr := verify(cleanup); cleanupErr != nil {
+			err = errors.Join(err, cleanupErr)
 			result.Files = nil
 			return
 		}
 		if raw, e := run(cleanup, "container", "rm", id); e != nil || strings.TrimSpace(string(raw)) != id {
-			err = errors.Join(err, ErrReleaseFiles)
+			if e != nil {
+				err = errors.Join(err, dockerFailure(cleanup, "inspection container removal", ErrReleaseFiles, e))
+			} else {
+				err = errors.Join(err, ErrReleaseFiles)
+			}
 			result.Files = nil
 			return
 		}
@@ -127,7 +137,7 @@ func (c *Client) ReadReleaseFiles(ctx context.Context, pin ImagePin) (result Rel
 		result.Removed = true
 	}()
 	if e != nil {
-		return result, ErrReleaseFiles
+		return result, dockerFailure(ctx, "stopped inspection container creation", ErrReleaseFiles, e)
 	}
 	if err = verify(ctx); err != nil {
 		return result, err
@@ -137,7 +147,7 @@ func (c *Client) ReadReleaseFiles(ctx context.Context, pin ImagePin) (result Rel
 		raw, e := c.archive(ctx, pin.Endpoint, "--config", directory, "container", "cp", id+":"+file, "-")
 		if e != nil {
 			result.Files = nil
-			return result, ErrReleaseFiles
+			return result, dockerFailure(ctx, "embedded image file read", ErrReleaseFiles, e)
 		}
 		body, e := releaseFile(raw, path.Base(file))
 		if e != nil {

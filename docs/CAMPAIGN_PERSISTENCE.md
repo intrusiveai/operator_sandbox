@@ -33,7 +33,7 @@ authenticate a publisher, select policy, or inspect the native session. Callers
 must establish those facts independently and verify the actual staged files.
 
 After Docker create, save `launch/docker-binding.json` using
-`operator.dev/docker-binding/v1alpha1`. It contains campaign, launch and shared
+`operator.dev/docker-binding/v1alpha2`. It contains campaign, launch and shared
 container IDs, run-manifest digest, full Docker container ID, image ID, selected
 local `unix:///absolute/socket` endpoint, Docker daemon ID and required labels:
 
@@ -42,6 +42,13 @@ ai.intrusive.operator.campaign  = campaign_id
 ai.intrusive.operator.launch    = launch_id
 ai.intrusive.operator.container = container_id
 ```
+
+Version 2 compares the selected platform manifest descriptor when Docker provides
+one, otherwise the classic store image ID. Existing version 1 records retain
+their literal container `.Image` comparison; they MUST NOT be rewritten or
+reinterpreted. The start intent records `binding_version` before create, and
+recovery MUST preserve it. An absent version in an old intent means version 1.
+An unknown version MUST fail closed.
 
 Persist this record before Docker start. An identical save is idempotent; a
 different binding is rejected. Never derive recovery's daemon endpoint from the

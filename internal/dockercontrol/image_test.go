@@ -39,7 +39,7 @@ func TestLocalImageResolutionAndPin(t *testing.T) {
 			if err := c.VerifyImage(context.Background(), pin); err != nil {
 				t.Fatal(err)
 			}
-			if !reflect.DeepEqual(references, []string{selector, id}) {
+			if !reflect.DeepEqual(references, []string{selector, id, id}) {
 				t.Fatal("verification retargeted mutable selector", references)
 			}
 		})
@@ -140,5 +140,114 @@ func TestTagChangeBeforeAndAfterAcceptance(t *testing.T) {
 	}
 	if err := c.VerifyImage(context.Background(), pin); err != nil {
 		t.Fatal("accepted pin followed latest", err)
+	}
+}
+
+func TestContainerdImmutableReferenceSelection(t *testing.T) {
+	for _, host := range []string{"linux/amd64", "darwin/arm64"} {
+		for _, mode := range []string{"success", "no matching repo", "wrong bytes", "wrong platform", "timeout", "tag moved", "pinned absent"} {
+			t.Run(host+"/"+mode, func(t *testing.T) {
+				platform, _ := ImagePlatform(host)
+				id := "sha256:" + strings.Repeat("a", 64)
+				selected := "registry.example/harness:candidate"
+				repo := "registry.example/harness@sha256:" + strings.Repeat("b", 64)
+				unrelated := "other.example/harness@sha256:" + strings.Repeat("c", 64)
+				moved, absent := false, false
+				calls := []string{}
+				c := &Client{run: func(ctx context.Context, endpoint string, args ...string) ([]byte, error) {
+					if args[0] == "info" {
+						return []byte(`"daemon-1"`), nil
+					}
+					if args[0] != "image" || args[1] != "inspect" || args[3] != platform {
+						t.Fatal(args)
+					}
+					ref := args[len(args)-1]
+					calls = append(calls, ref)
+					if ref == unrelated {
+						t.Fatal("selected unrelated repository")
+					}
+					if ref == id || (absent && ref == repo) {
+						return nil, classifyCommand(ctx, errors.New("exit"), []byte("No such image: private"), false)
+					}
+					rid, arch := id, strings.Split(platform, "/")[1]
+					if ref == repo {
+						switch mode {
+						case "wrong bytes":
+							rid = "sha256:" + strings.Repeat("d", 64)
+						case "wrong platform":
+							arch = "invalid"
+						case "timeout":
+							return nil, context.DeadlineExceeded
+						}
+					} else if ref != selected {
+						t.Fatal(ref)
+					}
+					if moved && ref == selected {
+						rid = "sha256:" + strings.Repeat("e", 64)
+					}
+					inventory := []string{unrelated, repo}
+					if mode == "no matching repo" {
+						inventory = []string{unrelated}
+					}
+					return json.Marshal(map[string]any{"id": rid, "os": "linux", "architecture": arch, "repo_digests": inventory})
+				}}
+				pin, err := c.ResolveImage(context.Background(), "unix:///saved/docker.sock", selected, host)
+				if mode == "no matching repo" || mode == "wrong bytes" || mode == "wrong platform" || mode == "timeout" {
+					if err == nil {
+						t.Fatal("accepted", mode)
+					}
+					return
+				}
+				if err != nil || pin.Reference != repo || pin.ImageID != id {
+					t.Fatal(pin, err)
+				}
+				if !reflect.DeepEqual(calls, []string{selected, id, repo}) {
+					t.Fatal(calls)
+				}
+				moved = mode == "tag moved"
+				absent = mode == "pinned absent"
+				if moved {
+					if err = c.VerifySelection(context.Background(), pin); !errors.Is(err, ErrImageIdentity) {
+						t.Fatal(err)
+					}
+				}
+				calls = nil
+				err = c.VerifyImage(context.Background(), pin)
+				if absent && err == nil || !absent && err != nil {
+					t.Fatal(err)
+				}
+				if !reflect.DeepEqual(calls, []string{repo}) {
+					t.Fatal("verification changed reference", calls)
+				}
+				// Round-trip host metadata. Legacy pins remain bare-ID only and fail here;
+				// a failed legacy lookup must not upgrade itself using the repository inventory.
+				raw, _ := json.Marshal(pin)
+				var saved ImagePin
+				if err = json.Unmarshal(raw, &saved); err != nil || saved.Reference != repo {
+					t.Fatal(err, saved)
+				}
+				saved.Reference = ""
+				calls = nil
+				if err = c.VerifyImage(context.Background(), saved); err == nil {
+					t.Fatal("legacy pin reinterpreted")
+				}
+				if !reflect.DeepEqual(calls, []string{id}) {
+					t.Fatal(calls)
+				}
+			})
+		}
+	}
+}
+
+func TestRepositoryReferenceValidation(t *testing.T) {
+	for name, want := range map[string]string{"ubuntu:latest": "docker.io/library/ubuntu", "library/ubuntu": "docker.io/library/ubuntu", "docker.io/ubuntu:1": "docker.io/library/ubuntu", "index.docker.io/library/ubuntu:1": "docker.io/library/ubuntu", "localhost:5000/a:b": "localhost:5000/a"} {
+		if got := repository(name); got != want {
+			t.Fatalf("%s: %s != %s", name, got, want)
+		}
+	}
+	for _, ref := range []string{"repo:latest", "repo:tag@sha256:" + strings.Repeat("a", 64), "repo@@sha256:" + strings.Repeat("a", 64)} {
+		if immutableReference(ref) {
+			t.Fatal(ref)
+		}
 	}
 }

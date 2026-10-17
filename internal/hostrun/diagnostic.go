@@ -105,6 +105,9 @@ func preparationMessage(err error) string {
 			}
 		}
 	}
+	if detail, ok := dockercontrol.FailureDetail(err); ok {
+		return detail
+	}
 	switch {
 	case errors.Is(err, context.Canceled):
 		return "operation canceled"

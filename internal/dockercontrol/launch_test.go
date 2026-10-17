@@ -107,7 +107,7 @@ func launchFixture(t *testing.T, mode string) (*LaunchPlan, string, *campaign.Wr
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = channel.Close() })
-	plan, err := NewLaunchPlan(ctx, parent, ImagePin{Selector: "image:latest", Endpoint: "unix:///saved/docker.sock", DaemonID: "daemon-1", ImageID: d, HostPlatform: m.HostPlatform, ImagePlatform: m.ImagePlatform}, m, tree, channel)
+	plan, err := NewLaunchPlan(ctx, parent, ImagePin{Reference: "registry.example/harness@sha256:" + strings.Repeat("e", 64), Selector: "image:latest", Endpoint: "unix:///saved/docker.sock", DaemonID: "daemon-1", ImageID: d, HostPlatform: m.HostPlatform, ImagePlatform: m.ImagePlatform}, m, tree, channel)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,6 +139,9 @@ func (f *launchDocker) run(ctx context.Context, endpoint string, args ...string)
 	case "info":
 		return json.Marshal(f.daemon)
 	case "image":
+		if args[len(args)-1] != f.p.image.ReferenceForDocker() {
+			f.t.Fatal("image reference changed", args)
+		}
 		if args[5] == "{{json .Config.Volumes}}" {
 			return []byte(f.volumes), nil
 		}
@@ -231,7 +234,7 @@ func TestLaunchPolicyMountsAndSyscalls(t *testing.T) {
 		t.Run(mode, func(t *testing.T) {
 			p, _, _ := launchFixture(t, mode)
 			joined := strings.Join(p.args, " ")
-			for _, must := range []string{"--pull=never", "--network=none", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges:true", "--restart=no", "--no-healthcheck", "--init=false", "--ipc=none", "--pids-limit=16", "nodev,nosuid,noexec", "bind-recursive=disabled", "bind-propagation=rprivate", "--entrypoint=/usr/bin/python3", p.image.ImageID + " -I -S -B /opt/operator/engine/bootstrap.py"} {
+			for _, must := range []string{"--pull=never", "--network=none", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges:true", "--restart=no", "--no-healthcheck", "--init=false", "--ipc=none", "--pids-limit=16", "nodev,nosuid,noexec", "bind-recursive=disabled", "bind-propagation=rprivate", "--entrypoint=/usr/bin/python3", p.image.ReferenceForDocker() + " -I -S -B /opt/operator/engine/bootstrap.py"} {
 				if !strings.Contains(joined, must) {
 					t.Error("missing", must)
 				}

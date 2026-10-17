@@ -123,3 +123,56 @@ func TestRecoverBindingRejectsUntrustedOrIncompleteEvidence(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateRecoveryPreservesBindingVersion(t *testing.T) {
+	for _, version := range []string{"", BindingVersion, SelectedImageBindingVersion, "unknown"} {
+		t.Run(version, func(t *testing.T) {
+			root, w := newWriter(t)
+			b := fixtureBinding(w)
+			fields := map[string]any{"endpoint": b.Endpoint, "daemon_id": b.DaemonID, "image_id": b.ImageDigest}
+			if version != "" {
+				fields["binding_version"] = version
+			}
+			raw, _ := json.Marshal(fields)
+			appendOK(t, w, Entry{RunRevision: 3, Kind: "launch.start-intent", Metadata: raw})
+			w.Close()
+			intent, err := ReadCreateIntent(context.Background(), root, b.CampaignID)
+			if version == "unknown" {
+				if err == nil {
+					t.Fatal("accepted unknown version")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, err := intent.Binding(b.DockerContainerID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			expected := version
+			if expected == "" {
+				expected = BindingVersion
+			}
+			if got.APIVersion != expected {
+				t.Fatal(got.APIVersion)
+			}
+			changed := got
+			if expected == BindingVersion {
+				changed.APIVersion = SelectedImageBindingVersion
+			} else {
+				changed.APIVersion = BindingVersion
+			}
+			if err = SaveRecoveredDockerBinding(context.Background(), root, changed); err == nil {
+				t.Fatal("reinterpreted intent")
+			}
+			if err = SaveRecoveredDockerBinding(context.Background(), root, got); err != nil {
+				t.Fatal(err)
+			}
+			saved, err := ReadDockerBinding(root, b.CampaignID)
+			if err != nil || saved.APIVersion != expected {
+				t.Fatal(saved, err)
+			}
+		})
+	}
+}
