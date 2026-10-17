@@ -149,9 +149,12 @@ func TestDiagnosticResponseReadingAndValidation(t *testing.T) {
 	}
 }
 
-type failingCredentials struct{}
+type failingCredentials struct{ captured *context.Context }
 
-func (failingCredentials) Resolve(context.Context, string) (credentials.Resolution, error) {
+func (f failingCredentials) Resolve(ctx context.Context, _ string) (credentials.Resolution, error) {
+	if f.captured != nil {
+		*f.captured = ctx
+	}
 	return credentials.Resolution{}, errors.New("synthetic-credential-secret")
 }
 
@@ -246,5 +249,26 @@ func TestDiagnosticCanceledBeforeDispatch(t *testing.T) {
 	d := Details(err)
 	if d == nil || d.Category != "cancellation" || d.Reason != "canceled" || d.HTTPStatus != 0 {
 		t.Fatal(d, err)
+	}
+}
+
+func TestDiagnosticCredentialFailureReleasesRequestContext(t *testing.T) {
+	var requestContext context.Context
+	parent := context.Background()
+	c, err := New(parent, profile(t, "openai-chat", "https://127.0.0.1:1"), failingCredentials{captured: &requestContext})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+	_, err = c.Generate(parent, nativeRequest(c.profile.Codec))
+	d := Details(err)
+	if d == nil || d.Category != "credential_preparation" || d.Reason != "credential_unavailable" {
+		t.Fatalf("cleanup changed failure: %+v %v", d, err)
+	}
+	if requestContext == nil || !errors.Is(requestContext.Err(), context.Canceled) {
+		t.Fatal("request context leaked")
+	}
+	if parent.Err() != nil {
+		t.Fatal("parent context changed")
 	}
 }

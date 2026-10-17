@@ -128,17 +128,15 @@ func (c *Client) Generate(ctx context.Context, raw []byte) ([]byte, error) {
 // GenerateWithMetadata returns only selected response facts, including on HTTP
 // success so subsequent contract-validation failures can retain their provenance.
 func (c *Client) GenerateWithMetadata(ctx context.Context, raw []byte) (body []byte, observed Diagnostic, callErr error) {
+	ctx, cancel := context.WithTimeout(ctx, 120*time.Second)
+	// Defer order matters: classify the observed failure before our own cleanup
+	// cancels the context, so cleanup cannot turn a rejection into cancellation.
+	defer cancel()
 	category, reason := "request_validation", "request_invalid"
-	var cancel context.CancelFunc
 	if c != nil {
 		observed.Provider, observed.Model = c.profile.Provider, c.profile.Model
 	}
 	defer func() {
-		defer func() {
-			if cancel != nil {
-				cancel()
-			}
-		}()
 		if callErr != nil {
 			if category != "http_rejection" {
 				category = failureCategory(ctx, callErr, category)
@@ -170,7 +168,6 @@ func (c *Client) GenerateWithMetadata(ctx context.Context, raw []byte) (body []b
 	if err = c.checkNative(native); err != nil {
 		return nil, observed, err
 	}
-	ctx, cancel = context.WithTimeout(ctx, 120*time.Second)
 
 	category, reason = "credential_preparation", "credential_unavailable"
 	header, prefix := "Authorization", "Bearer "
