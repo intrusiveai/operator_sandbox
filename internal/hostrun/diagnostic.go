@@ -60,10 +60,10 @@ func PreparationFailure(stage string, err error) error {
 	if errors.As(err, &prior) {
 		return err
 	}
-	if stage == "Harness image and release validation" {
+	if stage == "local Harness image and compatibility validation" {
 		switch {
-		case errors.Is(err, imagerelease.ErrLookup), errors.Is(err, imagerelease.ErrUnapproved), errors.Is(err, imagerelease.ErrRecord):
-			stage = "Harness release lookup"
+		case errors.Is(err, imagerelease.ErrRecord):
+			stage = "embedded Harness compatibility record validation"
 		case errors.Is(err, imagerelease.ErrCompatibility):
 			stage = "Harness compatibility validation"
 		case errors.Is(err, dockercontrol.ErrImage), errors.Is(err, dockercontrol.ErrImageIdentity), errors.Is(err, dockercontrol.ErrPlatform):
@@ -116,8 +116,6 @@ func preparationMessage(err error) string {
 		return "permission denied while accessing a required resource"
 	case errors.Is(err, syscall.ENOSPC):
 		return "insufficient disk space"
-	case errors.Is(err, imagerelease.ErrUnapproved):
-		return "the release service returned HTTP 404 for the selected image"
 	}
 	var remote *interceptor.RemoteError
 	if errors.As(err, &remote) && remote.Response.Status >= 100 && remote.Response.Status <= 599 {
@@ -144,7 +142,7 @@ func preparationMessage(err error) string {
 	// These sentinels have fixed, host-authored descriptions. Do not return err.Error():
 	// it may wrap one of these with private paths, credentials or server content.
 	for _, safe := range []error{
-		imagerelease.ErrLookup, imagerelease.ErrRecord, imagerelease.ErrCompatibility, imagerelease.ErrCache, imagerelease.ErrEmbedded,
+		imagerelease.ErrRecord, imagerelease.ErrCompatibility, imagerelease.ErrEmbedded,
 		dockercontrol.ErrCLIUnavailable, dockercontrol.ErrExecutablePath, dockercontrol.ErrExecutableUnavailable,
 		dockercontrol.ErrImage, dockercontrol.ErrImageIdentity, dockercontrol.ErrPlatform, dockercontrol.ErrImageSelector, dockercontrol.ErrReleaseFiles,
 		hostconfig.ErrInvalid, hostconfig.ErrPrivate, hostconfig.ErrImage, hostconfig.ErrPath, hostconfig.ErrSpool, hostconfig.ErrEvidence,

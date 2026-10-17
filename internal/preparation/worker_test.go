@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
-	"path/filepath"
 	goruntime "runtime"
 	"strings"
 	"sync"
@@ -115,7 +114,7 @@ func (p *workerPower) Close() {
 	}
 }
 
-func cachedApproval(t *testing.T, p *contracts.Protocol, hostPlatform ...string) (imagerelease.Prepared, imagerelease.Requirements) {
+func localCompatibility(t *testing.T, p *contracts.Protocol, hostPlatform ...string) (imagerelease.Prepared, imagerelease.Requirements) {
 	t.Helper()
 	pin, _ := p.PackageIdentity()
 	platform := "darwin/" + goruntime.GOARCH
@@ -124,21 +123,8 @@ func cachedApproval(t *testing.T, p *contracts.Protocol, hostPlatform ...string)
 	}
 	h := imagerelease.Requirements{OperatorVersion: "0.1.0", Contract: pin, HostPlatform: platform, RuntimeProfile: "operator-container/v1"}
 	image := dockercontrol.ImagePin{Selector: "harness:latest", Endpoint: "unix:///fixture/docker.sock", DaemonID: "daemon-1", ImageID: contracts.RawDigest([]byte("approved test image")), HostPlatform: platform, ImagePlatform: "linux/" + goruntime.GOARCH}
-	record := imagerelease.Record{APIVersion: "intrusive.ai/engine-release/v1alpha1", ImageDigest: image.ImageID, MinimumOperatorVersion: "0.1.0", ContractPackageVersion: pin.Version, ContractPackageDigest: pin.Digest, RuntimeProfile: h.RuntimeProfile, Platform: image.ImagePlatform}
-	raw := encode(record)
-	cache := t.TempDir()
-	_ = os.Chmod(cache, 0700)
-	entry := encode(map[string]any{"api_version": "operator.dev/image-release-cache/v1alpha1", "origin": imagerelease.Origin, "image_id": image.ImageID, "retrieved_at": "2026-09-26T00:00:00Z", "response_base64": raw, "response_digest": contracts.RawDigest(raw)})
-	name := strings.TrimPrefix(contracts.RawDigest([]byte(imagerelease.Origin)), "sha256:") + "-" + strings.TrimPrefix(image.ImageID, "sha256:") + ".json"
-	if err := os.WriteFile(filepath.Join(cache, name), entry, 0600); err != nil {
-		t.Fatal(err)
-	}
-	client, err := imagerelease.Open(cache)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer client.Close()
-	approval, err := client.Resolve(context.Background(), image.ImageID, h)
+	record := imagerelease.Record{APIVersion: imagerelease.CompatibilityVersion, MinimumOperatorVersion: "0.1.0", ContractPackageVersion: pin.Version, ContractPackageDigest: pin.Digest, RuntimeProfile: h.RuntimeProfile, Platform: image.ImagePlatform}
+	approval, err := imagerelease.Validate(encode(record), image.ImageID, h)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -157,7 +143,7 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			image, requirements := cachedApproval(t, input.Protocol)
+			image, requirements := localCompatibility(t, input.Protocol)
 			var operations []string
 			if mode == "requested stop" {
 				operations = []string{"engine.request_stop"}

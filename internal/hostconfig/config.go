@@ -90,6 +90,7 @@ type Config struct {
 	State struct {
 		Root string `json:"root"`
 	} `json:"state"`
+	// Cache is accepted only for legacy configuration compatibility; it is unused.
 	Cache struct {
 		ReleaseDirectory string `json:"release_directory"`
 	} `json:"cache"`
@@ -240,18 +241,7 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 	if !absolute(c.State.Root) || (c.Docker.Executable != "" && !absolute(c.Docker.Executable)) {
 		return Config{}, ErrPath
 	}
-	if c.Cache.ReleaseDirectory == "" {
-		c.Cache.ReleaseDirectory = filepath.Join(c.State.Root, "cache", "releases")
-	}
-	if !absolute(c.Cache.ReleaseDirectory) {
-		return Config{}, ErrPath
-	}
 	if (c.Target.ProfileFile != "" && !absolute(c.Target.ProfileFile)) || (c.Credentials.File != "" && !absolute(c.Credentials.File)) || (c.Model.ProfileFile != "" && !absolute(c.Model.ProfileFile)) {
-		return Config{}, ErrPath
-	}
-	// Reusable approvals must not be inside the purgeable campaign tree.
-	campaigns := filepath.Join(c.State.Root, "campaigns")
-	if c.Cache.ReleaseDirectory == campaigns || strings.HasPrefix(c.Cache.ReleaseDirectory, campaigns+string(filepath.Separator)) {
 		return Config{}, ErrPath
 	}
 	return c, nil

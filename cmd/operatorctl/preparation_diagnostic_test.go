@@ -201,18 +201,8 @@ func diagnosticFixture(t *testing.T) (hostconfig.Paths, string) {
 	for name, raw := range files {
 		put(name, raw)
 	}
-	imageID := contracts.RawDigest([]byte("diagnostic-test-image"))
-	release := marshal(imagerelease.Record{APIVersion: "intrusive.ai/engine-release/v1alpha1", ImageDigest: imageID, MinimumOperatorVersion: "0.1.0", ContractPackageVersion: pin.Version, ContractPackageDigest: pin.Digest, RuntimeProfile: "operator-container/v1", Platform: "linux/" + runtime.GOARCH})
-	cache := filepath.Join(dir, "cache")
-	if e := os.Mkdir(cache, 0700); e != nil {
-		t.Fatal(e)
-	}
-	// A valid private cache permits this test to run with no release-service access.
-	cached := marshal(map[string]any{"api_version": "operator.dev/image-release-cache/v1alpha1", "origin": imagerelease.Origin, "image_id": imageID, "retrieved_at": "2026-10-01T00:00:00Z", "response_base64": release, "response_digest": contracts.RawDigest(release)})
-	cacheName := contracts.RawDigest([]byte(imagerelease.Origin))[7:] + "-" + imageID[7:] + ".json"
-	if e := os.WriteFile(filepath.Join(cache, cacheName), cached, 0600); e != nil {
-		t.Fatal(e)
-	}
+	compatibility := marshal(imagerelease.Record{APIVersion: imagerelease.CompatibilityVersion, MinimumOperatorVersion: "0.1.0", ContractPackageVersion: pin.Version, ContractPackageDigest: pin.Digest, RuntimeProfile: "operator-container/v1", Platform: "linux/" + runtime.GOARCH})
+	put("compatibility.json", compatibility)
 	// An unauthenticated local model profile initializes without resolving credentials
 	// or contacting a provider. Execution must never be reached in these tests.
 	put("model.json", []byte(`{"api_version":"operator.dev/model-provider-profile/v1alpha1","id":"test","provider":"litellm","codec_id":"openai-chat-text-tools-v1","model":"test","endpoint":"https://127.0.0.1:4000/v1/chat/completions","authentication":"none","maximum_prompt_tokens":10000,"maximum_completion_tokens":100,"maximum_response_bytes":4096,"codec_options":{"instruction_role":"developer","response_models":["test"]}}`))
@@ -229,7 +219,7 @@ func diagnosticFixture(t *testing.T) (hostconfig.Paths, string) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	writeConfig(t, paths.ConfigFile, string(original)+fmt.Sprintf("state: {root: %q}\ndocker: {executable: %q, endpoint: %q}\nmodel: {profile_file: %q}\ncache: {release_directory: %q}\n", paths.StateRoot, filepath.Join(dir, "docker"), paths.DockerEndpoint, filepath.Join(dir, "model.json"), cache))
+	writeConfig(t, paths.ConfigFile, string(original)+fmt.Sprintf("state: {root: %q}\ndocker: {executable: %q, endpoint: %q}\nmodel: {profile_file: %q}\n", paths.StateRoot, filepath.Join(dir, "docker"), paths.DockerEndpoint, filepath.Join(dir, "model.json")))
 	t.Setenv("OPERATOR_DIAGNOSTIC_FILES", dir)
 	code, raw, stderr := diagnosticCLI(t, paths, append([]string{"submit"}, args...)...)
 	if code != 0 {
@@ -357,17 +347,104 @@ func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
 
 func TestImmediateDiagnosticWhenCompletionCannotBeSaved(t *testing.T) {
 	dir, paths, deps, _ := startFixture(t)
-	d := hostrun.PreparationDetails(hostrun.PreparationFailure("Harness image and release validation", imagerelease.ErrUnapproved))
+	d := hostrun.PreparationDetails(hostrun.PreparationFailure("local Harness image and compatibility validation", imagerelease.ErrCompatibility))
 	deps.run = func(context.Context, string, string, string) (workerjob.Result, error) {
-		return workerjob.Result{Code: "preparation_failed", Diagnostic: d, CompletionRecording: "unconfirmed"}, imagerelease.ErrUnapproved
+		return workerjob.Result{Code: "preparation_failed", Diagnostic: d, CompletionRecording: "unconfirmed"}, imagerelease.ErrCompatibility
 	}
 	code, _, stderr := invokeStart(t, context.Background(), "start", []string{"--run", dir}, paths, deps)
-	if code != 1 || !strings.Contains(stderr, "HTTP 404") || !strings.Contains(stderr, "saving the start completion is unconfirmed") {
+	if code != 1 || !strings.Contains(stderr, "incompatible") || !strings.Contains(stderr, "saving the start completion is unconfirmed") {
 		t.Fatal(code, stderr)
 	}
 	var worker bytes.Buffer
 	printWorkerFailure(&worker, "preparation_failed", d, "unconfirmed")
 	if stderr != worker.String() {
 		t.Fatal("entrypoint formatting differs", stderr, worker.String())
+	}
+}
+
+// Admission must reach the local target even when no approval cache exists and
+// a release-service proxy would reject every request. Invalid local metadata must
+// fail earlier, with the cause retained for a later CLI process.
+func TestLocalCompatibilityWithoutReleaseService(t *testing.T) {
+	var networkCalls atomic.Int64
+	proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { networkCalls.Add(1); w.WriteHeader(503) }))
+	defer proxy.Close()
+	t.Setenv("HTTPS_PROXY", proxy.URL)
+	t.Setenv("https_proxy", proxy.URL)
+	t.Setenv("NO_PROXY", "")
+	t.Setenv("no_proxy", "")
+	for _, fault := range []string{"missing", "malformed", "minimum version", "contract", "platform", "resource digest"} {
+		t.Run(fault, func(t *testing.T) {
+			t.Setenv("OPERATOR_DIAGNOSTIC_FAULT", fault)
+			paths, dir := diagnosticFixture(t)
+			file := filepath.Join(os.Getenv("OPERATOR_DIAGNOSTIC_FILES"), "compatibility.json")
+			raw, e := os.ReadFile(file)
+			if e != nil {
+				t.Fatal(e)
+			}
+			var record imagerelease.Record
+			if e = json.Unmarshal(raw, &record); e != nil {
+				t.Fatal(e)
+			}
+			want := "incompatible"
+			switch fault {
+			case "missing":
+				e = os.Remove(file)
+				want = "cannot inspect immutable image release files"
+			case "malformed":
+				e = os.WriteFile(file, []byte(`{"unexpected":"`+diagnosticSecret+`"}`), 0600)
+				want = "invalid embedded Harness compatibility record"
+			case "minimum version":
+				record.MinimumOperatorVersion = "999.0.0"
+			case "contract":
+				record.ContractPackageDigest = contracts.RawDigest([]byte("wrong package"))
+			case "platform":
+				if runtime.GOARCH == "arm64" {
+					record.Platform = "linux/amd64"
+				} else {
+					record.Platform = "linux/arm64"
+				}
+			case "resource digest":
+				e = os.WriteFile(filepath.Join(filepath.Dir(file), "default-system-prompt.txt"), []byte("changed prompt"), 0600)
+				want = "embedded engine metadata"
+			}
+			if e != nil {
+				t.Fatal(e)
+			}
+			if fault == "minimum version" || fault == "contract" || fault == "platform" {
+				raw, _ = json.Marshal(record)
+				if e = os.WriteFile(file, raw, 0600); e != nil {
+					t.Fatal(e)
+				}
+			}
+			code, raw, stderr := diagnosticCLI(t, paths, "campaign", "start", "--run", dir)
+			var receipt startReceipt
+			if e = json.Unmarshal(raw, &receipt); e != nil || code != 1 || receipt.Completion == nil || receipt.Completion.Diagnostic == nil || !strings.Contains(stderr, want) {
+				t.Fatal(code, string(raw), stderr, e)
+			}
+			code, raw, stderr = diagnosticCLI(t, paths, "inspect", "--run", dir)
+			var status struct {
+				Start *startReceipt `json:"start"`
+			}
+			if e = json.Unmarshal(raw, &status); e != nil || code != 0 || status.Start == nil || status.Start.Completion == nil || status.Start.Completion.Diagnostic == nil || *status.Start.Completion.Diagnostic != *receipt.Completion.Diagnostic {
+				t.Fatal("lost diagnostic", code, string(raw), stderr, e)
+			}
+			if _, e = os.Stat(filepath.Join(paths.StateRoot, "attachments", receipt.CampaignID)); !os.IsNotExist(e) {
+				t.Fatal("attached incompatible image", e)
+			}
+			if _, e = os.Stat(filepath.Join(paths.StateRoot, "cache")); !os.IsNotExist(e) {
+				t.Fatal("required or created a release cache", e)
+			}
+			calls, e := os.ReadFile(filepath.Join(os.Getenv("OPERATOR_DIAGNOSTIC_FILES"), "calls"))
+			if e != nil || !bytes.Contains(calls, []byte("container rm")) {
+				t.Fatal("inspection cleanup not confirmed", e)
+			}
+		})
+	}
+	// The original test checks both entrypoints and reaches an actual controlled
+	// local attachment rejection after complete compatible-image validation.
+	t.Run("compatible image", TestPreparationFailureCLIThenSeparateInspection)
+	if networkCalls.Load() != 0 {
+		t.Fatal("compatibility admission contacted network proxy", networkCalls.Load())
 	}
 }

@@ -71,7 +71,7 @@ change a queued campaign. The object exposes no private profile or credential
 configuration and does not serialize those fields.
 
 `InstalledInputs.Open` is single-use. It obtains the startup gate, checks the local
-image and HTTPS/cached release, inspects embedded files, validates selected skills,
+image and embedded compatibility record, inspects embedded files, validates selected skills,
 constructs host-only provider/credential clients and attaches the configured local
 Interceptor. It then builds the launch session and records installation provenance
 as digests. No secret value is resolved by offline loading. Provider calls use the

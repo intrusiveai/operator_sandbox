@@ -75,7 +75,7 @@ func New(ctx context.Context, c Config) (*Worker, error) {
 	w := c.Service.Prepared.Writer()
 	m := w.Manifest()
 	pin, _ := c.Service.Prepared.Target().Protocol().PackageIdentity()
-	if c.Image.Image.HostPlatform != c.Requirements.HostPlatform || m.HostPlatform != c.Requirements.HostPlatform || c.Requirements.Contract != pin || c.Image.Release.Digest() == "" || c.Image.Release.Digest() != m.ReleaseRecordDigest || c.Image.Release.Record().Compatible(m.ImageDigest, c.Requirements) != nil || c.Requirements.RuntimeProfile != m.RuntimeProfile {
+	if c.Image.Image.HostPlatform != c.Requirements.HostPlatform || m.HostPlatform != c.Requirements.HostPlatform || c.Requirements.Contract != pin || c.Image.Release.Digest() == "" || c.Image.Release.Digest() != m.ReleaseRecordDigest || c.Image.Release.Compatible(m.ImageDigest, c.Requirements) != nil || c.Requirements.RuntimeProfile != m.RuntimeProfile {
 		return nil, ErrWorker
 	}
 	if c.Service.Deadline.IsZero() || !c.Service.Deadline.After(time.Now()) || c.Service.Deadline.After(time.Now().Add(30*time.Minute)) {

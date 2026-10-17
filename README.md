@@ -52,7 +52,7 @@ Prepare the following configuration:
 
 - **Harness image:** install a matching Attack Harness image in local Docker and
   select it with `engine.image`. Operator uses the local image and validates its
-  release compatibility record before launch; it does not pull images for you.
+  embedded compatibility record before launch; it does not pull images for you.
 - **Model access:** choose a [model-provider profile](docs/MODEL_PROVIDERS.md) and
   configure [host authentication](docs/HOST_AUTHENTICATION.md). Credentials stay
   on the host.
@@ -149,7 +149,7 @@ go build -o build/operatorctl ./cmd/operatorctl
 ```
 
 This builds a development CLI. A runnable campaign installation additionally
-requires the matching contract package, harness image, release compatibility
+requires the matching contract package, harness image, embedded compatibility
 metadata, and host configuration described above. See
 [release tooling](docs/HOST_DISTRIBUTION.md#reproducible-candidates-and-publication)
 for reproducible installation candidates.

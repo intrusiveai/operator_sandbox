@@ -13,7 +13,7 @@ required Section 12 conformance tests pass. Existing attempt/feedback schemas
 remain active as specified below.
 In every attempt, `generator.release_digest` MUST equal the frozen
 `EngineContext.release.release_record_digest`. It identifies the validated
-compatibility response. `release.image_digest` separately pins the harness image
+embedded compatibility file. `release.image_digest` separately pins the harness image
 through startup and MUST NOT be substituted for this field.
 The closed ScenarioBundle and TargetCapabilityManifest schemas are now in the
 catalog. Their [capability mapping](CAPABILITY_EXPORT_CONTRACT.md) and reference-chain
@@ -77,8 +77,9 @@ inventory (relative path, byte length, raw digest), schema catalog identity,
 operation-registry identity and semantic-profile identities. Exclude the package
 manifest and signatures from the inventory they bind. The package content digest
 is the canonical digest of that manifest payload. The host-only
-[HTTPS release record](ENGINE_RELEASE_CONTRACT.md) binds this package digest,
-the local Docker image ID and the required Operator/runtime/platform compatibility.
+[embedded compatibility record](ENGINE_RELEASE_CONTRACT.md) binds this package
+digest and required Operator/runtime/platform compatibility. The independently
+resolved local Docker image ID binds the embedded record bytes.
 Operator and the engine consume their installed package copies.
 
 The [implemented package layout](PACKAGE_INTEGRITY_CONTRACT.md) retains flat schema

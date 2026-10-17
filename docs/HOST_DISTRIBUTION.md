@@ -192,7 +192,7 @@ publication and preserve the package identities on promotion. The workflow MUST
 serialize publication and promotion per version. The workflow MUST validate before
 acquiring AWS credentials, fetch no private publisher code at runtime, and use
 the custom OIDC subject documented in the maintainer guide.
-Release status MUST NOT claim native qualification or grant harness image approval.
+Release status MUST NOT claim native qualification or grant harness runtime qualification.
 See [candidate release automation](../.github/maintainers/CANDIDATE_RELEASES.md) for setup and recovery.
 
 ## Validation and limits

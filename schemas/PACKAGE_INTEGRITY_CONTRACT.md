@@ -29,9 +29,9 @@ inside schema or registry files. The builder emits canonical manifest bytes.
 the payload inventory. Neither is an unverified payload escape hatch: verifier
 arguments contain **only** inventoried payload resources, with the manifest passed
 separately. No other missing or extra payload is allowed. Reserved names also
-reject case-fold aliases and use as parent directories. The current release
-approval mechanism remains the host's pinned HTTPS release record; this schema
-does not introduce a signature distribution or authorization mechanism.
+reject case-fold aliases and use as parent directories. The embedded compatibility record MUST name the exact installed package
+identity. The local image pin binds that record; this schema does not introduce
+a signature distribution or authorization mechanism.
 
 The catalog mapping and registry remain at the package root. Schema filenames
 referenced by the catalog are unique, bare `*.schema.json` names at that same root,

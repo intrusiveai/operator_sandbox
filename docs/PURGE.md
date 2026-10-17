@@ -26,7 +26,7 @@ container was created.
 `--all` MUST preflight its entire selection before deleting evidence. Scans MUST
 be bounded, avoid reading file contents, unlink rather than follow interior links,
 and reject mount boundaries. Reusable configuration, credentials, skills, images,
-release caches, submitted input projects and external exports MUST survive purge.
+submitted input projects and external exports MUST survive purge.
 
 ## Registered managed copies
 

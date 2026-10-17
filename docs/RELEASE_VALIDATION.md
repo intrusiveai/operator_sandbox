@@ -2,7 +2,7 @@
 
 This document retains dated validation evidence. Earlier entries describe the
 implementation tested at that time; current requirements are in
-[host distribution](HOST_DISTRIBUTION.md). It does not grant production image approval or native runtime qualification.
+[host distribution](HOST_DISTRIBUTION.md). It does not grant production runtime qualification or native runtime qualification.
 
 ## Tested identities
 

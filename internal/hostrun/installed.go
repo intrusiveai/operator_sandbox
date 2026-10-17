@@ -305,21 +305,10 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 	if err != nil {
 		return nil, err
 	}
-	stage = "Harness release cache opening"
-	release, err := imagerelease.Open(c.Cache.ReleaseDirectory)
-	if err != nil {
-		return nil, err
-	}
 	pin, _ := p.PackageIdentity()
 	requirements := imagerelease.Requirements{OperatorVersion: operatorVersion, Contract: pin, HostPlatform: runtime.GOOS + "/" + runtime.GOARCH, RuntimeProfile: "operator-container/v1"}
-	stage = "Harness image and release validation"
-	image, err := release.Prepare(ctx, docker, c.Docker.Endpoint, c.Engine.Image, requirements)
-	closeErr := release.Close()
-	if err != nil || closeErr != nil {
-		return nil, preparationCleanup(stage, err, closeErr)
-	}
-	stage = "embedded Harness metadata validation"
-	embedded, _, err := imagerelease.InspectEmbedded(ctx, docker, image, requirements, p)
+	stage = "local Harness image and compatibility validation"
+	image, embedded, _, err := imagerelease.Prepare(ctx, docker, c.Docker.Endpoint, c.Engine.Image, requirements, p)
 	if err != nil {
 		return nil, err
 	}
