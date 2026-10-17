@@ -227,7 +227,7 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 	if mountErr != nil {
 		return result, mountErr
 	}
-	metadata, _ := json.Marshal(map[string]any{"start_request_id": c.StartRequestID, "image_id": c.Image.Image.ImageID, "endpoint": c.Image.Image.Endpoint, "daemon_id": c.Image.Image.DaemonID, "input_directory": c.Tree.Directory(), "transport_mounts": mounts})
+	metadata, _ := json.Marshal(map[string]any{"binding_version": campaign.SelectedImageBindingVersion, "image_reference": c.Image.Image.ReferenceForDocker(), "image_platform": c.Image.Image.ImagePlatform, "start_request_id": c.StartRequestID, "image_id": c.Image.Image.ImageID, "endpoint": c.Image.Image.Endpoint, "daemon_id": c.Image.Image.DaemonID, "input_directory": c.Tree.Directory(), "transport_mounts": mounts})
 	if _, err = writer.AppendReserving(campaign.Entry{RunRevision: m.InitialRevision, Kind: "launch.start-intent", Metadata: metadata, Content: []campaign.Content{{Role: "release", MediaType: "application/json", Bytes: c.Image.Release.Bytes()}}}, "launch-terminal", 1<<20); err != nil {
 		return result, err
 	}

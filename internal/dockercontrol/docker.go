@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -69,13 +68,14 @@ func dockerCommand(executable string, limit int) command {
 		cmd.Env = dockerEnvironment(os.Environ())
 		cmd.WaitDelay = 100 * time.Millisecond
 		out := &boundedOutput{limit: limit}
-		cmd.Stdout, cmd.Stderr = out, io.Discard
+		stderr := &boundedOutput{limit: 4096}
+		cmd.Stdout, cmd.Stderr = out, stderr
 		err := cmd.Run()
 		if out.overflow {
-			return nil, errors.New("Docker output limit")
+			return nil, classifyCommand(ctx, err, stderr.Bytes(), true)
 		}
 		// Preserve a complete create ID even when the CLI reports a later error.
-		return out.Bytes(), err
+		return out.Bytes(), classifyCommand(ctx, err, stderr.Bytes(), false)
 	}
 }
 
@@ -119,6 +119,10 @@ func (b *boundedOutput) Write(p []byte) (int, error) {
 // mounts. CLI defaults and user-configured output templates cannot change this.
 const inspectFormat = `{"id":{{json .Id}},"image":{{json .Image}},"labels":{{json .Config.Labels}},"status":{{json .State.Status}},"running":{{json .State.Running}},"paused":{{json .State.Paused}},"restarting":{{json .State.Restarting}},"restart_policy":{{json .HostConfig.RestartPolicy.Name}},"auto_remove":{{json .HostConfig.AutoRemove}}}`
 
+// New bindings explicitly identify the platform-selected image. Classic Docker
+// lacks ImageManifestDescriptor and continues to expose the config ID in .Image.
+var selectedInspectFormat = strings.Replace(inspectFormat, "{{json .Image}}", `{{if index . "ImageManifestDescriptor"}}{{json .ImageManifestDescriptor.digest}}{{else}}{{json .Image}}{{end}}`, 1)
+
 type identity struct {
 	ID            string            `json:"id"`
 	Image         string            `json:"image"`
@@ -155,7 +159,11 @@ func (c *Client) inspect(ctx context.Context, b campaign.DockerBinding) (identit
 	if code := c.daemon(ctx, b); code != "" {
 		return item, code
 	}
-	raw, err := c.run(ctx, b.Endpoint, "container", "inspect", "--format", inspectFormat, b.DockerContainerID)
+	format := inspectFormat
+	if b.APIVersion == campaign.SelectedImageBindingVersion {
+		format = selectedInspectFormat
+	}
+	raw, err := c.run(ctx, b.Endpoint, "container", "inspect", "--format", format, b.DockerContainerID)
 	if err != nil {
 		return item, "container_unconfirmed"
 	}

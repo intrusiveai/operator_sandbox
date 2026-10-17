@@ -50,7 +50,7 @@ type Embedded struct {
 // Matches binds checked bytes to the same pinned image and local daemon.
 func (e *Embedded) Matches(p Prepared) bool {
 	return e != nil && e.release.Digest() != "" && e.release.Digest() == p.Release.Digest() && p.Release.imageID == e.image.ImageID &&
-		e.image.ImageID == p.Image.ImageID && e.image.Endpoint == p.Image.Endpoint &&
+		e.image.ReferenceForDocker() == p.Image.ReferenceForDocker() && e.image.ImageID == p.Image.ImageID && e.image.Endpoint == p.Image.Endpoint &&
 		e.image.DaemonID == p.Image.DaemonID && e.image.HostPlatform == p.Image.HostPlatform &&
 		e.image.ImagePlatform == p.Image.ImagePlatform
 }

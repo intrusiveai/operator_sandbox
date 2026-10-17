@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
@@ -24,9 +25,10 @@ var imageDigest = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
 var daemonID = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$`)
 var imageSelector = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._/:@-]{0,511}$`)
 
-// ImagePin is host preparation metadata. Repository digests are attribution only;
-// ImageID (the config digest) is the immutable create/release identity.
+// ImagePin separates the selected platform identity from a locally usable immutable
+// reference. An absent Reference is a legacy pin: only its original bare ID is used.
 type ImagePin struct {
+	Reference     string   `json:"reference,omitempty"`
 	Selector      string   `json:"selector"`
 	Endpoint      string   `json:"endpoint"`
 	DaemonID      string   `json:"daemon_id"`
@@ -53,6 +55,9 @@ func (p ImagePin) Validate() error {
 		return ErrPlatform
 	}
 	if campaign.ValidateDockerEndpoint(p.Endpoint) != nil || ValidateImageSelector(p.Selector) != nil || !daemonID.MatchString(p.DaemonID) || !imageDigest.MatchString(p.ImageID) {
+		return ErrImageIdentity
+	}
+	if p.Reference != "" && (!immutableReference(p.Reference) || (imageDigest.MatchString(p.Reference) && p.Reference != p.ImageID)) {
 		return ErrImageIdentity
 	}
 	if len(p.RepoDigests) > 128 {
@@ -84,7 +89,7 @@ const imageFormat = `{"id":{{json .Id}},"os":{{json .Os}},"architecture":{{json 
 func (c *Client) imageDaemon(ctx context.Context, endpoint string) (string, error) {
 	raw, err := c.run(ctx, endpoint, "info", "--format", "{{json .ID}}")
 	if err != nil {
-		return "", ErrImage
+		return "", dockerFailure(ctx, "Docker daemon inspection", ErrImage, err)
 	}
 	v, err := contracts.Decode(raw, outputLimit)
 	id, ok := v.(string)
@@ -94,34 +99,55 @@ func (c *Client) imageDaemon(ctx context.Context, endpoint string) (string, erro
 	return id, nil
 }
 
-// ResolveImage performs read-only Docker inspection. Explicit --platform selects
-// a native variant from multi-platform local storage; no registry is contacted.
-func (c *Client) ResolveImage(ctx context.Context, endpoint, selector, host string) (ImagePin, error) {
-	var pin ImagePin
-	platform, err := ImagePlatform(host)
-	if err != nil {
-		return pin, err
+// ReferenceForDocker preserves legacy bare-ID semantics; it never selects a tag.
+func (p ImagePin) ReferenceForDocker() string {
+	if p.Reference == "" {
+		return p.ImageID
 	}
-	if c == nil || c.run == nil || campaign.ValidateDockerEndpoint(endpoint) != nil || ValidateImageSelector(selector) != nil {
-		return pin, ErrImageSelector
+	return p.Reference
+}
+
+func immutableReference(s string) bool {
+	if imageDigest.MatchString(s) {
+		return true
 	}
-	ctx, cancel := context.WithTimeout(ctx, ConfirmationTimeout)
-	defer cancel()
-	id, err := c.imageDaemon(ctx, endpoint)
-	if err != nil {
-		return pin, err
+	repo, digest, ok := strings.Cut(s, "@")
+	return ok && validSelector(repo) && !strings.Contains(repo, "@") &&
+		!strings.Contains(repo[strings.LastIndex(repo, "/")+1:], ":") && imageDigest.MatchString(digest)
+}
+
+// repository normalizes familiar Docker names without consulting a registry.
+func repository(s string) string {
+	s, _, _ = strings.Cut(s, "@")
+	if i := strings.LastIndex(s, ":"); i > strings.LastIndex(s, "/") {
+		s = s[:i]
 	}
+	first, _, slash := strings.Cut(s, "/")
+	if !slash || (!strings.ContainsAny(first, ".:") && first != "localhost") {
+		s = "docker.io/" + s
+	}
+	if strings.HasPrefix(s, "index.docker.io/") {
+		s = "docker.io/" + strings.TrimPrefix(s, "index.docker.io/")
+	}
+	if !strings.Contains(s, "/") {
+		s = "docker.io/" + s
+	}
+	if strings.HasPrefix(s, "docker.io/") && strings.Count(s, "/") == 1 {
+		s = "docker.io/library/" + strings.TrimPrefix(s, "docker.io/")
+	}
+	return s
+}
+
+// inspectImage inspects exactly one selector; it never changes selectors or pulls.
+func (c *Client) inspectImage(ctx context.Context, endpoint, selector, platform, operation string) (ImagePin, error) {
 	raw, err := c.run(ctx, endpoint, "image", "inspect", "--platform", platform, "--format", imageFormat, "--", selector)
 	if err != nil {
-		return pin, ErrImage
+		return ImagePin{}, dockerFailure(ctx, operation, ErrImage, err)
 	}
 	v, err := contracts.Decode(raw, outputLimit)
-	if err != nil {
-		return pin, ErrImageIdentity
-	}
 	m, ok := v.(map[string]any)
-	if !ok || len(m) != 4 {
-		return pin, ErrImageIdentity
+	if err != nil || !ok || len(m) != 4 {
+		return ImagePin{}, ErrImageIdentity
 	}
 	var item struct {
 		ID           string   `json:"id"`
@@ -130,61 +156,159 @@ func (c *Client) ResolveImage(ctx context.Context, endpoint, selector, host stri
 		RepoDigests  []string `json:"repo_digests"`
 	}
 	if json.Unmarshal(raw, &item) != nil || !imageDigest.MatchString(item.ID) {
-		return pin, ErrImageIdentity
+		return ImagePin{}, ErrImageIdentity
 	}
 	if _, ok := m["repo_digests"]; !ok {
-		return pin, ErrImageIdentity
+		return ImagePin{}, ErrImageIdentity
 	}
 	if item.OS+"/"+item.Architecture != platform {
-		return pin, ErrPlatform
+		return ImagePin{}, ErrPlatform
 	}
-	// A request by immutable image ID must not be silently resolved to other bytes.
 	if imageDigest.MatchString(selector) && selector != item.ID {
-		return pin, ErrImageIdentity
-	}
-	again, err := c.imageDaemon(ctx, endpoint)
-	if err != nil || again != id || ctx.Err() != nil {
-		return pin, ErrImageIdentity
+		return ImagePin{}, ErrImageIdentity
 	}
 	if item.RepoDigests == nil {
 		item.RepoDigests = []string{}
 	}
-	pin = ImagePin{selector, endpoint, id, item.ID, host, platform, item.RepoDigests}
-	if err := pin.Validate(); err != nil {
+	return ImagePin{ImageID: item.ID, ImagePlatform: platform, RepoDigests: item.RepoDigests}, nil
+}
+
+// ResolveImage selects and verifies an immutable local reference before returning
+// the pin. Classic stores use their bare config ID. Containerd stores may require
+// a repository-qualified index digest plus the explicit platform.
+func (c *Client) ResolveImage(ctx context.Context, endpoint, selector, host string) (ImagePin, error) {
+	platform, err := ImagePlatform(host)
+	if err != nil {
 		return ImagePin{}, err
+	}
+	if c == nil || c.run == nil || campaign.ValidateDockerEndpoint(endpoint) != nil || ValidateImageSelector(selector) != nil {
+		return ImagePin{}, ErrImageSelector
+	}
+	ctx, cancel := context.WithTimeout(ctx, ConfirmationTimeout)
+	defer cancel()
+	daemon, err := c.imageDaemon(ctx, endpoint)
+	if err != nil {
+		return ImagePin{}, err
+	}
+	pin, err := c.inspectImage(ctx, endpoint, selector, platform, "selected image inspection")
+	if err != nil {
+		return ImagePin{}, err
+	}
+	pin.Selector, pin.Endpoint, pin.DaemonID, pin.HostPlatform = selector, endpoint, daemon, host
+	if err = pin.Validate(); err != nil {
+		return ImagePin{}, err
+	}
+	candidates := []string{pin.ImageID}
+	// Prefer an explicitly selected immutable reference. Never choose another repo
+	// just because it is first in Docker's inventory.
+	if immutableReference(selector) && selector != pin.ImageID {
+		candidates = []string{selector, pin.ImageID}
+	}
+	repos := []string{}
+	if !imageDigest.MatchString(selector) {
+		for _, ref := range pin.RepoDigests {
+			if immutableReference(ref) && !imageDigest.MatchString(ref) && repository(ref) == repository(selector) {
+				repos = append(repos, ref)
+			}
+		}
+	}
+	sort.Strings(repos)
+	candidates = append(candidates, repos...)
+	seen := map[string]bool{}
+	var last error
+	for _, ref := range candidates {
+		if seen[ref] {
+			continue
+		}
+		seen[ref] = true
+		actual, e := c.inspectImage(ctx, endpoint, ref, platform, "immutable image reference inspection")
+		if e != nil {
+			last = e
+			// Only an absent local selector permits trying another immutable candidate.
+			if !isMissingImage(e) {
+				return ImagePin{}, e
+			}
+			continue
+		}
+		if actual.ImageID != pin.ImageID {
+			return ImagePin{}, ErrImageIdentity
+		}
+		pin.Reference = ref
+		break
+	}
+	if pin.Reference == "" {
+		return ImagePin{}, last
+	}
+	again, err := c.imageDaemon(ctx, endpoint)
+	if err != nil {
+		return ImagePin{}, err
+	}
+	if again != daemon {
+		return ImagePin{}, ErrImageIdentity
+	}
+	if ctx.Err() != nil {
+		return ImagePin{}, dockerFailure(ctx, "image selection", ErrImage, ctx.Err())
 	}
 	return pin, nil
 }
 
-// VerifyImage checks continued availability by the accepted immutable ID, not its
-// original mutable tag. A changed daemon or missing pin requires failure, not pull.
+// VerifyImage never consults the original tag or switches a saved reference.
 func (c *Client) VerifyImage(ctx context.Context, pin ImagePin) error {
+	if c == nil || c.run == nil {
+		return ErrImageSelector
+	}
 	if err := pin.Validate(); err != nil {
 		return err
 	}
-	actual, err := c.ResolveImage(ctx, pin.Endpoint, pin.ImageID, pin.HostPlatform)
+	ctx, cancel := context.WithTimeout(ctx, ConfirmationTimeout)
+	defer cancel()
+	daemon, err := c.imageDaemon(ctx, pin.Endpoint)
 	if err != nil {
 		return err
 	}
-	if actual.DaemonID != pin.DaemonID || actual.ImageID != pin.ImageID {
+	if daemon != pin.DaemonID {
 		return ErrImageIdentity
 	}
-	return nil
+	actual, err := c.inspectImage(ctx, pin.Endpoint, pin.ReferenceForDocker(), pin.ImagePlatform, "pinned image reference inspection")
+	if err != nil {
+		return err
+	}
+	if actual.ImageID != pin.ImageID {
+		return ErrImageIdentity
+	}
+	daemon, err = c.imageDaemon(ctx, pin.Endpoint)
+	if err != nil {
+		return err
+	}
+	if daemon != pin.DaemonID {
+		return ErrImageIdentity
+	}
+	return ctx.Err()
 }
 
-// VerifySelection is the pre-acceptance check for prepared inputs. A changed
-// selector requires rebuilding image-dependent inputs and revalidating approval.
-// Accepted retries use VerifyImage instead, preserving their original image pin.
+// VerifySelection detects changes to the administrator's tag before admission.
 func (c *Client) VerifySelection(ctx context.Context, pin ImagePin) error {
+	if c == nil || c.run == nil {
+		return ErrImageSelector
+	}
 	if err := pin.Validate(); err != nil {
 		return err
 	}
-	actual, err := c.ResolveImage(ctx, pin.Endpoint, pin.Selector, pin.HostPlatform)
+	ctx, cancel := context.WithTimeout(ctx, ConfirmationTimeout)
+	defer cancel()
+	daemon, err := c.imageDaemon(ctx, pin.Endpoint)
 	if err != nil {
 		return err
 	}
-	if actual.DaemonID != pin.DaemonID || actual.ImageID != pin.ImageID {
+	if daemon != pin.DaemonID {
 		return ErrImageIdentity
 	}
-	return nil
+	actual, err := c.inspectImage(ctx, pin.Endpoint, pin.Selector, pin.ImagePlatform, "selected image reinspection")
+	if err != nil {
+		return err
+	}
+	if actual.ImageID != pin.ImageID {
+		return ErrImageIdentity
+	}
+	return c.VerifyImage(ctx, pin)
 }

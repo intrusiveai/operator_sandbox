@@ -88,11 +88,15 @@ func TestReleaseFileArchive(t *testing.T) {
 	}
 }
 func TestStoppedImageInspection(t *testing.T) {
-	for _, mode := range []string{"success", "cp failure", "cancel during read", "lost create with ID", "lost create without ID", "foreign daemon", "wrong image", "unexpected running", "remove failure", "volume", "archive link"} {
+	for _, mode := range []string{"success", "repository reference", "cp failure", "cancel during read", "lost create with ID", "lost create without ID", "foreign daemon", "wrong image", "unexpected running", "remove failure", "volume", "archive link"} {
 		t.Run(mode, func(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 			pin := ImagePin{Selector: "harness:latest", Endpoint: "unix:///saved/docker.sock", DaemonID: "daemon-1", ImageID: "sha256:" + strings.Repeat("a", 64), HostPlatform: "darwin/arm64", ImagePlatform: "linux/arm64"}
+			if mode == "repository reference" {
+				pin.Reference = "registry.example/harness@sha256:" + strings.Repeat("c", 64)
+			}
+			success := mode == "success" || mode == "repository reference"
 			id := strings.Repeat("b", 64)
 			label := ""
 			created, removed, copies := 0, 0, 0
@@ -120,7 +124,7 @@ func TestStoppedImageInspection(t *testing.T) {
 						}
 						return []byte(`null`), nil
 					}
-					if args[len(args)-1] != pin.ImageID {
+					if args[len(args)-1] != pin.ReferenceForDocker() {
 						t.Fatal("mutable image selector used")
 					}
 					return json.Marshal(map[string]any{"id": pin.ImageID, "os": "linux", "architecture": "arm64", "repo_digests": nil})
@@ -128,7 +132,7 @@ func TestStoppedImageInspection(t *testing.T) {
 					switch args[1] {
 					case "create":
 						created++
-						for _, flag := range []string{"--pull=never", "--network=none", "--read-only", "--cap-drop=ALL", "--restart=no", "--user=65532:65532", "--entrypoint=/usr/bin/python3", pin.ImageID} {
+						for _, flag := range []string{"--pull=never", "--network=none", "--read-only", "--cap-drop=ALL", "--restart=no", "--user=65532:65532", "--entrypoint=/usr/bin/python3", pin.ReferenceForDocker()} {
 							if !slices.Contains(args, flag) {
 								t.Fatal("missing containment", flag)
 							}
@@ -196,16 +200,16 @@ func TestStoppedImageInspection(t *testing.T) {
 				return tarFile(t, h, body), nil
 			}
 			result, err := c.ReadReleaseFiles(ctx, pin)
-			if (err == nil) != (mode == "success") {
+			if (err == nil) != success {
 				t.Fatalf("mode=%s err=%v", mode, err)
 			}
-			if mode == "success" && (len(result.Files) != 5 || !result.Removed || copies != 5) {
+			if success && (len(result.Files) != 5 || !result.Removed || copies != 5) {
 				t.Fatal(result, copies)
 			}
-			if mode != "success" && len(result.Files) != 0 {
+			if !success && len(result.Files) != 0 {
 				t.Fatal("partial bytes usable after failure")
 			}
-			wantRemove := mode == "success" || mode == "cp failure" || mode == "cancel during read" || mode == "archive link" || mode == "lost create with ID" || mode == "remove failure"
+			wantRemove := success || mode == "cp failure" || mode == "cancel during read" || mode == "archive link" || mode == "lost create with ID" || mode == "remove failure"
 			if (removed == 1) != wantRemove {
 				t.Fatalf("unexpected cleanup count %d", removed)
 			}

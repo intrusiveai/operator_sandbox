@@ -56,6 +56,12 @@ carry the saved local `--host unix:///...` endpoint. Docker environment override
 and proxy variables are removed from the child environment. No shell, user-supplied
 Docker arguments, remote endpoint or mutable container name is used.
 
+New `docker-binding/v1alpha2` records compare the selected platform image
+manifest descriptor when available, otherwise the classic Docker image ID.
+Existing `v1alpha1` records keep their literal `.Image` comparison; recovery MUST
+NOT reinterpret them. Termination does not need an image tag or registry lookup.
+See [image selection](IMAGE_PREPARATION.md) for the storage-specific rules.
+
 The control sequence is:
 
 1. Read the daemon ID and compare it with the saved value.
@@ -79,8 +85,8 @@ nor a failed inspect is accepted as proof of exit.
 The total identity-read/Docker confirmation budget is five seconds, shortened by
 any caller deadline. Each Docker subprocess is canceled with that context; pipe
 draining has a separate 100 ms maximum. Command stdout is bounded to 64 KiB and
-stderr is discarded rather than copied into receipts. Docker/API errors use fixed
-codes. One unavailable or ambiguous daemon/container observation fails closed.
+stderr is captured only up to 4 KiB to classify allowlisted failures, then discarded;
+raw stderr is never copied into receipts. Docker/API errors use fixed codes. One unavailable or ambiguous daemon/container observation fails closed.
 
 This uses Docker's documented [explicit daemon selection](https://docs.docker.com/reference/cli/docker/),
 [container inspection](https://docs.docker.com/reference/cli/docker/container/inspect/)

@@ -18,7 +18,12 @@ import (
 )
 
 const ManifestVersion = "operator.dev/run-manifest/v1alpha1"
+
+// v1 compares Docker container .Image verbatim. v2 compares the platform-selected
+// ImageManifestDescriptor.digest where available, otherwise classic .Image.
+// Existing records are never upgraded or reinterpreted.
 const BindingVersion = "operator.dev/docker-binding/v1alpha1"
+const SelectedImageBindingVersion = "operator.dev/docker-binding/v1alpha2"
 const ManifestLimit = 256 << 10
 
 var (
@@ -198,7 +203,7 @@ func (b DockerBinding) validate(m RunManifest, manifestDigest string) error {
 // Validate checks a detached binding before passing it to Docker. ReadDockerBinding
 // additionally verifies it against the durable campaign manifest.
 func (b DockerBinding) Validate() error {
-	if b.APIVersion != BindingVersion || !validID(b.CampaignID) || !validID(b.LaunchID) ||
+	if (b.APIVersion != BindingVersion && b.APIVersion != SelectedImageBindingVersion) || !validID(b.CampaignID) || !validID(b.LaunchID) ||
 		!dockerIDPattern.MatchString(b.ContainerID) || !dockerIDPattern.MatchString(b.DockerContainerID) ||
 		!validDigest(b.RunManifestDigest) || !validDigest(b.ImageDigest) || !validID(b.DaemonID) || len(b.Labels) != 3 {
 		return ErrInvalid
