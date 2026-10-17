@@ -136,6 +136,10 @@ func run(ctx context.Context, stateRoot, requestID, requestDigest, operatorVersi
 	result.Execution = &execution
 	if err != nil {
 		result.Code = "execution_failed"
+		if execution.ModelDiagnostic != nil && execution.ModelDiagnostic.Valid() {
+			d := *execution.ModelDiagnostic
+			result.Diagnostic = &hostrun.PreparationDiagnostic{Stage: "model request (" + d.Category + ")", Message: d.Summary(), Model: d, CleanupFailed: execution.ContainerCleanup == "unconfirmed" || execution.TransportCleanup == "retained" || execution.InputCleanup == "retained"}
+		}
 		return result, err
 	}
 	result.Phase, result.Code = "finished", "execution_finished"

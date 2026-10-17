@@ -25,18 +25,23 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/targetprofile"
 )
 
-// PreparationDiagnostic contains only host-selected stage names and allowlisted
+// PreparationDiagnostic retains its historical name and also carries optional
+// model execution details. It contains only host-selected stage names and allowlisted
 // descriptions. Never populate it from an error string, URL or response body.
 // It belongs to the host start record, not the shared host/harness contract.
 type PreparationDiagnostic struct {
-	Stage         string `json:"stage"`
-	Message       string `json:"message"`
-	CleanupFailed bool   `json:"cleanup_failed,omitempty"`
+	Stage         string                   `json:"stage"`
+	Message       string                   `json:"message"`
+	CleanupFailed bool                     `json:"cleanup_failed,omitempty"`
+	Model         modelprovider.Diagnostic `json:"model,omitempty,omitzero"`
 }
 
 func (d *PreparationDiagnostic) Valid() bool {
 	if d == nil {
 		return true
+	}
+	if d.Model != (modelprovider.Diagnostic{}) && !d.Model.Valid() {
+		return false
 	}
 	return len(d.Stage) > 0 && len(d.Stage) <= 96 && len(d.Message) > 0 && len(d.Message) <= 512 &&
 		strings.IndexFunc(d.Stage+d.Message, func(r rune) bool { return r < 32 || r == 127 }) < 0

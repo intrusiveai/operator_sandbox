@@ -18,6 +18,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/feedback"
+	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/nativerecovery"
 )
 
@@ -45,6 +46,7 @@ type Attempt struct {
 	Feedback      *feedback.Manifest `json:"feedback,omitempty"`
 }
 type Result struct {
+	ModelFailures         []modelprovider.Diagnostic   `json:"model_failures,omitempty"`
 	APIVersion            string                       `json:"api_version"`
 	CampaignID            string                       `json:"campaign_id"`
 	ManifestDigest        string                       `json:"run_manifest_digest"`
@@ -155,6 +157,7 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 		batch.Reset()
 		return nil
 	}
+	modelReservations := map[string]int64{}
 	inspect, scanErr := a.Inspect(ctx, func(event campaign.Event) (projectionErr error) {
 		defer func() {
 			if projectionErr != nil {
@@ -194,6 +197,46 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 				keep[key] = value
 			}
 		}
+		if event.Kind == "model.intent" || event.Kind == "model.exchange" || event.Kind == "model.usage" {
+			for _, key := range []string{"reserved_tokens", "elapsed_ms"} {
+				var n int64
+				if json.Unmarshal(metadata[key], &n) == nil && n >= 0 && n <= contracts.MaxSafeInteger {
+					keep[key] = metadata[key]
+				}
+			}
+			var outcome string
+			if json.Unmarshal(metadata["outcome"], &outcome) == nil {
+				switch outcome {
+				case "response", "unknown", "invalid-response", "http-rejected":
+					keep["outcome"] = metadata["outcome"]
+				}
+			}
+			if d := modelprovider.DecodeDiagnostic(metadata["diagnostic"]); d != nil {
+				keep["diagnostic"], _ = json.Marshal(d)
+				result.ModelFailures = append(result.ModelFailures, *d)
+			}
+			var op string
+			_ = json.Unmarshal(metadata["operation_id"], &op)
+			var charge int64
+			if json.Unmarshal(metadata["model_tokens"], &charge) == nil && charge >= 0 && charge <= contracts.MaxSafeInteger {
+				result.Usage["model_tokens_budget_charged"] = charge
+				keep["model_tokens_budget_charged"] = metadata["model_tokens"]
+			}
+			delete(keep, "model_tokens") // This value includes reservations, not consumption.
+			if event.Kind == "model.intent" {
+				var n int64
+				if json.Unmarshal(metadata["reserved_tokens"], &n) == nil && n >= 0 && n <= contracts.MaxSafeInteger {
+					modelReservations[op] = n
+				}
+			}
+			if event.Kind == "model.usage" {
+				var n int64
+				if json.Unmarshal(metadata["actual_tokens"], &n) == nil && n >= 0 && n <= contracts.MaxSafeInteger-result.Usage["model_tokens"] {
+					result.Usage["model_tokens"] += n
+					delete(modelReservations, op)
+				}
+			}
+		}
 		projected.Metadata, _ = json.Marshal(keep)
 		if event.Kind == "campaign.launch-input" {
 			var inputPath string
@@ -202,7 +245,7 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 				projected.Metadata, _ = json.Marshal(keep)
 			}
 		}
-		for _, key := range []string{"attempt_index_high_watermark", "attempt_admissions", "snapshot_admissions", "snapshot_bytes", "model_turns", "model_tokens"} {
+		for _, key := range []string{"attempt_index_high_watermark", "attempt_admissions", "snapshot_admissions", "snapshot_bytes", "model_turns"} {
 			var n int64
 			if json.Unmarshal(metadata[key], &n) == nil && n >= 0 {
 				result.Usage[key] = max(result.Usage[key], n)
@@ -345,6 +388,18 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 		batch.WriteByte('\n')
 		return nil
 	})
+	for _, n := range modelReservations {
+		if n > contracts.MaxSafeInteger-result.Usage["model_tokens_unconfirmed_reserved"] {
+			return receipt, campaign.ErrCorrupt
+		}
+		result.Usage["model_tokens_unconfirmed_reserved"] += n
+	}
+	if _, ok := result.Usage["model_tokens_budget_charged"]; ok {
+		if _, exists := result.Usage["model_tokens"]; !exists {
+			result.Usage["model_tokens"] = 0
+		}
+	}
+
 	if writeErr != nil {
 		return receipt, writeErr
 	}
@@ -545,6 +600,16 @@ func markdown(r Result, digest string) []byte {
 	fmt.Fprintf(&b, "# Campaign report\n\nCampaign: `%s`\n\nResult: `%s`\n\n", r.CampaignID, digest)
 	fmt.Fprintf(&b, "| Recorded fact | Value |\n| --- | --- |\n| Journal intact | %t |\n| Verified events | %d |\n| Execution | %s |\n| Container cleanup | %s |\n| Target closure | %s |\n| Injection cleanup | %s |\n| Target stop | %s |\n| Attempts | %d |\n| Harness claim records | %d |\n", r.JournalIntact, r.VerifiedEvents, r.Execution, r.ContainerCleanup, r.TargetClosure, r.InjectionCleanup, r.TargetStop, len(r.Attempts), r.HarnessClaims)
 	b.WriteString("\nAttempt completion is not proof of exploitation. Delivery, target responses and scoped oracle observations remain source evidence. Harness conclusions are claims; missing oracle evidence is unknown. No model interpretation is performed.\n")
+	if len(r.ModelFailures) > 0 {
+		b.WriteString("\n## Model request failure\n\n")
+		for _, d := range r.ModelFailures {
+			fmt.Fprintf(&b, "- Operation `%s`; category `%s`: %s\n", d.OperationID, d.Category, d.Summary())
+			if d.RequestID != "" {
+				fmt.Fprintf(&b, "  Request ID: `%s`.\n", d.RequestID)
+			}
+		}
+		b.WriteString("\nReserved tokens are an allowance held against the budget, not confirmed consumption. See cumulative_usage in result-manifest.json.\n")
+	}
 	if len(r.Gaps) > 0 {
 		b.WriteString("\n## Evidence gaps\n\n")
 		for _, gap := range r.Gaps {

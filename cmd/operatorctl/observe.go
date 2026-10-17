@@ -16,25 +16,27 @@ import (
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
+	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/startrequest"
 )
 
 type observationReceipt struct {
-	Start            *startReceipt `json:"start,omitempty"`
-	APIVersion       string        `json:"api_version"`
-	CampaignID       string        `json:"campaign_id"`
-	LaunchID         string        `json:"launch_id"`
-	ManifestDigest   string        `json:"run_manifest_digest"`
-	Verified         bool          `json:"prefix_verified"`
-	Sequence         int64         `json:"sequence"`
-	Bytes            int64         `json:"journal_bytes"`
-	Revision         int64         `json:"run_revision"`
-	LastKind         string        `json:"last_event_kind"`
-	TerminalRecorded bool          `json:"terminal_recorded"`
-	ExecutionState   string        `json:"execution_state"`
-	Emitted          int64         `json:"emitted_events"`
-	NextAfter        int64         `json:"next_after"`
-	More             bool          `json:"more_events"`
+	ModelDiagnostic  *modelprovider.Diagnostic `json:"model_diagnostic,omitempty"`
+	Start            *startReceipt             `json:"start,omitempty"`
+	APIVersion       string                    `json:"api_version"`
+	CampaignID       string                    `json:"campaign_id"`
+	LaunchID         string                    `json:"launch_id"`
+	ManifestDigest   string                    `json:"run_manifest_digest"`
+	Verified         bool                      `json:"prefix_verified"`
+	Sequence         int64                     `json:"sequence"`
+	Bytes            int64                     `json:"journal_bytes"`
+	Revision         int64                     `json:"run_revision"`
+	LastKind         string                    `json:"last_event_kind"`
+	TerminalRecorded bool                      `json:"terminal_recorded"`
+	ExecutionState   string                    `json:"execution_state"`
+	Emitted          int64                     `json:"emitted_events"`
+	NextAfter        int64                     `json:"next_after"`
+	More             bool                      `json:"more_events"`
 }
 
 // These commands only read retained records. Neither polling nor cancellation
@@ -124,6 +126,12 @@ func observeCampaign(ctx context.Context, action string, args []string, stdout, 
 		}
 		snapshot, err := campaign.Observe(ctx, *root, *id, func(e campaign.Event) error {
 			result.Revision, result.LastKind = e.RunRevision, e.Kind
+			if e.Kind == "model.exchange" && result.ModelDiagnostic == nil {
+				var metadata map[string]json.RawMessage
+				if json.Unmarshal(e.Metadata, &metadata) == nil {
+					result.ModelDiagnostic = modelprovider.DecodeDiagnostic(metadata["diagnostic"])
+				}
+			}
 			if e.Kind == "launch.terminal" {
 				result.TerminalRecorded = true
 			}

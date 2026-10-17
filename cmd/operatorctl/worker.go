@@ -52,9 +52,22 @@ func workerCommand(ctx context.Context, args []string, stdout, stderr io.Writer)
 // print the worker error: its chain can include private backend/filesystem details.
 func printWorkerFailure(w io.Writer, code string, d *hostrun.PreparationDiagnostic, recording string) {
 	if d != nil {
-		fmt.Fprintf(w, "Campaign preparation failed during %s (%s):\n%s.\n", d.Stage, code, d.Message)
+		phase := "preparation"
+		if code == "execution_failed" {
+			phase = "execution"
+		}
+		fmt.Fprintf(w, "Campaign %s failed during %s (%s):\n%s\n", phase, d.Stage, code, d.Message)
+		if d.Model.Valid() {
+			fmt.Fprintln(w, "Operation:", d.Model.OperationID)
+			if d.Model.Model != "" {
+				fmt.Fprintln(w, "Model:", d.Model.Model)
+			}
+			if d.Model.RequestID != "" {
+				fmt.Fprintln(w, "Provider request ID:", d.Model.RequestID)
+			}
+		}
 		if d.CleanupFailed {
-			fmt.Fprintln(w, "Secondary failure: preparation cleanup did not finish successfully; inspect retained campaign state.")
+			fmt.Fprintf(w, "Secondary failure: %s cleanup did not finish successfully; inspect retained campaign state.\n", phase)
 		}
 	} else {
 		fmt.Fprintln(w, "campaign worker stopped:", code)

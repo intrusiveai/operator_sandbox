@@ -936,8 +936,14 @@ release are journaled atomically with their owning events. Duplicates retain the
 original target binding and do not charge or execute again.
 
 For model calls, also retain the exact engine-visible and canonical provider-bound
-request bodies, bounded provider response and exact normalized guest response,
-codec/profile/model, usage and timing. Exclude host-added credentials, authority
+request bodies, bounded validated successful provider response and exact normalized
+successful guest response, codec/profile/model, usage and timing. Failed or invalid
+provider bodies MUST be replaced by a bounded selected diagnostic, as defined in
+[model failure diagnostics](docs/MODEL_SERVICE.md#model-failure-diagnostics).
+Foreground output, failed start completion, inspection and report/export MUST
+expose the same selected failure facts. Reservations MUST remain distinct from
+confirmed usage; diagnostic persistence/cleanup failures MUST NOT replace the
+primary failure or permit replay. Exclude host-added credentials, authority
 headers, private credential-bearing routing, secret-store and bootstrap material.
 Otherwise do not silently redact adversarial guest/model content from required
 audit records. Public summaries and protected audit content are separate outputs.

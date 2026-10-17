@@ -89,9 +89,19 @@ route entries MUST bind canonical policy-route digests and surface names, with
 `not-attempted` or `arm-attempted` state derived from retained native step dispatch;
 arming MUST NOT be called observed injection delivery.
 
-Usage fields MUST retain the highest recorded cumulative counters across revisions,
-including attempts, models and snapshots. Absent counters MUST remain absent,
-not be synthesized as zero. Incomplete journals MUST mark integrity false, retain
+Usage fields MUST retain the highest recorded cumulative counters across revisions
+for attempts, model turns and snapshots. Model token accounting MUST distinguish:
+
+- `model_tokens`: sum of confirmed `model.usage.actual_tokens` records.
+- `model_tokens_budget_charged`: last recorded budget charge, including unresolved
+  reservations; this is not measured provider consumption.
+- `model_tokens_unconfirmed_reserved`: outstanding intent allowances without a
+  matching confirmed usage record.
+
+If a model intent exists without any confirmed usage, `model_tokens: 0` MUST mean
+zero **confirmed** tokens; it MUST NOT claim the provider consumed zero tokens.
+Absent model counters MUST otherwise remain absent. Older unknown model exchanges
+MUST remain readable without inventing diagnostics or consumption. Incomplete journals MUST mark integrity false, retain
 only the verified prefix and unresolved operations, and leave execution unknown.
 Missing launch-input completion, native evidence, coverage or invalid cleanup/
 termination records MUST produce explicit gaps. Reports MUST NOT repair sources.
@@ -148,3 +158,14 @@ generation corruption, active writers, size/space failures, cancellation, unsafe
 paths, partial export, independent worker reporting failure, actual host attempt
 and feedback records, and unchanged source journals. These tests MUST NOT be
 described as live host/target/provider qualification.
+
+## Model failure evidence
+
+The result manifest and JSON report MUST expose optional `model_failures` with
+validated, bounded diagnostics. The Markdown report MUST summarize the category,
+operation, status/code when observed, and safe explanation. Projected model events
+MUST preserve `outcome`, `elapsed_ms`, `reserved_tokens` and valid `diagnostic` fields;
+budget counters MUST be named `model_tokens_budget_charged` in this projection.
+Unrestricted error text, response bodies and headers MUST NOT be added to exports.
+Existing immutable reports MUST remain unchanged; regenerating a report with the
+updated projection can produce a new generation alongside the original.

@@ -5,11 +5,13 @@ package campaignservice
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/attemptadapter"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/termination"
 )
 
@@ -54,7 +56,11 @@ func (s *Service) handleModel(ctx context.Context, raw []byte, seq int64) ([]byt
 		return nil, err
 	}
 	if reply.Error != nil && reply.Error.Disposition == "terminate" {
-		s.Stop(ErrService)
+		if d := s.ModelFailure(); d != nil {
+			s.Stop(modelprovider.FailureError(*d))
+		} else {
+			s.Stop(ErrService)
+		}
 	}
 	return response, nil
 }
@@ -93,52 +99,102 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 	}
 	s.model.turns++
 	s.model.tokens += reserve
-	response, callErr := s.config.Model.Provider.Generate(ctx, request)
-	// Record only native bytes; private transport errors can contain secrets.
+	var response []byte
+	var observed modelprovider.Diagnostic
+	var callErr error
+	if provider, ok := s.config.Model.Provider.(interface {
+		GenerateWithMetadata(context.Context, []byte) ([]byte, modelprovider.Diagnostic, error)
+	}); ok {
+		response, observed, callErr = provider.GenerateWithMetadata(ctx, request)
+	} else {
+		response, callErr = s.config.Model.Provider.Generate(ctx, request)
+		if d := modelprovider.Details(callErr); d != nil {
+			observed = *d
+		}
+	}
+	observed.OperationID = q.ID
+	// Missing transport metadata is not invented for injected/legacy providers.
+	if observed.Model == "" {
+		observed.Model, _ = native["model"].(string)
+	}
 	outcome := "response"
+	failureCode, effect := "", ""
+	reason := ""
 	if callErr != nil {
 		outcome = "unknown"
-	}
-	if len(response) > campaign.MaxContentBytes {
+		failureCode, effect = "OUTCOME_UNKNOWN", "unknown"
+		if !observed.Valid() {
+			observed = observed.WithFailure("unknown", "provider_failed")
+		}
+		if observed.Category == "http_rejection" {
+			outcome = "http-rejected"
+		}
+	} else if len(response) > campaign.MaxContentBytes {
 		outcome = "invalid-response"
+		failureCode, effect = "OUTCOME_UNKNOWN", "unknown"
+		reason = "response_too_large"
+	} else if ctx.Err() != nil {
+		outcome = "unknown"
+		failureCode, effect = "OUTCOME_UNKNOWN", "unknown"
+		category := "cancellation"
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			category = "timeout"
+		}
+		observed = observed.WithFailure(category, "read_failed")
+	}
+	result := map[string]any{"codec_id": value["codec_id"], "profile_id": value["profile_id"], "profile_digest": value["profile_digest"], "receipt_id": "model-" + termination.NewRequestID(), "response": json.RawMessage(response)}
+	body := marshal(result)
+	var total int64
+	var toolCalls int64
+	if failureCode == "" {
+		if _, err = s.target().Protocol().ValidateModelExchange(s.model.policy, q.Body, body); err != nil {
+			reason = "contract_invalid"
+			failureCode, effect = "INTERNAL_ERROR", "known"
+		} else if usage, usageErr := s.target().Protocol().ModelUsage(body); usageErr != nil {
+			reason = "usage_invalid"
+			failureCode, effect = "INTERNAL_ERROR", "known"
+		} else if !usage.Known {
+			reason = "usage_unknown"
+			failureCode, effect = "OUTCOME_UNKNOWN", "unknown"
+		} else if usage.InputTokens > s.config.Model.MaximumPromptTokens || usage.TotalTokens > reserve {
+			reason = "usage_exceeds_reservation"
+			failureCode, effect = "INTERNAL_ERROR", "known"
+		} else {
+			total, toolCalls = usage.TotalTokens, usage.ToolCalls
+		}
+	}
+	if reason != "" {
+		observed = observed.WithFailure("response_validation", reason)
+		outcome = "invalid-response"
+	}
+	metadata := map[string]any{"operation_id": q.ID, "outcome": outcome, "elapsed_ms": time.Since(started).Milliseconds(), "reserved_tokens": reserve}
+	var primary error
+	if failureCode != "" {
+		if !observed.Valid() {
+			observed = modelprovider.Diagnostic{OperationID: q.ID}.WithFailure("unknown", "provider_failed")
+		}
+		s.modelDiagnostic.CompareAndSwap(nil, &observed)
+		metadata["diagnostic"] = observed
+		primary = modelprovider.FailureError(observed)
+		// Never store unvalidated or failed provider bodies, including echoed secrets.
 		response = nil
 	}
-	entry := campaign.Entry{RunRevision: q.Revision, Kind: "model.exchange", Metadata: marshal(map[string]any{"operation_id": q.ID, "outcome": outcome, "elapsed_ms": time.Since(started).Milliseconds(), "reserved_tokens": reserve})}
+	entry := campaign.Entry{RunRevision: q.Revision, Kind: "model.exchange", Metadata: marshal(metadata)}
 	if len(response) > 0 {
 		entry.Content = []campaign.Content{{Role: "provider-response", MediaType: "application/json", Bytes: response}}
 	}
 	if _, err = s.writer.AppendStored(entry, reservation, true); err != nil {
-		return stateReply{}, err
+		return stateReply{}, errors.Join(primary, err)
 	}
-	if callErr != nil {
-		return modelFailure("OUTCOME_UNKNOWN", "unknown"), nil
-	}
-	if outcome != "response" || ctx.Err() != nil {
-		return modelFailure("OUTCOME_UNKNOWN", "unknown"), nil
-	}
-	result := map[string]any{"codec_id": value["codec_id"], "profile_id": value["profile_id"], "profile_digest": value["profile_digest"], "receipt_id": "model-" + termination.NewRequestID(), "response": json.RawMessage(response)}
-	body := marshal(result)
-	_, err = s.target().Protocol().ValidateModelExchange(s.model.policy, q.Body, body)
-	if err != nil {
-		return modelFailure("INTERNAL_ERROR", "known"), nil
-	}
-	usage, err := s.target().Protocol().ModelUsage(body)
-	if err != nil {
-		return modelFailure("INTERNAL_ERROR", "known"), nil
-	}
-	if !usage.Known {
-		return modelFailure("OUTCOME_UNKNOWN", "unknown"), nil
-	}
-	input, total := usage.InputTokens, usage.TotalTokens
-	if input > s.config.Model.MaximumPromptTokens || total > reserve {
-		return modelFailure("INTERNAL_ERROR", "known"), nil
+	if failureCode != "" {
+		return modelFailure(failureCode, effect), nil
 	}
 	charged := s.model.tokens - reserve + total
 	if _, err = s.writer.AppendStored(campaign.Entry{RunRevision: q.Revision, Kind: "model.usage", Metadata: marshal(map[string]any{"operation_id": q.ID, "model_turns": s.model.turns, "model_tokens": charged, "actual_tokens": total})}, "", false); err != nil {
 		return stateReply{}, err
 	}
 	s.model.tokens = charged
-	if usage.ToolCalls > loop.Calls {
+	if toolCalls > loop.Calls {
 		if err := s.beginFinalization(); err != nil {
 			return stateReply{}, err
 		}
