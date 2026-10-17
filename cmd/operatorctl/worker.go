@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 
+	"github.com/intrusiveai/operator_sandbox/internal/hostrun"
 	"github.com/intrusiveai/operator_sandbox/internal/workerjob"
 )
 
@@ -41,8 +42,25 @@ func workerCommand(ctx context.Context, args []string, stdout, stderr io.Writer)
 		return 1
 	}
 	if err != nil {
-		fmt.Fprintln(stderr, "campaign worker stopped:", result.Code)
+		printWorkerFailure(stderr, result.Code, result.Diagnostic, result.CompletionRecording)
 		return 1
 	}
 	return 0
+}
+
+// Both execution entrypoints render the same safe, retained diagnostic. Never
+// print the worker error: its chain can include private backend/filesystem details.
+func printWorkerFailure(w io.Writer, code string, d *hostrun.PreparationDiagnostic, recording string) {
+	if d != nil {
+		fmt.Fprintf(w, "Campaign preparation failed during %s (%s):\n%s.\n", d.Stage, code, d.Message)
+		if d.CleanupFailed {
+			fmt.Fprintln(w, "Secondary failure: preparation cleanup did not finish successfully; inspect retained campaign state.")
+		}
+	} else {
+		fmt.Fprintln(w, "campaign worker stopped:", code)
+	}
+	if recording == "unconfirmed" {
+		fmt.Fprintln(w, "Secondary failure: saving the start completion is unconfirmed; this diagnostic may not be available through inspection.")
+	}
+	fmt.Fprintln(w, "Execution will not resume.")
 }

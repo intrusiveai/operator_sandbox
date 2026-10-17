@@ -24,6 +24,13 @@ import (
 const ConfirmationTimeout = 5 * time.Second
 const outputLimit = 64 << 10
 
+// Initialization errors have fixed descriptions suitable for preparation diagnostics.
+var (
+	ErrCLIUnavailable        = errors.New("Docker CLI unavailable")
+	ErrExecutablePath        = errors.New("Docker executable must be absolute")
+	ErrExecutableUnavailable = errors.New("Docker executable unavailable")
+)
+
 var ErrNotRunning = errors.New("Docker container is not running under the pinned lifecycle policy")
 
 type Outcome = campaign.TerminationOutcome
@@ -43,15 +50,15 @@ func New(executable string) (*Client, error) {
 		var err error
 		executable, err = exec.LookPath("docker")
 		if err != nil {
-			return nil, errors.New("Docker CLI unavailable")
+			return nil, ErrCLIUnavailable
 		}
 	}
 	if !filepath.IsAbs(executable) {
-		return nil, errors.New("Docker executable must be absolute")
+		return nil, ErrExecutablePath
 	}
 	info, err := os.Stat(executable)
 	if err != nil || !info.Mode().IsRegular() || info.Mode().Perm()&0111 == 0 {
-		return nil, errors.New("Docker executable unavailable")
+		return nil, ErrExecutableUnavailable
 	}
 	return &Client{executable: executable, run: dockerCommand(executable, outputLimit), archive: dockerCommand(executable, imageArchiveLimit)}, nil
 }
