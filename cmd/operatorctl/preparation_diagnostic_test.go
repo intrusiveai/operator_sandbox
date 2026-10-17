@@ -26,6 +26,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
 	"github.com/intrusiveai/operator_sandbox/internal/hostrun"
 	"github.com/intrusiveai/operator_sandbox/internal/imagerelease"
+	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/startrequest"
 	"github.com/intrusiveai/operator_sandbox/internal/workerjob"
 )
@@ -456,4 +457,28 @@ func TestLocalCompatibilityWithoutReleaseService(t *testing.T) {
 	if networkCalls.Load() != 0 {
 		t.Fatal("compatibility admission contacted network proxy", networkCalls.Load())
 	}
+}
+
+func TestModelFailureForegroundAndWorkerOutput(t *testing.T) {
+	dir, paths, deps, _ := startFixture(t)
+	model := modelprovider.Diagnostic{Provider: "openai-chat", Model: "test-model", OperationID: "model-generate-0000000000000001", HTTPStatus: 401, ProviderCode: "invalid_api_key"}.WithFailure("http_rejection", "http_rejected")
+	d := &hostrun.PreparationDiagnostic{Stage: "model request (http_rejection)", Message: model.Summary(), Model: model}
+	deps.run = func(context.Context, string, string, string) (workerjob.Result, error) {
+		return workerjob.Result{Code: "execution_failed", Diagnostic: d, CompletionRecording: "recorded"}, modelprovider.FailureError(model)
+	}
+	code, _, stderr := invokeStart(t, context.Background(), "start", []string{"--run", dir}, paths, deps)
+	if code != 1 {
+		t.Fatal(code, stderr)
+	}
+	for _, want := range []string{"Campaign execution failed during model request (http_rejection) (execution_failed)", "openai-chat returned HTTP 401 (invalid_api_key)", "Operation: model-generate-0000000000000001", "Model: test-model", "Execution will not resume."} {
+		if !strings.Contains(stderr, want) {
+			t.Fatalf("missing %q: %s", want, stderr)
+		}
+	}
+	var worker bytes.Buffer
+	printWorkerFailure(&worker, "execution_failed", d, "recorded")
+	if worker.String() != stderr {
+		t.Fatal("foreground/supervised mismatch", worker.String(), stderr)
+	}
+	t.Log(stderr)
 }

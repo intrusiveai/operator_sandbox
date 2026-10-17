@@ -65,6 +65,7 @@ func processResponse(calls []any) []byte {
 }
 
 type processCase struct {
+	modelProvider     campaignservice.ModelProvider
 	transport, prompt string
 	native            func(*peer)
 	block             bool
@@ -213,6 +214,9 @@ func newProcessRun(t *testing.T, tc processCase) *processRun {
 	}
 	rt := &runtime{killed: make(chan struct{})}
 	serviceConfig := campaignservice.Config{Prepared: stored, Peer: native, Runtime: rt, Docker: binding, StateRoot: root, Deadline: time.Now().Add(time.Minute), Model: &campaignservice.ModelConfig{Provider: provider, ProfileDigest: cfg.Model.Digest(), Tools: launch.ModelTools, MaximumPromptTokens: 10000}}
+	if tc.modelProvider != nil {
+		serviceConfig.Model.Provider = tc.modelProvider
+	}
 	if in.Profile.HTTPS() != nil {
 		serviceConfig.HTTPS, err = httpstarget.New(in.Profile.HTTPS(), nil, 5*time.Second)
 		if err != nil {

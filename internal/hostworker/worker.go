@@ -18,6 +18,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 	"github.com/intrusiveai/operator_sandbox/internal/hostlifetime"
 	"github.com/intrusiveai/operator_sandbox/internal/imagerelease"
+	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/staging"
 	"github.com/intrusiveai/operator_sandbox/internal/termination"
 	"github.com/intrusiveai/operator_sandbox/internal/transport"
@@ -55,6 +56,7 @@ type Worker struct {
 }
 
 type Result struct {
+	ModelDiagnostic  *modelprovider.Diagnostic      `json:"model_diagnostic,omitempty"`
 	StopAccepted     bool                           `json:"stop_accepted"`
 	LaunchPhase      string                         `json:"launch_phase"`
 	ContainerCleanup string                         `json:"container_cleanup"`
@@ -164,6 +166,10 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 			}
 			runErr = errors.Join(runErr, err)
 			result.StopAccepted = service.StopAccepted()
+			result.ModelDiagnostic = service.ModelFailure()
+			if result.ModelDiagnostic != nil {
+				runErr = errors.Join(modelprovider.FailureError(*result.ModelDiagnostic), runErr)
+			}
 		} else if result.Binding.DockerContainerID != "" {
 			result.Termination = termination.New(c.Docker).Watch(context.Background(), fence, c.Service.StateRoot, result.Binding)
 		}

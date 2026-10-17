@@ -18,6 +18,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/httpstarget"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
+	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/nativeexec"
 	"github.com/intrusiveai/operator_sandbox/internal/preparation"
 	"github.com/intrusiveai/operator_sandbox/internal/termination"
@@ -52,6 +53,7 @@ type Config struct {
 	CheckHost func() error // Installed host lifetime gate; called before admission and every ordinary request.
 }
 type Service struct {
+	modelDiagnostic    atomic.Pointer[modelprovider.Diagnostic]
 	httpsParent        *attemptadapter.Parent
 	config             Config
 	writer             *campaign.Writer
@@ -527,8 +529,16 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 		entry.Kind = "service.reply-unavailable"
 	}
 	if _, logErr := s.writer.AppendStored(entry, reservation, true); logErr != nil {
-		s.Stop(logErr)
-		return nil, logErr
+		// Retain the operation failure before a secondary reply-recording failure.
+		// A terminal model reply can carry its failure without a Go error.
+		if err == nil && request["operation"] == "engine.model_generate" {
+			if d := s.ModelFailure(); d != nil {
+				err = modelprovider.FailureError(*d)
+			}
+		}
+		combined := errors.Join(err, logErr)
+		s.Stop(combined)
+		return nil, combined
 	}
 	if err != nil {
 		if !errors.Is(err, attemptadapter.ErrOperation) {
@@ -611,3 +621,13 @@ func (s *Service) Wait(ctx context.Context) (TerminalResult, termination.Receipt
 // StopAccepted reports the durably accepted harness conclusion/stop decision.
 // It does not assert successful native cleanup, guest exit or assessment success.
 func (s *Service) StopAccepted() bool { return s.stopAccepted.Load() }
+
+// ModelFailure returns the first selected diagnostic, independently of journal or
+// cleanup failures. The atomic copy is also available after cancellation.
+func (s *Service) ModelFailure() *modelprovider.Diagnostic {
+	if d := s.modelDiagnostic.Load(); d != nil {
+		copy := *d
+		return &copy
+	}
+	return nil
+}

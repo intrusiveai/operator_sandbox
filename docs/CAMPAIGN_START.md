@@ -139,6 +139,64 @@ owns it. It verifies equivalent persisted diagnostics, no acceptance or executio
 attachment-intent retention, inspection-container cleanup, no replay, and response
 body redaction. This tests worker behavior without installing systemd/launchd jobs.
 
+## Troubleshooting model execution failures
+
+When preparation succeeds but a model call fails, the worker retains
+`execution_failed` and prints the selected facts. For a controlled HTTP 401 fixture,
+output is:
+
+```text
+Campaign execution failed during model request (http_rejection) (execution_failed):
+openai-chat returned HTTP 401 (invalid_api_key): The provider returned an unsuccessful HTTP status.
+Operation: model-generate-0000000000000001
+Model: test-model
+Provider request ID: req_0123456789abcdef0123456789abcdef
+Execution will not resume.
+```
+
+This is an example, not a diagnosis of an older failure. A TLS/connection failure
+without a response has no HTTP status; a response that fails contract validation
+can have HTTP 200 and category `response_validation`. Provider messages are never
+copied verbatim because they can echo credentials or prompts. Unknown codes and
+unrecognized request-ID formats are omitted. See the
+[selected diagnostic fields](MODEL_SERVICE.md#model-failure-diagnostics).
+
+Use separate commands after the failed foreground start (or supervised worker):
+
+```sh
+operatorctl campaign start --run ./runs/support-agent
+operatorctl inspect --run ./runs/support-agent
+operatorctl campaign status --run ./runs/support-agent
+operatorctl report --run ./runs/support-agent
+operatorctl export --run ./runs/support-agent --output ./exports/support-agent
+```
+
+Inspection/status expose `model_diagnostic` from the journal, and
+`start.completion.diagnostic.model` from the saved start when selecting `--run`.
+The immediate start receipt has the same completion diagnostic. Reports expose
+`model_failures`; exported model events retain the selected facts and timing.
+A resolved credential event proves secret retrieval, not provider acceptance.
+An unknown call retains its budget reservation, not confirmed consumption.
+Older records without diagnostics remain readable; facts that were never saved
+cannot be recovered by regenerating a report. Do not rerun a failed campaign to
+obtain missing historical details.
+
+Local verification uses no paid calls or cloud writes:
+
+```sh
+go test ./internal/modelprovider -run TestDiagnostic -count=1
+go test ./cmd/operatorctl ./internal/workerjob -run 'TestModelFailure|TestModelDiagnostic' -count=1
+# Requires make setup and the sibling Attack Harness checkout:
+OPERATOR_HARNESS_INTEGRATION=1 go test ./internal/preparation -run TestPythonProcessModelDiagnosticInspectionAndExport -count=1 -v
+```
+
+The last test launches the production Python Harness on real FIFO/spool channels,
+contacts a local TLS provider fixture, verifies one call and terminal cleanup, then
+runs independent Operator CLI inspection/status/report/export processes against
+the retained campaign. It covers both HTTP rejection and HTTP 200 with invalid
+contract content, with synthetic secret checks. Docker and Interceptor are test
+peers, so this is not native-container or live-provider qualification.
+
 ## Optional OS service binding
 
 The administrator MUST install `operatorctl` at a stable absolute executable path

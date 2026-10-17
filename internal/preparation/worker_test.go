@@ -18,6 +18,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/hostlifetime"
 	"github.com/intrusiveai/operator_sandbox/internal/hostworker"
 	"github.com/intrusiveai/operator_sandbox/internal/imagerelease"
+	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/preparation"
 	"github.com/intrusiveai/operator_sandbox/internal/staging"
 	"github.com/intrusiveai/operator_sandbox/internal/transport"
@@ -87,7 +88,12 @@ func (d *workerDocker) Terminate(context.Context, campaign.DockerBinding) docker
 	return dockercontrol.Outcome{Confirmed: d.mode != "kill unknown", State: map[bool]string{true: "unknown", false: "exited"}[d.mode == "kill unknown"], Code: map[bool]string{true: "container_unconfirmed", false: "confirmed_stopped"}[d.mode == "kill unknown"]}
 }
 
-func (d *workerDocker) RemoveStopped(context.Context, campaign.DockerBinding) error { return nil }
+func (d *workerDocker) RemoveStopped(context.Context, campaign.DockerBinding) error {
+	if d.mode == "model cleanup failure" {
+		return errors.New("fixture cleanup failure")
+	}
+	return nil
+}
 func (d *workerDocker) Completed(context.Context, campaign.DockerBinding) bool {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -134,7 +140,7 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 	if goruntime.GOOS != "darwin" {
 		t.Skip("full worker integration uses the macOS spool profile; FIFO mechanics have separate transport coverage")
 	}
-	for _, mode := range []string{"event loss", "requested stop", "bad bootstrap", "create lost", "start lost", "kill unknown"} {
+	for _, mode := range []string{"event loss", "requested stop", "bad bootstrap", "create lost", "start lost", "kill unknown", "model failure", "model cleanup failure"} {
 		t.Run(mode, func(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
@@ -144,7 +150,20 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 				t.Fatal(err)
 			}
 			image, requirements := localCompatibility(t, input.Protocol)
+			var modelConfig *campaignservice.ModelConfig
+			var modelRequest map[string]any
+			var modelCalls *provider
+			if strings.HasPrefix(mode, "model ") {
+				policy, request, _ := modelFixture(t)
+				modelRequest = request
+				failure := modelprovider.Diagnostic{Provider: "openai-chat", Model: "test-model", HTTPStatus: 401, ProviderCode: "invalid_api_key"}.WithFailure("http_rejection", "http_rejected")
+				modelCalls = &provider{err: modelprovider.FailureError(failure)}
+				modelConfig = &campaignservice.ModelConfig{Provider: modelCalls, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
+			}
 			var operations []string
+			if modelConfig != nil {
+				operations = []string{"engine.model_generate"}
+			}
 			if mode == "requested stop" {
 				operations = []string{"engine.request_stop"}
 			}
@@ -177,7 +196,7 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 					t.Error("power lease released before termination")
 				}
 			}}
-			worker, err := hostworker.New(ctx, hostworker.Config{Service: campaignservice.Config{Prepared: stored, Peer: &peer{input: input, revision: 5}, StateRoot: root, Deadline: deadline}, Docker: docker, Image: image, Requirements: requirements, Tree: tree, Channel: channel, Inputs: launch, PolicyDirectory: parent, StartRequestID: strings.Repeat("a", 32), Lifetime: hostlifetime.NewWithBackend(power, writer.Fence().Stop)})
+			worker, err := hostworker.New(ctx, hostworker.Config{Service: campaignservice.Config{Prepared: stored, Peer: &peer{input: input, revision: 5}, StateRoot: root, Deadline: deadline, Model: modelConfig}, Docker: docker, Image: image, Requirements: requirements, Tree: tree, Channel: channel, Inputs: launch, PolicyDirectory: parent, StartRequestID: strings.Repeat("a", 32), Lifetime: hostlifetime.NewWithBackend(power, writer.Fence().Stop)})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -185,9 +204,15 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 			var result hostworker.Result
 			var runErr error
 			go func() { result, runErr = worker.Run(ctx); close(finished) }()
-			if mode == "event loss" || mode == "kill unknown" || mode == "requested stop" {
+			if mode == "event loss" || mode == "kill unknown" || mode == "requested stop" || modelConfig != nil {
 				select {
 				case <-docker.ready:
+					if modelConfig != nil {
+						modelRequest["request"].(map[string]any)["messages"].([]any)[0].(map[string]any)["content"] = string(launch.Prompt)
+						if e := spoolPut(dir, "ordinary-out", 0, stateWire("engine.model_generate", "model-1", 1, modelRequest)); e != nil {
+							t.Fatal(e)
+						}
+					}
 					if mode == "event loss" {
 						if err = spoolPut(dir, "ordinary-out", 0, attemptWire(&peer{input: input}, 1, 1, writer.Manifest().ReleaseRecordDigest)); err != nil {
 							t.Fatal(err)
@@ -221,7 +246,9 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 							t.Fatal(e)
 						}
 					}
-					close(docker.stop)
+					if modelConfig == nil {
+						close(docker.stop)
+					}
 				case <-finished:
 					t.Fatal("worker stopped before admission", runErr)
 				case <-ctx.Done():
@@ -238,6 +265,18 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 			}
 			if _, err = worker.Run(ctx); err == nil || docker.creates != 1 {
 				t.Fatal("worker restarted")
+			}
+			if modelConfig != nil {
+				if result.ModelDiagnostic == nil || result.ModelDiagnostic.HTTPStatus != 401 || result.ModelDiagnostic.OperationID != "model-1" || modelprovider.Details(runErr) == nil || modelCalls.calls != 1 {
+					t.Fatal("model failure lost", result, runErr)
+				}
+				want := "removed"
+				if mode == "model cleanup failure" {
+					want = "unconfirmed"
+				}
+				if result.ContainerCleanup != want {
+					t.Fatal("cleanup outcome", result)
+				}
 			}
 			if result.StopAccepted != (mode == "requested stop") {
 				t.Fatal("lost stop disposition", result)
