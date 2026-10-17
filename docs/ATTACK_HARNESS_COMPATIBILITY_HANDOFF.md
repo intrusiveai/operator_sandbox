@@ -14,6 +14,18 @@ approval prerequisite for Operator startup. Ordinary image and release-catalog
 publication remains a separate distribution workflow. Do not change Operator's
 image pinning, installed contract checks, network isolation or confinement policy.
 
+## Exact shared package pin
+
+- Source commit: `cb43a919bda9b8689c11e20b7a09db35d2a98f89`.
+- Source tree: `1fcded221a5fa02d2cb60f493e57dcd8150adcc1`.
+- Package version: `0.0.4`.
+- Package digest: `sha256:750deac00ebece408dd7514ceae75e090f458f07ed1988b26859f7332ade32be`.
+
+Build the contract from this immutable Operator source commit. The branch's
+`release/contract-lock.json` also contains the catalog/operation digests and
+inventory counts required by the Harness lock. The source commit predates the
+follow-up lock-file commit so the lock does not refer to its own commit ID.
+
 ## 1. Build and validate the embedded compatibility file
 
 Update `build/prepare_release.py` to generate and verify this regular immutable
@@ -28,7 +40,7 @@ It MUST contain exactly:
   "api_version": "operator.dev/harness-compatibility/v1alpha1",
   "minimum_operator_version": "0.1.0",
   "contract_package_version": "0.0.4",
-  "contract_package_digest": "<actual digest from Operator release/contract-lock.json>",
+  "contract_package_digest": "sha256:750deac00ebece408dd7514ceae75e090f458f07ed1988b26859f7332ade32be",
   "runtime_profile": "operator-container/v1",
   "platform": "linux/amd64"
 }
