@@ -45,7 +45,7 @@ func (f *stringsFlag) Set(value string) error { *f = append(*f, value); return n
 type startDependencies struct {
 	freeze func(context.Context, string, hostconfig.Paths, hostrun.Selection) (startrequest.Request, error)
 	submit func(context.Context, string, string, string) error
-	run    func(context.Context, string, string, string) error
+	run    func(context.Context, string, string, string) (workerjob.Result, error)
 }
 
 func startCampaign(ctx context.Context, action string, args []string, stdout, stderr io.Writer, defaults hostconfig.Paths) int {
@@ -65,9 +65,8 @@ func startCampaign(ctx context.Context, action string, args []string, stdout, st
 			return err
 		}
 		return client.Submit(ctx, root, id, digest)
-	}, run: func(ctx context.Context, root, id, digest string) error {
-		_, err := workerjob.Run(ctx, root, id, digest, operatorVersion)
-		return err
+	}, run: func(ctx context.Context, root, id, digest string) (workerjob.Result, error) {
+		return workerjob.Run(ctx, root, id, digest, operatorVersion)
 	}}
 	return startCampaignWith(ctx, action, args, stdout, stderr, defaults, deps)
 }
@@ -207,7 +206,7 @@ func startCampaignWith(ctx context.Context, action string, args []string, stdout
 	if foreground && snapshot.Claim == nil && snapshot.Completion == nil && snapshot.Retired == nil {
 		// Execute the same permanently claimed worker used by the service entrypoint.
 		// The caller context owns its lifetime; cleanup/reporting use bounded independent contexts.
-		runErr := deps.run(ctx, request.StateRoot, request.Selection.StartRequestID, snapshot.Digest)
+		result, runErr := deps.run(ctx, request.StateRoot, request.Selection.StartRequestID, snapshot.Digest)
 		readCtx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 		latest, readErr := startrequest.Observe(readCtx, request.StateRoot, request.Selection.StartRequestID)
@@ -218,7 +217,10 @@ func startCampaignWith(ctx context.Context, action string, args []string, stdout
 			return 1
 		}
 		if runErr != nil || readErr != nil || snapshot.Completion == nil || snapshot.Completion.Status != "finished" {
-			fmt.Fprintln(stderr, "foreground worker did not finish successfully; inspect the saved campaign; execution will not resume")
+			printWorkerFailure(stderr, result.Code, result.Diagnostic, result.CompletionRecording)
+			if readErr != nil {
+				fmt.Fprintln(stderr, "Secondary failure: saved start completion could not be read.")
+			}
 			return 1
 		}
 		return 0
@@ -246,6 +248,9 @@ func startCampaignWith(ctx context.Context, action string, args []string, stdout
 				return 1
 			}
 			if snapshot.Retired != nil || (snapshot.Completion != nil && snapshot.Completion.Status == "failed") {
+				if c := snapshot.Completion; c != nil && c.Status == "failed" {
+					printWorkerFailure(stderr, c.Code, c.Diagnostic, "recorded")
+				}
 				return 1
 			}
 			return 0

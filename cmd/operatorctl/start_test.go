@@ -16,6 +16,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
 	"github.com/intrusiveai/operator_sandbox/internal/hostrun"
 	"github.com/intrusiveai/operator_sandbox/internal/startrequest"
+	"github.com/intrusiveai/operator_sandbox/internal/workerjob"
 )
 
 func startFixture(t *testing.T) (string, hostconfig.Paths, startDependencies, *int) {
@@ -183,26 +184,26 @@ func TestForegroundOwnsWorkerLifetimeAndNeverReplays(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 			runs := 0
-			deps.run = func(ctx context.Context, root, id, digest string) error {
+			deps.run = func(ctx context.Context, root, id, digest string) (workerjob.Result, error) {
 				runs++
 				owner, err := startrequest.ClaimOnce(ctx, root, id, digest)
 				if err != nil {
-					return err
+					return workerjob.Result{}, err
 				}
 				defer owner.Close()
 				if cancelRun {
 					cancel()
 					<-ctx.Done()
-					return errors.Join(ctx.Err(), owner.Finish(context.Background(), "failed", "execution_failed"))
+					return workerjob.Result{}, errors.Join(ctx.Err(), owner.Finish(context.Background(), "failed", "execution_failed"))
 				}
 				saved, err := startrequest.Read(root, id)
 				if err != nil {
-					return err
+					return workerjob.Result{}, err
 				}
 				if err := owner.Accept(ctx, hostrun.Receipt{APIVersion: "operator.dev/campaign-start/v1alpha1", CampaignID: saved.Request.Selection.CampaignID, LaunchID: saved.Request.Selection.LaunchID, StartRequestID: id, ManifestDigest: contracts.RawDigest([]byte("manifest")), Status: "accepted"}); err != nil {
-					return err
+					return workerjob.Result{}, err
 				}
-				return owner.Finish(ctx, "finished", "execution_closed")
+				return workerjob.Result{}, owner.Finish(ctx, "finished", "execution_closed")
 			}
 			code, receipt, diag := invokeStart(t, ctx, "start", []string{"--run", dir}, paths, deps)
 			want := 0

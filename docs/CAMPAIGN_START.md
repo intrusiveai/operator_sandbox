@@ -72,6 +72,74 @@ only the mapped application operations. Native attachment, injection cleanup,
 snapshots, restore and target stop MUST be unavailable; recovery MUST finalize
 local records without sending another application request. See [HTTPS targets](HTTPS_TARGETS.md).
 
+## Troubleshooting preparation failures
+
+A failed worker MUST report `preparation_failed` with the actual failing operation
+and a bounded safe explanation, both immediately and in the saved start completion.
+Foreground and supervised workers MUST retain equivalent diagnostics. The
+start request remains permanently claimed; observing it MUST NOT retry or resume it.
+
+For a previously submitted run, use:
+
+```sh
+operatorctl campaign start --run ./runs/support-agent
+# On failure, inspect the saved start independently (no live worker required):
+operatorctl inspect --run ./runs/support-agent
+# Equivalent status view:
+operatorctl campaign status --run ./runs/support-agent
+```
+
+For example, a failed local Docker image inspection produces stderr like:
+
+```text
+Campaign preparation failed during local Harness image inspection (preparation_failed):
+cannot resolve local image; install the selected native-platform image and ensure Docker supports platform-specific image inspection.
+Execution will not resume.
+```
+
+The immediate JSON receipt contains `completion.diagnostic`; later inspection and
+status expose the same object at `start.completion.diagnostic`:
+
+```json
+{
+  "stage": "local Harness image inspection",
+  "message": "cannot resolve local image; install the selected native-platform image and ensure Docker supports platform-specific image inspection"
+}
+```
+
+Other stages distinguish configuration and input loading, startup ownership and
+recovery, release cache access, release lookup and compatibility, embedded Harness
+metadata, skills, model/credential initialization, attachment intent, Interceptor
+attachment/status, target preparation, and launch persistence. An Interceptor
+rejection reports its validated HTTP status; a lost or invalid response identifies
+that uncertainty. Neither an empty release cache nor an absent attachment record
+alone proves the cause.
+
+Use `--run` for failures before acceptance: there may be no campaign journal for
+`--campaign` to inspect. A `cleanup_failed` diagnostic reports a secondary cleanup
+problem without replacing the primary cause. If saving the completion is
+unconfirmed, stderr explicitly says that later inspection may not have the
+diagnostic. Preserve that console output and inspect the retained state; do not
+remove the worker claim to force another execution. Older completions without a
+diagnostic remain readable, but their missing cause cannot be reconstructed.
+Unknown error types retain the stage and say no additional safe detail is available.
+
+The local regression workflow can be reproduced without Docker, cloud access, a
+release endpoint, or paid model calls:
+
+```sh
+go test ./cmd/operatorctl -run '^TestPreparationFailureCLIThenSeparateInspection$' -count=1 -v
+```
+
+It runs the production CLI dispatcher in separate processes for submission,
+foreground start, the supervised worker entrypoint, and inspection/status. A fake
+Docker executable and a valid test-only private release cache exercise image
+inspection failure and a controlled Interceptor HTTP 409 rejection. The attachment
+case requires unused localhost port 8080 and explicitly skips if another service
+owns it. It verifies equivalent persisted diagnostics, no acceptance or execution,
+attachment-intent retention, inspection-container cleanup, no replay, and response
+body redaction. This tests worker behavior without installing systemd/launchd jobs.
+
 ## Optional OS service binding
 
 The administrator MUST install `operatorctl` at a stable absolute executable path

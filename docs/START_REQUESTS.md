@@ -9,7 +9,7 @@ contract and MUST NOT be mounted into the guest.
   request.json
   owner.json          # once claimed, including after worker loss
   accepted.json       # only after the launch session is durably prepared
-  completion.json     # finished or failed; fixed host reason code
+  completion.json     # finished or failed; host reason code and optional safe diagnostic
 ```
 
 Every file contains a closed typed value and its canonical SHA-256 digest.
@@ -40,7 +40,24 @@ receipt MUST match campaign, launch and start-request IDs and include a valid
 RunManifest digest. Repeated identical acceptance/completion writes are idempotent;
 changed results conflict. A worker can record failure before acceptance, but cannot
 record `finished` before acceptance. Completion uses a fixed host reason code,
-never a raw provider/secret-store error. Detailed execution and native-effect
+never a raw provider/secret-store error. Failed `preparation_failed` completions
+use the backward-compatible optional `diagnostic` field with `stage` (at most 96 bytes),
+`message` (at most 512 bytes), and optional `cleanup_failed` boolean. Newly
+recorded preparation failures MUST include it; legacy records without it MUST
+remain readable. Descriptions MUST come from fixed host error categories or
+validated HTTP status numbers, never arbitrary exception text, URLs, response
+bodies, headers, credential values or locators. Unknown causes MUST explicitly
+state that no additional safe detail is available. An outer operation or cleanup
+failure MUST NOT replace an already identified primary stage/cause.
+
+The diagnostic MUST survive before campaign acceptance or journal creation and
+MUST be identical in foreground and supervised worker results. Completion-write
+failure MUST retain the in-memory diagnostic and report
+`completion_recording: "unconfirmed"` separately; no persistence guarantee is
+possible in that case.
+Repeated completion writes MUST compare diagnostics as well as status/code.
+See [preparation troubleshooting](CAMPAIGN_START.md#troubleshooting-preparation-failures)
+for inspection commands. Detailed execution and native-effect
 outcomes remain in campaign evidence; `finished` is not an experiment-success claim.
 
 Read-only phases are `submitted`, `claimed`, `accepted`, `finished`, `failed` or `retired`.
@@ -87,7 +104,8 @@ ceiling. The campaign retains its separately frozen execution deadline. Failed
 acceptance cancels the never-started session; it cannot proceed to Docker start.
 Worker completion is recorded with a fresh five-second recording context even if
 execution was cancelled. Errors do not produce a second claim or automatic retry.
-The worker's stdout is one bounded host result; diagnostics use fixed reason codes,
+The worker's stdout is one bounded host result; diagnostics use fixed reason codes
+and safe preparation stage/cause details,
 not raw configuration/provider/secret-store errors. A terminal worker result is
 separate from experiment success and complete evidence.
 

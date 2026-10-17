@@ -1100,6 +1100,12 @@ including complete input retention and the startup reconciliation gate.
 Durable host start requests and worker claims MUST follow
 [Start requests](docs/START_REQUESTS.md). Public preparation, startup and OS manager
 submission MUST follow [Campaign startup](docs/CAMPAIGN_START.md).
+Preparation failures MUST keep the `preparation_failed` classification and retain
+a bounded, redacted stage/cause diagnostic in the failed start completion, even
+before a journal exists. Foreground and supervised workers MUST report equivalent
+diagnostics; `inspect --run` and `campaign status --run` MUST expose them. Cleanup
+or completion-recording failures MUST NOT replace the original preparation cause.
+Legacy completions without diagnostics MUST remain readable.
 `--new-campaign` explicitly creates a new intent/ledger for a fresh execution.
 No accepted campaign is reopened, and no unresolved start silently duplicates it.
 

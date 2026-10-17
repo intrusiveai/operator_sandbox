@@ -20,16 +20,17 @@ const PreparationTimeout = 2 * time.Minute
 var ErrInputsChanged = errors.New("queued campaign inputs changed before preparation")
 
 type Result struct {
-	APIVersion          string             `json:"api_version"`
-	StartRequestID      string             `json:"start_request_id"`
-	CampaignID          string             `json:"campaign_id"`
-	Phase               string             `json:"phase"`
-	Code                string             `json:"code"`
-	CompletionRecording string             `json:"completion_recording"`
-	Accepted            *hostrun.Receipt   `json:"accepted,omitempty"`
-	Execution           *hostworker.Result `json:"-"`
-	Reporting           string             `json:"reporting"`
-	Report              *reporting.Receipt `json:"report,omitempty"`
+	APIVersion          string                         `json:"api_version"`
+	StartRequestID      string                         `json:"start_request_id"`
+	CampaignID          string                         `json:"campaign_id"`
+	Phase               string                         `json:"phase"`
+	Code                string                         `json:"code"`
+	Diagnostic          *hostrun.PreparationDiagnostic `json:"diagnostic,omitempty"`
+	CompletionRecording string                         `json:"completion_recording"`
+	Accepted            *hostrun.Receipt               `json:"accepted,omitempty"`
+	Execution           *hostworker.Result             `json:"-"`
+	Reporting           string                         `json:"reporting"`
+	Report              *reporting.Receipt             `json:"report,omitempty"`
 }
 type preparedRun interface {
 	Receipt() hostrun.Receipt
@@ -84,12 +85,17 @@ func run(ctx context.Context, stateRoot, requestID, requestDigest, operatorVersi
 	}
 	defer owner.Close()
 	result.Phase, result.Code = "failed", "preparation_failed"
+	stage := "saved start request loading"
 	defer func() {
+		if result.Code == "preparation_failed" {
+			runErr = hostrun.PreparationFailure(stage, runErr)
+			result.Diagnostic = hostrun.PreparationDetails(runErr)
+		}
 		// Completion recording is independent of an observer/service cancellation;
 		// it cannot grant another execution or delay the independent Docker kill.
 		recordCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		err := owner.Finish(recordCtx, result.Phase, result.Code)
+		err := owner.FinishWithDiagnostic(recordCtx, result.Phase, result.Code, result.Diagnostic)
 		result.CompletionRecording = "recorded"
 		if err != nil {
 			result.CompletionRecording = "unconfirmed"
@@ -103,6 +109,7 @@ func run(ctx context.Context, stateRoot, requestID, requestDigest, operatorVersi
 	result.CampaignID = snapshot.Request.Selection.CampaignID
 	prepareCtx, cancel := context.WithTimeout(ctx, PreparationTimeout)
 	defer cancel()
+	stage = "input loading"
 	inputs, err := load(prepareCtx, snapshot.Request)
 	if err != nil {
 		return result, err
@@ -111,6 +118,7 @@ func run(ctx context.Context, stateRoot, requestID, requestDigest, operatorVersi
 		result.Code = "inputs_changed"
 		return result, ErrInputsChanged
 	}
+	stage = "campaign preparation"
 	prepared, err := inputs.Open(prepareCtx, operatorVersion)
 	if err != nil {
 		return result, err

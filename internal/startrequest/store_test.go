@@ -256,3 +256,48 @@ func TestClaimChildProcess(t *testing.T) {
 	fmt.Println("claimed")
 	bufio.NewReader(os.Stdin).ReadString('\n')
 }
+
+func TestCompletionDiagnosticRoundTripAndLegacyRecords(t *testing.T) {
+	for _, legacy := range []bool{false, true} {
+		t.Run(fmt.Sprint(legacy), func(t *testing.T) {
+			ctx := context.Background()
+			r := requestFixture(t)
+			saved, err := Save(ctx, r)
+			if err != nil {
+				t.Fatal(err)
+			}
+			owner, err := ClaimOnce(ctx, r.StateRoot, r.Selection.StartRequestID, saved.Digest)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer owner.Close()
+			var d *hostrun.PreparationDiagnostic
+			if !legacy {
+				d = hostrun.PreparationDetails(hostrun.PreparationFailure("configuration loading", os.ErrNotExist))
+			}
+			if err = owner.FinishWithDiagnostic(ctx, "failed", "preparation_failed", d); err != nil {
+				t.Fatal(err)
+			}
+			if err = owner.FinishWithDiagnostic(ctx, "failed", "preparation_failed", d); err != nil {
+				t.Fatal("idempotence", err)
+			}
+			got, err := Read(r.StateRoot, r.Selection.StartRequestID)
+			if err != nil || got.Completion == nil {
+				t.Fatal(got, err)
+			}
+			if legacy {
+				if got.Completion.Diagnostic != nil {
+					t.Fatal("legacy diagnostic invented")
+				}
+			} else {
+				if got.Completion.Diagnostic == nil || *got.Completion.Diagnostic != *d {
+					t.Fatal(got.Completion)
+				}
+				d.Message = "changed"
+				if err = owner.FinishWithDiagnostic(ctx, "failed", "preparation_failed", d); !errors.Is(err, ErrConflict) {
+					t.Fatal("rewrote completion", err)
+				}
+			}
+		})
+	}
+}
