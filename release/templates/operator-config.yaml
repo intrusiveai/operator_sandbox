@@ -24,8 +24,6 @@ journal:
 #   executable: /usr/bin/docker
 # state:
 #   root: /var/lib/operator
-# cache:
-#   release_directory: /var/lib/operator/cache/releases
 
 # Optional campaign defaults; bundle requests can only narrow them.
 # limits:

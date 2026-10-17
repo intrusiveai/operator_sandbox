@@ -199,7 +199,7 @@ func TestStoppedImageInspection(t *testing.T) {
 			if (err == nil) != (mode == "success") {
 				t.Fatalf("mode=%s err=%v", mode, err)
 			}
-			if mode == "success" && (len(result.Files) != 4 || !result.Removed || copies != 4) {
+			if mode == "success" && (len(result.Files) != 5 || !result.Removed || copies != 5) {
 				t.Fatal(result, copies)
 			}
 			if mode != "success" && len(result.Files) != 0 {

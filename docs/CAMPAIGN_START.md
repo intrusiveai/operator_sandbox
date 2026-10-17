@@ -108,12 +108,11 @@ status expose the same object at `start.completion.diagnostic`:
 ```
 
 Other stages distinguish configuration and input loading, startup ownership and
-recovery, release cache access, release lookup and compatibility, embedded Harness
+recovery, local image inspection and compatibility, embedded Harness
 metadata, skills, model/credential initialization, attachment intent, Interceptor
 attachment/status, target preparation, and launch persistence. An Interceptor
 rejection reports its validated HTTP status; a lost or invalid response identifies
-that uncertainty. Neither an empty release cache nor an absent attachment record
-alone proves the cause.
+that uncertainty. An absent attachment record alone does not prove the cause.
 
 Use `--run` for failures before acceptance: there may be no campaign journal for
 `--campaign` to inspect. A `cleanup_failed` diagnostic reports a secondary cleanup
@@ -133,7 +132,7 @@ go test ./cmd/operatorctl -run '^TestPreparationFailureCLIThenSeparateInspection
 
 It runs the production CLI dispatcher in separate processes for submission,
 foreground start, the supervised worker entrypoint, and inspection/status. A fake
-Docker executable and a valid test-only private release cache exercise image
+Docker executable with a test-only embedded compatibility file exercise image
 inspection failure and a controlled Interceptor HTTP 409 rejection. The attachment
 case requires unused localhost port 8080 and explicitly skips if another service
 owns it. It verifies equivalent persisted diagnostics, no acceptance or execution,

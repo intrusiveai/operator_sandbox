@@ -48,7 +48,7 @@ func TestDefaultsAndEffectiveSettings(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if c.State.Root != p.StateRoot || c.Docker.Endpoint != p.DockerEndpoint || c.Spool.MaxBytes != 536870912 || c.Evidence.MaxArchiveBytes != 4294967296 || c.Cache.ReleaseDirectory != filepath.Join(p.StateRoot, "cache/releases") || c.Docker.Executable != "" {
+			if c.State.Root != p.StateRoot || c.Docker.Endpoint != p.DockerEndpoint || c.Spool.MaxBytes != 536870912 || c.Evidence.MaxArchiveBytes != 4294967296 || c.Cache.ReleaseDirectory != "" || c.Docker.Executable != "" {
 				t.Fatal(c)
 			}
 			if goos == "darwin" && (p.ConfigFile != "/Users/test/Library/Application Support/Operator/config/config.yaml" || p.DockerEndpoint != "unix:///Users/test/.docker/run/docker.sock") {
@@ -64,7 +64,7 @@ func TestDefaultsAndEffectiveSettings(t *testing.T) {
 	}
 	raw := minimal + "docker:\n  endpoint: unix:///run/user/1000/docker.sock\n  executable: /opt/docker/bin/docker\nstate:\n  root: /srv/operator\nspool:\n  max_bytes: 9007199254740991\n"
 	c, err := Parse([]byte(raw), linuxDefaults(t))
-	if err != nil || c.Cache.ReleaseDirectory != "/srv/operator/cache/releases" || c.Spool.MaxBytes != contracts.MaxSafeInteger || c.Docker.Executable != "/opt/docker/bin/docker" || c.Docker.Endpoint != "unix:///run/user/1000/docker.sock" {
+	if err != nil || c.Cache.ReleaseDirectory != "" || c.Spool.MaxBytes != contracts.MaxSafeInteger || c.Docker.Executable != "/opt/docker/bin/docker" || c.Docker.Endpoint != "unix:///run/user/1000/docker.sock" {
 		t.Fatal(c, err)
 	}
 	c, err = Parse([]byte(raw+"cache:\n  release_directory: /srv/approvals\n"), linuxDefaults(t))
@@ -92,8 +92,6 @@ func TestRejectAmbiguousOrUnsupportedConfiguration(t *testing.T) {
 		"relative state":      minimal + "state: {root: ./data}", "tilde": minimal + "state: {root: ~/data}",
 		"unclean path": minimal + "state: {root: /srv/../data}", "root": minimal + "state: {root: /}",
 		"path tab":          minimal + "state: {root: \"/srv/\\tdata\"}",
-		"purgeable cache":   minimal + "cache: {release_directory: /var/lib/operator/campaigns/test/cache}",
-		"campaigns cache":   minimal + "cache: {release_directory: /var/lib/operator/campaigns}",
 		"url image":         "engine: {image: 'https://registry.test/image'}",
 		"image credentials": "engine: {image: 'user:password@registry.test/image'}",
 		"bad digest":        "engine: {image: 'image@sha256:1234'}",

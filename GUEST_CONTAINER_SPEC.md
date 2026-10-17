@@ -78,7 +78,7 @@ executing application code even when external utilities are absent.
    Remove installer hooks and ambient site customization. Do not rely on deleting
    `subprocess` or a few builtins as a confinement mechanism.
 5. Generate a final-image SBOM and manifest of required runtime files. Scan and
-   patch through rebuilt, release-approved image identities; there is no in-place package update.
+   patch through rebuilt, compatibility-checked image identities; there is no in-place package update.
 6. Exercise the real final image under nonroot, read-only root, no network and
    selected Docker mount/permission and syscall controls. Initial feasibility testing
    covers the four host OS/architecture targets; it is not a recurring OS/Docker
@@ -87,7 +87,7 @@ executing application code even when external utilities are absent.
 ## 3. Release metadata and filesystem
 
 Container ABI: `operator-container/v1`, using local Docker with Linux FIFO or macOS file-spool transport. The
-HTTPS release record, immutable image metadata and installed host policy bind:
+Embedded compatibility record, immutable image metadata and installed host policy bind:
 
 | Group | Required identities |
 |---|---|
@@ -99,17 +99,17 @@ HTTPS release record, immutable image metadata and installed host policy bind:
 | Integration | Exact `operator-contracts` package version/content digest, offline catalog/operation registry, pipe/input/skill schema identities, compatible host launcher/transport and shared Go/Python qualification fixture identities. |
 
 Do not put an OCI image's own digest inside a file used to calculate that image.
-The external HTTPS record approves the Docker image ID; the immutable image
-binds its embedded engine manifest.
+The immutable Docker image ID binds its embedded compatibility record and engine
+manifest. Neither file contains its own image ID.
 Likewise, an InputTreeManifest lives outside the file set it hashes; the guest
 receives its completed descriptor through the host startup binding.
 
 The administrator selects an already installed local Docker image with
 `engine.image`. Operator resolves its full image ID and validates the matching
-[HTTPS release response](schemas/ENGINE_RELEASE_CONTRACT.md), including minimum
+[embedded compatibility record](schemas/ENGINE_RELEASE_CONTRACT.md), including minimum
 Operator version and exact locally installed contract version/digest and runtime
 profile. It creates the container with pulling forbidden and retains the verified
-image and cached response. The guest has no registry or release-service client.
+image and exact embedded compatibility bytes. The guest has no registry or release-service client.
 
 ```text
 /usr/bin/python3                         immutable qualified interpreter

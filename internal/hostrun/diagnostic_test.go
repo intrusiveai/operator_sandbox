@@ -22,7 +22,7 @@ func TestPreparationDiagnosticUsesOnlySafeCauses(t *testing.T) {
 		err  error
 		want string
 	}{
-		{fmt.Errorf("https://user:%s@private.invalid/?key=%s: %w", secret, secret, imagerelease.ErrUnapproved), "HTTP 404"},
+		{fmt.Errorf("https://user:%s@private.invalid/?key=%s: %w", secret, secret, imagerelease.ErrCompatibility), "incompatible"},
 		{&os.PathError{Op: "open", Path: "/private/" + secret, Err: os.ErrNotExist}, "does not exist"},
 		{&interceptor.RemoteError{Response: interceptor.Response{Status: 409, Body: json.RawMessage(`{"code":"` + secret + `","message":"` + secret + `"}`)}}, "HTTP 409"},
 		{&interceptor.CallError{Kind: "invalid_response", Uncertain: true}, "contract validation; the target-side outcome is uncertain"},
@@ -30,7 +30,7 @@ func TestPreparationDiagnosticUsesOnlySafeCauses(t *testing.T) {
 		{fmt.Errorf("%s: %w", secret, context.DeadlineExceeded), "deadline exceeded"},
 		{errors.New(secret), "no additional safe error detail"},
 	} {
-		err := PreparationFailure("Harness image and release validation", tc.err)
+		err := PreparationFailure("local Harness image and compatibility validation", tc.err)
 		d := PreparationDetails(err)
 		if !errors.Is(err, tc.err) || d == nil || !d.Valid() || !strings.Contains(d.Message, tc.want) || strings.Contains(err.Error(), secret) {
 			t.Fatal(d, err)
@@ -39,7 +39,7 @@ func TestPreparationDiagnosticUsesOnlySafeCauses(t *testing.T) {
 		if strings.Contains(string(raw), secret) {
 			t.Fatal("unsafe diagnostic", string(raw))
 		}
-		if errors.Is(tc.err, imagerelease.ErrUnapproved) && d.Stage != "Harness release lookup" {
+		if errors.Is(tc.err, imagerelease.ErrCompatibility) && d.Stage != "Harness compatibility validation" {
 			t.Fatal(d)
 		}
 	}

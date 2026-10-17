@@ -38,6 +38,7 @@ type ReleaseFiles struct {
 // Fixed paths are implementation-owned. Image metadata cannot select another
 // file, command, mount or executable. The image is never started during inspection.
 var releasePaths = []string{
+	"/opt/operator/engine/share/compatibility.json",
 	"/opt/operator/engine/share/engine-manifest.json",
 	"/opt/operator/engine/share/default-system-prompt.txt",
 	"/opt/operator/engine/lib/attack_harness/skill_loader.py",

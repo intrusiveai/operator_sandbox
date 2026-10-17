@@ -147,7 +147,7 @@ func TestPreparationDiagnosticSurvivesCompletionWriteFailure(t *testing.T) {
 	for _, failWrite := range []bool{false, true} {
 		saved, inputs := jobFixture(t)
 		r := saved.Request
-		cause := hostrun.PreparationFailure("Harness image and release validation", imagerelease.ErrUnapproved)
+		cause := hostrun.PreparationFailure("local Harness image and compatibility validation", imagerelease.ErrCompatibility)
 		inputs.openError = cause
 		load := func(context.Context, startrequest.Request) (verifiedInputs, error) {
 			if failWrite {
@@ -158,7 +158,7 @@ func TestPreparationDiagnosticSurvivesCompletionWriteFailure(t *testing.T) {
 			return inputs, nil
 		}
 		result, err := run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", load)
-		if !errors.Is(err, imagerelease.ErrUnapproved) || result.Diagnostic == nil || result.Diagnostic.Stage != "Harness release lookup" || result.Code != "preparation_failed" || inputs.run.runs != 0 {
+		if !errors.Is(err, imagerelease.ErrCompatibility) || result.Diagnostic == nil || result.Diagnostic.Stage != "Harness compatibility validation" || result.Code != "preparation_failed" || inputs.run.runs != 0 {
 			t.Fatal(result, err)
 		}
 		if (result.CompletionRecording == "unconfirmed") != failWrite {

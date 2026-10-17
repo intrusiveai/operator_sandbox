@@ -217,14 +217,14 @@ Local progress claims never increase host budgets or extend hard termination.
 
 ### 5.1 Release identity and immutable staging
 
-An approved local Docker image and its HTTPS release compatibility record bind
+A pinned local Docker image and its embedded compatibility record bind
 the image identity, shared contract and runtime profile. The immutable image's
 embedded engine manifest records harness source/build identity, Python ABI,
 dependencies/SBOM, codecs, tool catalog, skill loader, prompt and confinement
 component. Operator checks these against installed policy and actual runtime
 capabilities; OS/Docker version-list membership is not required.
 [Release discovery and compatibility](schemas/ENGINE_RELEASE_CONTRACT.md) defines
-the authoritative image key, response and cache rules. Record registry manifest/index digests separately
+the authoritative image identity and embedded compatibility rules. Record registry manifest/index digests separately
 when available; launch uses the full verified local Docker image ID.
 
 The recommended runtime base is `gcr.io/distroless/python3-debian13:nonroot`,
@@ -319,35 +319,27 @@ or full Docker image ID. No registry credentials belong in Operator configuratio
 The administrator installs and updates images. Resolve all references locally;
 an omitted tag means the existing local `latest` tag. Missing local content is an actionable startup error.
 
-Before accepting a new campaign, resolve the selected native-platform image
-locally and pin its full Docker image ID. Use the fixed HTTPS release URL
-`https://releases.intrusive.ai/sha256/<64-hex-image-ID>` under the
-[release contract](schemas/ENGINE_RELEASE_CONTRACT.md), or reuse its valid local
-cached response. Validate image identity, minimum Operator version, exact installed
-shared-contract version/digest, platform and installed runtime profile capabilities. OS/Docker versions need not
-match the informational confirmed-supported list.
-The release key is Docker's image/config ID, not a repository manifest/index digest.
-The full shared contract remains installed locally rather than fetched from this URL.
+Before accepting a new campaign, Operator MUST resolve the selected native-platform
+image locally and pin its full Docker image/config ID. It MUST inspect
+`/opt/operator/engine/share/compatibility.json` from that exact image under the
+[local compatibility contract](schemas/ENGINE_RELEASE_CONTRACT.md). It MUST check
+minimum Operator version, exact installed shared-contract version/digest, native
+platform and runtime profile, and verify the embedded manifest and resources.
+Compatibility admission MUST use local image bytes without publisher verification,
+release-service requests or an approval cache. Missing or incompatible metadata
+MUST fail before native attachment or guest execution.
 
 Create by that immutable image ID with pulling forbidden; verify the created
-container's image before starting it. Check compatibility before any guest code
-executes. A new local image selection invalidates image-dependent prepared inputs;
-rebuild and revalidate them before acceptance. Accepted start retries retain their
-original pin and receipt. Record configured selector, image/platform identities,
-release response bytes/digest and retrieval/cache provenance in startup metadata.
-Retain the image and validated response while in use. No automatic replacement or
-fallback image is allowed when content or compatibility checks fail.
-
-The release response is cached by trusted origin and image ID and can be reused
-for later campaigns while rechecking current host compatibility. An uncached
-lookup failure, unknown image, corrupt metadata without a successful refetch, or
-unmet requirement fails startup. The MVP has no automatic cache expiry/revocation
-polling; the release contract documents administrator eviction and audit retention.
-Image selection and release lookup are host preparation; the guest remains offline.
+container's image before starting it. A changed local image selection requires
+fresh preparation before acceptance. Accepted campaigns retain their original
+pin and receipt. Record the configured selector, image/platform identities and
+exact embedded compatibility bytes/raw digest. Existing `release_record_digest`
+fields identify those bytes; `image_digest` separately pins the local image.
+No automatic replacement or fallback is allowed when validation fails.
 
 The [image preparation layer](docs/IMAGE_PREPARATION.md) implements local native
-image resolution, selector/pin rechecks, fixed-origin release lookup and private
-cache validation. The [host configuration loader](docs/HOST_CONFIGURATION.md)
+image resolution, selector/pin rechecks and embedded compatibility validation.
+The [host configuration loader](docs/HOST_CONFIGURATION.md)
 implements private YAML loading and read-only CLI validation. Embedded release-file
 inspection and container creation/start are integrated into the installed launcher.
 
@@ -1648,8 +1640,8 @@ expiry is required. Linux installation MUST create the dedicated service account
 and private filesystem paths; systemd prerequisites MUST be provisioned only
 when `install provision-linux --service` is explicitly requested; Docker socket permission grants MUST be explicit.
 The [host distribution contract](docs/HOST_DISTRIBUTION.md) defines packaging,
-integrity checks, provisioning, offline installation, updates and publication tooling. Attack Harness images use the HTTPS release approval and compatibility
-cache policy in Section 5.1.1.
+integrity checks, provisioning, offline installation, updates and publication tooling. Attack Harness images use the local embedded compatibility
+validation policy in Section 5.1.1.
 Active runs retain their pinned image, submitted bundle and reference inputs. No production credentials ship in images.
 
 Trusted configuration and private state are resolved by the installed host
@@ -1743,7 +1735,7 @@ native gates; schemas must cover boundary cases rather than merely mirror code.
 
 | ID | Required evidence |
 |---|---|
-| OC-AC-001 | Approved local Docker image and Python/native dependencies run on Linux/macOS amd64 and arm64 hosts using matching Linux images; wrong image/platform/profile, invalid release response or missing required runtime capability fails before launch. OS/Docker versions outside the confirmed-supported list are not rejected solely by version. |
+| OC-AC-001 | Compatible local Docker image and Python/native dependencies run on Linux/macOS amd64 and arm64 hosts using matching Linux images; wrong image/platform/profile, invalid embedded compatibility metadata or missing required runtime capability fails before launch. OS/Docker versions outside the confirmed-supported list are not rejected solely by version. |
 | OC-AC-002 | Verified root/input/skill data are immutable; caller mutation, symlink/nested-mount/path substitution and cross-campaign reads fail. |
 | OC-AC-003 | Native probes cannot reach IPv4/IPv6/DNS, loopback listeners, metadata addresses, other containers, host sockets or vsock; FIFO/spool model/attempt round trips still work. |
 | OC-AC-004 | Model requests for shell, Python execution, dynamic imports/plugins or arbitrary paths do not dispatch; hostile skills/prompts cannot add tools. |
@@ -1768,7 +1760,7 @@ native gates; schemas must cover boundary cases rather than merely mirror code.
 | OC-AC-023 | Report retries/late evidence never execute attacks; reports separate observed facts, guest claims, inference, incomplete audit and cleanup uncertainty. |
 | OC-AC-024 | Release/skill updates, skill removal/reinstallation, retention and offline installation preserve pinned active inputs, executable release file digests, skill content digests and referenced evidence. Bundle edits require a new immutable input identity and cannot modify an active campaign. |
 | OC-AC-025 | CLI disconnect/observer interrupt does not stop accepted work; status/wait/JSON receipts, read-only doctor and fenced startup are demonstrated. |
-| OC-AC-026 | Local image selection uses Docker content with `--pull=never` and treats latest as a local tag. Cover missing image, local tag change, immutable ID launch, image removal, cached/uncached HTTPS release lookup, bad origin/TLS/redirect/status/metadata/digest, minimum version, exact contract/platform/profile mismatch, offline valid-cache reuse and accepted-start pinning. |
+| OC-AC-026 | Local image selection uses Docker content with `--pull=never` and treats latest as a local tag. Cover missing image, local tag change, immutable ID launch, image removal, missing/malformed/oversized embedded compatibility metadata, resource digest mismatch, minimum version, exact contract/platform/profile mismatch, offline local-image admission and accepted-start pinning. |
 | OC-AC-027 | Create/list/inspect/restore tools preserve campaign ID and description, discover retained earlier-session checkpoints and support context-preserving branch restores (Sections 10.3–10.4). |
 | OC-AC-028 | Feedback selection defaults to all permitted kinds; profiles cannot broaden; receipt reads return actual verified bytes with fixed source attribution, explicit availability/truncation, cumulative limits and earlier-session retention. Qualify model-visible content and no cross-campaign/protected disclosure. |
 | OC-AC-029 | Rejected/corrected numbering, local gaps, duplicate and admission accounting, restore-retained counters, each loop limit, defined progress and bounded model-free finalization pass shared execution-rule traces. Both Go/Python runners pass the same accepted contract fixtures and real FIFO and file-spool fake-broker/fake-harness traces: gated startup, attempt/feedback, live restore, conclusion and stop. Cover fixed manifest descriptors beyond 64 KiB, package mismatch, IDs/digests, deadlines/queues, restore/control ordering, exact stop acknowledgement and spool sequence filenames/cumulative ACKs, producer deletion, timeout boundaries and no replay. This does not qualify production runtime containment. |

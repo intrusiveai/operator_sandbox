@@ -87,7 +87,7 @@ build/operatorctl contract check \
 Set the expected values from the installation's supported-package metadata. All
 three options are required; the command does not default to or infer a package pin.
 It is an installation diagnostic, not a required manual step for each campaign.
-It uses no host configuration, Docker, HTTPS, state directory or release cache.
+It uses no host configuration, Docker, HTTPS or state directory.
 It creates no files and does not modify the installation.
 
 Success emits `operator.dev/contract-check/v1alpha1` JSON with `status: verified`,
@@ -108,7 +108,7 @@ response can independently select arbitrary installed validators or executable c
 The release response must match that verified package pin. Before guest execution,
 also inspect the immutable image's embedded package/engine metadata and enforce
 the fixed runtime policy. This loader establishes byte integrity and offline schema
-loading; it does not establish source-code conformance, release approval or runtime
+loading; it does not establish source-code conformance, image compatibility admission or runtime
 qualification. Supported-package metadata/build version packaging is implemented by the
 [host distribution tools](HOST_DISTRIBUTION.md). Runtime admission checks the
 compiled supported pin; explicit inspection tools can verify a future package.

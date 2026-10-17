@@ -77,7 +77,7 @@ launch records and final revision:
 | `prompt_digest` | Exact effective system-prompt bytes. |
 | `skill_set_digest` | Raw bytes of SkillSetManifest, including the empty set. |
 | `image_digest` | Full Docker image ID pinned for this launch. |
-| `release_record_digest` | Raw bytes of the validated cached HTTPS release response. |
+| `release_record_digest` | Raw bytes of the validated embedded compatibility file. |
 | `contract_package_version`, `contract_package_digest` | Installed stable major.minor.patch version and canonical package-manifest digest. |
 
 These copies grant no authority. Raw-file digests do not replace separately recorded

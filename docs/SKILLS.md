@@ -110,7 +110,7 @@ the bounded manifest, recompute its loading digest from verified installed bundl
 and compare all descriptors. The file path and exact bytes MUST participate in
 start identity. An omitted selection MUST reuse the saved selection; changes MUST
 require explicit new-campaign selection. Online preparation MUST reverify bundles
-and match the frozen loader digest to the approved image. A set file MUST NOT
+and match the frozen loader digest to the pinned image. A set file MUST NOT
 permit ambient skill discovery.
 
 `skill remove` MUST remove only the selected hash-named installed bundle tree and
