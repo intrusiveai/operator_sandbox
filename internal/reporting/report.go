@@ -603,7 +603,11 @@ func markdown(r Result, digest string) []byte {
 	if len(r.ModelFailures) > 0 {
 		b.WriteString("\n## Model request failure\n\n")
 		for _, d := range r.ModelFailures {
-			fmt.Fprintf(&b, "- Operation `%s`; category `%s`: %s\n", d.OperationID, d.Category, d.Summary())
+			fmt.Fprintf(&b, "Operation `%s`; category `%s`:\n\n", d.OperationID, d.Category)
+			// Indented code keeps provider text from creating Markdown links/HTML.
+			for _, line := range strings.Split(d.Summary()+"\n"+d.ProviderDetailsText(), "\n") {
+				fmt.Fprintf(&b, "    %s\n", line)
+			}
 			if d.RequestID != "" {
 				fmt.Fprintf(&b, "  Request ID: `%s`.\n", d.RequestID)
 			}

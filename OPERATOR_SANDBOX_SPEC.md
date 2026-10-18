@@ -941,7 +941,10 @@ successful guest response, codec/profile/model, usage and timing. Failed or inva
 provider bodies MUST be replaced by a bounded selected diagnostic, as defined in
 [model failure diagnostics](docs/MODEL_SERVICE.md#model-failure-diagnostics).
 Foreground output, failed start completion, inspection and report/export MUST
-expose the same selected failure facts. Reservations MUST remain distinct from
+expose the same selected failure facts. HTTP rejections MUST include bounded,
+credential-redacted provider message/type/code/parameter fields when present and
+explicit reasons for omissions or truncation, across every supported provider.
+Reservations MUST remain distinct from
 confirmed usage; diagnostic persistence/cleanup failures MUST NOT replace the
 primary failure or permit replay. Exclude host-added credentials, authority
 headers, private credential-bearing routing, secret-store and bootstrap material.

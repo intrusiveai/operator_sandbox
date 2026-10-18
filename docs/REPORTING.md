@@ -166,6 +166,9 @@ validated, bounded diagnostics. The Markdown report MUST summarize the category,
 operation, status/code when observed, and safe explanation. Projected model events
 MUST preserve `outcome`, `elapsed_ms`, `reserved_tokens` and valid `diagnostic` fields;
 budget counters MUST be named `model_tokens_budget_charged` in this projection.
-Unrestricted error text, response bodies and headers MUST NOT be added to exports.
+Selected `provider_message`, `provider_type`, `provider_code`, `provider_parameter`
+and `omissions` MUST survive projection unchanged after diagnostic validation.
+The Markdown report MUST render these provider values as code and label omission
+reasons. Raw error bodies and unrestricted headers MUST NOT be added to exports.
 Existing immutable reports MUST remain unchanged; regenerating a report with the
 updated projection can produce a new generation alongside the original.

@@ -462,6 +462,10 @@ func TestLocalCompatibilityWithoutReleaseService(t *testing.T) {
 func TestModelFailureForegroundAndWorkerOutput(t *testing.T) {
 	dir, paths, deps, _ := startFixture(t)
 	model := modelprovider.Diagnostic{Provider: "openai-chat", Model: "test-model", OperationID: "model-generate-0000000000000001", HTTPStatus: 401, ProviderCode: "invalid_api_key"}.WithFailure("http_rejection", "http_rejected")
+	model.ProviderMessage = "The parameter temperature is unsupported."
+	model.ProviderType = "invalid_request_error"
+	model.ProviderParameter = "temperature"
+	model.Omissions.RequestID = "not_provided"
 	d := &hostrun.PreparationDiagnostic{Stage: "model request (http_rejection)", Message: model.Summary(), Model: model}
 	deps.run = func(context.Context, string, string, string) (workerjob.Result, error) {
 		return workerjob.Result{Code: "execution_failed", Diagnostic: d, CompletionRecording: "recorded"}, modelprovider.FailureError(model)
@@ -470,7 +474,7 @@ func TestModelFailureForegroundAndWorkerOutput(t *testing.T) {
 	if code != 1 {
 		t.Fatal(code, stderr)
 	}
-	for _, want := range []string{"Campaign execution failed during model request (http_rejection) (execution_failed)", "openai-chat returned HTTP 401 (invalid_api_key)", "Operation: model-generate-0000000000000001", "Model: test-model", "Execution will not resume."} {
+	for _, want := range []string{"Campaign execution failed during model request (http_rejection) (execution_failed)", "openai-chat returned HTTP 401 (invalid_api_key)", "Operation: model-generate-0000000000000001", "Model: test-model", `Provider message: "The parameter temperature is unsupported."`, `Provider type: "invalid_request_error"`, `Provider parameter: "temperature"`, "Provider request ID omission: not_provided", "Execution will not resume."} {
 		if !strings.Contains(stderr, want) {
 			t.Fatalf("missing %q: %s", want, stderr)
 		}

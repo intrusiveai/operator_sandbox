@@ -216,6 +216,10 @@ func TestModelDiagnosticCompletionAndPersistenceFailure(t *testing.T) {
 		saved, inputs := jobFixture(t)
 		r := saved.Request
 		d := modelprovider.Diagnostic{Provider: "openai-chat", Model: "test-model", OperationID: "model-1", HTTPStatus: 401, ProviderCode: "invalid_api_key"}.WithFailure("http_rejection", "http_rejected")
+		d.ProviderMessage = strings.Repeat("<", 1024) // Full bounded value must fit durable completion, including JSON escaping.
+		d.ProviderType = "invalid_request_error"
+		d.ProviderParameter = "temperature"
+		d.Omissions.RequestID = "not_provided"
 		inputs.run.modelDiagnostic = &d
 		secondary := errors.New("cleanup failed")
 		inputs.run.runError = errors.Join(modelprovider.FailureError(d), secondary)
