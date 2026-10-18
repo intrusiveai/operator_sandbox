@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/hostrun"
 	"github.com/intrusiveai/operator_sandbox/internal/hostworker"
 	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
@@ -21,11 +22,12 @@ import (
 )
 
 type fakeRun struct {
-	receipt         hostrun.Receipt
-	runs, cancels   int
-	runError        error
-	modelDiagnostic *modelprovider.Diagnostic
-	check           func()
+	conclusionDiagnostic *campaign.ConclusionDiagnostic
+	receipt              hostrun.Receipt
+	runs, cancels        int
+	runError             error
+	modelDiagnostic      *modelprovider.Diagnostic
+	check                func()
 }
 
 func (f *fakeRun) Receipt() hostrun.Receipt { return f.receipt }
@@ -37,7 +39,7 @@ func (f *fakeRun) Run(ctx context.Context) (hostworker.Result, error) {
 	if f.check != nil {
 		f.check()
 	}
-	return hostworker.Result{ContainerCleanup: "removed", ModelDiagnostic: f.modelDiagnostic}, f.runError
+	return hostworker.Result{ContainerCleanup: "removed", ModelDiagnostic: f.modelDiagnostic, ConclusionDiagnostic: f.conclusionDiagnostic}, f.runError
 }
 func (f *fakeRun) Cancel() error { f.cancels++; return nil }
 
@@ -233,6 +235,42 @@ func TestModelDiagnosticCompletionAndPersistenceFailure(t *testing.T) {
 		load := func(context.Context, startrequest.Request) (verifiedInputs, error) { return inputs, nil }
 		result, err := run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", load)
 		if result.Code != "execution_failed" || result.Diagnostic == nil || result.Diagnostic.Model != d || modelprovider.Details(err) == nil || !errors.Is(err, secondary) || inputs.run.runs != 1 {
+			t.Fatal(result, err)
+		}
+		if (result.CompletionRecording == "unconfirmed") != failWrite {
+			t.Fatal(result)
+		}
+		if !failWrite {
+			disk, e := startrequest.Read(r.StateRoot, r.Selection.StartRequestID)
+			if e != nil || disk.Completion == nil || disk.Completion.Diagnostic == nil || *disk.Completion.Diagnostic != *result.Diagnostic {
+				t.Fatal(disk, e)
+			}
+			if _, e = run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", load); !errors.Is(e, startrequest.ErrClaimed) {
+				t.Fatal("replay", e)
+			}
+		}
+	}
+}
+
+func TestConclusionDiagnosticCompletionAndPersistenceFailure(t *testing.T) {
+	for _, failWrite := range []bool{false, true} {
+		saved, inputs := jobFixture(t)
+		r := saved.Request
+		d := campaign.NewConclusionDiagnostic("conclusion-record", &contracts.ConclusionError{Reason: "unresolved_hypothesis", FieldPath: "/hypotheses/0/provenance/parent_hypothesis_id", Identifier: "hyp-missing"})
+		inputs.run.conclusionDiagnostic = &d
+
+		secondary := errors.New("cleanup failed")
+		inputs.run.runError = errors.Join(d, secondary)
+		inputs.run.check = func() {
+			if failWrite {
+				if e := os.WriteFile(filepath.Join(r.StateRoot, "starts", r.Selection.StartRequestID, "completion.json.pending"), []byte("interrupted"), 0600); e != nil {
+					t.Fatal(e)
+				}
+			}
+		}
+		load := func(context.Context, startrequest.Request) (verifiedInputs, error) { return inputs, nil }
+		result, err := run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", load)
+		if result.Code != "execution_failed" || result.Diagnostic == nil || result.Diagnostic.Conclusion != d || !errors.Is(err, d) || !errors.Is(err, secondary) || inputs.run.runs != 1 {
 			t.Fatal(result, err)
 		}
 		if (result.CompletionRecording == "unconfirmed") != failWrite {

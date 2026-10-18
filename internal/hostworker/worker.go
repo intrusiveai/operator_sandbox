@@ -56,15 +56,16 @@ type Worker struct {
 }
 
 type Result struct {
-	ModelDiagnostic  *modelprovider.Diagnostic      `json:"model_diagnostic,omitempty"`
-	StopAccepted     bool                           `json:"stop_accepted"`
-	LaunchPhase      string                         `json:"launch_phase"`
-	ContainerCleanup string                         `json:"container_cleanup"`
-	Binding          campaign.DockerBinding         `json:"binding"`
-	Terminal         campaignservice.TerminalResult `json:"terminal"`
-	Termination      termination.Receipt            `json:"termination"`
-	TransportCleanup string                         `json:"transport_cleanup"`
-	InputCleanup     string                         `json:"input_cleanup"`
+	ConclusionDiagnostic *campaign.ConclusionDiagnostic `json:"conclusion_diagnostic,omitempty"`
+	ModelDiagnostic      *modelprovider.Diagnostic      `json:"model_diagnostic,omitempty"`
+	StopAccepted         bool                           `json:"stop_accepted"`
+	LaunchPhase          string                         `json:"launch_phase"`
+	ContainerCleanup     string                         `json:"container_cleanup"`
+	Binding              campaign.DockerBinding         `json:"binding"`
+	Terminal             campaignservice.TerminalResult `json:"terminal"`
+	Termination          termination.Receipt            `json:"termination"`
+	TransportCleanup     string                         `json:"transport_cleanup"`
+	InputCleanup         string                         `json:"input_cleanup"`
 }
 
 // New binds fresh in-memory preparation to installed release authority and a
@@ -167,6 +168,7 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 			runErr = errors.Join(runErr, err)
 			result.StopAccepted = service.StopAccepted()
 			result.ModelDiagnostic = service.ModelFailure()
+			result.ConclusionDiagnostic = service.ConclusionFailure()
 			if result.ModelDiagnostic != nil {
 				runErr = errors.Join(modelprovider.FailureError(*result.ModelDiagnostic), runErr)
 			}
@@ -207,8 +209,15 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 		if runErr == nil && !completedResult(result) {
 			runErr = ErrWorker
 		}
+		if runErr != nil && result.ConclusionDiagnostic != nil {
+			runErr = errors.Join(*result.ConclusionDiagnostic, runErr)
+		}
 		raw, _ := json.Marshal(result)
-		entry := campaign.Entry{RunRevision: writer.Revision(), Kind: "launch.terminal", Metadata: json.RawMessage(`{"execution_admission":"closed"}`), Content: []campaign.Content{{Role: "launch-result", MediaType: "application/json", Bytes: raw}}}
+		metadata, _ := json.Marshal(struct {
+			ExecutionAdmission string                         `json:"execution_admission"`
+			Diagnostic         *campaign.ConclusionDiagnostic `json:"diagnostic,omitempty"`
+		}{"closed", result.ConclusionDiagnostic})
+		entry := campaign.Entry{RunRevision: writer.Revision(), Kind: "launch.terminal", Metadata: metadata, Content: []campaign.Content{{Role: "launch-result", MediaType: "application/json", Bytes: raw}}}
 		var recordErr error
 		if terminalReserved {
 			_, recordErr = writer.AppendReserved(entry, "launch-terminal", true)

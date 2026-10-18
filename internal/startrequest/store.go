@@ -455,7 +455,7 @@ func (o *Owner) Accept(ctx context.Context, r hostrun.Receipt) error {
 	return err
 }
 func validDiagnostic(status, code string, d *hostrun.PreparationDiagnostic) bool {
-	return d == nil || (status == "failed" && d.Valid() && (code == "preparation_failed" || (code == "execution_failed" && d.Model.Valid() && d.Model.OperationID != "")))
+	return d == nil || (status == "failed" && d.Valid() && (code == "preparation_failed" || (code == "execution_failed" && ((d.Model.Valid() && d.Model.OperationID != "") || d.Conclusion.Valid()))))
 }
 
 func (o *Owner) Finish(ctx context.Context, status, code string) error {

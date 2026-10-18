@@ -109,3 +109,39 @@ func TestAssessmentByteLimits(t *testing.T) {
 		t.Fatal("missing record fixture")
 	}
 }
+
+func TestConclusionErrorPaths(t *testing.T) {
+	p, err := LoadProtocol(schemas.Files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	original, err := os.ReadFile("../schemas/fixtures/conclusion-example.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		name, reason, path string
+		edit               func(map[string]any)
+	}{
+		{"missing field", "invalid_structure", "/summary", func(c map[string]any) { delete(c, "summary") }},
+		{"self", "self_parent", "/hypotheses/0/provenance/parent_hypothesis_id", func(c map[string]any) {
+			h := c["hypotheses"].([]any)[0].(map[string]any)
+			h["provenance"].(map[string]any)["parent_hypothesis_id"] = h["hypothesis_id"]
+		}},
+		{"overflow", "invalid_range", "/claims/0/observation_refs/0/range", func(c map[string]any) {
+			c["claims"].([]any)[0].(map[string]any)["observation_refs"].([]any)[0].(map[string]any)["range"] = map[string]any{"offset": MaxSafeInteger, "length": 1}
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var c map[string]any
+			_ = json.Unmarshal(original, &c)
+			tc.edit(c)
+			raw, _ := json.Marshal(c)
+			_, err := p.ValidateConclusion(raw)
+			var issue *ConclusionError
+			if !errors.As(err, &issue) || issue.Reason != tc.reason || issue.FieldPath != tc.path {
+				t.Fatal(err, issue)
+			}
+		})
+	}
+}

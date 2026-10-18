@@ -139,6 +139,9 @@ func run(ctx context.Context, stateRoot, requestID, requestDigest, operatorVersi
 		if execution.ModelDiagnostic != nil && execution.ModelDiagnostic.Valid() {
 			d := *execution.ModelDiagnostic
 			result.Diagnostic = &hostrun.PreparationDiagnostic{Stage: "model request (" + d.Category + ")", Message: d.Summary(), Model: d, CleanupFailed: execution.ContainerCleanup == "unconfirmed" || execution.TransportCleanup == "retained" || execution.InputCleanup == "retained"}
+		} else if execution.ConclusionDiagnostic != nil && execution.ConclusionDiagnostic.Valid() {
+			d := *execution.ConclusionDiagnostic
+			result.Diagnostic = &hostrun.PreparationDiagnostic{Stage: "conclusion validation (" + d.Stage + ")", Message: d.Message(), Conclusion: d, CleanupFailed: execution.ContainerCleanup == "unconfirmed" || execution.TransportCleanup == "retained" || execution.InputCleanup == "retained"}
 		}
 		return result, err
 	}

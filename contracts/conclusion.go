@@ -3,6 +3,8 @@ package contracts
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"sort"
+	"strconv"
 )
 
 const ConclusionLimit = 1 << 20
@@ -22,41 +24,47 @@ type CompletionInput struct {
 // ValidateConclusion checks bounded content and internal references. It does not
 // verify evidence truth, external receipt membership or current launch identity.
 func (p *Protocol) ValidateConclusion(raw []byte) (map[string]any, error) {
-	value, err := p.catalog.Validate(EngineConclusionSchema, raw, ConclusionLimit)
+	schema, ok := p.catalog.schemas[EngineConclusionSchema]
+	if !ok {
+		return nil, ErrCatalog
+	}
+	value, err := Decode(raw, ConclusionLimit)
 	if err != nil {
-		return nil, err
+		return nil, &ConclusionError{Reason: "invalid_structure", Cause: err}
+	}
+	if err := schema.Validate(value); err != nil {
+		return nil, &ConclusionError{Reason: "invalid_structure", FieldPath: conclusionSchemaPath(err), Cause: ErrSchema}
 	}
 	c := value.(map[string]any)
-	if !assessmentRangesOK(c) {
-		return nil, ErrProtocol
+	if path, ok := assessmentRangeError(c, ""); !ok {
+		return nil, conclusionIssue("invalid_range", path, "")
 	}
-	for field, id := range map[string]string{"objectives": "objective_id", "hypotheses": "hypothesis_id", "claims": "claim_id", "uncertainties": "gap_id"} {
+	if _, err := ConclusionHypotheses(c); err != nil {
+		return nil, err
+	}
+	for _, pair := range [][2]string{{"objectives", "objective_id"}, {"claims", "claim_id"}, {"uncertainties", "gap_id"}} {
+		field, id := pair[0], pair[1]
 		if !uniqueEntries(c[field].([]any), id) {
-			return nil, ErrProtocol
+			return nil, conclusionIssue("duplicate_entry", "/"+field, "")
 		}
 	}
 	gaps := map[string]bool{}
-	for _, item := range c["uncertainties"].([]any) {
+	for i, item := range c["uncertainties"].([]any) {
 		gap := item.(map[string]any)
 		gaps[gap["gap_id"].(string)] = true
 		if gap["kind"] == "coverage-limit" && c["status"] == "completed" {
-			return nil, ErrProtocol
+			return nil, conclusionIssue("coverage_status", "/uncertainties/"+strconv.Itoa(i)+"/kind", gap["gap_id"].(string))
 		}
 	}
-	for _, item := range c["claims"].([]any) {
+	for i, item := range c["claims"].([]any) {
 		claim := item.(map[string]any)
 		if !observationsLinked(claim) {
-			return nil, ErrProtocol
+			return nil, conclusionIssue("observation_attempt_mismatch", "/claims/"+strconv.Itoa(i)+"/observation_refs", "")
 		}
 		for _, id := range claim["uncertainty_refs"].([]any) {
 			if !gaps[id.(string)] {
-				return nil, ErrProtocol
+				return nil, conclusionIssue("unresolved_uncertainty", "/claims/"+strconv.Itoa(i)+"/uncertainty_refs", id.(string))
 			}
-		}
-	}
-	for _, item := range c["hypotheses"].([]any) {
-		if !hypothesisOK(item.(map[string]any)) {
-			return nil, ErrProtocol
 		}
 	}
 	return c, nil
@@ -170,27 +178,36 @@ func hypothesisOK(h map[string]any) bool {
 
 // All ranges in assessment schemas describe nonempty half-open raw-byte spans.
 func assessmentRangesOK(value any) bool {
+	_, ok := assessmentRangeError(value, "")
+	return ok
+}
+func assessmentRangeError(value any, path string) (string, bool) {
 	switch v := value.(type) {
 	case map[string]any:
 		if span, ok := v["range"]; ok {
 			r := span.(map[string]any)
 			if number(r["offset"])+number(r["length"]) > MaxSafeInteger {
-				return false
+				return path + "/range", false
 			}
 		}
-		for _, child := range v {
-			if !assessmentRangesOK(child) {
-				return false
+		keys := make([]string, 0, len(v))
+		for key := range v {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			if field, ok := assessmentRangeError(v[key], path+"/"+key); !ok {
+				return field, false
 			}
 		}
 	case []any:
-		for _, child := range v {
-			if !assessmentRangesOK(child) {
-				return false
+		for i, child := range v {
+			if field, ok := assessmentRangeError(child, path+"/"+strconv.Itoa(i)); !ok {
+				return field, false
 			}
 		}
 	}
-	return true
+	return "", true
 }
 
 func observationsLinked(object map[string]any) bool {

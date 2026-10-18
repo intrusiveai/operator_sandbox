@@ -21,22 +21,23 @@ import (
 )
 
 type observationReceipt struct {
-	ModelDiagnostic  *modelprovider.Diagnostic `json:"model_diagnostic,omitempty"`
-	Start            *startReceipt             `json:"start,omitempty"`
-	APIVersion       string                    `json:"api_version"`
-	CampaignID       string                    `json:"campaign_id"`
-	LaunchID         string                    `json:"launch_id"`
-	ManifestDigest   string                    `json:"run_manifest_digest"`
-	Verified         bool                      `json:"prefix_verified"`
-	Sequence         int64                     `json:"sequence"`
-	Bytes            int64                     `json:"journal_bytes"`
-	Revision         int64                     `json:"run_revision"`
-	LastKind         string                    `json:"last_event_kind"`
-	TerminalRecorded bool                      `json:"terminal_recorded"`
-	ExecutionState   string                    `json:"execution_state"`
-	Emitted          int64                     `json:"emitted_events"`
-	NextAfter        int64                     `json:"next_after"`
-	More             bool                      `json:"more_events"`
+	ConclusionDiagnostic *campaign.ConclusionDiagnostic `json:"conclusion_diagnostic,omitempty"`
+	ModelDiagnostic      *modelprovider.Diagnostic      `json:"model_diagnostic,omitempty"`
+	Start                *startReceipt                  `json:"start,omitempty"`
+	APIVersion           string                         `json:"api_version"`
+	CampaignID           string                         `json:"campaign_id"`
+	LaunchID             string                         `json:"launch_id"`
+	ManifestDigest       string                         `json:"run_manifest_digest"`
+	Verified             bool                           `json:"prefix_verified"`
+	Sequence             int64                          `json:"sequence"`
+	Bytes                int64                          `json:"journal_bytes"`
+	Revision             int64                          `json:"run_revision"`
+	LastKind             string                         `json:"last_event_kind"`
+	TerminalRecorded     bool                           `json:"terminal_recorded"`
+	ExecutionState       string                         `json:"execution_state"`
+	Emitted              int64                          `json:"emitted_events"`
+	NextAfter            int64                          `json:"next_after"`
+	More                 bool                           `json:"more_events"`
 }
 
 // These commands only read retained records. Neither polling nor cancellation
@@ -132,6 +133,12 @@ func observeCampaign(ctx context.Context, action string, args []string, stdout, 
 					result.ModelDiagnostic = modelprovider.DecodeDiagnostic(metadata["diagnostic"])
 				}
 			}
+			if (e.Kind == "conclusion.rejected" || e.Kind == "launch.terminal") && result.ConclusionDiagnostic == nil {
+				var metadata map[string]json.RawMessage
+				if json.Unmarshal(e.Metadata, &metadata) == nil {
+					result.ConclusionDiagnostic = campaign.DecodeConclusionDiagnostic(metadata["diagnostic"])
+				}
+			}
 			if e.Kind == "launch.terminal" {
 				result.TerminalRecorded = true
 			}
@@ -147,6 +154,10 @@ func observeCampaign(ctx context.Context, action string, args []string, stdout, 
 			}
 			return nil
 		})
+		if result.ConclusionDiagnostic == nil && start != nil && start.Completion != nil && start.Completion.Diagnostic != nil && start.Completion.Diagnostic.Conclusion.Valid() {
+			d := start.Completion.Diagnostic.Conclusion
+			result.ConclusionDiagnostic = &d
+		}
 		result.LaunchID, result.ManifestDigest = snapshot.Manifest.LaunchID, snapshot.ManifestDigest
 		result.Sequence, result.Bytes = snapshot.VerifiedEvents, snapshot.VerifiedBytes
 		if result.Revision == 0 {

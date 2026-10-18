@@ -69,6 +69,14 @@ func printWorkerFailure(w io.Writer, code string, d *hostrun.PreparationDiagnost
 				fmt.Fprintln(w, details)
 			}
 		}
+		if d.Conclusion.Valid() {
+			fmt.Fprintln(w, "Validation rule:", d.Conclusion.Reason)
+			if d.Conclusion.OperationID != "" {
+				fmt.Fprintln(w, "Operation:", d.Conclusion.OperationID)
+			} else {
+				fmt.Fprintln(w, "Operation omitted:", d.Conclusion.OperationOmitted)
+			}
+		}
 		if d.CleanupFailed {
 			fmt.Fprintf(w, "Secondary failure: %s cleanup did not finish successfully; inspect retained campaign state.\n", phase)
 		}

@@ -2,8 +2,9 @@
 
 This fixes concrete fields and validation rules for Shared Contract §§8, 10 and
 11. All assessments remain guest assertions. They cannot overwrite host execution
-facts, protected evidence, budget counters or final campaign status. Broker and harness runtime handling are implemented. Package
-publication and complete process/native qualification remain outstanding.
+facts, protected evidence, budget counters or final campaign status. Shared Go/Python
+validators and broker/harness process tests implement these rules. Native runtime
+qualification remains a separate release gate.
 
 ## Typed records
 
@@ -90,6 +91,23 @@ are `supported`, `inconclusive`, `not-observed` or `not-tested`. The runtime che
 objective/scenario membership in the submitted bundle and recorded exploratory
 lineage; compact conclusions need not embed every historical hypothesis.
 
+A conclusion MUST be allowed to define new hypotheses directly, without earlier
+hypothesis records. The host MUST collect all local definitions before resolving
+references, including forward parent and coverage references. Local definitions
+take precedence within that conclusion; explicit nonlocal references MAY resolve
+through the campaign's historical hypothesis records. A reference absent from both
+sets MUST be rejected. The host MUST NOT synthesize or append hypothesis history
+to admit a conclusion. Earlier hypothesis, progress, lineage and coverage records
+retain their existing validation and attribution rules.
+
+Duplicate local IDs, self-parenting and parent cycles MUST be rejected, including
+cycles crossing local and historical definitions. Both Go and Python validators
+check local duplicates/self-parenting/cycles; only the host resolves historical
+membership. Conclusion record admission and committed stop validation MUST use
+the same reference resolution. All binding, finish-reason, artifact commitment,
+receipt membership, visibility, evidence availability and byte-range checks remain
+required.
+
 Claims have unique IDs, statements, interpretation, confidence, assurance, attempt
 receipts, observations and local uncertainty references. A supported claim requires
 an observation; each observation's attempt must appear in the claim's attempt list.
@@ -145,3 +163,32 @@ claims cleanup/reporting is finished.
 
 An unavailable-conclusion stop still uses ordinary validation and host stop policy;
 it never fabricates a committed chain or extends the hard deadline.
+
+## Rejection diagnostics
+
+For conclusion record and committed stop rejections, the host MUST retain a
+bounded diagnostic with operation ID, validation stage, reason, JSON Pointer field
+path and relevant identifier when available. Distinct rules MUST identify
+structure, binding/finish mismatch, artifact and record receipts, hypothesis/record
+references, attempt/observation references, and evidence availability/ranges.
+
+The existing `CONCLUSION_INVALID` error MUST carry a safe actionable `message`
+and, when available, the existing `instance_path`. Effect and disposition remain
+`none` / `correct-and-resubmit` for definite invalid submissions; storage failures
+retain terminal handling. This adds no wire fields or new operation. Harnesses
+MUST accept the existing error shape and MUST NOT fabricate hypothesis history to
+work around a rejection.
+
+Operator MUST journal each rejection and preserve the first rejection through
+later generic execution/cleanup failure in terminal and failed-start receipts.
+Inspection, report/export and foreground/supervised output MUST expose that cause.
+A corrected conclusion MAY still complete successfully; rejection history alone
+MUST NOT force execution failure. Older records without diagnostics remain valid.
+
+Diagnostics MUST contain host-authored validation facts, never artifact prose,
+prompts or credentials. Identifiers are limited to 128 ASCII identifier characters;
+credential-like identifiers MUST be omitted. Field paths are limited to 160
+characters and known schema fields/indexes. Omitted fields MUST state their reason
+(`size_limit`, `invalid_identifier`, `credential_like`, or
+`unsafe_or_oversized` for paths). The derived wire explanation is at most 512
+bytes. The original evidence remains governed by its existing visibility policy.

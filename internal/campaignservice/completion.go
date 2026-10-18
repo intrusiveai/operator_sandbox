@@ -227,7 +227,7 @@ func (s *Service) appendRecord(q stateRequest, raw []byte, seq int64) (stateRepl
 	}
 	if body.Kind == "conclusion" {
 		if err := s.validateConclusionRecord(body.Record); err != nil {
-			return s.referenceError(err, "CONCLUSION_INVALID")
+			return s.rejectConclusion(q, err)
 		}
 	} else {
 		newHyp := ""
@@ -279,10 +279,13 @@ func (s *Service) referenceError(err error, code string) (stateReply, error) {
 func (s *Service) conclusionUpload(receipt string) (*artifactUpload, error) {
 	for _, u := range s.artifacts.uploads {
 		if u.Receipt == receipt && receipt != "" && u.Purpose == "conclusion" {
+			if u.Commit == nil {
+				return nil, referenceIssue("artifact_not_committed", "/record/artifact_receipt", receipt, nil)
+			}
 			return u, nil
 		}
 	}
-	return nil, errReference
+	return nil, referenceIssue("artifact_receipt_invalid", "/record/artifact_receipt", receipt, nil)
 }
 func (s *Service) validateConclusionRecord(record map[string]any) error {
 	u, err := s.conclusionUpload(record["artifact_receipt"].(string))
@@ -291,18 +294,24 @@ func (s *Service) validateConclusionRecord(record map[string]any) error {
 	}
 	content, err := s.readUpload(u)
 	if err != nil {
-		return err
+		return referenceIssue("evidence_unavailable", "/record/artifact_receipt", u.Receipt, err)
+	}
+	if contracts.RawDigest(content) != u.Artifact.Digest {
+		return referenceIssue("artifact_integrity_failed", "/record/artifact_receipt", u.Receipt, nil)
 	}
 	c, err := s.target().Protocol().ValidateConclusion(content)
 	if err != nil {
-		return errReference
+		return err
 	}
 	binding, _ := contracts.Canonicalize(marshal(c["binding"]), contracts.ControlLimit)
 	expected, _ := contracts.Canonicalize(s.conclusionBinding(), contracts.ControlLimit)
-	if !bytes.Equal(binding, expected) || c["finish_reason"] != record["finish_reason"] {
-		return errReference
+	if !bytes.Equal(binding, expected) {
+		return referenceIssue("binding_mismatch", "/binding", "", nil)
 	}
-	return s.checkReferences(c, "", false)
+	if c["finish_reason"] != record["finish_reason"] {
+		return referenceIssue("finish_reason_mismatch", "/record/finish_reason", "", nil)
+	}
+	return s.checkConclusionReferences(c)
 }
 func (s *Service) acceptStop(q stateRequest, raw []byte) (stateReply, error) {
 	if s.completion.stopID != "" {
@@ -320,37 +329,38 @@ func (s *Service) acceptStop(q stateRequest, raw []byte) (stateReply, error) {
 	if body.Conclusion.State == "committed" {
 		u, err := s.conclusionUpload(body.Conclusion.Artifact)
 		if err != nil {
-			return s.referenceError(err, "CONCLUSION_INVALID")
+			return s.rejectConclusion(q, stopConclusionIssue(err))
 		}
 		record, ok := s.completion.records[body.Conclusion.Record]
 		if !ok || record.kind != "conclusion" {
-			return stateDenied("CONCLUSION_INVALID"), nil
+			return s.rejectConclusion(q, referenceIssue("record_receipt_invalid", "/conclusion/record_receipt", body.Conclusion.Record, nil))
+		}
+		// Record and stop use identical local/history reference resolution and
+		// current binding/finish checks, even if retained evidence changed meanwhile.
+		if err := s.validateConclusionRecord(map[string]any{"artifact_receipt": body.Conclusion.Artifact, "finish_reason": body.Finish}); err != nil {
+			return s.rejectConclusion(q, stopConclusionIssue(err))
 		}
 		content, err := s.readUpload(u)
 		if err != nil {
-			return stateReply{}, err
+			return s.rejectConclusion(q, referenceIssue("evidence_unavailable", "/conclusion/artifact_receipt", body.Conclusion.Artifact, err))
 		}
 		request, err := s.writer.ReadContent(record.request)
 		if err != nil {
-			return stateReply{}, err
+			return s.rejectConclusion(q, referenceIssue("evidence_unavailable", "/conclusion/record_receipt", body.Conclusion.Record, err))
 		}
 		response, err := s.writer.ReadContent(record.response)
 		if err != nil {
-			return stateReply{}, err
+			return s.rejectConclusion(q, referenceIssue("evidence_unavailable", "/conclusion/record_receipt", body.Conclusion.Record, err))
 		}
 		if u.Commit == nil {
-			return stateReply{}, campaign.ErrCorrupt
+			return s.rejectConclusion(q, referenceIssue("artifact_not_committed", "/conclusion/artifact_receipt", body.Conclusion.Artifact, nil))
 		}
 		commit, err := s.writer.ReadContent(*u.Commit)
 		if err != nil {
-			return stateReply{}, err
+			return s.rejectConclusion(q, referenceIssue("evidence_unavailable", "/conclusion/artifact_receipt", body.Conclusion.Artifact, err))
 		}
 		if err = s.target().Protocol().ValidateCompletion(contracts.CompletionInput{Conclusion: content, Binding: s.conclusionBinding(), ArtifactCommitResponse: commit, RecordRequest: request, RecordResponse: response, StopRequest: raw}); err != nil {
-			return stateDenied("CONCLUSION_INVALID"), nil
-		}
-		c, _ := s.target().Protocol().ValidateConclusion(content)
-		if err = s.checkReferences(c, "", false); err != nil {
-			return s.referenceError(err, "CONCLUSION_INVALID")
+			return s.rejectConclusion(q, referenceIssue("completion_chain_invalid", "/conclusion", body.Conclusion.Record, nil))
 		}
 	}
 	reply := stateReply{Result: map[string]any{"status": "accepted", "stop_receipt": "stop-" + termination.NewRequestID(), "execution_admission": "closed", "conclusion_state": body.Conclusion.State, "exit_required": true, "exit_within_ms": 5000, "finalization_status": "pending"}}
@@ -358,4 +368,20 @@ func (s *Service) acceptStop(q stateRequest, raw []byte) (stateReply, error) {
 		return stateReply{}, err
 	}
 	return reply, nil
+}
+
+// Only request-relative paths change at stop; paths inside the artifact do not.
+func stopConclusionIssue(err error) error {
+	var issue *contracts.ConclusionError
+	if !errors.As(err, &issue) {
+		return err
+	}
+	copy := *issue
+	switch copy.FieldPath {
+	case "/record/artifact_receipt":
+		copy.FieldPath = "/conclusion/artifact_receipt"
+	case "/record/finish_reason":
+		copy.FieldPath = "/finish_reason"
+	}
+	return &copy
 }
