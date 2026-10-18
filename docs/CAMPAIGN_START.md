@@ -151,14 +151,21 @@ openai-chat returned HTTP 401 (invalid_api_key): The provider returned an unsucc
 Operation: model-generate-0000000000000001
 Model: test-model
 Provider request ID: req_0123456789abcdef0123456789abcdef
+Provider message: "The supplied API key was rejected: [REDACTED]"
+Provider type: "invalid_request_error"
+Provider code: "invalid_api_key"
+Provider parameter omission: not_provided
 Execution will not resume.
 ```
 
 This is an example, not a diagnosis of an older failure. A TLS/connection failure
 without a response has no HTTP status; a response that fails contract validation
-can have HTTP 200 and category `response_validation`. Provider messages are never
-copied verbatim because they can echo credentials or prompts. Unknown codes and
-unrecognized request-ID formats are omitted. See the
+can have HTTP 200 and category `response_validation`. HTTP rejections retain the
+provider message, type, code and offending parameter, after credential redaction
+and size limits. Missing, unsupported or shortened fields have explicit `omissions`
+reasons. For example, a 400 can retain `provider_parameter: "temperature"` and the
+provider's explanation of the unsupported setting; it is not inferred from status.
+Only selected fields are retained, never the full error body. See the
 [selected diagnostic fields](MODEL_SERVICE.md#model-failure-diagnostics).
 
 Use separate commands after the failed foreground start (or supervised worker):
@@ -176,6 +183,15 @@ Inspection/status expose `model_diagnostic` from the journal, and
 The immediate start receipt has the same completion diagnostic. Reports expose
 `model_failures`; exported model events retain the selected facts and timing.
 A resolved credential event proves secret retrieval, not provider acceptance.
+
+For `invalid_function_parameters` naming `attempt_execute` or `record_append`,
+confirm both Operator and the Harness image use the corrected shared contract
+package with OpenAI object declarations. The older declarations use root `allOf`
+and `oneOf`, which OpenAI rejects even with `strict: false`. Rebuild the Harness
+image with the matching package; changing only Operator or deleting constraints
+from a saved request does not update the installed Harness. Keep runtime argument
+validation and all package/declaration identity checks enabled. See the
+[schema verification record](qualification/openai-tools-2026-10-18/README.md).
 An unknown call retains its budget reservation, not confirmed consumption.
 Older records without diagnostics remain readable; facts that were never saved
 cannot be recovered by regenerating a report. Do not rerun a failed campaign to
@@ -193,7 +209,7 @@ OPERATOR_HARNESS_INTEGRATION=1 go test ./internal/preparation -run TestPythonPro
 The last test launches the production Python Harness on real FIFO/spool channels,
 contacts a local TLS provider fixture, verifies one call and terminal cleanup, then
 runs independent Operator CLI inspection/status/report/export processes against
-the retained campaign. It covers both HTTP rejection and HTTP 200 with invalid
+the retained campaign. It covers both HTTP 400 with retained, redacted provider details and HTTP 200 with invalid
 contract content, with synthetic secret checks. Docker and Interceptor are test
 peers, so this is not native-container or live-provider qualification.
 

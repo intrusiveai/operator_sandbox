@@ -35,7 +35,7 @@ type Client struct {
 	profile      Settings
 	resolver     Resolver
 	http         *http.Client
-	sign         func(context.Context, *http.Request, []byte) error
+	sign         func(context.Context, *http.Request, []byte) ([]string, error)
 	bearer       func(context.Context) (string, error)
 	googleBearer func(context.Context) (token, quota string, err error)
 }
@@ -216,8 +216,10 @@ func (c *Client) GenerateWithMetadata(ctx context.Context, raw []byte) (body []b
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Accept-Encoding", "identity")
+	var signedSecrets []string
 	if c.sign != nil {
-		if err := c.sign(ctx, req, raw); err != nil {
+		signedSecrets, err = c.sign(ctx, req, raw)
+		if err != nil {
 			return nil, observed, ErrProvider
 		}
 	} else if token != "" {
@@ -235,10 +237,11 @@ func (c *Client) GenerateWithMetadata(ctx context.Context, raw []byte) (body []b
 		return nil, observed, err
 	}
 	defer response.Body.Close()
-	observed = responseMetadata(c.profile.Provider, c.profile.Model, response, token)
+	secrets := diagnosticSecrets(req, token, signedSecrets)
+	observed = responseMetadata(c.profile.Provider, c.profile.Model, response, secrets)
 	if response.StatusCode != http.StatusOK {
 		category, reason = "http_rejection", "http_rejected"
-		observed.ProviderCode = errorCode(response, c.profile.MaximumResponseBytes, token)
+		observed.readErrorDetails(response, c.profile.MaximumResponseBytes, secrets)
 		// The observed rejection remains primary even if reading its optional error
 		// body times out or fails. Do not recategorize it as a no-response failure.
 		observed = observed.WithFailure(category, reason)
@@ -329,14 +332,16 @@ func (c *Client) checkNative(m map[string]any) error {
 
 // AWS signing uses the SDK workload credential chain and signer, while the HTTP
 // transport preserves exact native bytes and performs no SDK generation retries.
-func awsSign(provider aws.CredentialsProvider, region string) func(context.Context, *http.Request, []byte) error {
+func awsSign(provider aws.CredentialsProvider, region string) func(context.Context, *http.Request, []byte) ([]string, error) {
 	signer := v4.NewSigner()
-	return func(ctx context.Context, request *http.Request, raw []byte) error {
+	return func(ctx context.Context, request *http.Request, raw []byte) ([]string, error) {
 		identity, err := provider.Retrieve(ctx)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		sum := sha256.Sum256(raw)
-		return signer.SignHTTP(ctx, identity, request, hex.EncodeToString(sum[:]), "bedrock", region, time.Now())
+		err = signer.SignHTTP(ctx, identity, request, hex.EncodeToString(sum[:]), "bedrock", region, time.Now())
+		_, signature, _ := strings.Cut(request.Header.Get("Authorization"), "Signature=")
+		return []string{identity.AccessKeyID, identity.SecretAccessKey, identity.SessionToken, signature}, err
 	}
 }

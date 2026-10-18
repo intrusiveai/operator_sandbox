@@ -16,6 +16,40 @@ to the installed schema, never to model output. All five native projections MUST
 preserve the same names, descriptions and argument semantics. JSON Schema references
 MUST be resolved from the installed catalog before declarations reach a provider.
 
+### OpenAI object declarations
+
+Both OpenAI codecs MUST emit `type: object` parameters with no root `oneOf`,
+`anyOf`, `allOf`, `enum`, `const` or `not`, including with `strict: false`.
+The generated catalog's `x-operator-openai-parameters` annotation supplies the
+reviewed provider declaration for `attempt_execute` and `record_append`; both
+language implementations MUST use it for Chat Completions and Responses. Azure
+OpenAI and compatible routes using those codecs receive the same declarations.
+Other codecs MUST retain their existing projections.
+
+`attempt_execute` MUST retain its closed properties, required fields and nested
+constraints. Its description MUST state the cross-field rules enforced at runtime:
+scenario origin requires a scenario ID and exploratory origin forbids one;
+parented generations are at least two and unparented generations equal one;
+carrier input requires a carrier; setup actions require a canonical JSON payload.
+
+`record_append` MUST declare a closed object with required `record_kind` and
+`record` properties. `record_kind` MUST enumerate the four supported kinds;
+`record.anyOf` MUST contain their complete body schemas, with each body labeled
+with its kind. The description MUST require the kind and body to match.
+
+Provider declarations are generation guidance and MAY accept a broader set of
+cross-field combinations. The original `properties.arguments` schema MUST remain
+the authoritative runtime validator, including the complete attempt `allOf` and
+record `oneOf`. `ValidateToolArguments` / `validate_tool_arguments` MUST NOT validate
+against the broader provider annotation. A mismatched record MUST be rejected
+before its handler; an invalid attempt MUST be rejected before artifact lookup or
+target contact, after allocating its nonrefundable submission index. Tool names,
+argument shape and wire operations MUST remain unchanged.
+
+Publication MUST rebuild Operator and Attack Harness against the same revised
+contract package. Existing images with the older embedded Python projection MUST
+be rebuilt; neither compatibility pins nor declaration-digest checks may be bypassed.
+
 The runtime MUST dispatch through a fixed handler map and independently check the
 advertised set, live campaign binding, quotas and validated arguments. A declaration
 or a valid argument object MUST NOT create execution authority. Raw model relay,
@@ -64,3 +98,7 @@ arguments. Every native projection MUST pass the corresponding full model reques
 validator. Tests MUST verify returned data cannot mutate the installed catalog.
 These tests qualify local contract agreement; provider/runtime qualification MUST
 still exercise actual startup and model-tool execution.
+Fixtures MUST distinguish provider-schema acceptance from authoritative runtime
+acceptance for cross-field cases. Integration tests MUST exercise invalid calls
+followed by valid calls through the real Harness dispatcher and confirm that only
+valid calls have effects and rejected attempt indexes are not reused.

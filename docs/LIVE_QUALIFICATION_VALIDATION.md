@@ -1,5 +1,11 @@
 # Live-qualification tooling validation
 
+**OpenAI tool-schema verification (2026-10-18 UTC):** GPT-5-mini accepted the full
+corrected tool catalog on Chat Completions and Responses. Each route returned
+valid `attempt_execute` and `record_append` arguments in separate forced-tool
+calls. See the [bounded schema verification](qualification/openai-tools-2026-10-18/README.md).
+This verifies schema acceptance and argument generation, not a live target campaign.
+
 **Current live results (2026-09-30):** Azure OpenAI Chat and Responses each passed
 with Azure CLI identity and with a Key Vault API key; Gemini Developer API passed
 with a Google Secret Manager key. Azure required the shared Go/Python contract

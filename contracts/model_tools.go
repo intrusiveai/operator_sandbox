@@ -42,6 +42,11 @@ func (p *Protocol) ModelTools(codec string, operations []string) ([]byte, error)
 		properties := branch["properties"].(map[string]any)
 		name := properties["name"].(map[string]any)["const"]
 		parameters := properties["arguments"]
+		if codec == "openai-chat-text-tools-v1" || codec == responsesCodec {
+			if projected, ok := branch["x-operator-openai-parameters"]; ok {
+				parameters = projected
+			}
+		}
 		description := branch["description"]
 		switch codec {
 		case "openai-chat-text-tools-v1":

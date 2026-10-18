@@ -45,7 +45,7 @@ func TestDiagnosticHTTPRejections(t *testing.T) {
 					w.Header().Set("Content-Type", "application/json")
 					w.Header().Set("X-Request-Id", diagnosticRequestID)
 					w.Header().Set("Authorization", "Bearer synthetic-header-secret")
-					body := `{"error":{"code":"invalid_api_key","message":"synthetic-test-key synthetic-body-secret"}}`
+					body := `{"error":{"code":"invalid_api_key","message":"synthetic-test-key api_key=synthetic-body-secret"}}`
 					switch shape {
 					case "html":
 						w.Header().Set("Content-Type", "text/html")
@@ -57,7 +57,7 @@ func TestDiagnosticHTTPRejections(t *testing.T) {
 					case "interrupted":
 						w.Header().Set("Content-Length", "900")
 					case "private-code":
-						body = `{"error":{"code":"synthetic-body-secret"}}`
+						body = `{"error":{"code":"synthetic-test-key"}}`
 					case "private-header":
 						w.Header().Set("X-Request-Id", "synthetic-test-key")
 					case "duplicate":

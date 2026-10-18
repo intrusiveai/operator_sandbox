@@ -65,6 +65,9 @@ func printWorkerFailure(w io.Writer, code string, d *hostrun.PreparationDiagnost
 			if d.Model.RequestID != "" {
 				fmt.Fprintln(w, "Provider request ID:", d.Model.RequestID)
 			}
+			if details := d.Model.ProviderDetailsText(); details != "" {
+				fmt.Fprintln(w, details)
+			}
 		}
 		if d.CleanupFailed {
 			fmt.Fprintf(w, "Secondary failure: %s cleanup did not finish successfully; inspect retained campaign state.\n", phase)

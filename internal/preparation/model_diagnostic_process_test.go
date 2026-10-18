@@ -46,7 +46,7 @@ func TestPythonProcessModelDiagnosticInspectionAndExport(t *testing.T) {
 		t.Fatal(e, string(out))
 	}
 	for _, transport := range []string{"fifo", "spool"} {
-		for _, status := range []int{401, 200} {
+		for _, status := range []int{400, 200} {
 			t.Run(fmt.Sprintf("%s/%d", transport, status), func(t *testing.T) {
 				var calls atomic.Int32
 				server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -54,9 +54,12 @@ func TestPythonProcessModelDiagnosticInspectionAndExport(t *testing.T) {
 					_, _ = io.Copy(io.Discard, r.Body)
 					w.Header().Set("Content-Type", "application/json")
 					w.Header().Set("X-Request-Id", "req_0123456789abcdef0123456789abcdef")
+					if transport == "spool" && status == 400 {
+						w.Header().Set("X-Request-Id", "unsupported-request-id-format")
+					}
 					w.Header().Set("X-Private", "synthetic-private-header")
 					w.WriteHeader(status)
-					fmt.Fprint(w, `{"error":{"code":"invalid_api_key","message":"synthetic-provider-key synthetic-private-body"}}`)
+					fmt.Fprint(w, `{"error":{"code":"unsupported_parameter","type":"invalid_request_error","param":"temperature","message":"Parameter temperature is unsupported; api_key=synthetic-provider-key","debug":"synthetic-private-body"}}`)
 				}))
 				defer server.Close()
 				p, e := modelprovider.Parse(encode(map[string]any{
@@ -77,8 +80,15 @@ func TestPythonProcessModelDiagnosticInspectionAndExport(t *testing.T) {
 				r := newProcessRun(t, processCase{transport: transport, prompt: "default", modelProvider: client})
 				r.failed(t)
 				d := r.service.ModelFailure()
-				if d == nil || d.HTTPStatus != status || d.Provider != "openai-chat" || d.OperationID != "model-generate-0000000000000001" || d.RequestID == "" || calls.Load() != 1 {
+				if d == nil || d.HTTPStatus != status || d.Provider != "openai-chat" || d.OperationID != "model-generate-0000000000000001" || calls.Load() != 1 {
 					t.Fatalf("diagnostic=%+v calls=%d", d, calls.Load())
+				}
+				if transport == "spool" && status == 400 {
+					if d.RequestID != "" || d.Omissions.RequestID != "unrecognized_format" {
+						t.Fatal("missing omission reason", d)
+					}
+				} else if d.RequestID == "" {
+					t.Fatal("request ID missing", d)
 				}
 				category := "http_rejection"
 				if status == 200 {
@@ -86,6 +96,9 @@ func TestPythonProcessModelDiagnosticInspectionAndExport(t *testing.T) {
 				}
 				if d.Category != category {
 					t.Fatal(d)
+				}
+				if status == 400 && (d.ProviderMessage != "Parameter temperature is unsupported; api_key=[REDACTED]" || d.ProviderType != "invalid_request_error" || d.ProviderParameter != "temperature" || d.ProviderCode != "unsupported_parameter") {
+					t.Fatalf("provider detail lost: %+v", d)
 				}
 				r.native.mu.Lock()
 				closed := r.native.closed

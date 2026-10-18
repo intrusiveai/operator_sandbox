@@ -14,6 +14,8 @@ def model_tools(protocol,codec,operations):
     for branch in document['oneOf']:
         if not all(op in operations for op in branch['x-operator-required-operations']):continue
         name=branch['properties']['name']['const'];parameters=deepcopy(branch['properties']['arguments']);description=branch['description']
+        if codec in ('openai-chat-text-tools-v1','openai-responses-text-tools-v1'):
+            parameters=deepcopy(branch.get('x-operator-openai-parameters',parameters))
         if codec=='openai-chat-text-tools-v1':tools.append(dict(type='function',function=dict(name=name,description=description,parameters=parameters,strict=False)))
         elif codec=='openai-responses-text-tools-v1':tools.append(dict(type='function',name=name,description=description,parameters=parameters,strict=False))
         elif codec=='anthropic-messages-text-tools-v1':tools.append(dict(name=name,description=description,input_schema=parameters))

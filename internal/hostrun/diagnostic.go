@@ -26,8 +26,9 @@ import (
 )
 
 // PreparationDiagnostic retains its historical name and also carries optional
-// model execution details. It contains only host-selected stage names and allowlisted
-// descriptions. Never populate it from an error string, URL or response body.
+// model execution details. Stage/Message are host-selected summaries; Model can
+// include bounded provider fields sanitized by modelprovider. Never populate this
+// object directly from an unrestricted error string, URL or response body.
 // It belongs to the host start record, not the shared host/harness contract.
 type PreparationDiagnostic struct {
 	Stage         string                   `json:"stage"`
