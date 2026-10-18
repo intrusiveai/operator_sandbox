@@ -26,20 +26,25 @@ import (
 )
 
 // PreparationDiagnostic retains its historical name and also carries optional
-// model execution details. Stage/Message are host-selected summaries; Model can
+// model execution or conclusion rejection details. Stage/Message are host-selected
+// summaries; Conclusion contains sanitized host validation facts and Model can
 // include bounded provider fields sanitized by modelprovider. Never populate this
 // object directly from an unrestricted error string, URL or response body.
 // It belongs to the host start record, not the shared host/harness contract.
 type PreparationDiagnostic struct {
-	Stage         string                   `json:"stage"`
-	Message       string                   `json:"message"`
-	CleanupFailed bool                     `json:"cleanup_failed,omitempty"`
-	Model         modelprovider.Diagnostic `json:"model,omitempty,omitzero"`
+	Conclusion    campaign.ConclusionDiagnostic `json:"conclusion,omitempty,omitzero"`
+	Stage         string                        `json:"stage"`
+	Message       string                        `json:"message"`
+	CleanupFailed bool                          `json:"cleanup_failed,omitempty"`
+	Model         modelprovider.Diagnostic      `json:"model,omitempty,omitzero"`
 }
 
 func (d *PreparationDiagnostic) Valid() bool {
 	if d == nil {
 		return true
+	}
+	if d.Conclusion != (campaign.ConclusionDiagnostic{}) && !d.Conclusion.Valid() {
+		return false
 	}
 	if d.Model != (modelprovider.Diagnostic{}) && !d.Model.Valid() {
 		return false

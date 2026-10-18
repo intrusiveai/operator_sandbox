@@ -268,3 +268,50 @@ kickstart, real fixed-worker execution, durable pre-Docker preparation failure,
 and removal of its temporary service. This does not qualify live systemd, Docker,
 Python confinement or full campaign execution. The
 [host profile gate](../HOST_RUNTIME_PROFILES.md) still applies.
+
+## Conclusion rejection after successful execution
+
+A model call and target invocation can succeed while conclusion validation fails.
+Operator now preserves the actual failing rule, rather than reporting only
+`execution_failed`. A conclusion may introduce its own hypotheses; earlier
+`hypothesis` records are optional history.
+
+For an actually unresolved parent, foreground and supervised workers report:
+
+```text
+Campaign execution failed during conclusion validation (references) (execution_failed):
+Conclusion validation failed: The hypothesis reference is absent from both this conclusion and this campaign's hypothesis records. Field: /hypotheses/0/provenance/parent_hypothesis_id. Reference: "hyp-missing".
+Validation rule: unresolved_hypothesis
+Operation: conclusion-record-0000000000000005
+Execution will not resume.
+```
+
+Inspect the saved evidence in a separate invocation; do not replay the campaign:
+
+```sh
+operatorctl inspect --state-root /path/to/state --campaign <campaign-id>
+operatorctl campaign status --state-root /path/to/state --campaign <campaign-id>
+operatorctl report --state-root /path/to/state --campaign <campaign-id>
+operatorctl export --state-root /path/to/state --campaign <campaign-id> --output /new/export-directory
+```
+
+Inspection/status expose `conclusion_diagnostic`. With a linked submitted run,
+`operatorctl inspect --run /path/to/run` also exposes
+`start.completion.diagnostic.conclusion`. Reports include
+`conclusion_rejections` in the result manifest, a readable section in the report,
+and diagnostics in exported event metadata. Journal event `conclusion.rejected`
+and terminal/start receipts retain the operation, stage, rule, JSON Pointer path,
+and bounded identifier. Identifiers or paths that cannot safely be exposed have
+explicit omission reasons. No unrestricted artifact text is copied into diagnostics.
+
+Every rejection remains history; an accepted corrected submission can still finish
+normally. If execution subsequently fails, its first conclusion rejection survives
+generic shutdown/finalization errors. Older campaigns without diagnostic fields
+remain readable, but missing validation details cannot be reconstructed.
+
+Local verification: `TestPythonProcessConclusionAndSeparateInspection` runs the
+production Python entrypoint over both FIFO and spool against controlled peers,
+then starts separate CLI inspection/report/export processes. The retained
+`aws-openai-gpt5-mini-008` conclusion was also validated through the complete
+artifact/record/stop sequence after rebinding test identities and evidence handles;
+the committed fixture contains sanitized content. No paid campaign is replayed.

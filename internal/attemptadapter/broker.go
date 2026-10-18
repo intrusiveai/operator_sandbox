@@ -53,10 +53,11 @@ type wireRequest struct {
 	Body      json.RawMessage `json:"body"`
 }
 type Fault struct {
-	Code        string `json:"code"`
-	Message     string `json:"message"`
-	Effect      string `json:"effect_state"`
-	Disposition string `json:"disposition"`
+	InstancePath string `json:"instance_path,omitempty"`
+	Code         string `json:"code"`
+	Message      string `json:"message"`
+	Effect       string `json:"effect_state"`
+	Disposition  string `json:"disposition"`
 }
 type reply struct {
 	Result json.RawMessage `json:"result,omitempty"`
@@ -64,10 +65,10 @@ type reply struct {
 }
 
 func denied(code string) reply {
-	return reply{Error: &Fault{code, "The operation was not admitted.", "none", "correct-and-resubmit"}}
+	return reply{Error: &Fault{Code: code, Message: "The operation was not admitted.", Effect: "none", Disposition: "correct-and-resubmit"}}
 }
 func terminal(code, effect string) reply {
-	return reply{Error: &Fault{code, "Campaign execution is closed.", effect, "terminate"}}
+	return reply{Error: &Fault{Code: code, Message: "Campaign execution is closed.", Effect: effect, Disposition: "terminate"}}
 }
 func NewBroker(c BrokerConfig) (*Broker, error) {
 	if c.Catalog == nil || c.Protocol == nil || c.Writer == nil || c.Attempts == nil || !c.Attempts.BelongsTo(c.Writer) || c.Admitted == nil || c.Prepare == nil || c.Cleanup == nil || c.ReadKinds == nil || !c.Deadline.After(time.Now()) {

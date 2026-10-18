@@ -699,6 +699,14 @@ previously committed records; overflow is explicit partial coverage, not silent
 loss. Validate known references/ranges and campaign membership, not 'truth' of
 model interpretations. No guest claim changes host execution/evidence status.
 
+Conclusion-local hypotheses MUST be admitted without prior hypothesis records.
+Definitions apply throughout the conclusion independent of array order; nonlocal
+references must resolve in campaign history. Duplicate IDs, self-parenting and
+parent cycles remain invalid. Record and stop validation use the same rules.
+The host MUST preserve actionable rejection facts as specified in
+[assessment rejection diagnostics](ASSESSMENT_CONTRACT.md#rejection-diagnostics),
+using the existing wire error message and instance path.
+
 Publish the conclusion through existing artifact operations, then append a
 `conclusion` record containing its committed artifact receipt and finish reason.
 The host verifies the conclusion and returns a record receipt before normal stop.

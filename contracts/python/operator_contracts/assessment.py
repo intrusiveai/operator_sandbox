@@ -60,6 +60,16 @@ def validate_conclusion(protocol, raw: bytes):
         _require(set(claim["uncertainty_refs"]) <= gaps)
     for hypothesis in conclusion["hypotheses"]:
         _hypothesis(hypothesis)
+    # Local definitions are available regardless of array order. Unknown parents
+    # can name historical hypotheses; only the host can resolve those records.
+    parents = {h['hypothesis_id']: h['provenance'].get('parent_hypothesis_id')
+               for h in conclusion['hypotheses']}
+    for identifier in parents:
+        seen = set()
+        while identifier is not None:
+            _require(identifier not in seen)
+            seen.add(identifier)
+            identifier = parents.get(identifier)
     return conclusion
 
 

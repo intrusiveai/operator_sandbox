@@ -46,36 +46,37 @@ type Attempt struct {
 	Feedback      *feedback.Manifest `json:"feedback,omitempty"`
 }
 type Result struct {
-	ModelFailures         []modelprovider.Diagnostic   `json:"model_failures,omitempty"`
-	APIVersion            string                       `json:"api_version"`
-	CampaignID            string                       `json:"campaign_id"`
-	ManifestDigest        string                       `json:"run_manifest_digest"`
-	ExecutionBundleDigest string                       `json:"execution_bundle_digest"`
-	EvidenceSetDigest     string                       `json:"target_evidence_set_digest"`
-	JournalIntact         bool                         `json:"journal_intact"`
-	VerifiedEvents        int64                        `json:"verified_events"`
-	Execution             string                       `json:"execution_state"`
-	ContainerCleanup      string                       `json:"container_cleanup"`
-	TargetClosure         string                       `json:"target_closure"`
-	InjectionCleanup      string                       `json:"injection_cleanup"`
-	TargetStop            string                       `json:"target_stop"`
-	TargetAdapter         string                       `json:"target_adapter"`
-	NativeProfile         string                       `json:"native_feedback_profile"`
-	Assurance             string                       `json:"evidence_assurance"`
-	Attempts              []Attempt                    `json:"attempts"`
-	UntestedScenarios     []string                     `json:"untested_scenarios"`
-	UntestedObjectives    []string                     `json:"untested_objectives"`
-	Coverage              string                       `json:"coverage_state"`
-	Usage                 map[string]int64             `json:"cumulative_usage"`
-	HarnessClaims         int64                        `json:"harness_claim_records"`
-	OracleVerdict         string                       `json:"oracle_verdict"`
-	Gaps                  []string                     `json:"gaps"`
-	UnknownOperations     []string                     `json:"unknown_operations"`
-	Termination           *campaign.TerminationOutcome `json:"termination,omitempty"`
-	RecoveryDigest        string                       `json:"cleanup_audit_digest,omitempty"`
-	TerminationDigest     string                       `json:"termination_record_digest,omitempty"`
-	UntestedOperations    []string                     `json:"untested_operation_ids"`
-	Routes                []RouteCoverage              `json:"injection_routes"`
+	ConclusionRejections  []campaign.ConclusionDiagnostic `json:"conclusion_rejections,omitempty"`
+	ModelFailures         []modelprovider.Diagnostic      `json:"model_failures,omitempty"`
+	APIVersion            string                          `json:"api_version"`
+	CampaignID            string                          `json:"campaign_id"`
+	ManifestDigest        string                          `json:"run_manifest_digest"`
+	ExecutionBundleDigest string                          `json:"execution_bundle_digest"`
+	EvidenceSetDigest     string                          `json:"target_evidence_set_digest"`
+	JournalIntact         bool                            `json:"journal_intact"`
+	VerifiedEvents        int64                           `json:"verified_events"`
+	Execution             string                          `json:"execution_state"`
+	ContainerCleanup      string                          `json:"container_cleanup"`
+	TargetClosure         string                          `json:"target_closure"`
+	InjectionCleanup      string                          `json:"injection_cleanup"`
+	TargetStop            string                          `json:"target_stop"`
+	TargetAdapter         string                          `json:"target_adapter"`
+	NativeProfile         string                          `json:"native_feedback_profile"`
+	Assurance             string                          `json:"evidence_assurance"`
+	Attempts              []Attempt                       `json:"attempts"`
+	UntestedScenarios     []string                        `json:"untested_scenarios"`
+	UntestedObjectives    []string                        `json:"untested_objectives"`
+	Coverage              string                          `json:"coverage_state"`
+	Usage                 map[string]int64                `json:"cumulative_usage"`
+	HarnessClaims         int64                           `json:"harness_claim_records"`
+	OracleVerdict         string                          `json:"oracle_verdict"`
+	Gaps                  []string                        `json:"gaps"`
+	UnknownOperations     []string                        `json:"unknown_operations"`
+	Termination           *campaign.TerminationOutcome    `json:"termination,omitempty"`
+	RecoveryDigest        string                          `json:"cleanup_audit_digest,omitempty"`
+	TerminationDigest     string                          `json:"termination_record_digest,omitempty"`
+	UntestedOperations    []string                        `json:"untested_operation_ids"`
+	Routes                []RouteCoverage                 `json:"injection_routes"`
 }
 type sourceContent struct {
 	Role       string `json:"role"`
@@ -195,6 +196,12 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 		for _, key := range []string{"operation_id", "attempt_index_high_watermark", "attempt_admissions", "snapshot_admissions", "snapshot_bytes", "model_turns", "model_tokens", "actual_tokens", "finish_reason", "conclusion_state", "assertion_origin", "record_kind", "receipt_id", "part_index", "parts", "digest", "size_bytes"} {
 			if value, ok := metadata[key]; ok {
 				keep[key] = value
+			}
+		}
+		if event.Kind == "conclusion.rejected" || (event.Kind == "launch.terminal" && len(result.ConclusionRejections) == 0) {
+			if d := campaign.DecodeConclusionDiagnostic(metadata["diagnostic"]); d != nil {
+				keep["diagnostic"], _ = json.Marshal(d)
+				result.ConclusionRejections = append(result.ConclusionRejections, *d)
 			}
 		}
 		if event.Kind == "model.intent" || event.Kind == "model.exchange" || event.Kind == "model.usage" {
@@ -355,12 +362,18 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 			}
 			if event.Kind == "service.terminal-result" && desc.Role == "response" {
 				var r struct {
-					Closure string `json:"closure"`
-					Cleanup string `json:"cleanup_state"`
-					Stop    string `json:"target_stop"`
+					Diagnostic json.RawMessage `json:"conclusion_diagnostic"`
+					Closure    string          `json:"closure"`
+					Cleanup    string          `json:"cleanup_state"`
+					Stop       string          `json:"target_stop"`
 				}
 				if json.Unmarshal(raw, &r) == nil {
 					result.TargetClosure, result.InjectionCleanup, result.TargetStop = r.Closure, r.Cleanup, r.Stop
+					if len(result.ConclusionRejections) == 0 {
+						if d := campaign.DecodeConclusionDiagnostic(r.Diagnostic); d != nil {
+							result.ConclusionRejections = append(result.ConclusionRejections, *d)
+						}
+					}
 				}
 			}
 			if event.Kind == "launch.terminal" && desc.Role == "launch-result" {
@@ -613,6 +626,12 @@ func markdown(r Result, digest string) []byte {
 			}
 		}
 		b.WriteString("\nReserved tokens are an allowance held against the budget, not confirmed consumption. See cumulative_usage in result-manifest.json.\n")
+	}
+	if len(r.ConclusionRejections) > 0 {
+		b.WriteString("\n## Conclusion rejections\n\nRejected submissions remain history even if a corrected conclusion was later accepted.\n\n")
+		for _, d := range r.ConclusionRejections {
+			fmt.Fprintf(&b, "Operation %s; rule %s:\n\n    %s\n\n", d.OperationID, d.Reason, d.Message())
+		}
 	}
 	if len(r.Gaps) > 0 {
 		b.WriteString("\n## Evidence gaps\n\n")

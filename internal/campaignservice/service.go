@@ -53,45 +53,47 @@ type Config struct {
 	CheckHost func() error // Installed host lifetime gate; called before admission and every ordinary request.
 }
 type Service struct {
-	modelDiagnostic    atomic.Pointer[modelprovider.Diagnostic]
-	httpsParent        *attemptadapter.Parent
-	config             Config
-	writer             *campaign.Writer
-	attempts           *campaign.Attempts
-	broker             *attemptadapter.Broker
-	gate               chan struct{}
-	admitted           atomic.Bool
-	stopAccepted       atomic.Bool
-	serving            atomic.Bool
-	operations         map[string]bool
-	live               atomic.Pointer[preparation.Target]
-	restoring          atomic.Bool
-	transitionEpoch    atomic.Uint64
-	completion         completionState
-	model              modelState
-	artifacts          artifactStore
-	snapshotAdmissions int64
-	snapshotBytes      int64
-	lineage            nativeLineage
-	history            map[string]attemptadapter.Parent
-	checkpointLineage  map[string]nativeLineage
-	deadline           time.Time
-	timer              *time.Timer
-	killDone           chan struct{}
-	kill               termination.Receipt
-	shutdownOnce       sync.Once
-	terminalDone       chan struct{}
-	terminal           TerminalResult
-	evidenceTargets    []evidenceTarget
-	evidenceMu         sync.Mutex
+	modelDiagnostic      atomic.Pointer[modelprovider.Diagnostic]
+	conclusionDiagnostic atomic.Pointer[campaign.ConclusionDiagnostic]
+	httpsParent          *attemptadapter.Parent
+	config               Config
+	writer               *campaign.Writer
+	attempts             *campaign.Attempts
+	broker               *attemptadapter.Broker
+	gate                 chan struct{}
+	admitted             atomic.Bool
+	stopAccepted         atomic.Bool
+	serving              atomic.Bool
+	operations           map[string]bool
+	live                 atomic.Pointer[preparation.Target]
+	restoring            atomic.Bool
+	transitionEpoch      atomic.Uint64
+	completion           completionState
+	model                modelState
+	artifacts            artifactStore
+	snapshotAdmissions   int64
+	snapshotBytes        int64
+	lineage              nativeLineage
+	history              map[string]attemptadapter.Parent
+	checkpointLineage    map[string]nativeLineage
+	deadline             time.Time
+	timer                *time.Timer
+	killDone             chan struct{}
+	kill                 termination.Receipt
+	shutdownOnce         sync.Once
+	terminalDone         chan struct{}
+	terminal             TerminalResult
+	evidenceTargets      []evidenceTarget
+	evidenceMu           sync.Mutex
 }
 type TerminalResult struct {
-	Closure          string            `json:"closure"`
-	CleanupConfirmed int               `json:"cleanup_confirmed"`
-	CleanupRemaining int               `json:"cleanup_remaining"`
-	CleanupState     string            `json:"cleanup_state"`
-	TargetStop       string            `json:"target_stop"`
-	Evidence         []EvidenceOutcome `json:"evidence"`
+	ConclusionDiagnostic *campaign.ConclusionDiagnostic `json:"conclusion_diagnostic,omitempty"`
+	Closure              string                         `json:"closure"`
+	CleanupConfirmed     int                            `json:"cleanup_confirmed"`
+	CleanupRemaining     int                            `json:"cleanup_remaining"`
+	CleanupState         string                         `json:"cleanup_state"`
+	TargetStop           string                         `json:"target_stop"`
+	Evidence             []EvidenceOutcome              `json:"evidence"`
 }
 
 func New(ctx context.Context, c Config) (*Service, error) {

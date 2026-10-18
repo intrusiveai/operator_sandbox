@@ -1144,6 +1144,16 @@ it cannot become a new execution owner for the failed campaign.
 
 ### 10.2 Stop behavior
 
+Conclusion-local hypotheses MUST NOT require earlier hypothesis records. The host
+MUST resolve all local definitions before references, then consult campaign
+history for nonlocal references; duplicate IDs, self-parenting and cycles remain
+invalid. This resolution applies to both conclusion record and stop validation.
+The host MUST retain bounded conclusion rejection diagnostics in the journal,
+terminal and failed-start records and expose them through foreground/supervised
+output, inspection and report/export. Later generic failures MUST NOT replace the
+original cause; a corrected conclusion MAY still finish successfully. See the
+[assessment contract](schemas/ASSESSMENT_CONTRACT.md#rejection-diagnostics).
+
 Normal harness completion uses the accepted [conclusion and stop contract](schemas/SHARED_CONTRACT.md#10-structured-conclusion).
 The guest commits a bounded `operator.dev/engine-conclusion/v1alpha2` artifact,
 then a conclusion record, then `engine.request_stop` with matching finish reason

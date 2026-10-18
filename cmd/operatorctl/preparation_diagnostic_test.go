@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/contractstore"
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
 	"github.com/intrusiveai/operator_sandbox/internal/hostrun"
@@ -483,6 +484,30 @@ func TestModelFailureForegroundAndWorkerOutput(t *testing.T) {
 	printWorkerFailure(&worker, "execution_failed", d, "recorded")
 	if worker.String() != stderr {
 		t.Fatal("foreground/supervised mismatch", worker.String(), stderr)
+	}
+	t.Log(stderr)
+}
+
+func TestConclusionFailureForegroundAndWorkerOutput(t *testing.T) {
+	dir, paths, deps, _ := startFixture(t)
+	detail := campaign.NewConclusionDiagnostic("conclusion-record", &contracts.ConclusionError{Reason: "unresolved_hypothesis", FieldPath: "/hypotheses/0/provenance/parent_hypothesis_id", Identifier: "hyp-missing"})
+	d := &hostrun.PreparationDiagnostic{Stage: "conclusion validation (" + detail.Stage + ")", Message: detail.Message(), Conclusion: detail}
+	deps.run = func(context.Context, string, string, string) (workerjob.Result, error) {
+		return workerjob.Result{Code: "execution_failed", Diagnostic: d, CompletionRecording: "recorded"}, detail
+	}
+	code, _, stderr := invokeStart(t, context.Background(), "start", []string{"--run", dir}, paths, deps)
+	if code != 1 {
+		t.Fatal(code, stderr)
+	}
+	for _, want := range []string{"Campaign execution failed during conclusion validation (references) (execution_failed)", detail.Message(), "Operation: conclusion-record", "Validation rule: unresolved_hypothesis", "Execution will not resume."} {
+		if !strings.Contains(stderr, want) {
+			t.Fatalf("missing %q: %s", want, stderr)
+		}
+	}
+	var supervised bytes.Buffer
+	printWorkerFailure(&supervised, "execution_failed", d, "recorded")
+	if supervised.String() != stderr {
+		t.Fatal("foreground/supervised mismatch")
 	}
 	t.Log(stderr)
 }
