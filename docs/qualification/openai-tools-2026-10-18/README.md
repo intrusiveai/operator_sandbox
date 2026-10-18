@@ -58,10 +58,27 @@ OPERATOR_HARNESS_INTEGRATION=1 go test ./internal/preparation -run 'TestPythonPr
 
 ## Deployment and limits
 
+The release pin selects contract package `0.0.5`, digest
+`sha256:3b5690013ca4e0bb5f7e7c904b26df401f113ec61ef6158ad948db337ef13198`,
+from Operator source commit `1eaca1da7ad236353cb86d8799c93c679389ca4f`.
+`release/contract-lock.json` contains the full source tree and package metadata.
+
 Build Operator and Attack Harness with the same updated contract package and
 publish a new Harness image. Existing images contain the older Python generator;
 updating only the host does not replace that code. Preserve compatibility and
 declaration-digest checks, and start a new campaign after updating.
+
+For the Attack Harness maintainer:
+
+1. Make the pinned Operator source commit available on GitHub.
+2. Copy `source`, `package`, and `publisher` from Operator's
+   `release/contract-lock.json` into Attack Harness's `build/contract-lock.json`.
+   Preserve the Harness lock's own `api_version`.
+3. Use the existing image build workflow to materialize that exact package and
+   rebuild both platform images. No Harness dispatcher source change is required;
+   the corrected Python projection is shipped in the shared package.
+4. Select the rebuilt image and matching Operator candidate, then start a new
+   campaign. Do not resume the previously failed campaign or relax startup pins.
 
 These live calls validate direct OpenAI schema acceptance and argument generation.
 They do not qualify a Docker image, a complete live campaign, Azure/LiteLLM
