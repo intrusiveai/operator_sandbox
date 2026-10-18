@@ -4,6 +4,12 @@ The campaign service implements `engine.model_generate` with the shared
 `openai-chat-text-tools-v1` and `anthropic-messages-text-tools-v1` codecs. The launcher supplies a trusted `ModelConfig`;
 this service does not discover endpoints or resolve production credentials.
 
+The shared [model-tool catalog](../schemas/MODEL_TOOL_CATALOG.md#openai-object-declarations)
+provides OpenAI-compatible object declarations for Chat Completions and Responses,
+including compatible Azure/LiteLLM routes. Provider declarations guide generation;
+the complete runtime schemas still enforce cross-field attempt and record rules
+before dispatch. `strict: false` does not permit root schema combinators.
+
 - The configuration MUST bind a provider to the manifest's model-profile digest,
   an installed native tool projection and a qualified maximum input-token count.
   The provider MUST issue exactly one non-streaming request without retries,

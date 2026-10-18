@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/intrusiveai/operator_sandbox/schemas"
+	"github.com/santhosh-tekuri/jsonschema/v6"
 )
 
 func TestSharedModelTools(t *testing.T) {
@@ -58,7 +59,11 @@ func TestSharedModelTools(t *testing.T) {
 			for _, tool := range tools {
 				switch c.Codec {
 				case "openai-chat-text-tools-v1":
+					checkOpenAIParameters(t, tool["function"].(map[string]any)["parameters"])
 					names = append(names, tool["function"].(map[string]any)["name"].(string))
+				case responsesCodec:
+					checkOpenAIParameters(t, tool["parameters"])
+					names = append(names, tool["name"].(string))
 				case bedrockCodec:
 					names = append(names, tool["toolSpec"].(map[string]any)["name"].(string))
 				case geminiCodec:
@@ -114,5 +119,86 @@ func TestSharedModelTools(t *testing.T) {
 				t.Fatal("returned bytes mutated installed catalog")
 			}
 		})
+	}
+}
+
+func checkOpenAIParameters(t *testing.T, value any) {
+	t.Helper()
+	parameters := value.(map[string]any)
+	if parameters["type"] != "object" || parameters["properties"] == nil || parameters["additionalProperties"] != false {
+		t.Fatal("OpenAI parameters must declare a closed object")
+	}
+	for _, key := range []string{"oneOf", "anyOf", "allOf", "enum", "const", "not"} {
+		if _, exists := parameters[key]; exists {
+			t.Fatalf("OpenAI forbids root %s even with strict=false", key)
+		}
+	}
+}
+
+// Provider acceptance is not authorization: cross-field combinations accepted by
+// a declaration must still fail the authoritative runtime argument validator.
+func TestOpenAIProjectionAndRuntimeConstraints(t *testing.T) {
+	p, err := LoadProtocol(schemas.Files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile("../schemas/fixtures/model-tools.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var cases []struct {
+		Name, Mode, Tool string
+		Operations       []string
+		Arguments        json.RawMessage
+		Valid            bool
+		OpenAIValid      *bool `json:"openai_valid"`
+	}
+	if err := json.Unmarshal(raw, &cases); err != nil {
+		t.Fatal(err)
+	}
+	for _, codec := range []string{"openai-chat-text-tools-v1", responsesCodec} {
+		toolsRaw, err := p.ModelTools(codec, cases[0].Operations)
+		if err != nil {
+			t.Fatal(err)
+		}
+		value, err := Decode(toolsRaw, OrdinaryLimit)
+		if err != nil {
+			t.Fatal(err)
+		}
+		validators := map[string]*jsonschema.Schema{}
+		for _, value := range value.([]any) {
+			tool := value.(map[string]any)
+			if codec == "openai-chat-text-tools-v1" {
+				tool = tool["function"].(map[string]any)
+			}
+			compiler := jsonschema.NewCompiler()
+			compiler.DefaultDraft(jsonschema.Draft2020)
+			compiler.UseLoader(offlineLoader{})
+			if err := compiler.AddResource("urn:test:tool", tool["parameters"]); err != nil {
+				t.Fatal(err)
+			}
+			compiled, err := compiler.Compile("urn:test:tool")
+			if err != nil {
+				t.Fatal(err)
+			}
+			validators[tool["name"].(string)] = compiled
+		}
+		for _, c := range cases {
+			if c.OpenAIValid == nil {
+				continue
+			}
+			t.Run(codec+"/"+c.Name, func(t *testing.T) {
+				value, err := Decode(c.Arguments, OrdinaryLimit)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if got := validators[c.Tool].Validate(value) == nil; got != *c.OpenAIValid {
+					t.Fatalf("projection valid=%v want=%v", got, *c.OpenAIValid)
+				}
+				if _, err := p.ValidateToolArguments(c.Tool, c.Arguments); (err == nil) != c.Valid {
+					t.Fatalf("runtime valid=%v want=%v", err == nil, c.Valid)
+				}
+			})
+		}
 	}
 }

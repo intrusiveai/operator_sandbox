@@ -183,6 +183,15 @@ Inspection/status expose `model_diagnostic` from the journal, and
 The immediate start receipt has the same completion diagnostic. Reports expose
 `model_failures`; exported model events retain the selected facts and timing.
 A resolved credential event proves secret retrieval, not provider acceptance.
+
+For `invalid_function_parameters` naming `attempt_execute` or `record_append`,
+confirm both Operator and the Harness image use the corrected shared contract
+package with OpenAI object declarations. The older declarations use root `allOf`
+and `oneOf`, which OpenAI rejects even with `strict: false`. Rebuild the Harness
+image with the matching package; changing only Operator or deleting constraints
+from a saved request does not update the installed Harness. Keep runtime argument
+validation and all package/declaration identity checks enabled. See the
+[schema verification record](qualification/openai-tools-2026-10-18/README.md).
 An unknown call retains its budget reservation, not confirmed consumption.
 Older records without diagnostics remain readable; facts that were never saved
 cannot be recovered by regenerating a report. Do not rerun a failed campaign to

@@ -31,8 +31,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:5a8d5f692fa9a96a78daed8baf1a717c2ea6af9107ffce6f2a5ecef4e92189c6",
-    "size_bytes": 58512,
+    "digest": "sha256:ace7da1e99d0dc197dad729b479267c1c3674ef5b27a20900e3813f0a6a5631b",
+    "size_bytes": 58000,
     "valid": true
   },
   {
@@ -76,8 +76,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:561a41f69fbe8d6ddd4c249fe813d9ae4bbb99250f518b7c9145988e3fd64d55",
-    "size_bytes": 49398,
+    "digest": "sha256:3637027cfb579475268628f50437e724a06f234fa16714d51684116e12e4a8aa",
+    "size_bytes": 48886,
     "valid": true
   },
   {
@@ -112,8 +112,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:0cad80ed374ed6f0c1b3cfabf8da6700dc13c4272203c1abe4400e0f0a699594",
-    "size_bytes": 58369,
+    "digest": "sha256:6d43b72d94ae1c8c18c5fb3982ed8f499b55b604d02ae160c6992d08d11dd3e0",
+    "size_bytes": 57857,
     "valid": true
   },
   {
@@ -157,8 +157,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:1d9465b420ea052a733eeddcebaa65d5fcf2c08be54901353ddc71881b8307bf",
-    "size_bytes": 49281,
+    "digest": "sha256:1faa9a602993adb2a2921d2f538bec907d432bf3da7d0a336662829300a5afd5",
+    "size_bytes": 48769,
     "valid": true
   },
   {
@@ -632,6 +632,398 @@
     "valid": true
   },
   {
+    "name": "scenario requires id",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "scenario",
+      "thread_id": "thread-1",
+      "generation": 1,
+      "payload": {
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size_bytes": 2,
+        "media_type": "application/json",
+        "canonicalization": "raw"
+      },
+      "pre_actions": [],
+      "invocation": {
+        "operation_id": "invoke",
+        "input_source": "payload",
+        "media_type": "application/json"
+      },
+      "cleanup": {
+        "delete_actions_after_observation": true
+      }
+    },
+    "valid": false,
+    "openai_valid": true
+  },
+  {
+    "name": "scenario with id",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "scenario",
+      "thread_id": "thread-1",
+      "generation": 1,
+      "payload": {
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size_bytes": 2,
+        "media_type": "application/json",
+        "canonicalization": "raw"
+      },
+      "pre_actions": [],
+      "invocation": {
+        "operation_id": "invoke",
+        "input_source": "payload",
+        "media_type": "application/json"
+      },
+      "cleanup": {
+        "delete_actions_after_observation": true
+      },
+      "scenario_id": "scenario-1"
+    },
+    "valid": true,
+    "openai_valid": true
+  },
+  {
+    "name": "exploratory forbids scenario id",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "exploratory",
+      "thread_id": "thread-1",
+      "generation": 1,
+      "payload": {
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size_bytes": 2,
+        "media_type": "application/json",
+        "canonicalization": "raw"
+      },
+      "pre_actions": [],
+      "invocation": {
+        "operation_id": "invoke",
+        "input_source": "payload",
+        "media_type": "application/json"
+      },
+      "cleanup": {
+        "delete_actions_after_observation": true
+      },
+      "scenario_id": "scenario-1"
+    },
+    "valid": false,
+    "openai_valid": true
+  },
+  {
+    "name": "initial generation must be one",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "exploratory",
+      "thread_id": "thread-1",
+      "generation": 2,
+      "payload": {
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size_bytes": 2,
+        "media_type": "application/json",
+        "canonicalization": "raw"
+      },
+      "pre_actions": [],
+      "invocation": {
+        "operation_id": "invoke",
+        "input_source": "payload",
+        "media_type": "application/json"
+      },
+      "cleanup": {
+        "delete_actions_after_observation": true
+      }
+    },
+    "valid": false,
+    "openai_valid": true
+  },
+  {
+    "name": "parent requires generation at least two",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "exploratory",
+      "thread_id": "thread-1",
+      "generation": 1,
+      "payload": {
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size_bytes": 2,
+        "media_type": "application/json",
+        "canonicalization": "raw"
+      },
+      "pre_actions": [],
+      "invocation": {
+        "operation_id": "invoke",
+        "input_source": "payload",
+        "media_type": "application/json"
+      },
+      "cleanup": {
+        "delete_actions_after_observation": true
+      },
+      "parent_attempt_id": "attempt-parent"
+    },
+    "valid": false,
+    "openai_valid": true
+  },
+  {
+    "name": "valid child generation",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "exploratory",
+      "thread_id": "thread-1",
+      "generation": 2,
+      "payload": {
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size_bytes": 2,
+        "media_type": "application/json",
+        "canonicalization": "raw"
+      },
+      "pre_actions": [],
+      "invocation": {
+        "operation_id": "invoke",
+        "input_source": "payload",
+        "media_type": "application/json"
+      },
+      "cleanup": {
+        "delete_actions_after_observation": true
+      },
+      "parent_attempt_id": "attempt-parent"
+    },
+    "valid": true,
+    "openai_valid": true
+  },
+  {
+    "name": "carrier input requires carrier",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "exploratory",
+      "thread_id": "thread-1",
+      "generation": 1,
+      "payload": {
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size_bytes": 2,
+        "media_type": "application/json",
+        "canonicalization": "raw"
+      },
+      "pre_actions": [],
+      "invocation": {
+        "operation_id": "invoke",
+        "input_source": "carrier",
+        "media_type": "application/json"
+      },
+      "cleanup": {
+        "delete_actions_after_observation": true
+      }
+    },
+    "valid": false,
+    "openai_valid": true
+  },
+  {
+    "name": "carrier input with carrier",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "exploratory",
+      "thread_id": "thread-1",
+      "generation": 1,
+      "payload": {
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size_bytes": 2,
+        "media_type": "application/json",
+        "canonicalization": "raw"
+      },
+      "pre_actions": [],
+      "invocation": {
+        "operation_id": "invoke",
+        "input_source": "carrier",
+        "media_type": "application/json"
+      },
+      "cleanup": {
+        "delete_actions_after_observation": true
+      },
+      "carrier": {
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size_bytes": 2,
+        "media_type": "application/json",
+        "canonicalization": "raw"
+      }
+    },
+    "valid": true,
+    "openai_valid": true
+  },
+  {
+    "name": "setup requires canonical JSON",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "exploratory",
+      "thread_id": "thread-1",
+      "generation": 1,
+      "payload": {
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size_bytes": 2,
+        "media_type": "application/json",
+        "canonicalization": "raw"
+      },
+      "pre_actions": [
+        {
+          "action_id": "setup",
+          "action_type": "interceptor.injection/v1alpha1",
+          "parameters": {
+            "surface": "model_tool_result",
+            "mode": "simulation",
+            "scope": "once",
+            "selector": {
+              "tool_name": "search",
+              "call_ordinal": "first"
+            },
+            "placement": {
+              "operation": "replace",
+              "pointer": ""
+            },
+            "payload_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        }
+      ],
+      "invocation": {
+        "operation_id": "invoke",
+        "input_source": "payload",
+        "media_type": "application/json"
+      },
+      "cleanup": {
+        "delete_actions_after_observation": true
+      }
+    },
+    "valid": false,
+    "openai_valid": true
+  },
+  {
+    "name": "setup with canonical JSON",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "exploratory",
+      "thread_id": "thread-1",
+      "generation": 1,
+      "payload": {
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size_bytes": 2,
+        "media_type": "application/json",
+        "canonicalization": "jcs-v1"
+      },
+      "pre_actions": [
+        {
+          "action_id": "setup",
+          "action_type": "interceptor.injection/v1alpha1",
+          "parameters": {
+            "surface": "model_tool_result",
+            "mode": "simulation",
+            "scope": "once",
+            "selector": {
+              "tool_name": "search",
+              "call_ordinal": "first"
+            },
+            "placement": {
+              "operation": "replace",
+              "pointer": ""
+            },
+            "payload_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        }
+      ],
+      "invocation": {
+        "operation_id": "invoke",
+        "input_source": "payload",
+        "media_type": "application/json"
+      },
+      "cleanup": {
+        "delete_actions_after_observation": true
+      }
+    },
+    "valid": true,
+    "openai_valid": true
+  },
+  {
+    "name": "setup requires JSON media type",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "exploratory",
+      "thread_id": "thread-1",
+      "generation": 1,
+      "payload": {
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size_bytes": 2,
+        "media_type": "text/plain",
+        "canonicalization": "jcs-v1"
+      },
+      "pre_actions": [
+        {
+          "action_id": "setup",
+          "action_type": "interceptor.injection/v1alpha1",
+          "parameters": {
+            "surface": "model_tool_result",
+            "mode": "simulation",
+            "scope": "once",
+            "selector": {
+              "tool_name": "search",
+              "call_ordinal": "first"
+            },
+            "placement": {
+              "operation": "replace",
+              "pointer": ""
+            },
+            "payload_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        }
+      ],
+      "invocation": {
+        "operation_id": "invoke",
+        "input_source": "payload",
+        "media_type": "application/json"
+      },
+      "cleanup": {
+        "delete_actions_after_observation": true
+      }
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "unknown attempt field",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "exploratory",
+      "thread_id": "thread-1",
+      "generation": 1,
+      "payload": {
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size_bytes": 2,
+        "media_type": "application/json",
+        "canonicalization": "raw"
+      },
+      "pre_actions": [],
+      "invocation": {
+        "operation_id": "invoke",
+        "input_source": "payload",
+        "media_type": "application/json"
+      },
+      "cleanup": {
+        "delete_actions_after_observation": true
+      },
+      "unexpected": true
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
     "name": "reserved api_version",
     "mode": "arguments",
     "tool": "attempt_execute",
@@ -847,6 +1239,470 @@
       "checkpoint_id": "checkpoint-1"
     },
     "valid": true
+  },
+  {
+    "name": "record kind hypothesis",
+    "mode": "arguments",
+    "tool": "record_append",
+    "arguments": {
+      "record_kind": "hypothesis",
+      "record": {
+        "hypothesis_id": "hypothesis-1",
+        "objective_refs": [
+          "objective-1"
+        ],
+        "provenance": {
+          "origin": "exploratory"
+        },
+        "statement": "A target response may reveal the tested behavior.",
+        "assumptions": [
+          "A response is observable."
+        ],
+        "predicted_observations": [
+          "A marker in the response."
+        ],
+        "record_refs": []
+      }
+    },
+    "valid": true,
+    "openai_valid": true
+  },
+  {
+    "name": "record kind mismatch hypothesis",
+    "mode": "arguments",
+    "tool": "record_append",
+    "arguments": {
+      "record_kind": "progress",
+      "record": {
+        "hypothesis_id": "hypothesis-1",
+        "objective_refs": [
+          "objective-1"
+        ],
+        "provenance": {
+          "origin": "exploratory"
+        },
+        "statement": "A target response may reveal the tested behavior.",
+        "assumptions": [
+          "A response is observable."
+        ],
+        "predicted_observations": [
+          "A marker in the response."
+        ],
+        "record_refs": []
+      }
+    },
+    "valid": false,
+    "openai_valid": true
+  },
+  {
+    "name": "record missing required field hypothesis",
+    "mode": "arguments",
+    "tool": "record_append",
+    "arguments": {
+      "record_kind": "hypothesis",
+      "record": {
+        "objective_refs": [
+          "objective-1"
+        ],
+        "provenance": {
+          "origin": "exploratory"
+        },
+        "statement": "A target response may reveal the tested behavior.",
+        "assumptions": [
+          "A response is observable."
+        ],
+        "predicted_observations": [
+          "A marker in the response."
+        ],
+        "record_refs": []
+      }
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "record unknown field hypothesis",
+    "mode": "arguments",
+    "tool": "record_append",
+    "arguments": {
+      "record_kind": "hypothesis",
+      "record": {
+        "hypothesis_id": "hypothesis-1",
+        "objective_refs": [
+          "objective-1"
+        ],
+        "provenance": {
+          "origin": "exploratory"
+        },
+        "statement": "A target response may reveal the tested behavior.",
+        "assumptions": [
+          "A response is observable."
+        ],
+        "predicted_observations": [
+          "A marker in the response."
+        ],
+        "record_refs": [],
+        "unexpected": true
+      }
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "record kind progress",
+    "mode": "arguments",
+    "tool": "record_append",
+    "arguments": {
+      "record_kind": "progress",
+      "record": {
+        "summary": "The target returned a response.",
+        "decision": "Inspect the response before selecting another experiment.",
+        "objective_refs": [
+          "objective-1"
+        ],
+        "hypothesis_refs": [
+          "hypothesis-1"
+        ],
+        "attempt_receipt_refs": [
+          "attempt-receipt-1"
+        ],
+        "observation_refs": [
+          {
+            "attempt_receipt_id": "attempt-receipt-1",
+            "entry_id": "entry-1",
+            "range": {
+              "offset": 0,
+              "length": 4
+            }
+          }
+        ],
+        "record_refs": [
+          "hypothesis-record-1"
+        ]
+      }
+    },
+    "valid": true,
+    "openai_valid": true
+  },
+  {
+    "name": "record kind mismatch progress",
+    "mode": "arguments",
+    "tool": "record_append",
+    "arguments": {
+      "record_kind": "hypothesis",
+      "record": {
+        "summary": "The target returned a response.",
+        "decision": "Inspect the response before selecting another experiment.",
+        "objective_refs": [
+          "objective-1"
+        ],
+        "hypothesis_refs": [
+          "hypothesis-1"
+        ],
+        "attempt_receipt_refs": [
+          "attempt-receipt-1"
+        ],
+        "observation_refs": [
+          {
+            "attempt_receipt_id": "attempt-receipt-1",
+            "entry_id": "entry-1",
+            "range": {
+              "offset": 0,
+              "length": 4
+            }
+          }
+        ],
+        "record_refs": [
+          "hypothesis-record-1"
+        ]
+      }
+    },
+    "valid": false,
+    "openai_valid": true
+  },
+  {
+    "name": "record missing required field progress",
+    "mode": "arguments",
+    "tool": "record_append",
+    "arguments": {
+      "record_kind": "progress",
+      "record": {
+        "decision": "Inspect the response before selecting another experiment.",
+        "objective_refs": [
+          "objective-1"
+        ],
+        "hypothesis_refs": [
+          "hypothesis-1"
+        ],
+        "attempt_receipt_refs": [
+          "attempt-receipt-1"
+        ],
+        "observation_refs": [
+          {
+            "attempt_receipt_id": "attempt-receipt-1",
+            "entry_id": "entry-1",
+            "range": {
+              "offset": 0,
+              "length": 4
+            }
+          }
+        ],
+        "record_refs": [
+          "hypothesis-record-1"
+        ]
+      }
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "record unknown field progress",
+    "mode": "arguments",
+    "tool": "record_append",
+    "arguments": {
+      "record_kind": "progress",
+      "record": {
+        "summary": "The target returned a response.",
+        "decision": "Inspect the response before selecting another experiment.",
+        "objective_refs": [
+          "objective-1"
+        ],
+        "hypothesis_refs": [
+          "hypothesis-1"
+        ],
+        "attempt_receipt_refs": [
+          "attempt-receipt-1"
+        ],
+        "observation_refs": [
+          {
+            "attempt_receipt_id": "attempt-receipt-1",
+            "entry_id": "entry-1",
+            "range": {
+              "offset": 0,
+              "length": 4
+            }
+          }
+        ],
+        "record_refs": [
+          "hypothesis-record-1"
+        ],
+        "unexpected": true
+      }
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "record kind lineage",
+    "mode": "arguments",
+    "tool": "record_append",
+    "arguments": {
+      "record_kind": "lineage",
+      "record": {
+        "hypothesis_id": "hypothesis-1",
+        "attempt_receipt_id": "attempt-receipt-1",
+        "mutation_summary": "Initial experiment.",
+        "record_refs": [
+          "hypothesis-record-1"
+        ]
+      }
+    },
+    "valid": true,
+    "openai_valid": true
+  },
+  {
+    "name": "record kind mismatch lineage",
+    "mode": "arguments",
+    "tool": "record_append",
+    "arguments": {
+      "record_kind": "progress",
+      "record": {
+        "hypothesis_id": "hypothesis-1",
+        "attempt_receipt_id": "attempt-receipt-1",
+        "mutation_summary": "Initial experiment.",
+        "record_refs": [
+          "hypothesis-record-1"
+        ]
+      }
+    },
+    "valid": false,
+    "openai_valid": true
+  },
+  {
+    "name": "record missing required field lineage",
+    "mode": "arguments",
+    "tool": "record_append",
+    "arguments": {
+      "record_kind": "lineage",
+      "record": {
+        "attempt_receipt_id": "attempt-receipt-1",
+        "mutation_summary": "Initial experiment.",
+        "record_refs": [
+          "hypothesis-record-1"
+        ]
+      }
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "record unknown field lineage",
+    "mode": "arguments",
+    "tool": "record_append",
+    "arguments": {
+      "record_kind": "lineage",
+      "record": {
+        "hypothesis_id": "hypothesis-1",
+        "attempt_receipt_id": "attempt-receipt-1",
+        "mutation_summary": "Initial experiment.",
+        "record_refs": [
+          "hypothesis-record-1"
+        ],
+        "unexpected": true
+      }
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "record kind coverage",
+    "mode": "arguments",
+    "tool": "record_append",
+    "arguments": {
+      "record_kind": "coverage",
+      "record": {
+        "entries": [
+          {
+            "objective_id": "objective-1",
+            "status": "tested",
+            "reason": "One experiment executed.",
+            "attempt_receipt_refs": [
+              "attempt-receipt-1"
+            ]
+          }
+        ],
+        "record_refs": []
+      }
+    },
+    "valid": true,
+    "openai_valid": true
+  },
+  {
+    "name": "record kind mismatch coverage",
+    "mode": "arguments",
+    "tool": "record_append",
+    "arguments": {
+      "record_kind": "progress",
+      "record": {
+        "entries": [
+          {
+            "objective_id": "objective-1",
+            "status": "tested",
+            "reason": "One experiment executed.",
+            "attempt_receipt_refs": [
+              "attempt-receipt-1"
+            ]
+          }
+        ],
+        "record_refs": []
+      }
+    },
+    "valid": false,
+    "openai_valid": true
+  },
+  {
+    "name": "record missing required field coverage",
+    "mode": "arguments",
+    "tool": "record_append",
+    "arguments": {
+      "record_kind": "coverage",
+      "record": {
+        "record_refs": []
+      }
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "record unknown field coverage",
+    "mode": "arguments",
+    "tool": "record_append",
+    "arguments": {
+      "record_kind": "coverage",
+      "record": {
+        "entries": [
+          {
+            "objective_id": "objective-1",
+            "status": "tested",
+            "reason": "One experiment executed.",
+            "attempt_receipt_refs": [
+              "attempt-receipt-1"
+            ]
+          }
+        ],
+        "record_refs": [],
+        "unexpected": true
+      }
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "tested coverage requires evidence",
+    "mode": "arguments",
+    "tool": "record_append",
+    "arguments": {
+      "record_kind": "coverage",
+      "record": {
+        "entries": [
+          {
+            "objective_id": "objective-1",
+            "status": "tested",
+            "reason": "One experiment executed.",
+            "attempt_receipt_refs": []
+          }
+        ],
+        "record_refs": []
+      }
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "supported assessment requires observations",
+    "mode": "arguments",
+    "tool": "record_append",
+    "arguments": {
+      "record_kind": "progress",
+      "record": {
+        "summary": "The target returned a response.",
+        "decision": "Inspect the response before selecting another experiment.",
+        "objective_refs": [
+          "objective-1"
+        ],
+        "hypothesis_refs": [
+          "hypothesis-1"
+        ],
+        "attempt_receipt_refs": [
+          "attempt-receipt-1"
+        ],
+        "observation_refs": [],
+        "record_refs": [
+          "hypothesis-record-1"
+        ],
+        "assessment": {
+          "interpretation": "supported",
+          "confidence": "medium",
+          "assurance": "external-response",
+          "summary": "The observed marker supports this assessment.",
+          "gaps": [
+            "Internal execution is not visible."
+          ]
+        }
+      }
+    },
+    "valid": false,
+    "openai_valid": false
   },
   {
     "name": "structured conclusion draft",
