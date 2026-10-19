@@ -3,8 +3,7 @@
 Status: implemented in `internal/campaign`. This stage joins the existing shared
 attempt ledger to the host journal. It adds no host/harness wire fields and needs
 no Interceptor or Attack Harness changes. The [durable native executor](NATIVE_EXECUTION.md)
-now provides the per-step dispatch/audit boundary; concrete typed attempt and
-feedback adapters remain a later stage.
+now provides the per-step dispatch/audit boundary; the typed adapter and feedback publication are integrated.
 
 ## Startup and authority
 
@@ -28,7 +27,10 @@ The [attempt broker](ATTEMPT_BROKER.md) uses these steps for `engine.attempt_exe
 
 1. Validate the outer transport/envelope identity, campaign, launch and operation
    routing. Preserve the exact envelope in the transport audit. Pass its exact
-   bounded attempt body and host-attributed worker/revision to `Observe`.
+   bounded body through service input resolution and retention. Operator assigns
+   attempt IDs/index/thread/generation, then passes the internal plan and
+   host-attributed worker/revision to `Observe`. Rejections before resolution use
+   the shared tool ledger and allocate no attempt or execution receipt.
 2. `Observe` checks strict JSON and the request ID, attempt ID and positive safe
    integer index before tactical validation. It computes duplicate identity,
    advances the high-water mark, reserves future audit capacity and commits the

@@ -27,6 +27,8 @@ type ConclusionDiagnostic struct {
 }
 
 var conclusionReasons = map[string][2]string{
+	"assessment_budget_exceeded":   {"artifact", "The assessment cannot be retained within the remaining artifact allowance. Use an already committed assessment receipt or finish with an explicit unavailable reason."},
+	"evidence_required":            {"evidence", "A supported outcome requires an execution receipt. Use an honest untested or inconclusive outcome when no evidence exists."},
 	"invalid_structure":            {"structure", "The conclusion does not match its required structure."},
 	"duplicate_entry":              {"structure", "Entry identifiers must be unique within their array."},
 	"duplicate_hypothesis":         {"hypotheses", "A local hypothesis ID is defined more than once."},
@@ -68,7 +70,7 @@ func conclusionSafePath(path string) bool {
 	if !strings.HasPrefix(path, "/") {
 		return false
 	}
-	allowed := " api_version kind binding campaign_id launch_id run_revision input_tree_digest engine_context_digest prompt_digest skill_set_digest image_digest release_record_digest contract_package_version contract_package_digest status finish_reason summary objectives objective_id objective_refs hypotheses hypothesis_id hypothesis_refs provenance origin scenario_id parent_hypothesis_id surface_ref outcome claims claim_id statement interpretation confidence assurance attempt_receipt_refs attempt_receipt_id parent_attempt_receipt_id observation_refs entry_id range offset length uncertainty_refs coverage alternative reason uncertainties gap_id description input_refs record_refs record_kind record artifact_receipt record_receipt conclusion artifact purpose digest size_bytes media_type attribution "
+	allowed := " api_version kind binding campaign_id launch_id run_revision input_tree_digest engine_context_digest prompt_digest skill_set_digest image_digest release_record_digest contract_package_version contract_package_digest status finish_reason summary objectives objective_id objective_refs hypotheses hypothesis_id hypothesis_refs provenance origin scenario_id parent_hypothesis_id surface_ref outcome claims claim_id statement interpretation confidence assurance attempt_receipt_refs attempt_receipt_id parent_attempt_receipt_id observation_refs entry_id range offset length uncertainty_refs coverage alternative reason uncertainties gap_id description input_refs record_refs record_kind record artifact_receipt record_receipt assessment unavailable conclusion artifact purpose digest size_bytes media_type attribution "
 	for _, part := range strings.Split(path[1:], "/") {
 		if !conclusionIndex.MatchString(part) && !strings.Contains(allowed, " "+part+" ") {
 			return false

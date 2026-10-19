@@ -37,20 +37,18 @@ func TestPythonProcessToolSchemaRejections(t *testing.T) {
 				switch turn {
 				case 1:
 					attempt := processAttempt("scenario", "", []byte(`{"query":"baseline"}`), "")
-					delete(attempt, "scenario_id")
+					delete(attempt, "input")
 					return processResponse([]any{modelCall("bad-record", "record_append", map[string]any{"record_kind": "progress", "record": hypothesis}), modelCall("bad-attempt", "attempt_execute", attempt)}), nil
 				case 2:
 					badRecord, err := modelToolResult(q, "bad-record")
-					if err != nil || badRecord["code"] != "INVALID_TOOL_CALL" || badRecord["effect_state"] != "none" {
+					if err != nil || badRecord["code"] != "INVALID_ARGUMENTS" || badRecord["effect_state"] != "none" {
 						return nil, fmt.Errorf("record mismatch reached handler: %v %v", badRecord, err)
 					}
 					badAttempt, err := modelToolResult(q, "bad-attempt")
-					if err != nil || badAttempt["status"] != "rejected" || badAttempt["stage"] != "guest-validation" || badAttempt["target_contact"] != "none" {
+					if err != nil || badAttempt["code"] != "INVALID_ARGUMENTS" || badAttempt["effect_state"] != "none" || badAttempt["diagnostic"] == nil {
 						return nil, fmt.Errorf("attempt condition not enforced locally: %v %v", badAttempt, err)
 					}
-					if badAttempt["errors"].([]any)[0].(map[string]any)["code"] != "INVALID_ARGUMENTS" {
-						return nil, fmt.Errorf("attempt bypassed schema validation: %v", badAttempt)
-					}
+
 					return processResponse([]any{modelCall("hypothesis", "record_append", map[string]any{"record_kind": "hypothesis", "record": hypothesis}), publishCall("payload", "baseline")}), nil
 				case 3:
 					h, err := modelToolResult(q, "hypothesis")
@@ -68,7 +66,7 @@ func TestPythonProcessToolSchemaRejections(t *testing.T) {
 						return nil, fmt.Errorf("valid attempt rejected: %v %v", a, err)
 					}
 					completed = true
-					return processResponse([]any{modelCall("finish", "request_stop", modelDraft([]string{a["receipt_id"].(string)}, record))}), nil
+					return processResponse([]any{modelCall("finish", "finish", finishDraft(modelDraft([]string{a["receipt_id"].(string)}, record)))}), nil
 				default:
 					return nil, fmt.Errorf("unexpected extra model turn %d", turn)
 				}
@@ -96,8 +94,8 @@ func TestPythonProcessToolSchemaRejections(t *testing.T) {
 				t.Fatal(err)
 			}
 			report := reportResult(t, r.root, receipt)
-			if len(report.Attempts) != 1 || report.Attempts[0].Index != 2 || report.Attempts[0].State != "succeeded" {
-				t.Fatal("rejected submission was executed or its index refunded", report.Attempts)
+			if len(report.Attempts) != 1 || report.Attempts[0].Index != 1 || report.Attempts[0].State != "succeeded" {
+				t.Fatal("rejected submission was executed or host index incorrectly allocated", report.Attempts)
 			}
 		})
 	}

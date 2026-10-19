@@ -53,10 +53,10 @@ func TestServiceArtifactUploadThroughSpoolAndAttempt(t *testing.T) {
 	d = descriptor(data)
 	upload = call("engine.artifact_begin", "small-begin", map[string]any{"purpose": "payload", "artifact": d})["upload_id"]
 	call("engine.artifact_put_part", "small-part", map[string]any{"upload_id": upload, "offset": 0, "content": base64.StdEncoding.EncodeToString(data)})
-	call("engine.artifact_commit", "small-commit", map[string]any{"upload_id": upload})
+	small := call("engine.artifact_commit", "small-commit", map[string]any{"upload_id": upload})
 	var attempt map[string]any
 	_ = json.Unmarshal(attemptWire(p, 1, 1, w.Manifest().ReleaseRecordDigest), &attempt)
-	attempt["body"].(map[string]any)["payload"] = d
+	attempt["body"].(map[string]any)["input"] = map[string]any{"artifact_receipt": small["artifact_receipt"]}
 	got := stateResult(t, exchange(encode(attempt)), nil)
 	if got["receipt_id"] == nil {
 		t.Fatal(got)
@@ -112,7 +112,7 @@ func TestServiceArtifactRangesAndCampaignQuotaSurviveRestore(t *testing.T) {
 	}
 	deny("engine.artifact_begin", "exhausted", 2, begin, "ARTIFACT_BUDGET_EXCEEDED")
 	call("engine.artifact_begin", "conclusion", 2, map[string]any{"purpose": "conclusion", "artifact": d})
-	deny("engine.artifact_begin", "over", 2, begin, "STATE_CHANGED")
+	deny("engine.artifact_begin", "over", 2, begin, "ARTIFACT_BUDGET_EXCEEDED")
 }
 func TestServiceArtifactIntegrityFailureTerminates(t *testing.T) {
 	for _, mode := range []string{"digest", "canonical"} {

@@ -1,5 +1,9 @@
 # Conclusion validation: Operator and Attack Harness
 
+Historical change record. The current coordinated contract and replacement finish
+workflow are defined in [the simple campaign handoff](SIMPLE_CAMPAIGN_HANDOFF.md).
+Do not use the historical package pin below for new builds.
+
 ## Operator change
 
 Branch `fix/conclusion-hypotheses-diagnostics` targets `candidate-v0.1.0`.

@@ -25,13 +25,13 @@ func TestConclusionReferenceResolutionAndDiagnostics(t *testing.T) {
 		{"self", "self_parent", "/hypotheses/0/provenance/parent_hypothesis_id"},
 		{"cycle", "hypothesis_cycle", "/hypotheses/0/provenance/parent_hypothesis_id"},
 		{"structure", "invalid_structure", "/status"},
-		{"binding", "binding_mismatch", "/binding"},
-		{"finish", "finish_reason_mismatch", "/record/finish_reason"},
+		{"binding", "invalid_structure", "/binding"},
+		{"finish", "invalid_structure", "/finish_reason"},
 		{"record", "unresolved_record", "/record_refs/0"},
 		{"attempt", "invalid_attempt", "/hypotheses/0/attempt_receipt_refs/0"},
 		{"objective", "unknown_objective", "/hypotheses/0/objective_refs/0"},
 		{"scenario", "unknown_scenario", "/hypotheses/0/provenance/scenario_id"},
-		{"artifact", "artifact_receipt_invalid", "/record/artifact_receipt"},
+		{"artifact", "artifact_receipt_invalid", "/artifact_receipt"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			s, _, _, w, launch := serviceWithOperations(t, 0, completionRoutes)
@@ -60,7 +60,7 @@ func TestConclusionReferenceResolutionAndDiagnostics(t *testing.T) {
 				}
 			}
 			var c map[string]any
-			_ = json.Unmarshal(conclusion(t, w, launch, 1), &c)
+			c = assessmentDraft(conclusion(t, w, launch, 1))
 			h := localHypothesis("local", "")
 			c["hypotheses"] = []any{h}
 			// Coverage can refer to a local definition anywhere in the document.
@@ -87,7 +87,7 @@ func TestConclusionReferenceResolutionAndDiagnostics(t *testing.T) {
 			case "structure":
 				c["status"] = "invalid"
 			case "binding":
-				c["binding"].(map[string]any)["run_revision"] = 2
+				c["binding"] = map[string]any{"run_revision": 2}
 			case "record":
 				c["record_refs"] = []any{"missing-record"}
 			case "attempt":
@@ -97,36 +97,27 @@ func TestConclusionReferenceResolutionAndDiagnostics(t *testing.T) {
 			case "scenario":
 				h["provenance"] = map[string]any{"origin": "scenario", "scenario_id": "missing-scenario"}
 			}
+			if tc.name == "finish" {
+				c["finish_reason"] = "budget-limit"
+			}
 			data := encode(c)
 			u := call("engine.artifact_begin", "begin", map[string]any{"purpose": "conclusion", "artifact": descriptor(data)})["upload_id"]
 			call("engine.artifact_put_part", "part", map[string]any{"upload_id": u, "offset": 0, "content": base64.StdEncoding.EncodeToString(data)})
 			artifact := call("engine.artifact_commit", "commit", map[string]any{"upload_id": u})["artifact_receipt"]
-			finish := c["finish_reason"]
+			finish := "no-useful-next-experiment"
 			if tc.name == "finish" {
 				finish = "budget-limit"
 			}
 			if tc.name == "artifact" {
 				artifact = "missing-artifact"
 			}
-			raw, err := s.Handle(context.Background(), stateWire("engine.record_append", "conclusion-record", 1, map[string]any{"record_kind": "conclusion", "record": map[string]any{"artifact_receipt": artifact, "finish_reason": finish}}), 0)
+			raw, err := s.Handle(context.Background(), stateWire("engine.finish", "conclusion-record", 1, map[string]any{"artifact_receipt": artifact, "finish_reason": finish}), 0)
 			if tc.reason == "" {
-				record := stateResult(t, raw, err)["receipt_id"]
-				// Stop must diagnose its own receipt/finish paths, then allow a corrected request.
-				if tc.name == "local" {
-					for _, fault := range []struct{ id, reason, path string }{{"bad-record", "record_receipt_invalid", "/conclusion/record_receipt"}, {"bad-finish", "finish_reason_mismatch", "/finish_reason"}} {
-						rr, fr := record, finish
-						if fault.id == "bad-record" {
-							rr = "missing-record"
-						} else {
-							fr = "budget-limit"
-						}
-						response, e := s.Handle(context.Background(), stateWire("engine.request_stop", fault.id, 1, map[string]any{"finish_reason": fr, "conclusion": map[string]any{"state": "committed", "artifact_receipt": artifact, "record_receipt": rr}}), 0)
-						if e != nil || !strings.Contains(string(response), fault.path) {
-							t.Fatal(string(response), e)
-						}
-					}
+				ack := stateResult(t, raw, err)
+				duplicate, e := s.Handle(context.Background(), stateWire("engine.finish", "conclusion-record", 1, map[string]any{"artifact_receipt": artifact, "finish_reason": finish}), 1)
+				if stateResult(t, duplicate, e)["stop_receipt"] != ack["stop_receipt"] {
+					t.Fatal("duplicate finish changed receipt")
 				}
-				call("engine.request_stop", "stop", map[string]any{"finish_reason": finish, "conclusion": map[string]any{"state": "committed", "artifact_receipt": artifact, "record_receipt": record}})
 				if !s.StopAccepted() {
 					t.Fatal("not accepted")
 				}
@@ -142,7 +133,7 @@ func TestConclusionReferenceResolutionAndDiagnostics(t *testing.T) {
 					t.Fatal(f, d)
 				}
 				// Another rejection and generic shutdown must not replace the first diagnostic.
-				_, err = s.Handle(context.Background(), stateWire("engine.request_stop", "later-rejection", 1, map[string]any{"finish_reason": "budget-limit", "conclusion": map[string]any{"state": "committed", "artifact_receipt": "missing", "record_receipt": "missing"}}), 0)
+				_, err = s.Handle(context.Background(), stateWire("engine.finish", "later-rejection", 1, map[string]any{"finish_reason": "budget-limit", "conclusion": map[string]any{"state": "committed", "artifact_receipt": "missing", "record_receipt": "missing"}}), 0)
 				if err != nil || *s.ConclusionFailure() != *d {
 					t.Fatal("original cause lost", err)
 				}

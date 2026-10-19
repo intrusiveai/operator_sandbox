@@ -42,7 +42,7 @@ func (p *Protocol) ValidateLaneMessage(lane string, raw []byte) (map[string]any,
 		return p.ValidateControl(direction, raw)
 	}
 	if !host {
-		return p.ValidateRequest(raw)
+		return p.ValidateRequestEnvelope(raw)
 	}
 	return p.validateResponseEnvelope(raw)
 }

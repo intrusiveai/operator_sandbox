@@ -78,7 +78,7 @@ func (s *Service) observeTool(raw []byte) (stateRequest, *stateReply, error) {
 	}
 	t := s.attempts.Tools()
 	observe := t.Observe
-	if s.completion.finalizing {
+	if s.completion.finalizing || q.Operation == "engine.finish" || q.Operation == "engine.diagnostic_report" {
 		observe = t.ObserveFinalization
 	}
 	_, replay, err := observe(campaign.ToolInput{CampaignID: q.Campaign, OperationID: q.ID, Operation: q.Operation, WorkerInstanceID: s.target().Live().Binding().WorkerInstanceID, RunRevision: q.Revision, Body: q.Body})

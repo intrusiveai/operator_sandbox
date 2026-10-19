@@ -20,15 +20,17 @@ import (
 // Cleanup must check current native capability/policy before supplying its target.
 // These callbacks never come from a guest or a submitted scenario bundle.
 type BrokerConfig struct {
-	Catalog   *contracts.Catalog
-	Protocol  *contracts.Protocol
-	Writer    *campaign.Writer
-	Attempts  *campaign.Attempts
-	Deadline  time.Time
-	Admitted  func() bool
-	Prepare   func(context.Context, []byte, time.Time) (*Plan, *nativeexec.Guard, error)
-	Cleanup   func(context.Context, time.Time) (CleanupTarget, error)
-	ReadKinds func() []string
+	Catalog        *contracts.Catalog
+	Protocol       *contracts.Protocol
+	Writer         *campaign.Writer
+	Attempts       *campaign.Attempts
+	Deadline       time.Time
+	Admitted       func() bool
+	ResolveAttempt func(context.Context, string, []byte) ([]byte, error)
+	Rejection      func(string, error) (json.RawMessage, string, string, error)
+	Prepare        func(context.Context, []byte, time.Time) (*Plan, *nativeexec.Guard, error)
+	Cleanup        func(context.Context, time.Time) (CleanupTarget, error)
+	ReadKinds      func() []string
 }
 type CleanupTarget struct {
 	Guard           *nativeexec.Guard
@@ -53,11 +55,12 @@ type wireRequest struct {
 	Body      json.RawMessage `json:"body"`
 }
 type Fault struct {
-	InstancePath string `json:"instance_path,omitempty"`
-	Code         string `json:"code"`
-	Message      string `json:"message"`
-	Effect       string `json:"effect_state"`
-	Disposition  string `json:"disposition"`
+	InstancePath string          `json:"instance_path,omitempty"`
+	Diagnostic   json.RawMessage `json:"diagnostic,omitempty"`
+	Code         string          `json:"code"`
+	Message      string          `json:"message"`
+	Effect       string          `json:"effect_state"`
+	Disposition  string          `json:"disposition"`
 }
 type reply struct {
 	Result json.RawMessage `json:"result,omitempty"`
@@ -176,6 +179,37 @@ func (b *Broker) reject(q wireRequest, code string) (reply, error) {
 	return r, b.auditDenial(q, r)
 }
 func (b *Broker) attempt(ctx context.Context, q wireRequest, deadline time.Time) (reply, error) {
+	if _, _, lookupErr := b.config.Attempts.Tools().Lookup(q.ID); lookupErr == nil {
+		return b.saveRejectedAttempt(q, reply{})
+	}
+	if b.config.ResolveAttempt == nil {
+		return reply{}, b.stop(ErrAttempt)
+	}
+	resolved, err := b.config.ResolveAttempt(ctx, q.ID, q.Body)
+	if err != nil {
+		if b.config.Writer.Fence().Err() != nil {
+			return reply{}, err
+		}
+		code := "INVALID_ARGUMENTS"
+		if errors.Is(err, campaign.ErrConflict) {
+			code = "IDEMPOTENCY_CONFLICT"
+		}
+		r := denied(code)
+		var issue *contracts.ArgumentError
+		if errors.As(err, &issue) {
+			r.Error.Message = issue.Correction
+			r.Error.InstancePath = issue.FieldPath
+		}
+		if b.config.Rejection != nil {
+			var recordErr error
+			r.Error.Diagnostic, r.Error.Message, r.Error.InstancePath, recordErr = b.config.Rejection(q.ID, err)
+			if recordErr != nil {
+				return reply{}, errors.Join(err, recordErr)
+			}
+		}
+		return b.saveRejectedAttempt(q, r)
+	}
+	q.Body = resolved
 	a := b.config.Attempts
 	target := a.Target()
 	saved, replay, err := a.Observe(campaign.AttemptInput{CampaignID: q.Campaign, WorkerInstanceID: target.WorkerInstanceID, RunRevision: q.Revision, Body: q.Body})
@@ -218,14 +252,23 @@ func (b *Broker) attempt(ctx context.Context, q wireRequest, deadline time.Time)
 		}
 		return reply{Result: result}, nil
 	}
+	var rejectionCause error
 	reject := func(code string) (reply, error) {
 		r := denied(code)
+		if rejectionCause != nil && b.config.Rejection != nil {
+			var recordErr error
+			r.Error.Diagnostic, r.Error.Message, r.Error.InstancePath, recordErr = b.config.Rejection(q.ID, rejectionCause)
+			if recordErr != nil {
+				return reply{}, errors.Join(rejectionCause, recordErr)
+			}
+		}
 		body, _ := json.Marshal(r.Error)
 		err := a.Resolve(q.ID, campaign.AttemptCompletion{Outcome: "rejected", Result: body, Receipts: json.RawMessage(`{}`)})
 		return r, err
 	}
 	plan, guard, err := b.config.Prepare(ctx, q.Body, deadline)
 	if err != nil {
+		rejectionCause = err
 		if errors.Is(err, ErrPolicy) {
 			return reject("POLICY_DENIED")
 		}
@@ -278,6 +321,39 @@ func (b *Broker) attempt(ctx context.Context, q wireRequest, deadline time.Time)
 	}
 	return reply{Result: result.GuestJSON}, nil
 }
+
+// Predispatch resolution failures share the durable operation namespace. They
+// never become attempt receipts and changed content cannot turn them into effects.
+func (b *Broker) saveRejectedAttempt(q wireRequest, r reply) (reply, error) {
+	t := b.config.Attempts.Tools()
+	target := b.config.Attempts.Target()
+	_, replay, err := t.Observe(campaign.ToolInput{CampaignID: q.Campaign, OperationID: q.ID, Operation: q.Operation, WorkerInstanceID: target.WorkerInstanceID, RunRevision: q.Revision, Body: q.Body})
+	if err != nil {
+		if b.config.Writer.Fence().Err() != nil {
+			return reply{}, err
+		}
+		return b.reject(q, "IDEMPOTENCY_CONFLICT")
+	}
+	if replay {
+		_, data, e := t.Lookup(q.ID)
+		if e != nil {
+			return reply{}, e
+		}
+		if data == nil || json.Unmarshal(data, &r) != nil {
+			return reply{}, b.stop(campaign.ErrCorrupt)
+		}
+		return r, nil
+	}
+	if r.Error == nil {
+		return reply{}, b.stop(campaign.ErrCorrupt)
+	}
+	data, _ := json.Marshal(r)
+	if err = t.Finish(q.ID, data, 0); err != nil {
+		return reply{}, err
+	}
+	return r, b.auditDenial(q, r)
+}
+
 func (b *Broker) tool(ctx context.Context, q wireRequest, deadline time.Time) (reply, error) {
 	t := b.config.Attempts.Tools()
 	target := b.config.Attempts.Target()

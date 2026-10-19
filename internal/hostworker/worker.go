@@ -57,6 +57,7 @@ type Worker struct {
 
 type Result struct {
 	ConclusionDiagnostic *campaign.ConclusionDiagnostic `json:"conclusion_diagnostic,omitempty"`
+	WorkflowDiagnostic   *campaign.WorkflowDiagnostic   `json:"workflow_diagnostic,omitempty"`
 	ModelDiagnostic      *modelprovider.Diagnostic      `json:"model_diagnostic,omitempty"`
 	StopAccepted         bool                           `json:"stop_accepted"`
 	LaunchPhase          string                         `json:"launch_phase"`
@@ -169,6 +170,7 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 			result.StopAccepted = service.StopAccepted()
 			result.ModelDiagnostic = service.ModelFailure()
 			result.ConclusionDiagnostic = service.ConclusionFailure()
+			result.WorkflowDiagnostic = service.WorkflowFailure()
 			if result.ModelDiagnostic != nil {
 				runErr = errors.Join(modelprovider.FailureError(*result.ModelDiagnostic), runErr)
 			}
@@ -209,7 +211,16 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 		if runErr == nil && !completedResult(result) {
 			runErr = ErrWorker
 		}
-		if runErr != nil && result.ConclusionDiagnostic != nil {
+		if result.WorkflowDiagnostic != nil && result.Terminal.Dispatched != nil {
+			result.WorkflowDiagnostic.HostFinalized = true
+			result.WorkflowDiagnostic.Dispatched = *result.Terminal.Dispatched
+			result.WorkflowDiagnostic.AssessmentAccepted = result.Terminal.AssessmentState == "committed"
+			result.WorkflowDiagnostic.CleanupCompleted = cleanupCompleted(result)
+		}
+		if result.WorkflowDiagnostic != nil && (runErr != nil && !result.StopAccepted || result.WorkflowDiagnostic.Stopping != "") {
+			runErr = errors.Join(*result.WorkflowDiagnostic, runErr)
+		}
+		if runErr != nil && result.ConclusionDiagnostic != nil && !result.StopAccepted {
 			runErr = errors.Join(*result.ConclusionDiagnostic, runErr)
 		}
 		raw, _ := json.Marshal(result)
@@ -369,8 +380,13 @@ func normalStopCause(ctx context.Context, accepted bool, err error) bool {
 }
 
 func completedResult(r Result) bool {
-	return r.StopAccepted && r.Termination.Outcome.Confirmed && !r.Termination.Outcome.KillAttempted &&
-		r.Termination.Outcome.State == "exited" && r.ContainerCleanup == "removed" &&
+	return r.StopAccepted && !r.Termination.Outcome.KillAttempted && r.Termination.Outcome.State == "exited" && cleanupCompleted(r)
+}
+
+// Cleanup can complete after a failed/terminated campaign without implying a
+// successful finish or a natural Harness exit.
+func cleanupCompleted(r Result) bool {
+	return r.Termination.Outcome.Confirmed && r.ContainerCleanup == "removed" &&
 		r.TransportCleanup == "removed" && r.InputCleanup == "removed" &&
 		(r.Terminal.Closure == "confirmed" || r.Terminal.Closure == "not-applicable") &&
 		(r.Terminal.CleanupState == "complete" || r.Terminal.CleanupState == "not-needed") &&

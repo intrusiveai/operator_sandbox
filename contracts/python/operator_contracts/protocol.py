@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 
 from .validation import Catalog, ContractError, ORDINARY_LIMIT
-from .assessment import check_record, validate_conclusion, validate_completion
+from .assessment import check_record, validate_conclusion
 from . import startup, inputs, identity, transport, model
 from .canonical import _object_digest
 from .schema_ids import (
@@ -114,6 +114,14 @@ class Protocol:
         from .model_tools import model_tools
         return model_tools(self, codec, operations)
 
+    def resolve_direct_input(self, value):
+        from .simple import resolve_direct_input
+        return resolve_direct_input(self, value)
+
+    def normalize_assessment(self, raw, binding, finish):
+        from .simple import normalize_assessment
+        return normalize_assessment(self, raw, binding, finish)
+
     def validate_tool_arguments(self, name, raw):
         from .model_tools import validate_tool_arguments
         return validate_tool_arguments(self, name, raw)
@@ -208,9 +216,6 @@ class Protocol:
     def validate_conclusion(self, raw: bytes):
         return validate_conclusion(self, raw)
 
-    def validate_completion(self, **retained_records):
-        return validate_completion(self, **retained_records)
-
     def validate_ack(self, raw: bytes):
         """Syntax/size only; launch and monotonic positions require transport state."""
         return self._catalog.validate("urn:operator:schema:engine-spool-ack:v1alpha1", raw, 1024)
@@ -219,13 +224,17 @@ class Protocol:
         # Preserve exact Decimal values; serializing via a generic encoder is unsafe.
         self._catalog.validate_value(operation[schema_field], value)
 
+    def validate_request_envelope(self, raw):
+        message=self._catalog.validate('urn:operator:schema:engine-request-envelope:v1alpha1',raw)
+        return message
+
     def validate_request(self, raw: bytes):
-        message = self._catalog.validate(ENGINE_PIPE_REQUEST_SCHEMA, raw)
+        message = self.validate_request_envelope(raw)
         operation = self._operations.get(message["operation"])
         if operation is None:
             raise ContractError("invalid installed contract catalog")
         if len(raw) > operation["max_request_bytes"]:
-            raise ContractError("contract encoding limit exceeded")
+            raise ContractError("Request exceeds its registered byte limit.", reason="request_too_large", correction="Reduce request size; publish large input or assessment content as an artifact and use its receipt.")
         body = message["body"]
         self._check_registered(operation, "request_schema", body)
         name = operation["name"]
@@ -234,7 +243,8 @@ class Protocol:
         elif name == "engine.record_append":
             check_record(body)
         elif name == "engine.attempt_execute":
-            _require(body["request_id"] == message["operation_id"])
+            from .simple import check_attempt
+            check_attempt(self, body)
         elif name == "engine.artifact_begin":
             _conclusion_artifact(body)
         elif name == "engine.artifact_put_part":
@@ -259,13 +269,14 @@ class Protocol:
         return message
 
     def validate_response(self, request: bytes, response: bytes):
-        req = self.validate_request(request)
+        req = self.validate_request_envelope(request)
         message = self._validate_response_envelope(response)
         for field in ("campaign_id", "launch_id", "run_revision", "call_id", "operation_id", "operation"):
             _require(message[field] == req[field])
         operation = self._operations[req["operation"]]
         if "error" in message:
             return message
+        self.validate_request(request)
         result, body, name = message["result"], req["body"], req["operation"]
         if name == "engine.model_generate":
             model.check_correlation(body,result)
@@ -285,8 +296,6 @@ class Protocol:
         elif name == "engine.attempt_execute":
             if "request_id" in result:
                 _require(result["request_id"] == req["operation_id"])
-            if "attempt_id" in result:
-                _require(result["attempt_id"] == body["attempt_id"])
         elif name == "engine.injection_delete":
             for field in ("attempt_receipt_id", "action_id"):
                 _require(result[field] == body[field])
@@ -312,8 +321,8 @@ class Protocol:
                 _require(result["run_revision"] > result["previous_run_revision"])
         elif name == "engine.snapshot_list":
             self._check_list(body, result, req["campaign_id"])
-        elif name == "engine.request_stop":
-            _require(result["conclusion_state"] == body["conclusion"]["state"])
+        elif name == "engine.finish":
+            _require(result["assessment_state"] == ("unavailable" if "unavailable" in body else "committed"))
         return message
 
     @staticmethod

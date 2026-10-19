@@ -4,7 +4,6 @@ package preparation_test
 
 import (
 	"fmt"
-	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/attemptadapter"
 	"github.com/intrusiveai/operator_sandbox/internal/preparation"
 	"github.com/intrusiveai/operator_sandbox/internal/targetprofile"
@@ -38,7 +37,7 @@ func TestPythonProcessRestoreBatchBoundary(t *testing.T) {
 					if v["snapshot"].(map[string]any)["description"] != snapshot["description"] {
 						return nil, fmt.Errorf("snapshot metadata lost")
 					}
-					return processResponse([]any{modelCall("restore", "restore_request", map[string]any{"source_session": snapshot["source_session"], "checkpoint_id": snapshot["checkpoint_id"]}), modelCall("skipped-attempt", "attempt_execute", map[string]any{"invalid": "must never be decoded"}), modelCall("skipped-read", "snapshot_list", map[string]any{}), modelCall("skipped-stop", "request_stop", map[string]any{})}), nil
+					return processResponse([]any{modelCall("restore", "restore_request", map[string]any{"source_session": snapshot["source_session"], "checkpoint_id": snapshot["checkpoint_id"]}), modelCall("skipped-attempt", "attempt_execute", map[string]any{"invalid": "must never be decoded"}), modelCall("skipped-read", "snapshot_list", map[string]any{}), modelCall("skipped-stop", "finish", map[string]any{})}), nil
 				case 4:
 					restored, e := modelToolResult(q, "restore")
 					if e != nil {
@@ -92,10 +91,9 @@ func TestPythonProcessRestoredInjectionCleanupAndLineage(t *testing.T) {
 					}
 					record, _ = v["receipt_id"].(string)
 					a := processAttempt("scenario", record, payload, "")
-					a["carrier"] = a["payload"]
-					a["invocation"].(map[string]any)["input_source"] = "carrier"
-					a["cleanup"].(map[string]any)["delete_actions_after_observation"] = false
-					a["pre_actions"] = []any{map[string]any{"action_id": "setup", "action_type": "interceptor.injection/v1alpha1", "parameters": map[string]any{"surface": "mcp_tool_result", "mode": "simulation", "scope": "once", "selector": map[string]any{"service": "tickets", "tool_name": "get_ticket", "call_ordinal": "first"}, "placement": map[string]any{"operation": "replace", "pointer": "/structuredContent/description"}, "payload_digest": contracts.RawDigest(payload)}}}
+					a["injection_input"] = a["input"]
+					a["retain_injections"] = true
+					a["pre_actions"] = []any{map[string]any{"action_id": "setup", "action_type": "interceptor.injection/v1alpha1", "parameters": map[string]any{"surface": "mcp_tool_result", "mode": "simulation", "scope": "once", "selector": map[string]any{"service": "tickets", "tool_name": "get_ticket", "call_ordinal": "first"}, "placement": map[string]any{"operation": "replace", "pointer": "/structuredContent/description"}}}}
 					return processResponse([]any{modelCall("attempt", "attempt_execute", a)}), nil
 				case 3:
 					var e error
@@ -116,7 +114,7 @@ func TestPythonProcessRestoredInjectionCleanupAndLineage(t *testing.T) {
 					if e != nil || v["run_revision"] != float64(2) {
 						return nil, fmt.Errorf("restore failed %v %v", v, e)
 					}
-					return processResponse([]any{modelCall("delete", "injection_delete", map[string]any{"attempt_receipt_id": attempt["receipt_id"], "action_id": "setup"}), modelCall("child", "attempt_execute", processAttempt("scenario", record, payload, attempt["attempt_id"].(string)))}), nil
+					return processResponse([]any{modelCall("delete", "injection_delete", map[string]any{"attempt_receipt_id": attempt["receipt_id"], "action_id": "setup"}), modelCall("child", "attempt_execute", processAttempt("scenario", record, payload, attempt["receipt_id"].(string)))}), nil
 				case 6:
 					d, e := modelToolResult(q, "delete")
 					if e != nil || d["outcome"] != "deleted" {

@@ -22,6 +22,7 @@ import (
 
 type observationReceipt struct {
 	ConclusionDiagnostic *campaign.ConclusionDiagnostic `json:"conclusion_diagnostic,omitempty"`
+	WorkflowDiagnostic   *campaign.WorkflowDiagnostic   `json:"workflow_diagnostic,omitempty"`
 	ModelDiagnostic      *modelprovider.Diagnostic      `json:"model_diagnostic,omitempty"`
 	Start                *startReceipt                  `json:"start,omitempty"`
 	APIVersion           string                         `json:"api_version"`
@@ -127,6 +128,12 @@ func observeCampaign(ctx context.Context, action string, args []string, stdout, 
 		}
 		snapshot, err := campaign.Observe(ctx, *root, *id, func(e campaign.Event) error {
 			result.Revision, result.LastKind = e.RunRevision, e.Kind
+			if e.Kind == "workflow.diagnostic" {
+				var metadata map[string]json.RawMessage
+				if json.Unmarshal(e.Metadata, &metadata) == nil {
+					result.WorkflowDiagnostic = campaign.DecodeWorkflowDiagnostic(metadata["diagnostic"])
+				}
+			}
 			if e.Kind == "model.exchange" && result.ModelDiagnostic == nil {
 				var metadata map[string]json.RawMessage
 				if json.Unmarshal(e.Metadata, &metadata) == nil {
@@ -157,6 +164,10 @@ func observeCampaign(ctx context.Context, action string, args []string, stdout, 
 		if result.ConclusionDiagnostic == nil && start != nil && start.Completion != nil && start.Completion.Diagnostic != nil && start.Completion.Diagnostic.Conclusion.Valid() {
 			d := start.Completion.Diagnostic.Conclusion
 			result.ConclusionDiagnostic = &d
+		}
+		if start != nil && start.Completion != nil && start.Completion.Diagnostic != nil && start.Completion.Diagnostic.Workflow.Valid() && (result.WorkflowDiagnostic == nil || start.Completion.Diagnostic.Workflow.HostFinalized) {
+			d := start.Completion.Diagnostic.Workflow
+			result.WorkflowDiagnostic = &d
 		}
 		result.LaunchID, result.ManifestDigest = snapshot.Manifest.LaunchID, snapshot.ManifestDigest
 		result.Sequence, result.Bytes = snapshot.VerifiedEvents, snapshot.VerifiedBytes

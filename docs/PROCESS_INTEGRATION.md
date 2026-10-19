@@ -22,6 +22,16 @@ container profile. External model, native-target, Docker and image-approval
 dependencies are controlled fixtures. Tests MUST NOT claim live provider, Docker,
 seccomp, production release-service or native host qualification from these results.
 
+## Standalone Operator verification
+
+`make test` MUST work with only the Operator checkout and its prepared Python
+environment. It enables `OPERATOR_CONTROLLED_PEER_TEST=1` for the in-repository
+controlled Python campaign peer, including separate CLI inspection/report/export.
+It MUST NOT enable `OPERATOR_PYTHON_PEER_TEST`, which selects the sibling Harness
+transport tests. `make test-integration` explicitly enables those tests along with
+the production Harness process tests. A missing selected peer MUST fail promptly
+with its path; an exited peer MUST report its output instead of a transport timeout.
+
 ## Startup coverage
 
 `TestPythonProcessStartupInputs` covers both FIFO and spool with default,

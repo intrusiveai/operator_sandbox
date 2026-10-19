@@ -15,11 +15,11 @@ criteria have not yet been demonstrated.
 
 | Area | Completed scope |
 |---|---|
-| Shared contracts | Closed schemas, offline catalog, 13-operation registry, strict JSON/JCS, Go/Python validators, common fixtures, startup/manifest/identity/deadline rules and reproducible package build/check tools. |
+| Shared contracts | Closed schemas, offline catalog, 14-operation registry, strict JSON/JCS, Go/Python validators, common fixtures, startup/manifest/identity/deadline rules and reproducible package build/check tools. |
 | Inputs and preparation | Native capability verification/projection, compatible ScenarioBundle admission, offline submit/validate, immutable inputs, prompt construction, validated instruction-only skills and repeatable `--skill` selection. |
 | Image and launch | Local Docker image selection, fixed HTTPS compatibility lookup/cache, stopped-image embedded-file inspection, pinned launch identity, private staging, Docker confinement settings and startup verification. |
 | Transport and persistence | Linux FIFOs, macOS file spools, framing/ACKs, bounded queues, deadlines and spool size checks; durable journals, reservations, cumulative accounting, duplicate protection and terminal fencing. |
-| Native campaign service | All 13 ordinary routes: artifact upload, model relay, attempt execution, bounded feedback reads, injection cleanup, state/snapshots, assessments, conclusions and stop acknowledgement. |
+| Native campaign service | All 14 ordinary routes: artifact upload, model relay, attempt execution, bounded feedback reads, injection cleanup, state/snapshots, historical records, consolidated finish and runtime diagnostic reporting. |
 | Declarative HTTPS targets | Administrator-owned mappings, public capability projection, fixed destinations with DNS/IP and TLS checks, audited credentials, bounded JSON/text requests/responses, campaign lineage and duplicate suppression, filtered feedback, local-only recovery and observer-assurance reports. |
 | Restore and harness loop | Healthy restores preserve the harness and its context, adopt the replacement native session/revision, retain cumulative charges and skip remaining calls in the old model-response batch. Attempt numbering and finite-loop/finalization rules are integrated. |
 | Providers and secrets | Five codec families: Chat Completions, OpenAI Responses, Anthropic Messages, Bedrock Converse and Gemini GenerateContent. Host transports cover OpenAI, Azure OpenAI, LiteLLM, Anthropic, Bedrock and Gemini Developer/Vertex. Credential backends cover AWS Secrets Manager, Azure Key Vault, Google Secret Manager and Vault. |
@@ -135,3 +135,15 @@ Google/Azure combinations remain unqualified until explicitly run.
 
 The next major stage is external qualification and approved publication. Detailed
 historical commit boundaries remain available in Git history.
+
+## Coordinated simple-workflow candidate
+
+The breaking 0.1.0 shared contract replaces caller bookkeeping and multi-step
+completion with direct/artifact-receipt execution and one finish operation. Operator
+retains effective input before dispatch, assigns lineage, retains assessments and
+reports local/host stopping diagnostics through completion, inspection and exports.
+Controlled Python-process spool workflows and local failure/cleanup tests pass.
+These tests are included in `make test`. The production Attack Harness session
+must consume the exact new pin and complete `make test-integration`; prior
+production-Harness or cloud results do not qualify this new contract. See
+[the coordinated handoff](SIMPLE_CAMPAIGN_HANDOFF.md).

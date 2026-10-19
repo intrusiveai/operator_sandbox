@@ -8,11 +8,12 @@
       "engine.artifact_commit",
       "engine.artifact_put_part",
       "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
       "engine.injection_delete",
       "engine.model_generate",
       "engine.observation_read",
       "engine.record_append",
-      "engine.request_stop",
       "engine.restore_request",
       "engine.snapshot_inspect",
       "engine.snapshot_list",
@@ -21,18 +22,18 @@
     "names": [
       "artifact_publish",
       "attempt_execute",
+      "finish",
       "injection_delete",
       "observation_read",
       "record_append",
       "reference_read",
-      "request_stop",
       "restore_request",
       "snapshot_inspect",
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:ace7da1e99d0dc197dad729b479267c1c3674ef5b27a20900e3813f0a6a5631b",
-    "size_bytes": 58000,
+    "digest": "sha256:6ecfbccf1cde56d0813393aa82de28c9eb4fb5bdbe1ba69e1e10c0927c2e2116",
+    "size_bytes": 39081,
     "valid": true
   },
   {
@@ -48,6 +49,41 @@
     "valid": true
   },
   {
+    "name": "openai-chat-text-tools-v1/no-injection",
+    "mode": "projection",
+    "codec": "openai-chat-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "names": [
+      "artifact_publish",
+      "attempt_execute",
+      "finish",
+      "observation_read",
+      "record_append",
+      "reference_read",
+      "restore_request",
+      "snapshot_inspect",
+      "snapshot_list",
+      "snapshot_request"
+    ],
+    "digest": "sha256:5f26bdaddef487ad8d835d04378afe20868cf9553f68f7b85260fd83051e56ad",
+    "size_bytes": 23711,
+    "valid": true
+  },
+  {
     "name": "openai-chat-text-tools-v1/incomplete-upload",
     "mode": "projection",
     "codec": "openai-chat-text-tools-v1",
@@ -55,11 +91,12 @@
       "engine.artifact_begin",
       "engine.artifact_put_part",
       "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
       "engine.injection_delete",
       "engine.model_generate",
       "engine.observation_read",
       "engine.record_append",
-      "engine.request_stop",
       "engine.restore_request",
       "engine.snapshot_inspect",
       "engine.snapshot_list",
@@ -67,6 +104,7 @@
     ],
     "names": [
       "attempt_execute",
+      "finish",
       "injection_delete",
       "observation_read",
       "record_append",
@@ -76,8 +114,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:3637027cfb579475268628f50437e724a06f234fa16714d51684116e12e4a8aa",
-    "size_bytes": 48886,
+    "digest": "sha256:a604eeab28af3d437d8eb0a0635b9248da03100a299582369e0c111b1c0c6070",
+    "size_bytes": 38040,
     "valid": true
   },
   {
@@ -89,11 +127,12 @@
       "engine.artifact_commit",
       "engine.artifact_put_part",
       "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
       "engine.injection_delete",
       "engine.model_generate",
       "engine.observation_read",
       "engine.record_append",
-      "engine.request_stop",
       "engine.restore_request",
       "engine.snapshot_inspect",
       "engine.snapshot_list",
@@ -102,18 +141,18 @@
     "names": [
       "artifact_publish",
       "attempt_execute",
+      "finish",
       "injection_delete",
       "observation_read",
       "record_append",
       "reference_read",
-      "request_stop",
       "restore_request",
       "snapshot_inspect",
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:6d43b72d94ae1c8c18c5fb3982ed8f499b55b604d02ae160c6992d08d11dd3e0",
-    "size_bytes": 57857,
+    "digest": "sha256:0ba602486e4194016586e3c2fbf0c8f852b50a2b96e54ac63598889cbbf27dfa",
+    "size_bytes": 38938,
     "valid": true
   },
   {
@@ -129,6 +168,41 @@
     "valid": true
   },
   {
+    "name": "openai-responses-text-tools-v1/no-injection",
+    "mode": "projection",
+    "codec": "openai-responses-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "names": [
+      "artifact_publish",
+      "attempt_execute",
+      "finish",
+      "observation_read",
+      "record_append",
+      "reference_read",
+      "restore_request",
+      "snapshot_inspect",
+      "snapshot_list",
+      "snapshot_request"
+    ],
+    "digest": "sha256:d53968f263198bfb8bad3e08fca08b0a158a4d2e2aebdf0d6ec116e95aec30d5",
+    "size_bytes": 23581,
+    "valid": true
+  },
+  {
     "name": "openai-responses-text-tools-v1/incomplete-upload",
     "mode": "projection",
     "codec": "openai-responses-text-tools-v1",
@@ -136,11 +210,12 @@
       "engine.artifact_begin",
       "engine.artifact_put_part",
       "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
       "engine.injection_delete",
       "engine.model_generate",
       "engine.observation_read",
       "engine.record_append",
-      "engine.request_stop",
       "engine.restore_request",
       "engine.snapshot_inspect",
       "engine.snapshot_list",
@@ -148,6 +223,7 @@
     ],
     "names": [
       "attempt_execute",
+      "finish",
       "injection_delete",
       "observation_read",
       "record_append",
@@ -157,8 +233,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:1faa9a602993adb2a2921d2f538bec907d432bf3da7d0a336662829300a5afd5",
-    "size_bytes": 48769,
+    "digest": "sha256:5acbc0289be0d0d99faccf53df37c16184e33bc971573ff60fc7275aba473785",
+    "size_bytes": 37910,
     "valid": true
   },
   {
@@ -170,11 +246,12 @@
       "engine.artifact_commit",
       "engine.artifact_put_part",
       "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
       "engine.injection_delete",
       "engine.model_generate",
       "engine.observation_read",
       "engine.record_append",
-      "engine.request_stop",
       "engine.restore_request",
       "engine.snapshot_inspect",
       "engine.snapshot_list",
@@ -183,18 +260,18 @@
     "names": [
       "artifact_publish",
       "attempt_execute",
+      "finish",
       "injection_delete",
       "observation_read",
       "record_append",
       "reference_read",
-      "request_stop",
       "restore_request",
       "snapshot_inspect",
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:699aa00a5ebe2d7000d5fad39ae4b466ee809615570d878782a0ee981201fdc9",
-    "size_bytes": 58028,
+    "digest": "sha256:1d2629888de8feec478e3171060f07f49d25d81c1245228f6c514f2e058919c9",
+    "size_bytes": 38759,
     "valid": true
   },
   {
@@ -210,6 +287,41 @@
     "valid": true
   },
   {
+    "name": "anthropic-messages-text-tools-v1/no-injection",
+    "mode": "projection",
+    "codec": "anthropic-messages-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "names": [
+      "artifact_publish",
+      "attempt_execute",
+      "finish",
+      "observation_read",
+      "record_append",
+      "reference_read",
+      "restore_request",
+      "snapshot_inspect",
+      "snapshot_list",
+      "snapshot_request"
+    ],
+    "digest": "sha256:6c4db9543b7e525838abc91fc7b3c1909065539dff1009d88b8a35d9bfc55c20",
+    "size_bytes": 23433,
+    "valid": true
+  },
+  {
     "name": "anthropic-messages-text-tools-v1/incomplete-upload",
     "mode": "projection",
     "codec": "anthropic-messages-text-tools-v1",
@@ -217,11 +329,12 @@
       "engine.artifact_begin",
       "engine.artifact_put_part",
       "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
       "engine.injection_delete",
       "engine.model_generate",
       "engine.observation_read",
       "engine.record_append",
-      "engine.request_stop",
       "engine.restore_request",
       "engine.snapshot_inspect",
       "engine.snapshot_list",
@@ -229,6 +342,7 @@
     ],
     "names": [
       "attempt_execute",
+      "finish",
       "injection_delete",
       "observation_read",
       "record_append",
@@ -238,8 +352,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:d707da83119a9df6f7f65f55f5038ab5e806f7dead6cf92d59a0f2f00891cd09",
-    "size_bytes": 49002,
+    "digest": "sha256:173e5271150227b8eb13fe2fc9e82e68987d738c452a18eb13c7913a875cf61a",
+    "size_bytes": 37762,
     "valid": true
   },
   {
@@ -251,11 +365,12 @@
       "engine.artifact_commit",
       "engine.artifact_put_part",
       "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
       "engine.injection_delete",
       "engine.model_generate",
       "engine.observation_read",
       "engine.record_append",
-      "engine.request_stop",
       "engine.restore_request",
       "engine.snapshot_inspect",
       "engine.snapshot_list",
@@ -264,18 +379,18 @@
     "names": [
       "artifact_publish",
       "attempt_execute",
+      "finish",
       "injection_delete",
       "observation_read",
       "record_append",
       "reference_read",
-      "request_stop",
       "restore_request",
       "snapshot_inspect",
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:c27f0d7d1d82f582724fad850f558974851ffb8fdcda52d459be24d0cf32a11e",
-    "size_bytes": 58259,
+    "digest": "sha256:2ca308806e891db657fbbd125c07b3558f1b00ccd4366d25cd33c7d70d493319",
+    "size_bytes": 38990,
     "valid": true
   },
   {
@@ -291,6 +406,41 @@
     "valid": true
   },
   {
+    "name": "bedrock-converse-text-tools-v1/no-injection",
+    "mode": "projection",
+    "codec": "bedrock-converse-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "names": [
+      "artifact_publish",
+      "attempt_execute",
+      "finish",
+      "observation_read",
+      "record_append",
+      "reference_read",
+      "restore_request",
+      "snapshot_inspect",
+      "snapshot_list",
+      "snapshot_request"
+    ],
+    "digest": "sha256:2ea5dd0e06ea0091c0053e2a24ed3e6cabe17373807636823d3fa8a832528f2d",
+    "size_bytes": 23643,
+    "valid": true
+  },
+  {
     "name": "bedrock-converse-text-tools-v1/incomplete-upload",
     "mode": "projection",
     "codec": "bedrock-converse-text-tools-v1",
@@ -298,11 +448,12 @@
       "engine.artifact_begin",
       "engine.artifact_put_part",
       "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
       "engine.injection_delete",
       "engine.model_generate",
       "engine.observation_read",
       "engine.record_append",
-      "engine.request_stop",
       "engine.restore_request",
       "engine.snapshot_inspect",
       "engine.snapshot_list",
@@ -310,6 +461,7 @@
     ],
     "names": [
       "attempt_execute",
+      "finish",
       "injection_delete",
       "observation_read",
       "record_append",
@@ -319,8 +471,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:315495de6db97e3c9a894ed92ce1cd9047d85ebaa89649cb8b57f368ac27b69d",
-    "size_bytes": 49191,
+    "digest": "sha256:a41f642b8c999227b005fbc511b63794d21691ee443d10c5bd5c91894e9ac077",
+    "size_bytes": 37972,
     "valid": true
   },
   {
@@ -332,11 +484,12 @@
       "engine.artifact_commit",
       "engine.artifact_put_part",
       "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
       "engine.injection_delete",
       "engine.model_generate",
       "engine.observation_read",
       "engine.record_append",
-      "engine.request_stop",
       "engine.restore_request",
       "engine.snapshot_inspect",
       "engine.snapshot_list",
@@ -345,18 +498,18 @@
     "names": [
       "artifact_publish",
       "attempt_execute",
+      "finish",
       "injection_delete",
       "observation_read",
       "record_append",
       "reference_read",
-      "request_stop",
       "restore_request",
       "snapshot_inspect",
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:36757c442155adc31a44672733fa348d18079116d6d433af4798eca97e95aa24",
-    "size_bytes": 58143,
+    "digest": "sha256:692cbbb09da61b10ec04cdccfd6bb006a6fcc1816fbf22d02873b33e4587d11a",
+    "size_bytes": 38874,
     "valid": true
   },
   {
@@ -372,6 +525,41 @@
     "valid": true
   },
   {
+    "name": "gemini-text-tools-v1/no-injection",
+    "mode": "projection",
+    "codec": "gemini-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "names": [
+      "artifact_publish",
+      "attempt_execute",
+      "finish",
+      "observation_read",
+      "record_append",
+      "reference_read",
+      "restore_request",
+      "snapshot_inspect",
+      "snapshot_list",
+      "snapshot_request"
+    ],
+    "digest": "sha256:0194dd32ec32a507588b7dbdee2d8cf13759a23ad56d3c2c701ebc56a1e3c286",
+    "size_bytes": 23540,
+    "valid": true
+  },
+  {
     "name": "gemini-text-tools-v1/incomplete-upload",
     "mode": "projection",
     "codec": "gemini-text-tools-v1",
@@ -379,11 +567,12 @@
       "engine.artifact_begin",
       "engine.artifact_put_part",
       "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
       "engine.injection_delete",
       "engine.model_generate",
       "engine.observation_read",
       "engine.record_append",
-      "engine.request_stop",
       "engine.restore_request",
       "engine.snapshot_inspect",
       "engine.snapshot_list",
@@ -391,6 +580,7 @@
     ],
     "names": [
       "attempt_execute",
+      "finish",
       "injection_delete",
       "observation_read",
       "record_append",
@@ -400,8 +590,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:844c10aaaa8c803ed0451865b446dc312e7074101cb4272ca9cb3cd627983e31",
-    "size_bytes": 49101,
+    "digest": "sha256:5e9caf781369a4f4a0507d26624d1a76c59b3d92fc1f6efe0de32223d20da2ed",
+    "size_bytes": 37869,
     "valid": true
   },
   {
@@ -413,11 +603,12 @@
       "engine.artifact_commit",
       "engine.artifact_put_part",
       "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
       "engine.injection_delete",
       "engine.model_generate",
       "engine.observation_read",
       "engine.record_append",
-      "engine.request_stop",
       "engine.restore_request",
       "engine.snapshot_inspect",
       "engine.snapshot_list",
@@ -443,11 +634,12 @@
       "engine.artifact_commit",
       "engine.artifact_put_part",
       "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
       "engine.injection_delete",
       "engine.model_generate",
       "engine.observation_read",
       "engine.record_append",
-      "engine.request_stop",
       "engine.restore_request",
       "engine.snapshot_inspect",
       "engine.snapshot_list",
@@ -456,11 +648,12 @@
       "engine.artifact_commit",
       "engine.artifact_put_part",
       "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
       "engine.injection_delete",
       "engine.model_generate",
       "engine.observation_read",
       "engine.record_append",
-      "engine.request_stop",
       "engine.restore_request",
       "engine.snapshot_inspect",
       "engine.snapshot_list",
@@ -477,11 +670,12 @@
       "engine.snapshot_list",
       "engine.snapshot_inspect",
       "engine.restore_request",
-      "engine.request_stop",
       "engine.record_append",
       "engine.observation_read",
       "engine.model_generate",
       "engine.injection_delete",
+      "engine.finish",
+      "engine.diagnostic_report",
       "engine.attempt_execute",
       "engine.artifact_put_part",
       "engine.artifact_commit",
@@ -581,20 +775,6 @@
     "valid": true
   },
   {
-    "name": "model cannot publish conclusion directly",
-    "mode": "arguments",
-    "tool": "artifact_publish",
-    "arguments": {
-      "purpose": "conclusion",
-      "media_type": "application/json",
-      "content": {
-        "encoding": "json",
-        "value": {}
-      }
-    },
-    "valid": false
-  },
-  {
     "name": "no artifact source file",
     "mode": "arguments",
     "tool": "artifact_publish",
@@ -606,80 +786,31 @@
     "valid": false
   },
   {
-    "name": "complete tactical arguments",
+    "name": "direct invocation",
     "mode": "arguments",
     "tool": "attempt_execute",
     "arguments": {
-      "origin": "exploratory",
-      "thread_id": "thread-1",
-      "generation": 1,
-      "payload": {
-        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-        "size_bytes": 2,
-        "media_type": "application/json",
-        "canonicalization": "raw"
-      },
-      "pre_actions": [],
-      "invocation": {
-        "operation_id": "invoke",
-        "input_source": "payload",
-        "media_type": "application/json"
-      },
-      "cleanup": {
-        "delete_actions_after_observation": true
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "json",
+        "value": {
+          "prompt": "fixture"
+        }
       }
     },
     "valid": true
   },
   {
-    "name": "scenario requires id",
+    "name": "scenario association",
     "mode": "arguments",
     "tool": "attempt_execute",
     "arguments": {
-      "origin": "scenario",
-      "thread_id": "thread-1",
-      "generation": 1,
-      "payload": {
-        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-        "size_bytes": 2,
-        "media_type": "application/json",
-        "canonicalization": "raw"
-      },
-      "pre_actions": [],
-      "invocation": {
-        "operation_id": "invoke",
-        "input_source": "payload",
-        "media_type": "application/json"
-      },
-      "cleanup": {
-        "delete_actions_after_observation": true
-      }
-    },
-    "valid": false,
-    "openai_valid": true
-  },
-  {
-    "name": "scenario with id",
-    "mode": "arguments",
-    "tool": "attempt_execute",
-    "arguments": {
-      "origin": "scenario",
-      "thread_id": "thread-1",
-      "generation": 1,
-      "payload": {
-        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-        "size_bytes": 2,
-        "media_type": "application/json",
-        "canonicalization": "raw"
-      },
-      "pre_actions": [],
-      "invocation": {
-        "operation_id": "invoke",
-        "input_source": "payload",
-        "media_type": "application/json"
-      },
-      "cleanup": {
-        "delete_actions_after_observation": true
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "json",
+        "value": {
+          "prompt": "fixture"
+        }
       },
       "scenario_id": "scenario-1"
     },
@@ -687,189 +818,33 @@
     "openai_valid": true
   },
   {
-    "name": "exploratory forbids scenario id",
+    "name": "parent receipt",
     "mode": "arguments",
     "tool": "attempt_execute",
     "arguments": {
-      "origin": "exploratory",
-      "thread_id": "thread-1",
-      "generation": 1,
-      "payload": {
-        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-        "size_bytes": 2,
-        "media_type": "application/json",
-        "canonicalization": "raw"
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "json",
+        "value": {
+          "prompt": "fixture"
+        }
       },
-      "pre_actions": [],
-      "invocation": {
-        "operation_id": "invoke",
-        "input_source": "payload",
-        "media_type": "application/json"
-      },
-      "cleanup": {
-        "delete_actions_after_observation": true
-      },
-      "scenario_id": "scenario-1"
-    },
-    "valid": false,
-    "openai_valid": true
-  },
-  {
-    "name": "initial generation must be one",
-    "mode": "arguments",
-    "tool": "attempt_execute",
-    "arguments": {
-      "origin": "exploratory",
-      "thread_id": "thread-1",
-      "generation": 2,
-      "payload": {
-        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-        "size_bytes": 2,
-        "media_type": "application/json",
-        "canonicalization": "raw"
-      },
-      "pre_actions": [],
-      "invocation": {
-        "operation_id": "invoke",
-        "input_source": "payload",
-        "media_type": "application/json"
-      },
-      "cleanup": {
-        "delete_actions_after_observation": true
-      }
-    },
-    "valid": false,
-    "openai_valid": true
-  },
-  {
-    "name": "parent requires generation at least two",
-    "mode": "arguments",
-    "tool": "attempt_execute",
-    "arguments": {
-      "origin": "exploratory",
-      "thread_id": "thread-1",
-      "generation": 1,
-      "payload": {
-        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-        "size_bytes": 2,
-        "media_type": "application/json",
-        "canonicalization": "raw"
-      },
-      "pre_actions": [],
-      "invocation": {
-        "operation_id": "invoke",
-        "input_source": "payload",
-        "media_type": "application/json"
-      },
-      "cleanup": {
-        "delete_actions_after_observation": true
-      },
-      "parent_attempt_id": "attempt-parent"
-    },
-    "valid": false,
-    "openai_valid": true
-  },
-  {
-    "name": "valid child generation",
-    "mode": "arguments",
-    "tool": "attempt_execute",
-    "arguments": {
-      "origin": "exploratory",
-      "thread_id": "thread-1",
-      "generation": 2,
-      "payload": {
-        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-        "size_bytes": 2,
-        "media_type": "application/json",
-        "canonicalization": "raw"
-      },
-      "pre_actions": [],
-      "invocation": {
-        "operation_id": "invoke",
-        "input_source": "payload",
-        "media_type": "application/json"
-      },
-      "cleanup": {
-        "delete_actions_after_observation": true
-      },
-      "parent_attempt_id": "attempt-parent"
+      "parent_attempt_receipt_id": "execution-receipt"
     },
     "valid": true,
     "openai_valid": true
   },
   {
-    "name": "carrier input requires carrier",
+    "name": "setup requires injection input",
     "mode": "arguments",
     "tool": "attempt_execute",
     "arguments": {
-      "origin": "exploratory",
-      "thread_id": "thread-1",
-      "generation": 1,
-      "payload": {
-        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-        "size_bytes": 2,
-        "media_type": "application/json",
-        "canonicalization": "raw"
-      },
-      "pre_actions": [],
-      "invocation": {
-        "operation_id": "invoke",
-        "input_source": "carrier",
-        "media_type": "application/json"
-      },
-      "cleanup": {
-        "delete_actions_after_observation": true
-      }
-    },
-    "valid": false,
-    "openai_valid": true
-  },
-  {
-    "name": "carrier input with carrier",
-    "mode": "arguments",
-    "tool": "attempt_execute",
-    "arguments": {
-      "origin": "exploratory",
-      "thread_id": "thread-1",
-      "generation": 1,
-      "payload": {
-        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-        "size_bytes": 2,
-        "media_type": "application/json",
-        "canonicalization": "raw"
-      },
-      "pre_actions": [],
-      "invocation": {
-        "operation_id": "invoke",
-        "input_source": "carrier",
-        "media_type": "application/json"
-      },
-      "cleanup": {
-        "delete_actions_after_observation": true
-      },
-      "carrier": {
-        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-        "size_bytes": 2,
-        "media_type": "application/json",
-        "canonicalization": "raw"
-      }
-    },
-    "valid": true,
-    "openai_valid": true
-  },
-  {
-    "name": "setup requires canonical JSON",
-    "mode": "arguments",
-    "tool": "attempt_execute",
-    "arguments": {
-      "origin": "exploratory",
-      "thread_id": "thread-1",
-      "generation": 1,
-      "payload": {
-        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-        "size_bytes": 2,
-        "media_type": "application/json",
-        "canonicalization": "raw"
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "json",
+        "value": {
+          "prompt": "fixture"
+        }
       },
       "pre_actions": [
         {
@@ -886,36 +861,25 @@
             "placement": {
               "operation": "replace",
               "pointer": ""
-            },
-            "payload_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+            }
           }
         }
-      ],
-      "invocation": {
-        "operation_id": "invoke",
-        "input_source": "payload",
-        "media_type": "application/json"
-      },
-      "cleanup": {
-        "delete_actions_after_observation": true
-      }
+      ]
     },
     "valid": false,
     "openai_valid": true
   },
   {
-    "name": "setup with canonical JSON",
+    "name": "setup with injection input",
     "mode": "arguments",
     "tool": "attempt_execute",
     "arguments": {
-      "origin": "exploratory",
-      "thread_id": "thread-1",
-      "generation": 1,
-      "payload": {
-        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-        "size_bytes": 2,
-        "media_type": "application/json",
-        "canonicalization": "jcs-v1"
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "json",
+        "value": {
+          "prompt": "fixture"
+        }
       },
       "pre_actions": [
         {
@@ -932,91 +896,66 @@
             "placement": {
               "operation": "replace",
               "pointer": ""
-            },
-            "payload_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+            }
           }
         }
       ],
-      "invocation": {
-        "operation_id": "invoke",
-        "input_source": "payload",
-        "media_type": "application/json"
-      },
-      "cleanup": {
-        "delete_actions_after_observation": true
+      "injection_input": {
+        "encoding": "json",
+        "value": "replacement"
       }
     },
     "valid": true,
     "openai_valid": true
   },
   {
-    "name": "setup requires JSON media type",
+    "name": "no irrelevant injection input",
     "mode": "arguments",
     "tool": "attempt_execute",
     "arguments": {
-      "origin": "exploratory",
-      "thread_id": "thread-1",
-      "generation": 1,
-      "payload": {
-        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-        "size_bytes": 2,
-        "media_type": "text/plain",
-        "canonicalization": "jcs-v1"
-      },
-      "pre_actions": [
-        {
-          "action_id": "setup",
-          "action_type": "interceptor.injection/v1alpha1",
-          "parameters": {
-            "surface": "model_tool_result",
-            "mode": "simulation",
-            "scope": "once",
-            "selector": {
-              "tool_name": "search",
-              "call_ordinal": "first"
-            },
-            "placement": {
-              "operation": "replace",
-              "pointer": ""
-            },
-            "payload_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
-          }
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "json",
+        "value": {
+          "prompt": "fixture"
         }
-      ],
-      "invocation": {
-        "operation_id": "invoke",
-        "input_source": "payload",
-        "media_type": "application/json"
       },
-      "cleanup": {
-        "delete_actions_after_observation": true
+      "injection_input": {
+        "encoding": "json",
+        "value": "replacement"
       }
     },
     "valid": false,
-    "openai_valid": false
+    "openai_valid": true
+  },
+  {
+    "name": "no cleanup flags without setup",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "json",
+        "value": {
+          "prompt": "fixture"
+        }
+      },
+      "retain_injections": false
+    },
+    "valid": false,
+    "openai_valid": true
   },
   {
     "name": "unknown attempt field",
     "mode": "arguments",
     "tool": "attempt_execute",
     "arguments": {
-      "origin": "exploratory",
-      "thread_id": "thread-1",
-      "generation": 1,
-      "payload": {
-        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-        "size_bytes": 2,
-        "media_type": "application/json",
-        "canonicalization": "raw"
-      },
-      "pre_actions": [],
-      "invocation": {
-        "operation_id": "invoke",
-        "input_source": "payload",
-        "media_type": "application/json"
-      },
-      "cleanup": {
-        "delete_actions_after_observation": true
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "json",
+        "value": {
+          "prompt": "fixture"
+        }
       },
       "unexpected": true
     },
@@ -1028,135 +967,119 @@
     "mode": "arguments",
     "tool": "attempt_execute",
     "arguments": {
-      "origin": "exploratory",
-      "thread_id": "thread-1",
-      "generation": 1,
-      "payload": {
-        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-        "size_bytes": 2,
-        "media_type": "application/json",
-        "canonicalization": "raw"
-      },
-      "pre_actions": [],
-      "invocation": {
-        "operation_id": "invoke",
-        "input_source": "payload",
-        "media_type": "application/json"
-      },
-      "cleanup": {
-        "delete_actions_after_observation": true
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "json",
+        "value": {
+          "prompt": "fixture"
+        }
       },
       "api_version": "other"
     },
-    "valid": false
+    "valid": false,
+    "openai_valid": false
   },
   {
     "name": "reserved generator",
     "mode": "arguments",
     "tool": "attempt_execute",
     "arguments": {
-      "origin": "exploratory",
-      "thread_id": "thread-1",
-      "generation": 1,
-      "payload": {
-        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-        "size_bytes": 2,
-        "media_type": "application/json",
-        "canonicalization": "raw"
-      },
-      "pre_actions": [],
-      "invocation": {
-        "operation_id": "invoke",
-        "input_source": "payload",
-        "media_type": "application/json"
-      },
-      "cleanup": {
-        "delete_actions_after_observation": true
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "json",
+        "value": {
+          "prompt": "fixture"
+        }
       },
       "generator": {}
     },
-    "valid": false
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "reserved generation",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "json",
+        "value": {
+          "prompt": "fixture"
+        }
+      },
+      "generation": 1
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "reserved thread_id",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "json",
+        "value": {
+          "prompt": "fixture"
+        }
+      },
+      "thread_id": "thread"
+    },
+    "valid": false,
+    "openai_valid": false
   },
   {
     "name": "reserved attempt_index",
     "mode": "arguments",
     "tool": "attempt_execute",
     "arguments": {
-      "origin": "exploratory",
-      "thread_id": "thread-1",
-      "generation": 1,
-      "payload": {
-        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-        "size_bytes": 2,
-        "media_type": "application/json",
-        "canonicalization": "raw"
-      },
-      "pre_actions": [],
-      "invocation": {
-        "operation_id": "invoke",
-        "input_source": "payload",
-        "media_type": "application/json"
-      },
-      "cleanup": {
-        "delete_actions_after_observation": true
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "json",
+        "value": {
+          "prompt": "fixture"
+        }
       },
       "attempt_index": 1
     },
-    "valid": false
+    "valid": false,
+    "openai_valid": false
   },
   {
     "name": "reserved request_id",
     "mode": "arguments",
     "tool": "attempt_execute",
     "arguments": {
-      "origin": "exploratory",
-      "thread_id": "thread-1",
-      "generation": 1,
-      "payload": {
-        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-        "size_bytes": 2,
-        "media_type": "application/json",
-        "canonicalization": "raw"
-      },
-      "pre_actions": [],
-      "invocation": {
-        "operation_id": "invoke",
-        "input_source": "payload",
-        "media_type": "application/json"
-      },
-      "cleanup": {
-        "delete_actions_after_observation": true
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "json",
+        "value": {
+          "prompt": "fixture"
+        }
       },
       "request_id": "r1"
     },
-    "valid": false
+    "valid": false,
+    "openai_valid": false
   },
   {
     "name": "reserved attempt_id",
     "mode": "arguments",
     "tool": "attempt_execute",
     "arguments": {
-      "origin": "exploratory",
-      "thread_id": "thread-1",
-      "generation": 1,
-      "payload": {
-        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-        "size_bytes": 2,
-        "media_type": "application/json",
-        "canonicalization": "raw"
-      },
-      "pre_actions": [],
-      "invocation": {
-        "operation_id": "invoke",
-        "input_source": "payload",
-        "media_type": "application/json"
-      },
-      "cleanup": {
-        "delete_actions_after_observation": true
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "json",
+        "value": {
+          "prompt": "fixture"
+        }
       },
       "attempt_id": "a1"
     },
-    "valid": false
+    "valid": false,
+    "openai_valid": false
   },
   {
     "name": "injection_delete arguments",
@@ -1705,187 +1628,87 @@
     "openai_valid": false
   },
   {
-    "name": "structured conclusion draft",
+    "name": "minimal finish",
     "mode": "arguments",
-    "tool": "request_stop",
+    "tool": "finish",
     "arguments": {
-      "status": "completed",
-      "finish_reason": "objectives-addressed",
-      "summary": "The experiment produced a limited observation; assessment remains a guest claim.",
-      "objectives": [
-        {
-          "objective_id": "objective-1",
-          "outcome": "inconclusive",
-          "summary": "An experiment addressed this objective.",
-          "attempt_receipt_refs": [
-            "attempt-receipt-1"
-          ],
-          "record_refs": [
-            "hypothesis-record-1"
-          ]
-        }
-      ],
-      "hypotheses": [
-        {
-          "hypothesis_id": "hypothesis-1",
-          "objective_refs": [
-            "objective-1"
-          ],
-          "provenance": {
-            "origin": "exploratory"
-          },
-          "outcome": "supported",
-          "summary": "A response marker was observed.",
-          "attempt_receipt_refs": [
-            "attempt-receipt-1"
-          ],
-          "record_refs": [
-            "hypothesis-record-1"
-          ]
-        }
-      ],
-      "claims": [
-        {
-          "claim_id": "claim-1",
-          "statement": "The selected response excerpt contains the tested marker.",
-          "interpretation": "supported",
-          "confidence": "medium",
-          "assurance": "external-response",
-          "attempt_receipt_refs": [
-            "attempt-receipt-1"
-          ],
-          "observation_refs": [
-            {
-              "attempt_receipt_id": "attempt-receipt-1",
-              "entry_id": "entry-1",
-              "range": {
-                "offset": 0,
-                "length": 4
-              }
-            }
-          ],
-          "uncertainty_refs": [
-            "gap-1"
-          ]
-        }
-      ],
-      "coverage": [
-        {
-          "objective_id": "objective-1",
-          "status": "tested",
-          "reason": "One experiment executed.",
-          "attempt_receipt_refs": [
-            "attempt-receipt-1"
-          ]
-        }
-      ],
-      "uncertainties": [
-        {
-          "gap_id": "gap-1",
-          "kind": "unavailable-feedback",
-          "description": "No internal target evidence was available.",
-          "observation_refs": [],
-          "input_refs": [],
-          "record_refs": []
-        }
-      ],
-      "record_refs": [
-        "hypothesis-record-1"
-      ]
+      "finish_reason": "budget-limit",
+      "assessment": {
+        "summary": "No target experiment was run.",
+        "objectives": [
+          {
+            "objective_id": "objective-1",
+            "outcome": "not-tested",
+            "summary": "Not tested."
+          }
+        ]
+      }
     },
     "valid": true
   },
   {
+    "name": "honest unavailable finish",
+    "mode": "arguments",
+    "tool": "finish",
+    "arguments": {
+      "finish_reason": "harness-error",
+      "unavailable": {
+        "reason": "invalid-call-limit"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "finish requires one assessment source",
+    "mode": "arguments",
+    "tool": "finish",
+    "arguments": {
+      "finish_reason": "budget-limit"
+    },
+    "valid": false,
+    "openai_valid": true
+  },
+  {
+    "name": "finish rejects conflicting sources",
+    "mode": "arguments",
+    "tool": "finish",
+    "arguments": {
+      "finish_reason": "budget-limit",
+      "assessment": {
+        "summary": "No target experiment was run.",
+        "objectives": [
+          {
+            "objective_id": "objective-1",
+            "outcome": "not-tested",
+            "summary": "Not tested."
+          }
+        ]
+      },
+      "artifact_receipt": "artifact-1"
+    },
+    "valid": false,
+    "openai_valid": true
+  },
+  {
     "name": "model cannot supply conclusion binding",
     "mode": "arguments",
-    "tool": "request_stop",
+    "tool": "finish",
     "arguments": {
-      "status": "completed",
-      "finish_reason": "objectives-addressed",
-      "summary": "The experiment produced a limited observation; assessment remains a guest claim.",
-      "objectives": [
-        {
-          "objective_id": "objective-1",
-          "outcome": "inconclusive",
-          "summary": "An experiment addressed this objective.",
-          "attempt_receipt_refs": [
-            "attempt-receipt-1"
-          ],
-          "record_refs": [
-            "hypothesis-record-1"
-          ]
-        }
-      ],
-      "hypotheses": [
-        {
-          "hypothesis_id": "hypothesis-1",
-          "objective_refs": [
-            "objective-1"
-          ],
-          "provenance": {
-            "origin": "exploratory"
-          },
-          "outcome": "supported",
-          "summary": "A response marker was observed.",
-          "attempt_receipt_refs": [
-            "attempt-receipt-1"
-          ],
-          "record_refs": [
-            "hypothesis-record-1"
-          ]
-        }
-      ],
-      "claims": [
-        {
-          "claim_id": "claim-1",
-          "statement": "The selected response excerpt contains the tested marker.",
-          "interpretation": "supported",
-          "confidence": "medium",
-          "assurance": "external-response",
-          "attempt_receipt_refs": [
-            "attempt-receipt-1"
-          ],
-          "observation_refs": [
-            {
-              "attempt_receipt_id": "attempt-receipt-1",
-              "entry_id": "entry-1",
-              "range": {
-                "offset": 0,
-                "length": 4
-              }
-            }
-          ],
-          "uncertainty_refs": [
-            "gap-1"
-          ]
-        }
-      ],
-      "coverage": [
-        {
-          "objective_id": "objective-1",
-          "status": "tested",
-          "reason": "One experiment executed.",
-          "attempt_receipt_refs": [
-            "attempt-receipt-1"
-          ]
-        }
-      ],
-      "uncertainties": [
-        {
-          "gap_id": "gap-1",
-          "kind": "unavailable-feedback",
-          "description": "No internal target evidence was available.",
-          "observation_refs": [],
-          "input_refs": [],
-          "record_refs": []
-        }
-      ],
-      "record_refs": [
-        "hypothesis-record-1"
-      ],
-      "binding": {}
+      "finish_reason": "budget-limit",
+      "assessment": {
+        "summary": "No target experiment was run.",
+        "objectives": [
+          {
+            "objective_id": "objective-1",
+            "outcome": "not-tested",
+            "summary": "Not tested."
+          }
+        ],
+        "binding": {}
+      }
     },
-    "valid": false
+    "valid": false,
+    "openai_valid": false
   },
   {
     "name": "record wrapper cannot fabricate finalization",

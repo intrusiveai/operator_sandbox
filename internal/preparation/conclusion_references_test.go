@@ -132,11 +132,11 @@ func retainedConclusionSequence(t *testing.T, reason string, mutate func(map[str
 	if mutate != nil {
 		mutate(c)
 	}
-	data = encode(c)
+	data = encode(assessmentDraft(encode(c)))
 	upload := call("engine.artifact_begin", "begin", map[string]any{"purpose": "conclusion", "artifact": descriptor(data)})["upload_id"]
 	call("engine.artifact_put_part", "part", map[string]any{"upload_id": upload, "offset": 0, "content": base64.StdEncoding.EncodeToString(data)})
 	artifact := call("engine.artifact_commit", "commit", map[string]any{"upload_id": upload})["artifact_receipt"]
-	request := stateWire("engine.record_append", "record", 1, map[string]any{"record_kind": "conclusion", "record": map[string]any{"artifact_receipt": artifact, "finish_reason": c["finish_reason"]}})
+	request := stateWire("engine.finish", "finish", 1, map[string]any{"artifact_receipt": artifact, "finish_reason": c["finish_reason"]})
 	raw, err = s.Handle(context.Background(), request, 0)
 	if reason != "" {
 		d := s.ConclusionFailure()
@@ -145,8 +145,7 @@ func retainedConclusionSequence(t *testing.T, reason string, mutate func(map[str
 		}
 		return
 	}
-	record := stateResult(t, raw, err)["receipt_id"]
-	stop := call("engine.request_stop", "stop", map[string]any{"finish_reason": c["finish_reason"], "conclusion": map[string]any{"state": "committed", "artifact_receipt": artifact, "record_receipt": record}})
+	stop := stateResult(t, raw, err)
 	if stop["status"] != "accepted" || !s.StopAccepted() {
 		t.Fatal(stop)
 	}

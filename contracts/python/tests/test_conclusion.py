@@ -20,10 +20,6 @@ class ConclusionTest(unittest.TestCase):
             with self.subTest(case=case["name"]):
                 raw = base64.b64decode(case["conclusion_base64"], validate=True)
                 def check():
-                    if "completion" in case:
-                        return protocol.validate_completion(conclusion=raw, **{
-                            key: encode(value) for key, value in case["completion"].items()
-                        })
                     return protocol.validate_conclusion(raw)
                 if case["valid"]:
                     check()

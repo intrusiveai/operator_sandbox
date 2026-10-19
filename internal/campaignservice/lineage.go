@@ -30,6 +30,7 @@ func cloneLineage(v nativeLineage, session string) nativeLineage {
 }
 func (s *Service) rememberAttempt(request, response []byte) error {
 	var q struct {
+		ID   string `json:"operation_id"`
 		Body struct {
 			AttemptID  string `json:"attempt_id"`
 			Generation uint64 `json:"generation"`
@@ -41,6 +42,9 @@ func (s *Service) rememberAttempt(request, response []byte) error {
 		} `json:"result"`
 	}
 	_ = json.Unmarshal(request, &q)
+	if resolved, ok := s.resolvedAttempts[q.ID]; ok {
+		_ = json.Unmarshal(resolved.Plan, &q.Body)
+	}
 	_ = json.Unmarshal(response, &r)
 	if r.Result.Status != "completed" {
 		return nil

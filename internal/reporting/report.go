@@ -47,6 +47,7 @@ type Attempt struct {
 }
 type Result struct {
 	ConclusionRejections  []campaign.ConclusionDiagnostic `json:"conclusion_rejections,omitempty"`
+	WorkflowDiagnostics   []campaign.WorkflowDiagnostic   `json:"workflow_diagnostics,omitempty"`
 	ModelFailures         []modelprovider.Diagnostic      `json:"model_failures,omitempty"`
 	APIVersion            string                          `json:"api_version"`
 	CampaignID            string                          `json:"campaign_id"`
@@ -193,9 +194,15 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 			}
 		}
 		keep := map[string]json.RawMessage{}
-		for _, key := range []string{"operation_id", "attempt_index_high_watermark", "attempt_admissions", "snapshot_admissions", "snapshot_bytes", "model_turns", "model_tokens", "actual_tokens", "finish_reason", "conclusion_state", "assertion_origin", "record_kind", "receipt_id", "part_index", "parts", "digest", "size_bytes"} {
+		for _, key := range []string{"operation_id", "attempt_index_high_watermark", "attempt_admissions", "snapshot_admissions", "snapshot_bytes", "model_turns", "model_tokens", "actual_tokens", "finish_reason", "conclusion_state", "assessment_state", "unavailable", "finalization_status", "assertion_origin", "record_kind", "receipt_id", "part_index", "parts", "digest", "size_bytes"} {
 			if value, ok := metadata[key]; ok {
 				keep[key] = value
+			}
+		}
+		if event.Kind == "workflow.diagnostic" {
+			if d := campaign.DecodeWorkflowDiagnostic(metadata["diagnostic"]); d != nil {
+				keep["diagnostic"], _ = json.Marshal(d)
+				result.WorkflowDiagnostics = append(result.WorkflowDiagnostics, *d)
 			}
 		}
 		if event.Kind == "conclusion.rejected" || (event.Kind == "launch.terminal" && len(result.ConclusionRejections) == 0) {
@@ -313,7 +320,7 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 				bundleRetained = true
 			}
 		}
-		if event.Kind == "assessment.record" {
+		if event.Kind == "assessment.record" || event.Kind == "service.stop-accepted" && string(metadata["assessment_state"]) == `"committed"` {
 			result.HarnessClaims++
 		}
 		for _, desc := range event.Content {
@@ -363,12 +370,18 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 			if event.Kind == "service.terminal-result" && desc.Role == "response" {
 				var r struct {
 					Diagnostic json.RawMessage `json:"conclusion_diagnostic"`
+					Workflow   json.RawMessage `json:"workflow_diagnostic"`
 					Closure    string          `json:"closure"`
 					Cleanup    string          `json:"cleanup_state"`
 					Stop       string          `json:"target_stop"`
 				}
 				if json.Unmarshal(raw, &r) == nil {
 					result.TargetClosure, result.InjectionCleanup, result.TargetStop = r.Closure, r.Cleanup, r.Stop
+					if len(result.WorkflowDiagnostics) == 0 {
+						if d := campaign.DecodeWorkflowDiagnostic(r.Workflow); d != nil {
+							result.WorkflowDiagnostics = append(result.WorkflowDiagnostics, *d)
+						}
+					}
 					if len(result.ConclusionRejections) == 0 {
 						if d := campaign.DecodeConclusionDiagnostic(r.Diagnostic); d != nil {
 							result.ConclusionRejections = append(result.ConclusionRejections, *d)
@@ -378,11 +391,17 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 			}
 			if event.Kind == "launch.terminal" && desc.Role == "launch-result" {
 				var r struct {
-					Cleanup string `json:"container_cleanup"`
+					Cleanup  string          `json:"container_cleanup"`
+					Workflow json.RawMessage `json:"workflow_diagnostic"`
 				}
 				if json.Unmarshal(raw, &r) == nil {
 					result.Execution = "closed"
 					result.ContainerCleanup = r.Cleanup
+					if len(result.WorkflowDiagnostics) == 0 {
+						if d := campaign.DecodeWorkflowDiagnostic(r.Workflow); d != nil {
+							result.WorkflowDiagnostics = append(result.WorkflowDiagnostics, *d)
+						}
+					}
 				}
 			}
 
@@ -581,6 +600,9 @@ func publicContent(kind, role string) bool {
 	if kind == "campaign.launch-input" || kind == "campaign.artifact-staged" || kind == "campaign.reference-staged" || kind == "assessment.record" || kind == "model.intent" || kind == "model.exchange" {
 		return true
 	}
+	if kind == "service.stop-accepted" && role == "conclusion" {
+		return true
+	}
 	if kind == "service.request" || kind == "service.response" || kind == "artifact.part" {
 		return true
 	}
@@ -626,6 +648,12 @@ func markdown(r Result, digest string) []byte {
 			}
 		}
 		b.WriteString("\nReserved tokens are an allowance held against the budget, not confirmed consumption. See cumulative_usage in result-manifest.json.\n")
+	}
+	if len(r.WorkflowDiagnostics) > 0 {
+		b.WriteString("\n## Workflow diagnostics\n\n")
+		for _, d := range r.WorkflowDiagnostics {
+			fmt.Fprintf(&b, "- %s (%s; operation %s)\n", d.Message(), d.Source, d.OperationID)
+		}
 	}
 	if len(r.ConclusionRejections) > 0 {
 		b.WriteString("\n## Conclusion rejections\n\nRejected submissions remain history even if a corrected conclusion was later accepted.\n\n")

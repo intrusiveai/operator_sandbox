@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:workflow-diagnostic:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "source": {
+      "enum": [
+        "harness-local",
+        "operator",
+        "provider",
+        "target",
+        "cleanup"
+      ]
+    },
+    "stage": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+    },
+    "reason": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "field_path": {
+      "type": "string",
+      "maxLength": 256
+    },
+    "identifier": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "correction": {
+      "type": "string",
+      "maxLength": 512
+    },
+    "omissions": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "field": {
+            "enum": [
+              "message",
+              "field_path",
+              "identifier",
+              "correction",
+              "tool_call_id"
+            ]
+          },
+          "reason": {
+            "enum": [
+              "sensitive",
+              "oversized",
+              "unavailable",
+              "invalid"
+            ]
+          }
+        },
+        "required": [
+          "field",
+          "reason"
+        ]
+      }
+    },
+    "execution_occurred": {
+      "enum": [
+        "no",
+        "yes",
+        "unknown"
+      ]
+    },
+    "resubmission_safe": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "source",
+    "stage",
+    "reason",
+    "message",
+    "execution_occurred",
+    "resubmission_safe"
+  ]
+}

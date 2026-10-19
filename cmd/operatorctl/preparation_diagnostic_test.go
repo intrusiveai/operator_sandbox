@@ -511,3 +511,32 @@ func TestConclusionFailureForegroundAndWorkerOutput(t *testing.T) {
 	}
 	t.Log(stderr)
 }
+
+func TestWorkflowFailureForegroundAndWorkerOutput(t *testing.T) {
+	dir, paths, deps, _ := startFixture(t)
+	detail := campaign.NewWorkflowDiagnostic("local-report", "harness-local", "arguments", "invalid_structure", "/input", "attempt_execute", "call-5")
+	detail.Stopping = "invalid-call-limit"
+	detail.Observed = 5
+	detail.Limit = 5
+	detail.HostFinalized = true
+	detail.CleanupCompleted = true
+	d := &hostrun.PreparationDiagnostic{Stage: "Harness arguments", Message: detail.Message(), Workflow: detail}
+	deps.run = func(context.Context, string, string, string) (workerjob.Result, error) {
+		return workerjob.Result{Code: "execution_failed", Diagnostic: d, CompletionRecording: "recorded"}, detail
+	}
+	code, _, stderr := invokeStart(t, context.Background(), "start", []string{"--run", dir}, paths, deps)
+	if code != 1 {
+		t.Fatal(code, stderr)
+	}
+	for _, want := range []string{"Campaign execution failed", "invalid-call-limit (observed 5; configured limit 5)", "Field: /input.", "No target attempt was dispatched.", "Assessment accepted: false", "Cleanup completed: true", "Tool: attempt_execute", "Call: call-5", "Execution will not resume."} {
+		if !strings.Contains(stderr, want) {
+			t.Fatalf("missing %q: %s", want, stderr)
+		}
+	}
+	var supervised bytes.Buffer
+	printWorkerFailure(&supervised, "execution_failed", d, "recorded")
+	if supervised.String() != stderr {
+		t.Fatal("foreground/supervised mismatch")
+	}
+	t.Log(stderr)
+}

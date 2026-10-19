@@ -48,6 +48,7 @@ type SavedAttempt struct {
 }
 
 type AttemptStatus struct {
+	Dispatched    int64
 	HighWatermark int64
 	Admissions    int64
 	Submissions   int64
@@ -423,7 +424,13 @@ func (a *Attempts) Lookup(id string) (SavedAttempt, []byte, error) {
 func (a *Attempts) Status() AttemptStatus {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	return AttemptStatus{a.ledger.HighWatermark(), a.ledger.Admissions(), int64(len(a.records)), a.revision, a.w.fence.Err() != nil}
+	var dispatched int64
+	for _, r := range a.records {
+		if r.Dispatched {
+			dispatched++
+		}
+	}
+	return AttemptStatus{Dispatched: dispatched, HighWatermark: a.ledger.HighWatermark(), Admissions: a.ledger.Admissions(), Submissions: int64(len(a.records)), RunRevision: a.revision, Closed: a.w.fence.Err() != nil}
 }
 
 // Rebind records a caller-verified successful native restore while retaining the

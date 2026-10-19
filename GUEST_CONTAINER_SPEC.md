@@ -443,14 +443,15 @@ IDs; they cannot create successful host audit records by assertion.
 
 ## 7. Shutdown and qualification
 
-A healthy completion commits a v1alpha2 conclusion artifact and conclusion
-record, then sends `engine.request_stop` under shared contract Sections 10–11.
-An explicit unavailable conclusion remains possible. Operator's ordinary accepted
-acknowledgement closes execution admission and requires exit within 5,000 ms;
-finalization remains pending until host work completes. Expected EOF afterward
-is normal teardown. Reserve up to 1 MiB/one conclusion slot within the artifact
-budget and up to 30 seconds inside the campaign deadline, admitting only
-conclusion artifact/record/stop operations during graceful finalization.
+A healthy completion sends one `engine.finish` with an assessment draft or a
+committed assessment-artifact receipt. Operator supplies binding metadata, retains
+the validated assessment and closes admission. No conclusion record or separate
+stop request is required. Explicit unavailable assessments preserve their reason.
+The accepted acknowledgement requires exit within 5,000 ms; finalization remains
+pending until owned cleanup completes. Expected EOF afterward is normal teardown.
+Reserve up to 1 MiB/one assessment slot within the artifact budget and up to
+30 seconds inside the campaign deadline, admitting only assessment-artifact,
+finish and runtime diagnostic operations during graceful finalization.
 Immediate/fatal stop uses the exact-container Docker kill path, independently of
 the campaign worker, without waiting for output, signal handlers, control delivery
 or model responses. Docker unavailability is an explicit unconfirmed outcome;

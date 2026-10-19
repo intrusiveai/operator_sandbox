@@ -9,7 +9,7 @@ setup:
 
 # Requires the sibling Attack Harness source checkout and make setup.
 test-integration:
-	OPERATOR_TEST_PYTHON="$(abspath $(PYTHON))" OPERATOR_HARNESS_INTEGRATION=1 OPERATOR_PYTHON_PEER_TEST=1 go test -count=1 -timeout 10m ./internal/preparation ./internal/transport
+	OPERATOR_TEST_PYTHON="$(abspath $(PYTHON))" OPERATOR_HARNESS_INTEGRATION=1 OPERATOR_PYTHON_PEER_TEST=1 OPERATOR_CONTROLLED_PEER_TEST=1 go test -count=1 -timeout 10m ./internal/preparation ./internal/transport
 
 generate:
 	go run ./scripts/generate_path_unicode.go
@@ -24,7 +24,7 @@ test:
 	$(PYTHON) scripts/generate_tool_catalog.py --check
 	$(PYTHON) scripts/generate_envelopes.py --check
 	$(PYTHON) scripts/generate_schema_ids.py --check
-	go test ./...
+	OPERATOR_TEST_PYTHON="$(abspath $(PYTHON))" OPERATOR_CONTROLLED_PEER_TEST=1 go test ./...
 	python3 -m unittest discover -s scripts/tests
 	PYTHONPATH=contracts/python $(PYTHON) -m unittest discover -s contracts/python/tests -v
 	$(PYTHON) schemas/validate_cleanup_fixtures.py

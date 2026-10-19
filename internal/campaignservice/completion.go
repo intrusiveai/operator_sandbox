@@ -3,7 +3,6 @@
 package campaignservice
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -31,6 +30,7 @@ type completionState struct {
 	finalRequests                   int
 	finalBytes                      int64
 	stopID                          string
+	assessmentState                 string
 }
 
 func (s *Service) initializeCompletion(in campaign.LaunchInputs) {
@@ -133,16 +133,14 @@ func (s *Service) armCompletionDeadline(until time.Time) {
 func (s *Service) phaseAllows(operation string, body map[string]any) bool {
 	c := &s.completion
 	if c.stopID != "" {
-		return operation == "engine.request_stop"
+		return operation == "engine.finish"
 	}
 	if !c.finalizing {
 		return true
 	}
 	switch operation {
-	case "engine.request_stop":
+	case "engine.finish", "engine.diagnostic_report":
 		return true
-	case "engine.record_append":
-		return body["record_kind"] == "conclusion"
 	case "engine.artifact_begin":
 		return body["purpose"] == "conclusion"
 	case "engine.artifact_put_part", "engine.artifact_commit":
@@ -167,6 +165,11 @@ func (s *Service) chargeFinalization(q stateRequest) error {
 		}
 		_ = json.Unmarshal(q.Body, &part)
 		bytes = int64(len(part.Content))
+	}
+	if q.Operation == "engine.finish" {
+		var body map[string]json.RawMessage
+		_ = json.Unmarshal(q.Body, &body)
+		bytes = int64(len(body["assessment"]))
 	}
 	if bytes > (2<<20)-c.finalBytes {
 		return contracts.ErrLoopStopped
@@ -193,7 +196,7 @@ func (s *Service) handleCompletion(ctx context.Context, raw []byte, seq int64) (
 	if q.Operation == "engine.record_append" {
 		reply, err = s.appendRecord(q, raw, seq)
 	} else {
-		reply, err = s.acceptStop(q, raw)
+		reply, err = s.acceptFinish(q)
 	}
 	if err != nil {
 		return nil, err
@@ -205,8 +208,9 @@ func (s *Service) handleCompletion(ctx context.Context, raw []byte, seq int64) (
 	if err = s.attempts.Tools().Finish(q.ID, marshal(reply), 0); err != nil {
 		return nil, err
 	}
-	if q.Operation == "engine.request_stop" && reply.Error == nil {
+	if q.Operation == "engine.finish" && reply.Error == nil {
 		s.completion.stopID = q.ID
+		s.completion.assessmentState, _ = reply.Result.(map[string]any)["assessment_state"].(string)
 		s.stopAccepted.Store(true)
 		until := time.Now().Add(5 * time.Second)
 		if s.deadline.Before(until) {
@@ -225,25 +229,19 @@ func (s *Service) appendRecord(q stateRequest, raw []byte, seq int64) (stateRepl
 	if body.Kind == "progress" && !s.completion.progressAt.IsZero() && time.Since(s.completion.progressAt) < time.Second {
 		return stateDenied("LIMIT_EXCEEDED"), nil
 	}
-	if body.Kind == "conclusion" {
-		if err := s.validateConclusionRecord(body.Record); err != nil {
-			return s.rejectConclusion(q, err)
-		}
-	} else {
-		newHyp := ""
-		if body.Kind == "hypothesis" {
-			newHyp, _ = body.Record["hypothesis_id"].(string)
-			provenance := body.Record["provenance"].(map[string]any)
-			parent, _ := provenance["parent_hypothesis_id"].(string)
-			for id := parent; id != ""; id = s.completion.parents[id] {
-				if id == newHyp {
-					return stateDenied("RECORD_REFERENCE_INVALID"), nil
-				}
+	newHyp := ""
+	if body.Kind == "hypothesis" {
+		newHyp, _ = body.Record["hypothesis_id"].(string)
+		provenance := body.Record["provenance"].(map[string]any)
+		parent, _ := provenance["parent_hypothesis_id"].(string)
+		for id := parent; id != ""; id = s.completion.parents[id] {
+			if id == newHyp {
+				return stateDenied("RECORD_REFERENCE_INVALID"), nil
 			}
 		}
-		if err := s.checkReferences(body.Record, newHyp, false); err != nil {
-			return s.referenceError(err, "RECORD_REFERENCE_INVALID")
-		}
+	}
+	if err := s.checkReferences(body.Record, newHyp, false); err != nil {
+		return s.referenceError(err, "RECORD_REFERENCE_INVALID")
 	}
 	receipt := "record-" + termination.NewRequestID()
 	result := stateReply{Result: map[string]any{"receipt_id": receipt, "record_kind": body.Kind, "assertion_origin": "harness", "attribution": map[string]any{"campaign_id": q.Campaign, "launch_id": q.Launch, "run_revision": q.Revision}}}
@@ -280,108 +278,85 @@ func (s *Service) conclusionUpload(receipt string) (*artifactUpload, error) {
 	for _, u := range s.artifacts.uploads {
 		if u.Receipt == receipt && receipt != "" && u.Purpose == "conclusion" {
 			if u.Commit == nil {
-				return nil, referenceIssue("artifact_not_committed", "/record/artifact_receipt", receipt, nil)
+				return nil, referenceIssue("artifact_not_committed", "/artifact_receipt", receipt, nil)
 			}
 			return u, nil
 		}
 	}
-	return nil, referenceIssue("artifact_receipt_invalid", "/record/artifact_receipt", receipt, nil)
+	return nil, referenceIssue("artifact_receipt_invalid", "/artifact_receipt", receipt, nil)
 }
-func (s *Service) validateConclusionRecord(record map[string]any) error {
-	u, err := s.conclusionUpload(record["artifact_receipt"].(string))
-	if err != nil {
-		return err
-	}
-	content, err := s.readUpload(u)
-	if err != nil {
-		return referenceIssue("evidence_unavailable", "/record/artifact_receipt", u.Receipt, err)
-	}
-	if contracts.RawDigest(content) != u.Artifact.Digest {
-		return referenceIssue("artifact_integrity_failed", "/record/artifact_receipt", u.Receipt, nil)
-	}
-	c, err := s.target().Protocol().ValidateConclusion(content)
-	if err != nil {
-		return err
-	}
-	binding, _ := contracts.Canonicalize(marshal(c["binding"]), contracts.ControlLimit)
-	expected, _ := contracts.Canonicalize(s.conclusionBinding(), contracts.ControlLimit)
-	if !bytes.Equal(binding, expected) {
-		return referenceIssue("binding_mismatch", "/binding", "", nil)
-	}
-	if c["finish_reason"] != record["finish_reason"] {
-		return referenceIssue("finish_reason_mismatch", "/record/finish_reason", "", nil)
-	}
-	return s.checkConclusionReferences(c)
-}
-func (s *Service) acceptStop(q stateRequest, raw []byte) (stateReply, error) {
+
+// acceptFinish validates a draft and creates the bound retained conclusion itself.
+// No guest artifact/record chain is required or synthesized.
+func (s *Service) acceptFinish(q stateRequest) (stateReply, error) {
 	if s.completion.stopID != "" {
 		return stateDenied("STATE_CHANGED"), nil
 	}
-	var body struct {
-		Finish     string `json:"finish_reason"`
-		Conclusion struct {
-			State    string `json:"state"`
-			Artifact string `json:"artifact_receipt"`
-			Record   string `json:"record_receipt"`
-		} `json:"conclusion"`
-	}
+	var body map[string]json.RawMessage
 	_ = json.Unmarshal(q.Body, &body)
-	if body.Conclusion.State == "committed" {
-		u, err := s.conclusionUpload(body.Conclusion.Artifact)
+	var finish string
+	_ = json.Unmarshal(body["finish_reason"], &finish)
+	state := "unavailable"
+	var content []byte
+	if _, unavailable := body["unavailable"]; !unavailable {
+		draft := []byte(body["assessment"])
+		if receiptRaw, ok := body["artifact_receipt"]; ok {
+			var receipt string
+			_ = json.Unmarshal(receiptRaw, &receipt)
+			u, err := s.conclusionUpload(receipt)
+			if err != nil {
+				return s.rejectConclusion(q, err)
+			}
+			draft, err = s.readUpload(u)
+			if err != nil {
+				return s.rejectConclusion(q, referenceIssue("evidence_unavailable", "/artifact_receipt", receipt, err))
+			}
+			if contracts.RawDigest(draft) != u.Artifact.Digest {
+				return s.rejectConclusion(q, referenceIssue("artifact_integrity_failed", "/artifact_receipt", receipt, nil))
+			}
+		}
+		conclusion, err := s.target().Protocol().NormalizeAssessment(draft, s.conclusionBinding(), finish)
 		if err != nil {
-			return s.rejectConclusion(q, stopConclusionIssue(err))
+			var issue *contracts.ConclusionError
+			if !errors.As(err, &issue) {
+				path := "/assessment"
+				var argument *contracts.ArgumentError
+				if errors.As(err, &argument) {
+					path = argument.FieldPath
+				}
+				err = &contracts.ConclusionError{Reason: "invalid_structure", FieldPath: path, Cause: err}
+			}
+			return s.rejectConclusion(q, err)
 		}
-		record, ok := s.completion.records[body.Conclusion.Record]
-		if !ok || record.kind != "conclusion" {
-			return s.rejectConclusion(q, referenceIssue("record_receipt_invalid", "/conclusion/record_receipt", body.Conclusion.Record, nil))
+		if err = s.checkConclusionReferences(conclusion); err != nil {
+			return s.rejectConclusion(q, err)
 		}
-		// Record and stop use identical local/history reference resolution and
-		// current binding/finish checks, even if retained evidence changed meanwhile.
-		if err := s.validateConclusionRecord(map[string]any{"artifact_receipt": body.Conclusion.Artifact, "finish_reason": body.Finish}); err != nil {
-			return s.rejectConclusion(q, stopConclusionIssue(err))
+		content = marshal(conclusion)
+		if _, uploaded := body["artifact_receipt"]; !uploaded {
+			if _, err = s.retainContent(q.ID, "conclusion", draft, "application/json", "raw"); err != nil {
+				var argument *contracts.ArgumentError
+				if errors.As(err, &argument) {
+					return s.rejectConclusion(q, &contracts.ConclusionError{Reason: "assessment_budget_exceeded", FieldPath: "/assessment"})
+				}
+				return stateReply{}, s.retentionFailure(q.ID, "assessment", err)
+			}
 		}
-		content, err := s.readUpload(u)
-		if err != nil {
-			return s.rejectConclusion(q, referenceIssue("evidence_unavailable", "/conclusion/artifact_receipt", body.Conclusion.Artifact, err))
-		}
-		request, err := s.writer.ReadContent(record.request)
-		if err != nil {
-			return s.rejectConclusion(q, referenceIssue("evidence_unavailable", "/conclusion/record_receipt", body.Conclusion.Record, err))
-		}
-		response, err := s.writer.ReadContent(record.response)
-		if err != nil {
-			return s.rejectConclusion(q, referenceIssue("evidence_unavailable", "/conclusion/record_receipt", body.Conclusion.Record, err))
-		}
-		if u.Commit == nil {
-			return s.rejectConclusion(q, referenceIssue("artifact_not_committed", "/conclusion/artifact_receipt", body.Conclusion.Artifact, nil))
-		}
-		commit, err := s.writer.ReadContent(*u.Commit)
-		if err != nil {
-			return s.rejectConclusion(q, referenceIssue("evidence_unavailable", "/conclusion/artifact_receipt", body.Conclusion.Artifact, err))
-		}
-		if err = s.target().Protocol().ValidateCompletion(contracts.CompletionInput{Conclusion: content, Binding: s.conclusionBinding(), ArtifactCommitResponse: commit, RecordRequest: request, RecordResponse: response, StopRequest: raw}); err != nil {
-			return s.rejectConclusion(q, referenceIssue("completion_chain_invalid", "/conclusion", body.Conclusion.Record, nil))
-		}
+		state = "committed"
 	}
-	reply := stateReply{Result: map[string]any{"status": "accepted", "stop_receipt": "stop-" + termination.NewRequestID(), "execution_admission": "closed", "conclusion_state": body.Conclusion.State, "exit_required": true, "exit_within_ms": 5000, "finalization_status": "pending"}}
-	if _, err := s.writer.AppendStored(campaign.Entry{RunRevision: q.Revision, Kind: "service.stop-accepted", Metadata: marshal(map[string]any{"operation_id": q.ID, "finish_reason": body.Finish, "conclusion_state": body.Conclusion.State, "execution_admission": "closed"}), Content: []campaign.Content{{Role: "stop-result", MediaType: "application/json", Bytes: marshal(reply)}}}, "", false); err != nil {
+	if err := s.beginFinalization(); err != nil {
+		return stateReply{}, err
+	}
+	reply := stateReply{Result: map[string]any{"status": "accepted", "stop_receipt": "stop-" + termination.NewRequestID(), "execution_admission": "closed", "assessment_state": state, "exit_required": true, "exit_within_ms": 5000, "finalization_status": "pending"}}
+	metadata := map[string]any{"operation_id": q.ID, "finish_reason": finish, "conclusion_state": state, "assessment_state": state, "execution_admission": "closed", "finalization_status": "pending"}
+	if reason, ok := body["unavailable"]; ok {
+		metadata["unavailable"] = json.RawMessage(reason)
+	}
+	entry := campaign.Entry{RunRevision: q.Revision, Kind: "service.stop-accepted", Metadata: marshal(metadata), Content: []campaign.Content{{Role: "stop-result", MediaType: "application/json", Bytes: marshal(reply)}}}
+	if content != nil {
+		entry.Content = append(entry.Content, campaign.Content{Role: "conclusion", MediaType: "application/json", Bytes: content})
+	}
+	if _, err := s.writer.AppendStored(entry, "", false); err != nil {
 		return stateReply{}, err
 	}
 	return reply, nil
-}
-
-// Only request-relative paths change at stop; paths inside the artifact do not.
-func stopConclusionIssue(err error) error {
-	var issue *contracts.ConclusionError
-	if !errors.As(err, &issue) {
-		return err
-	}
-	copy := *issue
-	switch copy.FieldPath {
-	case "/record/artifact_receipt":
-		copy.FieldPath = "/conclusion/artifact_receipt"
-	case "/record/finish_reason":
-		copy.FieldPath = "/finish_reason"
-	}
-	return &copy
 }

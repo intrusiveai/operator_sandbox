@@ -35,11 +35,12 @@
         "engine.artifact_commit",
         "engine.artifact_put_part",
         "engine.attempt_execute",
+        "engine.diagnostic_report",
+        "engine.finish",
         "engine.injection_delete",
         "engine.model_generate",
         "engine.observation_read",
         "engine.record_append",
-        "engine.request_stop",
         "engine.restore_request",
         "engine.snapshot_inspect",
         "engine.snapshot_list",
@@ -103,7 +104,27 @@
           "const": "engine.attempt_execute"
         },
         "body": {
-          "$ref": "urn:operator:schema:engine-attempt-request:v1alpha2"
+          "$ref": "urn:operator:schema:engine-attempt-request:v1alpha3"
+        }
+      }
+    },
+    {
+      "properties": {
+        "operation": {
+          "const": "engine.diagnostic_report"
+        },
+        "body": {
+          "$ref": "urn:operator:schema:engine-diagnostic-report-request:v1alpha1"
+        }
+      }
+    },
+    {
+      "properties": {
+        "operation": {
+          "const": "engine.finish"
+        },
+        "body": {
+          "$ref": "urn:operator:schema:engine-finish-request:v1alpha1"
         }
       }
     },
@@ -144,16 +165,6 @@
         },
         "body": {
           "$ref": "urn:operator:schema:engine-record-append-request:v1alpha1"
-        }
-      }
-    },
-    {
-      "properties": {
-        "operation": {
-          "const": "engine.request_stop"
-        },
-        "body": {
-          "$ref": "urn:operator:schema:engine-request-stop-request:v1alpha1"
         }
       }
     },

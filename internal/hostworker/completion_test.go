@@ -42,6 +42,12 @@ func TestCompletionRequiresAllCleanupAndNaturalExit(t *testing.T) {
 	r := Result{StopAccepted: true, ContainerCleanup: "removed", TransportCleanup: "removed", InputCleanup: "removed",
 		Terminal: campaignservice.TerminalResult{Closure: "confirmed", CleanupState: "complete", TargetStop: "confirmed"}}
 	r.Termination.Outcome = dockercontrol.Outcome{Confirmed: true, State: "exited"}
+	failed := r
+	failed.StopAccepted = false
+	failed.Termination.Outcome.KillAttempted = true
+	if completedResult(failed) || !cleanupCompleted(failed) {
+		t.Fatal("cleanup confused with successful campaign", failed)
+	}
 	if !completedResult(r) {
 		t.Fatal("clean completion rejected")
 	}
