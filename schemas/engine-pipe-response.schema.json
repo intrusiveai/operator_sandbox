@@ -35,11 +35,12 @@
         "engine.artifact_commit",
         "engine.artifact_put_part",
         "engine.attempt_execute",
+        "engine.diagnostic_report",
+        "engine.finish",
         "engine.injection_delete",
         "engine.model_generate",
         "engine.observation_read",
         "engine.record_append",
-        "engine.request_stop",
         "engine.restore_request",
         "engine.snapshot_inspect",
         "engine.snapshot_list",
@@ -207,6 +208,75 @@
     {
       "properties": {
         "operation": {
+          "const": "engine.diagnostic_report"
+        },
+        "result": {
+          "$ref": "urn:operator:schema:engine-diagnostic-report-result:v1alpha1"
+        },
+        "error": {
+          "allOf": [
+            {
+              "$ref": "urn:operator:schema:operation-error:v1alpha1"
+            },
+            {
+              "properties": {
+                "code": {
+                  "enum": [
+                    "DEADLINE_EXCEEDED",
+                    "IDEMPOTENCY_CONFLICT",
+                    "INTERNAL_ERROR",
+                    "INVALID_ARGUMENTS",
+                    "LIMIT_EXCEEDED",
+                    "OUTCOME_UNKNOWN",
+                    "POLICY_DENIED",
+                    "STATE_CHANGED",
+                    "UNSUPPORTED_CAPABILITY"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "properties": {
+        "operation": {
+          "const": "engine.finish"
+        },
+        "result": {
+          "$ref": "urn:operator:schema:engine-finish-result:v1alpha1"
+        },
+        "error": {
+          "allOf": [
+            {
+              "$ref": "urn:operator:schema:operation-error:v1alpha1"
+            },
+            {
+              "properties": {
+                "code": {
+                  "enum": [
+                    "CONCLUSION_INVALID",
+                    "DEADLINE_EXCEEDED",
+                    "IDEMPOTENCY_CONFLICT",
+                    "INTERNAL_ERROR",
+                    "INVALID_ARGUMENTS",
+                    "LIMIT_EXCEEDED",
+                    "OUTCOME_UNKNOWN",
+                    "POLICY_DENIED",
+                    "STATE_CHANGED",
+                    "UNSUPPORTED_CAPABILITY"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "properties": {
+        "operation": {
           "const": "engine.injection_delete"
         },
         "result": {
@@ -331,7 +401,6 @@
               "properties": {
                 "code": {
                   "enum": [
-                    "CONCLUSION_INVALID",
                     "DEADLINE_EXCEEDED",
                     "IDEMPOTENCY_CONFLICT",
                     "INTERNAL_ERROR",
@@ -340,41 +409,6 @@
                     "OUTCOME_UNKNOWN",
                     "POLICY_DENIED",
                     "RECORD_REFERENCE_INVALID",
-                    "STATE_CHANGED",
-                    "UNSUPPORTED_CAPABILITY"
-                  ]
-                }
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "properties": {
-        "operation": {
-          "const": "engine.request_stop"
-        },
-        "result": {
-          "$ref": "urn:operator:schema:engine-request-stop-result:v1alpha1"
-        },
-        "error": {
-          "allOf": [
-            {
-              "$ref": "urn:operator:schema:operation-error:v1alpha1"
-            },
-            {
-              "properties": {
-                "code": {
-                  "enum": [
-                    "CONCLUSION_INVALID",
-                    "DEADLINE_EXCEEDED",
-                    "IDEMPOTENCY_CONFLICT",
-                    "INTERNAL_ERROR",
-                    "INVALID_ARGUMENTS",
-                    "LIMIT_EXCEEDED",
-                    "OUTCOME_UNKNOWN",
-                    "POLICY_DENIED",
                     "STATE_CHANGED",
                     "UNSUPPORTED_CAPABILITY"
                   ]

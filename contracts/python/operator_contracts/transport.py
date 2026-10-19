@@ -17,7 +17,7 @@ def validate_lane_message(protocol, lane, raw):
     host, control, _ = lane_info(lane)
     if control:
         return protocol.validate_control('host' if host else 'guest', raw)
-    return protocol._validate_response_envelope(raw) if host else protocol.validate_request(raw)
+    return protocol._validate_response_envelope(raw) if host else protocol.validate_request_envelope(raw)
 
 
 def encode_frame(protocol, lane, raw):

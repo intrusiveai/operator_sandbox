@@ -9,12 +9,15 @@ operations=[o['name'] for o in json.loads((ROOT/'operations.json').read_text())[
 codecs=['openai-chat-text-tools-v1','openai-responses-text-tools-v1','anthropic-messages-text-tools-v1','bedrock-converse-text-tools-v1','gemini-text-tools-v1']
 cases=[]
 for codec in codecs:
- for label,enabled in [('all',operations),('local-only',[]),('incomplete-upload',[o for o in operations if o!='engine.artifact_commit'])]:
+ for label,enabled in [('all',operations),('local-only',[]),('no-injection',[o for o in operations if o!='engine.injection_delete']),('incomplete-upload',[o for o in operations if o!='engine.artifact_commit'])]:
     tools=[];names=[];functions=[]
     for b in branches:
         if not set(b['x-operator-required-operations']).issubset(enabled):continue
-        name=b['properties']['name']['const'];names.append(name);parameters=b['properties']['arguments'];description=b['description']
+        name=b['properties']['name']['const'];names.append(name);parameters=b.get('x-operator-provider-parameters',b['properties']['arguments']);description=b['description']
         if codec in codecs[:2]:parameters=b.get('x-operator-openai-parameters',parameters)
+        parameters=deepcopy(parameters)
+        if name=='attempt_execute' and 'engine.injection_delete' not in enabled:
+            for field in ('pre_actions','injection_input','retain_injections'):parameters['properties'].pop(field,None)
         if codec=='openai-chat-text-tools-v1':tools.append({'type':'function','function':{'name':name,'description':description,'parameters':parameters,'strict':False}})
         elif codec=='openai-responses-text-tools-v1':tools.append({'type':'function','name':name,'description':description,'parameters':parameters,'strict':False})
         elif codec=='anthropic-messages-text-tools-v1':tools.append({'name':name,'description':description,'input_schema':parameters})
@@ -37,31 +40,21 @@ arg('no arbitrary path','reference_read',dict(path='/etc/passwd',offset=0,max_by
 arg('bounded reference ceiling','reference_read',dict(reference_id='ref-1',offset=0,max_bytes=262145),False)
 for content in [dict(encoding='utf8',text='payload'),dict(encoding='json',value={'payload':'data'}),dict(encoding='json',value='JSON string'),dict(encoding='base64',data='eA==')]:
  arg('data artifact '+str(content),'artifact_publish',dict(purpose='payload',media_type='application/json',content=content))
-arg('model cannot publish conclusion directly','artifact_publish',dict(purpose='conclusion',media_type='application/json',content=dict(encoding='json',value={})),False)
 arg('no artifact source file','artifact_publish',dict(purpose='payload',media_type='application/json',source_file='/tmp/file'),False)
 attempt=body('engine.attempt_execute')
-for key in ('api_version','kind','generator','request_id','attempt_id','attempt_index'):attempt.pop(key)
-arg('complete tactical arguments','attempt_execute',attempt)
-# The provider projection is intentionally broader only for cross-field rules.
-# Both language runtimes MUST still reject these before any host operation.
-def attempt_case(label, mutate, valid, projected=True):
-    value=deepcopy(attempt);mutate(value)
-    arg(label,'attempt_execute',value,valid,projected)
-attempt_case('scenario requires id',lambda a:a.update(origin='scenario'),False)
-attempt_case('scenario with id',lambda a:a.update(origin='scenario',scenario_id='scenario-1'),True)
-attempt_case('exploratory forbids scenario id',lambda a:a.update(scenario_id='scenario-1'),False)
-attempt_case('initial generation must be one',lambda a:a.update(generation=2),False)
-attempt_case('parent requires generation at least two',lambda a:a.update(parent_attempt_id='attempt-parent'),False)
-attempt_case('valid child generation',lambda a:a.update(parent_attempt_id='attempt-parent',generation=2),True)
-attempt_case('carrier input requires carrier',lambda a:a['invocation'].update(input_source='carrier'),False)
-attempt_case('carrier input with carrier',lambda a:(a['invocation'].update(input_source='carrier'),a.update(carrier=deepcopy(a['payload']))),True)
-action=dict(action_id='setup',action_type='interceptor.injection/v1alpha1',parameters=dict(surface='model_tool_result',mode='simulation',scope='once',selector=dict(tool_name='search',call_ordinal='first'),placement=dict(operation='replace',pointer=''),payload_digest=attempt['payload']['digest']))
-attempt_case('setup requires canonical JSON',lambda a:a.update(pre_actions=[action]),False)
-attempt_case('setup with canonical JSON',lambda a:(a.update(pre_actions=[action]),a['payload'].update(canonicalization='jcs-v1')),True)
-attempt_case('setup requires JSON media type',lambda a:(a.update(pre_actions=[action]),a['payload'].update(canonicalization='jcs-v1',media_type='text/plain')),False,False)
+arg('direct invocation','attempt_execute',attempt)
+def attempt_case(label,mutate,valid,projected=True):
+ value=deepcopy(attempt);mutate(value);arg(label,'attempt_execute',value,valid,projected)
+attempt_case('scenario association',lambda a:a.update(scenario_id='scenario-1'),True)
+attempt_case('parent receipt',lambda a:a.update(parent_attempt_receipt_id='execution-receipt'),True)
+action=dict(action_id='setup',action_type='interceptor.injection/v1alpha1',parameters=dict(surface='model_tool_result',mode='simulation',scope='once',selector=dict(tool_name='search',call_ordinal='first'),placement=dict(operation='replace',pointer='')))
+attempt_case('setup requires injection input',lambda a:a.update(pre_actions=[action]),False)
+attempt_case('setup with injection input',lambda a:a.update(pre_actions=[action],injection_input=dict(encoding='json',value='replacement')),True)
+attempt_case('no irrelevant injection input',lambda a:a.update(injection_input=dict(encoding='json',value='replacement')),False)
+attempt_case('no cleanup flags without setup',lambda a:a.update(retain_injections=False),False)
 attempt_case('unknown attempt field',lambda a:a.update(unexpected=True),False,False)
-for key,value in [('api_version','other'),('generator',{}),('attempt_index',1),('request_id','r1'),('attempt_id','a1')]:
- arg('reserved '+key,'attempt_execute',dict(attempt,**{key:value}),False)
+for key,value in [('api_version','other'),('generator',{}),('generation',1),('thread_id','thread'),('attempt_index',1),('request_id','r1'),('attempt_id','a1')]:
+ arg('reserved '+key,'attempt_execute',dict(attempt,**{key:value}),False,False)
 for name in ('injection_delete','observation_read','record_append','restore_request','snapshot_request','snapshot_list','snapshot_inspect'):
  arg(name+' arguments',name,body('engine.'+name))
 for kind in ('hypothesis','progress','lineage','coverage'):
@@ -79,10 +72,12 @@ arg('tested coverage requires evidence','record_append',coverage,False,False)
 progress=deepcopy(next(c['request']['body'] for c in ordinary if c['name']=='record typed interpretation'))
 progress['record']['observation_refs']=[]
 arg('supported assessment requires observations','record_append',progress,False,False)
-draft=json.loads((ROOT/'fixtures/conclusion-example.json').read_text())
-for key in ('api_version','kind','binding'):draft.pop(key)
-arg('structured conclusion draft','request_stop',draft)
-arg('model cannot supply conclusion binding','request_stop',dict(draft,binding={}),False)
+draft=dict(summary='No target experiment was run.',objectives=[dict(objective_id='objective-1',outcome='not-tested',summary='Not tested.')])
+arg('minimal finish','finish',dict(finish_reason='budget-limit',assessment=draft))
+arg('honest unavailable finish','finish',dict(finish_reason='harness-error',unavailable=dict(reason='invalid-call-limit')))
+arg('finish requires one assessment source','finish',dict(finish_reason='budget-limit'),False,True)
+arg('finish rejects conflicting sources','finish',dict(finish_reason='budget-limit',assessment=draft,artifact_receipt='artifact-1'),False,True)
+arg('model cannot supply conclusion binding','finish',dict(finish_reason='budget-limit',assessment=dict(draft,binding={})),False,False)
 arg('record wrapper cannot fabricate finalization','record_append',dict(record_kind='conclusion',record={}),False)
 arg('internal model operation hidden','model_generate',{},False)
 arg('artifact chunk hidden','artifact_put_part',{},False)

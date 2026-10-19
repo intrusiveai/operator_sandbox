@@ -9,81 +9,15 @@ finalization with 129 shared cases. Durable dispatcher integration and actual ti
 are implemented; complete process/native conformance remains outstanding. These rules supplement
 SHARED_CONTRACT.md without a new broker operation.
 
-## 1. Campaign-wide attempt numbering
+## 1. Host-owned attempt numbering
 
-`attempt_index` is the chronological submission number, not the number of executed
-experiments, the thread generation, a native session revision or a quota counter.
-It starts at 1 in a new campaign and strictly increases across all threads and
-healthy restores. Gaps are allowed. Its maximum is 2^53−1; never wrap or recycle.
-If another allocation would exceed that maximum, finish with `budget-limit`.
-
-The trusted harness request builder owns allocation. The model-facing projection
-omits `request_id`, `attempt_id` and `attempt_index`; the wrapper fills those
-bookkeeping fields, leaving the model's tactical fields unchanged. Supplying
-reserved bookkeeping fields is an argument error, not an instruction to override
-the allocator. The full EngineAttemptRequest wire schema still requires all three;
-`request_id` equals the ordinary envelope's durable `operation_id`.
-
-Allocate as follows:
-
-1. At admission, initialize the local high-water mark from the required
-   `EngineContext.attempt_index_high_watermark` (0 for a new campaign). Operator
-   derives this from its campaign ledger and any verified native attempts already
-   bound to this campaign before publishing context. The field is a nonnegative
-   integer at most 2^53−1. If a native index cannot be represented, reject preparation.
-2. For a new `attempt_execute` call actually selected for dispatch, first require
-   syntactically valid bounded JSON object arguments. Reserve fresh request/attempt
-   IDs and index `local_high_watermark + 1` exactly once, then advance the local
-   mark before structural, artifact, lineage and capability validation. Keep the
-   allocation with the local call record, including any rejected result.
-3. Malformed JSON/non-object arguments cannot form a submission: report bounded
-   invalid-call diagnostics without allocating an index. Invalid outer model
-   responses follow existing codec/protocol failure rules and allocate nothing.
-   Calls skipped after restore, quota closure or termination are never
-   dispatched and allocate nothing. They must not become attempt records.
-4. A local or host rejection after allocation retains that number in history.
-   A corrected submission is a new request ID, new attempt ID and new index. Never
-   renumber later submissions to fill the gap. A rejected attempt is not a valid
-   parent for a native child: reference a registered same-thread parent or form a
-   root with generation 1 under the existing lineage rules.
-5. Exact duplicates retain the original tuple/content and known result. Duplicate
-   lookup precedes new-allocation/monotonicity checks; they allocate no new number
-   and cannot cause another experiment. Changed content under a used request ID
-   conflicts. This does not permit a guest retry after timeout/channel loss or an
-   unknown effect; reconciliation remains host-owned.
-6. Operator journals an identifiable new submission's request/attempt/index tuple
-   before target admission, even if semantic validation later rejects it. For an
-   unseen request, require the index to exceed its campaign high-water mark and
-   the attempt ID to be unused; persist the updated mark with the submission.
-   Invalid bookkeeping cannot advance it. Gaps need no native placeholder records:
-   local rejected submissions may never reach Operator. Record local rejections
-   in bounded harness history and subsequent model/tool history as guest assertions;
-   they cannot overwrite host-observed admission or execution records.
-7. Preserve the harness allocator and Operator ledger across restore. Never seed
-   them again from the restored native registry or immutable launch context. The
-   native registry may contain an earlier prefix; Operator sends the new campaign
-   index unchanged. No worker/revision ownership or counter synchronization RPC
-   is needed. Failed campaigns still do not resume or reconstruct a harness.
-
-The campaign execution quota (default 100) counts durable **attempt admissions**,
-not the highest allocated index. Operator validates the request, content, binding,
-capability and policy before admission, then charges one attempt when committing
-execution intent before the first native registration/setup/invocation. Rejection
-before that admission charges no attempt, although it consumes any allocated
-number and applicable tool/invalid-call limits. An admitted operation remains
-charged if later setup/invocation fails. A known duplicate charges once. Unknown
-outcomes retain their admission and follow terminal reconciliation rules. Restores
-and deletion never refund campaign admissions. Interceptor separately limits the
-number of native registered attempts; its limit is not an index ceiling.
-
-| Event | Index / admission effect |
-|---|---|
-| Attempt 7 rejected for unavailable payload before admission | Keep 7 as rejected; zero execution admissions. |
-| Corrected submission | Use fresh IDs and index 8; charge one only if admitted. |
-| Exact known replay of submission 8 | Same index/result; no second allocation or admission. |
-| Restore checkpoint containing attempts through 3 after allocating 8 | Next new submission is 9, including when 8 was rejected. |
-| Restore skips a queued attempt call | No allocation, registration or admission. |
-| JSON cannot be decoded as a tool argument object | No allocation; tool and invalid-call accounting still applies. |
+The Harness MUST generate outer operation/call correlation IDs. Operator MUST
+assign attempt identity/index and derive thread/generation from an optional
+verified parent execution receipt. Local malformed or rejected arguments allocate
+no host attempt. Exact duplicates retain their result; corrected new calls use
+new operation IDs. A rejected submission is not an execution receipt. Host indices
+and execution admission counts remain distinct and never reset on restore.
+See [simple workflow](SIMPLE_CAMPAIGN_CONTRACT.md).
 
 ## 2. Configurable finite-loop defaults
 
@@ -159,8 +93,8 @@ startup context and the campaign journal.
   dispatcher counters remain attributed harness state, not host attestation or a
   new monitoring requirement. Guest reports never refund authoritative host usage.
   Operator supplies host remaining budgets; the harness combines them with its
-  retained local counters using the smaller allowance. No new telemetry RPC is
-  required. Neither side restores counters from target snapshots.
+  retained local counters using the smaller allowance. Local rejection/stopping facts use `engine.diagnostic_report`; these reports
+  are not authoritative usage attestations. Neither side restores counters from target snapshots.
 
 ### Progress and termination
 
@@ -188,8 +122,8 @@ an admitted operation uses its own deadline, and heartbeats extend neither limit
 When a limit blocks further work (after the last permitted operation/batch as
 defined above), cancel remaining undispatched calls, preserve their
 not-executed status for reporting, and finalize from known records without another
-model generation or target effect. Allow only the existing conclusion artifact,
-conclusion record and `engine.request_stop` path: at most 16 ordinary finalization
+model generation or target effect. Allow only assessment artifact publication when needed, bounded local diagnostics
+and `engine.finish`: at most 16 ordinary finalization
 requests, at most 2 MiB of conclusion bytes, within 30 seconds and all remaining
 host time/artifact allowances. These fixed finalization bounds do not renew
 exploration quotas. If resources cannot support the conclusion, use the existing
@@ -200,8 +134,8 @@ cleanup/reporting must never delay Docker termination.
 
 ## 3. Acceptance cases
 
-Shared Go/Python allocator/dispatcher traces must verify rejected 7 → corrected 8;
-exact duplicates and changed-content conflicts under a used ID; local-only gaps;
+Shared Go/Python ledger/dispatcher traces must verify rejected host index 7 → corrected 8;
+exact duplicates and changed-content conflicts under a used ID; local rejections without host allocation;
 malformed and skipped calls without allocation; no rejected native parent; host high-water mark
 persistence before rejection; restore retaining index/counters; index overflow;
 admission counts independent of numbering; every default/override and zero rejection;

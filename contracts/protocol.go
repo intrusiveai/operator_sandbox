@@ -119,8 +119,23 @@ func (p *Protocol) Operations() []Operation {
 	return result
 }
 
+// ValidateRequestEnvelope admits only a bounded correlated envelope. The host must
+// validate its registered body before effects; invalid bodies can receive errors.
+func (p *Protocol) ValidateRequestEnvelope(raw []byte) (map[string]any, error) {
+	v, err := p.catalog.Validate(EngineRequestEnvelopeSchema, raw, OrdinaryLimit)
+	if err != nil {
+		return nil, err
+	}
+	m := v.(map[string]any)
+	_, ok := p.operations[m["operation"].(string)]
+	if !ok {
+		return nil, ErrProtocol
+	}
+	return m, nil
+}
+
 func (p *Protocol) ValidateRequest(raw []byte) (map[string]any, error) {
-	value, err := p.catalog.Validate(EnginePipeRequestSchema, raw, OrdinaryLimit)
+	value, err := p.catalog.Validate(EngineRequestEnvelopeSchema, raw, OrdinaryLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -130,11 +145,12 @@ func (p *Protocol) ValidateRequest(raw []byte) (map[string]any, error) {
 		return nil, ErrCatalog
 	}
 	if len(raw) > op.MaxRequestBytes {
-		return nil, ErrLimit
+		return nil, &ArgumentError{Reason: "request_too_large", Correction: "Reduce request size; publish large input or assessment content as an artifact and use its receipt.", Cause: ErrLimit}
 	}
 	// Validate against the installed registry as well as the generated envelope.
 	if err = p.catalog.schemas[op.RequestSchema].Validate(message["body"]); err != nil {
-		return nil, ErrSchema
+		path, _ := SafeArgumentPath(conclusionSchemaPath(err))
+		return nil, &ArgumentError{Reason: "invalid_structure", FieldPath: path, Correction: "Supply the required fields with the documented types and no unknown fields.", Cause: ErrSchema}
 	}
 	body := message["body"].(map[string]any)
 	valid := true
@@ -144,7 +160,9 @@ func (p *Protocol) ValidateRequest(raw []byte) (map[string]any, error) {
 	case "engine.record_append":
 		valid = recordOK(body)
 	case "engine.attempt_execute":
-		valid = same(body["request_id"], message["operation_id"])
+		if err := p.checkSimpleAttempt(body); err != nil {
+			return nil, err
+		}
 	case "engine.artifact_begin":
 		artifact := body["artifact"].(map[string]any)
 		if body["purpose"] == "conclusion" {
@@ -165,7 +183,7 @@ func (p *Protocol) ValidateRequest(raw []byte) (map[string]any, error) {
 // ValidateResponse binds a response to its original request, including the old
 // revision on a restore response. Request/response sequences are independent.
 func (p *Protocol) ValidateResponse(request, response []byte) (map[string]any, error) {
-	req, err := p.ValidateRequest(request)
+	req, err := p.ValidateRequestEnvelope(request)
 	if err != nil {
 		return nil, err
 	}
@@ -181,6 +199,9 @@ func (p *Protocol) ValidateResponse(request, response []byte) (map[string]any, e
 	op := p.operations[req["operation"].(string)]
 	if _, found := message["error"]; found {
 		return message, nil
+	}
+	if _, err = p.ValidateRequest(request); err != nil {
+		return nil, err
 	}
 	result := message["result"].(map[string]any)
 	body := req["body"].(map[string]any)
@@ -205,9 +226,6 @@ func (p *Protocol) ValidateResponse(request, response []byte) (map[string]any, e
 	case "engine.attempt_execute":
 		if id, ok := result["request_id"]; ok {
 			valid = same(id, req["operation_id"])
-		}
-		if id, ok := result["attempt_id"]; ok {
-			valid = valid && same(id, body["attempt_id"])
 		}
 	case "engine.injection_delete":
 		valid = same(result["attempt_receipt_id"], body["attempt_receipt_id"]) && same(result["action_id"], body["action_id"])
@@ -234,8 +252,12 @@ func (p *Protocol) ValidateResponse(request, response []byte) (map[string]any, e
 		}
 	case "engine.snapshot_list":
 		valid = listOK(body, result, req["campaign_id"])
-	case "engine.request_stop":
-		valid = same(result["conclusion_state"], body["conclusion"].(map[string]any)["state"])
+	case "engine.finish":
+		state := "committed"
+		if _, ok := body["unavailable"]; ok {
+			state = "unavailable"
+		}
+		valid = result["assessment_state"] == state
 	}
 	if !valid {
 		return nil, ErrProtocol

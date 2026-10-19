@@ -26,7 +26,7 @@ shared byte fixtures and generated schema-ID constants. The
 [ordinary protocol stage](ORDINARY_WIRE_CONTRACT.md) supplies typed envelopes for 13
 operations, their registry, spool ACK schema and stateless correlation checks.
 The [assessment contract](ASSESSMENT_CONTRACT.md) supplies typed record append,
-conclusion content and completion-chain validation.
+conclusion content and assessment normalization and finish validation.
 The [startup/manifest stage](STARTUP_MANIFEST_CONTRACT.md) supplies closed control
 messages, successful-transcript checks, bounded input/skill inventories and shared
 raw-descriptor/path validation. The [input-content stage](ENGINE_INPUT_CONTRACT.md)
@@ -138,25 +138,14 @@ For this package, require it to equal the envelope's `operation_id`.
 The envelope's `call_id` is the separate exchange correlation. This explicit rule
 avoids silently assigning two meanings to the existing nested request_id field.
 
-### 2.1 Attempt indices and execution admissions
+### 2.1 Host-owned attempt numbering
 
-The [campaign allocator rules](HARNESS_EXECUTION_RULES.md#1-campaign-wide-attempt-numbering)
-are normative. The trusted request builder assigns a new attempt index and fresh
-request/attempt IDs once for a decoded new attempt submission, before validation.
-An allocated rejected submission keeps its number; a corrected submission gets
-the next one. Undecodable/non-object arguments and undispatched calls allocate nothing.
-Exact duplicates retain identity; restores never rewind campaign numbering.
-Operator records the high-water mark independently of execution admission counts
-and sends the campaign index unchanged to Interceptor, which already accepts gaps.
-
-EngineContext includes required `attempt_index_high_watermark` (integer 0 through
-2^53−1, normally 0), derived from the host ledger and verified bound native history
-before startup. The harness seeds its allocator once and retains it across restores.
-The model-facing attempt projection excludes bookkeeping request/attempt/index
-fields; the full v1alpha2 wire request retains them. These are identities, not
-model tactical choices. The default 100-attempt ceiling counts durable execution
-admissions after validation, never the highest index; the allocator contract fixes
-rejection, failure and duplicate accounting without a new allocation RPC.
+Operator assigns attempt IDs, monotonic indices and lineage from the simple request
+and any verified parent receipt. The model and Harness MUST NOT supply these
+fields. Local rejections allocate no host attempt. Corrected host submissions use
+new operation IDs; exact duplicates reuse their saved identities and results.
+Restores never reset counters or refund admissions. The startup high-water mark is
+informational to Harness. See [simple workflow](SIMPLE_CAMPAIGN_CONTRACT.md).
 
 ## 3. Digest and duplicate rules
 
@@ -538,9 +527,10 @@ Arbitrary strings, unknown fields and generic forwarding are not dispatch paths.
 | Attempts | engine.attempt_execute; retain current v1alpha2 request/result, observation selection and native delivery semantics. |
 | Cleanup | engine.injection_delete; [closed schemas and semantics](INJECTION_CLEANUP_CONTRACT.md), one attempt-receipt/action handle, current-target deletion, confirmed absence succeeds, restore-aware duplicate behavior. |
 | Feedback | engine.observation_read; retain adopted receipt/entry/range contract and profile-limited manifest. |
-| Records | engine.record_append; closed record_kind union for hypothesis, progress, lineage, coverage and conclusion references; host supplies authoritative attribution and committed record receipt. |
+| Records | engine.record_append; closed record_kind union for hypothesis, progress, lineage and coverage; host supplies authoritative attribution and committed record receipt. |
 | State | engine.snapshot_request / snapshot_list / snapshot_inspect / restore_request; preserve campaign/description metadata, source/checkpoint handles, discovery and live-harness restore. |
-| Completion | engine.request_stop; payload and acknowledgement below. |
+| Completion | engine.finish; one assessment submission and acknowledgement below. |
+| Local diagnostics | engine.diagnostic_report; bounded Harness-local validation and stopping facts, never a model tool. |
 
 Cleanup request/result v1alpha1 schemas are package members. Bind their operation
 to current campaign policy, the ordinary lane and a 30-second ceiling (also bounded
@@ -657,7 +647,7 @@ Examples and acceptance cases:
 |---|---|
 | `[restore_request, attempt_execute]`, restore succeeds | Return actual restore result and correlated `not_executed` attempt result; ask the model for its next action at the new revision. No attempt dispatch/registration. |
 | `[record_append, restore_request, observation_read, injection_delete]`, restore succeeds | Keep the record result, return restore result, skip both later calls (including the read). |
-| `[restore_request, restore_request, request_stop]`, first restore succeeds | Exactly one transition; skip the later restore and stop. Campaign remains admitted unless independently stopped. |
+| `[restore_request, restore_request, finish]`, first restore succeeds | Exactly one transition; skip the later restore and stop. Campaign remains admitted unless independently stopped. |
 | `[restore_request, attempt_execute]`, known preflight rejection | Return rejection; validate and dispatch the attempt at the unchanged revision if otherwise permitted. |
 | Restore fails/is uncertain, or terminate races with success | No later tool or model generation; preserve known results and undispatched status for reporting. |
 
@@ -669,109 +659,31 @@ Structural vectors are in `fixtures/restore-batch-not-executed.json`; state-mach
 and dispatcher tests are implemented. Complete process and real-provider
 qualification remain outstanding.
 
-## 10. Structured conclusion
+## 10. Assessment and finish
 
-Publish `operator.dev/engine-conclusion/v1alpha2`, retaining `status` values
-completed/partial/failed and claim interpretations supported/inconclusive/
-not-observed. Completed describes the conclusion, not successful exploitation.
+The authoritative interface and semantic defaults are defined in
+[SIMPLE_CAMPAIGN_CONTRACT.md](SIMPLE_CAMPAIGN_CONTRACT.md). `engine.finish` accepts
+one bounded assessment draft, a committed assessment-artifact receipt, or an
+explicit unavailable reason. Operator generates binding, validates references,
+retains the assessment and starts owned finalization. Hypotheses may be defined
+locally without prior records. Omitted optional collections resolve to empty arrays;
+objective outcomes and evidence are never invented.
 
-Required groups:
+## 11. Finish acknowledgement and local diagnostics
 
-- `binding`: campaign_id, launch_id, final run_revision and exact launch input,
-  prompt, skill-set, release and contract identities. Host validates these copies.
-- `finish_reason`: objectives-addressed, no-useful-next-experiment,
-  capabilities-exhausted, budget-limit, context-limit or harness-error.
-- `summary`: bounded guest assessment, not an authoritative host outcome.
-- `objectives` and `hypotheses`: IDs, scenario/exploratory lineage, outcomes and
-  references to committed attempt/decision/coverage records.
-- `claims`: statement, interpretation, assurance and exact attempt/observation
-  references, including byte ranges when only an excerpt supports the claim.
-- `coverage`: tested and untested objectives/alternatives, with reasons.
-- `uncertainties`: unresolved effects, unavailable/truncated feedback, unread
-  inputs, summaries/omitted ranges and remaining evidence gaps.
-- `record_refs`: committed related strategy/lineage/coverage records.
+The acknowledgement MUST report acceptance, closed admission, committed/unavailable
+assessment state, five-second exit requirement and pending finalization. It MUST
+NOT imply successful cleanup. Repeated delivery returns the original receipt.
+The ordinary finish path does not require artifact publication or record append.
+Optional large assessment artifacts and bounded diagnostic reports share the
+existing finalization limits: 16 requests, 2 MiB and 30 seconds, bounded by the
+campaign deadline. Invalid assessments remain correctable before acceptance.
+Deadlines, unknown effects and loss of transport always retain independent cleanup.
 
-Initial bound: 1 MiB encoded conclusion, 8,192-character summary, 100 claims,
-100 objective/hypothesis entries each, 100 gap entries and 256 record references;
-arrays/text are additionally bounded by total encoded size. Claim field/reference ceilings are fixed by the
-[assessment contract](ASSESSMENT_CONTRACT.md). Detailed exploration history goes in
-previously committed records; overflow is explicit partial coverage, not silent
-loss. Validate known references/ranges and campaign membership, not 'truth' of
-model interpretations. No guest claim changes host execution/evidence status.
-
-Conclusion-local hypotheses MUST be admitted without prior hypothesis records.
-Definitions apply throughout the conclusion independent of array order; nonlocal
-references must resolve in campaign history. Duplicate IDs, self-parenting and
-parent cycles remain invalid. Record and stop validation use the same rules.
-The host MUST preserve actionable rejection facts as specified in
-[assessment rejection diagnostics](ASSESSMENT_CONTRACT.md#rejection-diagnostics),
-using the existing wire error message and instance path.
-
-Publish the conclusion through existing artifact operations, then append a
-`conclusion` record containing its committed artifact receipt and finish reason.
-The host verifies the conclusion and returns a record receipt before normal stop.
-
-## 11. Exact graceful stop request and acknowledgement
-
-Normal engine.request_stop body:
-
-```json
-{
-  "finish_reason": "objectives-addressed",
-  "conclusion": {
-    "state": "committed",
-    "artifact_receipt": "artifact-conclusion-01",
-    "record_receipt": "record-conclusion-01"
-  }
-}
-```
-
-The committed references and finish reason must agree. If the live harness cannot
-produce a conclusion, permit the explicit alternative
-`{"state":"unavailable","reason":"context-limit"}` (bounded enum: context-limit,
-budget-limit, local-error, serialization-failed). This preserves a truthful partial
-finish without fabricating receipts. It does not waive host hard deadlines.
-
-After durably accepting the finish request and closing new execution admission,
-Operator returns this ordinary correlated result:
-
-```json
-{
-  "status": "accepted",
-  "stop_receipt": "stop-01",
-  "execution_admission": "closed",
-  "conclusion_state": "committed",
-  "exit_required": true,
-  "exit_within_ms": 5000,
-  "finalization_status": "pending"
-}
-```
-
-This means the host accepted finishing and the guest must exit. It does NOT mean
-that native target cleanup/export, assessment, report generation or host-observed
-container exit has completed. Those are host campaign-status facts. The harness
-submits no further ordinary work after acceptance and exits within the deadline;
-Operator still verifies task exit and enforces teardown independently.
-
-Exact duplicates return the saved stop receipt without repeating effects; changed
-finish content under the same operation ID conflicts. The harness does not resend
-after a lost/ambiguous acknowledgement or reconnect; the host's persisted record
-remains authoritative. Exit zero alone never proves a successful campaign.
-
-Immediate/fatal host stop uses control kind `terminate` with a bounded reason,
-stop receipt when persistence is possible, and exit requirement. Delivery is best
-effort: the independent kill path does not wait for any guest acknowledgement,
-conclusion or reporting. Final target stop still obeys Operator's existing opt-in
-policy; engine.request_stop cannot change it.
-
-Reserve up to 1 MiB of the existing artifact budget and one conclusion slot for
-graceful finalization. Begin normal finalization with up to 30 seconds reserved
-inside the existing campaign hard deadline. Finalization admission permits only
-conclusion artifact/record/stop operations, not another model/target experiment.
-If time/resources are already exhausted or failure requires immediate stop, retain
-partial host records and terminate; do not extend the campaign to get a conclusion. Expected EOF and process exit following accepted
-graceful stop are normal teardown, not a new protocol failure; unexpected EOF
-while execution is admitted remains terminal failure.
+`engine.diagnostic_report` retains bounded Harness-local rejection and stopping
+facts, attributed to Harness. Host evidence separately establishes dispatch and
+cleanup. Operation errors may carry the shared workflow-diagnostic structure.
+Primary failures MUST survive generic worker shutdown and cleanup errors.
 
 ## 12. Go/Python conformance is part of publication
 
@@ -814,12 +726,11 @@ Required vectors cover:
   terminal failure and terminate arriving before the restore response; successful
   restore batch termination, correlated not-executed results, next-model-turn
   context, nonterminal preflight continuation and duplicate/stop precedence (9.1);
-- conclusion structure/references, explicit missing conclusion, stop accepted,
-  duplicate stop, lost acknowledgement and independent terminal kill.
+- assessment structure/references, explicit unavailable assessment, finish accepted,
+  duplicate finish, lost acknowledgement and independent terminal kill.
 
 A small Go fake broker and Python fake harness must exchange messages over both
-real named FIFOs and regular-file spools for startup → attempt/result → feedback read → restore → conclusion
-commit → stop. These tests qualify shared syntax/state semantics, not production
+real named FIFOs and regular-file spools for startup → attempt/result → feedback read → restore → finish. These tests qualify shared syntax/state semantics, not production
 containment, real-provider behavior or Operator runtime implementation.
 
 ## 13. Publication and implementation status

@@ -118,10 +118,10 @@ the additional consistency rules described in the ordinary wire contract. The
 lower-level catalog API performs structural validation only.
 
 Use `ValidateConclusion` / `validate_conclusion` for conclusion content and
-`ValidateCompletion` / `validate_completion` for a retained artifact/record/stop
-chain with the host's expected binding. See [the assessment contract](../schemas/ASSESSMENT_CONTRACT.md)
-for fields, byte limits and the caller's required trusted receipt lookups. These
-helpers do not persist records or accept stop.
+`NormalizeAssessment` / `normalize_assessment` for documented defaults and
+host-generated conclusion binding. `engine.finish` validates and retains one
+assessment submission; no artifact/record/stop chain is required. Shared
+simple-workflow fixtures define direct inputs, limits and optional sections.
 
 Use `ValidateControl` / `validate_control` for individual control messages,
 `ValidateStartup` / `validate_startup` for a successful five-message transcript,

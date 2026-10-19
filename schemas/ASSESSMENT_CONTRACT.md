@@ -17,7 +17,6 @@ qualification remains a separate release gate.
 | `progress` | Summary, objective/hypothesis/attempt references, observation references and record references; optional decision and typed assessment. |
 | `lineage` | Hypothesis ID, committed attempt receipt, mutation summary and record references; optional parent attempt receipt. |
 | `coverage` | Coverage entries and record references. |
-| `conclusion` | Committed `artifact_receipt` and `finish_reason`. |
 
 Provenance is `scenario` with a required `scenario_id`, or `exploratory` without
 that field. Either can name a parent hypothesis. Self-parent hypotheses and attempt
@@ -47,20 +46,17 @@ duplicate retains its original attribution; earlier worker/revision attribution
 never denies same-campaign access. The validator checks campaign/launch/kind
 correlation; the ledger distinguishes new records from saved duplicates.
 
-Only conclusion records are eligible during finalization. The host resolves the
-artifact, checks purpose/content/binding/finish reason and then commits the record.
-The registry marks this operation `record-write`, with durable receipt policy and
-`conclusion-only` finalization. `RECORD_REFERENCE_INVALID` covers invalid external
-record/evidence references before effects; `CONCLUSION_INVALID` covers invalid
-conclusion content. Uncertain persistence remains a terminal unknown outcome.
+Historical records are optional and remain exploration operations. Invalid
+references use RECORD_REFERENCE_INVALID. Finish draft validation uses
+CONCLUSION_INVALID with an actionable bounded diagnostic.
 
 ## Structured conclusion
 
-[EngineConclusion](engine-conclusion.schema.json) uses
-`operator.dev/engine-conclusion/v1alpha2` and `kind: EngineConclusion`. It requires
-binding, status, finish reason, summary, objectives, hypotheses, claims, coverage,
-uncertainties and record references. The [example](fixtures/conclusion-example.json)
-uses test identities, not real evidence.
+The caller submits [Assessment](assessment.schema.json), requiring only summary
+and objectives, through `engine.finish`. Operator resolves optional empty
+collections, defaults status to partial, and adds its current binding and supplied
+finish reason. The retained [EngineConclusion](engine-conclusion.schema.json)
+contains the fully resolved form. It is host-generated, not a caller obligation.
 
 Status is `completed`, `partial` or `failed`. Completed describes the assessment,
 not successful exploitation, exhaustive testing or verified claims. A complete
@@ -138,57 +134,10 @@ hypothesis, claim or gap IDs are rejected within their respective collections.
 History overflow requires a `coverage-limit` gap and partial (or failed) status,
 with detailed history retained through committed records.
 
-## Completion-chain validation
+## Completion
 
-The finish sequence remains artifact commit → conclusion record → stop request
-with matching finish reason and both receipts → closed-admission/required-exit ACK.
-
-Go `ValidateConclusion` and Python `validate_conclusion` check shape, byte limits,
-range arithmetic and internal references. They do not resolve external IDs or
-validate the truth of evidence claims.
-
-Go `ValidateCompletion(CompletionInput)` and Python `validate_completion(...)`
-check exact conclusion bytes against the host's expected binding, saved artifact
-commit response, conclusion-record request/response and stop request. Checks cover
-raw SHA-256/byte count, media/purpose, receipt links, campaign/launch/final revision
-and finish reasons. An artifact's earlier revision attribution alone does not deny
-access; the conclusion itself must match the expected final revision.
-
-Callers must resolve inputs from trusted launch and campaign receipt records.
-Guest-supplied messages that agree with each other are not proof of commitment.
-Receipt lookup, visibility, stored range bounds, claimed canonicalization,
-durable writes, duplicates, admission and shutdown remain runtime requirements.
-The helper checks the chain before stop acceptance and neither saves stop nor
-claims cleanup/reporting is finished.
-
-An unavailable-conclusion stop still uses ordinary validation and host stop policy;
-it never fabricates a committed chain or extends the hard deadline.
-
-## Rejection diagnostics
-
-For conclusion record and committed stop rejections, the host MUST retain a
-bounded diagnostic with operation ID, validation stage, reason, JSON Pointer field
-path and relevant identifier when available. Distinct rules MUST identify
-structure, binding/finish mismatch, artifact and record receipts, hypothesis/record
-references, attempt/observation references, and evidence availability/ranges.
-
-The existing `CONCLUSION_INVALID` error MUST carry a safe actionable `message`
-and, when available, the existing `instance_path`. Effect and disposition remain
-`none` / `correct-and-resubmit` for definite invalid submissions; storage failures
-retain terminal handling. This adds no wire fields or new operation. Harnesses
-MUST accept the existing error shape and MUST NOT fabricate hypothesis history to
-work around a rejection.
-
-Operator MUST journal each rejection and preserve the first rejection through
-later generic execution/cleanup failure in terminal and failed-start receipts.
-Inspection, report/export and foreground/supervised output MUST expose that cause.
-A corrected conclusion MAY still complete successfully; rejection history alone
-MUST NOT force execution failure. Older records without diagnostics remain valid.
-
-Diagnostics MUST contain host-authored validation facts, never artifact prose,
-prompts or credentials. Identifiers are limited to 128 ASCII identifier characters;
-credential-like identifiers MUST be omitted. Field paths are limited to 160
-characters and known schema fields/indexes. Omitted fields MUST state their reason
-(`size_limit`, `invalid_identifier`, `credential_like`, or
-`unsafe_or_oversized` for paths). The derived wire explanation is at most 512
-bytes. The original evidence remains governed by its existing visibility policy.
+Use the single finish operation and duplicate/finalization rules in
+[SIMPLE_CAMPAIGN_CONTRACT.md](SIMPLE_CAMPAIGN_CONTRACT.md). Large assessment drafts
+may use committed conclusion-purpose artifacts. No conclusion registration or
+caller-created binding is accepted. Host retention precedes acknowledgement and
+cleanup completion is reported separately.

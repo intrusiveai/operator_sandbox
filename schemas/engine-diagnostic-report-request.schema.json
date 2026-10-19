@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:engine-diagnostic-report-request:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "tool_name": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "tool_call_id": {
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+    },
+    "diagnostic": {
+      "allOf": [
+        {
+          "$ref": "urn:operator:schema:workflow-diagnostic:v1alpha1"
+        },
+        {
+          "properties": {
+            "source": {
+              "const": "harness-local"
+            }
+          }
+        }
+      ]
+    },
+    "stopping": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "condition": {
+          "enum": [
+            "invalid-call-limit",
+            "tool-call-limit",
+            "model-turn-limit",
+            "wall-time-limit",
+            "context-limit",
+            "budget-limit",
+            "local-error"
+          ]
+        },
+        "observed_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "configured_limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "condition",
+        "observed_count",
+        "configured_limit"
+      ]
+    }
+  },
+  "required": [
+    "diagnostic"
+  ]
+}

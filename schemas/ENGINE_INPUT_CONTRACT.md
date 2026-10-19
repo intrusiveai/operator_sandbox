@@ -16,7 +16,7 @@ at `/run/operator/input/scenario-bundle.json`. Context fields are:
 | Field | Meaning |
 |---|---|
 | `campaign_id`, `launch_id`, `run_revision` | Initial launch identity; must match startup. |
-| `attempt_index_high_watermark` | Host-ledger campaign allocator seed, 0 through 2^53−1. |
+| `attempt_index_high_watermark` | Host-ledger informational submission high-water mark, 0 through 2^53−1. |
 | `contract`, `release` | Exact package/catalog/registry and image/release pins echoed in bootstrap. |
 | `scenario_bundle` | Complete input-manifest entry for the separate ScenarioBundle file. |
 | `references` | Complete manifest entries for included reference files, sorted by relative path. |
@@ -91,7 +91,7 @@ The immutable remaining allowances describe input preparation time. Admission ma
 narrow them as startup consumes campaign time or resources; it must not increase
 them. Campaign/harness ceilings and advertised operations must match exactly.
 Healthy restores update the active revision through the correlated restore result;
-they do not rewrite this context, reset its allocator seed or reload the prompt.
+they do not rewrite this context, reset host allocation or reload the prompt.
 
 ## Prompt provenance and composition
 

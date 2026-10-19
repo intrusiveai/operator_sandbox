@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:execution-input:v1alpha1",
+  "description": "Exactly one direct encoding or a committed artifact receipt. Direct decoded bytes are limited to 32768 and JSON nesting to 16. Publish larger input as an artifact. The host computes all identities.",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "encoding": {
+          "const": "json"
+        },
+        "value": {}
+      },
+      "required": [
+        "encoding",
+        "value"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "encoding": {
+          "const": "utf8"
+        },
+        "text": {
+          "type": "string"
+        },
+        "media_type": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/media_type"
+        }
+      },
+      "required": [
+        "encoding",
+        "text"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "encoding": {
+          "const": "base64"
+        },
+        "data": {
+          "type": "string"
+        },
+        "media_type": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/media_type"
+        }
+      },
+      "required": [
+        "encoding",
+        "data",
+        "media_type"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "artifact_receipt": {
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+        }
+      },
+      "required": [
+        "artifact_receipt"
+      ]
+    }
+  ]
+}

@@ -7120,7 +7120,7 @@
         "action": "charge",
         "expected": {},
         "error": "",
-        "kind": "conclusion-record",
+        "kind": "diagnostic",
         "bytes": 0,
         "now": 100
       },
@@ -7128,7 +7128,7 @@
         "action": "charge",
         "expected": {},
         "error": "",
-        "kind": "conclusion-record",
+        "kind": "diagnostic",
         "bytes": 0,
         "now": 101
       },
@@ -7136,7 +7136,7 @@
         "action": "charge",
         "expected": {},
         "error": "",
-        "kind": "conclusion-record",
+        "kind": "diagnostic",
         "bytes": 0,
         "now": 102
       },
@@ -7144,7 +7144,7 @@
         "action": "charge",
         "expected": {},
         "error": "",
-        "kind": "conclusion-record",
+        "kind": "diagnostic",
         "bytes": 0,
         "now": 103
       },
@@ -7152,7 +7152,7 @@
         "action": "charge",
         "expected": {},
         "error": "",
-        "kind": "conclusion-record",
+        "kind": "diagnostic",
         "bytes": 0,
         "now": 104
       },
@@ -7160,7 +7160,7 @@
         "action": "charge",
         "expected": {},
         "error": "",
-        "kind": "conclusion-record",
+        "kind": "diagnostic",
         "bytes": 0,
         "now": 105
       },
@@ -7168,7 +7168,7 @@
         "action": "charge",
         "expected": {},
         "error": "",
-        "kind": "conclusion-record",
+        "kind": "diagnostic",
         "bytes": 0,
         "now": 106
       },
@@ -7176,7 +7176,7 @@
         "action": "charge",
         "expected": {},
         "error": "",
-        "kind": "conclusion-record",
+        "kind": "diagnostic",
         "bytes": 0,
         "now": 107
       },
@@ -7184,7 +7184,7 @@
         "action": "charge",
         "expected": {},
         "error": "",
-        "kind": "conclusion-record",
+        "kind": "diagnostic",
         "bytes": 0,
         "now": 108
       },
@@ -7192,7 +7192,7 @@
         "action": "charge",
         "expected": {},
         "error": "",
-        "kind": "conclusion-record",
+        "kind": "diagnostic",
         "bytes": 0,
         "now": 109
       },
@@ -7200,7 +7200,7 @@
         "action": "charge",
         "expected": {},
         "error": "",
-        "kind": "conclusion-record",
+        "kind": "diagnostic",
         "bytes": 0,
         "now": 110
       },
@@ -7208,7 +7208,7 @@
         "action": "charge",
         "expected": {},
         "error": "",
-        "kind": "conclusion-record",
+        "kind": "diagnostic",
         "bytes": 0,
         "now": 111
       },
@@ -7216,7 +7216,7 @@
         "action": "charge",
         "expected": {},
         "error": "",
-        "kind": "conclusion-record",
+        "kind": "diagnostic",
         "bytes": 0,
         "now": 112
       },
@@ -7224,7 +7224,7 @@
         "action": "charge",
         "expected": {},
         "error": "",
-        "kind": "conclusion-record",
+        "kind": "diagnostic",
         "bytes": 0,
         "now": 113
       },
@@ -7232,7 +7232,7 @@
         "action": "charge",
         "expected": {},
         "error": "",
-        "kind": "conclusion-record",
+        "kind": "diagnostic",
         "bytes": 0,
         "now": 114
       },
@@ -7240,7 +7240,7 @@
         "action": "charge",
         "expected": {},
         "error": "",
-        "kind": "conclusion-record",
+        "kind": "diagnostic",
         "bytes": 0,
         "now": 115
       },
@@ -7248,7 +7248,7 @@
         "action": "charge",
         "expected": {},
         "error": "stopped",
-        "kind": "stop",
+        "kind": "finish",
         "bytes": 0,
         "now": 116,
         "final_expected": {
@@ -7296,7 +7296,7 @@
         "action": "charge",
         "expected": {},
         "error": "",
-        "kind": "conclusion-artifact",
+        "kind": "assessment-artifact",
         "bytes": 2097152,
         "now": 100
       },
@@ -7304,7 +7304,7 @@
         "action": "charge",
         "expected": {},
         "error": "",
-        "kind": "conclusion-record",
+        "kind": "diagnostic",
         "bytes": 0,
         "now": 101
       },
@@ -7312,7 +7312,7 @@
         "action": "charge",
         "expected": {},
         "error": "",
-        "kind": "stop",
+        "kind": "finish",
         "bytes": 0,
         "now": 102,
         "final_expected": {
@@ -7325,7 +7325,7 @@
         "action": "charge",
         "expected": {},
         "error": "stopped",
-        "kind": "conclusion-artifact",
+        "kind": "assessment-artifact",
         "bytes": 1,
         "now": 103,
         "final_expected": {
@@ -7372,7 +7372,7 @@
         "action": "charge",
         "expected": {},
         "error": "stopped",
-        "kind": "conclusion-artifact",
+        "kind": "assessment-artifact",
         "bytes": 5,
         "now": 100,
         "final_expected": {
@@ -7420,7 +7420,7 @@
         "action": "charge",
         "expected": {},
         "error": "",
-        "kind": "stop",
+        "kind": "finish",
         "bytes": 0,
         "now": 100,
         "final_expected": {
@@ -7468,7 +7468,7 @@
         "action": "charge",
         "expected": {},
         "error": "",
-        "kind": "conclusion-record",
+        "kind": "diagnostic",
         "bytes": 0,
         "now": 30099
       },
@@ -7527,7 +7527,7 @@
         "action": "charge",
         "expected": {},
         "error": "stopped",
-        "kind": "stop",
+        "kind": "finish",
         "bytes": 0,
         "now": 120,
         "final_expected": {
@@ -7574,7 +7574,7 @@
         "action": "charge",
         "expected": {},
         "error": "stopped",
-        "kind": "stop",
+        "kind": "finish",
         "bytes": 0,
         "now": 100
       }
@@ -7648,7 +7648,7 @@
         "action": "charge",
         "expected": {},
         "error": "protocol",
-        "kind": "stop",
+        "kind": "diagnostic",
         "bytes": 1,
         "now": 200
       }
@@ -7702,7 +7702,7 @@
         "action": "charge",
         "expected": {},
         "error": "stopped",
-        "kind": "stop",
+        "kind": "finish",
         "bytes": 0,
         "now": 100
       },

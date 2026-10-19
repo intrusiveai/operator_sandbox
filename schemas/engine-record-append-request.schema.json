@@ -309,35 +309,6 @@
         "record_kind",
         "record"
       ]
-    },
-    {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "record_kind": {
-          "const": "conclusion"
-        },
-        "record": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "artifact_receipt": {
-              "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
-            },
-            "finish_reason": {
-              "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/finish_reason"
-            }
-          },
-          "required": [
-            "artifact_receipt",
-            "finish_reason"
-          ]
-        }
-      },
-      "required": [
-        "record_kind",
-        "record"
-      ]
     }
   ]
 }

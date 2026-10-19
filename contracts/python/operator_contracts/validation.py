@@ -13,8 +13,23 @@ CONTROL_LIMIT = 64 << 10
 MAX_DEPTH = 32
 MAX_SAFE_INTEGER = (1 << 53) - 1
 
+SAFE_PATH_FIELDS = ' name arguments input injection_input value encoding text data media_type artifact_receipt operation_id scenario_id parent_attempt_receipt_id caller_principal_id pre_actions action_id action_type parameters surface mode scope selector placement operation pointer retain_injections observation_selection rationale strategy_provenance_ref technique_refs finish_reason assessment unavailable reason status summary objectives objective_id outcome hypotheses hypothesis_id objective_refs provenance origin parent_hypothesis_id claims claim_id interpretation assurance confidence attempt_receipt_refs attempt_receipt_id observation_refs entry_id range offset length uncertainty_refs coverage alternative uncertainties gap_id description input_refs record_refs record_kind record payload carrier digest generation thread_id request_id attempt_id attempt_index binding api_version kind artifact record_receipt tool_name call_ordinal method path predicates equals contains max_bytes receipt_id reference_id source_session checkpoint_id label continuation limit '
+
 class ContractError(ValueError):
-    """Bounded error; never contains submitted values, paths or native diagnostics."""
+    """Bounded rule details; never copies validator messages or submitted values."""
+    def __init__(self, message, *, reason="invalid_arguments", field_path="", correction=""):
+        super().__init__(message)
+        self.reason = reason
+        self.field_path = safe_argument_path(field_path)
+        self.correction = correction
+
+
+def safe_argument_path(path):
+    if len(path)>256 or path and not path.startswith('/'): return ''
+    allowed = set(SAFE_PATH_FIELDS.split())
+    return path if all(part in allowed or part.isascii() and part.isdigit() and len(part)<=4
+                       for part in path.split('/')[1:]) else ''
+
 
 
 def decode(raw: bytes, maximum: int = ORDINARY_LIMIT):
@@ -34,12 +49,18 @@ def decode(raw: bytes, maximum: int = ORDINARY_LIMIT):
                 if depth > MAX_DEPTH: raise ContractError("contract encoding limit exceeded")
             elif char in "]}": depth -= 1
 
-        def pairs(items):
-            result = {}
-            for key, value in items:
-                if key in result: raise ContractError("invalid contract JSON")
-                result[key] = value
-            return result
+        class Pairs(list): pass
+        def pairs(items): return Pairs(items)
+        def objects(value, path=""):
+            if isinstance(value, Pairs):
+                result = {}
+                for key, child in value:
+                    if key in result:
+                        raise ContractError("duplicate_json_key: Supply each JSON key once; duplicate keys are rejected before decoding can discard them.", reason="duplicate_json_key", field_path=path+"/"+key, correction="Supply each JSON key once; duplicate keys are rejected before decoding can discard them.")
+                    result[key] = objects(child,path+"/"+key)
+                return result
+            if isinstance(value,list): return [objects(child,path+"/"+str(i)) for i,child in enumerate(value)]
+            return value
 
         def number(text):
             value = float(text)
@@ -59,6 +80,8 @@ def decode(raw: bytes, maximum: int = ORDINARY_LIMIT):
             raise ContractError("invalid contract JSON")
 
         value = json.loads(text, object_pairs_hook=pairs, parse_int=number, parse_float=number, parse_constant=bad_constant)
+
+        value = objects(value)
 
         def unicode_check(item):
             if isinstance(item, str): item.encode("utf-8", errors="strict")
@@ -138,6 +161,13 @@ class Catalog:
         if schema_id not in self._validators: raise ContractError("invalid installed contract catalog")
         try:
             self._validators[schema_id].validate(value)
-        except (ValidationError, Unresolvable):
-            raise ContractError("contract schema validation failed") from None
+        except ValidationError as error:
+            while error.context: error=error.context[0]
+            parts=[str(x) for x in error.absolute_path]
+            if error.validator == 'required' and isinstance(error.instance,dict):
+                missing=sorted(set(error.validator_value)-set(error.instance))
+                if missing: parts.append(missing[0])
+            raise ContractError("invalid_structure: Supply the required fields with the documented types and no unknown fields.",reason="invalid_structure",field_path='/'+ '/'.join(parts) if parts else '',correction="Supply the required fields with the documented types and no unknown fields.") from None
+        except Unresolvable:
+            raise ContractError("invalid installed contract catalog") from None
         return value
