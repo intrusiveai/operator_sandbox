@@ -65,6 +65,8 @@ type Service struct {
 	gate                 chan struct{}
 	admitted             atomic.Bool
 	stopAccepted         atomic.Bool
+	assessmentCommitted  atomic.Bool
+	exitDeadline         atomic.Int64
 	serving              atomic.Bool
 	operations           map[string]bool
 	live                 atomic.Pointer[preparation.Target]
@@ -676,3 +678,13 @@ func (s *Service) ModelFailure() *modelprovider.Diagnostic {
 	}
 	return nil
 }
+
+// ExitDeadline is the original accepted-finish deadline, never an extension.
+func (s *Service) ExitDeadline() time.Time {
+	if !s.StopAccepted() {
+		return time.Time{}
+	}
+	return time.Unix(0, s.exitDeadline.Load())
+}
+
+func (s *Service) AssessmentCommitted() bool { return s.assessmentCommitted.Load() }

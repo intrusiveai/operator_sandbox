@@ -211,11 +211,13 @@ func (s *Service) handleCompletion(ctx context.Context, raw []byte, seq int64) (
 	if q.Operation == "engine.finish" && reply.Error == nil {
 		s.completion.stopID = q.ID
 		s.completion.assessmentState, _ = reply.Result.(map[string]any)["assessment_state"].(string)
-		s.stopAccepted.Store(true)
 		until := time.Now().Add(5 * time.Second)
 		if s.deadline.Before(until) {
 			until = s.deadline
 		}
+		s.exitDeadline.Store(until.UnixNano())
+		s.assessmentCommitted.Store(s.completion.assessmentState == "committed")
+		s.stopAccepted.Store(true)
 		s.armCompletionDeadline(until)
 	}
 	return response, nil

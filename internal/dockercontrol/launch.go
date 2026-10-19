@@ -107,22 +107,6 @@ func sameBinding(a, b campaign.DockerBinding) bool {
 	return true
 }
 
-// Completed verifies an exact stopped guest exited zero before removal. A stop
-// request or event-stream loss alone never establishes successful completion.
-func (c *Client) Completed(ctx context.Context, b campaign.DockerBinding) bool {
-	if c == nil || c.run == nil || b.Validate() != nil || ctx.Err() != nil {
-		return false
-	}
-	ctx, cancel := context.WithTimeout(ctx, ConfirmationTimeout)
-	defer cancel()
-	item, code := c.inspect(ctx, b)
-	if code != "" || item.Status != "exited" || item.Running || item.Paused || item.Restarting || item.RestartPolicy != "no" || item.AutoRemove {
-		return false
-	}
-	raw, err := c.run(ctx, b.Endpoint, "container", "inspect", "--format", "{{.State.ExitCode}}", b.DockerContainerID)
-	return err == nil && strings.TrimSpace(string(raw)) == "0" && c.daemon(ctx, b) == "" && ctx.Err() == nil
-}
-
 // RemoveStopped removes only an exact, independently confirmed inactive container.
 // It never force-removes execution or deletes volumes. Missing/failed replies are
 // unknown; a later caller must not substitute a container selected by name.

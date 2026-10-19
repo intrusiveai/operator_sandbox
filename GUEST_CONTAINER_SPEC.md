@@ -171,7 +171,7 @@ Guest bootstrap opens the following paths and assigns their descriptors locally:
 | FD | Fixed path / guest direction | Purpose |
 |---|---|---|
 | 0 | `/dev/null`, read-only | No interactive command stream. |
-| 1, 2 | Docker bounded stdout/stderr capture | Diagnostics only, never dispatch. |
+| 1, 2 | Docker bounded local log capture (1 MiB, one file; retained stderr ≤8 KiB) | Diagnostics only, never dispatch. |
 | 3 | `/run/operator/ipc/ordinary-in`, read-only | Host ordinary responses. |
 | 4 | `/run/operator/ipc/ordinary-out`, write-only | Guest ordinary requests. |
 | 5 | `/run/operator/ipc/control-in`, read-only | Host startup/control. |

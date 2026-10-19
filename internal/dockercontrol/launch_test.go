@@ -280,7 +280,11 @@ func TestLaunchPolicyMountsAndSyscalls(t *testing.T) {
 func TestDockerEventsNeverReconnectOrIgnoreExit(t *testing.T) {
 	id := strings.Repeat("b", 64)
 	for _, stream := range []string{"", `{"id":"wrong","action":"start"}`, `{"id":"` + id + `","action":"die"}`, `{"id":"` + id + `","action":"start"}` + "\n", strings.Repeat("x", outputLimit+1)} {
-		if err := readEvents(context.Background(), strings.NewReader(stream), id); !errors.Is(err, ErrEvents) {
+		want := ErrEvents
+		if strings.Contains(stream, `"action":"die"`) {
+			want = ErrExited
+		}
+		if err := readEvents(context.Background(), strings.NewReader(stream), id); !errors.Is(err, want) {
 			t.Fatal(err)
 		}
 	}

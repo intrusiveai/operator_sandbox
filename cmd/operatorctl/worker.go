@@ -57,6 +57,13 @@ func printWorkerFailure(w io.Writer, code string, d *hostrun.PreparationDiagnost
 			phase = "execution"
 		}
 		fmt.Fprintf(w, "Campaign %s failed during %s (%s):\n%s\n", phase, d.Stage, code, d.Message)
+		if d.HarnessExit.Valid() {
+			if d.Stage != "Harness exit" {
+				fmt.Fprintln(w, d.HarnessExit.Summary())
+			}
+			fmt.Fprintln(w, "Worker termination cause:", d.HarnessExit.WorkerCause)
+			fmt.Fprintln(w, "Details:", d.HarnessExit.Details)
+		}
 		if d.Model.Valid() {
 			fmt.Fprintln(w, "Operation:", d.Model.OperationID)
 			if d.Model.Model != "" {

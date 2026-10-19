@@ -16,6 +16,8 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 )
 
+var ErrExited = errors.New("Docker reported container exit")
+
 var ErrEvents = errors.New("Docker event stream lost or target execution interrupted")
 
 // WatchEvents is a single subscription, never reconnected. since precedes create,
@@ -62,6 +64,8 @@ func readEvents(ctx context.Context, r io.Reader, id string) error {
 		// Only the expected create/start lifecycle is benign. Exec, pause, kill,
 		// rename, removal and resource changes all invalidate the launch assumptions.
 		switch action {
+		case "die":
+			return ErrExited
 		case "create", "start":
 		default:
 			return ErrEvents

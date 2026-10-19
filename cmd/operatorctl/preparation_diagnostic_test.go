@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -532,6 +533,25 @@ func TestWorkflowFailureForegroundAndWorkerOutput(t *testing.T) {
 		if !strings.Contains(stderr, want) {
 			t.Fatalf("missing %q: %s", want, stderr)
 		}
+	}
+	var supervised bytes.Buffer
+	printWorkerFailure(&supervised, "execution_failed", d, "recorded")
+	if supervised.String() != stderr {
+		t.Fatal("foreground/supervised mismatch")
+	}
+	t.Log(stderr)
+}
+
+func TestHarnessExitFailureForegroundAndWorkerOutput(t *testing.T) {
+	dir, paths, deps, _ := startFixture(t)
+	h := campaign.HarnessExit{Outcome: "failed", FinishAccepted: true, AssessmentCommitted: true, ExitObserved: true, ExitCode: 1, WorkerCause: "docker_exit_notification", Cause: "RuntimeError: controlled failure", Stderr: "RuntimeError: controlled failure", StderrState: "retained", CleanupComplete: true, Details: "campaign journal event launch.exit"}
+	d := &hostrun.PreparationDiagnostic{Stage: "Harness exit", Message: h.Summary(), HarnessExit: h}
+	deps.run = func(context.Context, string, string, string) (workerjob.Result, error) {
+		return workerjob.Result{Code: "execution_failed", Diagnostic: d, CompletionRecording: "recorded"}, errors.New("fixture failure")
+	}
+	code, _, stderr := invokeStart(t, context.Background(), "start", []string{"--run", dir}, paths, deps)
+	if code != 1 || !strings.Contains(stderr, h.Summary()) || !strings.Contains(stderr, "Details: campaign journal event launch.exit") {
+		t.Fatal(code, stderr)
 	}
 	var supervised bytes.Buffer
 	printWorkerFailure(&supervised, "execution_failed", d, "recorded")
