@@ -215,7 +215,7 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 			result.WorkflowDiagnostic.HostFinalized = true
 			result.WorkflowDiagnostic.Dispatched = *result.Terminal.Dispatched
 			result.WorkflowDiagnostic.AssessmentAccepted = result.Terminal.AssessmentState == "committed"
-			result.WorkflowDiagnostic.CleanupCompleted = completedResult(result)
+			result.WorkflowDiagnostic.CleanupCompleted = cleanupCompleted(result)
 		}
 		if result.WorkflowDiagnostic != nil && (runErr != nil && !result.StopAccepted || result.WorkflowDiagnostic.Stopping != "") {
 			runErr = errors.Join(*result.WorkflowDiagnostic, runErr)
@@ -380,8 +380,13 @@ func normalStopCause(ctx context.Context, accepted bool, err error) bool {
 }
 
 func completedResult(r Result) bool {
-	return r.StopAccepted && r.Termination.Outcome.Confirmed && !r.Termination.Outcome.KillAttempted &&
-		r.Termination.Outcome.State == "exited" && r.ContainerCleanup == "removed" &&
+	return r.StopAccepted && !r.Termination.Outcome.KillAttempted && r.Termination.Outcome.State == "exited" && cleanupCompleted(r)
+}
+
+// Cleanup can complete after a failed/terminated campaign without implying a
+// successful finish or a natural Harness exit.
+func cleanupCompleted(r Result) bool {
+	return r.Termination.Outcome.Confirmed && r.ContainerCleanup == "removed" &&
 		r.TransportCleanup == "removed" && r.InputCleanup == "removed" &&
 		(r.Terminal.Closure == "confirmed" || r.Terminal.Closure == "not-applicable") &&
 		(r.Terminal.CleanupState == "complete" || r.Terminal.CleanupState == "not-needed") &&
