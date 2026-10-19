@@ -22,6 +22,7 @@ import (
 )
 
 type fakeRun struct {
+	workflowDiagnostic   *campaign.WorkflowDiagnostic
 	conclusionDiagnostic *campaign.ConclusionDiagnostic
 	receipt              hostrun.Receipt
 	runs, cancels        int
@@ -39,7 +40,7 @@ func (f *fakeRun) Run(ctx context.Context) (hostworker.Result, error) {
 	if f.check != nil {
 		f.check()
 	}
-	return hostworker.Result{ContainerCleanup: "removed", ModelDiagnostic: f.modelDiagnostic, ConclusionDiagnostic: f.conclusionDiagnostic}, f.runError
+	return hostworker.Result{ContainerCleanup: "removed", ModelDiagnostic: f.modelDiagnostic, ConclusionDiagnostic: f.conclusionDiagnostic, WorkflowDiagnostic: f.workflowDiagnostic}, f.runError
 }
 func (f *fakeRun) Cancel() error { f.cancels++; return nil }
 
@@ -283,6 +284,46 @@ func TestConclusionDiagnosticCompletionAndPersistenceFailure(t *testing.T) {
 			}
 			if _, e = run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", load); !errors.Is(e, startrequest.ErrClaimed) {
 				t.Fatal("replay", e)
+			}
+		}
+	}
+}
+
+func TestWorkflowDiagnosticCompletionAndPersistenceFailure(t *testing.T) {
+	for _, failWrite := range []bool{false, true} {
+		saved, inputs := jobFixture(t)
+		r := saved.Request
+		d := campaign.NewWorkflowDiagnostic("local-report", "harness-local", "arguments", "invalid_structure", "/input", "attempt_execute", "call-5")
+		d.Stopping = "invalid-call-limit"
+		d.Observed = 5
+		d.Limit = 5
+		d.HostFinalized = true
+		d.CleanupCompleted = true
+		inputs.run.workflowDiagnostic = &d
+		secondary := errors.New("secondary cleanup failure")
+		inputs.run.runError = errors.Join(d, secondary)
+		inputs.run.check = func() {
+			if failWrite {
+				if e := os.WriteFile(filepath.Join(r.StateRoot, "starts", r.Selection.StartRequestID, "completion.json.pending"), []byte("interrupted"), 0600); e != nil {
+					t.Fatal(e)
+				}
+			}
+		}
+		load := func(context.Context, startrequest.Request) (verifiedInputs, error) { return inputs, nil }
+		result, e := run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", load)
+		if e == nil || result.Code != "execution_failed" || result.Diagnostic == nil || result.Diagnostic.Workflow != d || !errors.Is(e, d) || !errors.Is(e, secondary) {
+			t.Fatal(result, e)
+		}
+		if (result.CompletionRecording == "unconfirmed") != failWrite {
+			t.Fatal(result)
+		}
+		if !failWrite {
+			disk, e := startrequest.Read(r.StateRoot, r.Selection.StartRequestID)
+			if e != nil || disk.Completion.Diagnostic.Workflow != d {
+				t.Fatal(disk, e)
+			}
+			if _, e = run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", load); !errors.Is(e, startrequest.ErrClaimed) {
+				t.Fatal("replayed", e)
 			}
 		}
 	}

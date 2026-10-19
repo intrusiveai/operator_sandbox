@@ -460,10 +460,11 @@ generation is an internal loop operation, not a model's recursive tool.
 | `engine.model_generate` | One bounded provider-native non-streaming request through the selected host profile. |
 | `engine.artifact_begin`, `engine.artifact_put_part`, `engine.artifact_commit` | Upload bytes with size/media/digest declaration; obtain a host-verified committed receipt. |
 | `engine.injection_delete` | Remove one known injection by attempt receipt/action ID in the current target; confirmed absence is successful cleanup. |
-| `engine.attempt_execute` | Submit one structured attempt with explicit tactical fields, committed artifacts and observation selection; return a fixed feedback manifest. |
+| `engine.attempt_execute` | Submit a permitted target operation with direct bounded input or an artifact receipt; Operator retains input and assigns bookkeeping, then returns outcome, execution receipt and permitted feedback. |
 | `engine.observation_read` | Read bounded, already-filtered feedback bytes by attempt receipt and entry ID; no general artifact-store access. |
-| `engine.record_append` | Bounded hypotheses, progress, lineage, conclusions and evidence references; guest assertions are labeled. |
-| `engine.request_stop` | Commit graceful completion with conclusion receipts or an explicit unavailable conclusion; acknowledge closed execution admission and required guest exit. |
+| `engine.record_append` | Optional historical hypotheses, progress, lineage, coverage and evidence references; guest assertions are labeled. |
+| `engine.finish` | Submit one bounded assessment or an explicit unavailable reason; Operator validates, retains, closes execution and starts cleanup. |
+| `engine.diagnostic_report` | Retain bounded Harness-local rejection and stopping facts; runtime-only, not a model tool. |
 | `engine.restore_request` | Restore an explicit checkpoint; Operator validates and executes the transition without restarting the harness. |
 | `engine.snapshot_request` | Create a checkpoint with optional `label` and `description`; Operator supplies the campaign ID. |
 | `engine.snapshot_list`, `engine.snapshot_inspect` | Read permitted campaign checkpoint metadata, including campaign ID and description, across retained source sessions. |
@@ -1147,22 +1148,24 @@ it cannot become a new execution owner for the failed campaign.
 Conclusion-local hypotheses MUST NOT require earlier hypothesis records. The host
 MUST resolve all local definitions before references, then consult campaign
 history for nonlocal references; duplicate IDs, self-parenting and cycles remain
-invalid. This resolution applies to both conclusion record and stop validation.
+invalid. This resolution applies to assessment validation in the finish operation.
 The host MUST retain bounded conclusion rejection diagnostics in the journal,
 terminal and failed-start records and expose them through foreground/supervised
 output, inspection and report/export. Later generic failures MUST NOT replace the
 original cause; a corrected conclusion MAY still finish successfully. See the
 [assessment contract](schemas/ASSESSMENT_CONTRACT.md#rejection-diagnostics).
 
-Normal harness completion uses the accepted [conclusion and stop contract](schemas/SHARED_CONTRACT.md#10-structured-conclusion).
-The guest commits a bounded `operator.dev/engine-conclusion/v1alpha2` artifact,
-then a conclusion record, then `engine.request_stop` with matching finish reason
-and both receipts. If it cannot produce a conclusion, it supplies the explicit
-unavailable variant; missing output is recorded as incomplete.
+Normal Harness completion MUST use the [simple campaign contract](schemas/SIMPLE_CAMPAIGN_CONTRACT.md).
+The guest submits `engine.finish` with a minimal assessment containing summary and
+objective outcomes. Optional elaboration and reference collections default empty;
+status defaults partial. Operator adds binding and retains the normalized conclusion.
+Large drafts MAY use a committed conclusion-purpose artifact receipt. No prior
+hypothesis registration, conclusion record or separate stop request is required.
+If no assessment can be constructed, the explicit unavailable reason MUST be retained.
 
 Operator durably accepts the stop, closes execution admission and returns the
 ordinary correlated acknowledgement: `status: accepted`, saved `stop_receipt`,
-`execution_admission: closed`, `conclusion_state`, `exit_required: true`,
+`execution_admission: closed`, `assessment_state`, `exit_required: true`,
 `exit_within_ms: 5000`, and `finalization_status: pending`. This acknowledges
 finishing, not completed export, reporting or observed process exit. The guest
 submits no further ordinary work and exits; the host independently verifies and

@@ -139,7 +139,10 @@ func run(ctx context.Context, stateRoot, requestID, requestDigest, operatorVersi
 		if execution.ModelDiagnostic != nil && execution.ModelDiagnostic.Valid() {
 			d := *execution.ModelDiagnostic
 			result.Diagnostic = &hostrun.PreparationDiagnostic{Stage: "model request (" + d.Category + ")", Message: d.Summary(), Model: d, CleanupFailed: execution.ContainerCleanup == "unconfirmed" || execution.TransportCleanup == "retained" || execution.InputCleanup == "retained"}
-		} else if execution.ConclusionDiagnostic != nil && execution.ConclusionDiagnostic.Valid() {
+		} else if execution.WorkflowDiagnostic != nil && execution.WorkflowDiagnostic.Valid() && (execution.WorkflowDiagnostic.Stopping != "" || !execution.StopAccepted) {
+			d := *execution.WorkflowDiagnostic
+			result.Diagnostic = &hostrun.PreparationDiagnostic{Stage: map[string]string{"harness-local": "Harness", "operator": "Operator", "target": "target", "cleanup": "cleanup"}[d.Source] + " " + d.Stage, Message: d.Message(), Workflow: d, CleanupFailed: execution.ContainerCleanup == "unconfirmed" || execution.TransportCleanup == "retained" || execution.InputCleanup == "retained"}
+		} else if execution.ConclusionDiagnostic != nil && execution.ConclusionDiagnostic.Valid() && !execution.StopAccepted {
 			d := *execution.ConclusionDiagnostic
 			result.Diagnostic = &hostrun.PreparationDiagnostic{Stage: "conclusion validation (" + d.Stage + ")", Message: d.Message(), Conclusion: d, CleanupFailed: execution.ContainerCleanup == "unconfirmed" || execution.TransportCleanup == "retained" || execution.InputCleanup == "retained"}
 		}

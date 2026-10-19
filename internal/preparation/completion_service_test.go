@@ -12,7 +12,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 )
 
-var completionRoutes = []string{"engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit", "engine.record_append", "engine.request_stop"}
+var completionRoutes = []string{"engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit", "engine.record_append", "engine.finish"}
 
 func conclusion(t *testing.T, w *campaign.Writer, launch campaign.LaunchInputs, revision int) []byte {
 	t.Helper()
@@ -31,6 +31,14 @@ func conclusion(t *testing.T, w *campaign.Writer, launch campaign.LaunchInputs, 
 	}
 	return raw
 }
+func assessmentDraft(raw []byte) map[string]any {
+	var draft map[string]any
+	_ = json.Unmarshal(raw, &draft)
+	for _, field := range []string{"api_version", "kind", "binding", "finish_reason"} {
+		delete(draft, field)
+	}
+	return draft
+}
 func TestServiceConclusionStopThroughSpoolAfterRestore(t *testing.T) {
 	routes := append(append([]string{}, snapshotRoutes...), completionRoutes...)
 	s, p, r, w, launch := serviceWithOperations(t, 0, routes, snapshotInput(t))
@@ -41,22 +49,20 @@ func TestServiceConclusionStopThroughSpoolAfterRestore(t *testing.T) {
 	}
 	cp := call("engine.snapshot_request", "snapshot", 1, map[string]any{})["snapshot"].(map[string]any)
 	call("engine.restore_request", "restore", 1, map[string]any{"source_session": cp["source_session"], "checkpoint_id": cp["checkpoint_id"]})
-	data := conclusion(t, w, launch, 2)
+	data := encode(assessmentDraft(conclusion(t, w, launch, 2)))
 	u := call("engine.artifact_begin", "begin", 2, map[string]any{"purpose": "conclusion", "artifact": descriptor(data)})["upload_id"]
-	closed := exchange(stateWire("engine.snapshot_request", "after-conclusion-begin", 2, map[string]any{}))
-	if !strings.Contains(string(closed), "STATE_CHANGED") {
-		t.Fatal("conclusion traffic did not close exploration", string(closed))
+	if s.StopAccepted() {
+		t.Fatal("upload accepted finish prematurely")
 	}
 	call("engine.artifact_put_part", "part", 2, map[string]any{"upload_id": u, "offset": 0, "content": base64.StdEncoding.EncodeToString(data)})
 	artifact := call("engine.artifact_commit", "commit", 2, map[string]any{"upload_id": u})["artifact_receipt"]
-	record := call("engine.record_append", "record", 2, map[string]any{"record_kind": "conclusion", "record": map[string]any{"artifact_receipt": artifact, "finish_reason": "no-useful-next-experiment"}})["receipt_id"]
-	body := map[string]any{"finish_reason": "no-useful-next-experiment", "conclusion": map[string]any{"state": "committed", "artifact_receipt": artifact, "record_receipt": record}}
+	body := map[string]any{"finish_reason": "no-useful-next-experiment", "artifact_receipt": artifact}
 	started := time.Now()
-	ack := call("engine.request_stop", "stop", 2, body)
+	ack := call("engine.finish", "stop", 2, body)
 	if ack["execution_admission"] != "closed" || ack["exit_within_ms"] != float64(5000) || ack["finalization_status"] != "pending" {
 		t.Fatal(ack)
 	}
-	if dup := call("engine.request_stop", "stop", 2, body); dup["stop_receipt"] != ack["stop_receipt"] {
+	if dup := call("engine.finish", "stop", 2, body); dup["stop_receipt"] != ack["stop_receipt"] {
 		t.Fatal("stop replay changed receipt")
 	}
 	rejected := exchange(stateWire("engine.snapshot_request", "after-stop", 2, map[string]any{}))
@@ -86,11 +92,11 @@ func TestServiceCompletionRejectsUnboundConclusionAndAllowsUnavailableStop(t *te
 	u := call("engine.artifact_begin", "begin", map[string]any{"purpose": "conclusion", "artifact": descriptor(data)})["upload_id"]
 	call("engine.artifact_put_part", "part", map[string]any{"upload_id": u, "offset": 0, "content": base64.StdEncoding.EncodeToString(data)})
 	artifact := call("engine.artifact_commit", "commit", map[string]any{"upload_id": u})["artifact_receipt"]
-	raw, err := s.Handle(context.Background(), stateWire("engine.record_append", "record", 1, map[string]any{"record_kind": "conclusion", "record": map[string]any{"artifact_receipt": artifact, "finish_reason": "no-useful-next-experiment"}}), 0)
+	raw, err := s.Handle(context.Background(), stateWire("engine.finish", "record", 1, map[string]any{"artifact_receipt": artifact, "finish_reason": "no-useful-next-experiment"}), 0)
 	if err != nil || !strings.Contains(string(raw), "CONCLUSION_INVALID") || w.Fence().Err() != nil {
 		t.Fatal(string(raw), err)
 	}
-	call("engine.request_stop", "stop", map[string]any{"finish_reason": "harness-error", "conclusion": map[string]any{"state": "unavailable", "reason": "serialization-failed"}})
+	call("engine.finish", "stop", map[string]any{"finish_reason": "harness-error", "unavailable": map[string]any{"reason": "serialization-failed"}})
 	// Immediate administrative stop must still bypass the grace period.
 	s.Stop(context.Canceled)
 	select {
@@ -113,12 +119,12 @@ func TestServiceFinalizationClosesExplorationAndBoundsRequests(t *testing.T) {
 	}
 	for i := 0; i < 16; i++ {
 		id := strings.Repeat("x", i+1)
-		raw, err = s.Handle(context.Background(), stateWire("engine.record_append", id, 1, map[string]any{"record_kind": "conclusion", "record": map[string]any{"artifact_receipt": "missing", "finish_reason": "budget-limit"}}), 0)
+		raw, err = s.Handle(context.Background(), stateWire("engine.finish", id, 1, map[string]any{"artifact_receipt": "missing", "finish_reason": "budget-limit"}), 0)
 		if err != nil || !strings.Contains(string(raw), "CONCLUSION_INVALID") {
 			t.Fatal(string(raw), err)
 		}
 	}
-	_, err = s.Handle(context.Background(), stateWire("engine.request_stop", "stop", 1, map[string]any{"finish_reason": "budget-limit", "conclusion": map[string]any{"state": "unavailable", "reason": "budget-limit"}}), 0)
+	_, err = s.Handle(context.Background(), stateWire("engine.finish", "stop", 1, map[string]any{"finish_reason": "budget-limit", "unavailable": map[string]any{"reason": "budget-limit"}}), 0)
 	if err == nil {
 		t.Fatal("unbounded finalization requests")
 	}
@@ -129,11 +135,11 @@ func TestServiceFinalizationClosesExplorationAndBoundsRequests(t *testing.T) {
 	}
 }
 func TestServiceGracefulStopCannotExtendHardDeadline(t *testing.T) {
-	s, _, r, _, launch := serviceWithOperations(t, 600*time.Millisecond, []string{"engine.request_stop"})
+	s, _, r, _, launch := serviceWithOperations(t, 600*time.Millisecond, []string{"engine.finish"})
 	if err := s.Admit(context.Background(), launch); err != nil {
 		t.Fatal(err)
 	}
-	raw, err := s.Handle(context.Background(), stateWire("engine.request_stop", "stop", 1, map[string]any{"finish_reason": "budget-limit", "conclusion": map[string]any{"state": "unavailable", "reason": "budget-limit"}}), 0)
+	raw, err := s.Handle(context.Background(), stateWire("engine.finish", "stop", 1, map[string]any{"finish_reason": "budget-limit", "unavailable": map[string]any{"reason": "budget-limit"}}), 0)
 	stateResult(t, raw, err)
 	select {
 	case <-r.killed:

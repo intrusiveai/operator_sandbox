@@ -32,6 +32,24 @@ def safe_argument_path(path):
 
 
 
+def schema_error_path(error):
+    """Select one stable schema field without copying validator prose or values."""
+    while error.context: error = error.context[0]
+    parts = [str(x) for x in error.absolute_path]
+    if isinstance(error.instance, dict):
+        fields = []
+        if error.validator == 'required':
+            fields = sorted(set(error.validator_value)-set(error.instance))
+        elif error.validator == 'additionalProperties' and error.validator_value is False:
+            import re
+            properties = error.schema.get('properties', {})
+            patterns = error.schema.get('patternProperties', {})
+            fields = sorted(k for k in error.instance if k not in properties
+                            and not any(re.search(pattern,k) for pattern in patterns))
+        if fields: parts.append(fields[0])
+    return safe_argument_path('/'+'/'.join(parts) if parts else '')
+
+
 def decode(raw: bytes, maximum: int = ORDINARY_LIMIT):
     if type(maximum) is not int or maximum <= 0 or len(raw) > maximum:
         raise ContractError("contract encoding limit exceeded")
@@ -162,12 +180,7 @@ class Catalog:
         try:
             self._validators[schema_id].validate(value)
         except ValidationError as error:
-            while error.context: error=error.context[0]
-            parts=[str(x) for x in error.absolute_path]
-            if error.validator == 'required' and isinstance(error.instance,dict):
-                missing=sorted(set(error.validator_value)-set(error.instance))
-                if missing: parts.append(missing[0])
-            raise ContractError("invalid_structure: Supply the required fields with the documented types and no unknown fields.",reason="invalid_structure",field_path='/'+ '/'.join(parts) if parts else '',correction="Supply the required fields with the documented types and no unknown fields.") from None
+            raise ContractError("invalid_structure: Supply the required fields with the documented types and no unknown fields.",reason="invalid_structure",field_path=schema_error_path(error),correction="Supply the required fields with the documented types and no unknown fields.") from None
         except Unresolvable:
             raise ContractError("invalid installed contract catalog") from None
         return value

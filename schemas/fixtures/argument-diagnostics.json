@@ -34,6 +34,13 @@
       "raw": "{}",
       "reason": "unsupported_tool",
       "path": "/name"
+    },
+    {
+      "name": "removed bookkeeping",
+      "tool": "attempt_execute",
+      "raw": "{\"operation_id\":\"invoke\",\"input\":{\"encoding\":\"json\",\"value\":{}},\"generation\":1}",
+      "reason": "invalid_structure",
+      "path": "/generation"
     }
   ]
 }

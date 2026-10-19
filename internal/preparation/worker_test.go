@@ -99,7 +99,7 @@ func (d *workerDocker) Completed(context.Context, campaign.DockerBinding) bool {
 	defer d.mu.Unlock()
 	// A successful guest's transport closes before its final exit. Completion
 	// must not be checked until terminal shutdown has confirmed that exit.
-	return d.mode == "requested stop" && d.kills > 0
+	return (d.mode == "requested stop" || d.mode == "harness limit") && d.kills > 0
 }
 
 type workerPower struct {
@@ -140,7 +140,7 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 	if goruntime.GOOS != "darwin" {
 		t.Skip("full worker integration uses the macOS spool profile; FIFO mechanics have separate transport coverage")
 	}
-	for _, mode := range []string{"event loss", "requested stop", "bad bootstrap", "create lost", "start lost", "kill unknown", "model failure", "model cleanup failure"} {
+	for _, mode := range []string{"event loss", "requested stop", "bad bootstrap", "create lost", "start lost", "kill unknown", "model failure", "model cleanup failure", "harness limit"} {
 		t.Run(mode, func(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
@@ -164,8 +164,8 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 			if modelConfig != nil {
 				operations = []string{"engine.model_generate"}
 			}
-			if mode == "requested stop" {
-				operations = []string{"engine.request_stop"}
+			if mode == "requested stop" || mode == "harness limit" {
+				operations = []string{"engine.diagnostic_report", "engine.finish"}
 			}
 			writer, launch, root := preparedLaunchConfigured(t, target, func(m map[string]any) {
 				m["release"] = map[string]any{"image_digest": image.Image.ImageID, "release_record_digest": image.Release.Digest()}
@@ -204,7 +204,7 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 			var result hostworker.Result
 			var runErr error
 			go func() { result, runErr = worker.Run(ctx); close(finished) }()
-			if mode == "event loss" || mode == "kill unknown" || mode == "requested stop" || modelConfig != nil {
+			if mode == "event loss" || mode == "kill unknown" || mode == "requested stop" || mode == "harness limit" || modelConfig != nil {
 				select {
 				case <-docker.ready:
 					if modelConfig != nil {
@@ -229,12 +229,35 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 							t.Fatal(e)
 						}
 					}
-					if mode == "requested stop" {
-						request := stateWire("engine.request_stop", "stop", 1, map[string]any{"finish_reason": "budget-limit", "conclusion": map[string]any{"state": "unavailable", "reason": "budget-limit"}})
-						if e := spoolPut(dir, "ordinary-out", 0, request); e != nil {
+					if mode == "requested stop" || mode == "harness limit" {
+						seq := int64(0)
+						if mode == "harness limit" {
+							body := map[string]any{"tool_name": "attempt_execute", "tool_call_id": "call-5", "diagnostic": map[string]any{"source": "harness-local", "stage": "arguments", "reason": "invalid_structure", "field_path": "/input", "message": "Required input is absent.", "execution_occurred": "no", "resubmission_safe": true}, "stopping": map[string]any{"condition": "invalid-call-limit", "observed_count": 5, "configured_limit": 5}}
+							if e := spoolPut(dir, "ordinary-out", 0, stateWire("engine.diagnostic_report", "local-report", 1, body)); e != nil {
+								t.Fatal(e)
+							}
+							raw, e := spoolRead(ctx, dir, "ordinary-in", 0)
+							if e != nil {
+								t.Fatal(e)
+							}
+							stateResult(t, raw, nil)
+							if e = spoolACK(dir, 0, 2); e != nil {
+								t.Fatal(e)
+							}
+							seq = 1
+						}
+						request := stateWire("engine.finish", "stop", 1, map[string]any{"finish_reason": "budget-limit", "unavailable": map[string]any{"reason": "budget-limit"}})
+						var envelope map[string]any
+						_ = json.Unmarshal(request, &envelope)
+						envelope["seq"] = seq
+						if mode == "harness limit" {
+							envelope["body"] = map[string]any{"finish_reason": "harness-error", "unavailable": map[string]any{"reason": "invalid-call-limit"}}
+						}
+						request = encode(envelope)
+						if e := spoolPut(dir, "ordinary-out", seq, request); e != nil {
 							t.Fatal(e)
 						}
-						raw, e := spoolRead(ctx, dir, "ordinary-in", 0)
+						raw, e := spoolRead(ctx, dir, "ordinary-in", seq)
 						if e != nil {
 							t.Fatal(e)
 						}
@@ -242,7 +265,7 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 						if ack["status"] != "accepted" {
 							t.Fatal(ack)
 						}
-						if e = spoolACK(dir, 0, 2); e != nil {
+						if e = spoolACK(dir, seq, 2); e != nil {
 							t.Fatal(e)
 						}
 					}
@@ -278,8 +301,14 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 					t.Fatal("cleanup outcome", result)
 				}
 			}
-			if result.StopAccepted != (mode == "requested stop") {
+			if result.StopAccepted != (mode == "requested stop" || mode == "harness limit") {
 				t.Fatal("lost stop disposition", result)
+			}
+			if mode == "harness limit" {
+				d := result.WorkflowDiagnostic
+				if d == nil || !d.Valid() || !d.HostFinalized || d.Dispatched != 0 || !d.CleanupCompleted || d.AssessmentAccepted || d.Stopping != "invalid-call-limit" || !errors.Is(runErr, *d) {
+					t.Fatal("lost Harness stopping cause", result, runErr)
+				}
 			}
 			retained := mode == "create lost" || mode == "start lost" || mode == "kill unknown"
 			if retained {

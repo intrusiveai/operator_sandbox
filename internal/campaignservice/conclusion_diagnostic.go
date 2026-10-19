@@ -35,5 +35,5 @@ func (s *Service) rejectConclusion(q stateRequest, err error) (stateReply, error
 	if issue.Reason != "invalid_structure" && issue.Cause != nil && !errors.Is(err, errReference) {
 		return stateReply{}, errors.Join(d, err)
 	}
-	return stateReply{Error: &attemptadapter.Fault{Code: "CONCLUSION_INVALID", Message: d.Message(), InstancePath: d.FieldPath, Effect: "none", Disposition: "correct-and-resubmit"}}, nil
+	return stateReply{Error: &attemptadapter.Fault{Code: "CONCLUSION_INVALID", Message: d.Message(), InstancePath: d.FieldPath, Diagnostic: marshal(map[string]any{"source": "operator", "stage": d.Stage, "reason": d.Reason, "message": d.Message(), "field_path": d.FieldPath, "execution_occurred": "no", "resubmission_safe": true}), Effect: "none", Disposition: "correct-and-resubmit"}}, nil
 }

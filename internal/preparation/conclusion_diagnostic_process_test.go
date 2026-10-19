@@ -49,7 +49,7 @@ func TestPythonProcessConclusionAndSeparateInspection(t *testing.T) {
 					draft["status"] = "partial"
 					draft["finish_reason"] = "no-useful-next-experiment"
 					draft["hypotheses"] = []any{h}
-					return processResponse([]any{modelCall("finish", "request_stop", draft)}), nil
+					return processResponse([]any{modelCall("finish", "finish", finishDraft(draft))}), nil
 				}})
 				if invalid {
 					r.failed(t)

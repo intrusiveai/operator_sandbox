@@ -30,19 +30,14 @@ def model_tools(protocol,codec,operations):
 
 def validate_tool_arguments(protocol,name,raw):
     value=decode(raw,ORDINARY_LIMIT);require(type(value) is dict)
-    from .validation import ContractError
+    from .validation import ContractError, schema_error_path
     from jsonschema import ValidationError
     validator=protocol._catalog._validators[MODEL_TOOL_ARGUMENTS_SCHEMA]
     branch=next((b for b in validator.schema['oneOf'] if b['properties']['name']['const']==name),None)
     if branch is None: raise ContractError('unsupported_tool: Use a tool from the advertised catalog.',reason='unsupported_tool',field_path='/name')
     try: validator.evolve(schema=branch['properties']['arguments']).validate(value)
     except ValidationError as error:
-        while error.context: error=error.context[0]
-        parts=[str(x) for x in error.absolute_path]
-        if error.validator=='required' and isinstance(error.instance,dict):
-            missing=sorted(set(error.validator_value)-set(error.instance))
-            if missing:parts.append(missing[0])
-        raise ContractError('invalid_structure: Supply the required fields with the documented types and no unknown fields.',reason='invalid_structure',field_path='/'+ '/'.join(parts) if parts else '',correction='Supply the required fields with the documented types and no unknown fields.') from None
+        raise ContractError('invalid_structure: Supply the required fields with the documented types and no unknown fields.',reason='invalid_structure',field_path=schema_error_path(error),correction='Supply the required fields with the documented types and no unknown fields.') from None
     if name == "attempt_execute":
         from .simple import check_attempt
         check_attempt(protocol, value)

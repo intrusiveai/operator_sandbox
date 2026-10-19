@@ -69,6 +69,24 @@ func printWorkerFailure(w io.Writer, code string, d *hostrun.PreparationDiagnost
 				fmt.Fprintln(w, details)
 			}
 		}
+		if d.Workflow.Valid() {
+			fmt.Fprintln(w, "Operation:", d.Workflow.OperationID)
+			if d.Workflow.Tool != "" {
+				fmt.Fprintln(w, "Tool:", d.Workflow.Tool)
+			}
+			if d.Workflow.HostFinalized {
+				if d.Workflow.Dispatched == 0 {
+					fmt.Fprintln(w, "No target attempt was dispatched.")
+				} else {
+					fmt.Fprintln(w, "Target attempts dispatched:", d.Workflow.Dispatched)
+				}
+				fmt.Fprintln(w, "Assessment accepted:", d.Workflow.AssessmentAccepted)
+				fmt.Fprintln(w, "Cleanup completed:", d.Workflow.CleanupCompleted)
+			}
+			if d.Workflow.CallID != "" {
+				fmt.Fprintln(w, "Call:", d.Workflow.CallID)
+			}
+		}
 		if d.Conclusion.Valid() {
 			fmt.Fprintln(w, "Validation rule:", d.Conclusion.Reason)
 			if d.Conclusion.OperationID != "" {

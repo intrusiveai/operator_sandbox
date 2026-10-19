@@ -23,7 +23,7 @@ runtime, private state root and the saved exact Docker binding. Construction MUS
 verify the campaign's persisted manifest/container binding and freeze caller-owned
 identity fields. The service MUST use one attempt ledger and one ordinary gate.
 
-The service supports all 13 ordinary operations in the shared registry.
+The service supports all 14 ordinary operations in the shared registry.
 Dispatch MUST reject unadvertised operations before effects. Advertising model
 generation MUST require a host-bound provider configuration; admission MUST verify
 its frozen prompt/tool policy. This library is not a complete Attack Harness

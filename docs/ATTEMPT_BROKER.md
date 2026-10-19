@@ -9,7 +9,10 @@ original receive deadline remain the transport's responsibility.
 
 ## Execution and publication
 
-Attempt observation precedes tactical validation. A rejected attempt consumes its
+The service first resolves the simple input, retains its bytes, assigns host
+bookkeeping and journals the resolved plan. Identifiable failures before this
+point use the shared tool namespace and produce no execution receipt.
+Attempt observation of that host plan precedes tactical validation. A rejected attempt consumes its
 index, retains the rejection and makes no target contact. Admission charges once;
 the broker reserves publication capacity before dispatch, executes the compiled
 plan through the native journal and adopts the immutable receipt before replying.
@@ -65,7 +68,7 @@ Its separate post-closure controller uses confirmed handles, bounded deadlines
 and pre-reserved audit capacity without reopening guest admission or bypassing the
 ordinary executor's fence. It also wires native closure and independent Docker
 termination. The [state service](SNAPSHOT_SERVICE.md) coordinates healthy restore
-and rebinding. All 13 ordinary routes now have service handlers.
+and rebinding. All 14 ordinary routes now have service handlers.
 
 Tests use the real journal, compiled attempt adapter and scripted native peer.
 They cover rejection numbering, duplicate concurrency, publication/settlement loss,

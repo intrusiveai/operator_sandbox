@@ -84,7 +84,7 @@ func (t *Tools) Observe(in ToolInput) (SavedTool, bool, error) {
 // ObserveFinalization is host-only. The service enforces the conclusion-only
 // classification and a separate 16-request finalization allowance.
 func (t *Tools) ObserveFinalization(in ToolInput) (SavedTool, bool, error) {
-	if !slices.Contains([]string{"engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit", "engine.record_append", "engine.request_stop"}, in.Operation) {
+	if !slices.Contains([]string{"engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit", "engine.finish", "engine.diagnostic_report"}, in.Operation) {
 		return SavedTool{}, false, ErrInvalid
 	}
 	return t.observe(in, true)
@@ -93,7 +93,7 @@ func (t *Tools) observe(in ToolInput, finalizing bool) (SavedTool, bool, error) 
 	a := t.a
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if in.CampaignID != a.w.manifest.CampaignID || !validID(in.OperationID) || !validID(in.WorkerInstanceID) || in.RunRevision < 0 || in.RunRevision > contracts.MaxSafeInteger || !slices.Contains([]string{"engine.observation_read", "engine.injection_delete", "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request", "engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit", "engine.model_generate", "engine.record_append", "engine.request_stop"}, in.Operation) || !validJSONObject(in.Body, MaxContentBytes) {
+	if in.CampaignID != a.w.manifest.CampaignID || !validID(in.OperationID) || !validID(in.WorkerInstanceID) || in.RunRevision < 0 || in.RunRevision > contracts.MaxSafeInteger || !slices.Contains([]string{"engine.attempt_execute", "engine.observation_read", "engine.injection_delete", "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request", "engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit", "engine.model_generate", "engine.record_append", "engine.finish", "engine.diagnostic_report"}, in.Operation) || !validJSONObject(in.Body, MaxContentBytes) {
 		return SavedTool{}, false, ErrInvalid
 	}
 	if _, ok := a.records[in.OperationID]; ok {
@@ -129,6 +129,11 @@ func (t *Tools) observe(in ToolInput, finalizing bool) (SavedTool, bool, error) 
 		return SavedTool{}, false, contracts.ErrLimit
 	}
 	r := SavedTool{ID: in.OperationID, Operation: in.Operation, IdentityDigest: digest, Target: target, RunRevision: in.RunRevision, WorkerInstanceID: in.WorkerInstanceID, Body: append(json.RawMessage{}, in.Body...)}
+	// Local diagnostics retain an identity digest and separately sanitized facts.
+	// Untrusted message prose must not enter durable tool bodies.
+	if in.Operation == "engine.diagnostic_report" {
+		r.Body = nil
+	}
 	// Large bodies live in verified content, keeping metadata and the in-memory
 	// ledger bounded. Content retained before adoption grants no execution rights.
 	if len(r.Body) > 32<<10 {

@@ -24,7 +24,7 @@ test:
 	$(PYTHON) scripts/generate_tool_catalog.py --check
 	$(PYTHON) scripts/generate_envelopes.py --check
 	$(PYTHON) scripts/generate_schema_ids.py --check
-	go test ./...
+	OPERATOR_PYTHON_PEER_TEST=1 go test ./...
 	python3 -m unittest discover -s scripts/tests
 	PYTHONPATH=contracts/python $(PYTHON) -m unittest discover -s contracts/python/tests -v
 	$(PYTHON) schemas/validate_cleanup_fixtures.py
