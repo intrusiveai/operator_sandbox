@@ -1155,6 +1155,8 @@ output, inspection and report/export. Later generic failures MUST NOT replace th
 original cause; a corrected conclusion MAY still finish successfully. See the
 [assessment contract](schemas/ASSESSMENT_CONTRACT.md#rejection-diagnostics).
 
+Harness completion and container removal MUST follow [the exit-observation contract](docs/HARNESS_EXIT.md). Accepted finish plus a verified zero exit establishes successful Harness execution; accepted finish or a disconnect alone does not. Nonzero/unconfirmed exits and independent failures remain failures, while cleanup outcomes remain separately reported. Operator MUST retain exit status, bounded stderr and the original safe worker cause before removing the exact container.
+
 Normal Harness completion MUST use the [simple campaign contract](schemas/SIMPLE_CAMPAIGN_CONTRACT.md).
 The guest submits `engine.finish` with a minimal assessment containing summary and
 objective outcomes. Optional elaboration and reference collections default empty;

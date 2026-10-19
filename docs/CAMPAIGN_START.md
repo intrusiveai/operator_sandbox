@@ -315,3 +315,11 @@ then starts separate CLI inspection/report/export processes. The retained
 `aws-openai-gpt5-mini-008` conclusion was also validated through the complete
 artifact/record/stop sequence after rebinding test identities and evidence handles;
 the committed fixture contains sanitized content. No paid campaign is replayed.
+
+## Finish accepted, but the Harness exits or cleanup fails
+
+See [Harness exit handling](HARNESS_EXIT.md). Inspect `harness_exit` for the actual
+exit status, finish acceptance, causal diagnostic, forced termination and cleanup
+outcome. A recovered assessment rejection remains history; it does not explain a
+later nonzero exit. Records from older releases may lack the exit observation and
+cannot establish a zero exit.

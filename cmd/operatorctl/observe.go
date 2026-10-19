@@ -21,6 +21,7 @@ import (
 )
 
 type observationReceipt struct {
+	HarnessExit          *campaign.HarnessExit          `json:"harness_exit,omitempty"`
 	ConclusionDiagnostic *campaign.ConclusionDiagnostic `json:"conclusion_diagnostic,omitempty"`
 	WorkflowDiagnostic   *campaign.WorkflowDiagnostic   `json:"workflow_diagnostic,omitempty"`
 	ModelDiagnostic      *modelprovider.Diagnostic      `json:"model_diagnostic,omitempty"`
@@ -146,7 +147,19 @@ func observeCampaign(ctx context.Context, action string, args []string, stdout, 
 					result.ConclusionDiagnostic = campaign.DecodeConclusionDiagnostic(metadata["diagnostic"])
 				}
 			}
+			if e.Kind == "launch.exit" {
+				var h campaign.HarnessExit
+				if json.Unmarshal(e.Metadata, &h) == nil && h.Valid() {
+					result.HarnessExit = &h
+				}
+			}
 			if e.Kind == "launch.terminal" {
+				var m struct {
+					HarnessExit *campaign.HarnessExit `json:"harness_exit"`
+				}
+				if json.Unmarshal(e.Metadata, &m) == nil && m.HarnessExit != nil && m.HarnessExit.Valid() {
+					result.HarnessExit = m.HarnessExit
+				}
 				result.TerminalRecorded = true
 			}
 			if action == "logs" && e.Sequence > after && result.Emitted < limit {

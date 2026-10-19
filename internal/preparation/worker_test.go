@@ -32,6 +32,7 @@ type workerDocker struct {
 	binding                campaign.DockerBinding
 	guestDone              chan error
 	ready                  chan struct{}
+	checking               chan struct{}
 	stop                   chan struct{}
 	once                   sync.Once
 }
@@ -72,12 +73,26 @@ func (d *workerDocker) StartCreated(ctx context.Context, root string, b campaign
 	}()
 	return nil
 }
-func (d *workerDocker) CheckRunning(context.Context, campaign.DockerBinding) error { return nil }
+func (d *workerDocker) CheckRunning(ctx context.Context, _ campaign.DockerBinding) error {
+	if d.mode == "poll cancellation" {
+		select {
+		case <-d.ready:
+			d.once.Do(func() { close(d.checking) })
+			<-ctx.Done()
+			return ctx.Err()
+		default:
+		}
+	}
+	return nil
+}
 func (d *workerDocker) WatchEvents(ctx context.Context, _ campaign.DockerBinding, _ time.Time) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	case <-d.stop:
+		if d.mode == "requested stop" || d.mode == "poll cancellation" || d.mode == "harness limit" {
+			return dockercontrol.ErrExited
+		}
 		return dockercontrol.ErrEvents
 	}
 }
@@ -94,12 +109,10 @@ func (d *workerDocker) RemoveStopped(context.Context, campaign.DockerBinding) er
 	}
 	return nil
 }
-func (d *workerDocker) Completed(context.Context, campaign.DockerBinding) bool {
+func (d *workerDocker) ObserveExit(context.Context, campaign.DockerBinding) campaign.HarnessExit {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	// A successful guest's transport closes before its final exit. Completion
-	// must not be checked until terminal shutdown has confirmed that exit.
-	return (d.mode == "requested stop" || d.mode == "harness limit") && d.kills > 0
+	return campaign.HarnessExit{ExitObserved: d.kills > 0, ExitCode: 0, StderrState: "empty"}
 }
 
 type workerPower struct {
@@ -140,7 +153,7 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 	if goruntime.GOOS != "darwin" {
 		t.Skip("full worker integration uses the macOS spool profile; FIFO mechanics have separate transport coverage")
 	}
-	for _, mode := range []string{"event loss", "requested stop", "bad bootstrap", "create lost", "start lost", "kill unknown", "model failure", "model cleanup failure", "harness limit"} {
+	for _, mode := range []string{"event loss", "requested stop", "poll cancellation", "bad bootstrap", "create lost", "start lost", "kill unknown", "model failure", "model cleanup failure", "harness limit"} {
 		t.Run(mode, func(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
@@ -164,7 +177,7 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 			if modelConfig != nil {
 				operations = []string{"engine.model_generate"}
 			}
-			if mode == "requested stop" || mode == "harness limit" {
+			if mode == "requested stop" || mode == "poll cancellation" || mode == "harness limit" {
 				operations = []string{"engine.diagnostic_report", "engine.finish"}
 			}
 			writer, launch, root := preparedLaunchConfigured(t, target, func(m map[string]any) {
@@ -188,7 +201,7 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 				t.Fatal(err)
 			}
 			t.Cleanup(func() { _ = tree.Discard(); _ = channel.Close() })
-			docker := &workerDocker{writer: writer, root: root, spool: dir, mode: mode, guestDone: make(chan error, 1), ready: make(chan struct{}), stop: make(chan struct{})}
+			docker := &workerDocker{writer: writer, root: root, spool: dir, mode: mode, guestDone: make(chan error, 1), ready: make(chan struct{}), checking: make(chan struct{}), stop: make(chan struct{})}
 			power := &workerPower{checkClose: func() {
 				docker.mu.Lock()
 				defer docker.mu.Unlock()
@@ -204,7 +217,7 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 			var result hostworker.Result
 			var runErr error
 			go func() { result, runErr = worker.Run(ctx); close(finished) }()
-			if mode == "event loss" || mode == "kill unknown" || mode == "requested stop" || mode == "harness limit" || modelConfig != nil {
+			if mode == "event loss" || mode == "kill unknown" || mode == "requested stop" || mode == "poll cancellation" || mode == "harness limit" || modelConfig != nil {
 				select {
 				case <-docker.ready:
 					if modelConfig != nil {
@@ -229,7 +242,7 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 							t.Fatal(e)
 						}
 					}
-					if mode == "requested stop" || mode == "harness limit" {
+					if mode == "requested stop" || mode == "poll cancellation" || mode == "harness limit" {
 						seq := int64(0)
 						if mode == "harness limit" {
 							body := map[string]any{"tool_name": "attempt_execute", "tool_call_id": "call-5", "diagnostic": map[string]any{"source": "harness-local", "stage": "arguments", "reason": "invalid_structure", "field_path": "/input", "message": "Required input is absent.", "execution_occurred": "no", "resubmission_safe": true}, "stopping": map[string]any{"condition": "invalid-call-limit", "observed_count": 5, "configured_limit": 5}}
@@ -270,6 +283,13 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 						}
 					}
 					if modelConfig == nil {
+						if mode == "poll cancellation" {
+							select {
+							case <-docker.checking:
+							case <-ctx.Done():
+								t.Fatal("poll not started")
+							}
+						}
 						close(docker.stop)
 					}
 				case <-finished:
@@ -283,7 +303,7 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 			case <-ctx.Done():
 				t.Fatal("worker did not finalize", ctx.Err())
 			}
-			if (runErr == nil) != (mode == "requested stop") || docker.creates != 1 {
+			if (runErr == nil) != (mode == "requested stop" || mode == "poll cancellation") || docker.creates != 1 {
 				t.Fatal("missing terminal result", runErr, docker.creates)
 			}
 			if _, err = worker.Run(ctx); err == nil || docker.creates != 1 {
@@ -301,7 +321,7 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 					t.Fatal("cleanup outcome", result)
 				}
 			}
-			if result.StopAccepted != (mode == "requested stop" || mode == "harness limit") {
+			if result.StopAccepted != (mode == "requested stop" || mode == "poll cancellation" || mode == "harness limit") {
 				t.Fatal("lost stop disposition", result)
 			}
 			if mode == "harness limit" {

@@ -39,6 +39,7 @@ type command func(context.Context, string, ...string) ([]byte, error)
 type Client struct {
 	run        command
 	archive    command
+	stderr     command
 	executable string
 }
 
@@ -59,7 +60,7 @@ func New(executable string) (*Client, error) {
 	if err != nil || !info.Mode().IsRegular() || info.Mode().Perm()&0111 == 0 {
 		return nil, ErrExecutableUnavailable
 	}
-	return &Client{executable: executable, run: dockerCommand(executable, outputLimit), archive: dockerCommand(executable, imageArchiveLimit)}, nil
+	return &Client{stderr: dockerStderr(executable), executable: executable, run: dockerCommand(executable, outputLimit), archive: dockerCommand(executable, imageArchiveLimit)}, nil
 }
 
 func dockerCommand(executable string, limit int) command {
@@ -258,12 +259,18 @@ func (c *Client) CheckRunning(ctx context.Context, b campaign.DockerBinding) err
 	defer cancel()
 	item, code := c.inspect(ctx, b)
 	if code != "" {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		return fmt.Errorf("Docker identity check failed: %s", code)
 	}
 	if !item.Running || item.Paused || item.Restarting || item.Status != "running" || item.RestartPolicy != "no" || item.AutoRemove {
 		return ErrNotRunning
 	}
 	if code = c.daemon(ctx, b); code != "" {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		return fmt.Errorf("Docker identity check failed: %s", code)
 	}
 	return ctx.Err()

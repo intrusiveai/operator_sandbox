@@ -22,6 +22,8 @@ import (
 )
 
 type fakeRun struct {
+	harnessExit          *campaign.HarnessExit
+	stopAccepted         bool
 	workflowDiagnostic   *campaign.WorkflowDiagnostic
 	conclusionDiagnostic *campaign.ConclusionDiagnostic
 	receipt              hostrun.Receipt
@@ -40,7 +42,7 @@ func (f *fakeRun) Run(ctx context.Context) (hostworker.Result, error) {
 	if f.check != nil {
 		f.check()
 	}
-	return hostworker.Result{ContainerCleanup: "removed", ModelDiagnostic: f.modelDiagnostic, ConclusionDiagnostic: f.conclusionDiagnostic, WorkflowDiagnostic: f.workflowDiagnostic}, f.runError
+	return hostworker.Result{HarnessExit: f.harnessExit, StopAccepted: f.stopAccepted, ContainerCleanup: "removed", ModelDiagnostic: f.modelDiagnostic, ConclusionDiagnostic: f.conclusionDiagnostic, WorkflowDiagnostic: f.workflowDiagnostic}, f.runError
 }
 func (f *fakeRun) Cancel() error { f.cancels++; return nil }
 
@@ -326,5 +328,24 @@ func TestWorkflowDiagnosticCompletionAndPersistenceFailure(t *testing.T) {
 				t.Fatal("replayed", e)
 			}
 		}
+	}
+}
+
+func TestHarnessExitCompletionRetainsCauseAndIgnoresRecoveredRejection(t *testing.T) {
+	saved, inputs := jobFixture(t)
+	r := saved.Request
+	h := campaign.HarnessExit{Outcome: "failed", FinishAccepted: true, AssessmentCommitted: true, ExitObserved: true, ExitCode: 1, WorkerCause: "docker_exit_notification", Cause: "RuntimeError: controlled failure", Stderr: "RuntimeError: controlled failure", StderrState: "retained", CleanupComplete: true, Details: "campaign journal event launch.exit"}
+	inputs.run.harnessExit = &h
+	inputs.run.stopAccepted = true
+	old := campaign.NewConclusionDiagnostic("old-rejected-finish", &contracts.ConclusionError{Reason: "unresolved_hypothesis", FieldPath: "/hypotheses/0/provenance/parent_hypothesis_id", Identifier: "hyp-missing"})
+	inputs.run.conclusionDiagnostic = &old
+	inputs.run.runError = errors.New("execution failed")
+	result, err := run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", func(context.Context, startrequest.Request) (verifiedInputs, error) { return inputs, nil })
+	if err == nil || result.Diagnostic == nil || result.Diagnostic.HarnessExit != h || result.Diagnostic.Conclusion.Valid() {
+		t.Fatal(result, err)
+	}
+	disk, e := startrequest.Read(r.StateRoot, r.Selection.StartRequestID)
+	if e != nil || disk.Completion == nil || disk.Completion.Diagnostic == nil || disk.Completion.Diagnostic.HarnessExit != h {
+		t.Fatal("exit diagnostic not persisted", disk, e)
 	}
 }

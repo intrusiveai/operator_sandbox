@@ -32,6 +32,7 @@ import (
 // object directly from an unrestricted error string, URL or response body.
 // It belongs to the host start record, not the shared host/harness contract.
 type PreparationDiagnostic struct {
+	HarnessExit   campaign.HarnessExit          `json:"harness_exit,omitempty,omitzero"`
 	Workflow      campaign.WorkflowDiagnostic   `json:"workflow,omitempty,omitzero"`
 	Conclusion    campaign.ConclusionDiagnostic `json:"conclusion,omitempty,omitzero"`
 	Stage         string                        `json:"stage"`
@@ -43,6 +44,9 @@ type PreparationDiagnostic struct {
 func (d *PreparationDiagnostic) Valid() bool {
 	if d == nil {
 		return true
+	}
+	if d.HarnessExit != (campaign.HarnessExit{}) && !d.HarnessExit.Valid() {
+		return false
 	}
 	if d.Conclusion != (campaign.ConclusionDiagnostic{}) && !d.Conclusion.Valid() {
 		return false

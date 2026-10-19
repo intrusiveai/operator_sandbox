@@ -258,3 +258,12 @@ func diagnosticSecrets(req *http.Request, token string, signed []string) []strin
 	}
 	return secrets
 }
+
+// SafeDiagnosticText applies the existing credential/control filtering to bounded
+// host-collected guest diagnostics. Host credentials are never passed to the guest.
+func SafeDiagnosticText(text string, limit int) (string, string) {
+	if text == "" {
+		return "", ""
+	}
+	return selectDetail(text, limit, newDetailRedactor(nil))
+}

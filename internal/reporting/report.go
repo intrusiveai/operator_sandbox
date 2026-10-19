@@ -46,6 +46,7 @@ type Attempt struct {
 	Feedback      *feedback.Manifest `json:"feedback,omitempty"`
 }
 type Result struct {
+	HarnessExit           *campaign.HarnessExit           `json:"harness_exit,omitempty"`
 	ConclusionRejections  []campaign.ConclusionDiagnostic `json:"conclusion_rejections,omitempty"`
 	WorkflowDiagnostics   []campaign.WorkflowDiagnostic   `json:"workflow_diagnostics,omitempty"`
 	ModelFailures         []modelprovider.Diagnostic      `json:"model_failures,omitempty"`
@@ -197,6 +198,20 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 		for _, key := range []string{"operation_id", "attempt_index_high_watermark", "attempt_admissions", "snapshot_admissions", "snapshot_bytes", "model_turns", "model_tokens", "actual_tokens", "finish_reason", "conclusion_state", "assessment_state", "unavailable", "finalization_status", "assertion_origin", "record_kind", "receipt_id", "part_index", "parts", "digest", "size_bytes"} {
 			if value, ok := metadata[key]; ok {
 				keep[key] = value
+			}
+		}
+		if event.Kind == "launch.exit" {
+			var h campaign.HarnessExit
+			if json.Unmarshal(event.Metadata, &h) == nil && h.Valid() {
+				result.HarnessExit = &h
+				keep["harness_exit"], _ = json.Marshal(h)
+			}
+		}
+		if event.Kind == "launch.terminal" {
+			var h campaign.HarnessExit
+			if json.Unmarshal(metadata["harness_exit"], &h) == nil && h.Valid() {
+				result.HarnessExit = &h
+				keep["harness_exit"], _ = json.Marshal(h)
 			}
 		}
 		if event.Kind == "workflow.diagnostic" {
@@ -391,12 +406,16 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 			}
 			if event.Kind == "launch.terminal" && desc.Role == "launch-result" {
 				var r struct {
-					Cleanup  string          `json:"container_cleanup"`
-					Workflow json.RawMessage `json:"workflow_diagnostic"`
+					HarnessExit *campaign.HarnessExit `json:"harness_exit"`
+					Cleanup     string                `json:"container_cleanup"`
+					Workflow    json.RawMessage       `json:"workflow_diagnostic"`
 				}
 				if json.Unmarshal(raw, &r) == nil {
 					result.Execution = "closed"
 					result.ContainerCleanup = r.Cleanup
+					if r.HarnessExit != nil && r.HarnessExit.Valid() {
+						result.HarnessExit = r.HarnessExit
+					}
 					if len(result.WorkflowDiagnostics) == 0 {
 						if d := campaign.DecodeWorkflowDiagnostic(r.Workflow); d != nil {
 							result.WorkflowDiagnostics = append(result.WorkflowDiagnostics, *d)
@@ -648,6 +667,9 @@ func markdown(r Result, digest string) []byte {
 			}
 		}
 		b.WriteString("\nReserved tokens are an allowance held against the budget, not confirmed consumption. See cumulative_usage in result-manifest.json.\n")
+	}
+	if r.HarnessExit != nil {
+		fmt.Fprintf(&b, "\n## Harness exit\n\n    %s\n\nWorker cause: %s. Details: %s. Cleanup complete: %t.\n", r.HarnessExit.Summary(), r.HarnessExit.WorkerCause, r.HarnessExit.Details, r.HarnessExit.CleanupComplete)
 	}
 	if len(r.WorkflowDiagnostics) > 0 {
 		b.WriteString("\n## Workflow diagnostics\n\n")

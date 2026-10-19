@@ -146,6 +146,14 @@ func run(ctx context.Context, stateRoot, requestID, requestDigest, operatorVersi
 			d := *execution.ConclusionDiagnostic
 			result.Diagnostic = &hostrun.PreparationDiagnostic{Stage: "conclusion validation (" + d.Stage + ")", Message: d.Message(), Conclusion: d, CleanupFailed: execution.ContainerCleanup == "unconfirmed" || execution.TransportCleanup == "retained" || execution.InputCleanup == "retained"}
 		}
+		if execution.HarnessExit != nil && execution.HarnessExit.Valid() {
+			h := *execution.HarnessExit
+			if result.Diagnostic == nil {
+				result.Diagnostic = &hostrun.PreparationDiagnostic{Stage: "Harness exit", Message: h.Summary()}
+			}
+			result.Diagnostic.HarnessExit = h
+			result.Diagnostic.CleanupFailed = !h.CleanupComplete
+		}
 		return result, err
 	}
 	result.Phase, result.Code = "finished", "execution_finished"
