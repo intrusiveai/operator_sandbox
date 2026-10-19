@@ -81,7 +81,7 @@ separate inspect/report/export commands. It also exercises correction and the
 zero-attempt invalid-call-limit case. To run just these cases:
 
 ```sh
-OPERATOR_PYTHON_PEER_TEST=1 go test ./internal/preparation \
+OPERATOR_CONTROLLED_PEER_TEST=1 go test ./internal/preparation \
   -run '^TestSimplePythonSpoolAndSeparateCLI$' -v -count=1
 ```
 

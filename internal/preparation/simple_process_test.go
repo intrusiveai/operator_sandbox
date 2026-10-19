@@ -19,7 +19,7 @@ import (
 )
 
 func TestSimplePythonSpoolAndSeparateCLI(t *testing.T) {
-	if os.Getenv("OPERATOR_PYTHON_PEER_TEST") != "1" {
+	if os.Getenv("OPERATOR_CONTROLLED_PEER_TEST") != "1" {
 		t.Skip("opt-in controlled Python process peer")
 	}
 	operator, err := filepath.Abs("../..")
