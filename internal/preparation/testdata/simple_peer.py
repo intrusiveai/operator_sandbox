@@ -48,7 +48,7 @@ def call(operation,body,identity=None,invalid=False):
 if mode=='invalid-limit':
     errors=[]
     for i in range(5):
-        try:p.validate_tool_arguments('attempt_execute',b'{"operation_id":"invoke"}')
+        try:p.validate_tool_arguments('attempt_execute',b'{"origin":"exploratory","operation_id":"invoke"}')
         except ContractError as e:errors.append(e)
         else:raise AssertionError('invalid arguments accepted')
     error=errors[-1]
@@ -61,11 +61,11 @@ if mode=='invalid-limit':
     attempts=0
 else:
     if mode=='corrected':
-        rejected=call('engine.attempt_execute',dict(operation_id='invoke'),invalid=True)
+        rejected=call('engine.attempt_execute',dict(origin='exploratory',operation_id='invoke'),invalid=True)
         assert rejected['error']['code']=='INVALID_ARGUMENTS'
         assert rejected['error']['instance_path']=='/input'
         assert 'receipt_id' not in rejected
-    execution=call('engine.attempt_execute',dict(operation_id='invoke',scenario_id='scenario-marker',
+    execution=call('engine.attempt_execute',dict(origin='scenario',operation_id='invoke',scenario_id='scenario-marker',
                     input=dict(encoding='json',value=dict(query='direct input'))))['result']
     assert execution['status']=='completed'
     entry=execution['feedback']['entries'][0]

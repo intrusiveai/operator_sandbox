@@ -26,7 +26,7 @@ func TestSimpleInputRejectionAndRetentionBeforeDispatch(t *testing.T) {
 			if e := s.Admit(context.Background(), launch); e != nil {
 				t.Fatal(e)
 			}
-			body := map[string]any{"operation_id": "invoke", "input": map[string]any{"encoding": "json", "value": map[string]any{"query": "new input"}}}
+			body := map[string]any{"origin": "exploratory", "operation_id": "invoke", "input": map[string]any{"encoding": "json", "value": map[string]any{"query": "new input"}}}
 			reason := "ARTIFACT_BUDGET_EXCEEDED"
 			if mode == "receipt" {
 				body["input"] = map[string]any{"artifact_receipt": "invented-receipt"}
@@ -168,5 +168,73 @@ func TestAssessmentRetentionBudgetAllowsHonestUnavailableFinish(t *testing.T) {
 	ack := stateResult(t, raw, e)
 	if ack["assessment_state"] != "unavailable" || !s.StopAccepted() {
 		t.Fatal(ack)
+	}
+}
+
+func TestExplicitOriginRejectCorrectAndDoNotReplay(t *testing.T) {
+	for _, mode := range []string{"missing-origin", "missing-scenario", "unknown-scenario", "forbidden-scenario", "exploratory"} {
+		t.Run(mode, func(t *testing.T) {
+			s, p, _, _, launch := serviceWithTemplate(t, 0, []string{"engine.attempt_execute"}, nil, nil)
+			if err := s.Admit(context.Background(), launch); err != nil {
+				t.Fatal(err)
+			}
+			body := map[string]any{"operation_id": "invoke", "input": map[string]any{"encoding": "json", "value": map[string]any{"query": "marker"}}}
+			reason, path := "origin_required", "/origin"
+			switch mode {
+			case "missing-scenario":
+				body["origin"] = "scenario"
+				reason, path = "scenario_required", "/scenario_id"
+			case "unknown-scenario":
+				body["origin"] = "scenario"
+				body["scenario_id"] = "absent"
+				reason, path = "unknown_scenario", "/scenario_id"
+			case "forbidden-scenario":
+				body["origin"] = "exploratory"
+				body["scenario_id"] = "scenario-marker"
+				reason, path = "scenario_forbidden", "/scenario_id"
+			case "exploratory":
+				body["origin"] = "exploratory"
+			}
+			if mode != "exploratory" {
+				raw, err := s.Handle(context.Background(), stateWire("engine.attempt_execute", "invalid-origin", 1, body), 0)
+				if err != nil || !strings.Contains(string(raw), reason) || !strings.Contains(string(raw), path) || !strings.Contains(string(raw), "correct-and-resubmit") || !strings.Contains(string(raw), "Execution did not occur") {
+					t.Fatal(string(raw), err)
+				}
+				p.mu.Lock()
+				for _, op := range p.calls {
+					if op == "application.invoke" {
+						t.Fatal("invalid origin dispatched")
+					}
+				}
+				p.mu.Unlock()
+				body["origin"] = "scenario"
+				body["scenario_id"] = "scenario-marker"
+			}
+			wire := stateWire("engine.attempt_execute", "corrected-origin", 1, body)
+			for i := int64(1); i <= 2; i++ {
+				raw, err := s.Handle(context.Background(), wire, i)
+				var reply map[string]any
+				_ = json.Unmarshal(raw, &reply)
+				if err != nil || reply["error"] != nil || reply["result"] == nil {
+					t.Fatal(string(raw), err)
+				}
+			}
+			body["input"] = map[string]any{"encoding": "json", "value": map[string]any{"query": "changed after execution"}}
+			raw, err := s.Handle(context.Background(), stateWire("engine.attempt_execute", "corrected-origin", 1, body), 3)
+			if err != nil || !strings.Contains(string(raw), "IDEMPOTENCY_CONFLICT") {
+				t.Fatal("changed executed request replayed", string(raw), err)
+			}
+			p.mu.Lock()
+			n := 0
+			for _, op := range p.calls {
+				if op == "application.invoke" {
+					n++
+				}
+			}
+			p.mu.Unlock()
+			if n != 1 {
+				t.Fatalf("dispatch count %d", n)
+			}
+		})
 	}
 }

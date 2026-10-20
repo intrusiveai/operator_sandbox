@@ -65,7 +65,7 @@ func wire(b *Broker, id, op string, body []byte) []byte {
 		b.config.ResolveAttempt = func(context.Context, string, []byte) ([]byte, error) { return bytes.Clone(plan), nil }
 		var original map[string]any
 		_ = json.Unmarshal(body, &original)
-		body = encode(map[string]any{"operation_id": original["invocation"].(map[string]any)["operation_id"], "input": map[string]any{"encoding": "json", "value": map[string]any{"fixture_digest": contracts.RawDigest(plan)}}})
+		body = encode(map[string]any{"origin": "exploratory", "operation_id": original["invocation"].(map[string]any)["operation_id"], "input": map[string]any{"encoding": "json", "value": map[string]any{"fixture_digest": contracts.RawDigest(plan)}}})
 	}
 
 	return encode(map[string]any{"api_version": "operator.dev/engine-pipe/v1alpha1", "kind": "request", "seq": 1, "campaign_id": "campaign-1", "launch_id": "launch-1", "run_revision": b.config.Attempts.Status().RunRevision, "call_id": "call-" + id, "operation_id": id, "operation": op, "timeout_ms": 30000, "body": json.RawMessage(body)})

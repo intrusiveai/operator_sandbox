@@ -117,7 +117,7 @@ func TestNativeDockerFinishExit(t *testing.T) {
 	if raw, e := build.CombinedOutput(); e != nil {
 		t.Fatal(e, string(raw))
 	}
-	for _, mode := range []string{"success", "peer-first", "corrected", "nonzero", "silent-nonzero", "no-finish", "missing-status", "timeout", "cleanup-failure"} {
+	for _, mode := range []string{"success", "scenario", "peer-first", "corrected", "nonzero", "silent-nonzero", "no-finish", "missing-status", "timeout", "cleanup-failure"} {
 		t.Run(mode, func(t *testing.T) {
 			input := fixture(t)
 			target, e := preparation.Build(input)
@@ -133,7 +133,11 @@ func TestNativeDockerFinishExit(t *testing.T) {
 			}
 			writer, launch, root := preparedLaunchConfigured(t, target, func(m map[string]any) {
 				m["release"] = map[string]any{"image_digest": image.ImageID, "release_record_digest": approved.Release.Digest()}
-			}, req.HostPlatform, "engine.finish")
+				if mode == "scenario" {
+					m["limits"].(map[string]any)["campaign"].(map[string]any)["observation_bytes"] = 4096
+					m["remaining_limits"].(map[string]any)["observation_bytes"] = 4096
+				}
+			}, req.HostPlatform, "engine.finish", "engine.attempt_execute", "engine.observation_read")
 			stored, e := target.Persist(writer, launch.EngineContext)
 			if e != nil {
 				t.Fatal(e)
@@ -159,7 +163,7 @@ func TestNativeDockerFinishExit(t *testing.T) {
 			}
 			result, runErr := worker.Run(ctx)
 			h := result.HarnessExit
-			success := mode == "success" || mode == "corrected" || mode == "peer-first"
+			success := mode == "success" || mode == "scenario" || mode == "corrected" || mode == "peer-first"
 			if (runErr == nil) != success || h == nil || h.ExitObserved != (mode != "missing-status") || (result.ContainerCleanup == "removed") != (mode != "cleanup-failure") || h.CleanupComplete != (mode != "cleanup-failure") {
 				t.Fatalf("mode %s: %+v; %v", mode, result, runErr)
 			}
@@ -195,12 +199,26 @@ func TestNativeDockerFinishExit(t *testing.T) {
 			if json.Unmarshal(raw, &got) != nil || got.HarnessExit == nil || *got.HarnessExit != *h {
 				t.Fatal("inspection lost exit after removal", string(raw))
 			}
-			report, e := reporting.Generate(ctx, root, "campaign-1", "")
+			report, e := reporting.Generate(ctx, root, "campaign-1", filepath.Join(t.TempDir(), "export"))
 			if e != nil {
 				t.Fatal(e)
 			}
 			if r := reportResult(t, root, report); r.HarnessExit == nil || *r.HarnessExit != *h {
 				t.Fatal("report lost exit", r.HarnessExit)
+			}
+			facts := reportResult(t, root, report)
+			markdown := string(read(t, filepath.Join(root, "campaigns/campaign-1/reports", report.GenerationDigest[7:], "report.md")))
+			if success && !strings.Contains(markdown, "Execution completed successfully") {
+				t.Fatal("report lost success", markdown)
+			}
+			if mode == "scenario" && (len(facts.Attempts) != 1 || facts.Attempts[0].Origin != "scenario" || len(facts.UntestedScenarios) != 0 || len(facts.Observations) != 1 || facts.Assessment == nil) {
+				t.Fatal("scenario evidence incomplete", facts)
+			}
+			if mode == "corrected" && !strings.Contains(markdown, "retained as history, not the terminal cause") {
+				t.Fatal("recovered rejection unclear", markdown)
+			}
+			if mode == "nonzero" && (!strings.Contains(markdown, "Harness exit code: 1") || !strings.Contains(markdown, "controlled post-finish failure")) {
+				t.Fatal("exit failure missing", markdown)
 			}
 			if _, e = os.Stat(dir); !errors.Is(e, os.ErrNotExist) {
 				t.Fatal("spool not removed", e)

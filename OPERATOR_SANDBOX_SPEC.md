@@ -1449,8 +1449,11 @@ alternative bootstrap protocol.
 Supporting source/citation/context metadata is optional and bounded. Preserve supplied
 provenance and reference-read/omission history without requiring catalog membership,
 model invocation records or technique taxonomies. No protected host/target content
-enters engine-visible inputs. Keep scenario IDs for scenario-origin attempts and the
-existing exploratory origin for unlisted hypotheses or objectives-only input.
+enters engine-visible inputs. Every attempt MUST explicitly select origin. Scenario origin MUST supply a
+submitted scenario_id; exploratory origin MUST omit scenario_id. Missing origin
+or an invalid combination MUST be rejected before dispatch with actionable
+INVALID_ARGUMENTS feedback. Never infer origin from scenario_id. See
+[the shared contract](schemas/SIMPLE_CAMPAIGN_CONTRACT.md).
 
 ### 11.4 Evidence-based reporting
 
@@ -1722,7 +1725,7 @@ No worker/daemon recovery resumes failed campaign execution.
 The accepted [shared contract](schemas/SHARED_CONTRACT.md) has closed schemas, an
 offline catalog/registry, semantic validators and shared Go/Python vectors. Package
 build/check tooling and runtime integration are implemented. Publish
-`operator-contracts` 0.1.0 only after both runners and the required conformance
+`operator-contracts` 0.2.0 only after both runners and the required conformance
 gates pass. Raw byte digests, Operator canonical-object digests, OCI digests and
 native Interceptor digests are separate recipes. Release/runtime claims require tests.
 

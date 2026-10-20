@@ -29,6 +29,10 @@ type WorkflowDiagnostic struct {
 }
 
 var workflowReasons = map[string]string{
+	"origin_required":             "Set origin to scenario with a submitted scenario_id, or exploratory without scenario_id. Execution did not occur; correct and resubmit with a new operation ID.",
+	"scenario_required":           "Scenario origin requires a scenario_id from the submitted bundle. Execution did not occur; correction is safe with a new operation ID.",
+	"scenario_forbidden":          "Exploratory origin forbids scenario_id. Remove it or select scenario origin. Execution did not occur; correction is safe with a new operation ID.",
+	"unknown_scenario":            "Select a scenario_id from the submitted bundle, or exploratory origin without scenario_id. Execution did not occur; correction is safe with a new operation ID.",
 	"assessment_retention_failed": "The assessment could not be retained. Finish was not accepted; execution closes for owned cleanup.",
 	"target_failed":               "The target operation failed. Inspect the retained attempt errors and permitted observations.",
 	"target_outcome_unknown":      "The target operation outcome is uncertain. Execution is closed and the operation will not be replayed.",

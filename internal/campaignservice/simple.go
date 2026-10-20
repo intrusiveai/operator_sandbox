@@ -38,19 +38,19 @@ func (s *Service) resolveAttempt(ctx context.Context, id string, raw []byte) ([]
 	}
 	var body map[string]any
 	_ = json.Unmarshal(canonical, &body)
+	if err := contracts.ValidateAttemptOrigin(body, s.completion.scenarios); err != nil {
+		return nil, err
+	}
 	index := s.attempts.Status().HighWatermark + 1
 	if index > contracts.MaxSafeInteger {
 		return nil, contracts.ErrLimit
 	}
 	attemptID := fmt.Sprintf("attempt-%d", index)
-	plan := map[string]any{"api_version": "operator.dev/engine-attempt-request/v1alpha2", "kind": "EngineAttemptRequest", "request_id": id, "attempt_id": attemptID, "attempt_index": index, "generation": 1, "thread_id": fmt.Sprintf("thread-%d", index), "origin": "exploratory", "generator": map[string]any{"kind": "operator-engine", "release_digest": s.writer.Manifest().ReleaseRecordDigest}, "pre_actions": []any{}, "cleanup": map[string]any{"delete_actions_after_observation": true}, "observation_selection": map[string]any{"mode": "all-permitted"}}
+	plan := map[string]any{"api_version": "operator.dev/engine-attempt-request/v1alpha2", "kind": "EngineAttemptRequest", "request_id": id, "attempt_id": attemptID, "attempt_index": index, "generation": 1, "thread_id": fmt.Sprintf("thread-%d", index), "origin": body["origin"], "generator": map[string]any{"kind": "operator-engine", "release_digest": s.writer.Manifest().ReleaseRecordDigest}, "pre_actions": []any{}, "cleanup": map[string]any{"delete_actions_after_observation": true}, "observation_selection": map[string]any{"mode": "all-permitted"}}
 	for _, key := range []string{"scenario_id", "pre_actions", "observation_selection", "rationale", "strategy_provenance_ref", "technique_refs"} {
 		if v, ok := body[key]; ok {
 			plan[key] = v
 		}
-	}
-	if _, ok := body["scenario_id"]; ok {
-		plan["origin"] = "scenario"
 	}
 	if receipt, ok := body["parent_attempt_receipt_id"].(string); ok {
 		publication, e := s.attempts.FindPublication(receipt)
