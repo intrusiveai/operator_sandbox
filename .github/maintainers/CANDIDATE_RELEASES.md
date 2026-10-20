@@ -317,10 +317,15 @@ maintenance version does not deliberately replace a newer release.
 
 ## What is published
 
-Each release includes four platform archives (`linux-amd64.tar.gz`,
-`linux-arm64.tar.gz`, `darwin-amd64.tar.gz`, `darwin-arm64.tar.gz`), each containing the
-executable, contract, configuration templates, documentation, SBOM, provenance and
-file manifest. Each has a corresponding `<platform>-SHA256SUMS` file.
+Each release includes four platform archives (`operator_sandbox-linux_amd64.tar.gz`,
+`operator_sandbox-linux_arm64.tar.gz`, `operator_sandbox-darwin_amd64.tar.gz`,
+`operator_sandbox-darwin_arm64.tar.gz`), each containing the executable, contract,
+configuration templates, documentation, SBOM, provenance and file manifest.
+Each has a corresponding `operator_sandbox-<os>_<arch>-SHA256SUMS` file.
+All archives extract into a single `operator_sandbox/` directory. Internal build
+job directories keep their platform names; those names are not public asset names.
+See [installation instructions](../../docs/HOST_DISTRIBUTION.md#installing-an-archive),
+including the v0.1.0 upgrade procedure.
 Verify those named checksum files before unpacking, as described in
 [host distribution](../../docs/HOST_DISTRIBUTION.md).
 

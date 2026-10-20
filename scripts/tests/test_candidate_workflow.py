@@ -158,9 +158,9 @@ class CandidateWorkflowTest(unittest.TestCase):
         for change in ("changed", "missing", "extra"):
             self.github.uploaded = dict(original)
             if change == "changed":
-                self.github.uploaded["linux-amd64.tar.gz"] = b"unexpected bytes"
+                self.github.uploaded["operator_sandbox-linux_amd64.tar.gz"] = b"unexpected bytes"
             elif change == "missing":
-                self.github.uploaded.pop("linux-amd64.tar.gz")
+                self.github.uploaded.pop("operator_sandbox-linux_amd64.tar.gz")
             else:
                 self.github.uploaded["unexpected.exe"] = b"extra"
             with self.assertRaises(ValueError):

@@ -8,6 +8,7 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -67,6 +68,53 @@ func TestArchiveRoundTripAndInventory(t *testing.T) {
 	if !bytes.Equal(a, b) {
 		t.Fatal("non-reproducible archive")
 	}
+	// Verify the public layout independently of Extract, then reconstruct the
+	// flat layout shipped in v0.1.0 to check backward-compatible installation.
+	gz, err := gzip.NewReader(bytes.NewReader(a))
+	if err != nil {
+		t.Fatal(err)
+	}
+	tr := tar.NewReader(gz)
+	var legacy bytes.Buffer
+	legacyGZ := gzip.NewWriter(&legacy)
+	legacyTar := tar.NewWriter(legacyGZ)
+	for {
+		h, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.HasPrefix(h.Name, "operator_sandbox/") {
+			t.Fatalf("archive entry outside product directory: %s", h.Name)
+		}
+		h.Name = strings.TrimPrefix(h.Name, "operator_sandbox/")
+		if err := legacyTar.WriteHeader(h); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := io.Copy(legacyTar, tr); err != nil {
+			t.Fatal(err)
+		}
+	}
+	gz.Close()
+	if err := legacyTar.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := legacyGZ.Close(); err != nil {
+		t.Fatal(err)
+	}
+	legacyPath := filepath.Join(temp, "legacy.tgz")
+	if err := os.WriteFile(legacyPath, legacy.Bytes(), 0600); err != nil {
+		t.Fatal(err)
+	}
+	legacyDest := filepath.Join(temp, "legacy")
+	if err := Extract(ctx, legacyPath, legacyDest); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := VerifyDirectory(ctx, legacyDest); err != nil {
+		t.Fatal(err)
+	}
 	dest := filepath.Join(temp, "unpacked")
 	if err := Extract(ctx, one, dest); err != nil {
 		t.Fatal(err)
@@ -82,6 +130,47 @@ func TestArchiveRoundTripAndInventory(t *testing.T) {
 	}
 	if err := Archive(ctx, root, one); err == nil {
 		t.Fatal("overwrote archive")
+	}
+}
+
+func TestExtractRejectsMixedAndUnsafeProductLayouts(t *testing.T) {
+	for _, paths := range [][]string{
+		{"operator_sandbox/release.json", "bin/operatorctl"},
+		{"release.json", "operator_sandbox/bin/operatorctl"},
+		{"operator_sandbox/release.json", "other/product"},
+		{"operator_sandbox/release.json", "operator_sandbox/../escape"},
+		{"operator_sandbox/release.json", "operator_sandbox//escape"},
+		{"operator_sandbox/release.json", "operator_sandbox/release.json"},
+		{"operator_sandbox/release.json", "operator_sandbox/./release.json"},
+		{"operator_sandbox/release.json", "operator_sandbox/"},
+	} {
+		t.Run(strings.Join(paths, ","), func(t *testing.T) {
+			var buf bytes.Buffer
+			gz := gzip.NewWriter(&buf)
+			tw := tar.NewWriter(gz)
+			for _, name := range paths {
+				kind := byte(tar.TypeReg)
+				if strings.HasSuffix(name, "/") {
+					kind = tar.TypeDir
+				}
+				if err := tw.WriteHeader(&tar.Header{Name: name, Typeflag: kind, Mode: 0600}); err != nil {
+					t.Fatal(err)
+				}
+			}
+			tw.Close()
+			gz.Close()
+			dir := t.TempDir()
+			archive, dest := filepath.Join(dir, "bad.tgz"), filepath.Join(dir, "out")
+			if err := os.WriteFile(archive, buf.Bytes(), 0600); err != nil {
+				t.Fatal(err)
+			}
+			if err := Extract(context.Background(), archive, dest); err == nil {
+				t.Fatal("accepted mixed or unsafe product layout")
+			}
+			if _, err := os.Lstat(dest); !os.IsNotExist(err) {
+				t.Fatal("partial extraction retained")
+			}
+		})
 	}
 }
 func TestManifestRejectsAmbiguousInventory(t *testing.T) {
