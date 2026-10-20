@@ -96,6 +96,12 @@ def checksum(path):
         return "sha256:" + hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+def asset_stem(platform):
+    if platform not in PLATFORMS:
+        raise ValueError("unsupported host platform")
+    return "operator_sandbox-" + platform.replace("/", "_")
+
+
 def assemble(directory, output, operatorctl=None):
     """Reuse the existing manifest checker and archive builder."""
     directories = [directory / p.replace("/", "-") for p in sorted(PLATFORMS)]
@@ -105,11 +111,12 @@ def assemble(directory, output, operatorctl=None):
         raise ValueError("candidate platform differs from its directory")
     operator = str((operatorctl or directory / "linux-amd64/bin/operatorctl").resolve())
     output.mkdir(mode=0o700)
-    for d in directories:
-        archive = output / (d.name + ".tar.gz")
+    for host, d in zip(hosts, directories):
+        stem = asset_stem(host["platform"])
+        archive = output / (stem + ".tar.gz")
         subprocess.run([operator, "release", "archive", "--directory", str(d),
                         "--output", str(archive)], check=True)
-        (output / (d.name + "-SHA256SUMS")).write_text(
+        (output / (stem + "-SHA256SUMS")).write_text(
             checksum(archive).removeprefix("sha256:") + "  " + archive.name + "\n")
     files = sorted(output.iterdir())
     inventory = {"version": version, "source_commit": hosts[0]["source_commit"],
@@ -122,7 +129,7 @@ def assemble(directory, output, operatorctl=None):
 def expected_assets():
     names = {"candidate.json"}
     for platform in PLATFORMS:
-        slug = platform.replace("/", "-")
+        slug = asset_stem(platform)
         names.update({slug + ".tar.gz", slug + "-SHA256SUMS"})
     return names
 
@@ -161,7 +168,7 @@ def catalog_entry(github, tag, source):
     assets = {a["name"]: a for a in github.assets(release)}
     artifacts = []
     for platform in sorted(PLATFORMS):
-        name = platform.replace("/", "-") + ".tar.gz"
+        name = asset_stem(platform) + ".tar.gz"
         asset = assets[name]
         url = f"https://github.com/{github.repository}/releases/download/{tag}/{name}"
         if asset.get("browser_download_url") != url:

@@ -12,10 +12,13 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/internal/staging"
 )
+
+const archivePrefix = "operator_sandbox/"
 
 // VerifyDirectory validates the manifest and checks every payload file.
 func VerifyDirectory(ctx context.Context, directory string) (Manifest, error) {
@@ -70,7 +73,7 @@ func Archive(ctx context.Context, directory, output string) (err error) {
 		if err = ctx.Err(); err != nil {
 			return err
 		}
-		if err = tw.WriteHeader(&tar.Header{Name: f.Path, Size: f.Size, Mode: int64(f.Mode), ModTime: time.Unix(0, 0), Typeflag: tar.TypeReg, Format: tar.FormatUSTAR}); err != nil {
+		if err = tw.WriteHeader(&tar.Header{Name: archivePrefix + f.Path, Size: f.Size, Mode: int64(f.Mode), ModTime: time.Unix(0, 0), Typeflag: tar.TypeReg, Format: tar.FormatUSTAR}); err != nil {
 			return err
 		}
 		if f.Path == "release.json" {
@@ -101,8 +104,9 @@ func Archive(ctx context.Context, directory, output string) (err error) {
 	return nil
 }
 
-// Extract accepts only the bounded file-only format emitted by Archive. It writes
-// to a fresh private directory; callers validate its manifest and contents before activation.
+// Extract accepts the bounded file-only format emitted by Archive and legacy
+// flat archives. It removes the product prefix when present, writing the payload
+// to a fresh private directory for manifest validation before activation.
 func Extract(ctx context.Context, archive, destination string) (err error) {
 	in, err := os.Open(archive)
 	if err != nil {
@@ -134,6 +138,7 @@ func Extract(ctx context.Context, archive, destination string) (err error) {
 	defer root.Close()
 	tr := tar.NewReader(io.LimitReader(gz, MaxReleaseBytes+8<<20))
 	seen := map[string]bool{}
+	var prefixed bool
 	var total int64
 	for {
 		if err = ctx.Err(); err != nil {
@@ -145,6 +150,17 @@ func Extract(ctx context.Context, archive, destination string) (err error) {
 		}
 		if e != nil {
 			return ErrRelease
+		}
+		// Select one layout for the entire archive; mixed layouts must not alias
+		// paths or allow files outside the advertised product directory.
+		hasPrefix := strings.HasPrefix(h.Name, archivePrefix)
+		if len(seen) == 0 {
+			prefixed = hasPrefix
+		} else if hasPrefix != prefixed {
+			return ErrRelease
+		}
+		if prefixed {
+			h.Name = strings.TrimPrefix(h.Name, archivePrefix)
 		}
 		if h.Typeflag != tar.TypeReg || !validPath(h.Name) || seen[h.Name] || len(seen) >= MaxFiles+1 || h.Size < 0 || h.Size > MaxFileBytes || len(h.PAXRecords) > 0 {
 			return ErrRelease

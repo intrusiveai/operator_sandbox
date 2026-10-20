@@ -4,7 +4,9 @@
 
 Administrators MUST obtain release archives from the project's GitHub releases.
 Packages MUST include a file manifest, and publication MUST provide archive
-checksums. These checks detect corruption; they do not authenticate the publisher.
+checksums. Archives MUST be named `operator_sandbox-<os>_<arch>.tar.gz` and
+extract into one top-level directory named `operator_sandbox/`. These checks detect
+corruption; they do not authenticate the publisher.
 
 `operatorctl release manifest` MUST bind the host version, platform, source commit,
 Go toolchain, exact shared-contract pin and every payload file's name, size, mode
@@ -20,7 +22,11 @@ the manifest. Release checks MUST inspect files without executing their contents
 `operatorctl release check --directory DIR` MUST validate the manifest, file
 inventory and contract contents. `--archive FILE` MAY inspect a local archive.
 `operatorctl release archive --directory DIR --output NEW.tar.gz` MUST produce
-reproducible gzip/tar framing with fixed timestamps and ownership. Extraction MUST
+reproducible gzip/tar framing with fixed timestamps and ownership. Each file MUST
+be prefixed with `operator_sandbox/` in the archive; manifest paths remain relative
+to that directory. The installer MUST remove the prefix in its private staging
+directory and MUST also accept the flat layout shipped in v0.1.0. Mixed flat and
+prefixed entries MUST be rejected. Extraction MUST
 reject links, special files, duplicate paths, executable data files, traversal,
 unsupported entries and truncated/oversized archives. Bounds are 8,192 payload
 files, 128 MiB per file and 256 MiB total, with separately bounded metadata.
@@ -46,24 +52,27 @@ Installation MUST NOT embed credentials in templates.
 Download the archive and matching checksum file for your host from the same
 GitHub release. Check the archive checksum, then extract it into a private staging
 directory. The installer MUST validate the internal manifest and every file before
-activation. Subsequent installations MAY use the already installed `operatorctl`.
+activation. For upgrades from v0.1.0, use the newly extracted `operatorctl` shown
+below: the older installer does not recognize the product-prefixed archive layout.
+Installers from v0.1.1 onward MAY install subsequent archives directly.
 
 For Linux AMD64, with both downloaded files in the current directory:
 
 ```sh
-sha256sum --check linux-amd64-SHA256SUMS
+sha256sum --check operator_sandbox-linux_amd64-SHA256SUMS
 umask 077
 mkdir operator-staging
-tar -xzf linux-amd64.tar.gz -C operator-staging
-./operator-staging/bin/operatorctl install \
-  --archive "$PWD/linux-amd64.tar.gz" \
+tar -xzf operator_sandbox-linux_amd64.tar.gz -C operator-staging
+./operator-staging/operator_sandbox/bin/operatorctl install \
+  --archive "$PWD/operator_sandbox-linux_amd64.tar.gz" \
   --image registry.example.com/attack_harness:local
 ```
 
-On macOS, select `darwin-arm64` or `darwin-amd64` and use
-`shasum -a 256 --check <platform>-SHA256SUMS`. Complete Linux provisioning below
-before running `install` as the `operator` account; ensure that account can read
-the archive and access the staged executable.
+On macOS, select `operator_sandbox-darwin_arm64.tar.gz` or
+`operator_sandbox-darwin_amd64.tar.gz` and use
+`shasum -a 256 --check operator_sandbox-<os>_<arch>-SHA256SUMS`.
+Complete Linux provisioning below before running `install` as the `operator`
+account; ensure that account can read the archive and access the staged executable.
 
 Default installation roots MUST be `/opt/operator` on Linux and
 `~/Library/Application Support/Operator/installation` on macOS. `--root`, `--config`
@@ -153,12 +162,12 @@ To package a reviewed build using a native `operatorctl`:
 
 ```sh
 /absolute/operatorctl release archive --directory dist/candidate/linux-amd64 \
-  --output linux-amd64.tar.gz
-sha256sum linux-amd64.tar.gz > linux-amd64-SHA256SUMS
+  --output operator_sandbox-linux_amd64.tar.gz
+sha256sum operator_sandbox-linux_amd64.tar.gz > operator_sandbox-linux_amd64-SHA256SUMS
 ```
 
 The publisher MUST validate each manifest and payload before archiving it and
-emit a corresponding `<platform>-SHA256SUMS` file for each archive.
+emit a corresponding `operator_sandbox-<os>_<arch>-SHA256SUMS` file for each archive.
 
 GitHub Actions MUST publish a rolling prerelease for each successful push to
 `candidate-v<major.minor.patch>`, including merge commits. The branch version MUST

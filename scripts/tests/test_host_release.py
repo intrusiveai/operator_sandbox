@@ -42,6 +42,17 @@ class ReleaseMetadataTest(unittest.TestCase):
             self.assertNotEqual(subprocess.run(command, capture_output=True).returncode, 0)
 
 class PublicationPreflightTest(unittest.TestCase):
+    def test_public_asset_names_identify_product_and_platform(self):
+        from publish_host_release import expected_assets, asset_stem
+        stems = {
+            "operator_sandbox-linux_amd64", "operator_sandbox-linux_arm64",
+            "operator_sandbox-darwin_amd64", "operator_sandbox-darwin_arm64",
+        }
+        self.assertEqual(expected_assets(), {"candidate.json"} |
+                         {s + suffix for s in stems for suffix in (".tar.gz", "-SHA256SUMS")})
+        with self.assertRaises(ValueError):
+            asset_stem("windows/amd64")
+
     def test_requires_all_platforms_matching_source_and_contract(self):
         from publish_host_release import PLATFORMS, check_candidates
         pin = {"package_version": "0.0.0", "package_digest": "sha256:" + "a" * 64}

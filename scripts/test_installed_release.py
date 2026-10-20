@@ -22,6 +22,7 @@ def main():
         root = Path(temporary)
         env = dict(os.environ)
         archives, manifests = [], []
+        extracted_candidates = []
         candidates = [a.candidate] + ([a.upgrade] if a.upgrade else [])
         for index, candidate in enumerate(candidates):
             copied = root / f"candidate-{index}" / candidate.name
@@ -30,9 +31,18 @@ def main():
             run([copied / "bin/operatorctl", "release", "archive", "--directory", copied,
                  "--output", archive], env)
             run([copied / "bin/operatorctl", "release", "check", "--archive", archive], env)
+            # Exercise the administrator's ordinary tar extraction and execute
+            # the shipped binary, rather than only using the build directory.
+            extracted = root / f"extracted-{index}"
+            extracted.mkdir(mode=0o700)
+            run(["tar", "-xzf", archive, "-C", extracted], env)
+            assert sorted(p.name for p in extracted.iterdir()) == ["operator_sandbox"]
+            extracted_candidates.append(extracted / "operator_sandbox")
+            run([extracted_candidates[-1] / "bin/operatorctl", "release", "check",
+                 "--directory", extracted_candidates[-1]], env)
             archives.append(archive)
             manifests.append(json.loads((copied / "release.json").read_text()))
-        executable = a.candidate.resolve() / "bin/operatorctl"
+        executable = extracted_candidates[0] / "bin/operatorctl"
         common = ["--root", root / "installation with spaces and 'quote", "--config", root / "config/config.yaml",
                   "--state-root", root / "state", "--image", "fixture/local:harness"]
         first = json.loads(run([executable, "install", "--archive", archives[0], *common], env))
