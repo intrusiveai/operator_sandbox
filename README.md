@@ -33,14 +33,11 @@ campaign guidance. Available operations depend on the selected target adapter.
 
 ## Getting started
 
-The intended host platforms are **Linux and macOS on x86_64 and ARM64/AArch64**.
+The host platforms are **Linux and macOS on x86_64 and ARM64/AArch64**.
 Use Docker Engine on Linux or Docker Desktop on macOS.
 
-**Development status:** core implementation and deterministic integration tests
-are in place, and selected live model-provider tests have passed. Full native
-runtime qualification and approved release publication remain pending. See
-[implementation status](docs/IMPLEMENTATION_STATUS.md) and
-[live qualification results](docs/LIVE_QUALIFICATION_VALIDATION.md) for details.
+Use the [host profiles](HOST_RUNTIME_PROFILES.md) for runtime requirements and
+the [Harness integration guide](docs/HARNESS_INTEGRATION.md) for component compatibility.
 
 ### 1. Set up Operator
 
@@ -52,7 +49,7 @@ Prepare the following configuration:
 
 - **Harness image:** install a matching Attack Harness image in local Docker and
   select it with `engine.image`. Operator uses the local image and validates its
-  release compatibility record before launch; it does not pull images for you.
+  embedded compatibility record before launch; it does not pull images for you.
 - **Model access:** choose a [model-provider profile](docs/MODEL_PROVIDERS.md) and
   configure [host authentication](docs/HOST_AUTHENTICATION.md). Credentials stay
   on the host.
@@ -139,7 +136,7 @@ available for reporting and administrative cleanup.
 
 ## Development
 
-Use Go 1.26.5 and Python 3.12 or later, plus GnuPG, Bash, jq and curl for
+Use Go 1.26.5 and Python 3.12 or later, plus Bash, jq and curl for
 release-tooling tests. From this repository:
 
 ```sh
@@ -149,7 +146,7 @@ go build -o build/operatorctl ./cmd/operatorctl
 ```
 
 This builds a development CLI. A runnable campaign installation additionally
-requires the matching contract package, harness image, release compatibility
+requires the matching contract package, harness image, embedded compatibility
 metadata, and host configuration described above. See
 [release tooling](docs/HOST_DISTRIBUTION.md#reproducible-candidates-and-publication)
 for reproducible installation candidates.

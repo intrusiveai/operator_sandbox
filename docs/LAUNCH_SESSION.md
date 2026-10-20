@@ -71,7 +71,7 @@ change a queued campaign. The object exposes no private profile or credential
 configuration and does not serialize those fields.
 
 `InstalledInputs.Open` is single-use. It obtains the startup gate, checks the local
-image and HTTPS/cached release, inspects embedded files, validates selected skills,
+image and embedded compatibility record, inspects embedded files, validates selected skills,
 constructs host-only provider/credential clients and attaches the configured local
 Interceptor. It then builds the launch session and records installation provenance
 as digests. No secret value is resolved by offline loading. Provider calls use the
@@ -79,8 +79,8 @@ existing host resolver; credential values, locators and provider endpoints remai
 outside guest inputs and journal metadata.
 
 The resulting `InstalledRun` owns its native/model/credential clients through Run
-or Cancel, then closes them. The installed state and release-cache directories
-must already exist with the documented private permissions. This API does not
+or Cancel, then closes them. The installed state directories must already exist
+with the documented private permissions. This API does not
 install services, create administrator accounts or automatically pull an image.
 [Durable start-key publication](START_REQUESTS.md) and
 [supervised CLI dispatch](CAMPAIGN_START.md) are implemented.

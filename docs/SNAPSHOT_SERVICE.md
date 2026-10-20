@@ -83,9 +83,9 @@ parent/turn inventory at the checkpoint boundary. Restore MUST discard later nat
 lineage and rebind that inventory to the replacement session. When a requested
 parent is verified only in campaign history and cannot be verified in the restored
 registry, the adapter MUST preserve the original
-harness request/generation in the journal while creating a native root at generation
+resolved host plan/generation in the journal while creating a native root at generation
 one. Subsequent native children MUST follow native generation ordering; independent
-harness generation ordering MUST still be checked. Guest assertions alone MUST NOT
+campaign generation ordering MUST still be checked. Guest assertions alone MUST NOT
 establish a parent, thread or known turn.
 
 The shared contract requires the harness to skip later calls from the model response
@@ -102,6 +102,5 @@ tests MUST continue on the same launch with increasing channel sequences through
 restore and subsequent attempts.
 
 These tests use real host journals, shared validators and file spools with scripted
-native/Docker peers. Artifact upload, model relay, assessment/conclusion/stop
-dispatch and launcher/control integration are implemented. Complete process/native
-qualification remains outstanding.
+native/Docker peers. Artifact upload, model relay, assessment/finish
+dispatch and launcher/control integration are implemented.

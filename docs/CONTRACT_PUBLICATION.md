@@ -7,7 +7,7 @@ its embedded schemas MUST match the selected source schemas.
 
 ```sh
 operatorctl contract build --source /absolute/operator_sandbox \
-  --output /absolute/new-contract-package --package-version 0.0.3
+  --output /absolute/new-contract-package --package-version 0.2.1
 ```
 
 The output MUST be a new directory. The receipt contains the exact package version
@@ -51,24 +51,26 @@ The supported release process MUST independently distribute the approved version
 and digest alongside the Operator and Attack Harness builds. Runtime installation
 MUST NOT derive trust merely by reading an incoming `package.json`.
 
+Set `CONTRACT_DIGEST` to `package.package_digest` from the release lock before
+running the check:
+
 ```sh
 operatorctl contract check --package-dir /absolute/new-contract-package \
-  --package-version 0.0.3 --package-digest sha256:<approved-package-digest>
+  --package-version 0.2.1 --package-digest "$CONTRACT_DIGEST"
 ```
 
 Operator's private `contract.directory`, `contract.version` and `contract.digest`
 configuration MUST pin the installed package. The Attack Harness image MUST use
 the same package identity and matching Python validator implementation.
 
-Building or checking a package verifies content integrity. Release `0.1.0`
-qualification still requires live provider-route qualification and complete
-host/harness conformance tests. All five native codec families are implemented; a successful build alone does not qualify a runtime
-or a provider route. The current development candidate is `0.0.3`; `release/contract-lock.json` binds
-its exact source and package digest.
+The [release contract lock](../release/contract-lock.json) binds the supported
+package version, source revision and exact digests. Build from that immutable
+source revision. Building or checking a package verifies its content integrity;
+it does not by itself establish provider or container runtime behavior.
 
 The [host distribution builder](HOST_DISTRIBUTION.md) reproduces the independently
 pinned `release/contract-lock.json`, tests both languages in the generated source
-layout and embeds the exact package in each host candidate. The binary and signed
+layout and embeds the exact package in each host candidate. The binary and
 release manifest carry the same version/digest. Publication preflight MUST require
 matching pins in both architecture Attack Harness image-build reports. These tools
 distribute matching candidates; they do not grant production qualification.

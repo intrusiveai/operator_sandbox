@@ -132,21 +132,26 @@ func (i *InstalledInputs) Selection() Selection {
 // LoadInputs reads and freezes installed profiles, submission and prompt bytes.
 // It creates no state, resolves no credentials and contacts no external service.
 func LoadInputs(ctx context.Context, configPath string, defaults hostconfig.Paths, selected Selection) (_ *InstalledInputs, err error) {
+	stage := "start selection validation"
+	defer func() { err = PreparationFailure(stage, err) }()
 	selected.SkillDigests = append([]string{}, selected.SkillDigests...)
 	selected.AppendFiles = append([]string{}, selected.AppendFiles...)
 	if err = validateSelection(selected); err != nil {
 		return nil, err
 	}
+	stage = "configuration loading"
 	loaded, err := hostconfig.Load(configPath, defaults)
 	if err != nil {
 		return nil, err
 	}
 	c := loaded.Config
+	stage = "shared contract loading"
 	installed, err := contractstore.LoadRuntime(ctx, c.Contract.Directory, contracts.PackageIdentity{Version: c.Contract.Version, Digest: c.Contract.Digest})
 	if err != nil {
 		return nil, err
 	}
 	p := installed.Protocol()
+	stage = "saved submission loading"
 	submitted, err := submission.Load(ctx, p, selected.RunDirectory)
 	if err != nil {
 		return nil, err
@@ -155,6 +160,7 @@ func LoadInputs(ctx context.Context, configPath string, defaults hostconfig.Path
 	if target := submitted.Receipt().TargetSelection; target != nil {
 		profileFile = target.ProfileFile
 	}
+	stage = "target profile loading"
 	profile, err := targetprofile.Load(profileFile)
 	if err != nil {
 		return nil, err
@@ -162,6 +168,7 @@ func LoadInputs(ctx context.Context, configPath string, defaults hostconfig.Path
 	if profile.Settings().TargetID != submitted.TargetID() {
 		return nil, ErrSession
 	}
+	stage = "frozen skill selection"
 	var skillSet []byte
 	if selected.SkillSetFile != "" {
 		skillSet, err = staging.Capture(ctx, selected.SkillSetFile, contracts.ControlLimit)
@@ -172,11 +179,13 @@ func LoadInputs(ctx context.Context, configPath string, defaults hostconfig.Path
 			return nil, err
 		}
 	}
+	stage = "model profile loading"
 	model, err := modelprovider.Load(c.Model.ProfileFile)
 	if err != nil {
 		return nil, err
 	}
 	// Read explicit instruction sources once; no source directory is mounted.
+	stage = "prompt input loading"
 	var replacement []byte
 	appends := [][]byte{}
 	if selected.ReplacementFile != "" {
@@ -196,6 +205,7 @@ func LoadInputs(ctx context.Context, configPath string, defaults hostconfig.Path
 	if _, _, err = contracts.ComposePrompt(selected.PromptMode, []byte("validation placeholder\n"), replacement, appends); err != nil {
 		return nil, err
 	}
+	stage = "credential configuration loading"
 	var credentialConfig credentials.Config
 	if c.Credentials.File != "" {
 		credentialConfig, err = credentials.Load(c.Credentials.File)
@@ -228,6 +238,7 @@ func LoadInputs(ctx context.Context, configPath string, defaults hostconfig.Path
 			}
 		}
 	}
+	stage = "input fingerprint calculation"
 	credentialRaw, err := json.Marshal(credentialConfig)
 	if err != nil {
 		return nil, err
@@ -255,6 +266,8 @@ func LoadInputs(ctx context.Context, configPath string, defaults hostconfig.Path
 // local image/release and attaches Interceptor. It never starts the harness.
 // A frontend MUST match Fingerprint to its durable start request before calling.
 func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (result *InstalledRun, err error) {
+	stage := "prepared input validation"
+	defer func() { err = PreparationFailure(stage, err) }()
 	if i == nil || !i.used.CompareAndSwap(false, true) {
 		return nil, ErrSession
 	}
@@ -264,10 +277,12 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 	loaded, selected, p, submitted, profile, model := i.loaded, i.selected, i.protocol, i.submitted, i.profile, i.model
 	credentialConfig, replacement, appends := i.credentialConfig, i.replacement, i.appends
 	c := loaded.Config
+	stage = "Docker client initialization"
 	docker, err := dockercontrol.New(c.Docker.Executable)
 	if err != nil {
 		return nil, err
 	}
+	stage = "startup ownership and recovery"
 	gate, recovered, err := startup.Acquire(ctx, c.State.Root, docker)
 	if err != nil {
 		return nil, err
@@ -275,7 +290,7 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 	owned := true
 	defer func() {
 		if owned {
-			gate.Close()
+			err = preparationCleanup(stage, err, gate.Close())
 		}
 	}()
 	for _, prior := range recovered {
@@ -283,27 +298,21 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 			return nil, ErrSession
 		}
 	}
+	stage = "prior Interceptor attachment recovery"
 	recoveryPeer := interceptor.New()
 	recovered, err = gate.FinalizeNative(ctx, recoveryPeer)
 	recoveryPeer.Close()
 	if err != nil {
 		return nil, err
 	}
-	release, err := imagerelease.Open(c.Cache.ReleaseDirectory)
-	if err != nil {
-		return nil, err
-	}
 	pin, _ := p.PackageIdentity()
 	requirements := imagerelease.Requirements{OperatorVersion: operatorVersion, Contract: pin, HostPlatform: runtime.GOOS + "/" + runtime.GOARCH, RuntimeProfile: "operator-container/v1"}
-	image, err := release.Prepare(ctx, docker, c.Docker.Endpoint, c.Engine.Image, requirements)
-	closeErr := release.Close()
-	if err != nil || closeErr != nil {
-		return nil, errors.Join(err, closeErr)
-	}
-	embedded, _, err := imagerelease.InspectEmbedded(ctx, docker, image, requirements, p)
+	stage = "local Harness image and compatibility validation"
+	image, embedded, _, err := imagerelease.Prepare(ctx, docker, c.Docker.Endpoint, c.Engine.Image, requirements, p)
 	if err != nil {
 		return nil, err
 	}
+	stage = "skill selection"
 	var selectedSkills *skills.Selection
 	if len(i.skillSet) > 0 {
 		selectedSkills, err = skills.Frozen(ctx, p, filepath.Join(c.State.Root, "skills"), i.skillSet)
@@ -316,6 +325,7 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 	if err != nil {
 		return nil, err
 	}
+	stage = "credential resolver initialization"
 	resolver, err := credentials.New(credentialConfig, credentials.DefaultFactories())
 	if err != nil {
 		return nil, err
@@ -332,39 +342,45 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 		_, err = auditWriter.Append(campaign.Entry{RunRevision: auditWriter.Revision(), Kind: "credential.resolution", Metadata: metadata})
 		return err
 	})
+	stage = "model provider initialization"
 	provider, err := modelprovider.New(ctx, model, audited)
 	if err != nil {
-		resolver.Close()
-		return nil, err
+		return nil, preparationCleanup(stage, err, resolver.Close())
 	}
 	native := interceptor.New()
 	cleanup := func() error { native.Close(); provider.Close(); return resolver.Close() }
 	success := false
 	defer func() {
 		if !success {
-			err = errors.Join(err, cleanup())
+			err = preparationCleanup(stage, err, cleanup())
 		}
 	}()
+	stage = "target preparation"
 	bundle, authoring, references := submitted.Inputs()
 	var target *preparation.Target
 	var https *httpstarget.Client
 	if profile.HTTPS() != nil {
+		stage = "HTTPS target initialization"
 		https, err = httpstarget.New(profile.HTTPS(), audited, time.Duration(profile.Settings().OperationTimeoutMS)*time.Millisecond)
 		if err != nil {
 			return nil, err
 		}
+		stage = "target preparation"
 		target, err = preparation.Build(preparation.Input{Protocol: p, Profile: profile, CampaignID: selected.CampaignID, WorkerInstanceID: selected.WorkerInstanceID, Authoring: authoring, Bundle: bundle, References: references})
 	} else {
+		stage = "Interceptor attachment"
 		attached, status, e := attachRecorded(ctx, c.State.Root, campaign.AttachmentIntent{
 			CampaignID: selected.CampaignID, LaunchID: selected.LaunchID, StartRequestID: selected.StartRequestID, WorkerInstanceID: selected.WorkerInstanceID, InputsFingerprint: i.Fingerprint(), AllowTargetStop: profile.Settings().AllowTargetStop, MinimumFreeBytes: c.Journal.MinimumFreeBytes}, native)
 		if e != nil {
 			return nil, e
 		}
+		stage = "target preparation"
 		target, err = preparation.Build(preparation.Input{Protocol: p, Profile: profile, Attachment: attached, Status: status, InstanceID: status.InstanceID, Authoring: authoring, Bundle: bundle, References: references})
 	}
 	if err != nil {
 		return nil, err
 	}
+	stage = "campaign launch preparation"
 	session, err := Prepare(ctx, Config{StateRoot: c.State.Root, Target: target,
 		Launch:       preparation.LaunchConfig{LaunchID: selected.LaunchID, ContainerID: selected.ContainerID, CreatedAt: time.Now().UTC().Truncate(time.Second), Image: image, Embedded: embedded, Model: model, Skills: selectedSkills, Limits: c.Limits, Retention: campaign.Retention{Mode: "manual-purge", MaxJournalBytes: c.Journal.MaxBytes, MaxSegmentBytes: c.Journal.SegmentBytes}, PromptMode: selected.PromptMode, Replacement: replacement, Appends: appends},
 		Requirements: requirements, Peer: native, HTTPS: https, Docker: docker, Provider: provider, MinimumFreeBytes: c.Journal.MinimumFreeBytes, SpoolMaxBytes: c.Spool.MaxBytes, EvidenceMaxBytes: c.Evidence.MaxArchiveBytes, StartRequestID: selected.StartRequestID, Gate: gate, Recovery: recovered})
@@ -373,9 +389,10 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 	}
 	owned = false
 	auditWriter = session.writer
+	stage = "installation journal recording"
 	metadata, _ := json.Marshal(map[string]string{"configuration_digest": loaded.Digest, "private_model_profile_digest": model.Digest(), "bundle_digest": submitted.Receipt().BundleDigest})
 	if _, err = session.writer.Append(campaign.Entry{RunRevision: session.writer.Revision(), Kind: "campaign.installation-selected", Metadata: metadata}); err != nil {
-		return nil, errors.Join(err, session.Cancel())
+		return nil, preparationCleanup(stage, err, session.Cancel())
 	}
 	success = true
 	return &InstalledRun{session: session, cleanup: cleanup}, nil

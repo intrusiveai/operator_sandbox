@@ -37,6 +37,10 @@ func testPythonPeer(t *testing.T, fifo bool) {
 	if override := os.Getenv("OPERATOR_TEST_HARNESS_SOURCE"); override != "" {
 		harness = override
 	}
+	peerScript := filepath.Join(harness, "tests/spool_peer.py")
+	if info, err := os.Stat(peerScript); err != nil || !info.Mode().IsRegular() {
+		t.Fatalf("Python transport peer unavailable at %s; provide the Attack Harness checkout via OPERATOR_TEST_HARNESS_SOURCE: %v", peerScript, err)
+	}
 	f := fixtures(t)
 	dir := directory(t)
 	create := NewSpool
@@ -57,7 +61,7 @@ func testPythonPeer(t *testing.T, fifo bool) {
 	if python == "" {
 		python = filepath.Join(operator, ".venv/bin/python")
 	}
-	cmd := exec.CommandContext(ctx, python, filepath.Join(harness, "tests/spool_peer.py"), dir, filepath.Join(operator, "schemas"))
+	cmd := exec.CommandContext(ctx, python, peerScript, dir, filepath.Join(operator, "schemas"))
 	if fifo {
 		cmd.Args = append(cmd.Args, "fifo")
 	}
@@ -67,11 +71,17 @@ func testPythonPeer(t *testing.T, fifo bool) {
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
 	}
-	waited := false
+	peerDone := make(chan struct{})
+	var peerErr error
+	go func() {
+		peerErr = cmd.Wait()
+		close(peerDone)
+	}()
 	defer func() {
-		if !waited {
-			cancel()
-			cmd.Wait()
+		cancel()
+		<-peerDone
+		if t.Failed() {
+			t.Logf("Python peer exit: %v; output: %s", peerErr, output.String())
 		}
 	}()
 	raw, err := os.ReadFile(filepath.Join(operator, "schemas/fixtures/startup-example.json"))
@@ -99,6 +109,8 @@ func testPythonPeer(t *testing.T, fifo bool) {
 				return raw
 			}
 			select {
+			case <-peerDone:
+				t.Fatalf("Python peer exited before completing exchange: %v; %s", peerErr, output.String())
 			case <-ctx.Done():
 				t.Fatal("Python peer receive timed out")
 			case <-time.After(time.Millisecond):
@@ -115,6 +127,8 @@ func testPythonPeer(t *testing.T, fifo bool) {
 				t.Fatal(err)
 			}
 			select {
+			case <-peerDone:
+				t.Fatalf("Python peer exited before completing exchange: %v; %s", peerErr, output.String())
 			case <-ctx.Done():
 				t.Fatal("FIFO rendezvous timeout")
 			case <-time.After(time.Millisecond):
@@ -139,6 +153,8 @@ func testPythonPeer(t *testing.T, fifo bool) {
 	}
 	for !s.Published("control-in", 2) {
 		select {
+		case <-peerDone:
+			t.Fatalf("Python peer exited before admission: %v; %s", peerErr, output.String())
 		case <-ctx.Done():
 			t.Fatal("admission not published")
 		case <-time.After(time.Millisecond):
@@ -153,9 +169,46 @@ func testPythonPeer(t *testing.T, fifo bool) {
 	if err := s.Enqueue("ordinary-in", f.frames["ordinary-in"]); err != nil {
 		t.Fatal(err)
 	}
-	err = cmd.Wait()
-	waited = true
-	if err != nil || strings.TrimSpace(output.String()) != "transport complete" {
-		t.Fatal(err, output.String())
+	<-peerDone
+	if peerErr != nil || strings.TrimSpace(output.String()) != "transport complete" {
+		t.Fatal(peerErr, output.String())
+	}
+}
+
+// Exercise the test runner itself: a missing checkout or a failed Python startup
+// must produce the cause promptly, without waiting for the transport deadline.
+func TestPythonPeerStartupDiagnostics(t *testing.T) {
+	if os.Getenv("OPERATOR_CONTROLLED_PEER_TEST") != "1" {
+		t.Skip("requires the prepared Python environment")
+	}
+	for _, test := range []string{"TestPythonSpoolInteroperability", "TestPythonFIFOInteroperability"} {
+		for _, missing := range []bool{true, false} {
+			name := "exited"
+			if missing {
+				name = "missing"
+			}
+			t.Run(test+"/"+name, func(t *testing.T) {
+				harness := t.TempDir()
+				want := "Python transport peer unavailable at "
+				if !missing {
+					dir := filepath.Join(harness, "tests")
+					if err := os.Mkdir(dir, 0700); err != nil {
+						t.Fatal(err)
+					}
+					if err := os.WriteFile(filepath.Join(dir, "spool_peer.py"), []byte("raise SystemExit('intentional peer startup failure')\n"), 0600); err != nil {
+						t.Fatal(err)
+					}
+					want = "intentional peer startup failure"
+				}
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+				cmd := exec.CommandContext(ctx, os.Args[0], "-test.run=^"+test+"$")
+				cmd.Env = append(os.Environ(), "OPERATOR_PYTHON_PEER_TEST=1", "OPERATOR_TEST_HARNESS_SOURCE="+harness)
+				out, err := cmd.CombinedOutput()
+				if err == nil || ctx.Err() != nil || !strings.Contains(string(out), want) {
+					t.Fatalf("expected prompt peer failure containing %q: %v; context: %v; %s", want, err, ctx.Err(), out)
+				}
+			})
+		}
 	}
 }

@@ -89,9 +89,19 @@ route entries MUST bind canonical policy-route digests and surface names, with
 `not-attempted` or `arm-attempted` state derived from retained native step dispatch;
 arming MUST NOT be called observed injection delivery.
 
-Usage fields MUST retain the highest recorded cumulative counters across revisions,
-including attempts, models and snapshots. Absent counters MUST remain absent,
-not be synthesized as zero. Incomplete journals MUST mark integrity false, retain
+Usage fields MUST retain the highest recorded cumulative counters across revisions
+for attempts, model turns and snapshots. Model token accounting MUST distinguish:
+
+- `model_tokens`: sum of confirmed `model.usage.actual_tokens` records.
+- `model_tokens_budget_charged`: last recorded budget charge, including unresolved
+  reservations; this is not measured provider consumption.
+- `model_tokens_unconfirmed_reserved`: outstanding intent allowances without a
+  matching confirmed usage record.
+
+If a model intent exists without any confirmed usage, `model_tokens: 0` MUST mean
+zero **confirmed** tokens; it MUST NOT claim the provider consumed zero tokens.
+Absent model counters MUST otherwise remain absent. Older unknown model exchanges
+MUST remain readable without inventing diagnostics or consumption. Incomplete journals MUST mark integrity false, retain
 only the verified prefix and unresolved operations, and leave execution unknown.
 Missing launch-input completion, native evidence, coverage or invalid cleanup/
 termination records MUST produce explicit gaps. Reports MUST NOT repair sources.
@@ -148,3 +158,54 @@ generation corruption, active writers, size/space failures, cancellation, unsafe
 paths, partial export, independent worker reporting failure, actual host attempt
 and feedback records, and unchanged source journals. These tests MUST NOT be
 described as live host/target/provider qualification.
+
+## Model failure evidence
+
+The result manifest and JSON report MUST expose optional `model_failures` with
+validated, bounded diagnostics. The Markdown report MUST summarize the category,
+operation, status/code when observed, and safe explanation. Projected model events
+MUST preserve `outcome`, `elapsed_ms`, `reserved_tokens` and valid `diagnostic` fields;
+budget counters MUST be named `model_tokens_budget_charged` in this projection.
+Selected `provider_message`, `provider_type`, `provider_code`, `provider_parameter`
+and `omissions` MUST survive projection unchanged after diagnostic validation.
+The Markdown report MUST render these provider values as code and label omission
+reasons. Raw error bodies and unrestricted headers MUST NOT be added to exports.
+Existing immutable reports MUST remain unchanged; regenerating a report with the
+updated projection can produce a new generation alongside the original.
+
+## Evidence summary and credential audit
+
+The Markdown report MUST open with observed execution/cleanup outcome and the
+most consequential coverage and credential facts. It MUST show requested
+objectives and scenarios (including whether required), each attempt's retained
+origin, scenario, target operation, dispatch/invocation state and execution receipt,
+and links to the retained request, result and permitted target output.
+Historical exploratory attempts MUST NOT be assigned scenarios during reporting.
+An unknown origin MUST remain unknown. Scenario/objective execution coverage MUST
+remain distinct from objective achievement and Harness interpretation.
+
+Target-output excerpts MUST come only from adopted same-campaign publication
+records with matching receipt, verified chunk bytes and complete object digest.
+Only target_visible/harness_visible target_output is eligible. Excerpts MUST be
+bounded to 2 KiB each and 64 entries per report, rendered as inert indented data;
+truncation and missing evidence MUST be explicit. Complete retained objects MUST
+be linked and included in the derived/export integrity inventory. A truncated
+retained object MUST NOT be described as a complete original response.
+
+For credential.resolution, projected events MUST explicitly retain credential_id,
+profile_id, backend, outcome, code, cache_hit and timestamps when available.
+Allowed backend names are aws-secrets-manager, azure-key-vault,
+gcp-secret-manager and hashicorp-vault. Outcomes are resolved/failed; codes are
+ok/resolution_failed/canceled. Identifiers MUST obey the existing bounded identifier
+syntax. Absent or invalid required audit fields MUST be identified as omitted.
+Event time MUST remain available even in older records lacking audit timestamps.
+Never project credential values, locators, arbitrary metadata, headers or backend
+responses. Credential summaries MUST cite source events and MUST NOT imply broader
+cloud qualification than the recorded retrieval/cache/failure facts.
+
+Reports MUST distinguish rejected submissions before a later accepted finish from
+terminal errors. They MUST retain exit/cleanup outcomes separately and label the
+accepted assessment summary as Harness interpretation. Event references identify
+sequence numbers in the digest-bound source parts listed in execution-bundle.json.
+Missing assessment content MUST NOT prevent reporting execution facts. No report
+MUST claim that an external QA recipe passed.

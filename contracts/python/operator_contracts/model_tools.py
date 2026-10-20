@@ -13,7 +13,11 @@ def model_tools(protocol,codec,operations):
     tools=[];declarations=[]
     for branch in document['oneOf']:
         if not all(op in operations for op in branch['x-operator-required-operations']):continue
-        name=branch['properties']['name']['const'];parameters=deepcopy(branch['properties']['arguments']);description=branch['description']
+        name=branch['properties']['name']['const'];parameters=deepcopy(branch.get('x-operator-provider-parameters',branch['properties']['arguments']));description=branch['description']
+        if codec in ('openai-chat-text-tools-v1','openai-responses-text-tools-v1'):
+            parameters=deepcopy(branch.get('x-operator-openai-parameters',parameters))
+        if name=='attempt_execute' and 'engine.injection_delete' not in operations:
+            for field in ('pre_actions','injection_input','retain_injections'):parameters['properties'].pop(field,None)
         if codec=='openai-chat-text-tools-v1':tools.append(dict(type='function',function=dict(name=name,description=description,parameters=parameters,strict=False)))
         elif codec=='openai-responses-text-tools-v1':tools.append(dict(type='function',name=name,description=description,parameters=parameters,strict=False))
         elif codec=='anthropic-messages-text-tools-v1':tools.append(dict(name=name,description=description,input_schema=parameters))
@@ -26,5 +30,18 @@ def model_tools(protocol,codec,operations):
 
 def validate_tool_arguments(protocol,name,raw):
     value=decode(raw,ORDINARY_LIMIT);require(type(value) is dict)
-    protocol._catalog.validate(MODEL_TOOL_ARGUMENTS_SCHEMA,_canonical_value(dict(name=name,arguments=value),ORDINARY_LIMIT))
+    from .validation import ContractError, schema_error_path
+    from jsonschema import ValidationError
+    validator=protocol._catalog._validators[MODEL_TOOL_ARGUMENTS_SCHEMA]
+    branch=next((b for b in validator.schema['oneOf'] if b['properties']['name']['const']==name),None)
+    if branch is None: raise ContractError('unsupported_tool: Use a tool from the advertised catalog.',reason='unsupported_tool',field_path='/name')
+    if name == "attempt_execute":
+        from .simple import validate_attempt_origin
+        validate_attempt_origin(value)
+    try: validator.evolve(schema=branch['properties']['arguments']).validate(value)
+    except ValidationError as error:
+        raise ContractError('invalid_structure: Supply the required fields with the documented types and no unknown fields.',reason='invalid_structure',field_path=schema_error_path(error),correction='Supply the required fields with the documented types and no unknown fields.') from None
+    if name == "attempt_execute":
+        from .simple import check_attempt
+        check_attempt(protocol, value)
     return value

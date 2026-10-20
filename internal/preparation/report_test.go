@@ -185,3 +185,114 @@ func TestReportsExposeIncompleteJournalAndCorruptEvidence(t *testing.T) {
 		})
 	}
 }
+
+func TestCredentialAuditSurvivesExport(t *testing.T) {
+	root, w, _, _, _ := lateFixture(t)
+	for i, backend := range []string{"aws-secrets-manager", "azure-key-vault", "gcp-secret-manager", "hashicorp-vault"} {
+		for _, mode := range []string{"retrieved", "cached", "failed"} {
+			outcome, code := "resolved", "ok"
+			if mode == "failed" {
+				outcome, code = "failed", "resolution_failed"
+			}
+			metadata := map[string]any{"credential_id": "model-key", "profile_id": "qa-store", "backend": backend, "cache_hit": mode == "cached", "outcome": outcome, "code": code, "recorded_at": "2026-10-19T00:00:00Z", "operation_id": "synthetic-secret-unrelated-field", "credential_value": "synthetic-secret-never-export", "locator": "synthetic-secret-locator", "authorization": "Bearer synthetic-secret-header", "raw_response": map[string]any{"secret": "synthetic-secret-body"}}
+			if _, err := w.Append(campaign.Entry{RunRevision: 1, Kind: "credential.resolution", Metadata: encode(metadata)}); err != nil {
+				t.Fatal(i, err)
+			}
+		}
+	}
+	w.Close()
+	destination := filepath.Join(t.TempDir(), "export")
+	receipt, err := reporting.Generate(context.Background(), root, "campaign-1", destination)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result := reportResult(t, root, receipt)
+	if len(result.CredentialResolutions) != 12 {
+		t.Fatal(result.CredentialResolutions)
+	}
+	parts, err := filepath.Glob(filepath.Join(destination, "events", "*.jsonl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	count := 0
+	for _, part := range parts {
+		raw := read(t, part)
+		if strings.Contains(string(raw), "synthetic-secret") {
+			t.Fatal("secret metadata exported")
+		}
+		for _, line := range strings.Split(strings.TrimSpace(string(raw)), "\n") {
+			var event struct {
+				Kind, RecordedAt string
+				Metadata         map[string]any
+			}
+			if json.Unmarshal([]byte(line), &event) != nil {
+				t.Fatal(line)
+			}
+			if event.Kind != "credential.resolution" {
+				continue
+			}
+			count++
+			for _, field := range []string{"credential_id", "profile_id", "backend", "cache_hit", "outcome", "code", "recorded_at"} {
+				if _, ok := event.Metadata[field]; !ok {
+					t.Fatal("missing audit field", field)
+				}
+			}
+		}
+	}
+	if count != 12 {
+		t.Fatal(count)
+	}
+	markdown := string(read(t, filepath.Join(destination, "report.md")))
+	for _, want := range []string{"Cloud credential evidence", "cache hit: true", "resolution_failed", "qa-store", "aws-secrets-manager", "event "} {
+		if !strings.Contains(markdown, want) {
+			t.Fatal("missing report fact", want)
+		}
+	}
+	if strings.Contains(markdown, "synthetic-secret") {
+		t.Fatal("report leaked secret")
+	}
+}
+
+func TestReportExplainsExplorationAndPermittedOutput(t *testing.T) {
+	s, p, _, w, launch := serviceFixture(t)
+	if err := s.Admit(context.Background(), launch); err != nil {
+		t.Fatal(err)
+	}
+	var wire map[string]any
+	_ = json.Unmarshal(attemptWire(p, 1, 1, w.Manifest().ReleaseRecordDigest), &wire)
+	body := wire["body"].(map[string]any)
+	body["origin"] = "exploratory"
+	delete(body, "scenario_id")
+	delete(body, "observation_selection")
+	if raw, err := s.Handle(context.Background(), encode(wire), 0); err != nil || strings.Contains(string(raw), `"error":`) {
+		t.Fatal(string(raw), err)
+	}
+	if _, err := s.Shutdown(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	dir, _ := w.EvidenceDirectory()
+	root := filepath.Dir(filepath.Dir(filepath.Dir(dir)))
+	w.Close()
+	destination := filepath.Join(t.TempDir(), "export")
+	receipt, err := reporting.Generate(context.Background(), root, "campaign-1", destination)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result := reportResult(t, root, receipt)
+	if len(result.Attempts) != 1 || result.Attempts[0].Origin != "exploratory" || result.Attempts[0].ScenarioID != "" || result.Attempts[0].Operation != "invoke" || len(result.UntestedScenarios) != 1 {
+		t.Fatal(result.Attempts, result.UntestedScenarios)
+	}
+	if len(result.Observations) != 1 || result.Observations[0].State != "available" || !strings.Contains(result.Observations[0].Excerpt, "test") {
+		t.Fatal(result.Observations)
+	}
+	markdown := string(read(t, filepath.Join(destination, "report.md")))
+	for _, want := range []string{"Scenario scenario-marker has no associated dispatched attempt", "Exploratory invocations do not cover", "Origin: exploratory", "Complete retained artifact", "No accepted assessment content", "not confirmed", "\"answer\":\"test\""} {
+		if !strings.Contains(markdown, want) {
+			t.Fatal("missing report fact", want, markdown)
+		}
+	}
+	observation := result.Observations[0]
+	if string(read(t, filepath.Join(destination, observation.Evidence))) != `{"answer":"test"}` {
+		t.Fatal("wrong artifact")
+	}
+}

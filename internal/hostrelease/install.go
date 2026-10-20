@@ -22,9 +22,9 @@ var ErrInstall = errors.New("installation failed; retain prior release and inspe
 var ErrDowngrade = errors.New("lower release version requires explicit --allow-downgrade")
 
 type InstallOptions struct {
-	Root, Archive, Verifier, Keyring string
-	ConfigFile, StateRoot, Image     string
-	AllowDowngrade                   bool
+	Root, Archive                string
+	ConfigFile, StateRoot, Image string
+	AllowDowngrade               bool
 }
 type InstallReceipt struct {
 	APIVersion       string `json:"api_version"`
@@ -123,7 +123,7 @@ func launcher(root string) []byte {
 	return []byte("#!/bin/sh\nset -eu\nbase=" + quoted + "\nrelease=$(/usr/bin/readlink \"$base/current\")\ncase \"$release\" in releases/*) ;; *) exit 1;; esac\nexec \"$base/$release/bin/operatorctl\" \"$@\"\n")
 }
 
-// Install authenticates a local archive, stages immutable content, then atomically
+// Install validates a local archive, stages immutable content, then atomically
 // switches one release pointer. Existing configuration and all state are retained.
 func Install(ctx context.Context, o InstallOptions) (InstallReceipt, error) {
 	return install(ctx, o, func(string) error { return nil })
@@ -165,7 +165,7 @@ func install(ctx context.Context, o InstallOptions, boundary func(string) error)
 	if err = Extract(ctx, o.Archive, content); err != nil {
 		return result, err
 	}
-	m, err := VerifyDirectory(ctx, content, o.Verifier, o.Keyring)
+	m, err := VerifyDirectory(ctx, content)
 	if err != nil {
 		return result, err
 	}
@@ -183,7 +183,7 @@ func install(ctx context.Context, o InstallOptions, boundary func(string) error)
 		if !strings.HasPrefix(selected, "releases/") || filepath.Clean(selected) != selected || strings.Count(selected, "/") != 1 {
 			return result, ErrInstall
 		}
-		prior, err := VerifyDirectory(ctx, filepath.Join(o.Root, selected), o.Verifier, o.Keyring)
+		prior, err := VerifyDirectory(ctx, filepath.Join(o.Root, selected))
 		if err != nil {
 			return result, err
 		}
@@ -200,7 +200,7 @@ func install(ctx context.Context, o InstallOptions, boundary func(string) error)
 	}
 	destination := filepath.Join(releases, releaseName)
 	if _, err = os.Lstat(destination); err == nil {
-		prior, err := VerifyDirectory(ctx, destination, o.Verifier, o.Keyring)
+		prior, err := VerifyDirectory(ctx, destination)
 		if err != nil {
 			return result, err
 		}

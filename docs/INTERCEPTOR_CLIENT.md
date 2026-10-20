@@ -1,14 +1,10 @@
 # Native Interceptor client
 
-Status: the host-only client is implemented in `internal/interceptor`.
-It provides campaign attachment, instance status, immutable v1alpha2 operation
-encoding/dispatch, typed closure confirmation, lifecycle restore/stop, durable
-operation-record decoding, snapshot creation/discovery and bounded evidence downloads.
-It does not start a campaign or
-serve as the harness-facing policy broker. Shared Operator/Attack Harness schemas
-and Interceptor's existing API are unchanged.
-The [phase handoff](IMPLEMENTATION_STATUS.md) summarizes completed scope and the
-implemented host/broker integration and remaining live qualification gates.
+The host-only Interceptor client provides campaign attachment, instance status,
+immutable v1alpha2 operation encoding/dispatch, typed closure confirmation,
+lifecycle restore/stop, operation-record decoding, snapshot creation/discovery
+and bounded evidence downloads. The campaign service provides the Harness-facing
+policy broker; the native client does not independently admit a campaign.
 
 The authoritative native contracts remain Interceptor's
 [local integration guide](../../interceptor_sandbox/docs/local-api.md) and
@@ -303,8 +299,8 @@ files, interpret native JSON or publish evidence.
 
 `DefaultArchiveLimits(maxBytes)` selects 10,000 entries and the supplied total
 expanded-byte ceiling. Explicit limits require 1–100,000 entries and a positive
-expanded-byte ceiling within the existing maximum archive-byte range. The future
-finalizer must retain the selected limits with collection policy. Metadata blocks
+expanded-byte ceiling within the existing maximum archive-byte range. The
+finalizer retains the selected limits with collection policy. Metadata blocks
 have a separate 64 KiB budget per tar-header advance; member hashing uses a 64 KiB
 buffer. Large native files can use the tar PAX size extension.
 
@@ -354,8 +350,7 @@ mutation and uses reconciliation only for cleanup after uncertainty.
 Native provenance validation and publication are implemented by the verifier and
 [campaign evidence service](EVIDENCE_SERVICE.md). Typed experiment routing,
 capability/policy checks, reconciliation, polling and terminal fencing have host
-library integrations. Installed campaign preparation/start and Docker launch are
-implemented; live Interceptor/host qualification remains outstanding.
+library integrations.
 
 ### Native provenance verification
 

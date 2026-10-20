@@ -1,28 +1,24 @@
 # Host distribution and installation
 
-## Release trust and format
+## Release format and integrity
 
-Host releases MUST use publisher-controlled OpenPGP detached signatures. The
-administrator MUST obtain the trusted public keyring independently of incoming
-release files. Verification MUST use only that explicitly selected keyring,
-without ambient keys, key discovery or network access. The keyring MUST be owned
-by the administrator/service user or root and MUST NOT be group/world writable. SHA-1/MD5 signatures MUST
-be rejected. Private signing keys MUST remain outside packages and images.
+Administrators MUST obtain release archives from the project's GitHub releases.
+Packages MUST include a file manifest, and publication MUST provide archive
+checksums. These checks detect corruption; they do not authenticate the publisher.
 
 `operatorctl release manifest` MUST bind the host version, platform, source commit,
 Go toolchain, exact shared-contract pin and every payload file's name, size, mode
 and SHA-256 digest. The four platforms are `linux/amd64`, `linux/arm64`,
 `darwin/amd64` and `darwin/arm64`. Host release versions MUST be three numeric
-components. Candidate builds and signatures MUST NOT imply native qualification.
+components. Candidate builds MUST NOT imply native qualification.
 
 The directory MUST include `bin/operatorctl`, the complete `contract/` package,
 configuration/profile templates, `sbom.spdx.json` and `provenance.json`.
-`release.json` and its detached `release.sig` MUST be the only files outside the
-manifest inventory. Content MUST match the installed contract loader as well as
-the manifest. Executable bytes MUST never be run to inspect an unverified release.
+`release.json` MUST be the only file outside the manifest inventory. Content MUST match the installed contract loader as well as
+the manifest. Release checks MUST inspect files without executing their contents.
 
-`operatorctl release check --directory DIR --keyring /absolute/trusted.gpg`
-MUST authenticate exact manifest bytes before validating the inventory.
+`operatorctl release check --directory DIR` MUST validate the manifest, file
+inventory and contract contents. `--archive FILE` MAY inspect a local archive.
 `operatorctl release archive --directory DIR --output NEW.tar.gz` MUST produce
 reproducible gzip/tar framing with fixed timestamps and ownership. Extraction MUST
 reject links, special files, duplicate paths, executable data files, traversal,
@@ -45,23 +41,29 @@ user. Both profiles MUST retain the existing private configuration/state locatio
 Installation MUST NOT embed credentials in templates.
 
 
-## Installing a verified archive
+## Installing an archive
 
-The first executable MUST be authenticated before running it: verify the
-publisher's detached signature on `SHA256SUMS`, check the archive's checksum, then
-extract it into a private staging directory. Subsequent installations MAY use an
-already trusted `operatorctl`. The installer MUST independently authenticate the
-internal manifest and every file before activation. GnuPG (`gpgv`, and `gpg` for
-publication/key export) MUST be installed by the administrator.
+Download the archive and matching checksum file for your host from the same
+GitHub release. Check the archive checksum, then extract it into a private staging
+directory. The installer MUST validate the internal manifest and every file before
+activation. Subsequent installations MAY use the already installed `operatorctl`.
+
+For Linux AMD64, with both downloaded files in the current directory:
 
 ```sh
-gpgv --keyring /absolute/publisher.gpg SHA256SUMS.asc SHA256SUMS
-sha256sum --check SHA256SUMS # macOS: shasum -a 256 --check SHA256SUMS
-# After checksum verification, unpack the selected archive into a private directory.
-/path/to/verified/bin/operatorctl install \
-  --archive /absolute/operator-host.tar.gz --keyring /absolute/publisher.gpg \
+sha256sum --check linux-amd64-SHA256SUMS
+umask 077
+mkdir operator-staging
+tar -xzf linux-amd64.tar.gz -C operator-staging
+./operator-staging/bin/operatorctl install \
+  --archive "$PWD/linux-amd64.tar.gz" \
   --image registry.example.com/attack_harness:local
 ```
+
+On macOS, select `darwin-arm64` or `darwin-amd64` and use
+`shasum -a 256 --check <platform>-SHA256SUMS`. Complete Linux provisioning below
+before running `install` as the `operator` account; ensure that account can read
+the archive and access the staged executable.
 
 Default installation roots MUST be `/opt/operator` on Linux and
 `~/Library/Application Support/Operator/installation` on macOS. `--root`, `--config`
@@ -70,7 +72,7 @@ campaign state MUST NOT overlap. The installer MUST run as the intended service
 user, with private owned directories. Linux provisioning is the separate root step:
 
 ```sh
-sudo /path/to/verified/bin/operatorctl install provision-linux --grant-docker-access
+sudo /path/to/staged/bin/operatorctl install provision-linux --grant-docker-access
 ```
 
 Provisioning MUST create a missing `operator` system account with home
@@ -94,8 +96,7 @@ sudo -u operator env XDG_RUNTIME_DIR=/run/user/991 \
   /opt/operator/operatorctl doctor --offline
 ```
 
-The UID above is illustrative; use the UID returned by provisioning. Archives and
-the trusted keyring MUST be readable by that account. Runtime commands MUST NOT
+The UID above is illustrative; use the UID returned by provisioning. Archives MUST be readable by that account. Runtime commands MUST NOT
 invoke sudo themselves. macOS installation MUST reject root execution.
 
 The installer MUST retain `releases/<version>-<os>-<arch>/`, atomically switch the
@@ -105,7 +106,7 @@ before activation. Concurrent installers MUST be excluded by a private lock.
 Incomplete staging MUST be discarded on retry. A committed activation with a lost
 acknowledgement MUST be safely repeatable. Same-version changed contents MUST fail.
 
-A fresh install MUST create a private configuration selecting the signed contract
+A fresh install MUST create a private configuration selecting the packaged contract
 pin and explicit local image. Every install MUST emit a versioned `.yaml.example`
 configuration. Existing configuration MUST remain byte-for-byte unchanged;
 administrators MUST review the example and update contract/profile selections
@@ -133,41 +134,36 @@ publisher and exact matching schema bytes. The host executable MUST embed this
 supported pin and source commit; `operatorctl version` MUST expose them. Runtime
 submission, skills, capabilities and campaign preparation MUST reject another
 configured pin. Explicit `contract check` and `release check` MUST remain usable for
-inspecting a future package before activation. The current `0.0.0` package is a
-development candidate; tooling MUST NOT silently label it an approved `0.1.0` package.
+inspecting a package before activation. The [release contract lock](../release/contract-lock.json)
+is the source of truth; product and contract package versions are independent.
 
 Every candidate MUST include an SPDX 2.3 dependency inventory and an in-toto/SLSA
 provenance statement binding the binary digest, source commit, toolchain, target
 platform and contract. Unknown dependency licensing MUST remain `NOASSERTION`.
 The inventory describes compiled Go modules and the toolchain, not a vulnerability scan or
-an inventory of the host OS. The publisher's signature authenticates these files;
-locally generated provenance does not independently attest a trusted CI builder.
+an inventory of the host OS. Locally generated provenance does not independently attest a trusted CI builder.
 
 CI MUST run host/shared tests and build each platform twice, comparing the entire
-unsigned candidate payload. Archive/signature envelopes MAY differ when signing
-occurs at different times; the executable, contract and payload inventories MUST
-match. CI artifacts MUST preserve file modes and MUST remain labeled candidates.
-The workflow uses pinned [setup-go](https://github.com/actions/setup-go/commit/d35c59abb061a4a6fb18e82ac0862c26744d6ab5)
-and checkout/upload action revisions. Cross-compilation MUST NOT claim native qualification.
+candidate payload. Executables, contracts and payload inventories MUST match.
+CI artifacts MUST preserve file modes and MUST remain labeled candidates.
+The workflow MUST use pinned setup-go, checkout and upload action revisions.
+Cross-compilation MUST NOT claim native qualification.
 
-After reviewing a candidate, the publisher MAY sign it using an explicit full key
-fingerprint and its independently installed public keyring:
+To package a reviewed build using a native `operatorctl`:
 
 ```sh
-python3 scripts/sign_host_release.py --directory dist/candidate/linux-amd64 \
-  --output dist/signed/linux-amd64 --operatorctl /absolute/trusted/operatorctl \
-  --signing-key FULL_FINGERPRINT --keyring /absolute/publisher.gpg
+/absolute/operatorctl release archive --directory dist/candidate/linux-amd64 \
+  --output linux-amd64.tar.gz
+sha256sum linux-amd64.tar.gz > linux-amd64-SHA256SUMS
 ```
 
-The signing tool MUST sign `release.json`, verify it, archive the exact payload,
-and emit independently signed `SHA256SUMS` for first-install bootstrap. It MUST
-not export private keys or publish an image approval. Key rotation MUST be an
-explicit administrator update to the trusted keyring, independently authenticated.
+The publisher MUST validate each manifest and payload before archiving it and
+emit a corresponding `<platform>-SHA256SUMS` file for each archive.
 
-GitHub Actions MUST publish a rolling signed prerelease for each successful push to
+GitHub Actions MUST publish a rolling prerelease for each successful push to
 `candidate-v<major.minor.patch>`, including merge commits. The branch version MUST
 supply the package version. Publication MUST require Operator CI, reproducible
-four-platform packages and OpenPGP signatures. Attack Harness reports and external
+four-platform packages and matching file inventories. Attack Harness reports and external
 runtime qualification MUST remain independent of this publication gate. Runtime
 startup MUST continue enforcing the image-release and shared-contract checks.
 `check_release_pair.py` remains an optional diagnostic for host/harness pairing.
@@ -179,30 +175,30 @@ superseded candidate build MUST NOT overwrite the current candidate. Stable
 releases MUST NOT be overwritten or returned to prerelease status.
 
 When a same-repository candidate PR merges into `main`, the workflow MUST promote
-that existing release without rebuilding, replacing signed package assets or moving its tag.
+that existing release without rebuilding, replacing package assets or moving its tag.
 It MUST verify the candidate head, matching merge tree, complete uploaded asset
 inventory and SHA-256 digests. Missing, incomplete or mismatched prereleases MUST
 block promotion. Repeated promotion of the same release MUST be harmless.
 
-The publisher MUST retain the four signed archives, per-platform signed checksums,
-and a signed `candidate.json` inventory identifying source/version/contract and
+The publisher MUST retain the four archives, per-platform checksums,
+and a `candidate.json` inventory identifying source/version/contract and
 archive digests. A separate mutable `release-index-entry.json` MUST describe the
 four actual GitHub archive URLs, filenames and hashes. The workflow MUST publish
 that entry through the committed `tools/release-publisher` in its own ordinary
 `publish-catalog.yml` job, using Operator's `production` environment and scoped
 OIDC role from the protected release tag: `rc` on candidate publication, `release`
-after the agreed CI/signing and candidate merge gates. It MUST wait for successful catalog
+after the agreed CI and candidate merge gates. It MUST wait for successful catalog
 publication and preserve the package identities on promotion. The workflow MUST
 serialize publication and promotion per version. The workflow MUST validate before
 acquiring AWS credentials, fetch no private publisher code at runtime, and use
 the custom OIDC subject documented in the maintainer guide.
-Release status MUST NOT claim native qualification or grant harness image approval.
+Release status MUST NOT claim native qualification or grant harness runtime qualification.
 See [candidate release automation](../.github/maintainers/CANDIDATE_RELEASES.md) for setup and recovery.
 
 ## Validation and limits
 
-Host-release tests MUST cover authentic and altered OpenPGP signatures, independent
-keyring selection, malformed archives, exact contract contents, fresh installation,
+Host-release tests MUST cover altered payloads and manifests, malformed archives,
+exact contract contents, fresh installation,
 repeat installation, upgrades/downgrades, incompatible platforms, corrupted input,
 interrupted publication/activation, retained evidence and unchanged configuration.
 Worker registration tests MUST demonstrate that changing the selected release does
@@ -210,14 +206,9 @@ not redirect a previously registered command. An already-canceled worker MUST
 perform prelaunch cleanup without attempting container creation.
 
 `python3 scripts/test_installed_release.py --candidate DIR [--upgrade NEWER_DIR]`
-MUST exercise real native binaries and signatures in temporary directories, using
-a freshly generated test-only key. It MUST NOT provision machine accounts, alter
+MUST exercise real native binaries and packages in temporary directories. It MUST NOT provision machine accounts, alter
 system paths or contact Docker. `--upgrade` MUST additionally check the newly
 selected version, usability of the old binary and explicit downgrade enforcement.
 Linux account/service provisioning MUST use command fixtures in ordinary tests;
 actual native Linux provisioning and all four production runtime tuples still
-require external qualification. GnuPG MUST be available when recording signature
-acceptance; a skipped GPG test MUST NOT count as a passing signature check.
-
-See [recorded release validation](RELEASE_VALIDATION.md) for tested source identities,
-reproducibility results and the remaining external qualification boundaries.
+require external qualification.

@@ -260,15 +260,15 @@ class FinalizationBudget:
             raise LoopStopped()
 
     def charge(self, kind, conclusion_bytes, now_ms):
-        """kind is verified conclusion-artifact/conclusion-record/stop, not a claim.
+        """kind is verified assessment-artifact/diagnostic/finish, not a claim.
 
         Charge distinct content bytes once before transfer, including any existing
         upload continued in finalization. Every new ordinary request costs a slot.
         """
         self.check_time(now_ms)
-        require(kind in ('conclusion-artifact', 'conclusion-record', 'stop')
+        require(kind in ('assessment-artifact', 'diagnostic', 'finish')
                 and _integer(conclusion_bytes, 0)
-                and (kind == 'conclusion-artifact' or conclusion_bytes == 0))
+                and (kind == 'assessment-artifact' or kind == 'finish' or conclusion_bytes == 0))
         if self._requests == 16 or conclusion_bytes > self._bytes_limit-self._bytes:
             self.close()
             raise LoopStopped()

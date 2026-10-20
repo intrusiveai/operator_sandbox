@@ -301,10 +301,9 @@ func TestServiceRejectsUnadvertisedRouteBeforeTargetDispatch(t *testing.T) {
 }
 func attemptWire(p *peer, revision int, index int, release string) []byte {
 	id := fmt.Sprintf("request-%d", index)
-	body := map[string]any{"api_version": "operator.dev/engine-attempt-request/v1alpha2", "kind": "EngineAttemptRequest", "request_id": id, "origin": "scenario", "scenario_id": "scenario-marker", "thread_id": "thread-1", "attempt_id": fmt.Sprintf("attempt-%d", index), "generation": index, "attempt_index": index, "payload": p.input.Artifacts[0].Descriptor, "generator": map[string]string{"kind": "operator-engine", "release_digest": release}, "pre_actions": []any{}, "invocation": map[string]string{"operation_id": "invoke", "input_source": "payload", "media_type": "application/json"}, "cleanup": map[string]bool{"delete_actions_after_observation": true}, "observation_selection": map[string]any{"mode": "selected", "kinds": []string{"oracle_outcome"}}}
-	if index > 1 {
-		body["parent_attempt_id"] = fmt.Sprintf("attempt-%d", index-1)
-	}
+	var value any
+	_ = json.Unmarshal(p.input.Artifacts[0].Bytes, &value)
+	body := map[string]any{"origin": "scenario", "operation_id": "invoke", "scenario_id": "scenario-marker", "input": map[string]any{"encoding": "json", "value": value}, "observation_selection": map[string]any{"mode": "selected", "kinds": []string{"oracle_outcome"}}}
 	return encode(map[string]any{"api_version": "operator.dev/engine-pipe/v1alpha1", "kind": "request", "seq": index - 1, "campaign_id": "campaign-1", "launch_id": "launch-1", "run_revision": revision, "call_id": id, "operation_id": id, "operation": "engine.attempt_execute", "timeout_ms": 30000, "body": body})
 }
 func TestServiceAdmitsVerifiedStartupTracksRevisionAndCloses(t *testing.T) {
@@ -458,7 +457,7 @@ func TestServiceRealSpoolUsesGuestLanesAndZeroSequence(t *testing.T) {
 	exchange(attemptWire(p, 1, 1, w.Manifest().ReleaseRecordDigest))
 }
 
-func serviceSpool(t *testing.T, s *campaignservice.Service, p *peer, w *campaign.Writer, launch campaign.LaunchInputs) func([]byte) []byte {
+func serviceSpool(t *testing.T, s *campaignservice.Service, p *peer, w *campaign.Writer, launch campaign.LaunchInputs, ready ...func(string)) func([]byte) []byte {
 	t.Helper()
 	dir := t.TempDir()
 	_ = os.Chmod(dir, 0700)
@@ -533,6 +532,9 @@ func serviceSpool(t *testing.T, s *campaignservice.Service, p *peer, w *campaign
 		}
 	}
 	ack(nil)
+	for _, start := range ready {
+		start(dir)
+	}
 	sequence := int64(0)
 	return func(request []byte) []byte {
 		t.Helper()
@@ -603,10 +605,9 @@ func TestServiceCleansOnlyConfirmedHandlesAfterClosure(t *testing.T) {
 			var q map[string]any
 			_ = json.Unmarshal(attemptWire(p, 1, 1, w.Manifest().ReleaseRecordDigest), &q)
 			body := q["body"].(map[string]any)
-			body["pre_actions"] = []any{map[string]any{"action_id": "setup", "action_type": "interceptor.injection/v1alpha1", "parameters": map[string]any{"surface": "mcp_tool_result", "mode": "simulation", "scope": "once", "selector": map[string]any{"service": "tickets", "tool_name": "get_ticket", "call_ordinal": "first"}, "placement": map[string]any{"operation": "replace", "pointer": "/structuredContent/description"}, "payload_digest": p.input.Artifacts[0].Descriptor.Digest}}}
-			body["carrier"] = p.input.Artifacts[0].Descriptor
-			body["invocation"].(map[string]any)["input_source"] = "carrier"
-			body["cleanup"] = map[string]bool{"delete_actions_after_observation": false}
+			body["pre_actions"] = []any{map[string]any{"action_id": "setup", "action_type": "interceptor.injection/v1alpha1", "parameters": map[string]any{"surface": "mcp_tool_result", "mode": "simulation", "scope": "once", "selector": map[string]any{"service": "tickets", "tool_name": "get_ticket", "call_ordinal": "first"}, "placement": map[string]any{"operation": "replace", "pointer": "/structuredContent/description"}}}}
+			body["injection_input"] = body["input"]
+			body["retain_injections"] = true
 			raw, err := s.Handle(context.Background(), encode(q), 0)
 			if err != nil {
 				t.Fatal(err)

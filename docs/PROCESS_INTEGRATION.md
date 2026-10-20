@@ -18,9 +18,19 @@ The test-only Python launch adapter relocates fixed filesystem paths into privat
 temporary directories and supplies a no-op confinement callback. It MUST NOT be
 included in a release image or enabled by production configuration. Local FIFO
 tests also run on macOS to test wire behavior; they do not qualify the Linux
-container profile. External model, native-target, Docker and image-approval
+container profile. External model, native-target, Docker and image-inspection
 dependencies are controlled fixtures. Tests MUST NOT claim live provider, Docker,
-seccomp, production release-service or native host qualification from these results.
+seccomp or native host qualification from these results.
+
+## Standalone Operator verification
+
+`make test` MUST work with only the Operator checkout and its prepared Python
+environment. It enables `OPERATOR_CONTROLLED_PEER_TEST=1` for the in-repository
+controlled Python campaign peer, including separate CLI inspection/report/export.
+It MUST NOT enable `OPERATOR_PYTHON_PEER_TEST`, which selects the sibling Harness
+transport tests. `make test-integration` explicitly enables those tests along with
+the production Harness process tests. A missing selected peer MUST fail promptly
+with its path; an exited peer MUST report its output instead of a transport timeout.
 
 ## Startup coverage
 
@@ -71,6 +81,6 @@ the objective and explicit summary provenance intact. Attack Harness's
 the five codecs. Synthetic model usage counts are fixtures, not tokenizer or live
 provider qualification.
 
-The [acceptance matrix](../../attack_harness/ACCEPTANCE_MATRIX.md) records exact
-source and development contract identities. A package/image built from older pins
-MUST NOT be described as having passed these tests.
+Record the exact Operator and Harness source and contract identities with test
+results. A package/image built from different pins MUST NOT be described as having
+passed those tests.

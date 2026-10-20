@@ -1,13 +1,10 @@
 # Public capabilities and compatible bundle admission
 
-Status: accepted MVP contract, 2026-09-21. The closed public capability and bundle
-schemas are in the offline catalog. The Go host capability/bundle library verifies
-and projects native exports, checks compatible submissions and preserves live
-binding/policy records; see the [implementation guide](../docs/CAPABILITY_ADMISSION.md).
-The fixture runner checks the reference chain. Submission/validation/start and
-broker integration are implemented.
-The public capability-export CLI is implemented. Complete process/native conformance
-and package publication remain outstanding. Existing Attack Harness tool schemas are unchanged.
+The closed public capability and bundle schemas are in the offline catalog.
+The host capability/bundle library verifies and projects native exports, checks
+compatible submissions and preserves live binding/policy records. See the
+[capability guide](../docs/CAPABILITY_ADMISSION.md) and the shared reference-chain
+fixtures for the native export → public projection → submitted bundle relationship.
 
 ## 1. Public export
 
@@ -179,9 +176,7 @@ Positive/negative checks include objectives-only input, required/optional refs,
 namespace mistakes, source/projection integrity, unrelated live changes and exact
 pins. The fixture mapper is a conformance aid, not a production authorization layer.
 Native runtime policy/route checks and Go/Python structural, semantic and JCS
-validation are implemented. Public capability-export CLI integration, complete
-Operator/Attack Harness process tests, live target qualification and release
-publication remain outstanding. See [implementation status](../docs/IMPLEMENTATION_STATUS.md).
+validation remain required in addition to the fixture mapper.
 
 
 ## HTTPS adapter projection

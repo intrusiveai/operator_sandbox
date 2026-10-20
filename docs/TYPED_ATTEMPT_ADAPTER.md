@@ -1,6 +1,6 @@
 # Typed Interceptor attempt adapter
 
-`internal/attemptadapter` connects validated shared attempt requests to the durable
+`internal/attemptadapter` connects host-resolved attempt plans to the durable
 native executor. The [campaign service](CAMPAIGN_SERVICE.md) now supplies its live
 callbacks; the campaign start CLI and Docker launcher provide orchestration.
 
@@ -13,8 +13,9 @@ callbacks; the campaign start CLI and Docker launcher provide orchestration.
    The resolver checks native capability facts and produces the capability policy
    for bundle admission. A published injection family alone grants no selector.
 3. Run bundle compatibility admission using that policy.
-4. Journal the identified attempt submission before tactical validation.
-5. Call `Compile` with the request and trusted, campaign-associated artifact bytes,
+4. Resolve the simple wire input or committed receipt, retain bytes, and assign
+   host-owned identities and lineage. Journal the resolved plan before dispatch.
+5. Call `Compile` with that internal plan and trusted, campaign-associated artifact bytes,
    current-session parent lineage, scenario IDs, release pin, timestamps, native
    revision and remaining feedback allowance. Compilation performs no I/O.
 6. Admit `Plan.RecordJSON` and mark the parent dispatched. Create an execution
@@ -36,8 +37,8 @@ Narrative fields never choose a tactic or repair arguments.
 
 The [restore service](SNAPSHOT_SERVICE.md) supplies verified checkpoint lineage.
 A known historical parent absent from that inventory becomes a new native root;
-the original harness request and generation remain retained. Native children follow
-native generations while campaign lineage checks use the original harness generations.
+the original resolved host plan and generation remain retained. Native children follow
+native generations while campaign lineage checks use the original campaign generations.
 Unverified parent assertions remain invalid.
 
 Native capability placement names (`append`, `prepend`, `merge`, `insert`) map to

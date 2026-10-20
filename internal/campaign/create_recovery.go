@@ -12,6 +12,7 @@ import (
 
 // CreateIntent supplies discovery identity only. It never permits create/start.
 type CreateIntent struct {
+	BindingVersion string
 	Manifest       RunManifest
 	ManifestDigest string
 	Endpoint       string
@@ -19,6 +20,9 @@ type CreateIntent struct {
 }
 
 func (i CreateIntent) Validate() error {
+	if i.BindingVersion != "" && i.BindingVersion != BindingVersion && i.BindingVersion != SelectedImageBindingVersion {
+		return ErrInvalid
+	}
 	raw, err := i.Manifest.Bytes()
 	if err != nil || contracts.RawDigest(raw) != i.ManifestDigest || !validID(i.DaemonID) {
 		return ErrInvalid
@@ -31,7 +35,12 @@ func (i CreateIntent) Binding(id string) (DockerBinding, error) {
 		return DockerBinding{}, err
 	}
 	m := i.Manifest
-	b := DockerBinding{BindingVersion, m.CampaignID, m.LaunchID, m.ContainerID, i.ManifestDigest,
+	version := i.BindingVersion
+	if version == "" {
+		// Explicit legacy journal interpretation.
+		version = BindingVersion
+	}
+	b := DockerBinding{version, m.CampaignID, m.LaunchID, m.ContainerID, i.ManifestDigest,
 		i.Endpoint, i.DaemonID, id, m.ImageDigest, m.DockerLabels()}
 	return b, b.validate(m, i.ManifestDigest)
 }
@@ -69,6 +78,13 @@ func readCreateIntent(ctx context.Context, r *os.Root, campaignID string) (Creat
 		fields, ok := v.(map[string]any)
 		if !ok {
 			return ErrCorrupt
+		}
+		if value, exists := fields["binding_version"]; exists {
+			var ok bool
+			intent.BindingVersion, ok = value.(string)
+			if !ok || (intent.BindingVersion != BindingVersion && intent.BindingVersion != SelectedImageBindingVersion) {
+				return ErrCorrupt
+			}
 		}
 		intent.Endpoint, _ = fields["endpoint"].(string)
 		intent.DaemonID, _ = fields["daemon_id"].(string)
@@ -108,7 +124,11 @@ func SaveRecoveredDockerBinding(ctx context.Context, stateRoot string, b DockerB
 	if err != nil {
 		return err
 	}
-	if b.validate(i.Manifest, i.ManifestDigest) != nil || b.Endpoint != i.Endpoint || b.DaemonID != i.DaemonID {
+	expectedVersion := i.BindingVersion
+	if expectedVersion == "" {
+		expectedVersion = BindingVersion
+	}
+	if b.APIVersion != expectedVersion || b.validate(i.Manifest, i.ManifestDigest) != nil || b.Endpoint != i.Endpoint || b.DaemonID != i.DaemonID {
 		return ErrInvalid
 	}
 	if err := privateDir(r, "launch"); err != nil {

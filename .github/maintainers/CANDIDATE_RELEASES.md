@@ -1,21 +1,21 @@
 # Candidate releases
 
 Use this guide to configure release publication once, publish a rolling candidate,
-and promote its existing signed packages to stable. All settings and commands
+and promote its existing packages to stable. All settings and commands
 apply to `intrusiveai/operator_sandbox` unless explicitly stated otherwise.
 
 ## How the release moves through the system
 
 1. A push to `candidate-v<major.minor.patch>` (including a merged feature PR)
    runs tests and reproducible builds for Linux/macOS on AMD64/ARM64.
-2. Actions signs and uploads the four packages to the version's rolling GitHub
+2. Actions packages and uploads the four packages to the version's rolling GitHub
    **Pre-release**. Operator's local catalog job publishes the exact download
    links and hashes with `tags: ["rc"]` to the releases service.
 3. Merging the reviewed candidate PR into `main` promotes those same packages
    to stable and updates the catalog label to `release`. It does not rebuild or
-   re-sign them. The website shows the first two entries labeled `release`.
+   replace them. The website shows the first two entries labeled `release`.
 
-Operator's passing CI/signing and reviewed candidate merge are the publication
+Operator's passing CI and reviewed candidate merge are the publication
 checks. Finish the testing planned for that release before merging. Publication
 itself does not claim that every native runtime profile is qualified or approve
 an Attack Harness image; those have their own qualification and admission paths.
@@ -69,45 +69,7 @@ write access only for the publishing jobs; the repository's default workflow
 permission can remain read-only. The catalog job requests Contents and Pull
 requests read access plus `id-token: write` for temporary AWS credentials.
 
-### 3. Configure signing and release credentials
-
-#### Install the OpenPGP signing key
-
-Operator signs every host package. Complete this before pushing a candidate:
-
-1. Select your publisher-controlled OpenPGP signing key (or signing subkey) and
-   its full fingerprint. List available keys with `gpg --list-secret-keys
-   --keyid-format long --with-subkey-fingerprint`. Use a full 40- or 64-character
-   fingerprint, not the short key ID. Ensure the key is usable and unexpired.
-2. Export the selected private signing material into a private file outside the
-   repository. For a dedicated release key, run the following, replacing the
-   fingerprint with your actual one. `--export-secret-subkeys` may be used for
-   an established signing-subkey setup instead.
-
-   ```sh
-   umask 077
-   gpg --armor --output /private/path/operator-release-private.asc \
-     --export-secret-keys FULL_SIGNING_FINGERPRINT
-   ```
-
-   Replace `/private/path` with an existing private directory. Do not commit this
-   file or place it in a shared directory.
-3. Open **Settings → Secrets and variables → Actions → Secrets → New repository
-   secret**. Add `RELEASE_SIGNING_KEY` containing the complete armored private
-   export. Add `RELEASE_SIGNING_PASSPHRASE` with its passphrase if encrypted;
-   omit that secret for an unencrypted CI signing key.
-4. In the same Actions settings, select **Variables → New repository variable**.
-   Add `RELEASE_SIGNING_FINGERPRINT` with the full fingerprint selected above.
-   Use repository settings here: the signing job is not in `production`.
-5. Export the corresponding public key with `gpg --armor --output
-   operator-release-public.asc --export FULL_SIGNING_FINGERPRINT` and distribute
-   it to installing administrators through your established trusted channel.
-   Follow [host distribution](../../docs/HOST_DISTRIBUTION.md) for keyring setup.
-   Retire the temporary private export according to your key-handling policy.
-
-The signing job imports the key into a temporary GPG home and removes it on exit.
-Passphrases are passed through stdin. A key downloaded alongside an archive is
-not an independently trusted key.
+### 3. Configure release credentials
 
 #### Decide whether to add `RELEASE_TOKEN`
 
@@ -271,7 +233,7 @@ See GitHub's [repository OIDC configuration API](https://docs.github.com/en/rest
    `production`, and approve it after reviewing the candidate.
 3. Confirm both runs finish successfully. Under **Releases**, verify that
    `v<version>` is marked **Pre-release** and includes all four platform archives
-   and the signed inventory/checksums described below, plus `release-index-entry.json`.
+   and the inventory/checksums described below, plus `release-index-entry.json`.
 4. Open the [public Operator catalog](https://releases.intrusive.ai/docs/releases/operator_sandbox.json)
    and confirm the version has `tags: ["rc"]` with the same archive URLs and
    digests. It should remain hidden from the stable download listing. A dispatch
@@ -308,7 +270,7 @@ git push --set-upstream origin candidate-v1.2.3
 ```
 
 Merge feature PRs into that candidate or push trusted changes directly. Each push
-replaces its rolling prerelease after successful tests, builds, and signing. Use
+replaces its rolling prerelease after successful tests and builds. Use
 exactly `candidate-v1.2.3`, not an `-rc` suffix or shortened numeric version.
 
 ### 2. Wait for candidate publication and test its packages
@@ -318,9 +280,8 @@ exactly `candidate-v1.2.3`, not an `-rc` suffix or shortened numeric version.
    the `production` deployment when prompted, within the 30-minute wait.
 2. Open **Releases → Operator Sandbox 1.2.3**. Check **Pre-release**, tag `v1.2.3`,
    the candidate source commit and the complete asset list below.
-3. Download the needed platform's archive, checksum file and detached checksum
-   signature. Verify/install using [host distribution](../../docs/HOST_DISTRIBUTION.md)
-   and your independently trusted public keyring.
+3. Download the needed platform's archive and checksum file. Check the checksum
+   and install using [host distribution](../../docs/HOST_DISTRIBUTION.md).
 4. Complete your candidate tests and record the results on the release PR. Check
    the [public catalog](https://releases.intrusive.ai/docs/releases/operator_sandbox.json)
    for `rc` and the same archive hashes/URLs. Candidates remain hidden from the
@@ -341,7 +302,7 @@ Running campaigns retain their previously installed binaries and frozen inputs.
    job. Approve the resulting catalog deployment if required; wait for both jobs
    to finish successfully.
 4. Confirm the GitHub release is stable, its tag still identifies the candidate
-   commit, and its archives and signatures have unchanged hashes. Confirm its
+   commit, and its archives and checksums have unchanged hashes. Confirm its
    catalog entry is now `release` with the same artifact identities. Reload the
    [downloads website](https://releases.intrusive.ai/) and check its listing and links.
    Only the first two `release` entries are shown; older entries remain in the catalog.
@@ -359,17 +320,17 @@ maintenance version does not deliberately replace a newer release.
 Each release includes four platform archives (`linux-amd64.tar.gz`,
 `linux-arm64.tar.gz`, `darwin-amd64.tar.gz`, `darwin-arm64.tar.gz`), each containing the
 executable, contract, configuration templates, documentation, SBOM, provenance and
-signed manifest. Each has `<platform>-SHA256SUMS` and `<platform>-SHA256SUMS.asc`.
+file manifest. Each has a corresponding `<platform>-SHA256SUMS` file.
 Verify those named checksum files before unpacking, as described in
 [host distribution](../../docs/HOST_DISTRIBUTION.md).
 
-`candidate.json` and its detached signature bind the four packages to their version,
-source commit and shared contract. Release metadata records the complete signed-package asset
+`candidate.json` binds the four packages to their version,
+source commit and shared contract. Release metadata records the complete package asset
 inventory and GitHub-reported SHA-256 digests for promotion checks.
 
-`release-index-entry.json` is mutable catalog metadata, outside the signed package
+`release-index-entry.json` is mutable catalog metadata, outside the package
 inventory. It is regenerated from actual GitHub asset URLs and hashes, and its
-label changes on promotion while the signed packages remain unchanged.
+label changes on promotion while the packages remain unchanged.
 
 ## Catalog publication and recovery
 
@@ -402,7 +363,7 @@ If GitHub publication succeeds but catalog publication fails:
 3. Rerun the failed parent job through **Actions → run → Re-run failed jobs**.
    If only catalog repair is needed, run the command below from a reviewed
    checkout, replacing the source placeholder with the full commit behind the
-   published tag. Do not rebuild or re-sign stable artifacts.
+   published tag. Do not rebuild or replace stable artifacts.
 4. After success, repeat the public catalog, hash, and website checks above.
 
 ```sh
@@ -426,7 +387,7 @@ run is cancelled on timeout. Confirm timed-out runs have stopped before retrying
 
 ## Failure behavior and local verification
 
-- Failed tests, builds or signing do not publish a candidate.
+- Failed tests or builds do not publish a candidate.
 - An old run cannot replace a newer candidate branch head.
 - Interrupted asset replacement leaves a draft; rerun the candidate workflow.
 - Missing or changed assets, a changed tag, the wrong candidate head, or a

@@ -1,14 +1,13 @@
-# Ordinary protocol implementation stage
+# Ordinary wire protocol
 
 This document fixes the wire field choices for the ordinary operations implemented
 in the shared validation library. It supplements [SHARED_CONTRACT.md](SHARED_CONTRACT.md).
-It does not publish package `0.1.0` or claim a working broker or harness runtime.
 
 ## Registry and envelopes
 
-[operations.json](operations.json) is the source for 13 ordinary operations:
+[operations.json](operations.json) is the source for 14 ordinary operations:
 artifact begin/part/commit, attempt execution, injection deletion, observation
-read, typed record append, snapshot create/list/inspect, restore, graceful stop
+read, typed record append, snapshot create/list/inspect, restore, finish, local diagnostic retention
 and model generation. The [model codec contract](MODEL_CODEC_CONTRACT.md) fixes
 the model exchange's native subset and trusted profile binding. Each entry identifies
 request/result/error schemas, allowed error codes, lifecycle states, finalization
@@ -26,8 +25,7 @@ exact bodies. `make generate` regenerates envelopes and schema-ID constants;
 path is accepted. Model generation uses the implemented closed schemas and
 shared native-codec fixtures. [Startup and manifest metadata](STARTUP_MANIFEST_CONTRACT.md)
 now have schemas and shared validation. [Input content](ENGINE_INPUT_CONTRACT.md)
-adds EngineContext and prompt provenance; all five native codec families and host/harness
-runtime integration are implemented, with full qualification/publication outstanding.
+adds EngineContext and prompt provenance.
 Records and conclusion content are defined in the
 [assessment contract](ASSESSMENT_CONTRACT.md).
 
@@ -39,8 +37,8 @@ request and response ceilings to 64 KiB. Sequences are independent in each
 direction; a response sequence need not equal the request sequence.
 
 The response echoes the request's campaign, launch, revision, call ID, operation
-ID and operation name. Attempt bodies additionally bind `request_id` to the
-envelope's durable `operation_id`; it is never an alias for `call_id`.
+ID and operation name. The body operation_id selects a target capability. Operator assigns internal
+attempt request_id from the envelope operation_id; call_id remains exchange correlation.
 
 The host clamps the requested timeout to the registry ceiling and remaining campaign
 time. An otherwise valid longer requested timeout is not a new authorization or an
@@ -48,7 +46,7 @@ encoding error. Snapshot creation/restore have 300-second ceilings; other operat
 in this stage have 30-second ceilings. Every deadline is host-monotonic.
 
 Only admitted execution permits normal work. Finalization admits artifact operations
-for the reserved conclusion, the conclusion record and stop. For part/commit, determine purpose from the host's saved upload
+for a large assessment draft, local diagnostic reports and finish. For part/commit, determine purpose from the host's saved upload
 record. The guest cannot relabel an existing upload. Registry metadata does not
 replace runtime policy checks or authorize startup dispatch.
 
@@ -65,8 +63,8 @@ contains raw-byte `digest`, `size_bytes`, `media_type` and `canonicalization`
 (`raw` or `jcs-v1`). This matches the existing attempt artifact descriptor.
 `jcs-v1` requires `application/json`; it asserts the submitted bytes already use
 that canonical form. The host verifies rather than rewriting them or their digest.
-An attempt may use a descriptor only after the host has committed its artifact and
-recorded its campaign membership; descriptor syntax alone proves no commitment.
+An attempt uses direct input or a committed artifact receipt; Operator resolves
+descriptors from retained bytes and campaign membership. Models do not repeat descriptors.
 
 Objects are at most 16 MiB; a conclusion is at most 1 MiB and uses `application/json`.
 Each part carries 1–262,144 decoded bytes, strict padded standard base64 with canonical
@@ -136,7 +134,7 @@ current exchange has newer attribution; validate it against the recorded operati
 and never advance again. The stateless validator cannot establish that ledger fact
 and must not impose worker/revision ownership restrictions on duplicate lookup.
 
-## Errors, feedback and stop
+## Errors, feedback and finish
 
 [OperationError](operation-error.schema.json) bounds the code, message, optional
 JSON Pointer instance path, effect state and disposition. Registry entries enumerate
@@ -153,14 +151,15 @@ prove visibility, source membership or the full artifact digest; those require t
 host receipt map and complete-content verification. Unavailable/truncated content
 retains the existing explicit result semantics.
 
-Graceful stop uses the exact [request](engine-request-stop-request.schema.json) and
-[acknowledgement](engine-request-stop-result.schema.json) from Shared Contract §11.
-Committed and unavailable conclusion variants are closed and exclusive. The result
-must repeat the conclusion state, close execution admission and require exit within
-5,000 ms, with finalization still pending. The runtime must verify committed receipts
-and matching finish reason before accepting stop. The [assessment stage](ASSESSMENT_CONTRACT.md) implements conclusion content,
-record append and completion-chain consistency checks; the [completion service](../docs/COMPLETION_SERVICE.md) implements runtime receipt
-lookup and durable stop acceptance. The harness implements bounded finalization.
+Graceful completion uses the exact [finish request](engine-finish-request.schema.json)
+and [acknowledgement](engine-finish-result.schema.json) from Shared Contract §11.
+The request selects exactly one direct assessment, committed assessment-draft
+artifact receipt or unavailable reason. No prior conclusion registration is
+required. Acceptance retains the assessment or unavailable reason, closes
+execution admission and requires exit within 5,000 ms, with finalization pending.
+The [assessment contract](ASSESSMENT_CONTRACT.md) defines normalization and reference
+checks; the [completion service](../docs/COMPLETION_SERVICE.md) retains the result
+and coordinates owned cleanup.
 
 [Spool ACK](engine-spool-ack.schema.json) syntax is also implemented with a 1,024-byte
 ceiling. Initial null and zero positions remain distinct. The transport must still
@@ -177,5 +176,14 @@ Neither implementation executes operations or mutates campaign state.
 Campaign admission, active launch/sequence tracking, recorded duplicate identity,
 original effect binding, receipt membership, upload persistence, budgets and
 monotonic deadlines remain mandatory runtime gates. Passing these validators is
-not permission to dispatch. The operation registry and conformance tests provide
-the next implementation steps with shared field names and boundaries.
+not permission to dispatch. The operation registry and conformance tests define
+the shared field names and boundaries used by runtime callers.
+
+## Correctable argument rejection
+
+Transport validates the closed envelope and operation bounds before delivery. The
+host MUST validate the registered body before any effect. A valid envelope with
+invalid arguments receives a retained, correlated error, not an execution receipt.
+Successful responses require a fully valid request; error responses may correlate
+to an invalid body. Malformed JSON, invalid envelope identities and unknown routes
+remain transport violations. See SIMPLE_CAMPAIGN_CONTRACT.md for the ordinary workflow.

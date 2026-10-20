@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 
@@ -44,29 +43,19 @@ func installCommand(ctx context.Context, args []string, stdout, stderr io.Writer
 		rootDefault = filepath.Join(home, "Library", "Application Support", "Operator", "installation")
 	}
 	root := f.String("root", rootDefault, "private installation directory")
-	archive := f.String("archive", "", "local signed release archive")
-	keyring := f.String("keyring", "", "independently trusted public keyring")
-	verifier := f.String("gpgv", "", "absolute verifier path; default administrator PATH")
+	archive := f.String("archive", "", "local release archive")
 	config := f.String("config", defaults.ConfigFile, "private administrator configuration")
 	state := f.String("state-root", defaults.StateRoot, "retained campaign state directory")
 	image := f.String("image", "", "administrator-installed local harness image selector")
-	downgrade := f.Bool("allow-downgrade", false, "explicitly activate an older signed release")
-	if f.Parse(args) != nil || f.NArg() != 0 || *archive == "" || *keyring == "" || *image == "" {
+	downgrade := f.Bool("allow-downgrade", false, "explicitly activate an older release")
+	if f.Parse(args) != nil || f.NArg() != 0 || *archive == "" || *image == "" {
 		return 2
 	}
 	if runtime.GOOS == "darwin" && os.Geteuid() == 0 {
 		fmt.Fprintln(stderr, "macOS installation must run as the Docker Desktop user")
 		return 1
 	}
-	var err error
-	if *verifier == "" {
-		*verifier, err = exec.LookPath("gpgv")
-	}
-	if err != nil {
-		fmt.Fprintln(stderr, "install requires gpgv")
-		return 1
-	}
-	result, err := hostrelease.Install(ctx, hostrelease.InstallOptions{Root: *root, Archive: *archive, Verifier: *verifier, Keyring: *keyring, ConfigFile: *config, StateRoot: *state, Image: *image, AllowDowngrade: *downgrade})
+	result, err := hostrelease.Install(ctx, hostrelease.InstallOptions{Root: *root, Archive: *archive, ConfigFile: *config, StateRoot: *state, Image: *image, AllowDowngrade: *downgrade})
 	if err != nil {
 		fmt.Fprintln(stderr, "install failed:", err)
 		return 1

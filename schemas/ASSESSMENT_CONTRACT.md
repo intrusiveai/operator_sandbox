@@ -2,8 +2,9 @@
 
 This fixes concrete fields and validation rules for Shared Contract §§8, 10 and
 11. All assessments remain guest assertions. They cannot overwrite host execution
-facts, protected evidence, budget counters or final campaign status. Broker and harness runtime handling are implemented. Package
-publication and complete process/native qualification remain outstanding.
+facts, protected evidence, budget counters or final campaign status. Shared Go/Python
+validators and broker/harness process tests implement these rules. Native runtime
+qualification remains a separate release gate.
 
 ## Typed records
 
@@ -16,7 +17,6 @@ publication and complete process/native qualification remain outstanding.
 | `progress` | Summary, objective/hypothesis/attempt references, observation references and record references; optional decision and typed assessment. |
 | `lineage` | Hypothesis ID, committed attempt receipt, mutation summary and record references; optional parent attempt receipt. |
 | `coverage` | Coverage entries and record references. |
-| `conclusion` | Committed `artifact_receipt` and `finish_reason`. |
 
 Provenance is `scenario` with a required `scenario_id`, or `exploratory` without
 that field. Either can name a parent hypothesis. Self-parent hypotheses and attempt
@@ -46,20 +46,17 @@ duplicate retains its original attribution; earlier worker/revision attribution
 never denies same-campaign access. The validator checks campaign/launch/kind
 correlation; the ledger distinguishes new records from saved duplicates.
 
-Only conclusion records are eligible during finalization. The host resolves the
-artifact, checks purpose/content/binding/finish reason and then commits the record.
-The registry marks this operation `record-write`, with durable receipt policy and
-`conclusion-only` finalization. `RECORD_REFERENCE_INVALID` covers invalid external
-record/evidence references before effects; `CONCLUSION_INVALID` covers invalid
-conclusion content. Uncertain persistence remains a terminal unknown outcome.
+Historical records are optional and remain exploration operations. Invalid
+references use RECORD_REFERENCE_INVALID. Finish draft validation uses
+CONCLUSION_INVALID with an actionable bounded diagnostic.
 
 ## Structured conclusion
 
-[EngineConclusion](engine-conclusion.schema.json) uses
-`operator.dev/engine-conclusion/v1alpha2` and `kind: EngineConclusion`. It requires
-binding, status, finish reason, summary, objectives, hypotheses, claims, coverage,
-uncertainties and record references. The [example](fixtures/conclusion-example.json)
-uses test identities, not real evidence.
+The caller submits [Assessment](assessment.schema.json), requiring only summary
+and objectives, through `engine.finish`. Operator resolves optional empty
+collections, defaults status to partial, and adds its current binding and supplied
+finish reason. The retained [EngineConclusion](engine-conclusion.schema.json)
+contains the fully resolved form. It is host-generated, not a caller obligation.
 
 Status is `completed`, `partial` or `failed`. Completed describes the assessment,
 not successful exploitation, exhaustive testing or verified claims. A complete
@@ -77,7 +74,7 @@ launch records and final revision:
 | `prompt_digest` | Exact effective system-prompt bytes. |
 | `skill_set_digest` | Raw bytes of SkillSetManifest, including the empty set. |
 | `image_digest` | Full Docker image ID pinned for this launch. |
-| `release_record_digest` | Raw bytes of the validated cached HTTPS release response. |
+| `release_record_digest` | Raw bytes of the validated embedded compatibility file. |
 | `contract_package_version`, `contract_package_digest` | Installed stable major.minor.patch version and canonical package-manifest digest. |
 
 These copies grant no authority. Raw-file digests do not replace separately recorded
@@ -89,6 +86,23 @@ references. Hypotheses also carry objective references and provenance. Outcomes
 are `supported`, `inconclusive`, `not-observed` or `not-tested`. The runtime checks
 objective/scenario membership in the submitted bundle and recorded exploratory
 lineage; compact conclusions need not embed every historical hypothesis.
+
+A conclusion MUST be allowed to define new hypotheses directly, without earlier
+hypothesis records. The host MUST collect all local definitions before resolving
+references, including forward parent and coverage references. Local definitions
+take precedence within that conclusion; explicit nonlocal references MAY resolve
+through the campaign's historical hypothesis records. A reference absent from both
+sets MUST be rejected. The host MUST NOT synthesize or append hypothesis history
+to admit a conclusion. Earlier hypothesis, progress, lineage and coverage records
+retain their existing validation and attribution rules.
+
+Duplicate local IDs, self-parenting and parent cycles MUST be rejected, including
+cycles crossing local and historical definitions. Both Go and Python validators
+check local duplicates/self-parenting/cycles; only the host resolves historical
+membership. Assessment normalization, retention and finish acceptance MUST use
+the same reference resolution. All binding, finish-reason, artifact commitment,
+receipt membership, visibility, evidence availability and byte-range checks remain
+required.
 
 Claims have unique IDs, statements, interpretation, confidence, assurance, attempt
 receipts, observations and local uncertainty references. A supported claim requires
@@ -120,28 +134,10 @@ hypothesis, claim or gap IDs are rejected within their respective collections.
 History overflow requires a `coverage-limit` gap and partial (or failed) status,
 with detailed history retained through committed records.
 
-## Completion-chain validation
+## Completion
 
-The finish sequence remains artifact commit → conclusion record → stop request
-with matching finish reason and both receipts → closed-admission/required-exit ACK.
-
-Go `ValidateConclusion` and Python `validate_conclusion` check shape, byte limits,
-range arithmetic and internal references. They do not resolve external IDs or
-validate the truth of evidence claims.
-
-Go `ValidateCompletion(CompletionInput)` and Python `validate_completion(...)`
-check exact conclusion bytes against the host's expected binding, saved artifact
-commit response, conclusion-record request/response and stop request. Checks cover
-raw SHA-256/byte count, media/purpose, receipt links, campaign/launch/final revision
-and finish reasons. An artifact's earlier revision attribution alone does not deny
-access; the conclusion itself must match the expected final revision.
-
-Callers must resolve inputs from trusted launch and campaign receipt records.
-Guest-supplied messages that agree with each other are not proof of commitment.
-Receipt lookup, visibility, stored range bounds, claimed canonicalization,
-durable writes, duplicates, admission and shutdown remain runtime requirements.
-The helper checks the chain before stop acceptance and neither saves stop nor
-claims cleanup/reporting is finished.
-
-An unavailable-conclusion stop still uses ordinary validation and host stop policy;
-it never fabricates a committed chain or extends the hard deadline.
+Use the single finish operation and duplicate/finalization rules in
+[SIMPLE_CAMPAIGN_CONTRACT.md](SIMPLE_CAMPAIGN_CONTRACT.md). Large assessment drafts
+may use committed conclusion-purpose artifacts. No conclusion registration or
+caller-created binding is accepted. Host retention precedes acknowledgement and
+cleanup completion is reported separately.

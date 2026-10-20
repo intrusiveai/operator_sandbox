@@ -47,7 +47,7 @@ func TestRecordedAttachOrdersDurabilityBeforeEffects(t *testing.T) {
 				attaches++
 				check("intent.json")
 				if fault == "attach reply" {
-					return interceptor.Attachment{}, errors.New("lost")
+					return interceptor.Attachment{}, &interceptor.CallError{Kind: "transport_unavailable", Uncertain: true}
 				}
 				if fault == "binding write" {
 					os.WriteFile(filepath.Join(dir, "binding.json.pending"), []byte("partial"), 0600)
@@ -80,6 +80,13 @@ func TestRecordedAttachOrdersDurabilityBeforeEffects(t *testing.T) {
 			_, _, e := attachRecorded(ctx, root, intent, p)
 			if (e == nil) != (fault == "none") {
 				t.Fatal(e)
+			}
+			if fault != "none" {
+				expectedStage := map[string]string{"attach reply": "Interceptor attachment", "binding write": "Interceptor attachment binding recording", "status reply": "Interceptor status lookup", "status drift": "Interceptor attachment verification", "terminal status": "Interceptor attachment verification", "instance write": "Interceptor attachment verification", "cancelled": "Interceptor attachment intent recording"}[fault]
+				d := PreparationDetails(e)
+				if d == nil || d.Stage != expectedStage {
+					t.Fatal("wrong preparation stage", d, e)
+				}
 			}
 			expectedStatus := 1
 			if fault == "attach reply" || fault == "binding write" || fault == "cancelled" {

@@ -4,22 +4,33 @@ package workerjob
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"github.com/intrusiveai/operator_sandbox/internal/imagerelease"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/hostrun"
 	"github.com/intrusiveai/operator_sandbox/internal/hostworker"
+	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/startrequest"
 )
 
 type fakeRun struct {
-	receipt       hostrun.Receipt
-	runs, cancels int
-	runError      error
-	check         func()
+	harnessExit          *campaign.HarnessExit
+	stopAccepted         bool
+	workflowDiagnostic   *campaign.WorkflowDiagnostic
+	conclusionDiagnostic *campaign.ConclusionDiagnostic
+	receipt              hostrun.Receipt
+	runs, cancels        int
+	runError             error
+	modelDiagnostic      *modelprovider.Diagnostic
+	check                func()
 }
 
 func (f *fakeRun) Receipt() hostrun.Receipt { return f.receipt }
@@ -31,7 +42,7 @@ func (f *fakeRun) Run(ctx context.Context) (hostworker.Result, error) {
 	if f.check != nil {
 		f.check()
 	}
-	return hostworker.Result{ContainerCleanup: "removed"}, f.runError
+	return hostworker.Result{HarnessExit: f.harnessExit, StopAccepted: f.stopAccepted, ContainerCleanup: "removed", ModelDiagnostic: f.modelDiagnostic, ConclusionDiagnostic: f.conclusionDiagnostic, WorkflowDiagnostic: f.workflowDiagnostic}, f.runError
 }
 func (f *fakeRun) Cancel() error { f.cancels++; return nil }
 
@@ -136,5 +147,205 @@ func TestWorkerJobFailureDoesNotRetryOrExecuteChangedInputs(t *testing.T) {
 				t.Fatal("failed job reopened", err)
 			}
 		})
+	}
+}
+
+func TestPreparationDiagnosticSurvivesCompletionWriteFailure(t *testing.T) {
+	for _, failWrite := range []bool{false, true} {
+		saved, inputs := jobFixture(t)
+		r := saved.Request
+		cause := hostrun.PreparationFailure("local Harness image and compatibility validation", imagerelease.ErrCompatibility)
+		inputs.openError = cause
+		load := func(context.Context, startrequest.Request) (verifiedInputs, error) {
+			if failWrite {
+				if err := os.WriteFile(filepath.Join(r.StateRoot, "starts", r.Selection.StartRequestID, "completion.json.pending"), []byte("interrupted write"), 0600); err != nil {
+					t.Fatal(err)
+				}
+			}
+			return inputs, nil
+		}
+		result, err := run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", load)
+		if !errors.Is(err, imagerelease.ErrCompatibility) || result.Diagnostic == nil || result.Diagnostic.Stage != "Harness compatibility validation" || result.Code != "preparation_failed" || inputs.run.runs != 0 {
+			t.Fatal(result, err)
+		}
+		if (result.CompletionRecording == "unconfirmed") != failWrite {
+			t.Fatal(result)
+		}
+		if failWrite {
+			// The interrupted publication also makes inspection fail closed until
+			// the incomplete file is removed; it never permits a new claim.
+			if _, e := startrequest.Read(r.StateRoot, r.Selection.StartRequestID); !errors.Is(e, startrequest.ErrRecord) {
+				t.Fatal(e)
+			}
+			if e := os.Remove(filepath.Join(r.StateRoot, "starts", r.Selection.StartRequestID, "completion.json.pending")); e != nil {
+				t.Fatal(e)
+			}
+		}
+		disk, e := startrequest.Read(r.StateRoot, r.Selection.StartRequestID)
+		if e != nil {
+			t.Fatal(e)
+		}
+		if failWrite {
+			if disk.Completion != nil {
+				t.Fatal("claimed persistence")
+			}
+		} else if disk.Completion == nil || *disk.Completion.Diagnostic != *result.Diagnostic {
+			t.Fatal(disk)
+		}
+		if _, e := startrequest.ClaimOnce(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest); !errors.Is(e, startrequest.ErrClaimed) {
+			t.Fatal("failure permitted replay", e)
+		}
+	}
+}
+
+func TestUnknownPreparationErrorIsNeverStored(t *testing.T) {
+	saved, _ := jobFixture(t)
+	r := saved.Request
+	private := errors.New("Authorization: Bearer SENSITIVE-SECRET https://user:password@private.invalid/")
+	result, err := run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", func(context.Context, startrequest.Request) (verifiedInputs, error) { return nil, private })
+	if !errors.Is(err, private) || result.Diagnostic == nil {
+		t.Fatal(result, err)
+	}
+	snapshot, e := startrequest.Read(r.StateRoot, r.Selection.StartRequestID)
+	if e != nil {
+		t.Fatal(e)
+	}
+	raw, _ := json.Marshal(snapshot.Completion)
+	if strings.Contains(string(raw), "SENSITIVE") || strings.Contains(string(raw), "password") || strings.Contains(string(raw), "private.invalid") {
+		t.Fatal(string(raw))
+	}
+}
+
+func TestModelDiagnosticCompletionAndPersistenceFailure(t *testing.T) {
+	for _, failWrite := range []bool{false, true} {
+		saved, inputs := jobFixture(t)
+		r := saved.Request
+		d := modelprovider.Diagnostic{Provider: "openai-chat", Model: "test-model", OperationID: "model-1", HTTPStatus: 401, ProviderCode: "invalid_api_key"}.WithFailure("http_rejection", "http_rejected")
+		d.ProviderMessage = strings.Repeat("<", 1024) // Full bounded value must fit durable completion, including JSON escaping.
+		d.ProviderType = "invalid_request_error"
+		d.ProviderParameter = "temperature"
+		d.Omissions.RequestID = "not_provided"
+		inputs.run.modelDiagnostic = &d
+		secondary := errors.New("cleanup failed")
+		inputs.run.runError = errors.Join(modelprovider.FailureError(d), secondary)
+		inputs.run.check = func() {
+			if failWrite {
+				if e := os.WriteFile(filepath.Join(r.StateRoot, "starts", r.Selection.StartRequestID, "completion.json.pending"), []byte("interrupted"), 0600); e != nil {
+					t.Fatal(e)
+				}
+			}
+		}
+		load := func(context.Context, startrequest.Request) (verifiedInputs, error) { return inputs, nil }
+		result, err := run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", load)
+		if result.Code != "execution_failed" || result.Diagnostic == nil || result.Diagnostic.Model != d || modelprovider.Details(err) == nil || !errors.Is(err, secondary) || inputs.run.runs != 1 {
+			t.Fatal(result, err)
+		}
+		if (result.CompletionRecording == "unconfirmed") != failWrite {
+			t.Fatal(result)
+		}
+		if !failWrite {
+			disk, e := startrequest.Read(r.StateRoot, r.Selection.StartRequestID)
+			if e != nil || disk.Completion == nil || disk.Completion.Diagnostic == nil || *disk.Completion.Diagnostic != *result.Diagnostic {
+				t.Fatal(disk, e)
+			}
+			if _, e = run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", load); !errors.Is(e, startrequest.ErrClaimed) {
+				t.Fatal("replay", e)
+			}
+		}
+	}
+}
+
+func TestConclusionDiagnosticCompletionAndPersistenceFailure(t *testing.T) {
+	for _, failWrite := range []bool{false, true} {
+		saved, inputs := jobFixture(t)
+		r := saved.Request
+		d := campaign.NewConclusionDiagnostic("conclusion-record", &contracts.ConclusionError{Reason: "unresolved_hypothesis", FieldPath: "/hypotheses/0/provenance/parent_hypothesis_id", Identifier: "hyp-missing"})
+		inputs.run.conclusionDiagnostic = &d
+
+		secondary := errors.New("cleanup failed")
+		inputs.run.runError = errors.Join(d, secondary)
+		inputs.run.check = func() {
+			if failWrite {
+				if e := os.WriteFile(filepath.Join(r.StateRoot, "starts", r.Selection.StartRequestID, "completion.json.pending"), []byte("interrupted"), 0600); e != nil {
+					t.Fatal(e)
+				}
+			}
+		}
+		load := func(context.Context, startrequest.Request) (verifiedInputs, error) { return inputs, nil }
+		result, err := run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", load)
+		if result.Code != "execution_failed" || result.Diagnostic == nil || result.Diagnostic.Conclusion != d || !errors.Is(err, d) || !errors.Is(err, secondary) || inputs.run.runs != 1 {
+			t.Fatal(result, err)
+		}
+		if (result.CompletionRecording == "unconfirmed") != failWrite {
+			t.Fatal(result)
+		}
+		if !failWrite {
+			disk, e := startrequest.Read(r.StateRoot, r.Selection.StartRequestID)
+			if e != nil || disk.Completion == nil || disk.Completion.Diagnostic == nil || *disk.Completion.Diagnostic != *result.Diagnostic {
+				t.Fatal(disk, e)
+			}
+			if _, e = run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", load); !errors.Is(e, startrequest.ErrClaimed) {
+				t.Fatal("replay", e)
+			}
+		}
+	}
+}
+
+func TestWorkflowDiagnosticCompletionAndPersistenceFailure(t *testing.T) {
+	for _, failWrite := range []bool{false, true} {
+		saved, inputs := jobFixture(t)
+		r := saved.Request
+		d := campaign.NewWorkflowDiagnostic("local-report", "harness-local", "arguments", "invalid_structure", "/input", "attempt_execute", "call-5")
+		d.Stopping = "invalid-call-limit"
+		d.Observed = 5
+		d.Limit = 5
+		d.HostFinalized = true
+		d.CleanupCompleted = true
+		inputs.run.workflowDiagnostic = &d
+		secondary := errors.New("secondary cleanup failure")
+		inputs.run.runError = errors.Join(d, secondary)
+		inputs.run.check = func() {
+			if failWrite {
+				if e := os.WriteFile(filepath.Join(r.StateRoot, "starts", r.Selection.StartRequestID, "completion.json.pending"), []byte("interrupted"), 0600); e != nil {
+					t.Fatal(e)
+				}
+			}
+		}
+		load := func(context.Context, startrequest.Request) (verifiedInputs, error) { return inputs, nil }
+		result, e := run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", load)
+		if e == nil || result.Code != "execution_failed" || result.Diagnostic == nil || result.Diagnostic.Workflow != d || !errors.Is(e, d) || !errors.Is(e, secondary) {
+			t.Fatal(result, e)
+		}
+		if (result.CompletionRecording == "unconfirmed") != failWrite {
+			t.Fatal(result)
+		}
+		if !failWrite {
+			disk, e := startrequest.Read(r.StateRoot, r.Selection.StartRequestID)
+			if e != nil || disk.Completion.Diagnostic.Workflow != d {
+				t.Fatal(disk, e)
+			}
+			if _, e = run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", load); !errors.Is(e, startrequest.ErrClaimed) {
+				t.Fatal("replayed", e)
+			}
+		}
+	}
+}
+
+func TestHarnessExitCompletionRetainsCauseAndIgnoresRecoveredRejection(t *testing.T) {
+	saved, inputs := jobFixture(t)
+	r := saved.Request
+	h := campaign.HarnessExit{Outcome: "failed", FinishAccepted: true, AssessmentCommitted: true, ExitObserved: true, ExitCode: 1, WorkerCause: "docker_exit_notification", Cause: "RuntimeError: controlled failure", Stderr: "RuntimeError: controlled failure", StderrState: "retained", CleanupComplete: true, Details: "campaign journal event launch.exit"}
+	inputs.run.harnessExit = &h
+	inputs.run.stopAccepted = true
+	old := campaign.NewConclusionDiagnostic("old-rejected-finish", &contracts.ConclusionError{Reason: "unresolved_hypothesis", FieldPath: "/hypotheses/0/provenance/parent_hypothesis_id", Identifier: "hyp-missing"})
+	inputs.run.conclusionDiagnostic = &old
+	inputs.run.runError = errors.New("execution failed")
+	result, err := run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", func(context.Context, startrequest.Request) (verifiedInputs, error) { return inputs, nil })
+	if err == nil || result.Diagnostic == nil || result.Diagnostic.HarnessExit != h || result.Diagnostic.Conclusion.Valid() {
+		t.Fatal(result, err)
+	}
+	disk, e := startrequest.Read(r.StateRoot, r.Selection.StartRequestID)
+	if e != nil || disk.Completion == nil || disk.Completion.Diagnostic == nil || disk.Completion.Diagnostic.HarnessExit != h {
+		t.Fatal("exit diagnostic not persisted", disk, e)
 	}
 }

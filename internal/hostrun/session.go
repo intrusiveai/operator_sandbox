@@ -80,7 +80,7 @@ func Prepare(ctx context.Context, c Config) (session *Session, err error) {
 	s := &Session{gate: c.Gate}
 	defer func() {
 		if err != nil {
-			err = errors.Join(err, s.discard())
+			err = preparationCleanup("campaign launch preparation", err, s.discard())
 		}
 	}()
 	if c.Gate == nil || c.Target == nil || c.Docker == nil || (c.Peer == nil && c.HTTPS == nil) || c.Provider == nil || c.Launch.Model == nil || !filepath.IsAbs(c.StateRoot) || !campaign.ValidStopRequest(c.StartRequestID, "start") || c.Requirements.HostPlatform != runtime.GOOS+"/"+runtime.GOARCH {

@@ -1,35 +1,10 @@
-# Local image preparation and release approval
+# Local image preparation and compatibility
 
-Status: implemented in `internal/dockercontrol/image.go` and
-`internal/imagerelease`. This stage resolves local image identity and obtains a
-validated compatibility response. Separate embedded-file inspection creates and
-removes a stopped container without executing guest code. Runtime confinement
-requires the actual launch checks. The accepted [release contract](../schemas/ENGINE_RELEASE_CONTRACT.md)
-remains authoritative. These host-only records do not change the shared wire package.
-
-## Preparation interface
-
-The [host configuration loader](HOST_CONFIGURATION.md) supplies installation
-settings to the installed launcher/preparation command:
-
-- The configured `engine.image` selector and selected local Unix Docker endpoint.
-- The actual host platform and installed `operator-container/v1` policy identity.
-- The running stable Operator version and verified installed contract package
-  version/digest. These must come from the application/package installation,
-  not a campaign bundle, image label or HTTPS response.
-- An existing private, administrator-owned release-cache directory.
-
-`imagerelease.Open` opens that cache and creates a fixed-origin HTTPS client.
-`Client.Prepare` resolves the image through `dockercontrol.Client.ResolveImage`
-before checking approval. Its `Prepared` result retains both the image pin and an
-immutable copy of the approved response bytes. A cached approval alone cannot
-satisfy a missing local image. Close the client after preparation calls finish.
-
-The [installed contract loader](INSTALLED_CONTRACT.md) now supplies filesystem
-verification and a pinned protocol. Preparation is exposed through the campaign
-CLI. Production distribution-supported package/version metadata remains release
-work. No caller
-can configure a different release URL or TLS policy through this API.
+`internal/dockercontrol` resolves exact local image identity;
+`internal/imagerelease` validates the compatibility record and embedded resources.
+The installed preparation path uses both before Interceptor attachment or Harness
+execution. The administrator supplies `engine.image` and installs the image into
+the configured Docker daemon.
 
 ## Read-only Docker resolution
 
@@ -44,98 +19,109 @@ is a required Docker capability; unsupported clients/daemons fail rather than
 selecting an arbitrary variant. This is a capability check, not an OS/Docker version
 allowlist. See [Docker image inspection](https://docs.docker.com/reference/cli/docker/image/inspect/).
 
-The pin stores configured selector, endpoint, daemon ID, full `sha256:` image/config
-ID, host/image platforms and available repository digests. Repository digests are
-attribution, never release keys or replacements for the config ID. Local inspection
-does not pull, start or otherwise execute the image. An untagged name retains
-Docker's local `latest` selection behavior. Image inspection has a five-second
-budget, shortened by the caller's deadline; it uses bounded output.
+The pin MUST store the configured selector, endpoint, daemon ID, native platform,
+platform-specific Docker `Id`, repository inventory, and verified immutable lookup
+reference separately. Docker's selected `Id` can be a config digest on classic
+storage or a platform manifest digest on containerd storage. It is the identity
+compared throughout preparation; it is not necessarily a usable Docker selector.
 
-Before accepting prepared inputs, `VerifySelection` resolves their original selector
-again. A different image or daemon requires re-preparation and revalidation.
-Once a campaign is accepted, `VerifyImage` checks availability by its immutable ID
-and saved daemon. It does not follow subsequent tag changes. The launcher
-MUST create by that ID with pulling forbidden and inspect the created container's
-image before start.
+Resolution MUST first inspect the configured selector with `--platform`. It MUST
+then verify a usable immutable reference against that same selected identity and
+platform. Classic stores normally accept the bare ID. If Docker reports that ID
+absent, Operator MAY try repository-qualified digests from the inspected inventory
+whose normalized repository matches the configured selector. Candidates MUST be
+sorted, deduplicated and independently inspected; an unrelated first inventory
+entry MUST NOT be selected. An explicitly configured digest reference is checked
+first. A mismatch, timeout or non-absence failure MUST fail preparation. There is
+no tag fallback, pull or registry request. The complete resolution has a
+five-second budget, shortened by the caller's deadline.
 
-## HTTPS approval and compatibility
+Before accepting prepared inputs, `VerifySelection` MUST inspect the original
+selector again and reject changed image or daemon identity. `VerifyImage`, volume
+inspection, stopped-file inspection and launch MUST use only the frozen immutable
+reference plus explicit platform. Container creation MUST retain `--pull=never`.
+An image pin without `reference` is a legacy bare-ID pin; failed lookup MUST NOT
+silently upgrade it or select a different reference.
 
-The only lookup is `GET https://releases.intrusive.ai/sha256/<image-ID-hex>`, with
-`Accept: application/json` and `Accept-Encoding: identity`. The client uses system
-CA trust and hostname validation, rejects redirects, and requires HTTP 200 JSON
-with no non-identity content encoding. HTTP 404 produces an explicit unapproved-image
-error. Response headers are bounded to 16 KiB and decoded response bytes to 64 KiB;
-the lookup has a ten-second deadline, shortened by the caller. Invalid content,
-network/TLS/timeout errors and unmet requirements fail preparation.
+New container bindings use `operator.dev/docker-binding/v1alpha2`: compare the
+container's selected `ImageManifestDescriptor.digest` when present, otherwise the
+classic store's `.Image`. An index-backed container's `.Image` can be the index
+rather than the selected manifest. Neither accepting an arbitrary inventory digest
+nor weakening equality to a substring/prefix is allowed. Full container ID, saved
+daemon and labels remain mandatory. Version 1 bindings retain their original
+literal `.Image` comparison. Recovery uses the recorded binding version and never
+creates, starts, or resumes execution. The start intent records binding version,
+lookup reference, platform, and selected image identity before create.
 
-The record parser enforces the seven required fields in the release contract,
-unknown/duplicate-key rejection, strict UTF-8 JSON, no trailing content, depth 32,
-full lowercase SHA-256 digests and supported Linux image platforms. Versions are
-bounded to 128 characters and use [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html).
-Operator/minimum versions must be stable. Numeric precedence handles `1.10.0` versus
-`1.9.0` correctly and ignores build metadata; numeric components cannot overflow.
-The contract version and digest must match exactly, including version spelling.
+The [image compatibility contract](../schemas/ENGINE_RELEASE_CONTRACT.md) uses
+this same separation of selected identity and immutable lookup reference. Both
+inspection and launch verify the same platform and image before execution.
 
-`Approval.Bytes()` returns an independent copy of the exact HTTPS response, including
-whitespace; `Digest()` hashes those exact bytes. `Record()`, `Source()` (`network` or
-`cache`) and `RetrievedAt()` expose validated metadata and retrieval provenance.
-Campaign persistence must retain these bytes/digest and the image pin independently
-of subsequent cache eviction. Metadata approval alone is not launch admission.
+## Compatibility and embedded resources
 
-## Private cache
+`imagerelease.Prepare` MUST resolve the image and inspect its fixed files through
+`ReadReleaseFiles`. The stopped inspection container MUST remain networkless,
+nonroot, read-only and unstarted. Reads and cleanup MUST use its full ID and pinned
+local daemon; no image-supplied executable is run. The result MUST be rejected if
+cleanup cannot be confirmed.
 
-Each filename combines the SHA-256 of the fixed origin and the image/config ID.
-The cache's host-only `operator.dev/image-release-cache/v1alpha1` entry contains:
+The image MUST include `/opt/operator/engine/share/compatibility.json`, following
+[the local compatibility contract](../schemas/ENGINE_RELEASE_CONTRACT.md). Its
+minimum Operator version, exact contract package version/digest, runtime profile,
+and native Linux image platform MUST match the installed host. The compatibility
+record MUST omit its own image digest. The image pin binds it independently.
+The manifest, prompt, loader and complete native tool catalog MUST still satisfy
+the existing embedded metadata checks. No alternate startup command, mount or
+security policy may come from the image metadata.
 
-- Fixed origin and full image ID.
-- Original UTC retrieval time.
-- Exact response bytes as base64 and their raw SHA-256 digest.
+`Compatibility.Bytes()` returns a copy of the exact inspected compatibility file;
+`Digest()` is its raw SHA-256. `Compatible(imageID, requirements)` also checks the
+independent image binding. `Embedded.Matches` MUST prevent mixing inspected
+resources with another image, daemon, platform or compatibility record.
 
-Entries are bounded to 128 KiB including base64 overhead. Readers require private
-regular files, reject links and special files, bound actual reads and validate
-identity, bytes, digest, timestamp and response structure. Writes use private
-exclusive temporary files, file sync, atomic rename and directory sync. Concurrent
-preparations cannot expose a partially written record. Cache persistence failure
-fails preparation; no valid approval object is returned from that failed call.
+The host MUST retain these bytes/digest with campaign records. The existing
+`release_record_digest` wire name now identifies the embedded compatibility bytes;
+`generator.release_digest` MUST match that frozen startup value. The image ID
+remains separate. Operator requires no release endpoint or approval cache to
+prepare an otherwise compatible local image. Legacy `cache.release_directory`
+configuration is accepted but unused and can be removed.
 
-Every hit rechecks current Operator/contract/platform/profile compatibility. A valid
-but incompatible record fails without attempting to replace it. Missing or corrupt
-entries require a fresh validated lookup; no network failure can make corrupt bytes
-usable. A fresh valid lookup can atomically replace a corrupt cache entry without
-following its old link target. Cache directories themselves must be private and
-are not repaired by this component.
+## Validation
 
-There is no automatic expiry or refresh. A valid compatible entry supports later
-offline preparation while Docker still has the image. Different image IDs have
-different entries. Publisher metadata is immutable by image ID; administrative
-cache eviction follows the release contract. Cache publication is independent of
-campaign acceptance: a late successful write cannot make a canceled preparation
-an accepted campaign. Local filesystem calls still depend on a responsive host
-filesystem; context checks reject late completion but do not forcibly interrupt
-a stalled filesystem syscall.
+Tests cover strict metadata, minimum-version and exact contract/platform/runtime
+checks, image and daemon pinning, metadata consistency, resource digests, stopped
+inspection cleanup, missing/oversized files, and fail-closed admission. CLI tests
+exercise local preparation followed by independent retained-record inspection.
+These controlled tests do not qualify a production image or native Docker host.
+See [Harness integration](HARNESS_INTEGRATION.md) for the
+matching image-build requirements and package pin.
 
-## Validation and remaining gates
+## Troubleshooting and native reproduction
 
-Tests cover all four host platforms, exact ID versus repository digest, missing
-images, daemon drift, tag changes across acceptance, strict records, semantic version
-boundaries, exact package pins, fixed URL/headers, redirects, malformed/oversized
-responses, canceled lookups, cache corruption, link handling, failed publication,
-concurrent writes and compatible offline reuse. Docker and HTTPS are controlled
-test doubles; they do not qualify a production image, Docker host or release service.
+Preparation failures identify the Docker operation and allowlisted reason, such as
+`immutable image reference inspection: image reference is not available in the local Docker store (exit 1)`
+or `selected image inspection: Docker command timed out`. Raw stderr, command
+arguments, endpoints and credentials MUST NOT be copied into diagnostics. The same
+bounded message is retained in the start completion and exposed by `inspect --run`
+and `campaign status --run`. Cleanup failures MUST NOT replace the original error.
 
-The installed launcher inspects immutable engine files without guest execution,
-verifies the embedded manifest/package, freezes inputs through the
-[staging layer](INPUT_STAGING.md), and enforces Docker/startup policy. Attack Harness
-image candidates are built; approved image publication and full production-image
-confinement/host qualification remain outstanding. A release record identifies
-installed runtime policy; it supplies no executable code, Docker flags, filesystem
-mounts or downloaded shared contract.
+A successful tag lookup alone does not establish that its returned bare ID works:
 
-## Embedded metadata and launch-input binding
+```sh
+docker image inspect --platform linux/amd64 IMAGE_TAG
+docker image inspect --platform linux/amd64 RETURNED_ID
+docker image inspect --platform linux/amd64 REPOSITORY_AT_DIGEST
+```
 
-After approval, `InspectEmbedded` MUST perform the fixed-path inspection in
-[the embedded-file contract](../schemas/ENGINE_RELEASE_CONTRACT.md#5-embedded-image-files).
-It MUST return verified bytes only after cleanup succeeds. Its immutable result
-MUST retain the approved image/release and local daemon identity. The launch-input
-builder MUST reject combining that result with another image, release, daemon or
-host platform, even if the alternate tuple shares the same contract package.
+Use the platform installed on the test host. These are read-only local operations.
+For a repeatable production-reader test without registry access or campaign replay:
+
+```sh
+OPERATOR_NATIVE_DOCKER_ENDPOINT=unix:///var/run/docker.sock \
+  go test ./internal/imagerelease -run '^TestNativeLocalImageCompatibility$' -v -count=1
+```
+
+On macOS, set the explicitly selected Docker Desktop Unix endpoint instead. This
+opt-in test builds a scratch fixture with valid embedded metadata and resources,
+uses the real stopped-container reader and compatibility validator, checks exact
+cleanup, and removes its fixture image. It runs no Harness code or campaign.

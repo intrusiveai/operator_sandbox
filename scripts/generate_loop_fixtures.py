@@ -189,32 +189,32 @@ trace('host stop with model generation outstanding retains admission',[
     step('accept_response',count=0,error='stopped'),step('begin_model',error='stopped')])
 
 trace('finalization exact sixteen requests and no seventeenth',final_start()+[
-    step('charge',kind='conclusion-record',bytes=0,now=100+i) for i in range(16)]+[
-    step('charge',kind='stop',bytes=0,now=116,error='stopped',final_expected=dict(requests=16,conclusion_bytes=0,closed=True))])
+    step('charge',kind='diagnostic',bytes=0,now=100+i) for i in range(16)]+[
+    step('charge',kind='finish',bytes=0,now=116,error='stopped',final_expected=dict(requests=16,conclusion_bytes=0,closed=True))])
 trace('finalization exact byte limit still permits record and stop',final_start()+[
-    step('charge',kind='conclusion-artifact',bytes=2097152,now=100),
-    step('charge',kind='conclusion-record',bytes=0,now=101),step('charge',kind='stop',bytes=0,now=102,
+    step('charge',kind='assessment-artifact',bytes=2097152,now=100),
+    step('charge',kind='diagnostic',bytes=0,now=101),step('charge',kind='finish',bytes=0,now=102,
          final_expected=dict(requests=3,conclusion_bytes=2097152,closed=False)),
-    step('charge',kind='conclusion-artifact',bytes=1,now=103,error='stopped',final_expected=dict(requests=3,closed=True))])
+    step('charge',kind='assessment-artifact',bytes=1,now=103,error='stopped',final_expected=dict(requests=3,closed=True))])
 trace('finalization host artifact allowance wins',final_start(remaining=4)+[
-    step('charge',kind='conclusion-artifact',bytes=5,now=100,error='stopped',final_expected=dict(requests=0,conclusion_bytes=0,closed=True))])
+    step('charge',kind='assessment-artifact',bytes=5,now=100,error='stopped',final_expected=dict(requests=0,conclusion_bytes=0,closed=True))])
 trace('zero artifact allowance permits unavailable conclusion stop',final_start(remaining=0)+[
-    step('charge',kind='stop',bytes=0,now=100,final_expected=dict(requests=1,conclusion_bytes=0,closed=False))])
+    step('charge',kind='finish',bytes=0,now=100,final_expected=dict(requests=1,conclusion_bytes=0,closed=False))])
 trace('finalization thirty seconds never extends',final_start()+[
-    step('charge',kind='conclusion-record',bytes=0,now=30099),step('check_time',now=30100,error='stopped',
+    step('charge',kind='diagnostic',bytes=0,now=30099),step('check_time',now=30100,error='stopped',
         final_expected=dict(deadline_ms=30100,closed=True))])
 trace('campaign deadline wins over thirty second allowance',final_start(deadline=120)+[
-    step('check_time',now=119),step('charge',kind='stop',bytes=0,now=120,error='stopped',final_expected=dict(requests=0,closed=True))])
+    step('check_time',now=119),step('charge',kind='finish',bytes=0,now=120,error='stopped',final_expected=dict(requests=0,closed=True))])
 trace('expired campaign permits no finalization requests',final_start(deadline=99)+[
-    step('charge',kind='stop',bytes=0,now=100,error='stopped')])
+    step('charge',kind='finish',bytes=0,now=100,error='stopped')])
 trace('finalization cannot restart or admit exploration',final_start()+[
     step('begin_finalization',now=200,deadline=100000,remaining=2097152,error='protocol'),
     step('begin_model',error='stopped'),step('start_tool',name='attempt_execute',error='stopped'),
     step('charge',kind='attempt_execute',bytes=0,now=200,error='protocol',final_expected=dict(requests=0,deadline_ms=30100)),
-    step('charge',kind='stop',bytes=1,now=200,error='protocol')])
+    step('charge',kind='diagnostic',bytes=1,now=200,error='protocol')])
 trace('hard stop overrides active finalization',final_start()+[
     step('hard_stop',expected=dict(mode='closed',reason='hard-stop'),final_expected=dict(closed=True)),
-    step('charge',kind='stop',bytes=0,now=100,error='stopped'),
+    step('charge',kind='finish',bytes=0,now=100,error='stopped'),
     step('begin_finalization',now=101,deadline=100000,remaining=100,error='protocol')])
 trace('monotonic clock reversal closes finalization',final_start()+[
     step('check_time',now=99,error='protocol',final_expected=dict(closed=True)),step('check_time',now=100,error='stopped')])

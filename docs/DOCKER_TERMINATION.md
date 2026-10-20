@@ -1,10 +1,8 @@
 # Independent Docker termination
 
-Status: implemented in `internal/dockercontrol`, `internal/termination`,
-`internal/campaign/termination.go` and `cmd/operatorctl`. This stage provides the
-administrative command and a terminal-fence observer. Container creation/start,
-the campaign service and native execution now use this layer. Tests use a fake
-Docker executable; real Docker and host-profile qualification remain pending.
+The administrative termination command and terminal-fence observer stop the
+exact campaign container. Container startup, campaign execution and native
+dispatch use the same saved Docker binding and termination layer.
 
 The same restricted Docker subprocess wrapper now supports
 [read-only local image preparation](IMAGE_PREPARATION.md). Saved-container
@@ -56,6 +54,12 @@ carry the saved local `--host unix:///...` endpoint. Docker environment override
 and proxy variables are removed from the child environment. No shell, user-supplied
 Docker arguments, remote endpoint or mutable container name is used.
 
+New `docker-binding/v1alpha2` records compare the selected platform image
+manifest descriptor when available, otherwise the classic Docker image ID.
+Existing `v1alpha1` records keep their literal `.Image` comparison; recovery MUST
+NOT reinterpret them. Termination does not need an image tag or registry lookup.
+See [image selection](IMAGE_PREPARATION.md) for the storage-specific rules.
+
 The control sequence is:
 
 1. Read the daemon ID and compare it with the saved value.
@@ -79,8 +83,8 @@ nor a failed inspect is accepted as proof of exit.
 The total identity-read/Docker confirmation budget is five seconds, shortened by
 any caller deadline. Each Docker subprocess is canceled with that context; pipe
 draining has a separate 100 ms maximum. Command stdout is bounded to 64 KiB and
-stderr is discarded rather than copied into receipts. Docker/API errors use fixed
-codes. One unavailable or ambiguous daemon/container observation fails closed.
+stderr is captured only up to 4 KiB to classify allowlisted failures, then discarded;
+raw stderr is never copied into receipts. Docker/API errors use fixed codes. One unavailable or ambiguous daemon/container observation fails closed.
 
 This uses Docker's documented [explicit daemon selection](https://docs.docker.com/reference/cli/docker/),
 [container inspection](https://docs.docker.com/reference/cli/docker/container/inspect/)
@@ -147,9 +151,7 @@ This command stops the harness container and retains it for evidence. It does no
 remove Docker resources, delete transport storage, stop the native Interceptor
 target or purge campaign artifacts. The [host worker](HOST_LAUNCH.md) supplies those lifecycle steps after confirmed
 exit and records removal/cleanup separately. Its macOS power lease lasts through
-cleanup. Administrative reporting and supervised service submission are implemented;
-host installation packaging and full native qualification remain outstanding.
-A stop overlapping an unconfirmed start uses `startup_outcome_unconfirmed`; that
+cleanup. A stop overlapping an unconfirmed start uses `startup_outcome_unconfirmed`; that
 outcome does not authorize removal or transient-directory cleanup.
 
 ## Validation

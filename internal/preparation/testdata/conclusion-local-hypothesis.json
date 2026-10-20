@@ -1,0 +1,80 @@
+{
+  "api_version": "operator.dev/engine-conclusion/v1alpha2",
+  "binding": {
+    "campaign_id": "campaign-1",
+    "launch_id": "launch-1",
+    "run_revision": 3,
+    "input_tree_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "engine_context_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "prompt_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "skill_set_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "image_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "release_record_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "contract_package_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "contract_package_version": "0.1.0"
+  },
+  "claims": [
+    {
+      "assurance": "target-response",
+      "attempt_receipt_refs": [
+        "receipt-retained"
+      ],
+      "claim_id": "claim-configuration-1",
+      "confidence": "high",
+      "interpretation": "supported",
+      "observation_refs": [
+        {
+          "attempt_receipt_id": "receipt-retained",
+          "entry_id": "entry-retained"
+        }
+      ],
+      "statement": "Observed the expected configuration response.",
+      "uncertainty_refs": []
+    }
+  ],
+  "coverage": [
+    {
+      "attempt_receipt_refs": [
+        "receipt-retained"
+      ],
+      "objective_id": "configuration",
+      "reason": "Observed the expected configuration response.",
+      "status": "tested"
+    }
+  ],
+  "finish_reason": "objectives-addressed",
+  "hypotheses": [
+    {
+      "attempt_receipt_refs": [
+        "receipt-retained"
+      ],
+      "hypothesis_id": "hyp-configuration-1",
+      "objective_refs": [
+        "configuration"
+      ],
+      "outcome": "supported",
+      "provenance": {
+        "origin": "scenario",
+        "scenario_id": "configuration"
+      },
+      "record_refs": [],
+      "summary": "Observed the expected configuration response."
+    }
+  ],
+  "kind": "EngineConclusion",
+  "objectives": [
+    {
+      "attempt_receipt_refs": [
+        "receipt-retained"
+      ],
+      "objective_id": "configuration",
+      "outcome": "supported",
+      "record_refs": [],
+      "summary": "Observed the expected configuration response."
+    }
+  ],
+  "record_refs": [],
+  "status": "completed",
+  "summary": "Observed the expected configuration response.",
+  "uncertainties": []
+}

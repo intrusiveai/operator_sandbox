@@ -126,7 +126,7 @@ func TestFinalizationHasSeparateBoundedNamespaceAllowance(t *testing.T) {
 		t.Fatal(err)
 	}
 	stop := readTool("stop")
-	stop.Operation = "engine.request_stop"
+	stop.Operation = "engine.finish"
 	stop.Body = []byte(`{}`)
 	if _, _, err := tools.Observe(stop); !errors.Is(err, contracts.ErrLimit) {
 		t.Fatal("exploration allowance enlarged", err)

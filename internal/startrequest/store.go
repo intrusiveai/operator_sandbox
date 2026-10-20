@@ -74,11 +74,12 @@ type Claim struct {
 // Completion records worker completion, not experiment success or native-effect
 // certainty. Detailed evidence and outcomes remain in the campaign journal.
 type Completion struct {
-	RequestDigest string `json:"request_digest"`
-	OwnerID       string `json:"owner_id"`
-	RecordedAt    string `json:"recorded_at"`
-	Status        string `json:"status"` // finished or failed
-	Code          string `json:"code"`   // fixed host code, never a private error string
+	RequestDigest string                         `json:"request_digest"`
+	OwnerID       string                         `json:"owner_id"`
+	RecordedAt    string                         `json:"recorded_at"`
+	Status        string                         `json:"status"` // finished or failed
+	Code          string                         `json:"code"`   // fixed host code, never a private error string
+	Diagnostic    *hostrun.PreparationDiagnostic `json:"diagnostic,omitempty"`
 }
 type Retirement struct {
 	RequestDigest string `json:"request_digest"`
@@ -354,7 +355,7 @@ func readSnapshot(stateRoot, id string, retiring bool) (Snapshot, error) {
 	var completion Completion
 	_, err = read(dir, "completion.json", &completion)
 	if err == nil {
-		if s.Claim == nil || completion.RequestDigest != s.Digest || completion.OwnerID != s.Claim.OwnerID || !timestamp(completion.RecordedAt) || !codePattern.MatchString(completion.Code) || (completion.Status != "finished" && completion.Status != "failed") || (completion.Status == "finished" && s.Accepted == nil) {
+		if !validDiagnostic(completion.Status, completion.Code, completion.Diagnostic) || s.Claim == nil || completion.RequestDigest != s.Digest || completion.OwnerID != s.Claim.OwnerID || !timestamp(completion.RecordedAt) || !codePattern.MatchString(completion.Code) || (completion.Status != "finished" && completion.Status != "failed") || (completion.Status == "finished" && s.Accepted == nil) {
 			return s, ErrRecord
 		}
 		s.Completion = &completion
@@ -453,19 +454,32 @@ func (o *Owner) Accept(ctx context.Context, r hostrun.Receipt) error {
 	}
 	return err
 }
+func validDiagnostic(status, code string, d *hostrun.PreparationDiagnostic) bool {
+	return d == nil || (status == "failed" && d.Valid() && (code == "preparation_failed" || (code == "execution_failed" && ((d.Model.Valid() && d.Model.OperationID != "") || d.Conclusion.Valid() || d.Workflow.Valid() || d.HarnessExit.Valid()))))
+}
+
 func (o *Owner) Finish(ctx context.Context, status, code string) error {
+	return o.FinishWithDiagnostic(ctx, status, code, nil)
+}
+
+// FinishWithDiagnostic retains a safe preparation failure before any journal exists.
+func (o *Owner) FinishWithDiagnostic(ctx context.Context, status, code string, diagnostic *hostrun.PreparationDiagnostic) error {
 	o.mu.Lock()
 	defer o.mu.Unlock()
-	if o.closed || (status != "finished" && status != "failed") || !codePattern.MatchString(code) || (status == "finished" && o.snapshot.Accepted == nil) {
+	if !validDiagnostic(status, code, diagnostic) || o.closed || (status != "finished" && status != "failed") || !codePattern.MatchString(code) || (status == "finished" && o.snapshot.Accepted == nil) {
 		return ErrRecord
 	}
 	if old := o.snapshot.Completion; old != nil {
-		if old.Status == status && old.Code == code {
+		if old.Status == status && old.Code == code && ((old.Diagnostic == nil && diagnostic == nil) || (old.Diagnostic != nil && diagnostic != nil && *old.Diagnostic == *diagnostic)) {
 			return nil
 		}
 		return ErrConflict
 	}
 	c := Completion{RequestDigest: o.snapshot.Digest, OwnerID: o.snapshot.Claim.OwnerID, RecordedAt: time.Now().UTC().Format(time.RFC3339Nano), Status: status, Code: code}
+	if diagnostic != nil {
+		d := *diagnostic
+		c.Diagnostic = &d
+	}
 	raw, _, err := encode(c)
 	if err == nil {
 		err = put(ctx, o.root, "completion.json", raw)

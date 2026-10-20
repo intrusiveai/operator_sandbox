@@ -21,11 +21,12 @@
               "engine.artifact_commit",
               "engine.artifact_put_part",
               "engine.attempt_execute",
+              "engine.diagnostic_report",
+              "engine.finish",
               "engine.injection_delete",
               "engine.model_generate",
               "engine.observation_read",
               "engine.record_append",
-              "engine.request_stop",
               "engine.restore_request",
               "engine.snapshot_inspect",
               "engine.snapshot_list",
@@ -100,7 +101,8 @@
             "enum": [
               "denied",
               "conclusion-only",
-              "stop"
+              "stop",
+              "diagnostic"
             ]
           },
           "timeout_ms": {

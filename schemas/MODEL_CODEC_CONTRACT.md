@@ -1,13 +1,13 @@
 # Model relay and native codecs
 
-Status: typed `engine.model_generate` exchanges, Go/Python validators and shared
-cases are implemented for `openai-chat-text-tools-v1` and
-[`anthropic-messages-text-tools-v1`](ANTHROPIC_MODEL_CODEC_CONTRACT.md) and
-[`bedrock-converse-text-tools-v1`](BEDROCK_MODEL_CODEC_CONTRACT.md), and
-[`gemini-text-tools-v1`](GEMINI_MODEL_CODEC_CONTRACT.md), and
-[`openai-responses-text-tools-v1`](RESPONSES_MODEL_CODEC_CONTRACT.md). The Chat
-subset is described below. This is offline contract conformance, not provider,
-model, credential, route or container qualification. No real model call occurs here.
+The typed `engine.model_generate` exchanges use Go/Python validators and shared
+fixtures for `openai-chat-text-tools-v1`,
+[`openai-responses-text-tools-v1`](RESPONSES_MODEL_CODEC_CONTRACT.md),
+[`anthropic-messages-text-tools-v1`](ANTHROPIC_MODEL_CODEC_CONTRACT.md),
+[`bedrock-converse-text-tools-v1`](BEDROCK_MODEL_CODEC_CONTRACT.md) and
+[`gemini-text-tools-v1`](GEMINI_MODEL_CODEC_CONTRACT.md). The Chat subset is defined
+below. Codec conformance validates message semantics; live provider behavior is a
+separate integration property.
 
 The native field reference is [OpenAI's Create chat completion API](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create),
 consulted 2026-09-23. It defines message roles, function calls, finish reasons and
@@ -217,10 +217,8 @@ regenerating canonical launch identity fixtures with
 `python3 scripts/generate_identity_fixtures.py`. `make test` checks generated model
 schemas and exercises these validators alongside the existing contract suites.
 
-Before advertising this route, publish its semantic profile and native tool
-projection with the pinned package, implement host credentials/provider I/O,
-durable admission/usage/receipt handling and harness dispatch, and qualify real
-text/tool/follow-up calls, refusals, cancellation and ambiguous failures. Other
-provider families/routes require their own native schemas, codec implementation
-and qualification; this codec is not evidence of their support. Package `0.1.0`
-publication and Operator/Attack Harness runtime qualification remain pending.
+Each supported route MUST bind its semantic profile and tool projection to the
+installed package, use host credential/provider I/O and durable admission/usage
+records, and preserve correlated Harness dispatch. Integration checks MUST cover
+text/tool continuations, refusals, cancellation and ambiguous outcomes. A passing
+codec test does not establish live provider or model behavior.

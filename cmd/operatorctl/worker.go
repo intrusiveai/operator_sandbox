@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 
+	"github.com/intrusiveai/operator_sandbox/internal/hostrun"
 	"github.com/intrusiveai/operator_sandbox/internal/workerjob"
 )
 
@@ -41,8 +42,74 @@ func workerCommand(ctx context.Context, args []string, stdout, stderr io.Writer)
 		return 1
 	}
 	if err != nil {
-		fmt.Fprintln(stderr, "campaign worker stopped:", result.Code)
+		printWorkerFailure(stderr, result.Code, result.Diagnostic, result.CompletionRecording)
 		return 1
 	}
 	return 0
+}
+
+// Both execution entrypoints render the same safe, retained diagnostic. Never
+// print the worker error: its chain can include private backend/filesystem details.
+func printWorkerFailure(w io.Writer, code string, d *hostrun.PreparationDiagnostic, recording string) {
+	if d != nil {
+		phase := "preparation"
+		if code == "execution_failed" {
+			phase = "execution"
+		}
+		fmt.Fprintf(w, "Campaign %s failed during %s (%s):\n%s\n", phase, d.Stage, code, d.Message)
+		if d.HarnessExit.Valid() {
+			if d.Stage != "Harness exit" {
+				fmt.Fprintln(w, d.HarnessExit.Summary())
+			}
+			fmt.Fprintln(w, "Worker termination cause:", d.HarnessExit.WorkerCause)
+			fmt.Fprintln(w, "Details:", d.HarnessExit.Details)
+		}
+		if d.Model.Valid() {
+			fmt.Fprintln(w, "Operation:", d.Model.OperationID)
+			if d.Model.Model != "" {
+				fmt.Fprintln(w, "Model:", d.Model.Model)
+			}
+			if d.Model.RequestID != "" {
+				fmt.Fprintln(w, "Provider request ID:", d.Model.RequestID)
+			}
+			if details := d.Model.ProviderDetailsText(); details != "" {
+				fmt.Fprintln(w, details)
+			}
+		}
+		if d.Workflow.Valid() {
+			fmt.Fprintln(w, "Operation:", d.Workflow.OperationID)
+			if d.Workflow.Tool != "" {
+				fmt.Fprintln(w, "Tool:", d.Workflow.Tool)
+			}
+			if d.Workflow.HostFinalized {
+				if d.Workflow.Dispatched == 0 {
+					fmt.Fprintln(w, "No target attempt was dispatched.")
+				} else {
+					fmt.Fprintln(w, "Target attempts dispatched:", d.Workflow.Dispatched)
+				}
+				fmt.Fprintln(w, "Assessment accepted:", d.Workflow.AssessmentAccepted)
+				fmt.Fprintln(w, "Cleanup completed:", d.Workflow.CleanupCompleted)
+			}
+			if d.Workflow.CallID != "" {
+				fmt.Fprintln(w, "Call:", d.Workflow.CallID)
+			}
+		}
+		if d.Conclusion.Valid() {
+			fmt.Fprintln(w, "Validation rule:", d.Conclusion.Reason)
+			if d.Conclusion.OperationID != "" {
+				fmt.Fprintln(w, "Operation:", d.Conclusion.OperationID)
+			} else {
+				fmt.Fprintln(w, "Operation omitted:", d.Conclusion.OperationOmitted)
+			}
+		}
+		if d.CleanupFailed {
+			fmt.Fprintf(w, "Secondary failure: %s cleanup did not finish successfully; inspect retained campaign state.\n", phase)
+		}
+	} else {
+		fmt.Fprintln(w, "campaign worker stopped:", code)
+	}
+	if recording == "unconfirmed" {
+		fmt.Fprintln(w, "Secondary failure: saving the start completion is unconfirmed; this diagnostic may not be available through inspection.")
+	}
+	fmt.Fprintln(w, "Execution will not resume.")
 }

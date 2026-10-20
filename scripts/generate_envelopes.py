@@ -59,6 +59,18 @@ def main():
     names = [op["name"] for op in operations]
     if names != sorted(set(names)):
         raise SystemExit("Operations must be unique and sorted")
+    envelope=json.loads(render("request",operations))
+    envelope['$id']='urn:operator:schema:engine-request-envelope:v1alpha1'
+    envelope.pop('oneOf')
+    envelope['properties']['body']={'type':'object'}
+    filename='engine-request-envelope.schema.json'
+    rendered=json.dumps(envelope,indent=2)+'\n'
+    catalog=json.loads((ROOT/'catalog.json').read_text())
+    if args.check:
+        if (ROOT/filename).read_text()!=rendered or catalog.get(envelope['$id'])!=filename:raise SystemExit('Stale request envelope')
+    else:
+        (ROOT/filename).write_text(rendered);catalog[envelope['$id']]=filename
+        (ROOT/'catalog.json').write_text(json.dumps(dict(sorted(catalog.items())),indent=2)+'\n')
     for direction in ("request", "response"):
         path = ROOT / f"engine-pipe-{direction}.schema.json"
         content = render(direction, operations)

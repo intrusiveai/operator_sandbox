@@ -19,7 +19,7 @@ const PromptPath = "/opt/operator/engine/share/default-system-prompt.txt"
 const LoaderPath = "/opt/operator/engine/lib/attack_harness/skill_loader.py"
 const ToolCatalogPath = "/opt/operator/engine/share/tool-catalog.json"
 
-var ErrEmbedded = errors.New("embedded engine metadata does not match approved image and installed contract")
+var ErrEmbedded = errors.New("embedded engine metadata does not match pinned image and installed contract")
 var embeddedCodecs = []string{"anthropic-messages-text-tools-v1", "bedrock-converse-text-tools-v1", "gemini-text-tools-v1", "openai-chat-text-tools-v1", "openai-responses-text-tools-v1"}
 
 type fileIdentity struct {
@@ -41,22 +41,23 @@ type embeddedManifest struct {
 // Embedded contains checked immutable image data. Accessors return independent
 // copies; the image cannot select host commands, paths or policy settings.
 type Embedded struct {
-	image         dockercontrol.ImagePin
-	releaseDigest string
-	manifest      embeddedManifest
-	files         map[string][]byte
+	image    dockercontrol.ImagePin
+	release  Compatibility
+	manifest embeddedManifest
+	files    map[string][]byte
 }
 
-// Matches binds checked bytes to the same approved image and local daemon.
+// Matches binds checked bytes to the same pinned image and local daemon.
 func (e *Embedded) Matches(p Prepared) bool {
-	return e != nil && e.releaseDigest != "" && e.releaseDigest == p.Release.Digest() &&
-		e.image.ImageID == p.Image.ImageID && e.image.Endpoint == p.Image.Endpoint &&
+	return e != nil && e.release.Digest() != "" && e.release.Digest() == p.Release.Digest() && p.Release.imageID == e.image.ImageID &&
+		e.image.ReferenceForDocker() == p.Image.ReferenceForDocker() && e.image.ImageID == p.Image.ImageID && e.image.Endpoint == p.Image.Endpoint &&
 		e.image.DaemonID == p.Image.DaemonID && e.image.HostPlatform == p.Image.HostPlatform &&
 		e.image.ImagePlatform == p.Image.ImagePlatform
 }
-func (e *Embedded) DefaultPrompt() []byte { return bytes.Clone(e.files[PromptPath]) }
-func (e *Embedded) LoaderDigest() string  { return e.manifest.SkillLoader.Digest }
-func (e *Embedded) ManifestBytes() []byte { return bytes.Clone(e.files[ManifestPath]) }
+func (e *Embedded) Compatibility() Compatibility { return e.release }
+func (e *Embedded) DefaultPrompt() []byte        { return bytes.Clone(e.files[PromptPath]) }
+func (e *Embedded) LoaderDigest() string         { return e.manifest.SkillLoader.Digest }
+func (e *Embedded) ManifestBytes() []byte        { return bytes.Clone(e.files[ManifestPath]) }
 func (e *Embedded) Files() map[string][]byte {
 	result := map[string][]byte{}
 	for name, raw := range e.files {
@@ -69,31 +70,41 @@ type FileInspector interface {
 	ReadReleaseFiles(context.Context, dockercontrol.ImagePin) (dockercontrol.ReleaseFiles, error)
 }
 
-// InspectEmbedded only reads an already approved local image. The returned
+// InspectEmbedded reads the pinned local image without starting it. The returned
 // inspection identity remains available when Docker cleanup is unconfirmed.
-func InspectEmbedded(ctx context.Context, reader FileInspector, prepared Prepared, h Requirements, protocol *contracts.Protocol) (*Embedded, dockercontrol.ReleaseFiles, error) {
+func InspectEmbedded(ctx context.Context, reader FileInspector, image dockercontrol.ImagePin, h Requirements, protocol *contracts.Protocol) (*Embedded, dockercontrol.ReleaseFiles, error) {
 	var inspection dockercontrol.ReleaseFiles
-	if reader == nil || protocol == nil || prepared.Image.Validate() != nil || prepared.Release.Digest() == "" || prepared.Image.HostPlatform != h.HostPlatform || prepared.Release.Record().Compatible(prepared.Image.ImageID, h) != nil {
+	if err := ctx.Err(); err != nil {
+		return nil, inspection, err
+	}
+	if reader == nil || protocol == nil || image.Validate() != nil || image.HostPlatform != h.HostPlatform || h.validate() != nil {
 		return nil, inspection, ErrEmbedded
 	}
 	pin, ok := protocol.PackageIdentity()
 	if !ok || pin != h.Contract {
 		return nil, inspection, ErrEmbedded
 	}
-	inspection, err := reader.ReadReleaseFiles(ctx, prepared.Image)
+	inspection, err := reader.ReadReleaseFiles(ctx, image)
 	if err != nil {
 		return nil, inspection, err
 	}
-	if !inspection.Removed || !digestPattern.MatchString("sha256:"+inspection.ContainerID) || inspection.Endpoint != prepared.Image.Endpoint || inspection.DaemonID != prepared.Image.DaemonID || len(inspection.Files) != 4 {
+	if err := ctx.Err(); err != nil {
+		return nil, inspection, err
+	}
+	if !inspection.Removed || !digestPattern.MatchString("sha256:"+inspection.ContainerID) || inspection.Endpoint != image.Endpoint || inspection.DaemonID != image.DaemonID || len(inspection.Files) != 5 {
 		return nil, inspection, ErrEmbedded
 	}
-	embedded, err := parseEmbedded(inspection.Files, prepared.Image.ImagePlatform, h, protocol)
+	compatibility, err := Validate(inspection.Files[CompatibilityPath], image.ImageID, h)
 	if err != nil {
 		return nil, inspection, err
 	}
-	embedded.image = prepared.Image
+	embedded, err := parseEmbedded(inspection.Files, image.ImagePlatform, h, protocol)
+	if err != nil {
+		return nil, inspection, err
+	}
+	embedded.image = image
 	embedded.image.RepoDigests = nil
-	embedded.releaseDigest = prepared.Release.Digest()
+	embedded.release = compatibility
 	return embedded, inspection, nil
 }
 func parseEmbedded(files map[string][]byte, platform string, h Requirements, p *contracts.Protocol) (*Embedded, error) {
@@ -132,7 +143,7 @@ func parseEmbedded(files map[string][]byte, platform string, h Requirements, p *
 		}
 	}
 	result := &Embedded{manifest: manifest, files: map[string][]byte{}}
-	for _, name := range []string{ManifestPath, PromptPath, LoaderPath, ToolCatalogPath} {
+	for _, name := range []string{CompatibilityPath, ManifestPath, PromptPath, LoaderPath, ToolCatalogPath} {
 		result.files[name] = bytes.Clone(files[name])
 	}
 	return result, nil

@@ -46,7 +46,7 @@ artifact capture is bounded to 64 MiB; later upload admission remains separate.
 
 `Target.Context` MUST fill target, effective feedback and contract pins from those
 verified inputs. Prompt, model, skill, release and resource settings MUST come from
-their host preparation steps. Context projection does not grant release approval.
+their host preparation steps. Context projection does not grant image compatibility admission.
 
 `Target.Persist` MUST match the immutable RunManifest's target, context, bundle,
 host policy, model profile, package, release and remaining-limit pins. It MUST retain source,
@@ -67,7 +67,7 @@ Healthy restores MUST preserve original receipt sources and cumulative accountin
 
 Tests MUST cover unverified packages, changed process/capability bindings, foreign
 or corrupt artifact bytes, mutable caller inputs, private profile loading and
-manifest/context mismatches. Full launch still requires release approval, staged
+manifest/context mismatches. Full launch still requires image compatibility admission, staged
 input verification, the startup transcript and runtime qualification.
 
 ## Passive submitted references

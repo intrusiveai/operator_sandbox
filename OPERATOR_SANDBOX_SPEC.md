@@ -1,9 +1,8 @@
 # Intrusive AI Operator Sandbox Product Specification
 
-Status: core runtime, administrator workflows, HTTPS adapter, process integration and installation/release tooling implemented; approved publication and native qualification outstanding\
-Date: 2026-09-28\
-Product API family: `operator.dev`; existing data schemas remain individually versioned  
-Container runtime profile: `operator-container/v1` — Docker with Linux FIFO / macOS file-spool transport; qualification pending
+Product release: `0.1.0`\
+Product API family: `operator.dev`; data schemas are individually versioned\
+Container runtime profile: `operator-container/v1` — Docker with Linux FIFO / macOS file-spool transport
 
 ## 1. Purpose and design authority
 
@@ -26,16 +25,13 @@ The accepted [shared host/harness contract](schemas/SHARED_CONTRACT.md) is the
 single authority for the pipe envelope, identities, startup/manifest exchange,
 deadlines, errors, restore results and completion. Operator owns its versioned
 `operator-contracts` package; both ends pin its version and content digest.
-Closed schemas, Go/Python validators and shared fixtures, and the host/harness runtimes
-are implemented. Deterministic Go/Python process integration covers both transports.
-Package publication and native runtime qualification remain outstanding. See
-[current implementation status](docs/IMPLEMENTATION_STATUS.md) for
-completed work and remaining gates. MUST denotes a requirement, not proof of acceptance.
+The [release contract lock](release/contract-lock.json) identifies the exact
+package source, version and content digest. The schemas, Go/Python validators and
+shared fixtures define the integration contract.
 
 The [host transport implementation](docs/HOST_TRANSPORT.md) supplies FIFO/spool
-I/O, bounded queues, deadlines and confirmed-exit transport cleanup. Its integration
-with Docker, startup verification and the durable broker is implemented and tested
-with scripted peers; full native host qualification remains outstanding.
+I/O, bounded queues, deadlines and confirmed-exit transport cleanup, coordinated
+with Docker, startup verification and the durable broker.
 
 ## 2. Principal requirements and boundaries
 
@@ -121,10 +117,8 @@ Docker Desktop and regular-file spooling through its Linux VM. Operator and
 Interceptor run on the same physical machine and use its local Docker installation.
 A small release-owned native component may install Python's final confinement.
 The [host runtime profiles](HOST_RUNTIME_PROFILES.md) define the support matrix,
-confirmed supported versions, selected MVP controls and remaining implementation
-gates. Selected service/confinement probes have passed; complete production-image
-testing on all four host tuples remains outstanding. OS/Docker versions are not an
-admission allowlist.
+confirmed supported versions and runtime controls. OS/Docker versions are not an
+admission allowlist; runtime capability checks enforce the required behavior.
 
 ### 3.2 Security properties and limits
 
@@ -217,15 +211,15 @@ Local progress claims never increase host budgets or extend hard termination.
 
 ### 5.1 Release identity and immutable staging
 
-An approved local Docker image and its HTTPS release compatibility record bind
+A pinned local Docker image and its embedded compatibility record bind
 the image identity, shared contract and runtime profile. The immutable image's
 embedded engine manifest records harness source/build identity, Python ABI,
 dependencies/SBOM, codecs, tool catalog, skill loader, prompt and confinement
 component. Operator checks these against installed policy and actual runtime
 capabilities; OS/Docker version-list membership is not required.
 [Release discovery and compatibility](schemas/ENGINE_RELEASE_CONTRACT.md) defines
-the authoritative image key, response and cache rules. Record registry manifest/index digests separately
-when available; launch uses the full verified local Docker image ID.
+the authoritative image identity and embedded compatibility rules. Record registry manifest/index digests separately
+when available; launch uses a verified immutable local reference plus the explicit native platform, bound to the platform-specific Docker image ID.
 
 The recommended runtime base is `gcr.io/distroless/python3-debian13:nonroot`,
 pinned by digest after qualification. It omits shells and package managers and
@@ -319,35 +313,26 @@ or full Docker image ID. No registry credentials belong in Operator configuratio
 The administrator installs and updates images. Resolve all references locally;
 an omitted tag means the existing local `latest` tag. Missing local content is an actionable startup error.
 
-Before accepting a new campaign, resolve the selected native-platform image
-locally and pin its full Docker image ID. Use the fixed HTTPS release URL
-`https://releases.intrusive.ai/sha256/<64-hex-image-ID>` under the
-[release contract](schemas/ENGINE_RELEASE_CONTRACT.md), or reuse its valid local
-cached response. Validate image identity, minimum Operator version, exact installed
-shared-contract version/digest, platform and installed runtime profile capabilities. OS/Docker versions need not
-match the informational confirmed-supported list.
-The release key is Docker's image/config ID, not a repository manifest/index digest.
-The full shared contract remains installed locally rather than fetched from this URL.
+Before accepting a new campaign, Operator MUST resolve the selected native-platform
+image locally and pin its platform-specific Docker `Id` separately from its verified immutable lookup reference. It MUST inspect
+`/opt/operator/engine/share/compatibility.json` from that exact image under the
+[local compatibility contract](schemas/ENGINE_RELEASE_CONTRACT.md). It MUST check
+minimum Operator version, exact installed shared-contract version/digest, native
+platform and runtime profile, and verify the embedded manifest and resources.
+Compatibility admission MUST use local image bytes without publisher verification,
+release-service requests or an approval cache. Missing or incompatible metadata
+MUST fail before native attachment or guest execution.
 
-Create by that immutable image ID with pulling forbidden; verify the created
-container's image before starting it. Check compatibility before any guest code
-executes. A new local image selection invalidates image-dependent prepared inputs;
-rebuild and revalidate them before acceptance. Accepted start retries retain their
-original pin and receipt. Record configured selector, image/platform identities,
-release response bytes/digest and retrieval/cache provenance in startup metadata.
-Retain the image and validated response while in use. No automatic replacement or
-fallback image is allowed when content or compatibility checks fail.
-
-The release response is cached by trusted origin and image ID and can be reused
-for later campaigns while rechecking current host compatibility. An uncached
-lookup failure, unknown image, corrupt metadata without a successful refetch, or
-unmet requirement fails startup. The MVP has no automatic cache expiry/revocation
-polling; the release contract documents administrator eviction and audit retention.
-Image selection and release lookup are host preparation; the guest remains offline.
+Create by the verified immutable reference with explicit platform and pulling forbidden; verify the created container's selected image identity before starting it. Follow the storage-aware identity and versioned recovery rules in [image preparation](docs/IMAGE_PREPARATION.md). A changed local image selection requires
+fresh preparation before acceptance. Accepted campaigns retain their original
+pin and receipt. Record the configured selector, image/platform identities and
+exact embedded compatibility bytes/raw digest. Existing `release_record_digest`
+fields identify those bytes; `image_digest` separately pins the local image.
+No automatic replacement or fallback is allowed when validation fails.
 
 The [image preparation layer](docs/IMAGE_PREPARATION.md) implements local native
-image resolution, selector/pin rechecks, fixed-origin release lookup and private
-cache validation. The [host configuration loader](docs/HOST_CONFIGURATION.md)
+image resolution, selector/pin rechecks and embedded compatibility validation.
+The [host configuration loader](docs/HOST_CONFIGURATION.md)
 implements private YAML loading and read-only CLI validation. Embedded release-file
 inspection and container creation/start are integrated into the installed launcher.
 
@@ -469,10 +454,11 @@ generation is an internal loop operation, not a model's recursive tool.
 | `engine.model_generate` | One bounded provider-native non-streaming request through the selected host profile. |
 | `engine.artifact_begin`, `engine.artifact_put_part`, `engine.artifact_commit` | Upload bytes with size/media/digest declaration; obtain a host-verified committed receipt. |
 | `engine.injection_delete` | Remove one known injection by attempt receipt/action ID in the current target; confirmed absence is successful cleanup. |
-| `engine.attempt_execute` | Submit one structured attempt with explicit tactical fields, committed artifacts and observation selection; return a fixed feedback manifest. |
+| `engine.attempt_execute` | Submit a permitted target operation with direct bounded input or an artifact receipt; Operator retains input and assigns bookkeeping, then returns outcome, execution receipt and permitted feedback. |
 | `engine.observation_read` | Read bounded, already-filtered feedback bytes by attempt receipt and entry ID; no general artifact-store access. |
-| `engine.record_append` | Bounded hypotheses, progress, lineage, conclusions and evidence references; guest assertions are labeled. |
-| `engine.request_stop` | Commit graceful completion with conclusion receipts or an explicit unavailable conclusion; acknowledge closed execution admission and required guest exit. |
+| `engine.record_append` | Optional historical hypotheses, progress, lineage, coverage and evidence references; guest assertions are labeled. |
+| `engine.finish` | Submit one bounded assessment or an explicit unavailable reason; Operator validates, retains, closes execution and starts cleanup. |
+| `engine.diagnostic_report` | Retain bounded Harness-local rejection and stopping facts; runtime-only, not a model tool. |
 | `engine.restore_request` | Restore an explicit checkpoint; Operator validates and executes the transition without restarting the harness. |
 | `engine.snapshot_request` | Create a checkpoint with optional `label` and `description`; Operator supplies the campaign ID. |
 | `engine.snapshot_list`, `engine.snapshot_inspect` | Read permitted campaign checkpoint metadata, including campaign ID and description, across retained source sessions. |
@@ -738,8 +724,7 @@ truncated and whether all requested categories were collected. The harness must
 pass decoded permitted content and limitations into model context, label summaries
 and omitted ranges, and verify full-object hashes only for fully assembled bytes.
 See the shared contract for exact schemas, category states, boundary and retention
-semantics. Operator broker and Attack Harness feedback handling are implemented;
-complete live integration qualification remains outstanding.
+semantics.
 
 ### 8.2 Interceptor integration
 
@@ -850,8 +835,8 @@ The host service owns the API, provider bridge and target lifecycle. There is no
 separate gateway replacement/recovery protocol in this MVP. Service, worker,
 guest or target failure is terminal for execution; preserve uncertainty, stop
 the harness and perform bounded reachable cleanup. A new process cannot adopt
-or resume a failed campaign. Remote deployment, authentication, multiple
-instances and automatic restart are deferred beyond the local MVP.
+or resume a failed campaign. This adapter uses a single same-host instance and
+loopback communication without Operator–Interceptor authentication.
 
 **Compatibility gate:** native codecs, supervisor campaign access, localhost lifecycle
 and integration tests live in Interceptor. Qualify the exact source/image/resource
@@ -945,8 +930,17 @@ release are journaled atomically with their owning events. Duplicates retain the
 original target binding and do not charge or execute again.
 
 For model calls, also retain the exact engine-visible and canonical provider-bound
-request bodies, bounded provider response and exact normalized guest response,
-codec/profile/model, usage and timing. Exclude host-added credentials, authority
+request bodies, bounded validated successful provider response and exact normalized
+successful guest response, codec/profile/model, usage and timing. Failed or invalid
+provider bodies MUST be replaced by a bounded selected diagnostic, as defined in
+[model failure diagnostics](docs/MODEL_SERVICE.md#model-failure-diagnostics).
+Foreground output, failed start completion, inspection and report/export MUST
+expose the same selected failure facts. HTTP rejections MUST include bounded,
+credential-redacted provider message/type/code/parameter fields when present and
+explicit reasons for omissions or truncation, across every supported provider.
+Reservations MUST remain distinct from
+confirmed usage; diagnostic persistence/cleanup failures MUST NOT replace the
+primary failure or permit replay. Exclude host-added credentials, authority
 headers, private credential-bearing routing, secret-store and bootstrap material.
 Otherwise do not silently redact adversarial guest/model content from required
 audit records. Public summaries and protected audit content are separate outputs.
@@ -995,7 +989,7 @@ Keep journal content, committed artifacts, captured target evidence and managed
 report generations within this campaign group. Digest-based reuse is local to the
 group. Another campaign must own a copy of every evidence object it needs; retained
 reports and receipts cannot depend on another campaign's files. Reusable installed
-images, skills, release caches and administrator configuration keep their separate
+images, skills and administrator configuration keep their separate
 installation lifetimes. Spool files are transient and live outside retained evidence.
 
 Only host components write evidence. Use restrictive service ownership, append-only
@@ -1040,7 +1034,7 @@ and artifact group for that campaign, including every revision, captured target
 export and generated report. `--all` selects all managed campaign groups in the
 configured state root. Include registered managed campaign copies in run-output
 directories and update their inventories. Preserve reusable configuration,
-credentials, installed images, skills, release caches and input source projects.
+credentials, installed images, skills and input source projects.
 Files explicitly exported outside managed campaign directories remain administrator
 copies and are not searched for or deleted.
 
@@ -1100,6 +1094,12 @@ including complete input retention and the startup reconciliation gate.
 Durable host start requests and worker claims MUST follow
 [Start requests](docs/START_REQUESTS.md). Public preparation, startup and OS manager
 submission MUST follow [Campaign startup](docs/CAMPAIGN_START.md).
+Preparation failures MUST keep the `preparation_failed` classification and retain
+a bounded, redacted stage/cause diagnostic in the failed start completion, even
+before a journal exists. Foreground and supervised workers MUST report equivalent
+diagnostics; `inspect --run` and `campaign status --run` MUST expose them. Cleanup
+or completion-recording failures MUST NOT replace the original preparation cause.
+Legacy completions without diagnostics MUST remain readable.
 `--new-campaign` explicitly creates a new intent/ledger for a fresh execution.
 No accepted campaign is reopened, and no unresolved start silently duplicates it.
 
@@ -1138,15 +1138,29 @@ it cannot become a new execution owner for the failed campaign.
 
 ### 10.2 Stop behavior
 
-Normal harness completion uses the accepted [conclusion and stop contract](schemas/SHARED_CONTRACT.md#10-structured-conclusion).
-The guest commits a bounded `operator.dev/engine-conclusion/v1alpha2` artifact,
-then a conclusion record, then `engine.request_stop` with matching finish reason
-and both receipts. If it cannot produce a conclusion, it supplies the explicit
-unavailable variant; missing output is recorded as incomplete.
+Conclusion-local hypotheses MUST NOT require earlier hypothesis records. The host
+MUST resolve all local definitions before references, then consult campaign
+history for nonlocal references; duplicate IDs, self-parenting and cycles remain
+invalid. This resolution applies to assessment validation in the finish operation.
+The host MUST retain bounded conclusion rejection diagnostics in the journal,
+terminal and failed-start records and expose them through foreground/supervised
+output, inspection and report/export. Later generic failures MUST NOT replace the
+original cause; a corrected conclusion MAY still finish successfully. See the
+[assessment contract](schemas/ASSESSMENT_CONTRACT.md#rejection-diagnostics).
+
+Harness completion and container removal MUST follow [the exit-observation contract](docs/HARNESS_EXIT.md). Accepted finish plus a verified zero exit establishes successful Harness execution; accepted finish or a disconnect alone does not. Nonzero/unconfirmed exits and independent failures remain failures, while cleanup outcomes remain separately reported. Operator MUST retain exit status, bounded stderr and the original safe worker cause before removing the exact container.
+
+Normal Harness completion MUST use the [simple campaign contract](schemas/SIMPLE_CAMPAIGN_CONTRACT.md).
+The guest submits `engine.finish` with a minimal assessment containing summary and
+objective outcomes. Optional elaboration and reference collections default empty;
+status defaults partial. Operator adds binding and retains the normalized conclusion.
+Large drafts MAY use a committed conclusion-purpose artifact receipt. No prior
+hypothesis registration, conclusion record or separate stop request is required.
+If no assessment can be constructed, the explicit unavailable reason MUST be retained.
 
 Operator durably accepts the stop, closes execution admission and returns the
 ordinary correlated acknowledgement: `status: accepted`, saved `stop_receipt`,
-`execution_admission: closed`, `conclusion_state`, `exit_required: true`,
+`execution_admission: closed`, `assessment_state`, `exit_required: true`,
 `exit_within_ms: 5000`, and `finalization_status: pending`. This acknowledges
 finishing, not completed export, reporting or observed process exit. The guest
 submits no further ordinary work and exits; the host independently verifies and
@@ -1428,8 +1442,11 @@ alternative bootstrap protocol.
 Supporting source/citation/context metadata is optional and bounded. Preserve supplied
 provenance and reference-read/omission history without requiring catalog membership,
 model invocation records or technique taxonomies. No protected host/target content
-enters engine-visible inputs. Keep scenario IDs for scenario-origin attempts and the
-existing exploratory origin for unlisted hypotheses or objectives-only input.
+enters engine-visible inputs. Every attempt MUST explicitly select origin. Scenario origin MUST supply a
+submitted scenario_id; exploratory origin MUST omit scenario_id. Missing origin
+or an invalid combination MUST be rejected before dispatch with actionable
+INVALID_ARGUMENTS feedback. Never infer origin from scenario_id. See
+[the shared contract](schemas/SIMPLE_CAMPAIGN_CONTRACT.md).
 
 ### 11.4 Evidence-based reporting
 
@@ -1612,11 +1629,11 @@ from an external interpretation of a report.
 
 ## 13. Distribution, configuration and contract versioning
 
-Publish signed Linux and macOS host distributions for amd64 and arm64, with reproducible toolchain pins,
+Publish Linux and macOS host distributions for amd64 and arm64, with reproducible toolchain pins,
 release checksums/SBOMs and offline installation with a complete compatible artifact
 inventory. Executable release publication MUST remain separate from local instruction-only skill installation.
 Every successful push to `candidate-v<major.minor.patch>` MUST publish the version's
-rolling signed GitHub prerelease after Operator CI passes. Merging that candidate
+rolling GitHub prerelease after Operator CI passes. Merging that candidate
 PR into `main` MUST promote the existing artifacts after source/tree and asset
 verification, without rebuilding. Attack Harness build reports and external native
 qualification MUST remain separate from this publication gate; campaign startup
@@ -1633,18 +1650,18 @@ publication, and never publish image approval records. Its custom OIDC subject
 MUST contain, in order, `repository_id`, `repository_owner_id`, `environment`,
 `ref`, and `workflow_ref`; deployment MUST coordinate all affected OIDC consumers.
 See [candidate release automation](.github/maintainers/CANDIDATE_RELEASES.md).
-Host distributions MUST use publisher-controlled OpenPGP detached signatures over
-an exact release-file manifest, verified against an independently installed public
-keyring. Installation/updates MUST use explicit local archives and retain immutable
+Host distributions MUST include an exact release-file manifest with SHA-256
+digests. Installers MUST validate the manifest and every payload file before
+activation. Installation/updates MUST use explicit local archives and retain immutable
 release directories. Activation MUST switch the selected version atomically and
 reject downgrades unless explicitly requested; no automatic download or age-based
 expiry is required. Linux installation MUST create the dedicated service account
 and private filesystem paths; systemd prerequisites MUST be provisioned only
 when `install provision-linux --service` is explicitly requested; Docker socket permission grants MUST be explicit.
 The [host distribution contract](docs/HOST_DISTRIBUTION.md) defines packaging,
-trust, provisioning, offline installation, updates and publication tooling. Attack Harness images use the HTTPS release approval and compatibility
-cache policy in Section 5.1.1.
-Active runs retain their pinned image, submitted bundle and reference inputs. No executable release keys or production credentials ship in images.
+integrity checks, provisioning, offline installation, updates and publication tooling. Attack Harness images use the local embedded compatibility
+validation policy in Section 5.1.1.
+Active runs retain their pinned image, submitted bundle and reference inputs. No production credentials ship in images.
 
 Trusted configuration and private state are resolved by the installed host
 profile. Linux uses `/etc/operator`, `/var/lib/operator` and `/run/operator`;
@@ -1675,20 +1692,21 @@ selected from trusted distribution metadata. Require exact inventory and bounded
 regular-file reads before compiling the verified offline schemas. Preparation and
 launch use that frozen protocol and verified pin; incoming image/release metadata
 cannot supply replacement validators. `operatorctl contract check` provides the
-read-only installation diagnostic. Production package publication and distribution
-pin/version selection remain packaging requirements.
+read-only installation diagnostic. The release lock and installed executable
+carry the supported package identity.
 
 The host `engine.image` setting selects local Docker content under Section 5.1.1;
 campaign or guest content cannot override it. Administrators install images and
-manage registry credentials outside Operator. Release validation uses the fixed
-HTTPS origin/cache. Record host platform separately from the Linux image platform.
+manage registry credentials outside Operator. Compatibility validation reads
+bounded embedded files from that local image. Record host platform separately
+from the Linux image platform.
 
 Use typed Docker API requests or fixed argument arrays, never model-supplied shell
 commands. Connect only to the administrator-selected local daemon socket; ignore
 ambient remote contexts and DOCKER_HOST. Rootless Docker may be used if it satisfies the same runtime capability checks;
 no separate prior certification is required.
 
-Create without starting, using the exact local image ID, fixed entrypoint/environment,
+Create without starting, using the verified immutable local reference and explicit platform, fixed entrypoint/environment,
 network none, nonroot identity, empty capabilities,
 no-new-privileges, read-only root, exact mounts and resource ceilings. Save the
 daemon/container/launch binding before start; disable restart and automatic removal.
@@ -1698,46 +1716,34 @@ and the [shared spool rules](schemas/SHARED_CONTRACT.md#41-macos-file-spool-wire
 Use Section 10.2 Docker termination, then remove resources only after confirmed exit.
 No worker/daemon recovery resumes failed campaign execution.
 
-The accepted [shared contract](schemas/SHARED_CONTRACT.md) has closed schemas, an
-offline catalog/registry, semantic validators and shared Go/Python vectors. Package
-build/check tooling and runtime integration are implemented. Publish
-`operator-contracts` 0.1.0 only after both runners and the required conformance
-gates pass. Raw byte digests, Operator canonical-object digests, OCI digests and
-native Interceptor digests are separate recipes. Release/runtime claims require tests.
+The [shared contract](schemas/SHARED_CONTRACT.md) contains closed schemas, an
+offline catalog/registry, semantic validators and shared Go/Python vectors.
+The [release lock](release/contract-lock.json) pins package `0.2.1`. Raw byte
+digests, canonical-object digests, OCI digests and native Interceptor digests are
+separate identities and MUST use their specified recipes.
 
-## 14. Implementation sequence
+## 14. Integration references
 
-1. **Contracts and feasibility:** publish and test the accepted shared contract package;
-   implement and validate the selected host-service lifecycle and prove Linux FIFO/macOS spool bootstrap,
-   nonroot startup, exec/network denial and worker-independent Docker termination
-   on all four host OS/architecture combinations.
-2. **Host foundation:** CLI/state, local image/release validation, narrow Docker helper, supervised
-   ownership/fencing, immutable staging, journal recorder and terminal lifecycle.
-3. **Python vertical slice:** exact prompt/skill/reference loading, one model
-   exchange, artifact commit, validated fake-target attempt and structured output.
-4. **Native targets:** qualify the revised Interceptor campaign-access/delivery/evidence
-   contract and attach/optional-stop/restore flows; qualify declarative HTTPS.
-5. **Complete submission/reporting:** public bundle validation and immutable input
-   staging, objectives-only and scenario-guided runs, deterministic reports,
-   source-compatible result/evidence exports and explicit incomplete coverage.
-6. **Release gates:** real providers, cross-architecture containment, crash/fault
-   tests, installation/offline updates, capacity and end-to-end usability.
-
-The [implementation status](docs/IMPLEMENTATION_STATUS.md) records completed
-components and remaining work against this sequence. Component and scripted-peer
-tests do not replace native container, provider or Interceptor qualification.
+- [Harness integration](docs/HARNESS_INTEGRATION.md): package compatibility,
+  startup, direct input, evidence inspection, finish and error handling.
+- [Interceptor client](docs/INTERCEPTOR_CLIENT.md): native operation translation,
+  lifecycle and evidence retention.
+- [HTTPS targets](docs/HTTPS_TARGETS.md): trusted declarative target mappings.
+- [Reporting](docs/REPORTING.md): retained facts, assessment interpretation,
+  execution coverage and evidence exports.
+- [Host distribution](docs/HOST_DISTRIBUTION.md): installation, updates and
+  exact supported package identity.
 
 ## 15. Acceptance criteria
 
-The `OC-AC` criteria below remain the acceptance contract. Many components have
-passing unit, contract and scripted integration tests; the complete acceptance
-matrix has not passed. See [implementation status](docs/IMPLEMENTATION_STATUS.md)
-for evidence and outstanding gates. Unit/contract tests complement the named
-native gates; schemas must cover boundary cases rather than merely mirror code.
+The `OC-AC` criteria define required behavior and its verification. Unit and
+contract tests complement native runtime checks; schemas must cover boundary
+cases rather than merely mirror code. A test result establishes only the
+configuration and behavior actually exercised.
 
 | ID | Required evidence |
 |---|---|
-| OC-AC-001 | Approved local Docker image and Python/native dependencies run on Linux/macOS amd64 and arm64 hosts using matching Linux images; wrong image/platform/profile, invalid release response or missing required runtime capability fails before launch. OS/Docker versions outside the confirmed-supported list are not rejected solely by version. |
+| OC-AC-001 | Compatible local Docker image and Python/native dependencies run on Linux/macOS amd64 and arm64 hosts using matching Linux images; wrong image/platform/profile, invalid embedded compatibility metadata or missing required runtime capability fails before launch. OS/Docker versions outside the confirmed-supported list are not rejected solely by version. |
 | OC-AC-002 | Verified root/input/skill data are immutable; caller mutation, symlink/nested-mount/path substitution and cross-campaign reads fail. |
 | OC-AC-003 | Native probes cannot reach IPv4/IPv6/DNS, loopback listeners, metadata addresses, other containers, host sockets or vsock; FIFO/spool model/attempt round trips still work. |
 | OC-AC-004 | Model requests for shell, Python execution, dynamic imports/plugins or arbitrary paths do not dispatch; hostile skills/prompts cannot add tools. |
@@ -1760,9 +1766,9 @@ native gates; schemas must cover boundary cases rather than merely mirror code.
 | OC-AC-021 | HTTPS mapping rejects arbitrary destinations/redirects/headers and unsupported setup/state operations; reports retain its actual evidence assurance. |
 | OC-AC-022 | User-authored and generator-authored bundles use one strict validator; objectives-only input works without fabricated scenarios or generator metadata. Missing required capabilities/references fail before launch; optional gaps and requested-policy narrowing are explicit. No submission can select runtime credentials, tools or destinations. |
 | OC-AC-023 | Report retries/late evidence never execute attacks; reports separate observed facts, guest claims, inference, incomplete audit and cleanup uncertainty. |
-| OC-AC-024 | Release/skill updates, skill removal/reinstallation, retention and offline installation preserve pinned active inputs, executable release signatures, skill content digests and referenced evidence. Bundle edits require a new immutable input identity and cannot modify an active campaign. |
+| OC-AC-024 | Release/skill updates, skill removal/reinstallation, retention and offline installation preserve pinned active inputs, executable release file digests, skill content digests and referenced evidence. Bundle edits require a new immutable input identity and cannot modify an active campaign. |
 | OC-AC-025 | CLI disconnect/observer interrupt does not stop accepted work; status/wait/JSON receipts, read-only doctor and fenced startup are demonstrated. |
-| OC-AC-026 | Local image selection uses Docker content with `--pull=never` and treats latest as a local tag. Cover missing image, local tag change, immutable ID launch, image removal, cached/uncached HTTPS release lookup, bad origin/TLS/redirect/status/metadata/digest, minimum version, exact contract/platform/profile mismatch, offline valid-cache reuse and accepted-start pinning. |
+| OC-AC-026 | Local image selection uses Docker content with `--pull=never` and treats latest as a local tag. Cover missing image, local tag change, classic/containerd immutable-reference launch, versioned container identity recovery, image removal, missing/malformed/oversized embedded compatibility metadata, resource digest mismatch, minimum version, exact contract/platform/profile mismatch, offline local-image admission and accepted-start pinning. |
 | OC-AC-027 | Create/list/inspect/restore tools preserve campaign ID and description, discover retained earlier-session checkpoints and support context-preserving branch restores (Sections 10.3–10.4). |
 | OC-AC-028 | Feedback selection defaults to all permitted kinds; profiles cannot broaden; receipt reads return actual verified bytes with fixed source attribution, explicit availability/truncation, cumulative limits and earlier-session retention. Qualify model-visible content and no cross-campaign/protected disclosure. |
 | OC-AC-029 | Rejected/corrected numbering, local gaps, duplicate and admission accounting, restore-retained counters, each loop limit, defined progress and bounded model-free finalization pass shared execution-rule traces. Both Go/Python runners pass the same accepted contract fixtures and real FIFO and file-spool fake-broker/fake-harness traces: gated startup, attempt/feedback, live restore, conclusion and stop. Cover fixed manifest descriptors beyond 64 KiB, package mismatch, IDs/digests, deadlines/queues, restore/control ordering, exact stop acknowledgement and spool sequence filenames/cumulative ACKs, producer deletion, timeout boundaries and no replay. This does not qualify production runtime containment. |
@@ -1771,9 +1777,6 @@ native gates; schemas must cover boundary cases rather than merely mirror code.
 | OC-AC-032 | Per-campaign and all-campaign purge remove complete managed evidence without cross-campaign dependencies; active/read/export/report work blocks deletion. Retention is administrator-controlled; external exports/configuration/images survive; missing evidence and partial deletion are explicit. |
 | OC-AC-033 | macOS caffeinate assertion is verified before execution, remains continuous through healthy restore, and releases after cleanup or host exit. Display sleep/lock remain allowed. Helper loss, changed/unreadable sleep state, logout and Docker interruption close admission and trigger independent Docker termination with retained uncertainty. Idle evidence service does not inhibit sleep; recovery never resumes execution. |
 
-The host-service decisions are resolved and service submission/lifecycle handling
-and installation packaging are implemented. Full four-host runtime qualification
-remains outstanding. [Host profiles](HOST_RUNTIME_PROFILES.md) record the confirmed
-supported versions, selected Docker/seccomp baseline and accepted spool rules.
-Runtime capability checks enforce required behavior without an OS/Docker version
-certification allowlist.
+[Host profiles](HOST_RUNTIME_PROFILES.md) define supported versions, Docker/seccomp
+controls and spool rules. Runtime capability checks enforce required behavior
+without an OS/Docker version certification allowlist.

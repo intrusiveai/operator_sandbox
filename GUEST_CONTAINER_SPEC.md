@@ -1,13 +1,11 @@
 # Operator Sandbox Container Guest Contract
 
-Status: container ABI, launcher and harness implemented, 2026-09-28; full production runtime qualification outstanding\
-Owner: this container design; paired with [the product specification](OPERATOR_SANDBOX_SPEC.md)
+Owner: Operator Sandbox; paired with [the product specification](OPERATOR_SANDBOX_SPEC.md).
 
-The accepted [shared host/harness contract](schemas/SHARED_CONTRACT.md) governs
-wire semantics and data exchange. This document defines runtime responsibilities;
-the package, validators/fixtures and actual launcher are implemented. Approved
-release publication and full runtime qualification remain outstanding; see
-[current implementation status](docs/IMPLEMENTATION_STATUS.md). Both ends must pin the exact package version and content digest.
+The [shared host/harness contract](schemas/SHARED_CONTRACT.md) governs wire
+semantics and data exchange. This document defines runtime responsibilities.
+Both ends MUST pin the exact package version and content digest identified by
+the [release contract lock](release/contract-lock.json).
 
 ## 1. Decisions
 
@@ -78,7 +76,7 @@ executing application code even when external utilities are absent.
    Remove installer hooks and ambient site customization. Do not rely on deleting
    `subprocess` or a few builtins as a confinement mechanism.
 5. Generate a final-image SBOM and manifest of required runtime files. Scan and
-   patch through rebuilt, release-approved image identities; there is no in-place package update.
+   patch through rebuilt, compatibility-checked image identities; there is no in-place package update.
 6. Exercise the real final image under nonroot, read-only root, no network and
    selected Docker mount/permission and syscall controls. Initial feasibility testing
    covers the four host OS/architecture targets; it is not a recurring OS/Docker
@@ -87,11 +85,11 @@ executing application code even when external utilities are absent.
 ## 3. Release metadata and filesystem
 
 Container ABI: `operator-container/v1`, using local Docker with Linux FIFO or macOS file-spool transport. The
-HTTPS release record, immutable image metadata and installed host policy bind:
+Embedded compatibility record, immutable image metadata and installed host policy bind:
 
 | Group | Required identities |
 |---|---|
-| Image | Full local Docker image/config ID and native platform; separately recorded registry index/manifest digests when available; source/build provenance and SBOM. |
+| Image | Platform-selected Docker image ID, native platform and separately verified immutable lookup reference; registry index/manifest inventory when available; source/build provenance and SBOM. |
 | Python | Interpreter version/ABI, standard library/native dependencies and exact application installation layout. |
 | Harness | Source revision, package digest, fixed bootstrap entrypoint, model codec set, tool catalog, skill loader and conclusion schema. |
 | Guidance | Embedded default prompt exact bytes, digest, size and media type. |
@@ -99,17 +97,17 @@ HTTPS release record, immutable image metadata and installed host policy bind:
 | Integration | Exact `operator-contracts` package version/content digest, offline catalog/operation registry, pipe/input/skill schema identities, compatible host launcher/transport and shared Go/Python qualification fixture identities. |
 
 Do not put an OCI image's own digest inside a file used to calculate that image.
-The external HTTPS record approves the Docker image ID; the immutable image
-binds its embedded engine manifest.
+The immutable Docker image ID binds its embedded compatibility record and engine
+manifest. Neither file contains its own image ID.
 Likewise, an InputTreeManifest lives outside the file set it hashes; the guest
 receives its completed descriptor through the host startup binding.
 
 The administrator selects an already installed local Docker image with
 `engine.image`. Operator resolves its full image ID and validates the matching
-[HTTPS release response](schemas/ENGINE_RELEASE_CONTRACT.md), including minimum
+[embedded compatibility record](schemas/ENGINE_RELEASE_CONTRACT.md), including minimum
 Operator version and exact locally installed contract version/digest and runtime
 profile. It creates the container with pulling forbidden and retains the verified
-image and cached response. The guest has no registry or release-service client.
+image and exact embedded compatibility bytes. The guest has no registry or release-service client.
 
 ```text
 /usr/bin/python3                         immutable qualified interpreter
@@ -171,7 +169,7 @@ Guest bootstrap opens the following paths and assigns their descriptors locally:
 | FD | Fixed path / guest direction | Purpose |
 |---|---|---|
 | 0 | `/dev/null`, read-only | No interactive command stream. |
-| 1, 2 | Docker bounded stdout/stderr capture | Diagnostics only, never dispatch. |
+| 1, 2 | Docker bounded local log capture (1 MiB, one file; retained stderr ≤8 KiB) | Diagnostics only, never dispatch. |
 | 3 | `/run/operator/ipc/ordinary-in`, read-only | Host ordinary responses. |
 | 4 | `/run/operator/ipc/ordinary-out`, write-only | Guest ordinary requests. |
 | 5 | `/run/operator/ipc/control-in`, read-only | Host startup/control. |
@@ -443,14 +441,15 @@ IDs; they cannot create successful host audit records by assertion.
 
 ## 7. Shutdown and qualification
 
-A healthy completion commits a v1alpha2 conclusion artifact and conclusion
-record, then sends `engine.request_stop` under shared contract Sections 10–11.
-An explicit unavailable conclusion remains possible. Operator's ordinary accepted
-acknowledgement closes execution admission and requires exit within 5,000 ms;
-finalization remains pending until host work completes. Expected EOF afterward
-is normal teardown. Reserve up to 1 MiB/one conclusion slot within the artifact
-budget and up to 30 seconds inside the campaign deadline, admitting only
-conclusion artifact/record/stop operations during graceful finalization.
+A healthy completion sends one `engine.finish` with an assessment draft or a
+committed assessment-artifact receipt. Operator supplies binding metadata, retains
+the validated assessment and closes admission. No conclusion record or separate
+stop request is required. Explicit unavailable assessments preserve their reason.
+The accepted acknowledgement requires exit within 5,000 ms; finalization remains
+pending until owned cleanup completes. Expected EOF afterward is normal teardown.
+Reserve up to 1 MiB/one assessment slot within the artifact budget and up to
+30 seconds inside the campaign deadline, admitting only assessment-artifact,
+finish and runtime diagnostic operations during graceful finalization.
 Immediate/fatal stop uses the exact-container Docker kill path, independently of
 the campaign worker, without waiting for output, signal handlers, control delivery
 or model responses. Docker unavailability is an explicit unconfirmed outcome;
@@ -467,11 +466,9 @@ runtime controls to exercise forbidden syscalls; do not ship probe programs in
 the production image or infer denial from an absent tool. Verify both allowed
 Python operation and denied bypasses, Linux FIFO opening/EOF, macOS spool isolation/
 atomicity/bounds, descriptor leakage, mount/network state, journal failure handling,
-worker-independent Docker kill and image/release-cache drift on all four supported
+worker-independent Docker kill and local image/compatibility-metadata drift on all four supported
 Linux/macOS host tuples. Docker API/VM failure must report unconfirmed termination. Keep startup-only exceptions distinguishable
-from live permissions. Component and scripted-peer tests cover portions of these requirements; the
-complete production-image/native host matrix remains outstanding. See
-[current implementation status](docs/IMPLEMENTATION_STATUS.md) for evidence boundaries.
-D1 is resolved: Docker mounts/permissions and two-stage seccomp are the MVP controls.
+from live permissions. Docker mounts/permissions and two-stage seccomp enforce
+the runtime controls.
 Spool write access is limited to the fixed outbound transport view. These checks
 verify implementation behavior; no recurring OS/Docker version matrix is required.

@@ -65,7 +65,10 @@ func embeddedFiles(t *testing.T, p *contracts.Protocol, h Requirements) (map[str
 	if err != nil {
 		t.Fatal(err)
 	}
-	files := map[string][]byte{PromptPath: []byte("Conduct an authorized campaign.\n"), LoaderPath: []byte("# Static loader fixture; never executed.\n"), ToolCatalogPath: raw}
+	r := release()
+	r.ContractPackageVersion = h.Contract.Version
+	r.ContractPackageDigest = h.Contract.Digest
+	files := map[string][]byte{CompatibilityPath: wire(r), PromptPath: []byte("Conduct an authorized campaign.\n"), LoaderPath: []byte("# Static loader fixture; never executed.\n"), ToolCatalogPath: raw}
 	identity := func(name string) fileIdentity {
 		return fileIdentity{len(files[name]), contracts.RawDigest(files[name])}
 	}
@@ -90,9 +93,9 @@ func TestEmbeddedReleaseAdmission(t *testing.T) {
 	record := release()
 	record.ContractPackageVersion = h.Contract.Version
 	record.ContractPackageDigest = h.Contract.Digest
-	prepared := Prepared{Image: dockercontrol.ImagePin{Selector: "harness:latest", Endpoint: "unix:///saved/docker.sock", DaemonID: "daemon-1", ImageID: record.ImageDigest, HostPlatform: h.HostPlatform, ImagePlatform: record.Platform}, Release: Approval{record: record, raw: wire(record), digest: contracts.RawDigest(wire(record))}}
+	prepared := Prepared{Image: dockercontrol.ImagePin{Selector: "harness:latest", Endpoint: "unix:///saved/docker.sock", DaemonID: "daemon-1", ImageID: contracts.RawDigest([]byte("image")), HostPlatform: h.HostPlatform, ImagePlatform: record.Platform}}
 	base, manifest := embeddedFiles(t, p, h)
-	for _, mode := range []string{"success", "no approval", "unverified package", "cleanup failed", "wrong daemon", "wrong endpoint", "read failure", "missing file", "extra file", "prompt changed", "loader changed", "catalog changed", "different contract", "different platform", "different runtime", "entrypoint", "transports", "blank prompt", "loader NUL", "catalog tool changed", "missing codec", "manifest extra", "manifest duplicate"} {
+	for _, mode := range []string{"success", "missing compatibility", "unverified package", "cleanup failed", "wrong daemon", "wrong endpoint", "read failure", "missing file", "extra file", "prompt changed", "loader changed", "catalog changed", "different contract", "different platform", "different runtime", "entrypoint", "transports", "blank prompt", "loader NUL", "catalog tool changed", "missing codec", "manifest extra", "manifest duplicate"} {
 		t.Run(mode, func(t *testing.T) {
 			files := map[string][]byte{}
 			for k, v := range base {
@@ -103,8 +106,8 @@ func TestEmbeddedReleaseAdmission(t *testing.T) {
 			called := false
 			m := manifest
 			switch mode {
-			case "no approval":
-				current.Release = Approval{}
+			case "missing compatibility":
+				delete(files, CompatibilityPath)
 			case "unverified package":
 				protocol, _ = contracts.LoadProtocol(schemas.Files)
 			case "missing file":
@@ -170,12 +173,12 @@ func TestEmbeddedReleaseAdmission(t *testing.T) {
 				}
 				return result, nil
 			})
-			got, _, err := InspectEmbedded(context.Background(), inspector, current, h, protocol)
+			got, _, err := InspectEmbedded(context.Background(), inspector, current.Image, h, protocol)
 			if (err == nil) != (mode == "success") {
 				t.Fatalf("err=%v", err)
 			}
-			if (mode == "no approval" || mode == "unverified package") && called {
-				t.Fatal("unapproved image inspected")
+			if (mode == "unverified package") && called {
+				t.Fatal("unverified package inspected")
 			}
 			if err == nil {
 				if !bytes.Equal(got.DefaultPrompt(), files[PromptPath]) || got.LoaderDigest() != m.SkillLoader.Digest {

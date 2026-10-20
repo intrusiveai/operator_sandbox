@@ -122,10 +122,6 @@ Both Bedrock and Secrets Manager MUST share the named-profile behavior defined i
 [CREDENTIALS.md](CREDENTIALS.md#explicit-aws-named-profiles). Bedrock still uses its
 regional endpoint resolver and SigV4 signing, with no endpoint override or retry.
 
-The [live Nova Lite named-profile probe](qualification/aws-2026-09-28/README.md)
-passed the three native exchanges with contract `0.0.1`; this is scoped evidence,
-not qualification of every Bedrock model or identity mode.
-
 ## Google and Azure authentication
 
 `vertex-gemini` MUST accept `authentication:"secret-store"` with a

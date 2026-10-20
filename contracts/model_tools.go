@@ -1,7 +1,5 @@
 package contracts
 
-import "encoding/json"
-
 // ModelTools returns the package-owned native projection for a verified operation
 // set. This only declares tools; the fixed runtime dispatcher grants no authority
 // from a declaration and independently validates every call and live binding.
@@ -42,6 +40,21 @@ func (p *Protocol) ModelTools(codec string, operations []string) ([]byte, error)
 		properties := branch["properties"].(map[string]any)
 		name := properties["name"].(map[string]any)["const"]
 		parameters := properties["arguments"]
+		if projected, ok := branch["x-operator-provider-parameters"]; ok {
+			parameters = projected
+		}
+		if codec == "openai-chat-text-tools-v1" || codec == responsesCodec {
+			if projected, ok := branch["x-operator-openai-parameters"]; ok {
+				parameters = projected
+			}
+		}
+		if name == "attempt_execute" && !admitted["engine.injection_delete"] {
+			// Each declaration is decoded afresh, so narrowing cannot mutate the catalog.
+			props := parameters.(map[string]any)["properties"].(map[string]any)
+			for _, field := range []string{"pre_actions", "injection_input", "retain_injections"} {
+				delete(props, field)
+			}
+		}
 		description := branch["description"]
 		switch codec {
 		case "openai-chat-text-tools-v1":
@@ -64,10 +77,7 @@ func (p *Protocol) ModelTools(codec string, operations []string) ([]byte, error)
 	return canonicalValue(tools, OrdinaryLimit)
 }
 
-// ValidateToolArguments performs only local argument shape validation. For a new
-// attempt, allocate its bookkeeping tuple BEFORE calling this, after bounded
-// object decoding. A later rejection never refunds the allocated submission index.
-// Enforce configured argument byte limits and dispatch only advertised tools.
+// ValidateToolArguments validates local arguments; the host allocates attempt bookkeeping.
 func (p *Protocol) ValidateToolArguments(name string, raw []byte) (map[string]any, error) {
 	value, err := Decode(raw, OrdinaryLimit)
 	if err != nil {
@@ -77,12 +87,32 @@ func (p *Protocol) ValidateToolArguments(name string, raw []byte) (map[string]an
 	if !ok {
 		return nil, ErrProtocol
 	}
-	encoded, err := json.Marshal(map[string]any{"name": name, "arguments": object})
-	if err != nil {
-		return nil, ErrProtocol
+	if name == "attempt_execute" {
+		if err := ValidateAttemptOrigin(object, nil); err != nil {
+			return nil, err
+		}
 	}
-	if _, err = p.catalog.Validate(ModelToolArgumentsSchema, encoded, OrdinaryLimit); err != nil {
-		return nil, err
+	document, _ := Decode(p.catalog.sources[ModelToolArgumentsSchema], OrdinaryLimit)
+	matched := false
+	for index, value := range document.(map[string]any)["oneOf"].([]any) {
+		branch := value.(map[string]any)
+		if branch["properties"].(map[string]any)["name"].(map[string]any)["const"] != name {
+			continue
+		}
+		matched = true
+		if err := p.catalog.schemas[ModelToolArgumentsSchema].OneOf[index].Properties["arguments"].Validate(object); err != nil {
+			path, _ := SafeArgumentPath(conclusionSchemaPath(err))
+			return nil, &ArgumentError{Reason: "invalid_structure", FieldPath: path, Correction: "Supply the required fields with the documented types and no unknown fields.", Cause: ErrSchema}
+		}
+		break
+	}
+	if !matched {
+		return nil, argumentIssue("unsupported_tool", "/name", "Use a tool from the advertised catalog.")
+	}
+	if name == "attempt_execute" {
+		if err := p.checkSimpleAttempt(object); err != nil {
+			return nil, err
+		}
 	}
 	return object, nil
 }

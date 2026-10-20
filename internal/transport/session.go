@@ -271,7 +271,7 @@ func (s *Session) accept(i int, raw []byte, now time.Time) error {
 		}
 	}
 	if i == 1 {
-		m, err := s.config.Protocol.ValidateRequest(raw)
+		m, err := s.config.Protocol.ValidateRequestEnvelope(raw)
 		if err != nil {
 			return ErrProtocol
 		}

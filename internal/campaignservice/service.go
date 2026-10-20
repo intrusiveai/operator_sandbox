@@ -18,6 +18,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/httpstarget"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
+	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/nativeexec"
 	"github.com/intrusiveai/operator_sandbox/internal/preparation"
 	"github.com/intrusiveai/operator_sandbox/internal/termination"
@@ -52,44 +53,54 @@ type Config struct {
 	CheckHost func() error // Installed host lifetime gate; called before admission and every ordinary request.
 }
 type Service struct {
-	httpsParent        *attemptadapter.Parent
-	config             Config
-	writer             *campaign.Writer
-	attempts           *campaign.Attempts
-	broker             *attemptadapter.Broker
-	gate               chan struct{}
-	admitted           atomic.Bool
-	stopAccepted       atomic.Bool
-	serving            atomic.Bool
-	operations         map[string]bool
-	live               atomic.Pointer[preparation.Target]
-	restoring          atomic.Bool
-	transitionEpoch    atomic.Uint64
-	completion         completionState
-	model              modelState
-	artifacts          artifactStore
-	snapshotAdmissions int64
-	snapshotBytes      int64
-	lineage            nativeLineage
-	history            map[string]attemptadapter.Parent
-	checkpointLineage  map[string]nativeLineage
-	deadline           time.Time
-	timer              *time.Timer
-	killDone           chan struct{}
-	kill               termination.Receipt
-	shutdownOnce       sync.Once
-	terminalDone       chan struct{}
-	terminal           TerminalResult
-	evidenceTargets    []evidenceTarget
-	evidenceMu         sync.Mutex
+	resolvedAttempts     map[string]resolvedAttempt
+	modelDiagnostic      atomic.Pointer[modelprovider.Diagnostic]
+	conclusionDiagnostic atomic.Pointer[campaign.ConclusionDiagnostic]
+	workflowDiagnostic   atomic.Pointer[campaign.WorkflowDiagnostic]
+	httpsParent          *attemptadapter.Parent
+	config               Config
+	writer               *campaign.Writer
+	attempts             *campaign.Attempts
+	broker               *attemptadapter.Broker
+	gate                 chan struct{}
+	admitted             atomic.Bool
+	stopAccepted         atomic.Bool
+	assessmentCommitted  atomic.Bool
+	exitDeadline         atomic.Int64
+	serving              atomic.Bool
+	operations           map[string]bool
+	live                 atomic.Pointer[preparation.Target]
+	restoring            atomic.Bool
+	transitionEpoch      atomic.Uint64
+	completion           completionState
+	model                modelState
+	artifacts            artifactStore
+	snapshotAdmissions   int64
+	snapshotBytes        int64
+	lineage              nativeLineage
+	history              map[string]attemptadapter.Parent
+	checkpointLineage    map[string]nativeLineage
+	deadline             time.Time
+	timer                *time.Timer
+	killDone             chan struct{}
+	kill                 termination.Receipt
+	shutdownOnce         sync.Once
+	terminalDone         chan struct{}
+	terminal             TerminalResult
+	evidenceTargets      []evidenceTarget
+	evidenceMu           sync.Mutex
 }
 type TerminalResult struct {
-	Closure          string            `json:"closure"`
-	CleanupConfirmed int               `json:"cleanup_confirmed"`
-	CleanupRemaining int               `json:"cleanup_remaining"`
-	CleanupState     string            `json:"cleanup_state"`
-	TargetStop       string            `json:"target_stop"`
-	Evidence         []EvidenceOutcome `json:"evidence"`
+	Dispatched           *int64                         `json:"attempts_dispatched,omitempty"`
+	AssessmentState      string                         `json:"assessment_state,omitempty"`
+	ConclusionDiagnostic *campaign.ConclusionDiagnostic `json:"conclusion_diagnostic,omitempty"`
+	WorkflowDiagnostic   *campaign.WorkflowDiagnostic   `json:"workflow_diagnostic,omitempty"`
+	Closure              string                         `json:"closure"`
+	CleanupConfirmed     int                            `json:"cleanup_confirmed"`
+	CleanupRemaining     int                            `json:"cleanup_remaining"`
+	CleanupState         string                         `json:"cleanup_state"`
+	TargetStop           string                         `json:"target_stop"`
+	Evidence             []EvidenceOutcome              `json:"evidence"`
 }
 
 func New(ctx context.Context, c Config) (*Service, error) {
@@ -120,7 +131,7 @@ func New(ctx context.Context, c Config) (*Service, error) {
 	}
 	operations := map[string]bool{}
 	for _, name := range parsed["operations"].([]any) {
-		if !slices.Contains([]string{"engine.attempt_execute", "engine.injection_delete", "engine.observation_read", "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request", "engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit", "engine.model_generate", "engine.record_append", "engine.request_stop"}, name.(string)) {
+		if !slices.Contains([]string{"engine.attempt_execute", "engine.injection_delete", "engine.observation_read", "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request", "engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit", "engine.model_generate", "engine.record_append", "engine.finish", "engine.diagnostic_report"}, name.(string)) {
 			return nil, attemptadapter.ErrOperation
 		}
 		operations[name.(string)] = true
@@ -177,7 +188,7 @@ func New(ctx context.Context, c Config) (*Service, error) {
 	s.history = map[string]attemptadapter.Parent{}
 	s.checkpointLineage = map[string]nativeLineage{}
 	s.gate <- struct{}{}
-	b, err := attemptadapter.NewBroker(attemptadapter.BrokerConfig{Catalog: c.Prepared.Target().Protocol().Catalog(), Protocol: c.Prepared.Target().Protocol(), Writer: w, Attempts: a, Deadline: deadline, Admitted: s.admitted.Load, Prepare: s.prepare, Cleanup: s.cleanupTarget, ReadKinds: func() []string { return s.target().ReadKinds() }})
+	b, err := attemptadapter.NewBroker(attemptadapter.BrokerConfig{Catalog: c.Prepared.Target().Protocol().Catalog(), Protocol: c.Prepared.Target().Protocol(), Writer: w, Attempts: a, Deadline: deadline, Admitted: s.admitted.Load, Prepare: s.prepare, ResolveAttempt: s.resolveAttempt, Rejection: s.recordArgumentRejection, Cleanup: s.cleanupTarget, ReadKinds: func() []string { return s.target().ReadKinds() }})
 	if err != nil {
 		w.Fence().Stop(err)
 		return nil, err
@@ -466,7 +477,7 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 			return nil, err
 		}
 	}
-	request, err := s.target().Protocol().ValidateRequest(raw)
+	request, err := s.target().Protocol().ValidateRequestEnvelope(raw)
 	if err != nil {
 		s.Stop(err)
 		return nil, err
@@ -474,6 +485,16 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 	if !s.operations[request["operation"].(string)] {
 		s.Stop(attemptadapter.ErrOperation)
 		return nil, attemptadapter.ErrOperation
+	}
+	if !s.phaseAllows(request["operation"].(string), request["body"].(map[string]any)) {
+		return s.stateEnvelope(raw, sequence, stateDenied("STATE_CHANGED"))
+	}
+	if _, validationErr := s.target().Protocol().ValidateRequest(raw); validationErr != nil {
+		reply, rejectionErr := s.rejectArguments(raw, sequence, validationErr)
+		if rejectionErr != nil {
+			s.Stop(rejectionErr)
+		}
+		return reply, rejectionErr
 	}
 	ceiling := s.target().Profile().Settings().OperationTimeoutMS
 	if request["operation"] == "engine.snapshot_request" || request["operation"] == "engine.restore_request" {
@@ -489,23 +510,22 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 	deadline, _ := ctx.Deadline()
 	meta, _ := json.Marshal(map[string]any{"deadline": deadline.UTC().Format(time.RFC3339Nano)})
 	entry := campaign.Entry{RunRevision: s.attempts.Status().RunRevision, Kind: "service.request", Metadata: meta, Content: []campaign.Content{{Role: "request", MediaType: "application/json", Bytes: raw}}}
+	// Diagnostic reports retain selected safe facts separately, never submitted prose.
+	if request["operation"] == "engine.diagnostic_report" {
+		entry.Content = nil
+		entry.Metadata = marshal(map[string]any{"deadline": deadline.UTC().Format(time.RFC3339Nano), "request_digest": contracts.RawDigest(raw), "omitted": "untrusted_diagnostic_body"})
+	}
 	if _, err := s.writer.AppendReserving(entry, reservation, campaign.MaxContentBytes+2*(campaign.MaxEventBytes+1)); err != nil {
 		s.Stop(err)
 		return nil, err
 	}
-	body := request["body"].(map[string]any)
-	// Conclusion traffic is the guest's existing finish signal; it must not
-	// depend on an extra RPC to open the reserved finalization allowance.
-	if request["operation"] == "engine.request_stop" || request["operation"] == "engine.artifact_begin" && body["purpose"] == "conclusion" || request["operation"] == "engine.record_append" && body["record_kind"] == "conclusion" {
-		if err := s.beginFinalization(); err != nil {
-			return nil, err
-		}
-	}
 	var result []byte
 	if !s.phaseAllows(request["operation"].(string), request["body"].(map[string]any)) {
 		result, err = s.stateEnvelope(raw, sequence, stateDenied("STATE_CHANGED"))
-	} else if request["operation"] == "engine.record_append" || request["operation"] == "engine.request_stop" {
+	} else if request["operation"] == "engine.record_append" || request["operation"] == "engine.finish" {
 		result, err = s.handleCompletion(ctx, raw, sequence)
+	} else if request["operation"] == "engine.diagnostic_report" {
+		result, err = s.handleDiagnostic(ctx, raw, sequence)
 	} else if isSnapshot(request["operation"].(string)) {
 		result, err = s.handleSnapshot(ctx, raw, sequence)
 	} else if request["operation"] == "engine.model_generate" {
@@ -527,8 +547,16 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 		entry.Kind = "service.reply-unavailable"
 	}
 	if _, logErr := s.writer.AppendStored(entry, reservation, true); logErr != nil {
-		s.Stop(logErr)
-		return nil, logErr
+		// Retain the operation failure before a secondary reply-recording failure.
+		// A terminal model reply can carry its failure without a Go error.
+		if err == nil && request["operation"] == "engine.model_generate" {
+			if d := s.ModelFailure(); d != nil {
+				err = modelprovider.FailureError(*d)
+			}
+		}
+		combined := errors.Join(err, logErr)
+		s.Stop(combined)
+		return nil, combined
 	}
 	if err != nil {
 		if !errors.Is(err, attemptadapter.ErrOperation) {
@@ -536,6 +564,35 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 		}
 		return nil, err
 	}
+	// Attempt outcome is a host fact, distinct from earlier correctable arguments.
+	if request["operation"] == "engine.attempt_execute" {
+		var reply struct {
+			Error  *attemptadapter.Fault          `json:"error"`
+			Result struct{ Status, Stage string } `json:"result"`
+		}
+		if json.Unmarshal(result, &reply) == nil && reply.Error == nil {
+			if reply.Result.Status == "completed" {
+				if d := s.workflowDiagnostic.Load(); d != nil && d.Stopping == "" {
+					s.workflowDiagnostic.Store(nil)
+				}
+			} else if reply.Result.Status == "failed" || reply.Result.Status == "unknown" {
+				reason, source := "target_failed", "target"
+				if reply.Result.Status == "unknown" {
+					reason = "target_outcome_unknown"
+				}
+				if reply.Result.Stage == "cleanup" {
+					reason, source = "cleanup_failed", "cleanup"
+				}
+				d := campaign.NewWorkflowDiagnostic(request["operation_id"].(string), source, reply.Result.Stage, reason, "", "attempt_execute", request["call_id"].(string))
+				s.workflowDiagnostic.Store(&d)
+				if _, e := s.writer.AppendStored(campaign.Entry{RunRevision: s.attempts.Status().RunRevision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d})}, "", false); e != nil {
+					s.Stop(errors.Join(d, e))
+					return nil, errors.Join(d, e)
+				}
+			}
+		}
+	}
+
 	return result, nil
 }
 
@@ -611,3 +668,23 @@ func (s *Service) Wait(ctx context.Context) (TerminalResult, termination.Receipt
 // StopAccepted reports the durably accepted harness conclusion/stop decision.
 // It does not assert successful native cleanup, guest exit or assessment success.
 func (s *Service) StopAccepted() bool { return s.stopAccepted.Load() }
+
+// ModelFailure returns the first selected diagnostic, independently of journal or
+// cleanup failures. The atomic copy is also available after cancellation.
+func (s *Service) ModelFailure() *modelprovider.Diagnostic {
+	if d := s.modelDiagnostic.Load(); d != nil {
+		copy := *d
+		return &copy
+	}
+	return nil
+}
+
+// ExitDeadline is the original accepted-finish deadline, never an extension.
+func (s *Service) ExitDeadline() time.Time {
+	if !s.StopAccepted() {
+		return time.Time{}
+	}
+	return time.Unix(0, s.exitDeadline.Load())
+}
+
+func (s *Service) AssessmentCommitted() bool { return s.assessmentCommitted.Load() }

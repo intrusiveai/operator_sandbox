@@ -401,33 +401,14 @@
       "operation": "engine.attempt_execute",
       "timeout_ms": 30000,
       "body": {
-        "api_version": "operator.dev/engine-attempt-request/v1alpha2",
-        "kind": "EngineAttemptRequest",
-        "request_id": "operation-1",
-        "origin": "exploratory",
-        "thread_id": "thread-1",
-        "attempt_id": "attempt-1",
-        "generation": 1,
-        "attempt_index": 1,
-        "payload": {
-          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-          "size_bytes": 2,
-          "media_type": "application/json",
-          "canonicalization": "raw"
+        "operation_id": "invoke",
+        "input": {
+          "encoding": "json",
+          "value": {
+            "prompt": "fixture"
+          }
         },
-        "generator": {
-          "kind": "operator-engine",
-          "release_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
-        },
-        "pre_actions": [],
-        "invocation": {
-          "operation_id": "invoke",
-          "input_source": "payload",
-          "media_type": "application/json"
-        },
-        "cleanup": {
-          "delete_actions_after_observation": true
-        }
+        "origin": "exploratory"
       }
     },
     "valid": true
@@ -446,33 +427,14 @@
       "operation": "engine.attempt_execute",
       "timeout_ms": 30000,
       "body": {
-        "api_version": "operator.dev/engine-attempt-request/v1alpha2",
-        "kind": "EngineAttemptRequest",
-        "request_id": "operation-1",
-        "origin": "exploratory",
-        "thread_id": "thread-1",
-        "attempt_id": "attempt-1",
-        "generation": 1,
-        "attempt_index": 1,
-        "payload": {
-          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-          "size_bytes": 2,
-          "media_type": "application/json",
-          "canonicalization": "raw"
+        "operation_id": "invoke",
+        "input": {
+          "encoding": "json",
+          "value": {
+            "prompt": "fixture"
+          }
         },
-        "generator": {
-          "kind": "operator-engine",
-          "release_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
-        },
-        "pre_actions": [],
-        "invocation": {
-          "operation_id": "invoke",
-          "input_source": "payload",
-          "media_type": "application/json"
-        },
-        "cleanup": {
-          "delete_actions_after_observation": true
-        }
+        "origin": "exploratory"
       }
     },
     "valid": true,
@@ -1484,7 +1446,7 @@
     }
   },
   {
-    "name": "request_stop request",
+    "name": "finish request",
     "request": {
       "api_version": "operator.dev/engine-pipe/v1alpha1",
       "kind": "request",
@@ -1494,21 +1456,17 @@
       "run_revision": 3,
       "call_id": "call-1",
       "operation_id": "operation-1",
-      "operation": "engine.request_stop",
+      "operation": "engine.finish",
       "timeout_ms": 30000,
       "body": {
         "finish_reason": "objectives-addressed",
-        "conclusion": {
-          "state": "committed",
-          "artifact_receipt": "artifact-conclusion-1",
-          "record_receipt": "record-conclusion-1"
-        }
+        "artifact_receipt": "artifact-conclusion-1"
       }
     },
     "valid": true
   },
   {
-    "name": "request_stop response",
+    "name": "finish response",
     "request": {
       "api_version": "operator.dev/engine-pipe/v1alpha1",
       "kind": "request",
@@ -1518,15 +1476,11 @@
       "run_revision": 3,
       "call_id": "call-1",
       "operation_id": "operation-1",
-      "operation": "engine.request_stop",
+      "operation": "engine.finish",
       "timeout_ms": 30000,
       "body": {
         "finish_reason": "objectives-addressed",
-        "conclusion": {
-          "state": "committed",
-          "artifact_receipt": "artifact-conclusion-1",
-          "record_receipt": "record-conclusion-1"
-        }
+        "artifact_receipt": "artifact-conclusion-1"
       }
     },
     "valid": true,
@@ -1539,15 +1493,15 @@
       "run_revision": 3,
       "call_id": "call-1",
       "operation_id": "operation-1",
-      "operation": "engine.request_stop",
+      "operation": "engine.finish",
       "result": {
         "status": "accepted",
         "stop_receipt": "stop-1",
         "execution_admission": "closed",
-        "conclusion_state": "committed",
         "exit_required": true,
         "exit_within_ms": 5000,
-        "finalization_status": "pending"
+        "finalization_status": "pending",
+        "assessment_state": "committed"
       }
     }
   },
@@ -4401,12 +4355,11 @@
       "run_revision": 3,
       "call_id": "call-1",
       "operation_id": "operation-1",
-      "operation": "engine.request_stop",
+      "operation": "engine.finish",
       "timeout_ms": 30000,
       "body": {
         "finish_reason": "context-limit",
-        "conclusion": {
-          "state": "unavailable",
+        "unavailable": {
           "reason": "context-limit"
         }
       }
@@ -4421,15 +4374,15 @@
       "run_revision": 3,
       "call_id": "call-1",
       "operation_id": "operation-1",
-      "operation": "engine.request_stop",
+      "operation": "engine.finish",
       "result": {
         "status": "accepted",
         "stop_receipt": "stop-1",
         "execution_admission": "closed",
-        "conclusion_state": "unavailable",
         "exit_required": true,
         "exit_within_ms": 5000,
-        "finalization_status": "pending"
+        "finalization_status": "pending",
+        "assessment_state": "unavailable"
       }
     }
   },
@@ -5564,7 +5517,7 @@
     "valid": false
   },
   {
-    "name": "record conclusion request",
+    "name": "obsolete record conclusion request",
     "request": {
       "api_version": "operator.dev/engine-pipe/v1alpha1",
       "kind": "request",
@@ -5584,10 +5537,10 @@
         }
       }
     },
-    "valid": true
+    "valid": false
   },
   {
-    "name": "record conclusion response",
+    "name": "obsolete record conclusion response",
     "request": {
       "api_version": "operator.dev/engine-pipe/v1alpha1",
       "kind": "request",
@@ -5628,10 +5581,10 @@
         }
       }
     },
-    "valid": true
+    "valid": false
   },
   {
-    "name": "record conclusion request unknown",
+    "name": "obsolete record conclusion request unknown",
     "request": {
       "api_version": "operator.dev/engine-pipe/v1alpha1",
       "kind": "request",
@@ -5655,7 +5608,7 @@
     "valid": false
   },
   {
-    "name": "record conclusion response unknown",
+    "name": "obsolete record conclusion response unknown",
     "request": {
       "api_version": "operator.dev/engine-pipe/v1alpha1",
       "kind": "request",
@@ -6792,5 +6745,72 @@
       }
     },
     "valid": false
+  },
+  {
+    "name": "diagnostic report request",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.diagnostic_report",
+      "timeout_ms": 30000,
+      "body": {
+        "diagnostic": {
+          "source": "harness-local",
+          "stage": "arguments",
+          "reason": "invalid_arguments",
+          "message": "Required input is absent.",
+          "execution_occurred": "no",
+          "resubmission_safe": true
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "diagnostic report response",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.diagnostic_report",
+      "timeout_ms": 30000,
+      "body": {
+        "diagnostic": {
+          "source": "harness-local",
+          "stage": "arguments",
+          "reason": "invalid_arguments",
+          "message": "Required input is absent.",
+          "execution_occurred": "no",
+          "resubmission_safe": true
+        }
+      }
+    },
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.diagnostic_report",
+      "result": {
+        "status": "retained",
+        "receipt_id": "diagnostic-1"
+      }
+    },
+    "valid": true
   }
 ]

@@ -24,6 +24,7 @@ import (
 )
 
 const ManifestVersion = "operator.dev/host-release/v1alpha1"
+const ManifestLimit = 4 << 20
 const MaxFiles = 8192
 const MaxFileBytes int64 = 128 << 20
 const MaxReleaseBytes int64 = 256 << 20
@@ -72,7 +73,7 @@ func (m Manifest) Validate() error {
 	seen := map[string]bool{}
 	prior := ""
 	for _, f := range m.Files {
-		if !validPath(f.Path) || f.Path <= prior || f.Path == "release.json" || f.Path == "release.sig" || f.Size < 0 || f.Size > MaxFileBytes || !digestPattern.MatchString(f.Digest) {
+		if !validPath(f.Path) || f.Path <= prior || f.Path == "release.json" || f.Size < 0 || f.Size > MaxFileBytes || !digestPattern.MatchString(f.Digest) {
 			return ErrRelease
 		}
 		mode := uint32(0600)
@@ -116,7 +117,7 @@ func DecodeManifest(raw []byte) (Manifest, error) {
 }
 
 // Inventory hashes only regular, singly linked files in a trusted build tree.
-// Signature and manifest are distribution metadata, not recursively inventoried.
+// The manifest is distribution metadata, not recursively inventoried.
 func Inventory(ctx context.Context, directory string) ([]File, error) {
 	root, err := os.OpenRoot(directory)
 	if err != nil {
@@ -138,7 +139,7 @@ func Inventory(ctx context.Context, directory string) ([]File, error) {
 			}
 			return nil
 		}
-		if name == "release.json" || name == "release.sig" {
+		if name == "release.json" {
 			return nil
 		}
 		if !validPath(name) || len(files) >= MaxFiles {

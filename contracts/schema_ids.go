@@ -9,6 +9,10 @@ const AnthropicMessagesResponseSchema = "urn:operator:schema:anthropic-messages-
 
 const AssessmentCommonSchema = "urn:operator:schema:assessment-common:v1alpha1"
 
+const AssessmentSchema = "urn:operator:schema:assessment:v1alpha1"
+
+const AttemptPlanSchema = "urn:operator:schema:attempt-plan:v1alpha1"
+
 const BedrockConverseCommonSchema = "urn:operator:schema:bedrock-converse-common:v1alpha1"
 
 const BedrockConverseRequestSchema = "urn:operator:schema:bedrock-converse-request:v1alpha1"
@@ -31,13 +35,21 @@ const EngineArtifactPutPartRequestSchema = "urn:operator:schema:engine-artifact-
 
 const EngineArtifactPutPartResultSchema = "urn:operator:schema:engine-artifact-put-part-result:v1alpha1"
 
-const EngineAttemptRequestSchema = "urn:operator:schema:engine-attempt-request:v1alpha2"
+const EngineAttemptRequestSchema = "urn:operator:schema:engine-attempt-request:v1alpha4"
 
 const EngineAttemptResultSchema = "urn:operator:schema:engine-attempt-result:v1alpha2"
 
 const EngineConclusionSchema = "urn:operator:schema:engine-conclusion:v1alpha2"
 
 const EngineContextSchema = "urn:operator:schema:engine-context:v1alpha1"
+
+const EngineDiagnosticReportRequestSchema = "urn:operator:schema:engine-diagnostic-report-request:v1alpha1"
+
+const EngineDiagnosticReportResultSchema = "urn:operator:schema:engine-diagnostic-report-result:v1alpha1"
+
+const EngineFinishRequestSchema = "urn:operator:schema:engine-finish-request:v1alpha1"
+
+const EngineFinishResultSchema = "urn:operator:schema:engine-finish-result:v1alpha1"
 
 const EngineGuestControlSchema = "urn:operator:schema:engine-guest-control:v1alpha1"
 
@@ -63,9 +75,7 @@ const EngineRecordAppendRequestSchema = "urn:operator:schema:engine-record-appen
 
 const EngineRecordAppendResultSchema = "urn:operator:schema:engine-record-append-result:v1alpha1"
 
-const EngineRequestStopRequestSchema = "urn:operator:schema:engine-request-stop-request:v1alpha1"
-
-const EngineRequestStopResultSchema = "urn:operator:schema:engine-request-stop-result:v1alpha1"
+const EngineRequestEnvelopeSchema = "urn:operator:schema:engine-request-envelope:v1alpha1"
 
 const EngineRestoreRequestSchema = "urn:operator:schema:engine-restore-request:v1alpha1"
 
@@ -84,6 +94,8 @@ const EngineSnapshotRequestSchema = "urn:operator:schema:engine-snapshot-request
 const EngineSnapshotResultSchema = "urn:operator:schema:engine-snapshot-result:v1alpha1"
 
 const EngineSpoolAckSchema = "urn:operator:schema:engine-spool-ack:v1alpha1"
+
+const ExecutionInputSchema = "urn:operator:schema:execution-input:v1alpha1"
 
 const FeedbackManifestSchema = "urn:operator:schema:feedback-manifest:v1alpha1"
 
@@ -138,3 +150,5 @@ const StartupCommonSchema = "urn:operator:schema:startup-common:v1alpha1"
 const TargetCapabilityManifestSchema = "urn:operator:schema:target-capability-manifest:v1alpha1"
 
 const WireCommonSchema = "urn:operator:schema:wire-common:v1alpha1"
+
+const WorkflowDiagnosticSchema = "urn:operator:schema:workflow-diagnostic:v1alpha1"

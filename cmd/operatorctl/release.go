@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
@@ -17,15 +16,13 @@ import (
 )
 
 // releaseCommand operates on explicit administrator-selected distribution files.
-// It never fetches releases or treats a signature as native runtime qualification.
+// It never fetches releases or treats packaging as native runtime qualification.
 func releaseCommand(ctx context.Context, action string, args []string, stdout, stderr io.Writer) int {
 	f := flag.NewFlagSet("release "+action, flag.ContinueOnError)
 	f.SetOutput(stderr)
 	directory := f.String("directory", "", "release directory")
 	output := f.String("output", "", "new output archive")
-	archive := f.String("archive", "", "local signed archive to inspect")
-	keyring := f.String("keyring", "", "independently installed OpenPGP public keyring")
-	verifier := f.String("gpgv", "", "absolute gpgv path; default administrator PATH")
+	archive := f.String("archive", "", "local archive to inspect")
 	version := f.String("version", "", "host release version")
 	platform := f.String("platform", "", "host OS/architecture")
 	commit := f.String("source-commit", "", "source Git commit")
@@ -78,15 +75,7 @@ func releaseCommand(ctx context.Context, action string, args []string, stdout, s
 		}
 		result = m
 	case "check":
-		if *keyring == "" {
-			return 2
-		}
-		if *verifier == "" {
-			*verifier, err = exec.LookPath("gpgv")
-		}
-		if err == nil {
-			result, err = hostrelease.VerifyDirectory(ctx, dir, *verifier, *keyring)
-		}
+		result, err = hostrelease.VerifyDirectory(ctx, dir)
 	case "archive":
 		if *output == "" {
 			return 2

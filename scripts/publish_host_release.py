@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Publish a rolling signed candidate, or promote its existing GitHub assets."""
+"""Publish a rolling candidate, or promote its existing GitHub assets."""
 import argparse
 import hashlib
 import json
@@ -10,8 +10,6 @@ import subprocess
 import tempfile
 import time
 import uuid
-
-from sign_host_release import sign
 
 PLATFORMS = {"linux/amd64", "linux/arm64", "darwin/amd64", "darwin/arm64"}
 VERSION = r"(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})"
@@ -98,8 +96,8 @@ def checksum(path):
         return "sha256:" + hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def assemble(directory, output, keyring, fingerprint, operatorctl=None):
-    """Reuse the existing manifest verifier, signer and archive builder."""
+def assemble(directory, output, operatorctl=None):
+    """Reuse the existing manifest checker and archive builder."""
     directories = [directory / p.replace("/", "-") for p in sorted(PLATFORMS)]
     hosts = [json.loads((d / "release.json").read_text()) for d in directories]
     version = check_candidates(hosts)
@@ -108,34 +106,29 @@ def assemble(directory, output, keyring, fingerprint, operatorctl=None):
     operator = str((operatorctl or directory / "linux-amd64/bin/operatorctl").resolve())
     output.mkdir(mode=0o700)
     for d in directories:
-        subprocess.run(["python3", str(Path(__file__).with_name("sign_host_release.py")),
-                        "--directory", str(d), "--output", str(output / d.name),
-                        "--operatorctl", operator, "--signing-key", fingerprint,
-                        "--keyring", str(keyring), "--passphrase-env", "RELEASE_SIGNING_PASSPHRASE"], check=True)
-        # Keep archive filenames identical to the signed checksum contents.
-        (output / d.name / (d.name + ".tar.gz")).rename(output / (d.name + ".tar.gz"))
-        for suffix in ("SHA256SUMS", "SHA256SUMS.asc"):
-            (output / d.name / suffix).rename(output / (d.name + "-" + suffix))
-        (output / d.name).rmdir()
+        archive = output / (d.name + ".tar.gz")
+        subprocess.run([operator, "release", "archive", "--directory", str(d),
+                        "--output", str(archive)], check=True)
+        (output / (d.name + "-SHA256SUMS")).write_text(
+            checksum(archive).removeprefix("sha256:") + "  " + archive.name + "\n")
     files = sorted(output.iterdir())
     inventory = {"version": version, "source_commit": hosts[0]["source_commit"],
                  "contract": hosts[0]["contract"], "assets": {f.name: checksum(f) for f in files}}
     record = output / "candidate.json"
     record.write_text(json.dumps(inventory, sort_keys=True, indent=2) + "\n")
-    sign(record, output / "candidate.json.asc", fingerprint, "RELEASE_SIGNING_PASSPHRASE", armor=True)
     return inventory, sorted(output.iterdir())
 
 
 def expected_assets():
-    names = {"candidate.json", "candidate.json.asc"}
+    names = {"candidate.json"}
     for platform in PLATFORMS:
         slug = platform.replace("/", "-")
-        names.update({slug + ".tar.gz", slug + "-SHA256SUMS", slug + "-SHA256SUMS.asc"})
+        names.update({slug + ".tar.gz", slug + "-SHA256SUMS"})
     return names
 
 
 def verify_uploaded(github, release, digests):
-    # The catalog is mutable publication metadata, outside the signed package set.
+    # The catalog is mutable publication metadata, outside the package set.
     assets = [a for a in github.assets(release) if a["name"] != CATALOG_ASSET]
     if len(assets) != len(digests) or {a["name"] for a in assets} != set(digests):
         raise ValueError("release asset inventory is incomplete")
@@ -155,7 +148,7 @@ def catalog_entry(github, tag, source):
     if record["version"] != version or record["source_commit"] != source or github.api("commits/" + tag)["sha"] != source:
         raise ValueError("catalog source/tag differs from the published candidate")
     if set(record["assets"]) != expected_assets():
-        raise ValueError("catalog requires all signed package assets")
+        raise ValueError("catalog requires all package assets")
     verify_uploaded(github, release, record["assets"])
     if not release["prerelease"]:
         number = record.get("promotion_pr")
@@ -298,9 +291,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("operation", choices=("context", "publish", "promote", "catalog-sync", "catalog-context"))
     parser.add_argument("--directory", type=Path)
-    parser.add_argument("--keyring", type=Path)
-    parser.add_argument("--signing-key")
-    parser.add_argument("--operatorctl", type=Path, help="native verifier; defaults to the Linux AMD64 CI candidate")
+    parser.add_argument("--operatorctl", type=Path, help="native packager; defaults to the Linux AMD64 CI candidate")
     parser.add_argument("--branch")
     parser.add_argument("--source")
     parser.add_argument("--pr", type=int)
@@ -331,10 +322,10 @@ def main():
             parser.error("--pr is required")
         result = promote(github, args.pr)
     else:
-        if not all((args.directory, args.keyring, args.signing_key, args.branch, args.source)):
-            parser.error("publish requires directory, keyring, signing-key, branch and source")
+        if not all((args.directory, args.branch, args.source)):
+            parser.error("publish requires directory, branch and source")
         with tempfile.TemporaryDirectory(prefix="operator-publish-") as temporary:
-            inventory, files = assemble(args.directory.resolve(), Path(temporary) / "assets", args.keyring.resolve(), args.signing_key, args.operatorctl)
+            inventory, files = assemble(args.directory.resolve(), Path(temporary) / "assets", args.operatorctl)
             result = publish(github, args.branch, args.source, inventory, files)
         if os.environ.get("GITHUB_OUTPUT"):
             with open(os.environ["GITHUB_OUTPUT"], "a") as output:

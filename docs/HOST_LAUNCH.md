@@ -82,7 +82,7 @@ from durable records; constructing another worker is not a retry mechanism.
 5. Verify confinement acknowledgement before initialization; validate the complete
    transcript/input identity, host lifetime and running Docker identity before
    service admission. Publish `admission_open` before opening ordinary transport.
-6. Serve the existing 13 operations while checking host lifetime on each admission
+6. Serve the registered ordinary operations while checking host lifetime on each admission
    and polling exact Docker state. An idle admitted harness has 180 seconds to make
    progress; an active request retains its operation deadline instead.
 7. On termination, keep the power lease while independent Docker stop and native
@@ -115,4 +115,3 @@ These tests do not qualify an actual Docker/Python deployment.
 [Installed campaign preparation/start](CAMPAIGN_START.md) supplies administrative
 run preparation, provider/credential binding, accepted-start deduplication,
 single-host campaign serialization, signals and systemd/LaunchAgent submission.
-Host installation packaging and full native qualification remain outstanding.

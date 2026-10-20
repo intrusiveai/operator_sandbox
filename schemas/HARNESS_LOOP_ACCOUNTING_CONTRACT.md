@@ -1,6 +1,6 @@
 # Harness loop accounting implementation
 
-Status: Go/Python accounting helpers and 129 shared cases implement the finite-loop
+Go/Python accounting helpers implement the finite-loop
 rules in [HARNESS_EXECUTION_RULES.md](HARNESS_EXECUTION_RULES.md). The helpers run
 inside a trusted dispatcher; they are not a broker, model codec, timer service or
 wire authorization mechanism. No new wire operation or Interceptor change is added.
@@ -142,16 +142,19 @@ The returned budget has:
 - a deadline at the earlier of campaign deadline and start + 30 seconds.
 
 `Charge(kind, conclusionBytes, nowMS)` / `charge(...)` reserves a request slot and
-new conclusion bytes before transmission. Trusted kinds are `conclusion-artifact`,
-`conclusion-record` and `stop`. The broker must verify the actual request payload,
-artifact purpose/upload handle and record kind before assigning a kind. A model
+new conclusion bytes before transmission. Trusted kinds are `assessment-artifact`,
+`diagnostic` and `finish`. The broker must verify the actual request payload,
+artifact purpose/upload handle and finish/diagnostic operation before assigning a kind. A model
 or guest-supplied kind grants no authority. Charge each distinct conclusion's
 bytes once before transfer, including content in an existing upload continued
 during finalization; subsequent multipart requests still consume request slots.
-Artifact begin/part/commit, conclusion record and stop retain their existing schemas.
+Artifact begin/part/commit remain available for large assessments; ordinary finish
+carries its draft directly. Charge direct assessment bytes on finish, artifact
+bytes once on transfer, and zero bytes for diagnostic reports. The host MUST
+independently enforce these bounds.
 
 The exact last allowed request/byte may complete. Zero remaining artifact bytes
-still allows an unavailable-conclusion stop if time/request slots remain. A
+still allows an unavailable-assessment finish if time/request slots remain. A
 request or byte overflow closes the budget without partial charging. A second
 finalization start is rejected; it cannot renew time or quotas. Close the budget
 after accepted stop or abandonment.
@@ -169,7 +172,7 @@ termination, unknown effects, channel failure and other terminal conditions; do
 not wait for graceful work. Its internal `hard-stop` reason is not a new wire
 finish-reason enum; the runtime journals and translates the actual cause.
 
-## Verification and remaining integration
+## Verification and runtime integration
 
 Both languages run [harness-loop-accounting.json](fixtures/harness-loop-accounting.json).
 The 129 cases cover every configuration field, exact quota boundaries, invalid
@@ -181,5 +184,4 @@ use an independent byte-set oracle. Regenerate with
 These helpers have no persistence, provider/network I/O, native execution or
 container lifecycle. The host service and harness dispatcher now integrate saved-result lookup,
 durable host accounting, verified event sources, bounded histories, actual
-correlated result segments, timers and independent termination. Full fake-broker /
-fake-harness transport conformance and runtime qualification remain outstanding.
+correlated result segments, timers and independent termination.

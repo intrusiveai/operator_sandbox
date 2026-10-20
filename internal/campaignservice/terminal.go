@@ -16,7 +16,11 @@ func (s *Service) finish() {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), TerminalTimeout)
 	defer cancel()
-	defer func() { s.terminal = result }()
+	defer func() {
+		result.ConclusionDiagnostic = s.ConclusionFailure()
+		result.WorkflowDiagnostic = s.WorkflowFailure()
+		s.terminal = result
+	}()
 	if err := s.acquire(ctx); err != nil {
 		for _, target := range s.selectedEvidence() {
 			result.Evidence = append(result.Evidence, EvidenceOutcome{SessionID: target.Identity.SessionID, State: "missing", Reason: "finalization_gate_unavailable", LocalMaxBytes: s.config.Evidence.MaxArchiveBytes, NativeMaxBytes: target.NativeMaxBytes})
@@ -24,7 +28,15 @@ func (s *Service) finish() {
 		return
 	}
 	defer s.release()
-	defer func() { raw, _ := json.Marshal(result); _ = s.log("service.terminal-result", nil, raw, true, true) }()
+	dispatched := s.attempts.Status().Dispatched
+	result.Dispatched = &dispatched
+	result.AssessmentState = s.completion.assessmentState
+	defer func() {
+		result.ConclusionDiagnostic = s.ConclusionFailure()
+		result.WorkflowDiagnostic = s.WorkflowFailure()
+		raw, _ := json.Marshal(result)
+		_ = s.log("service.terminal-result", nil, raw, true, true)
+	}()
 	if s.config.HTTPS != nil {
 		result.Closure = "not-applicable"
 		result.CleanupState = "not-needed"

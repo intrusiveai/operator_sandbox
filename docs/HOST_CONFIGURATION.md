@@ -1,11 +1,9 @@
 # Administrator configuration
 
-Status: implemented in `internal/hostconfig` and `cmd/operatorctl`. This stage
-loads installation settings and makes them available to administrative termination.
-The private target profile and campaign preparation library are also implemented;
-campaign start, model configuration and supervised worker submission are implemented.
-Explicit submission target selectors override `target.profile_file` for that run
-and bind the selected profile into its start-input fingerprint. The host configuration is separate from the shared
+The host configuration loads installation settings for campaign startup and
+administrative termination. Explicit submission target selectors override
+`target.profile_file` for that run and bind the selected profile into its
+start-input fingerprint. Host configuration is separate from the shared
 Operator/Attack Harness wire package.
 
 ## File and supported settings
@@ -24,7 +22,7 @@ The initial loader accepts exactly these fields:
 | `docker.endpoint` | Canonical local `unix:///` socket. Linux default: `unix:///var/run/docker.sock`; macOS default: `unix://<home>/.docker/run/docker.sock`. Configure rootless/custom socket locations explicitly. |
 | `docker.executable` | Optional absolute Docker CLI path; omitted means resolve from the administrator/service `PATH` when constructing the Docker client. |
 | `state.root` | Linux default: `/var/lib/operator`; macOS default: `<home>/Library/Application Support/Operator/data`. |
-| `cache.release_directory` | Default: `<effective state.root>/cache/releases`. Must be outside `<state.root>/campaigns`, whose contents are purgeable. |
+
 | `spool.max_bytes` | Positive decimal byte count, default `536870912` (512 MiB), maximum `9007199254740991`. Applies to macOS spool accounting; Linux uses FIFOs. |
 | `evidence.max_archive_bytes` | Per-session native archive acceptance ceiling, default `4294967296` (4 GiB), maximum `9007199254740991`; positive decimal integer. Collection uses the smaller of this and Interceptor's advertised limit. |
 | `journal.max_bytes` | Cumulative event and retained-content budget, default `8589934592` (8 GiB), at most `9007199254740991`, and no smaller than one segment. |
@@ -41,8 +39,9 @@ configuration directory. The file must be owned by the executing service user or
 root, have no group/other permissions, be regular and singly linked, and fit within
 64 KiB. Symlinks, hard links and special files are rejected. Installation and runtime
 directory ownership/permissions remain the administrator/launcher responsibility.
-Path checks here are lexical; launch must also verify the actual filesystem layout
-so symlinks or filesystem name aliases cannot place the cache in purgeable storage.
+Path checks here are lexical; launch must also verify the actual filesystem layout.
+Legacy `cache.release_directory` is accepted but unused; administrators can remove
+it. Compatibility is read directly from the selected local image.
 
 The document must be UTF-8 YAML containing one mapping of sections to field mappings.
 Unknown and duplicate fields, additional documents, anchors, aliases, merge keys,

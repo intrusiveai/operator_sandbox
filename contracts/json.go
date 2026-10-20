@@ -34,7 +34,7 @@ func Decode(raw []byte, maximum int) (any, error) {
 	}
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.UseNumber()
-	value, err := decodeValue(decoder, 0)
+	value, err := decodeValue(decoder, 0, "")
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func Decode(raw []byte, maximum int) (any, error) {
 	}
 	return value, nil
 }
-func decodeValue(d *json.Decoder, depth int) (any, error) {
+func decodeValue(d *json.Decoder, depth int, path string) (any, error) {
 	token, err := d.Token()
 	if err != nil {
 		return nil, ErrJSON
@@ -66,9 +66,10 @@ func decodeValue(d *json.Decoder, depth int) (any, error) {
 					return nil, ErrJSON
 				}
 				if _, exists := object[name]; exists {
-					return nil, ErrJSON
+					safe, _ := SafeArgumentPath(path + "/" + name)
+					return nil, &ArgumentError{Reason: "duplicate_json_key", FieldPath: safe, Correction: "Supply each JSON key once; duplicate keys are rejected before decoding can discard them.", Cause: ErrJSON}
 				}
-				value, err := decodeValue(d, depth+1)
+				value, err := decodeValue(d, depth+1, path+"/"+name)
 				if err != nil {
 					return nil, err
 				}
@@ -82,7 +83,7 @@ func decodeValue(d *json.Decoder, depth int) (any, error) {
 		case '[':
 			array := []any{}
 			for d.More() {
-				value, err := decodeValue(d, depth+1)
+				value, err := decodeValue(d, depth+1, path+"/"+strconv.Itoa(len(array)))
 				if err != nil {
 					return nil, err
 				}

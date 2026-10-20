@@ -393,7 +393,7 @@ func (b *FinalizationBudget) Charge(kind string, conclusionBytes, nowMS int64) e
 	if err := b.CheckTime(nowMS); err != nil {
 		return err
 	}
-	if (kind != "conclusion-artifact" && kind != "conclusion-record" && kind != "stop") || !safeNonnegative(conclusionBytes) || (kind != "conclusion-artifact" && conclusionBytes != 0) {
+	if (kind != "assessment-artifact" && kind != "diagnostic" && kind != "finish") || !safeNonnegative(conclusionBytes) || (kind == "diagnostic" && conclusionBytes != 0) {
 		return ErrProtocol
 	}
 	if b.state.Requests == 16 || conclusionBytes > b.bytesLimit-b.state.ConclusionBytes {

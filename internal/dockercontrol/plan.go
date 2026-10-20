@@ -95,7 +95,7 @@ func NewLaunchPlan(ctx context.Context, parent string, image ImagePin, m campaig
 	if err = os.WriteFile(filepath.Join(p.directory, "config.json"), []byte(`{"auths":{}}`), 0600); err != nil {
 		return nil, err
 	}
-	p.args = []string{"container", "create", "--pull=never", "--platform", image.ImagePlatform, "--restart=no", "--no-healthcheck", "--ipc=none", "--init=false", "--cgroupns=private", "--network=none", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges:true", "--security-opt=seccomp=" + filepath.Join(p.directory, "startup-seccomp.json"), "--user", fmt.Sprintf("65532:%d", p.gid), "--cpus=2", "--memory=4294967296", "--memory-swap=4294967296", "--pids-limit=16", "--ulimit=nofile=256:256", "--ulimit=core=0:0", "--log-driver=none", "--workdir=/run/operator/work", "--entrypoint=/usr/bin/python3", "--env=OPERATOR_TRANSPORT=" + m.Transport}
+	p.args = []string{"container", "create", "--pull=never", "--platform", image.ImagePlatform, "--restart=no", "--no-healthcheck", "--ipc=none", "--init=false", "--cgroupns=private", "--network=none", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges:true", "--security-opt=seccomp=" + filepath.Join(p.directory, "startup-seccomp.json"), "--user", fmt.Sprintf("65532:%d", p.gid), "--cpus=2", "--memory=4294967296", "--memory-swap=4294967296", "--pids-limit=16", "--ulimit=nofile=256:256", "--ulimit=core=0:0", "--log-driver=local", "--log-opt=max-size=1m", "--log-opt=max-file=1", "--log-opt=compress=false", "--workdir=/run/operator/work", "--entrypoint=/usr/bin/python3", "--env=OPERATOR_TRANSPORT=" + m.Transport}
 	for _, tmp := range []struct {
 		path          string
 		bytes, inodes int
@@ -118,7 +118,7 @@ func NewLaunchPlan(ctx context.Context, parent string, image ImagePin, m campaig
 		}
 		p.args = append(p.args, "--mount", arg)
 	}
-	p.args = append(p.args, image.ImageID, "-I", "-S", "-B", "/opt/operator/engine/bootstrap.py")
+	p.args = append(p.args, image.ReferenceForDocker(), "-I", "-S", "-B", "/opt/operator/engine/bootstrap.py")
 	ok = true
 	return p, nil
 }

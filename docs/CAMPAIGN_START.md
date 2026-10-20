@@ -72,6 +72,147 @@ only the mapped application operations. Native attachment, injection cleanup,
 snapshots, restore and target stop MUST be unavailable; recovery MUST finalize
 local records without sending another application request. See [HTTPS targets](HTTPS_TARGETS.md).
 
+## Troubleshooting preparation failures
+
+A failed worker MUST report `preparation_failed` with the actual failing operation
+and a bounded safe explanation, both immediately and in the saved start completion.
+Foreground and supervised workers MUST retain equivalent diagnostics. The
+start request remains permanently claimed; observing it MUST NOT retry or resume it.
+
+For a previously submitted run, use:
+
+```sh
+operatorctl campaign start --run ./runs/support-agent
+# On failure, inspect the saved start independently (no live worker required):
+operatorctl inspect --run ./runs/support-agent
+# Equivalent status view:
+operatorctl campaign status --run ./runs/support-agent
+```
+
+For example, a failed local Docker image inspection produces stderr like:
+
+```text
+Campaign preparation failed during local Harness image inspection (preparation_failed):
+cannot resolve local image; install the selected native-platform image and ensure Docker supports platform-specific image inspection.
+Execution will not resume.
+```
+
+The immediate JSON receipt contains `completion.diagnostic`; later inspection and
+status expose the same object at `start.completion.diagnostic`:
+
+```json
+{
+  "stage": "local Harness image inspection",
+  "message": "cannot resolve local image; install the selected native-platform image and ensure Docker supports platform-specific image inspection"
+}
+```
+
+Other stages distinguish configuration and input loading, startup ownership and
+recovery, local image inspection and compatibility, embedded Harness
+metadata, skills, model/credential initialization, attachment intent, Interceptor
+attachment/status, target preparation, and launch persistence. An Interceptor
+rejection reports its validated HTTP status; a lost or invalid response identifies
+that uncertainty. An absent attachment record alone does not prove the cause.
+
+Use `--run` for failures before acceptance: there may be no campaign journal for
+`--campaign` to inspect. A `cleanup_failed` diagnostic reports a secondary cleanup
+problem without replacing the primary cause. If saving the completion is
+unconfirmed, stderr explicitly says that later inspection may not have the
+diagnostic. Preserve that console output and inspect the retained state; do not
+remove the worker claim to force another execution. Older completions without a
+diagnostic remain readable, but their missing cause cannot be reconstructed.
+Unknown error types retain the stage and say no additional safe detail is available.
+
+The local regression workflow can be reproduced without Docker, cloud access, a
+release endpoint, or paid model calls:
+
+```sh
+go test ./cmd/operatorctl -run '^TestPreparationFailureCLIThenSeparateInspection$' -count=1 -v
+```
+
+It runs the production CLI dispatcher in separate processes for submission,
+foreground start, the supervised worker entrypoint, and inspection/status. A fake
+Docker executable with a test-only embedded compatibility file exercise image
+inspection failure and a controlled Interceptor HTTP 409 rejection. The attachment
+case requires unused localhost port 8080 and explicitly skips if another service
+owns it. It verifies equivalent persisted diagnostics, no acceptance or execution,
+attachment-intent retention, inspection-container cleanup, no replay, and response
+body redaction. This tests worker behavior without installing systemd/launchd jobs.
+
+## Troubleshooting model execution failures
+
+When preparation succeeds but a model call fails, the worker retains
+`execution_failed` and prints the selected facts. For a controlled HTTP 401 fixture,
+output is:
+
+```text
+Campaign execution failed during model request (http_rejection) (execution_failed):
+openai-chat returned HTTP 401 (invalid_api_key): The provider returned an unsuccessful HTTP status.
+Operation: model-generate-0000000000000001
+Model: test-model
+Provider request ID: req_0123456789abcdef0123456789abcdef
+Provider message: "The supplied API key was rejected: [REDACTED]"
+Provider type: "invalid_request_error"
+Provider code: "invalid_api_key"
+Provider parameter omission: not_provided
+Execution will not resume.
+```
+
+This is an example, not a diagnosis of an older failure. A TLS/connection failure
+without a response has no HTTP status; a response that fails contract validation
+can have HTTP 200 and category `response_validation`. HTTP rejections retain the
+provider message, type, code and offending parameter, after credential redaction
+and size limits. Missing, unsupported or shortened fields have explicit `omissions`
+reasons. For example, a 400 can retain `provider_parameter: "temperature"` and the
+provider's explanation of the unsupported setting; it is not inferred from status.
+Only selected fields are retained, never the full error body. See the
+[selected diagnostic fields](MODEL_SERVICE.md#model-failure-diagnostics).
+
+Use separate commands after the failed foreground start (or supervised worker):
+
+```sh
+operatorctl campaign start --run ./runs/support-agent
+operatorctl inspect --run ./runs/support-agent
+operatorctl campaign status --run ./runs/support-agent
+operatorctl report --run ./runs/support-agent
+operatorctl export --run ./runs/support-agent --output ./exports/support-agent
+```
+
+Inspection/status expose `model_diagnostic` from the journal, and
+`start.completion.diagnostic.model` from the saved start when selecting `--run`.
+The immediate start receipt has the same completion diagnostic. Reports expose
+`model_failures`; exported model events retain the selected facts and timing.
+A resolved credential event proves secret retrieval, not provider acceptance.
+
+For `invalid_function_parameters` naming `attempt_execute` or `record_append`,
+confirm both Operator and the Harness image use the corrected shared contract
+package with OpenAI object declarations. The older declarations use root `allOf`
+and `oneOf`, which OpenAI rejects even with `strict: false`. Rebuild the Harness
+image with the matching package; changing only Operator or deleting constraints
+from a saved request does not update the installed Harness. Keep runtime argument
+validation and all package/declaration identity checks enabled. See
+[Harness integration](HARNESS_INTEGRATION.md) for the exact package requirements.
+An unknown call retains its budget reservation, not confirmed consumption.
+Older records without diagnostics remain readable; facts that were never saved
+cannot be recovered by regenerating a report. Do not rerun a failed campaign to
+obtain missing historical details.
+
+Local verification uses no paid calls or cloud writes:
+
+```sh
+go test ./internal/modelprovider -run TestDiagnostic -count=1
+go test ./cmd/operatorctl ./internal/workerjob -run 'TestModelFailure|TestModelDiagnostic' -count=1
+# Requires make setup and the sibling Attack Harness checkout:
+OPERATOR_HARNESS_INTEGRATION=1 go test ./internal/preparation -run TestPythonProcessModelDiagnosticInspectionAndExport -count=1 -v
+```
+
+The last test launches the production Python Harness on real FIFO/spool channels,
+contacts a local TLS provider fixture, verifies one call and terminal cleanup, then
+runs independent Operator CLI inspection/status/report/export processes against
+the retained campaign. It covers both HTTP 400 with retained, redacted provider details and HTTP 200 with invalid
+contract content, with synthetic secret checks. Docker and Interceptor are test
+peers, so this is not native-container or live-provider qualification.
+
 ## Optional OS service binding
 
 The administrator MUST install `operatorctl` at a stable absolute executable path
@@ -127,3 +268,56 @@ kickstart, real fixed-worker execution, durable pre-Docker preparation failure,
 and removal of its temporary service. This does not qualify live systemd, Docker,
 Python confinement or full campaign execution. The
 [host profile gate](../HOST_RUNTIME_PROFILES.md) still applies.
+
+## Conclusion rejection after successful execution
+
+A model call and target invocation can succeed while conclusion validation fails.
+Operator now preserves the actual failing rule, rather than reporting only
+`execution_failed`. A conclusion may introduce its own hypotheses; earlier
+`hypothesis` records are optional history.
+
+For an actually unresolved parent, foreground and supervised workers report:
+
+```text
+Campaign execution failed during conclusion validation (references) (execution_failed):
+Conclusion validation failed: The hypothesis reference is absent from both this conclusion and this campaign's hypothesis records. Field: /hypotheses/0/provenance/parent_hypothesis_id. Reference: "hyp-missing".
+Validation rule: unresolved_hypothesis
+Operation: conclusion-record-0000000000000005
+Execution will not resume.
+```
+
+Inspect the saved evidence in a separate invocation; do not replay the campaign:
+
+```sh
+operatorctl inspect --state-root /path/to/state --campaign <campaign-id>
+operatorctl campaign status --state-root /path/to/state --campaign <campaign-id>
+operatorctl report --state-root /path/to/state --campaign <campaign-id>
+operatorctl export --state-root /path/to/state --campaign <campaign-id> --output /new/export-directory
+```
+
+Inspection/status expose `conclusion_diagnostic`. With a linked submitted run,
+`operatorctl inspect --run /path/to/run` also exposes
+`start.completion.diagnostic.conclusion`. Reports include
+`conclusion_rejections` in the result manifest, a readable section in the report,
+and diagnostics in exported event metadata. Journal event `conclusion.rejected`
+and terminal/start receipts retain the operation, stage, rule, JSON Pointer path,
+and bounded identifier. Identifiers or paths that cannot safely be exposed have
+explicit omission reasons. No unrestricted artifact text is copied into diagnostics.
+
+Every rejection remains history; an accepted corrected submission can still finish
+normally. Unrecovered rejection diagnostics survive generic shutdown/finalization
+errors; a recovered rejection does not replace a later independent fatal cause.
+Older campaigns without diagnostic fields
+remain readable, but missing validation details cannot be reconstructed.
+
+For controlled process verification, see [process integration](PROCESS_INTEGRATION.md).
+The completion fixture exercises accepted finish and rejection followed by a
+corrected finish over FIFO/spool, with separate CLI inspection and export.
+
+## Finish accepted, but the Harness exits or cleanup fails
+
+See [Harness exit handling](HARNESS_EXIT.md). Inspect `harness_exit` for the actual
+exit status, finish acceptance, causal diagnostic, forced termination and cleanup
+outcome. A recovered assessment rejection remains history; it does not explain a
+later nonzero exit. Records from older releases may lack the exit observation and
+cannot establish a zero exit.

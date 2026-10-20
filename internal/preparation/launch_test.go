@@ -30,7 +30,7 @@ func (files embeddedInspector) ReadReleaseFiles(_ context.Context, pin dockercon
 func launchConfig(t *testing.T, target *preparation.Target, codec string, hostPlatform ...string) preparation.LaunchConfig {
 	t.Helper()
 	p := target.Protocol()
-	image, h := cachedApproval(t, p, hostPlatform...)
+	image, h := localCompatibility(t, p, hostPlatform...)
 	codecs := []string{"openai-chat-text-tools-v1", "openai-responses-text-tools-v1", "anthropic-messages-text-tools-v1", "bedrock-converse-text-tools-v1", "gemini-text-tools-v1"}
 	tools := map[string]json.RawMessage{}
 	operations := []string{}
@@ -44,12 +44,12 @@ func launchConfig(t *testing.T, target *preparation.Target, codec string, hostPl
 		}
 		tools[id] = raw
 	}
-	files := embeddedInspector{imagerelease.PromptPath: []byte("Conduct only authorized experiments.\n"), imagerelease.LoaderPath: []byte("# Test loader fixture, never executed.\n"), imagerelease.ToolCatalogPath: encode(map[string]any{"api_version": "operator.dev/model-tool-catalog/v1alpha1", "codecs": tools})}
+	files := embeddedInspector{imagerelease.CompatibilityPath: image.Release.Bytes(), imagerelease.PromptPath: []byte("Conduct only authorized experiments.\n"), imagerelease.LoaderPath: []byte("# Test loader fixture, never executed.\n"), imagerelease.ToolCatalogPath: encode(map[string]any{"api_version": "operator.dev/model-tool-catalog/v1alpha1", "codecs": tools})}
 	descriptor := func(path string) map[string]any {
 		return map[string]any{"size_bytes": len(files[path]), "digest": contracts.RawDigest(files[path])}
 	}
 	files[imagerelease.ManifestPath] = encode(map[string]any{"api_version": "operator.dev/engine-manifest/v1alpha1", "contract": h.Contract, "runtime_profile": h.RuntimeProfile, "platform": image.Image.ImagePlatform, "entrypoint": []string{"/usr/bin/python3", "-I", "-S", "-B", "/opt/operator/engine/bootstrap.py"}, "transports": []string{"fifo", "spool"}, "prompt": descriptor(imagerelease.PromptPath), "skill_loader": descriptor(imagerelease.LoaderPath), "tool_catalog": descriptor(imagerelease.ToolCatalogPath)})
-	embedded, _, err := imagerelease.InspectEmbedded(context.Background(), files, image, h, p)
+	embedded, _, err := imagerelease.InspectEmbedded(context.Background(), files, image.Image, h, p)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -219,7 +219,7 @@ func TestProductionLaunchRejectsMismatchedHostDependencies(t *testing.T) {
 			case "daemon":
 				c.Image.Image.DaemonID = "other"
 			case "release":
-				c.Image.Release = imagerelease.Approval{}
+				c.Image.Release = imagerelease.Compatibility{}
 			case "loader":
 				c.Skills, err = skills.Select(context.Background(), in.Protocol, "", contracts.RawDigest([]byte("other loader")), nil)
 				if err != nil {

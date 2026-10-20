@@ -15,11 +15,7 @@ func installFixture(t *testing.T) (InstallOptions, string, Manifest) {
 	t.Helper()
 	source, m := candidate(t)
 	base := t.TempDir()
-	verifier := filepath.Join(base, "gpgv-fixture")
-	os.WriteFile(verifier, []byte("#!/bin/sh\nexit 0\n"), 0700)
-	keyring := filepath.Join(base, "trusted.gpg")
-	os.WriteFile(keyring, []byte("test trust boundary"), 0600)
-	opts := InstallOptions{Root: filepath.Join(base, "installed"), Archive: filepath.Join(base, "one.tgz"), Verifier: verifier, Keyring: keyring, ConfigFile: filepath.Join(base, "config", "config.yaml"), StateRoot: filepath.Join(base, "state"), Image: "local/harness:fixture"}
+	opts := InstallOptions{Root: filepath.Join(base, "installed"), Archive: filepath.Join(base, "one.tgz"), ConfigFile: filepath.Join(base, "config", "config.yaml"), StateRoot: filepath.Join(base, "state"), Image: "local/harness:fixture"}
 	if err := Archive(context.Background(), source, opts.Archive); err != nil {
 		t.Fatal(err)
 	}
@@ -110,18 +106,22 @@ func TestInterruptedActivationPreservesPriorSelection(t *testing.T) {
 		t.Fatal("activation retry", err)
 	}
 }
-func TestInstallRejectsUntrustedAndIncompatibleRelease(t *testing.T) {
+func TestInstallRejectsCorruptAndIncompatibleRelease(t *testing.T) {
 	o, source, m := installFixture(t)
 	ctx := context.Background()
-	// Signature boundary is separately exercised with real GPG in signature tests.
-	os.WriteFile(o.Verifier, []byte("#!/bin/sh\nexit 1\n"), 0700)
-	if _, err := Install(ctx, o); !errors.Is(err, ErrSignature) {
+	raw, err := os.ReadFile(o.Archive)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := os.Readlink(filepath.Join(o.Root, "current")); !os.IsNotExist(err) {
-		t.Fatal("untrusted activation")
+	if err = os.WriteFile(o.Archive, raw[:len(raw)/2], 0600); err != nil {
+		t.Fatal(err)
 	}
-	os.WriteFile(o.Verifier, []byte("#!/bin/sh\nexit 0\n"), 0700)
+	if _, err := Install(ctx, o); !errors.Is(err, ErrRelease) {
+		t.Fatal("corrupt archive accepted", err)
+	}
+	if _, err := os.Readlink(filepath.Join(o.Root, "current")); !os.IsNotExist(err) {
+		t.Fatal("corrupt activation")
+	}
 	if m.Platform == "linux/amd64" {
 		m.Platform = "darwin/arm64"
 	} else {

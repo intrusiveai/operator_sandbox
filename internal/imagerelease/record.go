@@ -1,7 +1,7 @@
 //go:build linux || darwin
 
-// Package imagerelease implements host-only HTTPS image approval and compatibility.
-// Approval is a preparation gate, not proof of confinement or permission to launch.
+// Package imagerelease validates compatibility metadata from a pinned local image.
+// Compatibility is not proof of publisher identity or runtime confinement.
 package imagerelease
 
 import (
@@ -15,15 +15,13 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 )
 
-const Origin = "https://releases.intrusive.ai"
+const CompatibilityVersion = "operator.dev/harness-compatibility/v1alpha1"
+const CompatibilityPath = "/opt/operator/engine/share/compatibility.json"
 const ResponseLimit = 64 << 10
 
 var (
-	ErrRecord        = errors.New("invalid image release record")
+	ErrRecord        = errors.New("invalid embedded Harness compatibility record")
 	ErrCompatibility = errors.New("image release is incompatible with the installed Operator, contract, platform or runtime profile")
-	ErrUnapproved    = errors.New("image is not approved by the release service")
-	ErrLookup        = errors.New("release lookup failed; startup requires a valid cached or HTTPS release record")
-	ErrCache         = errors.New("cannot safely read or persist the release cache")
 )
 
 var digestPattern = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
@@ -33,7 +31,6 @@ var digits = regexp.MustCompile(`^[0-9]+$`)
 
 type Record struct {
 	APIVersion             string `json:"api_version"`
-	ImageDigest            string `json:"image_digest"`
 	MinimumOperatorVersion string `json:"minimum_operator_version"`
 	ContractPackageVersion string `json:"contract_package_version"`
 	ContractPackageDigest  string `json:"contract_package_digest"`
@@ -140,7 +137,7 @@ func Parse(raw []byte) (Record, error) {
 
 func (r Record) validate() error {
 	_, _, validContract := version(r.ContractPackageVersion)
-	if r.APIVersion != "intrusive.ai/engine-release/v1alpha1" || !digestPattern.MatchString(r.ImageDigest) ||
+	if r.APIVersion != CompatibilityVersion ||
 		!digestPattern.MatchString(r.ContractPackageDigest) || !stable(r.MinimumOperatorVersion) || !validContract ||
 		r.RuntimeProfile != "operator-container/v1" || (r.Platform != "linux/amd64" && r.Platform != "linux/arm64") {
 		return ErrRecord
@@ -157,7 +154,7 @@ func (h Requirements) validate() error {
 	return nil
 }
 
-func (r Record) Compatible(imageID string, h Requirements) error {
+func (r Record) Compatible(h Requirements) error {
 	if err := r.validate(); err != nil {
 		return err
 	}
@@ -165,7 +162,7 @@ func (r Record) Compatible(imageID string, h Requirements) error {
 		return ErrCompatibility
 	}
 	platform, _ := dockercontrol.ImagePlatform(h.HostPlatform)
-	if r.ImageDigest != imageID || !atLeast(h.OperatorVersion, r.MinimumOperatorVersion) || r.ContractPackageVersion != h.Contract.Version ||
+	if !atLeast(h.OperatorVersion, r.MinimumOperatorVersion) || r.ContractPackageVersion != h.Contract.Version ||
 		r.ContractPackageDigest != h.Contract.Digest || r.RuntimeProfile != h.RuntimeProfile || r.Platform != platform {
 		return ErrCompatibility
 	}

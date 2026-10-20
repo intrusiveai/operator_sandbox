@@ -155,7 +155,7 @@
         "contract_package_version": "0.1.0"
       },
       "operations": [
-        "engine.request_stop"
+        "engine.finish"
       ],
       "limits": {
         "harness": {

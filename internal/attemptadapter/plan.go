@@ -111,7 +111,7 @@ func compile(catalog *contracts.Catalog, raw []byte, in Inputs, external *httpsE
 	if catalog == nil || in.Live == nil || in.Compatibility == nil || in.Policy == nil || in.SessionRevision == 0 || in.CreatedAt.IsZero() || !in.Deadline.After(in.CreatedAt) || in.Deadline.Sub(in.CreatedAt) > interceptor.MaxOperationTimeout || !digestID.MatchString(in.ReleaseDigest) || in.FeedbackBytes < 0 || in.FeedbackBytes > 64*feedback.MaxArtifact {
 		return nil, ErrAttempt
 	}
-	if _, err := catalog.Validate(contracts.EngineAttemptRequestSchema, raw, contracts.OrdinaryLimit); err != nil {
+	if _, err := catalog.Validate(contracts.AttemptPlanSchema, raw, contracts.OrdinaryLimit); err != nil {
 		return nil, ErrAttempt
 	}
 	var r request

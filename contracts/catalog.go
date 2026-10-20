@@ -104,7 +104,8 @@ func (c *Catalog) Validate(id string, raw []byte, maximum int) (any, error) {
 		return nil, err
 	}
 	if err = schema.Validate(value); err != nil {
-		return nil, ErrSchema
+		path, _ := SafeArgumentPath(conclusionSchemaPath(err))
+		return nil, &ArgumentError{Reason: "invalid_structure", FieldPath: path, Correction: "Supply the required fields with the documented types and no unknown fields.", Cause: ErrSchema}
 	}
 	return value, nil
 }

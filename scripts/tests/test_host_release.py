@@ -1,48 +1,16 @@
 import importlib.util
 import json
-import os
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 spec = importlib.util.spec_from_file_location("builder", ROOT / "scripts/build_host_release.py")
 builder = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(builder)
-
-
-class UnattendedSigningTest(unittest.TestCase):
-    def test_encrypted_key_signs_manifest_and_checksum_without_prompt(self):
-        spec = importlib.util.spec_from_file_location("signer", ROOT / "scripts/sign_host_release.py")
-        signer = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(signer)
-        with tempfile.TemporaryDirectory() as temporary:
-            home = Path(temporary)
-            home.chmod(0o700)
-            with patch.dict(os.environ, {"GNUPGHOME": str(home), "TEST_RELEASE_PASSPHRASE": "fixture-only"}):
-                try:
-                    subprocess.run(["gpg", "--batch", "--pinentry-mode", "loopback",
-                                    "--passphrase-fd", "0", "--quick-generate-key",
-                                    "Release CI Fixture <fixture@example.invalid>", "ed25519", "sign", "0"],
-                                   input="fixture-only\n", text=True, check=True, capture_output=True)
-                    listing = subprocess.check_output(["gpg", "--batch", "--with-colons", "--list-keys"], text=True)
-                    fingerprint = next(line.split(":")[9] for line in listing.splitlines() if line.startswith("fpr:"))
-                    subprocess.run(["gpg", "--batch", "--output", str(home / "trusted.gpg"), "--export", fingerprint], check=True)
-                    for name, armor in (("release.json", False), ("SHA256SUMS", True)):
-                        source = home / name
-                        source.write_text("fixture payload\n")
-                        signature = home / (name + ".sig")
-                        signer.sign(source, signature, fingerprint, "TEST_RELEASE_PASSPHRASE", armor=armor)
-                        subprocess.run(["gpgv", "--keyring", str(home / "trusted.gpg"),
-                                        str(signature), str(source)], check=True, capture_output=True)
-                    with self.assertRaises(ValueError):
-                        signer.sign(source, home / "missing.sig", fingerprint, "ABSENT_SIGNING_VARIABLE")
-                finally:
-                    subprocess.run(["gpgconf", "--homedir", str(home), "--kill", "gpg-agent"], check=False)
 
 
 class ReleaseMetadataTest(unittest.TestCase):

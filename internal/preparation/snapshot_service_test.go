@@ -248,18 +248,23 @@ func TestServiceRestorePreservesCampaignLineageAcrossNativeRoots(t *testing.T) {
 	if err := s.Admit(context.Background(), launch); err != nil {
 		t.Fatal(err)
 	}
+	receipts := map[string]string{}
 	attempt := func(rev, index int, parent string) {
 		t.Helper()
 		var wire map[string]any
 		_ = json.Unmarshal(attemptWire(p, rev, index, w.Manifest().ReleaseRecordDigest), &wire)
+		if parent == "" && index > 1 {
+			parent = fmt.Sprintf("attempt-%d", index-1)
+		}
 		if parent != "" {
-			wire["body"].(map[string]any)["parent_attempt_id"] = parent
+			wire["body"].(map[string]any)["parent_attempt_receipt_id"] = receipts[parent]
 		}
 		raw, err := s.Handle(context.Background(), encode(wire), 0)
 		result := stateResult(t, raw, err)
 		if result["status"] != "completed" {
 			t.Fatal(result)
 		}
+		receipts[result["attempt_id"].(string)] = result["receipt_id"].(string)
 	}
 	attempt(1, 1, "")
 	raw, err := s.Handle(context.Background(), stateWire("engine.snapshot_request", "baseline", 1, map[string]any{}), 0)
@@ -281,8 +286,7 @@ func TestServiceRestorePreservesCampaignLineageAcrossNativeRoots(t *testing.T) {
 	var wire map[string]any
 	_ = json.Unmarshal(attemptWire(p, 3, 5, w.Manifest().ReleaseRecordDigest), &wire)
 	body := wire["body"].(map[string]any)
-	body["parent_attempt_id"] = "attempt-1"
-	body["generation"] = 2
+	body["parent_attempt_receipt_id"] = receipts["attempt-1"]
 	raw, err = s.Handle(context.Background(), encode(wire), 0)
 	stateResult(t, raw, err)
 	p.mu.Lock()

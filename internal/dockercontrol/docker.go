@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -24,6 +23,13 @@ import (
 const ConfirmationTimeout = 5 * time.Second
 const outputLimit = 64 << 10
 
+// Initialization errors have fixed descriptions suitable for preparation diagnostics.
+var (
+	ErrCLIUnavailable        = errors.New("Docker CLI unavailable")
+	ErrExecutablePath        = errors.New("Docker executable must be absolute")
+	ErrExecutableUnavailable = errors.New("Docker executable unavailable")
+)
+
 var ErrNotRunning = errors.New("Docker container is not running under the pinned lifecycle policy")
 
 type Outcome = campaign.TerminationOutcome
@@ -33,6 +39,7 @@ type command func(context.Context, string, ...string) ([]byte, error)
 type Client struct {
 	run        command
 	archive    command
+	stderr     command
 	executable string
 }
 
@@ -43,17 +50,17 @@ func New(executable string) (*Client, error) {
 		var err error
 		executable, err = exec.LookPath("docker")
 		if err != nil {
-			return nil, errors.New("Docker CLI unavailable")
+			return nil, ErrCLIUnavailable
 		}
 	}
 	if !filepath.IsAbs(executable) {
-		return nil, errors.New("Docker executable must be absolute")
+		return nil, ErrExecutablePath
 	}
 	info, err := os.Stat(executable)
 	if err != nil || !info.Mode().IsRegular() || info.Mode().Perm()&0111 == 0 {
-		return nil, errors.New("Docker executable unavailable")
+		return nil, ErrExecutableUnavailable
 	}
-	return &Client{executable: executable, run: dockerCommand(executable, outputLimit), archive: dockerCommand(executable, imageArchiveLimit)}, nil
+	return &Client{stderr: dockerStderr(executable), executable: executable, run: dockerCommand(executable, outputLimit), archive: dockerCommand(executable, imageArchiveLimit)}, nil
 }
 
 func dockerCommand(executable string, limit int) command {
@@ -62,13 +69,14 @@ func dockerCommand(executable string, limit int) command {
 		cmd.Env = dockerEnvironment(os.Environ())
 		cmd.WaitDelay = 100 * time.Millisecond
 		out := &boundedOutput{limit: limit}
-		cmd.Stdout, cmd.Stderr = out, io.Discard
+		stderr := &boundedOutput{limit: 4096}
+		cmd.Stdout, cmd.Stderr = out, stderr
 		err := cmd.Run()
 		if out.overflow {
-			return nil, errors.New("Docker output limit")
+			return nil, classifyCommand(ctx, err, stderr.Bytes(), true)
 		}
 		// Preserve a complete create ID even when the CLI reports a later error.
-		return out.Bytes(), err
+		return out.Bytes(), classifyCommand(ctx, err, stderr.Bytes(), false)
 	}
 }
 
@@ -112,6 +120,10 @@ func (b *boundedOutput) Write(p []byte) (int, error) {
 // mounts. CLI defaults and user-configured output templates cannot change this.
 const inspectFormat = `{"id":{{json .Id}},"image":{{json .Image}},"labels":{{json .Config.Labels}},"status":{{json .State.Status}},"running":{{json .State.Running}},"paused":{{json .State.Paused}},"restarting":{{json .State.Restarting}},"restart_policy":{{json .HostConfig.RestartPolicy.Name}},"auto_remove":{{json .HostConfig.AutoRemove}}}`
 
+// New bindings explicitly identify the platform-selected image. Classic Docker
+// lacks ImageManifestDescriptor and continues to expose the config ID in .Image.
+var selectedInspectFormat = strings.Replace(inspectFormat, "{{json .Image}}", `{{if index . "ImageManifestDescriptor"}}{{json .ImageManifestDescriptor.digest}}{{else}}{{json .Image}}{{end}}`, 1)
+
 type identity struct {
 	ID            string            `json:"id"`
 	Image         string            `json:"image"`
@@ -148,7 +160,11 @@ func (c *Client) inspect(ctx context.Context, b campaign.DockerBinding) (identit
 	if code := c.daemon(ctx, b); code != "" {
 		return item, code
 	}
-	raw, err := c.run(ctx, b.Endpoint, "container", "inspect", "--format", inspectFormat, b.DockerContainerID)
+	format := inspectFormat
+	if b.APIVersion == campaign.SelectedImageBindingVersion {
+		format = selectedInspectFormat
+	}
+	raw, err := c.run(ctx, b.Endpoint, "container", "inspect", "--format", format, b.DockerContainerID)
 	if err != nil {
 		return item, "container_unconfirmed"
 	}
@@ -243,12 +259,18 @@ func (c *Client) CheckRunning(ctx context.Context, b campaign.DockerBinding) err
 	defer cancel()
 	item, code := c.inspect(ctx, b)
 	if code != "" {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		return fmt.Errorf("Docker identity check failed: %s", code)
 	}
 	if !item.Running || item.Paused || item.Restarting || item.Status != "running" || item.RestartPolicy != "no" || item.AutoRemove {
 		return ErrNotRunning
 	}
 	if code = c.daemon(ctx, b); code != "" {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		return fmt.Errorf("Docker identity check failed: %s", code)
 	}
 	return ctx.Err()

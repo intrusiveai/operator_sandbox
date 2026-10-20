@@ -18,6 +18,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/feedback"
+	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/nativerecovery"
 )
 
@@ -31,49 +32,66 @@ type Receipt struct {
 	Complete         bool   `json:"journal_intact"`
 }
 type Attempt struct {
-	RequestID     string             `json:"request_id"`
-	AttemptID     string             `json:"attempt_id"`
-	Index         int64              `json:"attempt_index"`
-	Revision      int64              `json:"run_revision"`
-	State         string             `json:"state"`
-	Dispatched    bool               `json:"dispatched"`
-	ScenarioID    string             `json:"scenario_id,omitempty"`
-	ObjectiveIDs  []string           `json:"objective_ids"`
-	TargetContact string             `json:"target_contact"`
-	Invocation    string             `json:"invocation_state"`
-	Cleanup       string             `json:"cleanup_state"`
-	Feedback      *feedback.Manifest `json:"feedback,omitempty"`
+	RequestID       string             `json:"request_id"`
+	AttemptID       string             `json:"attempt_id"`
+	Index           int64              `json:"attempt_index"`
+	Revision        int64              `json:"run_revision"`
+	State           string             `json:"state"`
+	Dispatched      bool               `json:"dispatched"`
+	Origin          string             `json:"origin,omitempty"`
+	Operation       string             `json:"operation_id,omitempty"`
+	ReceiptID       string             `json:"receipt_id,omitempty"`
+	RequestEvidence string             `json:"request_evidence,omitempty"`
+	ResultEvidence  string             `json:"result_evidence,omitempty"`
+	ScenarioID      string             `json:"scenario_id,omitempty"`
+	ObjectiveIDs    []string           `json:"objective_ids"`
+	TargetContact   string             `json:"target_contact"`
+	Invocation      string             `json:"invocation_state"`
+	Cleanup         string             `json:"cleanup_state"`
+	Feedback        *feedback.Manifest `json:"feedback,omitempty"`
 }
 type Result struct {
-	APIVersion            string                       `json:"api_version"`
-	CampaignID            string                       `json:"campaign_id"`
-	ManifestDigest        string                       `json:"run_manifest_digest"`
-	ExecutionBundleDigest string                       `json:"execution_bundle_digest"`
-	EvidenceSetDigest     string                       `json:"target_evidence_set_digest"`
-	JournalIntact         bool                         `json:"journal_intact"`
-	VerifiedEvents        int64                        `json:"verified_events"`
-	Execution             string                       `json:"execution_state"`
-	ContainerCleanup      string                       `json:"container_cleanup"`
-	TargetClosure         string                       `json:"target_closure"`
-	InjectionCleanup      string                       `json:"injection_cleanup"`
-	TargetStop            string                       `json:"target_stop"`
-	TargetAdapter         string                       `json:"target_adapter"`
-	NativeProfile         string                       `json:"native_feedback_profile"`
-	Assurance             string                       `json:"evidence_assurance"`
-	Attempts              []Attempt                    `json:"attempts"`
-	UntestedScenarios     []string                     `json:"untested_scenarios"`
-	UntestedObjectives    []string                     `json:"untested_objectives"`
-	Coverage              string                       `json:"coverage_state"`
-	Usage                 map[string]int64             `json:"cumulative_usage"`
-	HarnessClaims         int64                        `json:"harness_claim_records"`
-	OracleVerdict         string                       `json:"oracle_verdict"`
-	Gaps                  []string                     `json:"gaps"`
-	UnknownOperations     []string                     `json:"unknown_operations"`
-	Termination           *campaign.TerminationOutcome `json:"termination,omitempty"`
-	RecoveryDigest        string                       `json:"cleanup_audit_digest,omitempty"`
-	TerminationDigest     string                       `json:"termination_record_digest,omitempty"`
-	UntestedOperations    []string                     `json:"untested_operation_ids"`
-	Routes                []RouteCoverage              `json:"injection_routes"`
+	RequestedObjectives   []RequestedObjective            `json:"requested_objectives"`
+	RequestedScenarios    []RequestedScenario             `json:"requested_scenarios"`
+	Observations          []ObservationSummary            `json:"observations"`
+	Assessment            *AssessmentSummary              `json:"assessment,omitempty"`
+	Rejections            []SubmissionRejection           `json:"submission_rejections"`
+	ExitEvent             int64                           `json:"exit_event,omitempty"`
+	FinishEvent           int64                           `json:"finish_event,omitempty"`
+	CredentialResolutions []CredentialResolution          `json:"credential_resolutions"`
+	HarnessExit           *campaign.HarnessExit           `json:"harness_exit,omitempty"`
+	ConclusionRejections  []campaign.ConclusionDiagnostic `json:"conclusion_rejections,omitempty"`
+	WorkflowDiagnostics   []campaign.WorkflowDiagnostic   `json:"workflow_diagnostics,omitempty"`
+	ModelFailures         []modelprovider.Diagnostic      `json:"model_failures,omitempty"`
+	APIVersion            string                          `json:"api_version"`
+	CampaignID            string                          `json:"campaign_id"`
+	ManifestDigest        string                          `json:"run_manifest_digest"`
+	ExecutionBundleDigest string                          `json:"execution_bundle_digest"`
+	EvidenceSetDigest     string                          `json:"target_evidence_set_digest"`
+	JournalIntact         bool                            `json:"journal_intact"`
+	VerifiedEvents        int64                           `json:"verified_events"`
+	Execution             string                          `json:"execution_state"`
+	ContainerCleanup      string                          `json:"container_cleanup"`
+	TargetClosure         string                          `json:"target_closure"`
+	InjectionCleanup      string                          `json:"injection_cleanup"`
+	TargetStop            string                          `json:"target_stop"`
+	TargetAdapter         string                          `json:"target_adapter"`
+	NativeProfile         string                          `json:"native_feedback_profile"`
+	Assurance             string                          `json:"evidence_assurance"`
+	Attempts              []Attempt                       `json:"attempts"`
+	UntestedScenarios     []string                        `json:"untested_scenarios"`
+	UntestedObjectives    []string                        `json:"untested_objectives"`
+	Coverage              string                          `json:"coverage_state"`
+	Usage                 map[string]int64                `json:"cumulative_usage"`
+	HarnessClaims         int64                           `json:"harness_claim_records"`
+	OracleVerdict         string                          `json:"oracle_verdict"`
+	Gaps                  []string                        `json:"gaps"`
+	UnknownOperations     []string                        `json:"unknown_operations"`
+	Termination           *campaign.TerminationOutcome    `json:"termination,omitempty"`
+	RecoveryDigest        string                          `json:"cleanup_audit_digest,omitempty"`
+	TerminationDigest     string                          `json:"termination_record_digest,omitempty"`
+	UntestedOperations    []string                        `json:"untested_operation_ids"`
+	Routes                []RouteCoverage                 `json:"injection_routes"`
 }
 type sourceContent struct {
 	Role       string `json:"role"`
@@ -131,6 +149,7 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 	defer files.Close()
 	result := Result{APIVersion: Version, CampaignID: id, Execution: "unknown", ContainerCleanup: "unconfirmed", TargetClosure: "unconfirmed", InjectionCleanup: "unconfirmed", TargetStop: "unconfirmed", Assurance: "retained-observations-only", Attempts: []Attempt{}, UntestedObjectives: []string{}, Coverage: "unknown", Usage: map[string]int64{}, OracleVerdict: "unknown", Gaps: []string{}}
 	attempts := map[string]Attempt{}
+	publications := map[string]*campaign.ContentDescriptor{}
 	objectives := map[string]bool{}
 	scenarios := map[string][]string{}
 	scenarioTested := map[string]bool{}
@@ -155,6 +174,7 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 		batch.Reset()
 		return nil
 	}
+	modelReservations := map[string]int64{}
 	inspect, scanErr := a.Inspect(ctx, func(event campaign.Event) (projectionErr error) {
 		defer func() {
 			if projectionErr != nil {
@@ -189,9 +209,85 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 			}
 		}
 		keep := map[string]json.RawMessage{}
-		for _, key := range []string{"operation_id", "attempt_index_high_watermark", "attempt_admissions", "snapshot_admissions", "snapshot_bytes", "model_turns", "model_tokens", "actual_tokens", "finish_reason", "conclusion_state", "assertion_origin", "record_kind", "receipt_id", "part_index", "parts", "digest", "size_bytes"} {
+		for _, key := range []string{"operation_id", "attempt_index_high_watermark", "attempt_admissions", "snapshot_admissions", "snapshot_bytes", "model_turns", "model_tokens", "actual_tokens", "finish_reason", "conclusion_state", "assessment_state", "unavailable", "finalization_status", "assertion_origin", "record_kind", "receipt_id", "part_index", "parts", "digest", "size_bytes"} {
 			if value, ok := metadata[key]; ok {
 				keep[key] = value
+			}
+		}
+		if event.Kind == "credential.resolution" {
+			audit, fields := projectCredential(event.Sequence, event.RecordedAt, metadata)
+			result.CredentialResolutions = append(result.CredentialResolutions, audit)
+			keep = fields
+		}
+		if event.Kind == "launch.exit" {
+			var h campaign.HarnessExit
+			if json.Unmarshal(event.Metadata, &h) == nil && h.Valid() {
+				result.HarnessExit = &h
+				result.ExitEvent = event.Sequence
+				keep["harness_exit"], _ = json.Marshal(h)
+			}
+		}
+		if event.Kind == "launch.terminal" {
+			var h campaign.HarnessExit
+			if json.Unmarshal(metadata["harness_exit"], &h) == nil && h.Valid() {
+				result.HarnessExit = &h
+				result.ExitEvent = event.Sequence
+				keep["harness_exit"], _ = json.Marshal(h)
+			}
+		}
+		if event.Kind == "workflow.diagnostic" {
+			if d := campaign.DecodeWorkflowDiagnostic(metadata["diagnostic"]); d != nil {
+				keep["diagnostic"], _ = json.Marshal(d)
+				result.WorkflowDiagnostics = append(result.WorkflowDiagnostics, *d)
+				if d.Stage == "arguments" && d.Stopping == "" && len(result.Rejections) < 128 {
+					result.Rejections = append(result.Rejections, SubmissionRejection{Event: event.Sequence, OperationID: d.OperationID, Code: "INVALID_ARGUMENTS", Message: d.Message()})
+				}
+			}
+		}
+		if event.Kind == "conclusion.rejected" || (event.Kind == "launch.terminal" && len(result.ConclusionRejections) == 0) {
+			if d := campaign.DecodeConclusionDiagnostic(metadata["diagnostic"]); d != nil {
+				keep["diagnostic"], _ = json.Marshal(d)
+				result.ConclusionRejections = append(result.ConclusionRejections, *d)
+			}
+		}
+		if event.Kind == "model.intent" || event.Kind == "model.exchange" || event.Kind == "model.usage" {
+			for _, key := range []string{"reserved_tokens", "elapsed_ms"} {
+				var n int64
+				if json.Unmarshal(metadata[key], &n) == nil && n >= 0 && n <= contracts.MaxSafeInteger {
+					keep[key] = metadata[key]
+				}
+			}
+			var outcome string
+			if json.Unmarshal(metadata["outcome"], &outcome) == nil {
+				switch outcome {
+				case "response", "unknown", "invalid-response", "http-rejected":
+					keep["outcome"] = metadata["outcome"]
+				}
+			}
+			if d := modelprovider.DecodeDiagnostic(metadata["diagnostic"]); d != nil {
+				keep["diagnostic"], _ = json.Marshal(d)
+				result.ModelFailures = append(result.ModelFailures, *d)
+			}
+			var op string
+			_ = json.Unmarshal(metadata["operation_id"], &op)
+			var charge int64
+			if json.Unmarshal(metadata["model_tokens"], &charge) == nil && charge >= 0 && charge <= contracts.MaxSafeInteger {
+				result.Usage["model_tokens_budget_charged"] = charge
+				keep["model_tokens_budget_charged"] = metadata["model_tokens"]
+			}
+			delete(keep, "model_tokens") // This value includes reservations, not consumption.
+			if event.Kind == "model.intent" {
+				var n int64
+				if json.Unmarshal(metadata["reserved_tokens"], &n) == nil && n >= 0 && n <= contracts.MaxSafeInteger {
+					modelReservations[op] = n
+				}
+			}
+			if event.Kind == "model.usage" {
+				var n int64
+				if json.Unmarshal(metadata["actual_tokens"], &n) == nil && n >= 0 && n <= contracts.MaxSafeInteger-result.Usage["model_tokens"] {
+					result.Usage["model_tokens"] += n
+					delete(modelReservations, op)
+				}
 			}
 		}
 		projected.Metadata, _ = json.Marshal(keep)
@@ -202,7 +298,7 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 				projected.Metadata, _ = json.Marshal(keep)
 			}
 		}
-		for _, key := range []string{"attempt_index_high_watermark", "attempt_admissions", "snapshot_admissions", "snapshot_bytes", "model_turns", "model_tokens"} {
+		for _, key := range []string{"attempt_index_high_watermark", "attempt_admissions", "snapshot_admissions", "snapshot_bytes", "model_turns"} {
 			var n int64
 			if json.Unmarshal(metadata[key], &n) == nil && n >= 0 {
 				result.Usage[key] = max(result.Usage[key], n)
@@ -213,6 +309,7 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 			if json.Unmarshal(value, &saved) != nil {
 				return campaign.ErrCorrupt
 			}
+			publications[saved.RequestID] = saved.Publication
 			old := attempts[saved.RequestID]
 			old.RequestID, old.AttemptID, old.Index, old.Revision, old.State, old.Dispatched = saved.RequestID, saved.AttemptID, saved.Index, saved.SubmittedRevision, saved.State, saved.Dispatched
 			if old.ObjectiveIDs == nil {
@@ -261,9 +358,17 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 					return e
 				}
 				bundleRetained = true
+				var work struct {
+					Objectives []RequestedObjective `json:"objectives"`
+					Scenarios  []RequestedScenario  `json:"scenarios"`
+				}
+				if json.Unmarshal(preparation.Bundle, &work) != nil {
+					return campaign.ErrCorrupt
+				}
+				result.RequestedObjectives, result.RequestedScenarios = work.Objectives, work.Scenarios
 			}
 		}
-		if event.Kind == "assessment.record" {
+		if event.Kind == "assessment.record" || event.Kind == "service.stop-accepted" && string(metadata["assessment_state"]) == `"committed"` {
 			result.HarnessClaims++
 		}
 		for _, desc := range event.Content {
@@ -284,18 +389,27 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 			if desc.Role == "guest-request" {
 				var request struct {
 					RequestID  string `json:"request_id"`
+					Origin     string `json:"origin"`
+					Invocation struct {
+						Operation string `json:"operation_id"`
+					} `json:"invocation"`
 					ScenarioID string `json:"scenario_id"`
 				}
 				if json.Unmarshal(raw, &request) == nil {
 					if old, ok := attempts[request.RequestID]; ok {
 						old.ScenarioID = request.ScenarioID
-						old.ObjectiveIDs = append([]string{}, scenarios[request.ScenarioID]...)
+						old.Origin, old.Operation, old.RequestEvidence = request.Origin, request.Invocation.Operation, item.Path
+						old.ObjectiveIDs = []string{}
+						if request.Origin == "scenario" {
+							old.ObjectiveIDs = append(old.ObjectiveIDs, scenarios[request.ScenarioID]...)
+						}
 						attempts[request.RequestID] = old
 					}
 				}
 			}
 			if desc.Role == "guest-result" {
 				var r struct {
+					ReceiptID     string             `json:"receipt_id"`
 					RequestID     string             `json:"request_id"`
 					TargetContact string             `json:"target_contact"`
 					Invocation    string             `json:"invocation_state"`
@@ -306,27 +420,81 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 					if old, ok := attempts[r.RequestID]; ok {
 						old.TargetContact, old.Invocation, old.Cleanup = r.TargetContact, r.Invocation, r.Cleanup
 						old.Feedback = r.Feedback
+						old.ReceiptID, old.ResultEvidence = r.ReceiptID, item.Path
 						attempts[r.RequestID] = old
+					}
+				}
+			}
+			if event.Kind == "service.stop-accepted" {
+				result.FinishEvent = event.Sequence
+				if desc.Role == "conclusion" {
+					var assessment struct {
+						Summary string `json:"summary"`
+					}
+					if json.Unmarshal(raw, &assessment) == nil {
+						result.Assessment = &AssessmentSummary{Summary: excerpt([]byte(assessment.Summary), 2048), Evidence: item.Path, Event: event.Sequence}
+					}
+				}
+			}
+			if event.Kind == "service.response" && desc.Role == "response" {
+				var response struct {
+					OperationID string `json:"operation_id"`
+					Error       *struct {
+						Code       string          `json:"code"`
+						Message    string          `json:"message"`
+						Diagnostic json.RawMessage `json:"diagnostic"`
+					} `json:"error"`
+				}
+				if json.Unmarshal(raw, &response) == nil && response.Error != nil && len(result.Rejections) < 128 {
+					seen := false
+					for _, rejection := range result.Rejections {
+						seen = seen || rejection.OperationID == response.OperationID
+					}
+					if !seen {
+						result.Rejections = append(result.Rejections, SubmissionRejection{Event: event.Sequence, OperationID: response.OperationID, Code: response.Error.Code, Message: excerpt([]byte(response.Error.Message), 512), Evidence: item.Path})
 					}
 				}
 			}
 			if event.Kind == "service.terminal-result" && desc.Role == "response" {
 				var r struct {
-					Closure string `json:"closure"`
-					Cleanup string `json:"cleanup_state"`
-					Stop    string `json:"target_stop"`
+					Diagnostic json.RawMessage `json:"conclusion_diagnostic"`
+					Workflow   json.RawMessage `json:"workflow_diagnostic"`
+					Closure    string          `json:"closure"`
+					Cleanup    string          `json:"cleanup_state"`
+					Stop       string          `json:"target_stop"`
 				}
 				if json.Unmarshal(raw, &r) == nil {
 					result.TargetClosure, result.InjectionCleanup, result.TargetStop = r.Closure, r.Cleanup, r.Stop
+					if len(result.WorkflowDiagnostics) == 0 {
+						if d := campaign.DecodeWorkflowDiagnostic(r.Workflow); d != nil {
+							result.WorkflowDiagnostics = append(result.WorkflowDiagnostics, *d)
+						}
+					}
+					if len(result.ConclusionRejections) == 0 {
+						if d := campaign.DecodeConclusionDiagnostic(r.Diagnostic); d != nil {
+							result.ConclusionRejections = append(result.ConclusionRejections, *d)
+						}
+					}
 				}
 			}
 			if event.Kind == "launch.terminal" && desc.Role == "launch-result" {
 				var r struct {
-					Cleanup string `json:"container_cleanup"`
+					HarnessExit *campaign.HarnessExit `json:"harness_exit"`
+					Cleanup     string                `json:"container_cleanup"`
+					Workflow    json.RawMessage       `json:"workflow_diagnostic"`
 				}
 				if json.Unmarshal(raw, &r) == nil {
 					result.Execution = "closed"
 					result.ContainerCleanup = r.Cleanup
+					if r.HarnessExit != nil && r.HarnessExit.Valid() {
+						result.HarnessExit = r.HarnessExit
+						result.ExitEvent = event.Sequence
+					}
+					if len(result.WorkflowDiagnostics) == 0 {
+						if d := campaign.DecodeWorkflowDiagnostic(r.Workflow); d != nil {
+							result.WorkflowDiagnostics = append(result.WorkflowDiagnostics, *d)
+						}
+					}
 				}
 			}
 
@@ -345,6 +513,18 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 		batch.WriteByte('\n')
 		return nil
 	})
+	for _, n := range modelReservations {
+		if n > contracts.MaxSafeInteger-result.Usage["model_tokens_unconfirmed_reserved"] {
+			return receipt, campaign.ErrCorrupt
+		}
+		result.Usage["model_tokens_unconfirmed_reserved"] += n
+	}
+	if _, ok := result.Usage["model_tokens_budget_charged"]; ok {
+		if _, exists := result.Usage["model_tokens"]; !exists {
+			result.Usage["model_tokens"] = 0
+		}
+	}
+
 	if writeErr != nil {
 		return receipt, writeErr
 	}
@@ -388,7 +568,7 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 		result.Execution = "unknown"
 	}
 	for _, v := range attempts {
-		if v.Dispatched {
+		if v.Dispatched && v.Origin == "scenario" {
 			scenarioTested[v.ScenarioID] = true
 			for _, id := range v.ObjectiveIDs {
 				tested[id] = true
@@ -397,6 +577,11 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 		result.Attempts = append(result.Attempts, v)
 	}
 	sort.Slice(result.Attempts, func(i, j int) bool { return result.Attempts[i].Index < result.Attempts[j].Index })
+	for _, attempt := range result.Attempts {
+		if err := summarizeObservations(ctx, a.ReadContent, files.Put, &result, attempt, publications[attempt.RequestID]); err != nil {
+			return receipt, err
+		}
+	}
 	result.UntestedScenarios = []string{}
 	for id := range scenarios {
 		if !scenarioTested[id] {
@@ -513,6 +698,9 @@ func publicContent(kind, role string) bool {
 	if kind == "campaign.launch-input" || kind == "campaign.artifact-staged" || kind == "campaign.reference-staged" || kind == "assessment.record" || kind == "model.intent" || kind == "model.exchange" {
 		return true
 	}
+	if kind == "service.stop-accepted" && role == "conclusion" {
+		return true
+	}
 	if kind == "service.request" || kind == "service.response" || kind == "artifact.part" {
 		return true
 	}
@@ -543,8 +731,38 @@ func readObjectives(raw []byte, objectives map[string]bool, scenarios map[string
 func markdown(r Result, digest string) []byte {
 	var b strings.Builder
 	fmt.Fprintf(&b, "# Campaign report\n\nCampaign: `%s`\n\nResult: `%s`\n\n", r.CampaignID, digest)
+	writeEvidenceSummary(&b, r)
 	fmt.Fprintf(&b, "| Recorded fact | Value |\n| --- | --- |\n| Journal intact | %t |\n| Verified events | %d |\n| Execution | %s |\n| Container cleanup | %s |\n| Target closure | %s |\n| Injection cleanup | %s |\n| Target stop | %s |\n| Attempts | %d |\n| Harness claim records | %d |\n", r.JournalIntact, r.VerifiedEvents, r.Execution, r.ContainerCleanup, r.TargetClosure, r.InjectionCleanup, r.TargetStop, len(r.Attempts), r.HarnessClaims)
 	b.WriteString("\nAttempt completion is not proof of exploitation. Delivery, target responses and scoped oracle observations remain source evidence. Harness conclusions are claims; missing oracle evidence is unknown. No model interpretation is performed.\n")
+	if len(r.ModelFailures) > 0 {
+		b.WriteString("\n## Model request failure\n\n")
+		for _, d := range r.ModelFailures {
+			fmt.Fprintf(&b, "Operation `%s`; category `%s`:\n\n", d.OperationID, d.Category)
+			// Indented code keeps provider text from creating Markdown links/HTML.
+			for _, line := range strings.Split(d.Summary()+"\n"+d.ProviderDetailsText(), "\n") {
+				fmt.Fprintf(&b, "    %s\n", line)
+			}
+			if d.RequestID != "" {
+				fmt.Fprintf(&b, "  Request ID: `%s`.\n", d.RequestID)
+			}
+		}
+		b.WriteString("\nReserved tokens are an allowance held against the budget, not confirmed consumption. See cumulative_usage in result-manifest.json.\n")
+	}
+	if r.HarnessExit != nil {
+		fmt.Fprintf(&b, "\n## Harness exit\n\n    %s\n\nWorker cause: %s. Details: %s. Cleanup complete: %t.\n", r.HarnessExit.Summary(), r.HarnessExit.WorkerCause, r.HarnessExit.Details, r.HarnessExit.CleanupComplete)
+	}
+	if len(r.WorkflowDiagnostics) > 0 {
+		b.WriteString("\n## Workflow diagnostics\n\n")
+		for _, d := range r.WorkflowDiagnostics {
+			fmt.Fprintf(&b, "- %s (%s; operation %s)\n", d.Message(), d.Source, d.OperationID)
+		}
+	}
+	if len(r.ConclusionRejections) > 0 {
+		b.WriteString("\n## Conclusion rejections\n\nRejected submissions remain history even if a corrected conclusion was later accepted.\n\n")
+		for _, d := range r.ConclusionRejections {
+			fmt.Fprintf(&b, "Operation %s; rule %s:\n\n    %s\n\n", d.OperationID, d.Reason, d.Message())
+		}
+	}
 	if len(r.Gaps) > 0 {
 		b.WriteString("\n## Evidence gaps\n\n")
 		for _, gap := range r.Gaps {

@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestCompletedRequiresExactStoppedZeroExitAndStableDaemon(t *testing.T) {
+func TestExitObservationRequiresExactStoppedContainerAndStableDaemon(t *testing.T) {
 	b := binding()
 	for _, mode := range []string{"success", "nonzero", "unknown", "wrong image", "running", "created", "daemon changed", "canceled"} {
 		t.Run(mode, func(t *testing.T) {
@@ -57,9 +57,18 @@ func TestCompletedRequiresExactStoppedZeroExitAndStableDaemon(t *testing.T) {
 			if mode == "canceled" {
 				cancel()
 			}
-			if c.Completed(ctx, b) != (mode == "success") {
+			h := c.ObserveExit(ctx, b)
+			if h.ExitObserved != (mode == "success" || mode == "nonzero") || (mode == "nonzero" && h.ExitCode != 1) || (!h.ExitObserved && h.ExitUnavailable == "") {
 				t.Fatal("exit proof did not fail closed", mode)
 			}
 		})
+	}
+}
+
+func TestCanceledExitProbePreservesContextCause(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	c := &Client{run: func(context.Context, string, ...string) ([]byte, error) { cancel(); return nil, ctx.Err() }}
+	if err := c.CheckRunning(ctx, binding()); err != context.Canceled {
+		t.Fatal("cancellation replaced with identity failure", err)
 	}
 }

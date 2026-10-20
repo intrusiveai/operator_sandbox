@@ -502,7 +502,7 @@
           "contract_package_version": "0.1.0"
         },
         "operations": [
-          "engine.request_stop"
+          "engine.finish"
         ],
         "limits": {
           "harness": {
@@ -569,7 +569,7 @@
           "contract_package_version": "0.1.0"
         },
         "operations": [
-          "engine.request_stop"
+          "engine.finish"
         ],
         "limits": {
           "harness": {
@@ -636,7 +636,7 @@
           "contract_package_version": "0.1.0"
         },
         "operations": [
-          "engine.request_stop"
+          "engine.finish"
         ],
         "limits": {
           "harness": {
@@ -839,7 +839,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -1041,7 +1041,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -1243,7 +1243,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -1445,7 +1445,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -1647,7 +1647,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -1849,7 +1849,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -2051,7 +2051,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -2253,7 +2253,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -2455,7 +2455,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -2657,7 +2657,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -2859,7 +2859,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -3061,7 +3061,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -3263,7 +3263,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -3465,7 +3465,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -3667,7 +3667,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -3869,7 +3869,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -4071,7 +4071,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -4273,7 +4273,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -4678,7 +4678,7 @@
           },
           "operations": [
             "engine.snapshot_list",
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -4880,7 +4880,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -5082,7 +5082,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -5284,7 +5284,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -5486,7 +5486,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -5688,7 +5688,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -6031,7 +6031,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -6092,7 +6092,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -6294,7 +6294,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -10598,7 +10598,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -10805,7 +10805,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -11010,7 +11010,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -11217,7 +11217,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {
@@ -11424,7 +11424,7 @@
             "contract_package_version": "0.1.0"
           },
           "operations": [
-            "engine.request_stop"
+            "engine.finish"
           ],
           "limits": {
             "harness": {

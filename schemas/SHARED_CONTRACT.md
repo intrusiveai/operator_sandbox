@@ -1,48 +1,41 @@
 # Shared host/harness contract
 
-Status: accepted design; schemas, shared validators/fixtures and host/harness
-runtime integration implemented as of 2026-09-28. Package publication and complete
-process/native qualification remain outstanding. This is the authoritative
-Operator-owned source for shared wire semantics, identity, startup, manifest
-delivery and completion. Component specs MUST reference these rules rather than
-define competing wire contracts. See [implementation status](../docs/IMPLEMENTATION_STATUS.md).
+This is the authoritative Operator-owned contract for shared wire semantics,
+identity, startup, manifest delivery and completion. Component specifications MUST
+reference these rules rather than define competing contracts. The
+[release contract lock](../release/contract-lock.json) identifies the exact
+source and package digest consumed by both products.
 
-JSON Schemas, Go/Python bindings, semantic validators and shared fixtures are
-implemented. Publish package `0.1.0` only after both conformance runners and the
-required Section 12 conformance tests pass. Existing attempt/feedback schemas
-remain active as specified below.
+JSON Schemas, Go/Python bindings, semantic validators and shared fixtures define
+package `0.2.1`. Section 12 defines its conformance requirements.
 In every attempt, `generator.release_digest` MUST equal the frozen
 `EngineContext.release.release_record_digest`. It identifies the validated
-compatibility response. `release.image_digest` separately pins the harness image
+embedded compatibility file. `release.image_digest` separately pins the harness image
 through startup and MUST NOT be substituted for this field.
 The closed ScenarioBundle and TargetCapabilityManifest schemas are now in the
 catalog. Their [capability mapping](CAPABILITY_EXPORT_CONTRACT.md) and reference-chain
-fixtures define compatibility-based admission and opt-in exact projection pins;
-this does not complete the remaining package publication or runtime gates.
+fixtures define compatibility-based admission and opt-in exact projection pins.
 
 The [validation foundation](../contracts/README.md) implements strict JSON decoding
 and offline structural validation of the current catalog in Go and Python, with
 shared byte fixtures and generated schema-ID constants. The
-[ordinary protocol stage](ORDINARY_WIRE_CONTRACT.md) supplies typed envelopes for 13
+[ordinary protocol stage](ORDINARY_WIRE_CONTRACT.md) supplies typed envelopes for the registry
 operations, their registry, spool ACK schema and stateless correlation checks.
 The [assessment contract](ASSESSMENT_CONTRACT.md) supplies typed record append,
-conclusion content and completion-chain validation.
+conclusion content and assessment normalization and finish validation.
 The [startup/manifest stage](STARTUP_MANIFEST_CONTRACT.md) supplies closed control
 messages, successful-transcript checks, bounded input/skill inventories and shared
 raw-descriptor/path validation. The [input-content stage](ENGINE_INPUT_CONTRACT.md)
 adds EngineContext, prompt provenance/composition and launch byte consistency.
-Full runtime qualification remains separate work.
 The [canonical identity stage](CANONICAL_IDENTITY_CONTRACT.md) implements `jcs-v1`,
 raw/canonical digest helpers, canonical launch bindings and artifact-content checks.
 The [package integrity stage](PACKAGE_INTEGRITY_CONTRACT.md) adds the closed package
 manifest, deterministic construction, payload verification and a loader that retains
-the verified version/digest. Package publication and runtime qualification remain pending.
+the verified version/digest.
 The [transport codec stage](TRANSPORT_CODEC_CONTRACT.md) implements bounded FIFO
 frames, spool naming, lane validation, consecutive sequences and cumulative ACK
 checks. The [host transport layer](../docs/HOST_TRANSPORT.md) implements physical
-FIFO/spool I/O, queues and startup/transfer/operation/campaign deadlines. Python
-peer I/O and broker integration are implemented; complete process exchanges and
-Docker qualification remain outstanding.
+FIFO/spool I/O, queues and startup/transfer/operation/campaign deadlines.
 The [attempt bookkeeping stage](ATTEMPT_BOOKKEEPING_CONTRACT.md) implements
 campaign-wide allocation and in-memory duplicate/admission/result transitions.
 The [loop accounting stage](HARNESS_LOOP_ACCOUNTING_CONTRACT.md) implements
@@ -53,12 +46,10 @@ The [model codec stage](MODEL_CODEC_CONTRACT.md) supplies typed model relay,
 trusted policy binding and correlated native continuation segments for Chat
 Completions, OpenAI Responses, Anthropic Messages, Bedrock Converse and Gemini
 GenerateContent. Their schemas, bindings and stateful checks are implemented.
-Real provider/route qualification and complete process transport conformance
-remain outstanding.
 
 ## 1. One owner and one pinned package
 
-Operator owns `operator-contracts`, initially package version `0.1.0`, with package
+Operator owns `operator-contracts`, package version `0.2.1`, with package
 manifest schema `operator.dev/contract-package/v1alpha1`. The package contains
 closed JSON Schemas, the offline URI catalog, operation registry, semantic rules,
 Go/Python bindings and validators, and shared golden test vectors. Engine builds
@@ -77,8 +68,9 @@ inventory (relative path, byte length, raw digest), schema catalog identity,
 operation-registry identity and semantic-profile identities. Exclude the package
 manifest and signatures from the inventory they bind. The package content digest
 is the canonical digest of that manifest payload. The host-only
-[HTTPS release record](ENGINE_RELEASE_CONTRACT.md) binds this package digest,
-the local Docker image ID and the required Operator/runtime/platform compatibility.
+[embedded compatibility record](ENGINE_RELEASE_CONTRACT.md) binds this package
+digest and required Operator/runtime/platform compatibility. The independently
+resolved local Docker image ID binds the embedded record bytes.
 Operator and the engine consume their installed package copies.
 
 The [implemented package layout](PACKAGE_INTEGRITY_CONTRACT.md) retains flat schema
@@ -137,25 +129,14 @@ For this package, require it to equal the envelope's `operation_id`.
 The envelope's `call_id` is the separate exchange correlation. This explicit rule
 avoids silently assigning two meanings to the existing nested request_id field.
 
-### 2.1 Attempt indices and execution admissions
+### 2.1 Host-owned attempt numbering
 
-The [campaign allocator rules](HARNESS_EXECUTION_RULES.md#1-campaign-wide-attempt-numbering)
-are normative. The trusted request builder assigns a new attempt index and fresh
-request/attempt IDs once for a decoded new attempt submission, before validation.
-An allocated rejected submission keeps its number; a corrected submission gets
-the next one. Undecodable/non-object arguments and undispatched calls allocate nothing.
-Exact duplicates retain identity; restores never rewind campaign numbering.
-Operator records the high-water mark independently of execution admission counts
-and sends the campaign index unchanged to Interceptor, which already accepts gaps.
-
-EngineContext includes required `attempt_index_high_watermark` (integer 0 through
-2^53−1, normally 0), derived from the host ledger and verified bound native history
-before startup. The harness seeds its allocator once and retains it across restores.
-The model-facing attempt projection excludes bookkeeping request/attempt/index
-fields; the full v1alpha2 wire request retains them. These are identities, not
-model tactical choices. The default 100-attempt ceiling counts durable execution
-admissions after validation, never the highest index; the allocator contract fixes
-rejection, failure and duplicate accounting without a new allocation RPC.
+Operator assigns attempt IDs, monotonic indices and lineage from the simple request
+and any verified parent receipt. The model and Harness MUST NOT supply these
+fields. Local rejections allocate no host attempt. Corrected host submissions use
+new operation IDs; exact duplicates reuse their saved identities and results.
+Restores never reset counters or refund admissions. The startup high-water mark is
+informational to Harness. See [simple workflow](SIMPLE_CAMPAIGN_CONTRACT.md).
 
 ## 3. Digest and duplicate rules
 
@@ -521,9 +502,8 @@ catalog; the guest continues to consume the existing startup fields and digests.
 The current [ordinary wire implementation](ORDINARY_WIRE_CONTRACT.md) fixes concrete
 artifact, snapshot, restore and stop fields and binds the existing attempt/cleanup/
 feedback schemas. Typed records and conclusions are defined in the
-[assessment contract](ASSESSMENT_CONTRACT.md). The model family remains required before
-publication. The checked-in registry is a development subset, not the complete
-released tool catalog.
+[assessment contract](ASSESSMENT_CONTRACT.md). The registry is the complete
+allowlist for ordinary operation dispatch in this package.
 
 `operations.json` binds each operation name to exact request/result/error schema
 IDs, permitted lifecycle states, timeout and size ceilings, effect classification
@@ -534,12 +514,13 @@ Arbitrary strings, unknown fields and generic forwarding are not dispatch paths.
 |---|---|
 | Model | engine.model_generate; pinned provider-native codec/profile, no guest endpoint selection or silent translation. Codec-specific schemas/vectors are package members. |
 | Artifacts | engine.artifact_begin / put_part / commit; begin fixes purpose/media/raw size/digest, parts identify upload/offset/base64 bytes, commit verifies complete content and returns immutable receipt. Parts ≤256 KiB; objects ≤16 MiB. |
-| Attempts | engine.attempt_execute; retain current v1alpha2 request/result, observation selection and native delivery semantics. |
+| Attempts | engine.attempt_execute; compact v1alpha4 request with explicit origin and direct/artifact input, v1alpha2 result, permitted observation selection and native delivery semantics. |
 | Cleanup | engine.injection_delete; [closed schemas and semantics](INJECTION_CLEANUP_CONTRACT.md), one attempt-receipt/action handle, current-target deletion, confirmed absence succeeds, restore-aware duplicate behavior. |
 | Feedback | engine.observation_read; retain adopted receipt/entry/range contract and profile-limited manifest. |
-| Records | engine.record_append; closed record_kind union for hypothesis, progress, lineage, coverage and conclusion references; host supplies authoritative attribution and committed record receipt. |
+| Records | engine.record_append; closed record_kind union for hypothesis, progress, lineage and coverage; host supplies authoritative attribution and committed record receipt. |
 | State | engine.snapshot_request / snapshot_list / snapshot_inspect / restore_request; preserve campaign/description metadata, source/checkpoint handles, discovery and live-harness restore. |
-| Completion | engine.request_stop; payload and acknowledgement below. |
+| Completion | engine.finish; one assessment submission and acknowledgement below. |
+| Local diagnostics | engine.diagnostic_report; bounded Harness-local validation and stopping facts, never a model tool. |
 
 Cleanup request/result v1alpha1 schemas are package members. Bind their operation
 to current campaign policy, the ordinary lane and a 30-second ceiling (also bounded
@@ -656,7 +637,7 @@ Examples and acceptance cases:
 |---|---|
 | `[restore_request, attempt_execute]`, restore succeeds | Return actual restore result and correlated `not_executed` attempt result; ask the model for its next action at the new revision. No attempt dispatch/registration. |
 | `[record_append, restore_request, observation_read, injection_delete]`, restore succeeds | Keep the record result, return restore result, skip both later calls (including the read). |
-| `[restore_request, restore_request, request_stop]`, first restore succeeds | Exactly one transition; skip the later restore and stop. Campaign remains admitted unless independently stopped. |
+| `[restore_request, restore_request, finish]`, first restore succeeds | Exactly one transition; skip the later restore and stop. Campaign remains admitted unless independently stopped. |
 | `[restore_request, attempt_execute]`, known preflight rejection | Return rejection; validate and dispatch the attempt at the unchanged revision if otherwise permitted. |
 | Restore fails/is uncertain, or terminate races with success | No later tool or model generation; preserve known results and undispatched status for reporting. |
 
@@ -665,104 +646,33 @@ single-call batches, malformed arguments in skipped calls, duplicate transition
 results, every supported provider's call-ID/name correlation and required result
 order, budget accounting and compaction preserving the complete tool segment.
 Structural vectors are in `fixtures/restore-batch-not-executed.json`; state-machine
-and dispatcher tests are implemented. Complete process and real-provider
-qualification remain outstanding.
+and dispatcher tests verify the same semantics.
 
-## 10. Structured conclusion
+## 10. Assessment and finish
 
-Publish `operator.dev/engine-conclusion/v1alpha2`, retaining `status` values
-completed/partial/failed and claim interpretations supported/inconclusive/
-not-observed. Completed describes the conclusion, not successful exploitation.
+The authoritative interface and semantic defaults are defined in
+[SIMPLE_CAMPAIGN_CONTRACT.md](SIMPLE_CAMPAIGN_CONTRACT.md). `engine.finish` accepts
+one bounded assessment draft, a committed assessment-artifact receipt, or an
+explicit unavailable reason. Operator generates binding, validates references,
+retains the assessment and starts owned finalization. Hypotheses may be defined
+locally without prior records. Omitted optional collections resolve to empty arrays;
+objective outcomes and evidence are never invented.
 
-Required groups:
+## 11. Finish acknowledgement and local diagnostics
 
-- `binding`: campaign_id, launch_id, final run_revision and exact launch input,
-  prompt, skill-set, release and contract identities. Host validates these copies.
-- `finish_reason`: objectives-addressed, no-useful-next-experiment,
-  capabilities-exhausted, budget-limit, context-limit or harness-error.
-- `summary`: bounded guest assessment, not an authoritative host outcome.
-- `objectives` and `hypotheses`: IDs, scenario/exploratory lineage, outcomes and
-  references to committed attempt/decision/coverage records.
-- `claims`: statement, interpretation, assurance and exact attempt/observation
-  references, including byte ranges when only an excerpt supports the claim.
-- `coverage`: tested and untested objectives/alternatives, with reasons.
-- `uncertainties`: unresolved effects, unavailable/truncated feedback, unread
-  inputs, summaries/omitted ranges and remaining evidence gaps.
-- `record_refs`: committed related strategy/lineage/coverage records.
+The acknowledgement MUST report acceptance, closed admission, committed/unavailable
+assessment state, five-second exit requirement and pending finalization. It MUST
+NOT imply successful cleanup. Repeated delivery returns the original receipt.
+The ordinary finish path does not require artifact publication or record append.
+Optional large assessment artifacts and bounded diagnostic reports share the
+existing finalization limits: 16 requests, 2 MiB and 30 seconds, bounded by the
+campaign deadline. Invalid assessments remain correctable before acceptance.
+Deadlines, unknown effects and loss of transport always retain independent cleanup.
 
-Initial bound: 1 MiB encoded conclusion, 8,192-character summary, 100 claims,
-100 objective/hypothesis entries each, 100 gap entries and 256 record references;
-arrays/text are additionally bounded by total encoded size. Claim field/reference ceilings are fixed by the
-[assessment contract](ASSESSMENT_CONTRACT.md). Detailed exploration history goes in
-previously committed records; overflow is explicit partial coverage, not silent
-loss. Validate known references/ranges and campaign membership, not 'truth' of
-model interpretations. No guest claim changes host execution/evidence status.
-
-Publish the conclusion through existing artifact operations, then append a
-`conclusion` record containing its committed artifact receipt and finish reason.
-The host verifies the conclusion and returns a record receipt before normal stop.
-
-## 11. Exact graceful stop request and acknowledgement
-
-Normal engine.request_stop body:
-
-```json
-{
-  "finish_reason": "objectives-addressed",
-  "conclusion": {
-    "state": "committed",
-    "artifact_receipt": "artifact-conclusion-01",
-    "record_receipt": "record-conclusion-01"
-  }
-}
-```
-
-The committed references and finish reason must agree. If the live harness cannot
-produce a conclusion, permit the explicit alternative
-`{"state":"unavailable","reason":"context-limit"}` (bounded enum: context-limit,
-budget-limit, local-error, serialization-failed). This preserves a truthful partial
-finish without fabricating receipts. It does not waive host hard deadlines.
-
-After durably accepting the finish request and closing new execution admission,
-Operator returns this ordinary correlated result:
-
-```json
-{
-  "status": "accepted",
-  "stop_receipt": "stop-01",
-  "execution_admission": "closed",
-  "conclusion_state": "committed",
-  "exit_required": true,
-  "exit_within_ms": 5000,
-  "finalization_status": "pending"
-}
-```
-
-This means the host accepted finishing and the guest must exit. It does NOT mean
-that native target cleanup/export, assessment, report generation or host-observed
-container exit has completed. Those are host campaign-status facts. The harness
-submits no further ordinary work after acceptance and exits within the deadline;
-Operator still verifies task exit and enforces teardown independently.
-
-Exact duplicates return the saved stop receipt without repeating effects; changed
-finish content under the same operation ID conflicts. The harness does not resend
-after a lost/ambiguous acknowledgement or reconnect; the host's persisted record
-remains authoritative. Exit zero alone never proves a successful campaign.
-
-Immediate/fatal host stop uses control kind `terminate` with a bounded reason,
-stop receipt when persistence is possible, and exit requirement. Delivery is best
-effort: the independent kill path does not wait for any guest acknowledgement,
-conclusion or reporting. Final target stop still obeys Operator's existing opt-in
-policy; engine.request_stop cannot change it.
-
-Reserve up to 1 MiB of the existing artifact budget and one conclusion slot for
-graceful finalization. Begin normal finalization with up to 30 seconds reserved
-inside the existing campaign hard deadline. Finalization admission permits only
-conclusion artifact/record/stop operations, not another model/target experiment.
-If time/resources are already exhausted or failure requires immediate stop, retain
-partial host records and terminate; do not extend the campaign to get a conclusion. Expected EOF and process exit following accepted
-graceful stop are normal teardown, not a new protocol failure; unexpected EOF
-while execution is admitted remains terminal failure.
+`engine.diagnostic_report` retains bounded Harness-local rejection and stopping
+facts, attributed to Harness. Host evidence separately establishes dispatch and
+cleanup. Operation errors may carry the shared workflow-diagnostic structure.
+Primary failures MUST survive generic worker shutdown and cleanup errors.
 
 ## 12. Go/Python conformance is part of publication
 
@@ -805,32 +715,24 @@ Required vectors cover:
   terminal failure and terminate arriving before the restore response; successful
   restore batch termination, correlated not-executed results, next-model-turn
   context, nonterminal preflight continuation and duplicate/stop precedence (9.1);
-- conclusion structure/references, explicit missing conclusion, stop accepted,
-  duplicate stop, lost acknowledgement and independent terminal kill.
+- assessment structure/references, explicit unavailable assessment, finish accepted,
+  duplicate finish, lost acknowledgement and independent terminal kill.
 
 A small Go fake broker and Python fake harness must exchange messages over both
-real named FIFOs and regular-file spools for startup → attempt/result → feedback read → restore → conclusion
-commit → stop. These tests qualify shared syntax/state semantics, not production
+real named FIFOs and regular-file spools for startup → attempt/result → feedback read → restore → finish. These tests qualify shared syntax/state semantics, not production
 containment, real-provider behavior or Operator runtime implementation.
 
-## 13. Publication and implementation status
+## 13. Package distribution
 
-Attempt numbering after rejection and harness-loop defaults/accounting are resolved
-by [Harness execution rules](HARNESS_EXECUTION_RULES.md). Attempt allocation and
-admission transitions have [shared semantic traces](ATTEMPT_BOOKKEEPING_CONTRACT.md);
-finite-loop/progress/finalization accounting has
-[shared semantic traces](HARNESS_LOOP_ACCOUNTING_CONTRACT.md). Durable runtime
-integration and progress/finalization timers are implemented. Complete cross-language
-process transport conformance and native qualification remain outstanding.
+The [release contract lock](../release/contract-lock.json) pins the shared package
+source, version, catalog, registry and complete content identity. The package
+contains these semantic documents as well as schemas, Go/Python validators and
+shared fixtures. Documentation changes therefore also change its digest.
+Both products MUST consume the same exact package. Distribution MUST run the
+Section 12 conformance checks and package verification before admitting a build.
 
-The package, startup/manifest flow, identity/deadline rules, completion semantics
-and physical transports are implemented. The operation registry, closed schemas,
-semantic validators, fixtures, five native codec families and host-private
-RunManifest/journal admission are available. Reproducible package build/check tooling
-is implemented. Complete Section 12 conformance before
-publishing package `0.1.0`; passing component tests or building a development
-package does not establish complete runtime qualification.
-
+[Harness execution rules](HARNESS_EXECUTION_RULES.md),
+[attempt bookkeeping](ATTEMPT_BOOKKEEPING_CONTRACT.md) and
+[loop accounting](HARNESS_LOOP_ACCOUNTING_CONTRACT.md) define admission,
+numbering, progress and finalization independently of the transport.
 Interceptor's native APIs remain separately versioned; Operator is the adapter.
-This contract introduces no additional lifecycle service, gateway, harness restart
-or authentication scheme.

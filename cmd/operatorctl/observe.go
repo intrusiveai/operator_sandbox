@@ -16,25 +16,30 @@ import (
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
+	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/startrequest"
 )
 
 type observationReceipt struct {
-	Start            *startReceipt `json:"start,omitempty"`
-	APIVersion       string        `json:"api_version"`
-	CampaignID       string        `json:"campaign_id"`
-	LaunchID         string        `json:"launch_id"`
-	ManifestDigest   string        `json:"run_manifest_digest"`
-	Verified         bool          `json:"prefix_verified"`
-	Sequence         int64         `json:"sequence"`
-	Bytes            int64         `json:"journal_bytes"`
-	Revision         int64         `json:"run_revision"`
-	LastKind         string        `json:"last_event_kind"`
-	TerminalRecorded bool          `json:"terminal_recorded"`
-	ExecutionState   string        `json:"execution_state"`
-	Emitted          int64         `json:"emitted_events"`
-	NextAfter        int64         `json:"next_after"`
-	More             bool          `json:"more_events"`
+	HarnessExit          *campaign.HarnessExit          `json:"harness_exit,omitempty"`
+	ConclusionDiagnostic *campaign.ConclusionDiagnostic `json:"conclusion_diagnostic,omitempty"`
+	WorkflowDiagnostic   *campaign.WorkflowDiagnostic   `json:"workflow_diagnostic,omitempty"`
+	ModelDiagnostic      *modelprovider.Diagnostic      `json:"model_diagnostic,omitempty"`
+	Start                *startReceipt                  `json:"start,omitempty"`
+	APIVersion           string                         `json:"api_version"`
+	CampaignID           string                         `json:"campaign_id"`
+	LaunchID             string                         `json:"launch_id"`
+	ManifestDigest       string                         `json:"run_manifest_digest"`
+	Verified             bool                           `json:"prefix_verified"`
+	Sequence             int64                          `json:"sequence"`
+	Bytes                int64                          `json:"journal_bytes"`
+	Revision             int64                          `json:"run_revision"`
+	LastKind             string                         `json:"last_event_kind"`
+	TerminalRecorded     bool                           `json:"terminal_recorded"`
+	ExecutionState       string                         `json:"execution_state"`
+	Emitted              int64                          `json:"emitted_events"`
+	NextAfter            int64                          `json:"next_after"`
+	More                 bool                           `json:"more_events"`
 }
 
 // These commands only read retained records. Neither polling nor cancellation
@@ -124,7 +129,37 @@ func observeCampaign(ctx context.Context, action string, args []string, stdout, 
 		}
 		snapshot, err := campaign.Observe(ctx, *root, *id, func(e campaign.Event) error {
 			result.Revision, result.LastKind = e.RunRevision, e.Kind
+			if e.Kind == "workflow.diagnostic" {
+				var metadata map[string]json.RawMessage
+				if json.Unmarshal(e.Metadata, &metadata) == nil {
+					result.WorkflowDiagnostic = campaign.DecodeWorkflowDiagnostic(metadata["diagnostic"])
+				}
+			}
+			if e.Kind == "model.exchange" && result.ModelDiagnostic == nil {
+				var metadata map[string]json.RawMessage
+				if json.Unmarshal(e.Metadata, &metadata) == nil {
+					result.ModelDiagnostic = modelprovider.DecodeDiagnostic(metadata["diagnostic"])
+				}
+			}
+			if (e.Kind == "conclusion.rejected" || e.Kind == "launch.terminal") && result.ConclusionDiagnostic == nil {
+				var metadata map[string]json.RawMessage
+				if json.Unmarshal(e.Metadata, &metadata) == nil {
+					result.ConclusionDiagnostic = campaign.DecodeConclusionDiagnostic(metadata["diagnostic"])
+				}
+			}
+			if e.Kind == "launch.exit" {
+				var h campaign.HarnessExit
+				if json.Unmarshal(e.Metadata, &h) == nil && h.Valid() {
+					result.HarnessExit = &h
+				}
+			}
 			if e.Kind == "launch.terminal" {
+				var m struct {
+					HarnessExit *campaign.HarnessExit `json:"harness_exit"`
+				}
+				if json.Unmarshal(e.Metadata, &m) == nil && m.HarnessExit != nil && m.HarnessExit.Valid() {
+					result.HarnessExit = m.HarnessExit
+				}
 				result.TerminalRecorded = true
 			}
 			if action == "logs" && e.Sequence > after && result.Emitted < limit {
@@ -139,6 +174,14 @@ func observeCampaign(ctx context.Context, action string, args []string, stdout, 
 			}
 			return nil
 		})
+		if result.ConclusionDiagnostic == nil && start != nil && start.Completion != nil && start.Completion.Diagnostic != nil && start.Completion.Diagnostic.Conclusion.Valid() {
+			d := start.Completion.Diagnostic.Conclusion
+			result.ConclusionDiagnostic = &d
+		}
+		if start != nil && start.Completion != nil && start.Completion.Diagnostic != nil && start.Completion.Diagnostic.Workflow.Valid() && (result.WorkflowDiagnostic == nil || start.Completion.Diagnostic.Workflow.HostFinalized) {
+			d := start.Completion.Diagnostic.Workflow
+			result.WorkflowDiagnostic = &d
+		}
 		result.LaunchID, result.ManifestDigest = snapshot.Manifest.LaunchID, snapshot.ManifestDigest
 		result.Sequence, result.Bytes = snapshot.VerifiedEvents, snapshot.VerifiedBytes
 		if result.Revision == 0 {

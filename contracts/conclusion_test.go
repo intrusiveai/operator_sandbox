@@ -24,13 +24,6 @@ func TestSharedConclusionFixtures(t *testing.T) {
 		Name       string `json:"name"`
 		Conclusion string `json:"conclusion_base64"`
 		Valid      bool   `json:"valid"`
-		Completion *struct {
-			Binding                json.RawMessage `json:"binding"`
-			ArtifactCommitResponse json.RawMessage `json:"artifact_commit_response"`
-			RecordRequest          json.RawMessage `json:"record_request"`
-			RecordResponse         json.RawMessage `json:"record_response"`
-			StopRequest            json.RawMessage `json:"stop_request"`
-		} `json:"completion"`
 	}
 	if err = json.Unmarshal(raw, &cases); err != nil {
 		t.Fatal(err)
@@ -41,11 +34,7 @@ func TestSharedConclusionFixtures(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if v := c.Completion; v != nil {
-				err = p.ValidateCompletion(CompletionInput{Conclusion: data, Binding: v.Binding, ArtifactCommitResponse: v.ArtifactCommitResponse, RecordRequest: v.RecordRequest, RecordResponse: v.RecordResponse, StopRequest: v.StopRequest})
-			} else {
-				_, err = p.ValidateConclusion(data)
-			}
+			_, err = p.ValidateConclusion(data)
 			if (err == nil) != c.Valid {
 				t.Fatalf("valid=%v want=%v error=%v", err == nil, c.Valid, err)
 			}
@@ -107,5 +96,41 @@ func TestAssessmentByteLimits(t *testing.T) {
 	}
 	if !found {
 		t.Fatal("missing record fixture")
+	}
+}
+
+func TestConclusionErrorPaths(t *testing.T) {
+	p, err := LoadProtocol(schemas.Files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	original, err := os.ReadFile("../schemas/fixtures/conclusion-example.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		name, reason, path string
+		edit               func(map[string]any)
+	}{
+		{"missing field", "invalid_structure", "/summary", func(c map[string]any) { delete(c, "summary") }},
+		{"self", "self_parent", "/hypotheses/0/provenance/parent_hypothesis_id", func(c map[string]any) {
+			h := c["hypotheses"].([]any)[0].(map[string]any)
+			h["provenance"].(map[string]any)["parent_hypothesis_id"] = h["hypothesis_id"]
+		}},
+		{"overflow", "invalid_range", "/claims/0/observation_refs/0/range", func(c map[string]any) {
+			c["claims"].([]any)[0].(map[string]any)["observation_refs"].([]any)[0].(map[string]any)["range"] = map[string]any{"offset": MaxSafeInteger, "length": 1}
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var c map[string]any
+			_ = json.Unmarshal(original, &c)
+			tc.edit(c)
+			raw, _ := json.Marshal(c)
+			_, err := p.ValidateConclusion(raw)
+			var issue *ConclusionError
+			if !errors.As(err, &issue) || issue.Reason != tc.reason || issue.FieldPath != tc.path {
+				t.Fatal(err, issue)
+			}
+		})
 	}
 }

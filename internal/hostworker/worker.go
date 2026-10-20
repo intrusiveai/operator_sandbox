@@ -18,6 +18,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 	"github.com/intrusiveai/operator_sandbox/internal/hostlifetime"
 	"github.com/intrusiveai/operator_sandbox/internal/imagerelease"
+	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/staging"
 	"github.com/intrusiveai/operator_sandbox/internal/termination"
 	"github.com/intrusiveai/operator_sandbox/internal/transport"
@@ -31,7 +32,7 @@ type Docker interface {
 	StartCreated(context.Context, string, campaign.DockerBinding, *dockercontrol.LaunchPlan) error
 	WatchEvents(context.Context, campaign.DockerBinding, time.Time) error
 	RemoveStopped(context.Context, campaign.DockerBinding) error
-	Completed(context.Context, campaign.DockerBinding) bool
+	ObserveExit(context.Context, campaign.DockerBinding) campaign.HarnessExit
 }
 
 type Config struct {
@@ -55,14 +56,18 @@ type Worker struct {
 }
 
 type Result struct {
-	StopAccepted     bool                           `json:"stop_accepted"`
-	LaunchPhase      string                         `json:"launch_phase"`
-	ContainerCleanup string                         `json:"container_cleanup"`
-	Binding          campaign.DockerBinding         `json:"binding"`
-	Terminal         campaignservice.TerminalResult `json:"terminal"`
-	Termination      termination.Receipt            `json:"termination"`
-	TransportCleanup string                         `json:"transport_cleanup"`
-	InputCleanup     string                         `json:"input_cleanup"`
+	HarnessExit          *campaign.HarnessExit          `json:"harness_exit,omitempty"`
+	ConclusionDiagnostic *campaign.ConclusionDiagnostic `json:"conclusion_diagnostic,omitempty"`
+	WorkflowDiagnostic   *campaign.WorkflowDiagnostic   `json:"workflow_diagnostic,omitempty"`
+	ModelDiagnostic      *modelprovider.Diagnostic      `json:"model_diagnostic,omitempty"`
+	StopAccepted         bool                           `json:"stop_accepted"`
+	LaunchPhase          string                         `json:"launch_phase"`
+	ContainerCleanup     string                         `json:"container_cleanup"`
+	Binding              campaign.DockerBinding         `json:"binding"`
+	Terminal             campaignservice.TerminalResult `json:"terminal"`
+	Termination          termination.Receipt            `json:"termination"`
+	TransportCleanup     string                         `json:"transport_cleanup"`
+	InputCleanup         string                         `json:"input_cleanup"`
 }
 
 // New binds fresh in-memory preparation to installed release authority and a
@@ -75,7 +80,7 @@ func New(ctx context.Context, c Config) (*Worker, error) {
 	w := c.Service.Prepared.Writer()
 	m := w.Manifest()
 	pin, _ := c.Service.Prepared.Target().Protocol().PackageIdentity()
-	if c.Image.Image.HostPlatform != c.Requirements.HostPlatform || m.HostPlatform != c.Requirements.HostPlatform || c.Requirements.Contract != pin || c.Image.Release.Digest() == "" || c.Image.Release.Digest() != m.ReleaseRecordDigest || c.Image.Release.Record().Compatible(m.ImageDigest, c.Requirements) != nil || c.Requirements.RuntimeProfile != m.RuntimeProfile {
+	if c.Image.Image.HostPlatform != c.Requirements.HostPlatform || m.HostPlatform != c.Requirements.HostPlatform || c.Requirements.Contract != pin || c.Image.Release.Digest() == "" || c.Image.Release.Digest() != m.ReleaseRecordDigest || c.Image.Release.Compatible(m.ImageDigest, c.Requirements) != nil || c.Requirements.RuntimeProfile != m.RuntimeProfile {
 		return nil, ErrWorker
 	}
 	if c.Service.Deadline.IsZero() || !c.Service.Deadline.After(time.Now()) || c.Service.Deadline.After(time.Now().Add(30*time.Minute)) {
@@ -142,6 +147,7 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 		}
 	}()
 	var service *campaignservice.Service
+	var liveService atomic.Pointer[campaignservice.Service]
 	created := false
 	var startPending atomic.Bool
 	terminalReserved := false
@@ -159,11 +165,14 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 			// Transport closure can precede the guest's final exit. Verify the
 			// zero exit only after bounded shutdown confirms the stopped container,
 			// and before removal makes the exit status unavailable.
-			if normalStop && err == nil && c.Docker.Completed(context.Background(), result.Binding) {
-				runErr = nil
-			}
 			runErr = errors.Join(runErr, err)
 			result.StopAccepted = service.StopAccepted()
+			result.ModelDiagnostic = service.ModelFailure()
+			result.ConclusionDiagnostic = service.ConclusionFailure()
+			result.WorkflowDiagnostic = service.WorkflowFailure()
+			if result.ModelDiagnostic != nil {
+				runErr = errors.Join(modelprovider.FailureError(*result.ModelDiagnostic), runErr)
+			}
 		} else if result.Binding.DockerContainerID != "" {
 			result.Termination = termination.New(c.Docker).Watch(context.Background(), fence, c.Service.StateRoot, result.Binding)
 		}
@@ -172,11 +181,68 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 			result.Termination.Outcome.State = "unknown"
 			result.Termination.Outcome.Code = "startup_outcome_unconfirmed"
 		}
+		exitRetained := true
+		if result.Binding.DockerContainerID != "" {
+			h := c.Docker.ObserveExit(context.Background(), result.Binding)
+			if h.Stderr != "" {
+				text, omission := modelprovider.SafeDiagnosticText(h.Stderr, 8<<10)
+				h.Stderr = text
+				if omission != "" {
+					h.StderrState = omission
+					if omission == "truncated" {
+						h.StderrTruncated = true
+					}
+				}
+			}
+			h.FinishAccepted = result.StopAccepted
+			if service != nil {
+				h.AssessmentCommitted = service.AssessmentCommitted()
+			}
+			h.Forced = result.Termination.Outcome.KillAttempted
+			h.WorkerCause = workerCause(runErr)
+			h.Outcome = "failed"
+			if !h.ExitObserved {
+				h.Outcome = "unconfirmed"
+			}
+			if normalStop && h.ExitObserved && h.ExitCode == 0 && !h.Forced && ctx.Err() == nil && result.Termination.Outcome.Confirmed {
+				runErr = err // retain any independent finalization failure
+				h.Outcome = "succeeded"
+			}
+			if result.ModelDiagnostic != nil {
+				h.Outcome = "failed"
+				h.Cause = result.ModelDiagnostic.Summary()
+			}
+			if result.WorkflowDiagnostic != nil && result.WorkflowDiagnostic.Stopping != "" {
+				h.Outcome = "failed"
+				h.Cause = result.WorkflowDiagnostic.Message()
+			}
+			if h.Cause == "" && h.ExitObserved && h.ExitCode != 0 {
+				h.Cause, _ = modelprovider.SafeDiagnosticText(h.Stderr, 180)
+			}
+			if len(h.Cause) > 256 {
+				h.Cause, _ = modelprovider.SafeDiagnosticText(h.Cause, 256)
+			}
+			h.Details = "campaign journal event launch.exit"
+			result.HarnessExit = &h
+			if h.Outcome != "succeeded" {
+				runErr = errors.Join(runErr, errors.New(h.Summary()))
+			}
+			raw, _ := json.Marshal(h)
+			entry := campaign.Entry{RunRevision: writer.Revision(), Kind: "launch.exit", Metadata: raw}
+			var saveErr error
+			if terminalReserved {
+				_, saveErr = writer.AppendReserved(entry, "launch-terminal", false)
+			} else {
+				_, saveErr = writer.Append(entry)
+			}
+			exitRetained = saveErr == nil
+			runErr = errors.Join(runErr, saveErr)
+		}
 		_ = c.Channel.Close()
 		// Unknown create may have left a stopped container retaining these mounts.
 		// Unknown termination may still have live execution. Preserve both explicitly.
 		safe := !created || result.Termination.Outcome.Confirmed
-		if result.Termination.Outcome.Confirmed {
+		if result.Termination.Outcome.Confirmed && exitRetained {
 			if err = c.Docker.RemoveStopped(context.Background(), result.Binding); err == nil {
 				result.ContainerCleanup = "removed"
 			} else {
@@ -198,11 +264,31 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 		}
 		runErr = errors.Join(runErr, w.plan.Discard())
 		runErr = errors.Join(runErr, ctx.Err())
+		if result.HarnessExit != nil {
+			result.HarnessExit.CleanupComplete = cleanupCompleted(result)
+		}
 		if runErr == nil && !completedResult(result) {
 			runErr = ErrWorker
 		}
+		if result.WorkflowDiagnostic != nil && result.Terminal.Dispatched != nil {
+			result.WorkflowDiagnostic.HostFinalized = true
+			result.WorkflowDiagnostic.Dispatched = *result.Terminal.Dispatched
+			result.WorkflowDiagnostic.AssessmentAccepted = result.Terminal.AssessmentState == "committed"
+			result.WorkflowDiagnostic.CleanupCompleted = cleanupCompleted(result)
+		}
+		if result.WorkflowDiagnostic != nil && (runErr != nil && !result.StopAccepted || result.WorkflowDiagnostic.Stopping != "") {
+			runErr = errors.Join(*result.WorkflowDiagnostic, runErr)
+		}
+		if runErr != nil && result.ConclusionDiagnostic != nil && !result.StopAccepted {
+			runErr = errors.Join(*result.ConclusionDiagnostic, runErr)
+		}
 		raw, _ := json.Marshal(result)
-		entry := campaign.Entry{RunRevision: writer.Revision(), Kind: "launch.terminal", Metadata: json.RawMessage(`{"execution_admission":"closed"}`), Content: []campaign.Content{{Role: "launch-result", MediaType: "application/json", Bytes: raw}}}
+		metadata, _ := json.Marshal(struct {
+			ExecutionAdmission string                         `json:"execution_admission"`
+			Diagnostic         *campaign.ConclusionDiagnostic `json:"diagnostic,omitempty"`
+			HarnessExit        *campaign.HarnessExit          `json:"harness_exit,omitempty"`
+		}{"closed", result.ConclusionDiagnostic, result.HarnessExit})
+		entry := campaign.Entry{RunRevision: writer.Revision(), Kind: "launch.terminal", Metadata: metadata, Content: []campaign.Content{{Role: "launch-result", MediaType: "application/json", Bytes: raw}}}
 		var recordErr error
 		if terminalReserved {
 			_, recordErr = writer.AppendReserved(entry, "launch-terminal", true)
@@ -227,7 +313,7 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 	if mountErr != nil {
 		return result, mountErr
 	}
-	metadata, _ := json.Marshal(map[string]any{"start_request_id": c.StartRequestID, "image_id": c.Image.Image.ImageID, "endpoint": c.Image.Image.Endpoint, "daemon_id": c.Image.Image.DaemonID, "input_directory": c.Tree.Directory(), "transport_mounts": mounts})
+	metadata, _ := json.Marshal(map[string]any{"binding_version": campaign.SelectedImageBindingVersion, "image_reference": c.Image.Image.ReferenceForDocker(), "image_platform": c.Image.Image.ImagePlatform, "start_request_id": c.StartRequestID, "image_id": c.Image.Image.ImageID, "endpoint": c.Image.Image.Endpoint, "daemon_id": c.Image.Image.DaemonID, "input_directory": c.Tree.Directory(), "transport_mounts": mounts})
 	if _, err = writer.AppendReserving(campaign.Entry{RunRevision: m.InitialRevision, Kind: "launch.start-intent", Metadata: metadata, Content: []campaign.Content{{Role: "release", MediaType: "application/json", Bytes: c.Image.Release.Bytes()}}}, "launch-terminal", 1<<20); err != nil {
 		return result, err
 	}
@@ -245,7 +331,12 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 		return result, err
 	}
 	c.Service.Docker = result.Binding
-	c.Service.Runtime = guardedRuntime{Docker: c.Docker, power: w.power, startPending: &startPending}
+	c.Service.Runtime = guardedRuntime{Docker: c.Docker, power: w.power, startPending: &startPending, parent: ctx, fence: fence, exitDeadline: func() time.Time {
+		if s := liveService.Load(); s != nil {
+			return s.ExitDeadline()
+		}
+		return time.Time{}
+	}}
 	c.Service.Deadline = w.config.Service.Deadline
 	originalCheck := c.Service.CheckHost
 	c.Service.CheckHost = func() error {
@@ -263,6 +354,7 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 		startPending.Store(false)
 		return result, err
 	}
+	liveService.Store(service)
 	binding := result.Binding
 	go func() {
 		err := c.Docker.WatchEvents(life, binding, since)
@@ -325,6 +417,9 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 			err = c.Docker.CheckRunning(probe, result.Binding)
 			done()
 			if err != nil {
+				if life.Err() != nil && errors.Is(err, life.Err()) {
+					return result, stopCause(life, fence)
+				}
 				return result, err
 			}
 		}
@@ -335,6 +430,9 @@ type guardedRuntime struct {
 	Docker
 	power        *hostlifetime.Manager
 	startPending *atomic.Bool
+	parent       context.Context
+	fence        *campaign.Fence
+	exitDeadline func() time.Time
 }
 
 // Fence shutdown cancels the local context too. Retain its original cause
@@ -348,14 +446,40 @@ func stopCause(life context.Context, fence *campaign.Fence) error {
 }
 
 func normalStopCause(ctx context.Context, accepted bool, err error) bool {
-	return ctx.Err() == nil && accepted && (errors.Is(err, dockercontrol.ErrEvents) ||
-		errors.Is(err, dockercontrol.ErrNotRunning) || errors.Is(err, transport.ErrClosed) ||
-		errors.Is(err, campaignservice.ErrService))
+	return ctx.Err() == nil && accepted && (err == nil || err == dockercontrol.ErrExited || err == dockercontrol.ErrNotRunning || err == transport.ErrClosed || err == transport.ErrPeerLost)
+}
+
+func workerCause(err error) string {
+	switch {
+	case err == nil:
+		return "none"
+	case errors.Is(err, transport.ErrPeerLost):
+		return "transport_peer_lost"
+	case errors.Is(err, transport.ErrClosed):
+		return "transport_closed"
+	case errors.Is(err, dockercontrol.ErrExited):
+		return "docker_exit_notification"
+	case errors.Is(err, dockercontrol.ErrEvents):
+		return "docker_events_lost_or_interrupted"
+	case errors.Is(err, dockercontrol.ErrNotRunning):
+		return "container_not_running"
+	case errors.Is(err, context.DeadlineExceeded), errors.Is(err, transport.ErrDeadline):
+		return "deadline_exceeded"
+	case errors.Is(err, context.Canceled):
+		return "canceled"
+	default:
+		return "independent_worker_failure_details_omitted"
+	}
 }
 
 func completedResult(r Result) bool {
-	return r.StopAccepted && r.Termination.Outcome.Confirmed && !r.Termination.Outcome.KillAttempted &&
-		r.Termination.Outcome.State == "exited" && r.ContainerCleanup == "removed" &&
+	return r.HarnessExit != nil && r.HarnessExit.Outcome == "succeeded" && r.HarnessExit.ExitObserved && r.HarnessExit.ExitCode == 0 && r.StopAccepted && !r.Termination.Outcome.KillAttempted && r.Termination.Outcome.State == "exited" && cleanupCompleted(r)
+}
+
+// Cleanup can complete after a failed/terminated campaign without implying a
+// successful finish or a natural Harness exit.
+func cleanupCompleted(r Result) bool {
+	return r.Termination.Outcome.Confirmed && r.ContainerCleanup == "removed" &&
 		r.TransportCleanup == "removed" && r.InputCleanup == "removed" &&
 		(r.Terminal.Closure == "confirmed" || r.Terminal.Closure == "not-applicable") &&
 		(r.Terminal.CleanupState == "complete" || r.Terminal.CleanupState == "not-needed") &&
@@ -374,6 +498,22 @@ func (r guardedRuntime) CheckRunning(ctx context.Context, b campaign.DockerBindi
 // start will not execute. Preserve uncertainty in the durable termination receipt.
 func (r guardedRuntime) Terminate(ctx context.Context, b campaign.DockerBinding) dockercontrol.Outcome {
 	pending := r.startPending.Load()
+	// A closed accepted-finish connection fences new work immediately, but the
+	// guest still owns the remainder of its original five-second exit allowance.
+	if r.exitDeadline != nil && r.parent.Err() == nil && (r.fence.Err() == transport.ErrPeerLost || r.fence.Err() == transport.ErrClosed) {
+		until := r.exitDeadline()
+		wait, cancel := context.WithDeadline(r.parent, until)
+		for time.Now().Before(until) && wait.Err() == nil {
+			if r.Docker.CheckRunning(wait, b) != nil {
+				break
+			}
+			select {
+			case <-wait.Done():
+			case <-time.After(20 * time.Millisecond):
+			}
+		}
+		cancel()
+	}
 	out := r.Docker.Terminate(ctx, b)
 	if pending || r.startPending.Load() {
 		out.Confirmed = false

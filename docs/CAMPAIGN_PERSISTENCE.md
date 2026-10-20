@@ -1,9 +1,8 @@
 # Host campaign persistence
 
-Status: implemented in Go under `internal/campaign`. This package provides
-persistence; Docker launch, tool dispatch and harness orchestration are implemented
-in its [host worker](HOST_LAUNCH.md) and [campaign service](CAMPAIGN_SERVICE.md) callers.
-The shared host/harness wire contract remains separately versioned.
+The campaign store provides durable persistence. Its [host worker](HOST_LAUNCH.md)
+and [campaign service](CAMPAIGN_SERVICE.md) callers manage Docker launch, dispatch
+and Harness orchestration. The shared wire contract is separately versioned.
 
 ## Immutable launch records
 
@@ -33,7 +32,7 @@ authenticate a publisher, select policy, or inspect the native session. Callers
 must establish those facts independently and verify the actual staged files.
 
 After Docker create, save `launch/docker-binding.json` using
-`operator.dev/docker-binding/v1alpha1`. It contains campaign, launch and shared
+`operator.dev/docker-binding/v1alpha2`. It contains campaign, launch and shared
 container IDs, run-manifest digest, full Docker container ID, image ID, selected
 local `unix:///absolute/socket` endpoint, Docker daemon ID and required labels:
 
@@ -42,6 +41,13 @@ ai.intrusive.operator.campaign  = campaign_id
 ai.intrusive.operator.launch    = launch_id
 ai.intrusive.operator.container = container_id
 ```
+
+Version 2 compares the selected platform manifest descriptor when Docker provides
+one, otherwise the classic store image ID. Existing version 1 records retain
+their literal container `.Image` comparison; they MUST NOT be rewritten or
+reinterpreted. The start intent records `binding_version` before create, and
+recovery MUST preserve it. An absent version in an old intent means version 1.
+An unknown version MUST fail closed.
 
 Persist this record before Docker start. An identical save is idempotent; a
 different binding is rejected. Never derive recovery's daemon endpoint from the
@@ -181,7 +187,7 @@ never returns execution permission or an open writer. Recovery remains cleanup
 and reporting only, including when all persisted records are intact. [Startup recovery](STARTUP_RECOVERY.md) now integrates separate cleanup and
 reconciliation records with the host lifecycle.
 
-## Validation and remaining integration
+## Validation
 
 Tests cover all four platform/transport manifests; real shared launch fixtures;
 identity reads while the writer mutex is held; immutable campaign/launch identity;
@@ -200,5 +206,4 @@ and signals a lock-independent terminal fence. The
 and emergency records; the launcher and broker integrate terminal checks before
 admission and dispatch. Reservations protect the logical write budget, not physical
 disk space against other host writers. [Transport](HOST_TRANSPORT.md), service
-timers, reporting and Attack Harness runtime integration are implemented. Campaign
-purge is implemented; full runtime qualification remains outstanding.
+timers, reporting and Attack Harness runtime integration are implemented.
