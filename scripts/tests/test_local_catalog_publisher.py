@@ -55,13 +55,15 @@ class LocalCatalogIntegrationTest(unittest.TestCase):
         release.sync_catalog(github, "v1.2.3", FIRST)
         first = json.loads(publisher.get(publisher.key))["releases"][0]
         self.assertEqual(first["tags"], ["rc"])
+        self.assertEqual(first["contract_package_version"], "0.2.1")
         self.assertEqual(len(first["artifacts"]), 4)
 
         github.head = SECOND
-        fixture.publish(SECOND)
+        fixture.publish(SECOND, contract_version="0.2.2")
         release.sync_catalog(github, "v1.2.3", SECOND)
         candidate = json.loads(publisher.get(publisher.key))["releases"][0]
         self.assertNotEqual(candidate["artifacts"], first["artifacts"])
+        self.assertEqual(candidate["contract_package_version"], "0.2.2")
         package_assets = {k: v for k, v in github.uploaded.items() if k != release.CATALOG_ASSET}
 
         github.pr = pull(SECOND)
@@ -72,6 +74,7 @@ class LocalCatalogIntegrationTest(unittest.TestCase):
         self.assertEqual([e["version"] for e in entries], ["v1.2.3", "v0.9.0"])
         self.assertEqual(entries[0]["tags"], ["release"])
         self.assertEqual(entries[0]["artifacts"], candidate["artifacts"])
+        self.assertEqual(entries[0]["contract_package_version"], "0.2.2")
         self.assertEqual(github.tag, SECOND)
         self.assertEqual({k: v for k, v in github.uploaded.items() if k != release.CATALOG_ASSET}, package_assets)
 
@@ -79,13 +82,14 @@ class LocalCatalogIntegrationTest(unittest.TestCase):
         self.assertEqual(publisher.get(publisher.key), promoted)
         publisher.publish(candidate, success=False)
         publisher.publish(dict(first, tags=["release"]), success=False)
+        publisher.publish(dict(candidate, tags=["release"], contract_package_version="0.2.1"), success=False)
         self.assertEqual(publisher.get(publisher.key), promoted)
 
     def test_export_matches_reviewed_provenance(self):
         manifest = json.loads((PUBLISHER / "publisher-source.json").read_text())
         self.assertEqual(manifest["product"], "operator_sandbox")
         self.assertFalse(manifest["working_tree"])
-        self.assertEqual(manifest["source_revision"], "c651c5fa47346f1ca02abe33791667f838b59e03")
+        self.assertEqual(manifest["source_revision"], "0a88c3564b5266581dc94d3f1ce71880cac2376a")
         for path, expected in manifest["sha256"].items():
             with self.subTest(path=path):
                 self.assertEqual(hashlib.sha256((PUBLISHER / path).read_bytes()).hexdigest(), expected)

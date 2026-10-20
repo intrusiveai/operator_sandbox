@@ -39,6 +39,9 @@ func MergeCatalogEntry(productID string, current, entryJSON []byte) ([]byte, err
 	if err := decode(entryJSON, &entry); err != nil {
 		return nil, fmt.Errorf("decode catalog entry: %w", err)
 	}
+	if product.UsesSharedContract() && entry.ContractPackageVersion == "" {
+		return nil, errors.New("catalog publication requires contract_package_version from the released artifact")
+	}
 	// latest is a property of the merged catalog, not a caller-selected position.
 	entry.Latest = true
 	if product.Kind == "oci_image" && entry.Digest == "" {
@@ -52,6 +55,14 @@ func MergeCatalogEntry(productID string, current, entryJSON []byte) ([]byte, err
 		index.Releases = append([]Entry{entry}, index.Releases...)
 	} else {
 		existing := index.Releases[position]
+		if existing.ContractPackageVersion != entry.ContractPackageVersion {
+			// Completing missing metadata is separate from promotion and preserves visibility.
+			metadataOnly := existing.ContractPackageVersion == "" && sameReleaseArtifacts(existing, entry) && slices.Equal(existing.Tags, entry.Tags)
+			rebuiltCandidate := !slices.Contains(existing.Tags, "release") && !slices.Contains(entry.Tags, "release") && !sameReleaseArtifacts(existing, entry)
+			if !metadataOnly && !rebuiltCandidate {
+				return nil, errors.New("contract_package_version must retain the artifact's identity through promotion and final publication")
+			}
+		}
 		if slices.Contains(existing.Tags, "release") && (!slices.Contains(entry.Tags, "release") || !sameReleaseArtifacts(existing, entry)) {
 			return nil, errors.New("cannot demote or replace the artifacts of a published release")
 		}

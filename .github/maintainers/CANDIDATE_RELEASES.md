@@ -337,6 +337,20 @@ inventory and GitHub-reported SHA-256 digests for promotion checks.
 inventory. It is regenerated from actual GitHub asset URLs and hashes, and its
 label changes on promotion while the packages remain unchanged.
 
+Operator entries also contain `contract_package_version`, the exact shared package
+version recorded by all four verified host manifests. It is independent of the
+Operator product version: for example, Operator `v0.1.2` can ship contract `0.2.1`.
+The generator downloads `candidate.json`, verifies its published SHA-256 and its
+source/version/archive digest bindings, and uses its `contract.package_version`.
+Do not supply a version from the current checkout or edit it into the catalog by
+hand. Missing, malformed, or disagreeing build versions block publication.
+Promotion retains this version and the archive identities.
+
+After publication, check `contract_package_version` in the public catalog against
+the release's `candidate.json`. After stable promotion, also check the website's
+**Shared contract: <version>** indicator. Matching displayed versions do not replace
+Operator's exact contract-digest compatibility checks.
+
 ## Catalog publication and recovery
 
 The parent release workflow uploads `release-index-entry.json`, dispatches
@@ -412,7 +426,7 @@ publish or configure GitHub, AWS, the releases service, or the public website.
 ## Updating the local publisher
 
 `tools/release-publisher` is the complete catalog-only export from reviewed
-releases commit `c651c5fa47346f1ca02abe33791667f838b59e03`.
+releases commit `0a88c3564b5266581dc94d3f1ce71880cac2376a`.
 `publisher-source.json` records the source revision and each file's SHA-256.
 The private module name is only a local Go import namespace; publication runs
 with `GOWORK=off`, `GOPROXY=off`, and `GOTOOLCHAIN=local` and fetches no private code.
@@ -431,7 +445,13 @@ maintenance tooling, separate from the installed Operator binaries.
    while retaining Operator's actual-release and promotion checks.
 3. Run `make test`. Go 1.26.5, Bash, jq, curl, and Python 3 are required locally;
    publication additionally needs AWS CLI v2 with conditional `put-object`.
-4. Review and commit the bundle, workflow, and any updated setup instructions.
-   Deliver them to both `main` and the next candidate before its tag is built.
+4. Review and commit the bundle, generator, and any updated setup instructions on
+   a branch based on current `main`, then include them in the next candidate before
+   its tag is built. Candidate promotion carries the changes into `main`. If new
+   workflow registration is needed, merge that workflow setup into `main` first;
+   the existing catalog workflow needs no registration change for this field.
+   Do not move stable tags or rerun their older publishers against catalogs with
+   the new field: those strict decoders do not recognize it. Use a new patch
+   candidate containing the reviewed publisher. Existing catalog history is retained.
    Confirm live OIDC and public delivery using step 7; local tests alone cannot
    establish deployment readiness.

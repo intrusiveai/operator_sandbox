@@ -15,6 +15,8 @@ PLATFORMS = {"linux/amd64", "linux/arm64", "darwin/amd64", "darwin/arm64"}
 VERSION = r"(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})"
 MARKER = "<!-- operator-candidate-release/v1 -->"
 CATALOG_ASSET = "release-index-entry.json"
+INVENTORY_ASSET = "candidate.json"
+INVENTORY_LIMIT = 64 * 1024
 
 
 def candidate_version(branch):
@@ -52,7 +54,16 @@ def check_candidates(hosts):
     identity = [(h["version"], h["source_commit"], h["contract"]) for h in hosts]
     if any(item != identity[0] for item in identity):
         raise ValueError("host source/version/contract identities differ")
+    contract_version(identity[0][2])
     return identity[0][0]
+
+
+def contract_version(contract):
+    version = contract.get("package_version") if isinstance(contract, dict) else None
+    if (not isinstance(version, str) or len(version) > 128 or
+            not re.fullmatch(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", version)):
+        raise ValueError("build contract.package_version must be an exact major.minor.patch version")
+    return version
 
 
 class GitHub:
@@ -83,6 +94,13 @@ class GitHub:
             subprocess.run(["gh", "release", "download", tag, "--repo", self.repository,
                             "--pattern", CATALOG_ASSET, "--dir", directory], check=True)
             return json.loads((Path(directory) / CATALOG_ASSET).read_text())
+
+    def download_inventory(self, tag):
+        with tempfile.TemporaryDirectory(prefix="operator-inventory-") as directory:
+            subprocess.run(["gh", "release", "download", tag, "--repo", self.repository,
+                            "--pattern", INVENTORY_ASSET, "--dir", directory], check=True)
+            with (Path(directory) / INVENTORY_ASSET).open("rb") as stream:
+                return stream.read(INVENTORY_LIMIT + 1)
 
     def release(self, tag):
         return self.api("releases/tags/" + tag, missing=True)
@@ -144,6 +162,19 @@ def verify_uploaded(github, release, digests):
             raise ValueError("uploaded release asset digest differs")
 
 
+def verify_inventory(raw, record):
+    """Bind the verified build's contract to precisely the published archive bytes."""
+    if len(raw) > INVENTORY_LIMIT or "sha256:" + hashlib.sha256(raw).hexdigest() != record["assets"][INVENTORY_ASSET]:
+        raise ValueError("candidate inventory exceeds its bound or differs from its published digest")
+    inventory = json.loads(raw)
+    if (not isinstance(inventory, dict) or inventory.get("version") != record["version"] or
+            inventory.get("source_commit") != record["source_commit"] or
+            inventory.get("assets") != {k: v for k, v in record["assets"].items() if k != INVENTORY_ASSET}):
+        raise ValueError("candidate inventory does not describe the published source and artifacts")
+    contract_version(inventory.get("contract"))
+    return inventory
+
+
 def catalog_entry(github, tag, source):
     if github.repository != "intrusiveai/operator_sandbox":
         raise ValueError("catalog publication is restricted to Operator's repository")
@@ -157,6 +188,7 @@ def catalog_entry(github, tag, source):
     if set(record["assets"]) != expected_assets():
         raise ValueError("catalog requires all package assets")
     verify_uploaded(github, release, record["assets"])
+    inventory = verify_inventory(github.download_inventory(tag), record)
     if not release["prerelease"]:
         number = record.get("promotion_pr")
         if type(number) is not int or number < 1:
@@ -176,7 +208,7 @@ def catalog_entry(github, tag, source):
         artifacts.append({"platform": platform, "filename": name, "url": asset["browser_download_url"],
                           "sha256": asset["digest"].removeprefix("sha256:")})
     return {"version": tag, "latest": True, "tags": ["rc" if release["prerelease"] else "release"],
-            "artifacts": artifacts}
+            "contract_package_version": contract_version(inventory["contract"]), "artifacts": artifacts}
 
 
 def catalog_context(github, tag, source):
@@ -233,7 +265,13 @@ def publish(github, branch, source, inventory, files):
     digests = {f.name: checksum(f) for f in files}
     if set(digests) != expected_assets():
         raise ValueError("candidate file set is incomplete")
-    body = MARKER + "\n" + json.dumps({"version": version, "source_commit": source, "assets": digests}, sort_keys=True)
+    record = {"version": version, "source_commit": source, "assets": digests}
+    inventory_file = next(f for f in files if f.name == INVENTORY_ASSET)
+    with inventory_file.open("rb") as stream:
+        saved = verify_inventory(stream.read(INVENTORY_LIMIT + 1), record)
+    if saved != inventory:
+        raise ValueError("candidate inventory differs from the verified build")
+    body = MARKER + "\n" + json.dumps(record, sort_keys=True)
     # A failed upload remains a draft. Promotion never accepts incomplete files.
     if release:
         github.api(f"releases/{release['id']}", "PATCH", {"draft": True})
@@ -284,6 +322,7 @@ def promote(github, number):
     if candidate_tree != merged_tree:
         raise ValueError("main merge changed the candidate tree; merge main into the candidate and rebuild before release")
     verify_uploaded(github, release, record["assets"])
+    verify_inventory(github.download_inventory("v" + version), record)
     promoted_record = dict(record, promotion_pr=number)
     body = MARKER + "\n" + json.dumps(promoted_record, sort_keys=True)
     if not release["prerelease"]:
