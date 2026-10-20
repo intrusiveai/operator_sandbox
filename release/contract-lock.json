@@ -2,16 +2,16 @@
   "api_version": "operator.dev/host-contract-lock/v1alpha1",
   "source": {
     "repository": "https://github.com/intrusiveai/operator_sandbox.git",
-    "commit": "850fa97624171a24189084964859893a731bdc4e",
-    "tree": "bf4232c445c748bc9afca83928c14d9d6ceb0259"
+    "commit": "754b7119f49850727c6df506f050eae11d7af915",
+    "tree": "0a13cb86dde4ae2605a9f3ce0d17638cc3f500c3"
   },
   "package": {
-    "package_version": "0.2.0",
-    "package_digest": "sha256:057c4a53997b94bcd8ae18012daca4ec4610cd26abab9f32f748867362b422ee",
+    "package_version": "0.2.1",
+    "package_digest": "sha256:6ecefb5354a4fe2d1baf591bace2fb8457d87106f6a8f99ebc9c9abede4a98d9",
     "catalog_digest": "sha256:23f442999833f355a6aa8161be95eee6143739b1eaa60e1c04dc19f15f098074",
     "operations_digest": "sha256:bca8a8e04c0d2ac2db45a79b0a04a5da73f5a99ee639ce805867addd86600dde",
     "file_count": 297,
-    "content_bytes": 7422176
+    "content_bytes": 7418142
   },
-  "publisher": "go run ./cmd/operatorctl contract build --source <operator-root> --output <new-directory> --package-version 0.2.0"
+  "publisher": "go run ./cmd/operatorctl contract build --source <operator-root> --output <new-directory> --package-version 0.2.1"
 }
