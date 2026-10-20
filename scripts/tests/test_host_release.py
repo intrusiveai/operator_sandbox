@@ -42,6 +42,20 @@ class ReleaseMetadataTest(unittest.TestCase):
             self.assertNotEqual(subprocess.run(command, capture_output=True).returncode, 0)
 
 class PublicationPreflightTest(unittest.TestCase):
+    def test_contract_version_is_required_and_exact(self):
+        from publish_host_release import contract_version, check_candidates, PLATFORMS
+        for version in (None, 123, "", "v0.2.1", "01.2.1", "0.2", "0.2.1-rc1", "0.2.1+build", "0.2.1\n", "^0.2.1", "1" * 125 + ".0.0"):
+            with self.subTest(version=version):
+                with self.assertRaises(ValueError):
+                    contract_version({"package_version": version})
+        self.assertEqual(contract_version({"package_version": "0.2.1"}), "0.2.1")
+        boundary = "1" * 124 + ".0.0"
+        self.assertEqual(contract_version({"package_version": boundary}), boundary)
+        for contract in (None, {}, {"package_version": ""}):
+            hosts = [{"platform": p, "version": "1.2.3", "source_commit": "a" * 40, "contract": contract} for p in PLATFORMS]
+            with self.assertRaises(ValueError):
+                check_candidates(hosts)
+
     def test_public_asset_names_identify_product_and_platform(self):
         from publish_host_release import expected_assets, asset_stem
         stems = {
@@ -65,6 +79,10 @@ class PublicationPreflightTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             check_candidates(hosts)
         hosts[0]["source_commit"] = "a" * 40
+        hosts[0]["contract"]["package_version"] = "0.2.2"
+        with self.assertRaises(ValueError):
+            check_candidates(hosts)
+        hosts[0]["contract"]["package_version"] = "0.0.0"
         hosts[0]["contract"]["package_digest"] = "sha256:" + "b" * 64
         with self.assertRaises(ValueError):
             check_candidates(hosts)

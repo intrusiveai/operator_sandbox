@@ -53,6 +53,9 @@ class GitHubFixture:
             if self.fail_upload and index == 1:
                 raise RuntimeError("simulated upload interruption")
 
+    def download_inventory(self, tag):
+        return self.uploaded[release.INVENTORY_ASSET]
+
     def api(self, path, method="GET", data=None, missing=False):
         self.calls.append((path, method, copy.deepcopy(data)))
         if path == "git/ref/heads/" + self.branch:
@@ -94,17 +97,23 @@ class CandidateWorkflowTest(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.github = GitHubFixture()
 
-    def publish(self, source=FIRST):
+    def publish(self, source=FIRST, contract_version="0.2.1"):
         context = release.event_context({}, "push", "refs/heads/" + BRANCH, source, REPO)
         self.assertEqual(context["mode"], "publish")
         files = []
-        for name in sorted(release.expected_assets()):
+        for name in sorted(release.expected_assets() - {release.INVENTORY_ASSET}):
             path = self.root / name
             path.write_bytes((name + ":" + source).encode())
             files.append(path)
+        inventory = {"version": context["version"], "source_commit": source,
+                     "contract": {"package_version": contract_version, "package_digest": "sha256:" + "a" * 64},
+                     "assets": {f.name: release.checksum(f) for f in files}}
+        path = self.root / release.INVENTORY_ASSET
+        path.write_text(json.dumps(inventory))
+        files.append(path)
         self.github.prepare_replacement()
         return release.publish(self.github, context["branch"], context["source"],
-                               {"version": context["version"], "source_commit": source}, files)
+                               inventory, files)
 
     def test_push_replace_merge_promotes_exact_same_bytes_and_tag(self):
         self.assertEqual(self.publish(), "prerelease-published")
@@ -129,6 +138,13 @@ class CandidateWorkflowTest(unittest.TestCase):
         self.github.head = SECOND
         self.assertEqual(self.publish(), "superseded")
         self.assertIsNone(self.github.current)
+
+    def test_invalid_contract_is_rejected_before_github_writes(self):
+        with self.assertRaisesRegex(ValueError, "contract.package_version"):
+            self.publish(contract_version="v0.2.1")
+        self.assertIsNone(self.github.current)
+        self.assertFalse(self.github.uploaded)
+        self.assertTrue(all(method == "GET" for _, method, _ in self.github.calls))
 
     def test_interrupted_upload_is_draft_and_retry_repairs_it(self):
         self.github.fail_upload = True

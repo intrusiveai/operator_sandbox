@@ -65,6 +65,7 @@ class CatalogTest(unittest.TestCase):
         self.assertTrue(result.endswith("/123"))
         candidate = self.github.public_catalog
         self.assertEqual(candidate["tags"], ["rc"])
+        self.assertEqual(candidate["contract_package_version"], "0.2.1")
         self.assertEqual({a["platform"] for a in candidate["artifacts"]}, release.PLATFORMS)
         for artifact in candidate["artifacts"]:
             self.assertEqual(artifact["filename"],
@@ -76,6 +77,7 @@ class CatalogTest(unittest.TestCase):
         stable = self.github.public_catalog
         self.assertEqual(stable["tags"], ["release"])
         self.assertEqual(stable["artifacts"], candidate["artifacts"])
+        self.assertEqual(stable["contract_package_version"], candidate["contract_package_version"])
         self.assertEqual({k:v for k,v in self.github.uploaded.items() if k != release.CATALOG_ASSET}, packages)
         self.assertEqual(self.github.dispatched[-1]["ref"], "v1.2.3")
         # A retry derives release status from GitHub; it cannot revert to rc.
@@ -139,6 +141,39 @@ class CatalogTest(unittest.TestCase):
         self.github.assets = altered
         with self.assertRaisesRegex(ValueError, "URL"):
             release.catalog_entry(self.github, "v1.2.3", FIRST)
+
+    def test_inventory_download_digest_and_binding_are_verified(self):
+        original = self.github.download_inventory("v1.2.3")
+        for data in (b"{}", b"x" * (release.INVENTORY_LIMIT + 1)):
+            with patch.object(self.github, "download_inventory", return_value=data):
+                with self.assertRaisesRegex(ValueError, "inventory"):
+                    release.catalog_entry(self.github, "v1.2.3", FIRST)
+        inventory = json.loads(original)
+        record = json.loads(self.github.current["body"].removeprefix(release.MARKER + "\n"))
+        for field, bad in (("version", "9.9.9"), ("source_commit", "c" * 40), ("assets", {})):
+            changed = dict(inventory, **{field: bad})
+            raw = json.dumps(changed).encode()
+            # Even a correctly hashed receipt must describe the same artifacts.
+            revised_record = dict(record, assets=dict(record["assets"]))
+            revised_record["assets"][release.INVENTORY_ASSET] = "sha256:" + release.hashlib.sha256(raw).hexdigest()
+            with self.assertRaisesRegex(ValueError, "does not describe"):
+                release.verify_inventory(raw, revised_record)
+
+    def test_invalid_contract_blocks_publication_and_promotion(self):
+        inventory = json.loads(self.github.download_inventory("v1.2.3"))
+        del inventory["contract"]["package_version"]
+        raw = json.dumps(inventory).encode()
+        self.github.uploaded[release.INVENTORY_ASSET] = raw
+        record = json.loads(self.github.current["body"].removeprefix(release.MARKER + "\n"))
+        record["assets"][release.INVENTORY_ASSET] = "sha256:" + release.hashlib.sha256(raw).hexdigest()
+        self.github.current["body"] = release.MARKER + "\n" + json.dumps(record)
+        with self.assertRaisesRegex(ValueError, "contract.package_version"):
+            release.sync_catalog(self.github, "v1.2.3", FIRST)
+        self.github.pr = pull(FIRST)
+        with self.assertRaisesRegex(ValueError, "contract.package_version"):
+            release.promote(self.github, 42)
+        self.assertTrue(self.github.current["prerelease"])
+        self.assertEqual(self.github.dispatched, [])
 
 
 if __name__ == "__main__":

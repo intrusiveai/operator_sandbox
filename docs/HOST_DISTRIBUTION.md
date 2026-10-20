@@ -192,7 +192,15 @@ block promotion. Repeated promotion of the same release MUST be harmless.
 The publisher MUST retain the four archives, per-platform checksums,
 and a `candidate.json` inventory identifying source/version/contract and
 archive digests. A separate mutable `release-index-entry.json` MUST describe the
-four actual GitHub archive URLs, filenames and hashes. The workflow MUST publish
+four actual GitHub archive URLs, filenames and hashes, plus
+`contract_package_version` from the verified host manifests' `contract.package_version`.
+Every platform MUST agree on that exact version. The catalog generator MUST verify
+the published `candidate.json` checksum and its source/version/archive bindings
+before using its contract metadata; a checkout's lock file MUST NOT substitute for
+evidence about the built packages. The package version MUST be an exact numeric
+`major.minor.patch` string without leading zeroes or a `v` prefix (128 characters
+maximum). Promotion MUST retain the package version with the same artifact bytes.
+The workflow MUST publish
 that entry through the committed `tools/release-publisher` in its own ordinary
 `publish-catalog.yml` job, using Operator's `production` environment and scoped
 OIDC role from the protected release tag: `rc` on candidate publication, `release`
