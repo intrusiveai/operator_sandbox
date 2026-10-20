@@ -236,6 +236,9 @@ class Protocol:
         if len(raw) > operation["max_request_bytes"]:
             raise ContractError("Request exceeds its registered byte limit.", reason="request_too_large", correction="Reduce request size; publish large input or assessment content as an artifact and use its receipt.")
         body = message["body"]
+        if operation["name"] == "engine.attempt_execute":
+            from .simple import validate_attempt_origin
+            validate_attempt_origin(body)
         self._check_registered(operation, "request_schema", body)
         name = operation["name"]
         if name == "engine.model_generate":

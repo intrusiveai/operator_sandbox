@@ -147,6 +147,11 @@ func (p *Protocol) ValidateRequest(raw []byte) (map[string]any, error) {
 	if len(raw) > op.MaxRequestBytes {
 		return nil, &ArgumentError{Reason: "request_too_large", Correction: "Reduce request size; publish large input or assessment content as an artifact and use its receipt.", Cause: ErrLimit}
 	}
+	if op.Name == "engine.attempt_execute" {
+		if err := ValidateAttemptOrigin(message["body"].(map[string]any), nil); err != nil {
+			return nil, err
+		}
+	}
 	// Validate against the installed registry as well as the generated envelope.
 	if err = p.catalog.schemas[op.RequestSchema].Validate(message["body"]); err != nil {
 		path, _ := SafeArgumentPath(conclusionSchemaPath(err))

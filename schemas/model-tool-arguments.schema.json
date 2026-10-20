@@ -211,13 +211,20 @@
               ]
             },
             "scenario_id": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128,
-              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-              "not": {
-                "pattern": "[\\r\\n]"
-              }
+              "allOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128,
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                {
+                  "description": "Required only for scenario origin; must name a scenario in the submitted bundle. Forbidden for exploratory origin."
+                }
+              ]
             },
             "parent_attempt_receipt_id": {
               "type": "string",
@@ -3588,9 +3595,18 @@
             "retain_injections": {
               "type": "boolean",
               "description": "Default false. Only valid with nonempty pre_actions; true retains injections for explicit deletion or lifecycle cleanup."
+            },
+            "origin": {
+              "type": "string",
+              "enum": [
+                "scenario",
+                "exploratory"
+              ],
+              "description": "Required explicit intent. Scenario requires a submitted scenario_id; exploratory forbids scenario_id. Never infer origin."
             }
           },
           "required": [
+            "origin",
             "operation_id",
             "input"
           ],
@@ -3624,6 +3640,30 @@
                         "retain_injections"
                       ]
                     }
+                  ]
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "origin": {
+                    "const": "scenario"
+                  }
+                },
+                "required": [
+                  "origin"
+                ]
+              },
+              "then": {
+                "required": [
+                  "scenario_id"
+                ]
+              },
+              "else": {
+                "not": {
+                  "required": [
+                    "scenario_id"
                   ]
                 }
               }
@@ -3738,13 +3778,20 @@
             ]
           },
           "scenario_id": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 128,
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-            "not": {
-              "pattern": "[\\r\\n]"
-            }
+            "allOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              },
+              {
+                "description": "Required only for scenario origin; must name a scenario in the submitted bundle. Forbidden for exploratory origin."
+              }
+            ]
           },
           "parent_attempt_receipt_id": {
             "type": "string",
@@ -4793,9 +4840,18 @@
           "retain_injections": {
             "type": "boolean",
             "description": "Default false. Only valid with nonempty pre_actions; true retains injections for explicit deletion or lifecycle cleanup."
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "scenario",
+              "exploratory"
+            ],
+            "description": "Required explicit intent. Scenario requires a submitted scenario_id; exploratory forbids scenario_id. Never infer origin."
           }
         },
         "required": [
+          "origin",
           "operation_id",
           "input"
         ],
@@ -4829,6 +4885,30 @@
                       "retain_injections"
                     ]
                   }
+                ]
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "origin": {
+                  "const": "scenario"
+                }
+              },
+              "required": [
+                "origin"
+              ]
+            },
+            "then": {
+              "required": [
+                "scenario_id"
+              ]
+            },
+            "else": {
+              "not": {
+                "required": [
+                  "scenario_id"
                 ]
               }
             }
@@ -4938,13 +5018,20 @@
             ]
           },
           "scenario_id": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 128,
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-            "not": {
-              "pattern": "[\\r\\n]"
-            }
+            "allOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              },
+              {
+                "description": "Required only for scenario origin; must name a scenario in the submitted bundle. Forbidden for exploratory origin."
+              }
+            ]
           },
           "parent_attempt_receipt_id": {
             "type": "string",
@@ -5993,15 +6080,24 @@
           "retain_injections": {
             "type": "boolean",
             "description": "Default false. Only valid with nonempty pre_actions; true retains injections for explicit deletion or lifecycle cleanup."
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "scenario",
+              "exploratory"
+            ],
+            "description": "Required explicit intent. Scenario requires a submitted scenario_id; exploratory forbids scenario_id. Never infer origin."
           }
         },
         "required": [
+          "origin",
           "operation_id",
           "input"
         ],
-        "description": "Runtime validates cross-field rules. Attempt setup requires injection_input; injection_input and retain_injections require nonempty pre_actions. Finish requires exactly one of assessment, artifact_receipt or unavailable. Direct inputs are limited to 32768 decoded bytes and JSON depth 16."
+        "description": "Runtime validates cross-field rules. origin is required: scenario requires scenario_id from the submitted bundle; exploratory forbids scenario_id. Attempt setup requires injection_input; injection_input and retain_injections require nonempty pre_actions. Finish requires exactly one of assessment, artifact_receipt or unavailable. Direct inputs are limited to 32768 decoded bytes and JSON depth 16."
       },
-      "description": "Invoke a permitted target operation. Use direct input normally, or an artifact receipt returned by artifact_publish for large/reusable input. Operator assigns bookkeeping; never invent descriptors or receipts.",
+      "description": "Invoke a permitted target operation. Always specify origin: scenario requires scenario_id from the submitted bundle; exploratory forbids scenario_id. Use direct input normally, or an artifact receipt returned by artifact_publish for large/reusable input. Operator assigns bookkeeping; never invent descriptors or receipts.",
       "x-operator-required-operations": [
         "engine.attempt_execute"
       ]
@@ -7408,7 +7504,7 @@
         "required": [
           "finish_reason"
         ],
-        "description": "Runtime validates cross-field rules. Attempt setup requires injection_input; injection_input and retain_injections require nonempty pre_actions. Finish requires exactly one of assessment, artifact_receipt or unavailable. Direct inputs are limited to 32768 decoded bytes and JSON depth 16."
+        "description": "Runtime validates cross-field rules. origin is required: scenario requires scenario_id from the submitted bundle; exploratory forbids scenario_id. Attempt setup requires injection_input; injection_input and retain_injections require nonempty pre_actions. Finish requires exactly one of assessment, artifact_receipt or unavailable. Direct inputs are limited to 32768 decoded bytes and JSON depth 16."
       },
       "description": "Finish with a minimal honest assessment: summary and objective outcomes. Cite only returned execution receipts. Empty references are valid for untested objectives. Operator retains the assessment and starts cleanup; acceptance is not cleanup completion.",
       "x-operator-required-operations": [

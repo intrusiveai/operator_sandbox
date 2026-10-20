@@ -8,7 +8,7 @@ delivery and completion. Component specs MUST reference these rules rather than
 define competing wire contracts. See [implementation status](../docs/IMPLEMENTATION_STATUS.md).
 
 JSON Schemas, Go/Python bindings, semantic validators and shared fixtures are
-implemented. Publish package `0.1.0` only after both conformance runners and the
+implemented. Publish package `0.2.0` only after both conformance runners and the
 required Section 12 conformance tests pass. Existing attempt/feedback schemas
 remain active as specified below.
 In every attempt, `generator.release_digest` MUST equal the frozen
@@ -58,7 +58,7 @@ remain outstanding.
 
 ## 1. One owner and one pinned package
 
-Operator owns `operator-contracts`, initially package version `0.1.0`, with package
+Operator owns `operator-contracts`, initially package version `0.2.0`, with package
 manifest schema `operator.dev/contract-package/v1alpha1`. The package contains
 closed JSON Schemas, the offline URI catalog, operation registry, semantic rules,
 Go/Python bindings and validators, and shared golden test vectors. Engine builds
@@ -748,7 +748,7 @@ and physical transports are implemented. The operation registry, closed schemas,
 semantic validators, fixtures, five native codec families and host-private
 RunManifest/journal admission are available. Reproducible package build/check tooling
 is implemented. Complete Section 12 conformance before
-publishing package `0.1.0`; passing component tests or building a development
+publishing package `0.2.0`; passing component tests or building a development
 package does not establish complete runtime qualification.
 
 Interceptor's native APIs remain separately versioned; Operator is the adapter.

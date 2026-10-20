@@ -32,8 +32,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:6ecfbccf1cde56d0813393aa82de28c9eb4fb5bdbe1ba69e1e10c0927c2e2116",
-    "size_bytes": 39081,
+    "digest": "sha256:5d21dba039447fc39676d3c9748a2e680369ff7ed1bc968b8a798b8f6f68dc70",
+    "size_bytes": 39767,
     "valid": true
   },
   {
@@ -79,8 +79,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:5f26bdaddef487ad8d835d04378afe20868cf9553f68f7b85260fd83051e56ad",
-    "size_bytes": 23711,
+    "digest": "sha256:ac08cb28f57e7b795d0a09ba653037ed1fe15120a0fbab9dab407ef82ec92ce6",
+    "size_bytes": 24397,
     "valid": true
   },
   {
@@ -114,8 +114,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:a604eeab28af3d437d8eb0a0635b9248da03100a299582369e0c111b1c0c6070",
-    "size_bytes": 38040,
+    "digest": "sha256:1b9d04a23f18f7227b1ba388bc8051f038747ee70d0355b4ef57970538371dbb",
+    "size_bytes": 38726,
     "valid": true
   },
   {
@@ -151,8 +151,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:0ba602486e4194016586e3c2fbf0c8f852b50a2b96e54ac63598889cbbf27dfa",
-    "size_bytes": 38938,
+    "digest": "sha256:23e1f4a821b03b00c6f00adedba1f996354664f61c8a61892e22bbaa3f0dc271",
+    "size_bytes": 39624,
     "valid": true
   },
   {
@@ -198,8 +198,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:d53968f263198bfb8bad3e08fca08b0a158a4d2e2aebdf0d6ec116e95aec30d5",
-    "size_bytes": 23581,
+    "digest": "sha256:5148c6afd53f16889450a05e16ac35bd7ffb834e45aff5797e1ccf2d008c53af",
+    "size_bytes": 24267,
     "valid": true
   },
   {
@@ -233,8 +233,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:5acbc0289be0d0d99faccf53df37c16184e33bc971573ff60fc7275aba473785",
-    "size_bytes": 37910,
+    "digest": "sha256:0cc34acc6e78922d705a0b9dd8d713e411d143c4c8e507f34379d0365bef46d6",
+    "size_bytes": 38596,
     "valid": true
   },
   {
@@ -270,8 +270,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:1d2629888de8feec478e3171060f07f49d25d81c1245228f6c514f2e058919c9",
-    "size_bytes": 38759,
+    "digest": "sha256:73376fd209f92c4fbc43b4917b75462a57b9f098dec7d356acdac3e8cabbeea2",
+    "size_bytes": 39381,
     "valid": true
   },
   {
@@ -317,8 +317,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:6c4db9543b7e525838abc91fc7b3c1909065539dff1009d88b8a35d9bfc55c20",
-    "size_bytes": 23433,
+    "digest": "sha256:9f171af27a25dac4867dba3409be961a8a0796658a3644c73ede58f85c4c58d5",
+    "size_bytes": 24055,
     "valid": true
   },
   {
@@ -352,8 +352,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:173e5271150227b8eb13fe2fc9e82e68987d738c452a18eb13c7913a875cf61a",
-    "size_bytes": 37762,
+    "digest": "sha256:8aa2edadefc215676287e3ce95d26f035168ade31b4d2ef342546f9c66fc14aa",
+    "size_bytes": 38384,
     "valid": true
   },
   {
@@ -389,8 +389,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:2ca308806e891db657fbbd125c07b3558f1b00ccd4366d25cd33c7d70d493319",
-    "size_bytes": 38990,
+    "digest": "sha256:ebb73f03ce7b1676d0924b62ad43ea28b151568b2b887d3a01b9e797a12a52cd",
+    "size_bytes": 39612,
     "valid": true
   },
   {
@@ -436,8 +436,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:2ea5dd0e06ea0091c0053e2a24ed3e6cabe17373807636823d3fa8a832528f2d",
-    "size_bytes": 23643,
+    "digest": "sha256:446163beac67b00fd0594c225732dfa99cca86dd71112ecb72baac4bdbba0c39",
+    "size_bytes": 24265,
     "valid": true
   },
   {
@@ -471,8 +471,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:a41f642b8c999227b005fbc511b63794d21691ee443d10c5bd5c91894e9ac077",
-    "size_bytes": 37972,
+    "digest": "sha256:1163621f261619587326f71c87568496c8981d845c461ef38e4a24c90376bca0",
+    "size_bytes": 38594,
     "valid": true
   },
   {
@@ -508,8 +508,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:692cbbb09da61b10ec04cdccfd6bb006a6fcc1816fbf22d02873b33e4587d11a",
-    "size_bytes": 38874,
+    "digest": "sha256:6b00eeafbe6c4233e04e6e248c2818383cd09db2d877be9df90caf90919e8571",
+    "size_bytes": 39496,
     "valid": true
   },
   {
@@ -555,8 +555,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:0194dd32ec32a507588b7dbdee2d8cf13759a23ad56d3c2c701ebc56a1e3c286",
-    "size_bytes": 23540,
+    "digest": "sha256:eee27e4d4c2970d29f1593f5fe51cf1ebf1447db518c19984f1a32cc66bd7537",
+    "size_bytes": 24162,
     "valid": true
   },
   {
@@ -590,8 +590,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:5e9caf781369a4f4a0507d26624d1a76c59b3d92fc1f6efe0de32223d20da2ed",
-    "size_bytes": 37869,
+    "digest": "sha256:7ecae0b89aa7b0d603d6bb7efe4ff17e0307620c33f713ddd5115333643d8f2d",
+    "size_bytes": 38491,
     "valid": true
   },
   {
@@ -796,7 +796,8 @@
         "value": {
           "prompt": "fixture"
         }
-      }
+      },
+      "origin": "exploratory"
     },
     "valid": true
   },
@@ -812,6 +813,7 @@
           "prompt": "fixture"
         }
       },
+      "origin": "scenario",
       "scenario_id": "scenario-1"
     },
     "valid": true,
@@ -829,6 +831,7 @@
           "prompt": "fixture"
         }
       },
+      "origin": "exploratory",
       "parent_attempt_receipt_id": "execution-receipt"
     },
     "valid": true,
@@ -846,6 +849,7 @@
           "prompt": "fixture"
         }
       },
+      "origin": "exploratory",
       "pre_actions": [
         {
           "action_id": "setup",
@@ -881,6 +885,7 @@
           "prompt": "fixture"
         }
       },
+      "origin": "exploratory",
       "pre_actions": [
         {
           "action_id": "setup",
@@ -920,6 +925,7 @@
           "prompt": "fixture"
         }
       },
+      "origin": "exploratory",
       "injection_input": {
         "encoding": "json",
         "value": "replacement"
@@ -940,6 +946,7 @@
           "prompt": "fixture"
         }
       },
+      "origin": "exploratory",
       "retain_injections": false
     },
     "valid": false,
@@ -957,6 +964,7 @@
           "prompt": "fixture"
         }
       },
+      "origin": "exploratory",
       "unexpected": true
     },
     "valid": false,
@@ -974,6 +982,7 @@
           "prompt": "fixture"
         }
       },
+      "origin": "exploratory",
       "api_version": "other"
     },
     "valid": false,
@@ -991,6 +1000,7 @@
           "prompt": "fixture"
         }
       },
+      "origin": "exploratory",
       "generator": {}
     },
     "valid": false,
@@ -1008,6 +1018,7 @@
           "prompt": "fixture"
         }
       },
+      "origin": "exploratory",
       "generation": 1
     },
     "valid": false,
@@ -1025,6 +1036,7 @@
           "prompt": "fixture"
         }
       },
+      "origin": "exploratory",
       "thread_id": "thread"
     },
     "valid": false,
@@ -1042,6 +1054,7 @@
           "prompt": "fixture"
         }
       },
+      "origin": "exploratory",
       "attempt_index": 1
     },
     "valid": false,
@@ -1059,6 +1072,7 @@
           "prompt": "fixture"
         }
       },
+      "origin": "exploratory",
       "request_id": "r1"
     },
     "valid": false,
@@ -1076,6 +1090,7 @@
           "prompt": "fixture"
         }
       },
+      "origin": "exploratory",
       "attempt_id": "a1"
     },
     "valid": false,

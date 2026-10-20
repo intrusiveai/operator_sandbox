@@ -45,7 +45,7 @@ attempt=body('engine.attempt_execute')
 arg('direct invocation','attempt_execute',attempt)
 def attempt_case(label,mutate,valid,projected=True):
  value=deepcopy(attempt);mutate(value);arg(label,'attempt_execute',value,valid,projected)
-attempt_case('scenario association',lambda a:a.update(scenario_id='scenario-1'),True)
+attempt_case('scenario association',lambda a:a.update(origin='scenario',scenario_id='scenario-1'),True)
 attempt_case('parent receipt',lambda a:a.update(parent_attempt_receipt_id='execution-receipt'),True)
 action=dict(action_id='setup',action_type='interceptor.injection/v1alpha1',parameters=dict(surface='model_tool_result',mode='simulation',scope='once',selector=dict(tool_name='search',call_ordinal='first'),placement=dict(operation='replace',pointer='')))
 attempt_case('setup requires injection input',lambda a:a.update(pre_actions=[action]),False)

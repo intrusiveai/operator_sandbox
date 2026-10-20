@@ -1,0 +1,14 @@
+{
+ "scenarios": ["configuration"],
+ "cases": [
+  {"name":"scenario", "body":{"origin":"scenario","scenario_id":"configuration"},"valid":true},
+  {"name":"exploratory", "body":{"origin":"exploratory"},"valid":true},
+  {"name":"missing origin", "body":{},"reason":"origin_required","path":"/origin"},
+  {"name":"no inferred scenario", "body":{"scenario_id":"configuration"},"reason":"origin_required","path":"/origin"},
+  {"name":"missing scenario", "body":{"origin":"scenario"},"reason":"scenario_required","path":"/scenario_id"},
+  {"name":"unknown scenario", "body":{"origin":"scenario","scenario_id":"absent"},"reason":"unknown_scenario","path":"/scenario_id"},
+  {"name":"forbidden scenario", "body":{"origin":"exploratory","scenario_id":"configuration"},"reason":"scenario_forbidden","path":"/scenario_id"},
+  {"name":"null scenario forbidden", "body":{"origin":"exploratory","scenario_id":null},"reason":"scenario_forbidden","path":"/scenario_id"},
+  {"name":"invalid origin", "body":{"origin":"automatic"},"reason":"origin_required","path":"/origin"}
+ ]
+}

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:operator:schema:engine-attempt-request:v1alpha3",
+  "$id": "urn:operator:schema:engine-attempt-request:v1alpha4",
   "type": "object",
   "additionalProperties": false,
   "properties": {
@@ -11,7 +11,8 @@
       "$ref": "urn:operator:schema:execution-input:v1alpha1"
     },
     "scenario_id": {
-      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id",
+      "description": "Required only for scenario origin; must name a scenario in the submitted bundle. Forbidden for exploratory origin."
     },
     "parent_attempt_receipt_id": {
       "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
@@ -80,9 +81,18 @@
     "retain_injections": {
       "type": "boolean",
       "description": "Default false. Only valid with nonempty pre_actions; true retains injections for explicit deletion or lifecycle cleanup."
+    },
+    "origin": {
+      "type": "string",
+      "enum": [
+        "scenario",
+        "exploratory"
+      ],
+      "description": "Required explicit intent. Scenario requires a submitted scenario_id; exploratory forbids scenario_id. Never infer origin."
     }
   },
   "required": [
+    "origin",
     "operation_id",
     "input"
   ],
@@ -721,6 +731,30 @@
                 "retain_injections"
               ]
             }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "origin": {
+            "const": "scenario"
+          }
+        },
+        "required": [
+          "origin"
+        ]
+      },
+      "then": {
+        "required": [
+          "scenario_id"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "scenario_id"
           ]
         }
       }
