@@ -53,10 +53,9 @@ literal `.Image` comparison. Recovery uses the recorded binding version and neve
 creates, starts, or resumes execution. The start intent records binding version,
 lookup reference, platform, and selected image identity before create.
 
-These host selection rules correct the bare-ID-only instructions in the pinned
-shared package's `ENGINE_RELEASE_CONTRACT.md` §1. The compatibility file and all
-host/Harness wire fields are unchanged; the published `0.0.4` package remains
-byte-for-byte unchanged. No Harness rebuild is required solely for this fix.
+The [image compatibility contract](../schemas/ENGINE_RELEASE_CONTRACT.md) uses
+this same separation of selected identity and immutable lookup reference. Both
+inspection and launch verify the same platform and image before execution.
 
 ## Compatibility and embedded resources
 
@@ -94,7 +93,7 @@ checks, image and daemon pinning, metadata consistency, resource digests, stoppe
 inspection cleanup, missing/oversized files, and fail-closed admission. CLI tests
 exercise local preparation followed by independent retained-record inspection.
 These controlled tests do not qualify a production image or native Docker host.
-See [the Attack Harness handoff](ATTACK_HARNESS_COMPATIBILITY_HANDOFF.md) for the
+See [Harness integration](HARNESS_INTEGRATION.md) for the
 matching image-build requirements and package pin.
 
 ## Troubleshooting and native reproduction
@@ -126,4 +125,3 @@ On macOS, set the explicitly selected Docker Desktop Unix endpoint instead. This
 opt-in test builds a scratch fixture with valid embedded metadata and resources,
 uses the real stopped-container reader and compatibility validator, checks exact
 cleanup, and removes its fixture image. It runs no Harness code or campaign.
-See [native selection evidence](IMAGE_SELECTION_VALIDATION.md) for tested scope.

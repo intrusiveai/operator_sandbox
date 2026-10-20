@@ -67,8 +67,7 @@ retries are governed separately and remain disabled.
 Tests exercise all backend request/selection rules with synthetic peers, including
 Vault over local TLS, sink rotation, Proxy mode, checksum failures, redaction and
 cancellation. They do not establish cloud connectivity or live workload identity
-qualification. Installed provider wiring and campaign credential-resolution audit
-are implemented; live secret-store qualification remains outstanding.
+qualification.
 
 ## Campaign resolution audit
 
@@ -103,8 +102,7 @@ Vault qualification remain external acceptance gates.
 
 Use the opt-in [qualification command](LIVE_QUALIFICATION.md) and
 [setup guide](LIVE_QUALIFICATION_SETUP.md) for read-only store, cache, expiry,
-rotation and negative-fixture probes. Live service and identity qualification
-remain pending until actual runner evidence is collected.
+rotation and negative-fixture probes.
 
 ### Explicit AWS named profiles
 

@@ -86,9 +86,9 @@ import command. Retained imports MUST use identities recovered from verified hos
 records, not identities taken from the supplied archive. Imports never resume
 execution or invoke a model.
 
-## Remaining integration
+## Campaign integration
 
-Production host-service construction must wire the selected config, native client
-and campaign lifetime into these libraries. Administrative collection/import,
-purge, retained reporting and the Docker launcher are separate integration work.
-Native exporter fixtures and protocol tests do not qualify a Docker runtime.
+The campaign service supplies the selected configuration, native client and
+campaign lifetime. [Late collection](LATE_EVIDENCE.md), [reporting](REPORTING.md)
+and [purge](PURGE.md) operate on the retained campaign group. Evidence collection
+does not resume execution, and cleanup does not depend on reporting success.

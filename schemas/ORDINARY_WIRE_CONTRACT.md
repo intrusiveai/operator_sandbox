@@ -1,8 +1,7 @@
-# Ordinary protocol implementation stage
+# Ordinary wire protocol
 
 This document fixes the wire field choices for the ordinary operations implemented
 in the shared validation library. It supplements [SHARED_CONTRACT.md](SHARED_CONTRACT.md).
-It does not publish package `0.1.0` or claim a working broker or harness runtime.
 
 ## Registry and envelopes
 
@@ -26,8 +25,7 @@ exact bodies. `make generate` regenerates envelopes and schema-ID constants;
 path is accepted. Model generation uses the implemented closed schemas and
 shared native-codec fixtures. [Startup and manifest metadata](STARTUP_MANIFEST_CONTRACT.md)
 now have schemas and shared validation. [Input content](ENGINE_INPUT_CONTRACT.md)
-adds EngineContext and prompt provenance; all five native codec families and host/harness
-runtime integration are implemented, with full qualification/publication outstanding.
+adds EngineContext and prompt provenance.
 Records and conclusion content are defined in the
 [assessment contract](ASSESSMENT_CONTRACT.md).
 
@@ -136,7 +134,7 @@ current exchange has newer attribution; validate it against the recorded operati
 and never advance again. The stateless validator cannot establish that ledger fact
 and must not impose worker/revision ownership restrictions on duplicate lookup.
 
-## Errors, feedback and stop
+## Errors, feedback and finish
 
 [OperationError](operation-error.schema.json) bounds the code, message, optional
 JSON Pointer instance path, effect state and disposition. Registry entries enumerate
@@ -153,14 +151,15 @@ prove visibility, source membership or the full artifact digest; those require t
 host receipt map and complete-content verification. Unavailable/truncated content
 retains the existing explicit result semantics.
 
-Graceful stop uses the exact [request](engine-request-stop-request.schema.json) and
-[acknowledgement](engine-request-stop-result.schema.json) from Shared Contract §11.
-Committed and unavailable conclusion variants are closed and exclusive. The result
-must repeat the conclusion state, close execution admission and require exit within
-5,000 ms, with finalization still pending. The runtime must verify committed receipts
-and matching finish reason before accepting stop. The [assessment stage](ASSESSMENT_CONTRACT.md) implements conclusion content,
-record append and completion-chain consistency checks; the [completion service](../docs/COMPLETION_SERVICE.md) implements runtime receipt
-lookup and durable stop acceptance. The harness implements bounded finalization.
+Graceful completion uses the exact [finish request](engine-finish-request.schema.json)
+and [acknowledgement](engine-finish-result.schema.json) from Shared Contract §11.
+The request selects exactly one direct assessment, committed assessment-draft
+artifact receipt or unavailable reason. No prior conclusion registration is
+required. Acceptance retains the assessment or unavailable reason, closes
+execution admission and requires exit within 5,000 ms, with finalization pending.
+The [assessment contract](ASSESSMENT_CONTRACT.md) defines normalization and reference
+checks; the [completion service](../docs/COMPLETION_SERVICE.md) retains the result
+and coordinates owned cleanup.
 
 [Spool ACK](engine-spool-ack.schema.json) syntax is also implemented with a 1,024-byte
 ceiling. Initial null and zero positions remain distinct. The transport must still
@@ -177,8 +176,8 @@ Neither implementation executes operations or mutates campaign state.
 Campaign admission, active launch/sequence tracking, recorded duplicate identity,
 original effect binding, receipt membership, upload persistence, budgets and
 monotonic deadlines remain mandatory runtime gates. Passing these validators is
-not permission to dispatch. The operation registry and conformance tests provide
-the next implementation steps with shared field names and boundaries.
+not permission to dispatch. The operation registry and conformance tests define
+the shared field names and boundaries used by runtime callers.
 
 ## Correctable argument rejection
 
@@ -187,4 +186,4 @@ host MUST validate the registered body before any effect. A valid envelope with
 invalid arguments receives a retained, correlated error, not an execution receipt.
 Successful responses require a fully valid request; error responses may correlate
 to an invalid body. Malformed JSON, invalid envelope identities and unknown routes
-remain transport violations. See SIMPLE_CAMPAIGN_CONTRACT.md for the new workflow.
+remain transport violations. See SIMPLE_CAMPAIGN_CONTRACT.md for the ordinary workflow.

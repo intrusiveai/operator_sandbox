@@ -1,5 +1,8 @@
 # Local cloud qualification — 2026-09-30
 
+> Historical engineering record. This captures the instructions and evidence at
+> the time it was written; it is not the release integration contract.
+
 Selected production host-adapter probes passed on macOS ARM64 using explicitly
 configured local cloud identities and administrator-selected test resources.
 Timestamps in the original evidence are UTC (2026-10-01); this record uses the

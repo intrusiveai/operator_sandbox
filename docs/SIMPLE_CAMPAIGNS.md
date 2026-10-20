@@ -87,4 +87,4 @@ OPERATOR_CONTROLLED_PEER_TEST=1 go test ./internal/preparation \
 
 This test peer is not the production Attack Harness. Matching production Harness
 integration and native/runtime qualification remain distinct gates; see the
-[coordinated handoff](SIMPLE_CAMPAIGN_HANDOFF.md).
+[Harness integration](HARNESS_INTEGRATION.md).

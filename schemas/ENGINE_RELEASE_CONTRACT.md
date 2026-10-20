@@ -1,23 +1,37 @@
 # Local Harness compatibility contract
 
-Status: local image compatibility and immutable embedded-file inspection implemented.
 This host-only contract defines admission of an administrator-selected local Attack
 Harness image. The shared host/harness wire fields remain unchanged.
 
 ## 1. Local image identity
 
 The administrator MUST install the image into Operator's configured local Docker
-installation. `engine.image` MUST select a local name/tag, repository reference,
-or full Docker image ID. Operator MUST resolve the native platform and pin the
-full Docker image/config `Id` (`sha256:` plus 64 lowercase hex characters).
-Repository manifest/index digests MUST remain separate attribution. An untagged
-name selects the existing local `latest` tag. Missing content MUST fail startup.
+installation. `engine.image` selects a local name/tag, repository reference or
+full Docker image ID. An untagged name selects the local `latest` tag. Missing
+content fails startup; Operator never pulls or contacts a registry.
 
-Operator MUST create containers by the full pinned ID with pulling forbidden,
-verify their image and saved daemon identity, and reject unavailable or changed
-content. Before acceptance, a changed selector requires fresh preparation. After
-acceptance, tag changes MUST NOT redirect the campaign. Target snapshot restores
-MUST retain the running Harness and its existing image/compatibility pins.
+Resolve with the native platform explicitly selected. Pin Docker's selected `Id`
+(`sha256:` plus 64 lowercase hex characters) separately from the immutable lookup
+reference and repository inventory. Classic stores can return a config ID;
+containerd stores can return a platform-manifest ID that is not a usable bare
+selector. Operator MUST independently verify an immutable lookup reference
+against the same selected ID, platform and local daemon. A repository-qualified
+digest candidate must match the configured repository; an unrelated first
+RepoDigests entry or a mutable-tag fallback is not acceptable.
+
+Subsequent inspection and creation MUST use that frozen reference and explicit
+platform with `--pull=never`. Before acceptance, recheck the original selector;
+a changed selector requires fresh preparation. After acceptance, tag changes MUST
+NOT redirect execution. Legacy pins without a reference retain bare-ID semantics;
+failed lookup must not silently reinterpret them.
+
+Container bindings verify the full container ID, saved daemon and launch labels.
+For `operator.dev/docker-binding/v1alpha2`, compare the selected
+`ImageManifestDescriptor.digest` when present, otherwise `.Image`. Legacy v1
+bindings retain their literal `.Image` check. Preserve the saved binding version
+through cleanup and recovery; recovery never creates or resumes execution.
+Target snapshot restores retain the running Harness and its image/compatibility
+pins. See [image selection](../docs/IMAGE_PREPARATION.md) for resolution bounds.
 
 ## 2. Embedded compatibility record
 
@@ -30,15 +44,15 @@ It MUST be strict UTF-8 JSON, at most 64 KiB and depth 32, with exactly these fi
 {
   "api_version": "operator.dev/harness-compatibility/v1alpha1",
   "minimum_operator_version": "0.1.0",
-  "contract_package_version": "0.0.4",
+  "contract_package_version": "0.2.1",
   "contract_package_digest": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
   "runtime_profile": "operator-container/v1",
   "platform": "linux/amd64"
 }
 ```
 
-The example digest is illustrative; builds MUST use the actual installed package
-identity. Required fields, duplicate/unknown keys, invalid types/UTF-8, trailing
+The example digest is illustrative; builds MUST use the actual package identity
+from the [release contract lock](../release/contract-lock.json). Required fields, duplicate/unknown keys, invalid types/UTF-8, trailing
 content, unsupported versions and oversized content MUST be checked. The file
 MUST NOT contain its image digest: adding it would change that digest. The Docker
 image identity independently binds the file's bytes and the other image contents.

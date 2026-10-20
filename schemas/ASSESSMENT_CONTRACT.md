@@ -99,7 +99,7 @@ retain their existing validation and attribution rules.
 Duplicate local IDs, self-parenting and parent cycles MUST be rejected, including
 cycles crossing local and historical definitions. Both Go and Python validators
 check local duplicates/self-parenting/cycles; only the host resolves historical
-membership. Conclusion record admission and committed stop validation MUST use
+membership. Assessment normalization, retention and finish acceptance MUST use
 the same reference resolution. All binding, finish-reason, artifact commitment,
 receipt membership, visibility, evidence availability and byte-range checks remain
 required.

@@ -1,5 +1,8 @@
 # Controlled finish-to-exit verification — 2026-10-19
 
+> Historical engineering record. This captures the instructions and evidence at
+> the time it was written; it is not the release integration contract.
+
 ## Original evidence and confirmed defects
 
 The retained `aws-openai-gpt5-mini-010` journal has accepted finish at event 113,

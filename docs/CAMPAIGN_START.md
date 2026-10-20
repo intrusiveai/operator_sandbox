@@ -190,8 +190,8 @@ package with OpenAI object declarations. The older declarations use root `allOf`
 and `oneOf`, which OpenAI rejects even with `strict: false`. Rebuild the Harness
 image with the matching package; changing only Operator or deleting constraints
 from a saved request does not update the installed Harness. Keep runtime argument
-validation and all package/declaration identity checks enabled. See the
-[schema verification record](qualification/openai-tools-2026-10-18/README.md).
+validation and all package/declaration identity checks enabled. See
+[Harness integration](HARNESS_INTEGRATION.md) for the exact package requirements.
 An unknown call retains its budget reservation, not confirmed consumption.
 Older records without diagnostics remain readable; facts that were never saved
 cannot be recovered by regenerating a report. Do not rerun a failed campaign to
@@ -305,16 +305,14 @@ and bounded identifier. Identifiers or paths that cannot safely be exposed have
 explicit omission reasons. No unrestricted artifact text is copied into diagnostics.
 
 Every rejection remains history; an accepted corrected submission can still finish
-normally. If execution subsequently fails, its first conclusion rejection survives
-generic shutdown/finalization errors. Older campaigns without diagnostic fields
+normally. Unrecovered rejection diagnostics survive generic shutdown/finalization
+errors; a recovered rejection does not replace a later independent fatal cause.
+Older campaigns without diagnostic fields
 remain readable, but missing validation details cannot be reconstructed.
 
-Local verification: `TestPythonProcessConclusionAndSeparateInspection` runs the
-production Python entrypoint over both FIFO and spool against controlled peers,
-then starts separate CLI inspection/report/export processes. The retained
-`aws-openai-gpt5-mini-008` conclusion was also validated through the complete
-artifact/record/stop sequence after rebinding test identities and evidence handles;
-the committed fixture contains sanitized content. No paid campaign is replayed.
+For controlled process verification, see [process integration](PROCESS_INTEGRATION.md).
+The completion fixture exercises accepted finish and rejection followed by a
+corrected finish over FIFO/spool, with separate CLI inspection and export.
 
 ## Finish accepted, but the Harness exits or cleanup fails
 

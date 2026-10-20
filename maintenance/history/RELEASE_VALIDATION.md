@@ -1,8 +1,11 @@
 # Installation and release-tooling validation
 
+> Historical engineering record. This captures the instructions and evidence at
+> the time it was written; it is not the release integration contract.
+
 This document retains dated validation evidence. Earlier entries describe the
 implementation tested at that time; current requirements are in
-[host distribution](HOST_DISTRIBUTION.md). It does not establish native runtime qualification.
+[host distribution](../../docs/HOST_DISTRIBUTION.md). It does not establish native runtime qualification.
 
 ## Tested identities
 
@@ -51,7 +54,7 @@ contact Docker, publish a release or change campaign state outside test director
 
 ## Reproduction and remaining qualification
 
-Use [the distribution guide](HOST_DISTRIBUTION.md) for current build and install commands. Build two separate outputs from the tested commit and compare them.
+Use [the distribution guide](../../docs/HOST_DISTRIBUTION.md) for current build and install commands. Build two separate outputs from the tested commit and compare them.
 Then run `scripts/test_installed_release.py` on a native candidate, optionally
 providing a newer native candidate with `--upgrade`.
 
@@ -77,7 +80,7 @@ verified. This exercised packaging/signing with actual binaries; it did not rebu
 or qualify their runtime and did not contact GitHub to publish them.
 
 Live Actions publication requires configured publisher credentials and repository
-settings from [candidate releases](../.github/maintainers/CANDIDATE_RELEASES.md). No live release was
+settings from [candidate releases](../../.github/maintainers/CANDIDATE_RELEASES.md). No live release was
 created or promoted during this implementation.
 
 ## Initial catalog integration — 2026-10-12 (superseded publisher)
@@ -95,7 +98,7 @@ and skipped publication, timeout and cancellation, stale source/metadata, incorr
 product URLs, and stable promotion evidence. Both Actions workflows pass actionlint.
 No GitHub release, S3 catalog, AWS role or environment setting was changed. Live
 publication still requires Operator's production environment variables and tag policy
-documented in [the maintainer guide](../.github/maintainers/CANDIDATE_RELEASES.md).
+documented in [the maintainer guide](../../.github/maintainers/CANDIDATE_RELEASES.md).
 
 ## Product-local catalog publication — 2026-10-13
 
@@ -118,7 +121,7 @@ file against the reviewed source manifest.
 The exported publisher's Go race tests and vet passed, as did all 12 publication
 tests. Actionlint 1.7.12 passed for both release workflows. GitHub/AWS deployment readiness is separate from these local checks; use
 the numbered setup and first-candidate walkthrough in
-[the maintainer guide](../.github/maintainers/CANDIDATE_RELEASES.md). No live release
+[the maintainer guide](../../.github/maintainers/CANDIDATE_RELEASES.md). No live release
 or catalog was published during this update.
 
 Read-only deployment checks on 2026-10-13 confirmed that AWS role

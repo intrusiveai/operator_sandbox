@@ -1,10 +1,13 @@
 # Simple campaign contract: coordinated Harness handoff
 
+> Historical engineering record. This captures the instructions and evidence at
+> the time it was written; it is not the release integration contract.
+
 ## Required matching builds
 
 The current identity and coordinated update are defined in
 [Explicit attempt origin](EXPLICIT_ORIGIN_HANDOFF.md) and
-[release/contract-lock.json](../release/contract-lock.json). The original implicit-origin
+[release/contract-lock.json](../../release/contract-lock.json). The original implicit-origin
 package is incompatible with this update. Use shared package 0.2.0; the simplified
 input and finish behavior below remains unchanged.
 

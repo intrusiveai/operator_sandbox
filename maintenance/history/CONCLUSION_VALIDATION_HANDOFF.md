@@ -1,5 +1,8 @@
 # Conclusion validation: Operator and Attack Harness
 
+> Historical engineering record. This captures the instructions and evidence at
+> the time it was written; it is not the release integration contract.
+
 Historical change record. The current coordinated contract and replacement finish
 workflow are defined in [the simple campaign handoff](SIMPLE_CAMPAIGN_HANDOFF.md).
 Do not use the historical package pin below for new builds.

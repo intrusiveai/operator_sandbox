@@ -1,19 +1,13 @@
 # Setting up live qualification
 
-The [Azure/Gemini record](qualification/azure-gemini-2026-09-30/README.md) covers
-Azure Chat/Responses with CLI and API-key authentication plus Gemini Developer API.
-The current shared contract pin is `0.0.3`. The earlier
-[local-cloud record](qualification/cloud-local-2026-09-30/README.md) covers three
-secret stores and OpenAI, Claude, Bedrock and Vertex. Their remaining-work lists
-identify unqualified routes, authentication mechanisms and fault cases.
-
-The first AWS named-profile run is documented in the
-[live result record](qualification/aws-2026-09-28/README.md), including the Bedrock
-compatibility correction and remaining qualification limits.
+Use `operatorctl qualify` to exercise a configured secret store or model route
+with bounded, explicit live requests. The command records the executable and
+contract identities alongside sanitized results. Follow the
+[command reference](LIVE_QUALIFICATION.md) and the setup instructions below.
 
 ## What to prepare
 
-The tooling is ready to run; live resources are administrator-provisioned. Start
+Live resources are administrator-provisioned. Start
 with one store and one model route, then repeat for the remaining combinations.
 A **runner** is simply the machine/container executing `operatorctl`. Docker,
 Interceptor, a campaign, and the Attack Harness image are not needed for these

@@ -1,12 +1,15 @@
 # Explicit attempt origin — coordinated Harness update
 
+> Historical engineering record. This captures the instructions and evidence at
+> the time it was written; it is not the release integration contract.
+
 ## Exact approved contract
 
 Consume Operator shared package **0.2.0**, source commit
 `850fa97624171a24189084964859893a731bdc4e` (tree
 `bf4232c445c748bc9afca83928c14d9d6ceb0259`). Its exact package digest is
 `sha256:057c4a53997b94bcd8ae18012daca4ec4610cd26abab9f32f748867362b422ee`.
-[release/contract-lock.json](../release/contract-lock.json) is the build source of
+[release/contract-lock.json](../../release/contract-lock.json) is the build source of
 truth. A local verified package is available at
 `/private/tmp/operator-explicit-origin-contract-0.2.0`.
 

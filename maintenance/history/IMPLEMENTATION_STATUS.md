@@ -1,5 +1,8 @@
 # Current implementation status
 
+> Historical engineering record. This captures the instructions and evidence at
+> the time it was written; it is not the release integration contract.
+
 Updated: 2026-09-28, following opt-in live-qualification tooling.
 
 Operator's core campaign runtime and Attack Harness's Python runtime are
@@ -35,19 +38,19 @@ criteria have not yet been demonstrated.
 
 Component guides provide the detailed behavior and validation boundaries:
 
-- [Contracts](../contracts/README.md), [package tooling](CONTRACT_PUBLICATION.md)
-  and [shared wire contract](../schemas/SHARED_CONTRACT.md).
-- [Campaign start](CAMPAIGN_START.md), [launch](HOST_LAUNCH.md),
-  [campaign service](CAMPAIGN_SERVICE.md) and [startup recovery](STARTUP_RECOVERY.md).
-- [Administrator run/diagnostics](ADMIN_WORKFLOWS.md) and [submission selectors](SUBMISSION.md).
-- [Host distribution and installation](HOST_DISTRIBUTION.md).
-- [Go/Python process integration](PROCESS_INTEGRATION.md).
-- [HTTPS targets](HTTPS_TARGETS.md) and [example private profile](../examples/https-target-profile.json).
-- [Providers](MODEL_PROVIDERS.md), [credentials](CREDENTIALS.md) and [skills](SKILLS.md).
-- [Evidence service](EVIDENCE_SERVICE.md), [late collection](LATE_EVIDENCE.md),
-  [offline import](EVIDENCE_IMPORT.md) and [reporting/export](REPORTING.md) and [campaign purge](PURGE.md).
-- [Attack Harness implementation status](../../attack_harness/IMPLEMENTATION_STATUS.md)
-  and [acceptance matrix](../../attack_harness/ACCEPTANCE_MATRIX.md).
+- [Contracts](../../contracts/README.md), [package tooling](../../docs/CONTRACT_PUBLICATION.md)
+  and [shared wire contract](../../schemas/SHARED_CONTRACT.md).
+- [Campaign start](../../docs/CAMPAIGN_START.md), [launch](../../docs/HOST_LAUNCH.md),
+  [campaign service](../../docs/CAMPAIGN_SERVICE.md) and [startup recovery](../../docs/STARTUP_RECOVERY.md).
+- [Administrator run/diagnostics](../../docs/ADMIN_WORKFLOWS.md) and [submission selectors](../../docs/SUBMISSION.md).
+- [Host distribution and installation](../../docs/HOST_DISTRIBUTION.md).
+- [Go/Python process integration](../../docs/PROCESS_INTEGRATION.md).
+- [HTTPS targets](../../docs/HTTPS_TARGETS.md) and [example private profile](../../examples/https-target-profile.json).
+- [Providers](../../docs/MODEL_PROVIDERS.md), [credentials](../../docs/CREDENTIALS.md) and [skills](../../docs/SKILLS.md).
+- [Evidence service](../../docs/EVIDENCE_SERVICE.md), [late collection](../../docs/LATE_EVIDENCE.md),
+  [offline import](../../docs/EVIDENCE_IMPORT.md) and [reporting/export](../../docs/REPORTING.md) and [campaign purge](../../docs/PURGE.md).
+- [Attack Harness implementation status](../../../attack_harness/IMPLEMENTATION_STATUS.md)
+  and [acceptance matrix](../../../attack_harness/ACCEPTANCE_MATRIX.md).
 
 ## Validation completed and its limits
 
@@ -69,7 +72,7 @@ Process tests use the production Python entrypoint and Go service, real journals
 physical transports and a local TLS target. Models, native Interceptor, Docker and
 image approval are controlled fixtures; a test-only adapter relocates Python's
 fixed paths and replaces confinement installation. These tests do not qualify a
-production image. The [integration guide](PROCESS_INTEGRATION.md) describes the
+production image. The [integration guide](../../docs/PROCESS_INTEGRATION.md) describes the
 boundaries; Attack Harness's acceptance matrix records matching source/package pins.
 
 A native macOS LaunchAgent retirement test also passed: it registered an unstarted
@@ -93,7 +96,7 @@ It reuses the four production store adapters and all five model codecs across th
 thirteen provider/codec/authentication combinations (including explicit AWS named profiles). Sanitized append-only evidence
 records checks, usage, build identity and explicit omissions; remote values and
 native payloads are excluded. Release templates include all store and route plans.
-See [setup instructions](LIVE_QUALIFICATION_SETUP.md) and the
+See [setup instructions](../../docs/LIVE_QUALIFICATION_SETUP.md) and the
 [tooling validation record](LIVE_QUALIFICATION_VALIDATION.md).
 
 Selected live AWS named-profile probes now pass: Nova Lite Converse text/tool
@@ -111,11 +114,11 @@ Azure OpenAI retains API keys for Chat/Responses and now supports explicit Azure
 CLI and service-principal client-secret credentials. Google Secret Manager and
 Azure Key Vault share the corresponding local identity selectors. Quota attribution,
 private profile binding and matching qualification labels are implemented.
-[Setup and permissions](CLOUD_AUTHENTICATION.md) cover model access and all four
+[Setup and permissions](../../docs/CLOUD_AUTHENTICATION.md) cover model access and all four
 secret stores. Both components now share explicit AWS environment/profile, Google
 ADC and Azure CLI/client-secret selectors, portable credential configuration,
 model environment-key support, and Vault rotating-sink/proxy support.
-[Common host auth](HOST_AUTHENTICATION.md) documents GitHub OIDC and foreground
+[Common host auth](../../docs/HOST_AUTHENTICATION.md) documents GitHub OIDC and foreground
 execution. Synthetic SDK tests cover GitHub-shaped Google federation, Azure CLI
 token scopes, and AWS action session selection; live GitHub runner trust and
 Google/Azure combinations remain unqualified until explicitly run.
@@ -130,8 +133,8 @@ Google/Azure combinations remain unqualified until explicitly run.
   interruption behavior against the complete acceptance criteria.
 - Complete final acceptance review and publish approved contract, executable and
   image releases with compatibility records. See the
-  [host runtime gates](../HOST_RUNTIME_PROFILES.md) and
-  [product acceptance criteria](../OPERATOR_SANDBOX_SPEC.md#15-acceptance-criteria).
+  [host runtime gates](../../HOST_RUNTIME_PROFILES.md) and
+  [product acceptance criteria](../../OPERATOR_SANDBOX_SPEC.md#15-acceptance-criteria).
 
 The next major stage is external qualification and approved publication. Detailed
 historical commit boundaries remain available in Git history.

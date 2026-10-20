@@ -1,9 +1,8 @@
 # Immutable host input staging
 
-Status: implemented in `internal/staging`. This stage copies prepared inventory
-bytes into service-owned directories for the three read-only Docker mounts. The
-campaign preparation CLI, input admission, launch binding and Docker mount wiring
-are implemented callers. Shared Operator/Attack Harness schemas are unchanged.
+The staging layer copies prepared inventory bytes into service-owned directories
+for the three read-only Docker mounts. Campaign preparation, input admission,
+launch binding and Docker mount setup use these verified trees.
 
 ## Preparation interface
 

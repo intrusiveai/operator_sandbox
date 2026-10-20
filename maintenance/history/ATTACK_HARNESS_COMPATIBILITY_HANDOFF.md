@@ -1,5 +1,8 @@
 # Attack Harness implementation handoff: local compatibility
 
+> Historical engineering record. This captures the instructions and evidence at
+> the time it was written; it is not the release integration contract.
+
 ## Objective and Operator counterpart
 
 Operator now admits an administrator-selected local image using compatibility
@@ -108,7 +111,7 @@ Update `build/inspect_stopped_image.py`, `build/inspect_oci.py`,
   or alteration to make Operator use this new path.
 
 The canonical record and stopped-container inspection rules are in Operator's
-[`schemas/ENGINE_RELEASE_CONTRACT.md`](../schemas/ENGINE_RELEASE_CONTRACT.md).
+[`schemas/ENGINE_RELEASE_CONTRACT.md`](../../schemas/ENGINE_RELEASE_CONTRACT.md).
 Operator reads five fixed files, creates only a stopped inspection container,
 executes no Harness code during inspection, and requires confirmed cleanup.
 

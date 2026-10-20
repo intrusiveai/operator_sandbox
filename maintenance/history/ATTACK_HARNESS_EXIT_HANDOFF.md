@@ -1,5 +1,8 @@
 # Attack Harness handoff: finish-to-exit and fatal diagnostics
 
+> Historical engineering record. This captures the instructions and evidence at
+> the time it was written; it is not the release integration contract.
+
 Implement a focused correction using the existing Operator–Harness contract.
 Do not add a completion handshake, retry a finished campaign, or send another
 ordinary operation after accepted `engine.finish`.
@@ -65,4 +68,4 @@ campaigns without separate authorization.
 
 Operator's correction adds host-side exit observations only; it does not change
 the shared wire schemas, package version, or pinned contract digest. See
-[Operator exit semantics](HARNESS_EXIT.md) for retention and inspection behavior.
+[Operator exit semantics](../../docs/HARNESS_EXIT.md) for retention and inspection behavior.

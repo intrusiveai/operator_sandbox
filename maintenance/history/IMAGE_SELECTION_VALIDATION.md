@@ -1,5 +1,8 @@
 # Docker image-selection validation — 2026-10-17
 
+> Historical engineering record. This captures the instructions and evidence at
+> the time it was written; it is not the release integration contract.
+
 ## Confirmed local behavior
 
 Test host: macOS ARM64, Docker Desktop 4.95.0, Engine/CLI 29.8.2,

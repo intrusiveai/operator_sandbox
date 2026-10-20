@@ -1,6 +1,6 @@
 # Harness loop accounting implementation
 
-Status: Go/Python accounting helpers and 129 shared cases implement the finite-loop
+Go/Python accounting helpers implement the finite-loop
 rules in [HARNESS_EXECUTION_RULES.md](HARNESS_EXECUTION_RULES.md). The helpers run
 inside a trusted dispatcher; they are not a broker, model codec, timer service or
 wire authorization mechanism. No new wire operation or Interceptor change is added.
@@ -172,7 +172,7 @@ termination, unknown effects, channel failure and other terminal conditions; do
 not wait for graceful work. Its internal `hard-stop` reason is not a new wire
 finish-reason enum; the runtime journals and translates the actual cause.
 
-## Verification and remaining integration
+## Verification and runtime integration
 
 Both languages run [harness-loop-accounting.json](fixtures/harness-loop-accounting.json).
 The 129 cases cover every configuration field, exact quota boundaries, invalid
@@ -184,5 +184,4 @@ use an independent byte-set oracle. Regenerate with
 These helpers have no persistence, provider/network I/O, native execution or
 container lifecycle. The host service and harness dispatcher now integrate saved-result lookup,
 durable host accounting, verified event sources, bounded histories, actual
-correlated result segments, timers and independent termination. Full fake-broker /
-fake-harness transport conformance and runtime qualification remain outstanding.
+correlated result segments, timers and independent termination.

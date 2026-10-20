@@ -8,13 +8,11 @@ faults, forced termination, nonzero/unknown guest exits and unconfirmed cleanup
 MUST remain unsuccessful. This execution result MUST NOT imply an attack succeeded
 or that every scenario was exercised; reports retain those facts separately.
 
-Status: implemented in `internal/campaignservice`, with integration tests in
-`internal/preparation`. This host library connects frozen preparation, ordinary
-attempt/feedback/cleanup dispatch, transport and terminal handling. [Campaign start CLI](CAMPAIGN_START.md) and
-[Docker creation/bootstrap](HOST_LAUNCH.md) are implemented callers.
-[Snapshot/restore](SNAPSHOT_SERVICE.md), [artifacts](ARTIFACT_SERVICE.md),
-[model relay](MODEL_SERVICE.md) and [assessment/completion](COMPLETION_SERVICE.md)
-are implemented on this foundation.
+The campaign service connects frozen preparation, attempt/feedback/cleanup
+dispatch, transport and terminal handling. [Campaign start](CAMPAIGN_START.md)
+and [Docker bootstrap](HOST_LAUNCH.md) construct the service with
+[snapshot](SNAPSHOT_SERVICE.md), [artifact](ARTIFACT_SERVICE.md),
+[model](MODEL_SERVICE.md) and [completion](COMPLETION_SERVICE.md) handlers.
 
 ## Construction and admission
 
@@ -107,10 +105,6 @@ verified parent lineage, unadvertised routes, frozen identity, idle deadlines,
 native status loss, blocked ordinary work, closure uncertainty, confirmed-injection
 cleanup and lost deletion replies. These tests do not qualify Docker or a live
 Interceptor/Attack Harness deployment.
-
-The ordinary service routes, bounded graceful finalization, reporting, Docker
-launch/control and OS service lifetime handling are implemented. Host installation
-packaging and full runtime qualification remain outstanding.
 
 ## Native evidence collection
 

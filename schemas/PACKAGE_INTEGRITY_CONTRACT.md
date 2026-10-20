@@ -1,9 +1,8 @@
 # Shared package manifest and integrity
 
-This stage defines the closed [package manifest](contract-package.schema.json) and
+This contract defines the closed [package manifest](contract-package.schema.json) and
 matching Go/Python construction, verification and loading APIs. It implements the
 package-content identity required by [SHARED_CONTRACT.md](SHARED_CONTRACT.md).
-It does not publish `0.1.0`, complete model codecs or certify runtime conformance.
 The [publication tooling contract](../docs/CONTRACT_PUBLICATION.md) specifies the
 reproducible source/package builder and required generated-package validation.
 
@@ -130,10 +129,10 @@ Image/release authenticity, executable-build provenance, actual filesystem
 permissions/no-follow reads, capability admission and runtime gates remain separate.
 The verifier is not a substitute for those checks or for release qualification.
 
-The current development library can create and verify manifests; no production
-package manifest or release is checked in by this stage. Publication still requires
-the advertised codec/tool profiles, full conformance and packaging work. Tests use version
-`0.0.0` and explicitly identified fixture semantic resources.
+The [release contract lock](../release/contract-lock.json) selects the exact
+package source and identity. Both products MUST verify that independent pin
+before loading its contents. Tests use explicitly identified fixture versions
+and semantic resources; fixture identities do not select a production package.
 
 ## Tests and regeneration
 

@@ -1,13 +1,10 @@
 # Harness attempt allocation and loop limits
 
-Status: accepted MVP contract. These rules complete the numbering and finite-loop
-decisions. The [attempt bookkeeping helpers](ATTEMPT_BOOKKEEPING_CONTRACT.md)
-implement allocation and in-memory admission transitions with 40 shared Go/Python
-traces. The [loop accounting helpers](HARNESS_LOOP_ACCOUNTING_CONTRACT.md) implement
-finite-loop configuration, read/progress accounting, batch skipping and bounded
-finalization with 129 shared cases. Durable dispatcher integration and actual timers
-are implemented; complete process/native conformance remains outstanding. These rules supplement
-SHARED_CONTRACT.md without a new broker operation.
+These rules define attempt numbering and finite-loop limits.
+[Attempt bookkeeping](ATTEMPT_BOOKKEEPING_CONTRACT.md) implements allocation and
+in-memory admission transitions; [loop accounting](HARNESS_LOOP_ACCOUNTING_CONTRACT.md)
+implements finite-loop configuration, read/progress accounting, batch skipping and
+bounded finalization. These rules supplement the shared contract.
 
 ## 1. Host-owned attempt numbering
 
@@ -144,5 +141,4 @@ consecutive versus 50 cumulative invalid calls; successful reset of streak only;
 repeat/overlapping read charges versus novel-byte progress; EOF and unused read
 reservation; refusal/compaction/no-tool turns; repeated restore/snapshot and forged
 progress; restore-skipped tool accounting; bounded model-free finalization and
-host-stop precedence. Operator/Attack Harness component and scripted-peer runtime tests are implemented;
-complete process/native conformance remains outstanding.
+host-stop precedence.

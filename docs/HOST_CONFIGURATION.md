@@ -1,11 +1,9 @@
 # Administrator configuration
 
-Status: implemented in `internal/hostconfig` and `cmd/operatorctl`. This stage
-loads installation settings and makes them available to administrative termination.
-The private target profile and campaign preparation library are also implemented;
-campaign start, model configuration and supervised worker submission are implemented.
-Explicit submission target selectors override `target.profile_file` for that run
-and bind the selected profile into its start-input fingerprint. The host configuration is separate from the shared
+The host configuration loads installation settings for campaign startup and
+administrative termination. Explicit submission target selectors override
+`target.profile_file` for that run and bind the selected profile into its
+start-input fingerprint. Host configuration is separate from the shared
 Operator/Attack Harness wire package.
 
 ## File and supported settings

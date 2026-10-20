@@ -1,10 +1,5 @@
 # Operator host runtime profiles
 
-Status: platform/transport/termination and MVP containment decisions accepted,
-file-spool and service-lifetime decisions accepted. Transport, supervised launch and
-lifecycle handling and installation packaging are implemented as of 2026-09-28;
-full native qualification and approved publication remain outstanding. See [implementation status](docs/IMPLEMENTATION_STATUS.md).
-
 This document supplies the host-specific requirements for `operator-container/v1`.
 The [product spec](OPERATOR_SANDBOX_SPEC.md), [guest contract](GUEST_CONTAINER_SPEC.md)
 and [shared message contract](schemas/SHARED_CONTRACT.md) retain their respective
@@ -12,8 +7,8 @@ lifecycle, containment and wire responsibilities.
 
 The [host transport layer](docs/HOST_TRANSPORT.md) implements FIFO/spool pumping,
 bounded queues, deadlines, periodic size checks and confirmed-exit transport cleanup.
-Its local tests do not qualify Docker permissions, confinement, the Python peer or
-independent container termination; those gates below remain open.
+Docker permissions, confinement and independent container termination require
+checks against the actual runtime in addition to transport tests.
 
 ## 1. Supported host scope
 
@@ -24,9 +19,7 @@ independent container termination; those gates below remain open.
 | macOS x86_64 (Intel) | `darwin/amd64` | Docker Desktop | `linux/amd64` | Regular-file spool |
 | macOS ARM64 (Apple Silicon) | `darwin/arm64` | Docker Desktop | `linux/arm64` | Regular-file spool |
 
-These are the supported host OS/architecture targets. Operator and Attack Harness
-runtimes are implemented; complete production-image tests on all four tuples
-remain outstanding.
+These are the supported host OS/architecture targets.
 Cross-architecture emulation, remote daemons and other desktop runtimes are outside
 the initial matrix. Linux Docker Desktop is not the selected Linux profile.
 Docker Desktop runs the Linux guest kernel on macOS; guest paths and Python/syscall
@@ -36,7 +29,7 @@ campaign data cannot change it. The launcher supplies the fixed allowlisted
 `OPERATOR_TRANSPORT=fifo` or `OPERATOR_TRANSPORT=spool` setting. Bootstrap verifies
 its mounted layout and requires the host bootstrap binding to match.
 
-The release response's `platform` identifies the Linux **image**, not the Operator
+The embedded compatibility record's `platform` identifies the Linux **image**, not the Operator
 host OS. Keep host platform, image platform, local daemon binding, profile revision
 and transport in host launch records. `operator-container/v1` names the common ABI;
 the installed host profile checks the required runtime capabilities before launch.
@@ -63,8 +56,7 @@ required versions. The agreed initial entries, selected on 2026-09-17, are:
 | Docker Engine on Linux | 29.8.1 |
 | Docker Desktop on macOS | 4.91.0, including its bundled Engine 29.8.0 |
 
-This records the agreed support baseline. Selected macOS ARM64 service/confinement
-probes have passed; complete production-image feasibility tests remain outstanding. Sources: [Ubuntu point release](https://lists.ubuntu.com/archives/ubuntu-announce/2026-August/000326.html),
+This records the support baseline. Sources: [Ubuntu point release](https://lists.ubuntu.com/archives/ubuntu-announce/2026-August/000326.html),
 [Apple releases](https://support.apple.com/en-us/100100),
 [Docker Engine releases](https://docs.docker.com/engine/release-notes/29/), and
 [Docker Desktop releases](https://docs.docker.com/desktop/release-notes/#4910).
@@ -310,32 +302,23 @@ the saved campaign endpoint even if configuration changes. Interceptor
 retains its documented data-directory configuration under that user's account.
 LaunchAgents require that Docker Desktop is available before explicit run startup.
 
-## 4. Decisions required before profile qualification
+## 4. Filesystem and service integration checks
 
-D1 is resolved by Sections 1.1–1.2, D2 by Section 2 and shared contract Section
-4.1, and D3 by Section 3.1. Implementation and feasibility evidence remain required.
+Verify immutable input/skill/manifest publication through Docker Desktop sharing:
+permissions, case/Unicode collisions and absence of writable aliases. Reject
+layouts that cannot satisfy those properties. Verify spool operations under the
+live syscall filter and Docker mount permissions, and test durable journal writes
+separately from transient transport writes. Worker and administrator CLI MUST
+resolve the same daemon and campaign state.
 
-| ID | Decision | Recommended starting point / constraint |
-|---|---|---|
-| D1 | Confirmed supported versions and MVP containment — resolved | Section 1.1 records the informational version baseline. Section 1.2 selects Docker mounts/permissions and two-stage seccomp; additional filesystem policy, separate user-namespace remapping and a kernel-enforced FIFO reopen ban are not required. |
-| D2 | File-spool protocol — resolved | Atomic sequence-named files, cumulative consumption acknowledgements, producer cleanup, 10 ms polling and five-second transport deadlines. Host-process size checks run every second with configurable `spool.max_bytes` (default 512 MiB); excess triggers Docker termination. Shutdown/startup cleanup removes inactive spools. Host transport and launch-worker termination/cleanup integration are available; supervised service submission and the Python peer are implemented. Installation packaging, complete Go/Python process exchanges and full native qualification remain outstanding. |
-| D3 | Host installation, service identity and lifecycle — resolved | Both components default to foreground execution. Optional services use Linux systemd or a macOS per-user LaunchAgent. macOS uses the logged-in Docker Desktop user, private Library configuration/state, and `caffeinate -i -w <pid>` during active work and cleanup. Screen lock is allowed; logout, actual sleep and Docker interruption end execution. Recovery is cleanup/reporting only. See Section 3.1. |
+## 5. Native runtime verification
 
-Initial feasibility testing verifies immutable input/skill/manifest publication
-through Docker Desktop sharing: permissions, case/Unicode collisions and no writable
-aliases. Reject layouts that cannot satisfy those properties. Verify the selected
-spool operations under the live syscall filter and Docker mount permissions, and
-test durable journal writes separately from transient transport writes. Verify that
-worker and administrator CLI resolve the same daemon and campaign state.
-
-## 5. Qualification gate for gap 7
-
-Run the initial real-image feasibility test on each of the
-four host OS/architecture targets using the agreed baseline. Record enough context
+Run real-image verification on each of the
+four host OS/architecture targets using the supported baseline. Record enough context
 to reproduce failures and mark each test pass/fail/not-run. This initial validation
 does not impose recurring certification of every OS/Docker version combination:
 
-1. Start the production Python image without pull and validate the release response,
+1. Start the production Python image without pull and validate embedded compatibility metadata,
    matching image/host architectures and full read-only input/skill manifests.
 2. Complete all five startup messages and a model/tool/artifact round trip through
    the selected transport, then a healthy target restore without harness restart.
@@ -355,5 +338,5 @@ does not impose recurring certification of every OS/Docker version combination:
    and closure on helper failure or a changed sleep/wake marker. Distinguish simulated
    interruptions from tests of physical sleep/logout/Docker restart.
 
-The complete native test matrix remains outstanding. Neither the support matrix nor passing
-Interceptor's own tests closes gap 7 without Operator/Attack Harness evidence on these tuples.
+Test records MUST identify the host, image, contract and operations exercised.
+Interceptor tests alone do not establish Operator/Harness runtime behavior.

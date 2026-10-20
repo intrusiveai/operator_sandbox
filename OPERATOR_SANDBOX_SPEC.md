@@ -1,9 +1,8 @@
 # Intrusive AI Operator Sandbox Product Specification
 
-Status: core runtime, administrator workflows, HTTPS adapter, process integration and installation/release tooling implemented; approved publication and native qualification outstanding\
-Date: 2026-09-28\
-Product API family: `operator.dev`; existing data schemas remain individually versioned  
-Container runtime profile: `operator-container/v1` — Docker with Linux FIFO / macOS file-spool transport; qualification pending
+Product release: `0.1.0`\
+Product API family: `operator.dev`; data schemas are individually versioned\
+Container runtime profile: `operator-container/v1` — Docker with Linux FIFO / macOS file-spool transport
 
 ## 1. Purpose and design authority
 
@@ -26,16 +25,13 @@ The accepted [shared host/harness contract](schemas/SHARED_CONTRACT.md) is the
 single authority for the pipe envelope, identities, startup/manifest exchange,
 deadlines, errors, restore results and completion. Operator owns its versioned
 `operator-contracts` package; both ends pin its version and content digest.
-Closed schemas, Go/Python validators and shared fixtures, and the host/harness runtimes
-are implemented. Deterministic Go/Python process integration covers both transports.
-Package publication and native runtime qualification remain outstanding. See
-[current implementation status](docs/IMPLEMENTATION_STATUS.md) for
-completed work and remaining gates. MUST denotes a requirement, not proof of acceptance.
+The [release contract lock](release/contract-lock.json) identifies the exact
+package source, version and content digest. The schemas, Go/Python validators and
+shared fixtures define the integration contract.
 
 The [host transport implementation](docs/HOST_TRANSPORT.md) supplies FIFO/spool
-I/O, bounded queues, deadlines and confirmed-exit transport cleanup. Its integration
-with Docker, startup verification and the durable broker is implemented and tested
-with scripted peers; full native host qualification remains outstanding.
+I/O, bounded queues, deadlines and confirmed-exit transport cleanup, coordinated
+with Docker, startup verification and the durable broker.
 
 ## 2. Principal requirements and boundaries
 
@@ -121,10 +117,8 @@ Docker Desktop and regular-file spooling through its Linux VM. Operator and
 Interceptor run on the same physical machine and use its local Docker installation.
 A small release-owned native component may install Python's final confinement.
 The [host runtime profiles](HOST_RUNTIME_PROFILES.md) define the support matrix,
-confirmed supported versions, selected MVP controls and remaining implementation
-gates. Selected service/confinement probes have passed; complete production-image
-testing on all four host tuples remains outstanding. OS/Docker versions are not an
-admission allowlist.
+confirmed supported versions and runtime controls. OS/Docker versions are not an
+admission allowlist; runtime capability checks enforce the required behavior.
 
 ### 3.2 Security properties and limits
 
@@ -730,8 +724,7 @@ truncated and whether all requested categories were collected. The harness must
 pass decoded permitted content and limitations into model context, label summaries
 and omitted ranges, and verify full-object hashes only for fully assembled bytes.
 See the shared contract for exact schemas, category states, boundary and retention
-semantics. Operator broker and Attack Harness feedback handling are implemented;
-complete live integration qualification remains outstanding.
+semantics.
 
 ### 8.2 Interceptor integration
 
@@ -842,8 +835,8 @@ The host service owns the API, provider bridge and target lifecycle. There is no
 separate gateway replacement/recovery protocol in this MVP. Service, worker,
 guest or target failure is terminal for execution; preserve uncertainty, stop
 the harness and perform bounded reachable cleanup. A new process cannot adopt
-or resume a failed campaign. Remote deployment, authentication, multiple
-instances and automatic restart are deferred beyond the local MVP.
+or resume a failed campaign. This adapter uses a single same-host instance and
+loopback communication without Operator–Interceptor authentication.
 
 **Compatibility gate:** native codecs, supervisor campaign access, localhost lifecycle
 and integration tests live in Interceptor. Qualify the exact source/image/resource
@@ -996,7 +989,7 @@ Keep journal content, committed artifacts, captured target evidence and managed
 report generations within this campaign group. Digest-based reuse is local to the
 group. Another campaign must own a copy of every evidence object it needs; retained
 reports and receipts cannot depend on another campaign's files. Reusable installed
-images, skills, release caches and administrator configuration keep their separate
+images, skills and administrator configuration keep their separate
 installation lifetimes. Spool files are transient and live outside retained evidence.
 
 Only host components write evidence. Use restrictive service ownership, append-only
@@ -1041,7 +1034,7 @@ and artifact group for that campaign, including every revision, captured target
 export and generated report. `--all` selects all managed campaign groups in the
 configured state root. Include registered managed campaign copies in run-output
 directories and update their inventories. Preserve reusable configuration,
-credentials, installed images, skills, release caches and input source projects.
+credentials, installed images, skills and input source projects.
 Files explicitly exported outside managed campaign directories remain administrator
 copies and are not searched for or deleted.
 
@@ -1699,13 +1692,14 @@ selected from trusted distribution metadata. Require exact inventory and bounded
 regular-file reads before compiling the verified offline schemas. Preparation and
 launch use that frozen protocol and verified pin; incoming image/release metadata
 cannot supply replacement validators. `operatorctl contract check` provides the
-read-only installation diagnostic. Production package publication and distribution
-pin/version selection remain packaging requirements.
+read-only installation diagnostic. The release lock and installed executable
+carry the supported package identity.
 
 The host `engine.image` setting selects local Docker content under Section 5.1.1;
 campaign or guest content cannot override it. Administrators install images and
-manage registry credentials outside Operator. Release validation uses the fixed
-HTTPS origin/cache. Record host platform separately from the Linux image platform.
+manage registry credentials outside Operator. Compatibility validation reads
+bounded embedded files from that local image. Record host platform separately
+from the Linux image platform.
 
 Use typed Docker API requests or fixed argument arrays, never model-supplied shell
 commands. Connect only to the administrator-selected local daemon socket; ignore
@@ -1722,42 +1716,30 @@ and the [shared spool rules](schemas/SHARED_CONTRACT.md#41-macos-file-spool-wire
 Use Section 10.2 Docker termination, then remove resources only after confirmed exit.
 No worker/daemon recovery resumes failed campaign execution.
 
-The accepted [shared contract](schemas/SHARED_CONTRACT.md) has closed schemas, an
-offline catalog/registry, semantic validators and shared Go/Python vectors. Package
-build/check tooling and runtime integration are implemented. Publish
-`operator-contracts` 0.2.0 only after both runners and the required conformance
-gates pass. Raw byte digests, Operator canonical-object digests, OCI digests and
-native Interceptor digests are separate recipes. Release/runtime claims require tests.
+The [shared contract](schemas/SHARED_CONTRACT.md) contains closed schemas, an
+offline catalog/registry, semantic validators and shared Go/Python vectors.
+The [release lock](release/contract-lock.json) pins package `0.2.1`. Raw byte
+digests, canonical-object digests, OCI digests and native Interceptor digests are
+separate identities and MUST use their specified recipes.
 
-## 14. Implementation sequence
+## 14. Integration references
 
-1. **Contracts and feasibility:** publish and test the accepted shared contract package;
-   implement and validate the selected host-service lifecycle and prove Linux FIFO/macOS spool bootstrap,
-   nonroot startup, exec/network denial and worker-independent Docker termination
-   on all four host OS/architecture combinations.
-2. **Host foundation:** CLI/state, local image/release validation, narrow Docker helper, supervised
-   ownership/fencing, immutable staging, journal recorder and terminal lifecycle.
-3. **Python vertical slice:** exact prompt/skill/reference loading, one model
-   exchange, artifact commit, validated fake-target attempt and structured output.
-4. **Native targets:** qualify the revised Interceptor campaign-access/delivery/evidence
-   contract and attach/optional-stop/restore flows; qualify declarative HTTPS.
-5. **Complete submission/reporting:** public bundle validation and immutable input
-   staging, objectives-only and scenario-guided runs, deterministic reports,
-   source-compatible result/evidence exports and explicit incomplete coverage.
-6. **Release gates:** real providers, cross-architecture containment, crash/fault
-   tests, installation/offline updates, capacity and end-to-end usability.
-
-The [implementation status](docs/IMPLEMENTATION_STATUS.md) records completed
-components and remaining work against this sequence. Component and scripted-peer
-tests do not replace native container, provider or Interceptor qualification.
+- [Harness integration](docs/HARNESS_INTEGRATION.md): package compatibility,
+  startup, direct input, evidence inspection, finish and error handling.
+- [Interceptor client](docs/INTERCEPTOR_CLIENT.md): native operation translation,
+  lifecycle and evidence retention.
+- [HTTPS targets](docs/HTTPS_TARGETS.md): trusted declarative target mappings.
+- [Reporting](docs/REPORTING.md): retained facts, assessment interpretation,
+  execution coverage and evidence exports.
+- [Host distribution](docs/HOST_DISTRIBUTION.md): installation, updates and
+  exact supported package identity.
 
 ## 15. Acceptance criteria
 
-The `OC-AC` criteria below remain the acceptance contract. Many components have
-passing unit, contract and scripted integration tests; the complete acceptance
-matrix has not passed. See [implementation status](docs/IMPLEMENTATION_STATUS.md)
-for evidence and outstanding gates. Unit/contract tests complement the named
-native gates; schemas must cover boundary cases rather than merely mirror code.
+The `OC-AC` criteria define required behavior and its verification. Unit and
+contract tests complement native runtime checks; schemas must cover boundary
+cases rather than merely mirror code. A test result establishes only the
+configuration and behavior actually exercised.
 
 | ID | Required evidence |
 |---|---|
@@ -1795,9 +1777,6 @@ native gates; schemas must cover boundary cases rather than merely mirror code.
 | OC-AC-032 | Per-campaign and all-campaign purge remove complete managed evidence without cross-campaign dependencies; active/read/export/report work blocks deletion. Retention is administrator-controlled; external exports/configuration/images survive; missing evidence and partial deletion are explicit. |
 | OC-AC-033 | macOS caffeinate assertion is verified before execution, remains continuous through healthy restore, and releases after cleanup or host exit. Display sleep/lock remain allowed. Helper loss, changed/unreadable sleep state, logout and Docker interruption close admission and trigger independent Docker termination with retained uncertainty. Idle evidence service does not inhibit sleep; recovery never resumes execution. |
 
-The host-service decisions are resolved and service submission/lifecycle handling
-and installation packaging are implemented. Full four-host runtime qualification
-remains outstanding. [Host profiles](HOST_RUNTIME_PROFILES.md) record the confirmed
-supported versions, selected Docker/seccomp baseline and accepted spool rules.
-Runtime capability checks enforce required behavior without an OS/Docker version
-certification allowlist.
+[Host profiles](HOST_RUNTIME_PROFILES.md) define supported versions, Docker/seccomp
+controls and spool rules. Runtime capability checks enforce required behavior
+without an OS/Docker version certification allowlist.

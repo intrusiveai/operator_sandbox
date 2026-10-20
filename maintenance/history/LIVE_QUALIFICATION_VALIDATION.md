@@ -1,5 +1,8 @@
 # Live-qualification tooling validation
 
+> Historical engineering record. This captures the instructions and evidence at
+> the time it was written; it is not the release integration contract.
+
 **OpenAI tool-schema verification (2026-10-18 UTC):** GPT-5-mini accepted the full
 corrected tool catalog on Chat Completions and Responses. Each route returned
 valid `attempt_execute` and `record_append` arguments in separate forced-tool
@@ -100,7 +103,7 @@ or live in-flight fault combination is marked passed here. The tooling reports
 pre-canceled checks separately and retains `not_run` for coordinated fault and
 identity checks. Each live record MUST identify its executing source/contract pins
 and private-profile digest; separate private runner records MUST identify the actual
-model/deployment and identity setup. See [setup instructions](LIVE_QUALIFICATION_SETUP.md).
+model/deployment and identity setup. See [setup instructions](../../docs/LIVE_QUALIFICATION_SETUP.md).
 
 Native host/image qualification, Interceptor/HTTPS target qualification and release
 publication remain separate gates. No Attack Harness contract or runtime changes

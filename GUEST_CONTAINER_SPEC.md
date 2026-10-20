@@ -1,13 +1,11 @@
 # Operator Sandbox Container Guest Contract
 
-Status: container ABI, launcher and harness implemented, 2026-09-28; full production runtime qualification outstanding\
-Owner: this container design; paired with [the product specification](OPERATOR_SANDBOX_SPEC.md)
+Owner: Operator Sandbox; paired with [the product specification](OPERATOR_SANDBOX_SPEC.md).
 
-The accepted [shared host/harness contract](schemas/SHARED_CONTRACT.md) governs
-wire semantics and data exchange. This document defines runtime responsibilities;
-the package, validators/fixtures and actual launcher are implemented. Approved
-release publication and full runtime qualification remain outstanding; see
-[current implementation status](docs/IMPLEMENTATION_STATUS.md). Both ends must pin the exact package version and content digest.
+The [shared host/harness contract](schemas/SHARED_CONTRACT.md) governs wire
+semantics and data exchange. This document defines runtime responsibilities.
+Both ends MUST pin the exact package version and content digest identified by
+the [release contract lock](release/contract-lock.json).
 
 ## 1. Decisions
 
@@ -468,11 +466,9 @@ runtime controls to exercise forbidden syscalls; do not ship probe programs in
 the production image or infer denial from an absent tool. Verify both allowed
 Python operation and denied bypasses, Linux FIFO opening/EOF, macOS spool isolation/
 atomicity/bounds, descriptor leakage, mount/network state, journal failure handling,
-worker-independent Docker kill and image/release-cache drift on all four supported
+worker-independent Docker kill and local image/compatibility-metadata drift on all four supported
 Linux/macOS host tuples. Docker API/VM failure must report unconfirmed termination. Keep startup-only exceptions distinguishable
-from live permissions. Component and scripted-peer tests cover portions of these requirements; the
-complete production-image/native host matrix remains outstanding. See
-[current implementation status](docs/IMPLEMENTATION_STATUS.md) for evidence boundaries.
-D1 is resolved: Docker mounts/permissions and two-stage seccomp are the MVP controls.
+from live permissions. Docker mounts/permissions and two-stage seccomp enforce
+the runtime controls.
 Spool write access is limited to the fixed outbound transport view. These checks
 verify implementation behavior; no recurring OS/Docker version matrix is required.
