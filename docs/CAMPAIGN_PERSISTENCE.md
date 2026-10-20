@@ -1,9 +1,8 @@
 # Host campaign persistence
 
-Status: implemented in Go under `internal/campaign`. This package provides
-persistence; Docker launch, tool dispatch and harness orchestration are implemented
-in its [host worker](HOST_LAUNCH.md) and [campaign service](CAMPAIGN_SERVICE.md) callers.
-The shared host/harness wire contract remains separately versioned.
+The campaign store provides durable persistence. Its [host worker](HOST_LAUNCH.md)
+and [campaign service](CAMPAIGN_SERVICE.md) callers manage Docker launch, dispatch
+and Harness orchestration. The shared wire contract is separately versioned.
 
 ## Immutable launch records
 
@@ -188,7 +187,7 @@ never returns execution permission or an open writer. Recovery remains cleanup
 and reporting only, including when all persisted records are intact. [Startup recovery](STARTUP_RECOVERY.md) now integrates separate cleanup and
 reconciliation records with the host lifecycle.
 
-## Validation and remaining integration
+## Validation
 
 Tests cover all four platform/transport manifests; real shared launch fixtures;
 identity reads while the writer mutex is held; immutable campaign/launch identity;
@@ -207,5 +206,4 @@ and signals a lock-independent terminal fence. The
 and emergency records; the launcher and broker integrate terminal checks before
 admission and dispatch. Reservations protect the logical write budget, not physical
 disk space against other host writers. [Transport](HOST_TRANSPORT.md), service
-timers, reporting and Attack Harness runtime integration are implemented. Campaign
-purge is implemented; full runtime qualification remains outstanding.
+timers, reporting and Attack Harness runtime integration are implemented.

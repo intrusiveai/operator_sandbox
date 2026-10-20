@@ -1,11 +1,10 @@
-# Simple campaign contract — coordinated breaking revision
+# Ordinary campaign contract
 
-This is the authoritative implementation contract for shared package **0.2.0**.
-The final source commit and package digest MUST be taken from the accompanying
-handoff, once published. Operator and Harness MUST require an exact matching
-package digest. The former attempt body and `engine.request_stop` are not supported
-by this revision. Transport envelopes, sequencing, deadlines, restore binding and
-no-replay semantics remain unchanged.
+This is the ordinary campaign contract for shared package **0.2.1**.
+The [release contract lock](../release/contract-lock.json) identifies its exact
+source revision and package digest. Operator and Harness MUST require that
+matching identity. Transport envelopes, sequencing, deadlines, restore bindings
+and no-replay semantics apply throughout the workflow.
 
 ## Ordinary execution
 
@@ -118,7 +117,7 @@ receipt and reports convey final cleanup results. Duplicate delivery is idempote
 interrupted finalization never replays a campaign. Deadlines and owned cleanup MUST
 remain enforceable independently of whether any assessment was produced.
 
-## Diagnostics and Harness handoff
+## Diagnostics and Harness responsibilities
 
 Operation errors MAY include `diagnostic`, validated by workflow-diagnostic.schema.
 It contains source, stage, stable reason, bounded message, execution state and
@@ -162,7 +161,5 @@ references, zero-attempt finish, optional local hypotheses and malformed values.
 Go and Python MUST agree. Operator process tests MUST verify execution → observation
 read → finish, retention-before-dispatch, duplicate finish, correction, invalid-call
 exhaustion, cleanup and exported diagnostics using controlled local peers. A real
-Harness process integration requires the matching separate Harness implementation.
-No live provider reliability is established by controlled tests. Record schema
-bytes, required model fields and ordinary workflow call counts against the prior
-contract. Publish no release as part of this change.
+Harness process integration MUST use the matching package on both ends.
+No live provider reliability is established by controlled tests.

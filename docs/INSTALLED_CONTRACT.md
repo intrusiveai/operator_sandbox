@@ -1,9 +1,8 @@
 # Installed shared-contract loading
 
-Status: implemented in `internal/contractstore` and `operatorctl contract check`.
-This connects the existing Go/Python [package integrity contract](../schemas/PACKAGE_INTEGRITY_CONTRACT.md)
-to Operator's host filesystem. Shared message schemas, package identities and
-digest recipes are unchanged.
+The installed loader and `operatorctl contract check` apply the shared
+[package integrity contract](../schemas/PACKAGE_INTEGRITY_CONTRACT.md) to the host
+filesystem using an independently selected package identity.
 
 ## Trust and installation layout
 
@@ -97,7 +96,7 @@ on success, **2** for missing/invalid command arguments, and **1** for failed lo
 verification, cancellation or output. Failure produces no success report, and
 diagnostics do not echo package contents.
 
-## Preparation integration and remaining gates
+## Preparation integration
 
 The installed launcher MUST select its supported package directory/pin,
 call this loader, and take `imagerelease.Requirements.Contract` from the verified
@@ -105,15 +104,12 @@ protocol's `PackageIdentity()`. The running Operator application version must al
 come from the installed executable. Neither an image manifest nor an HTTPS
 response can independently select arbitrary installed validators or executable code.
 
-The release response must match that verified package pin. Before guest execution,
-also inspect the immutable image's embedded package/engine metadata and enforce
-the fixed runtime policy. This loader establishes byte integrity and offline schema
-loading; it does not establish source-code conformance, image compatibility admission or runtime
-qualification. Supported-package metadata/build version packaging is implemented by the
-[host distribution tools](HOST_DISTRIBUTION.md). Runtime admission checks the
-compiled supported pin; explicit inspection tools can verify a future package.
-Approved production package publication remains outstanding. Image-file inspection and launch integration
-are implemented. Tests use explicitly identified `0.0.0` fixtures.
+The image's embedded compatibility metadata must match the verified package pin.
+Before guest execution, inspect the immutable image's embedded package/engine
+metadata and enforce runtime policy. The [distribution tools](HOST_DISTRIBUTION.md)
+embed the supported pin; runtime admission checks it. Explicit inspection commands
+can verify a different package without activating it. Package integrity is distinct
+from source-code conformance, image compatibility and runtime confinement.
 
 Tests cover real development-schema loading, independent pin failures before payload
 reads, malformed manifests, source immutability, same-size tampering, missing/extra

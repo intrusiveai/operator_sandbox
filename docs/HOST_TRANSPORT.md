@@ -1,9 +1,8 @@
 # Host FIFO and file-spool transport
 
-Status: implemented in Go under `internal/transport`. This layer moves the existing
-shared messages over real named FIFOs and regular files. It does not start Docker,
-implement the Python peer, verify confinement, dispatch operations or grant durable
-admission. No shared wire schemas or Interceptor APIs change.
+The host transport moves shared messages over named FIFOs and regular files.
+Container launch, confinement, operation dispatch and durable admission belong to
+the host worker and campaign service, rather than the transport layer.
 
 The sibling Attack Harness now supplies Python FIFO and spool peers. Run
 `OPERATOR_PYTHON_PEER_TEST=1 go test ./internal/transport -run 'TestPython.*Interoperability' -count=1`
@@ -118,7 +117,7 @@ hostile files can take time. Lifecycle integration must also distinguish expecte
 final exit from failure and reconcile a lost final spool ACK using authoritative
 Docker/journal state. A closed transport is never reopened for execution.
 
-## Validation and remaining work
+## Validation
 
 Tests use actual FIFOs and spool directories, complete shared startup fixtures,
 fragmented framing, fast first requests, response correlation, restore-continuing
@@ -127,8 +126,7 @@ campaign deadlines, malformed paths, size excess, and confirmed-exit cleanup.
 Cancellation is tested while the I/O mutex is held. Fake monotonic clocks make
 deadline boundary tests deterministic.
 
-The Python physical peer is implemented. Complete Go/Python process exchanges and
-Docker launch/permission/confinement qualification remain outstanding. The host worker now connects broker
+The host worker now connects broker
 dispatch and durable traffic audit. Transport schedules transfer, startup, idle,
 operation and campaign deadlines; the service separately bounds finalization.
 Meaningful model-loop progress remains an Attack Harness responsibility. No Docker

@@ -1,10 +1,8 @@
 # Independent Docker termination
 
-Status: implemented in `internal/dockercontrol`, `internal/termination`,
-`internal/campaign/termination.go` and `cmd/operatorctl`. This stage provides the
-administrative command and a terminal-fence observer. Container creation/start,
-the campaign service and native execution now use this layer. Tests use a fake
-Docker executable; real Docker and host-profile qualification remain pending.
+The administrative termination command and terminal-fence observer stop the
+exact campaign container. Container startup, campaign execution and native
+dispatch use the same saved Docker binding and termination layer.
 
 The same restricted Docker subprocess wrapper now supports
 [read-only local image preparation](IMAGE_PREPARATION.md). Saved-container
@@ -153,9 +151,7 @@ This command stops the harness container and retains it for evidence. It does no
 remove Docker resources, delete transport storage, stop the native Interceptor
 target or purge campaign artifacts. The [host worker](HOST_LAUNCH.md) supplies those lifecycle steps after confirmed
 exit and records removal/cleanup separately. Its macOS power lease lasts through
-cleanup. Administrative reporting and supervised service submission are implemented;
-host installation packaging and full native qualification remain outstanding.
-A stop overlapping an unconfirmed start uses `startup_outcome_unconfirmed`; that
+cleanup. A stop overlapping an unconfirmed start uses `startup_outcome_unconfirmed`; that
 outcome does not authorize removal or transient-directory cleanup.
 
 ## Validation

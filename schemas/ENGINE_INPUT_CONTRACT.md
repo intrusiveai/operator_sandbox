@@ -1,10 +1,10 @@
 # Immutable EngineContext and prompt content
 
-This document defines the implemented launch-input schemas and Go/Python validation.
-It supplements [startup/manifests](STARTUP_MANIFEST_CONTRACT.md) and the
-[shared contract](SHARED_CONTRACT.md). Runtime preparation and all five native provider codec families are implemented;
-contract package publication and full runtime qualification remain outstanding. Canonical verification is
-implemented by the additional [identity validation layer](CANONICAL_IDENTITY_CONTRACT.md).
+This document defines launch-input schemas and Go/Python validation. It
+supplements [startup/manifests](STARTUP_MANIFEST_CONTRACT.md) and the
+[shared contract](SHARED_CONTRACT.md). The
+[identity validation layer](CANONICAL_IDENTITY_CONTRACT.md) verifies canonical
+input identities.
 
 ## EngineContext
 

@@ -1,5 +1,8 @@
 # OpenAI object-schema verification
 
+> Historical engineering record. This captures the instructions and evidence at
+> the time it was written; it is not the release integration contract.
+
 Date: 2026-10-18 UTC. Model: `gpt-5-mini`. Provider: direct OpenAI API.
 
 Four live requests advertised all eleven tools from the production Python

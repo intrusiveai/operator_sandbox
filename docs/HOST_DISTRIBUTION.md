@@ -134,8 +134,8 @@ publisher and exact matching schema bytes. The host executable MUST embed this
 supported pin and source commit; `operatorctl version` MUST expose them. Runtime
 submission, skills, capabilities and campaign preparation MUST reject another
 configured pin. Explicit `contract check` and `release check` MUST remain usable for
-inspecting a future package before activation. The current `0.0.0` package is a
-development candidate; tooling MUST NOT silently label it an approved `0.1.0` package.
+inspecting a package before activation. The [release contract lock](../release/contract-lock.json)
+is the source of truth; product and contract package versions are independent.
 
 Every candidate MUST include an SPDX 2.3 dependency inventory and an in-toto/SLSA
 provenance statement binding the binary digest, source commit, toolchain, target
@@ -212,6 +212,3 @@ selected version, usability of the old binary and explicit downgrade enforcement
 Linux account/service provisioning MUST use command fixtures in ordinary tests;
 actual native Linux provisioning and all four production runtime tuples still
 require external qualification.
-
-See [recorded release validation](RELEASE_VALIDATION.md) for tested source identities,
-reproducibility results and the remaining external qualification boundaries.

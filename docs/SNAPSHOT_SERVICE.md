@@ -103,5 +103,4 @@ restore and subsequent attempts.
 
 These tests use real host journals, shared validators and file spools with scripted
 native/Docker peers. Artifact upload, model relay, assessment/finish
-dispatch and launcher/control integration are implemented. Complete process/native
-qualification remains outstanding.
+dispatch and launcher/control integration are implemented.

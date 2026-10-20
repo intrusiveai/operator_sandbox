@@ -1,5 +1,8 @@
 # AWS live qualification — 2026-09-28
 
+> Historical engineering record. This captures the instructions and evidence at
+> the time it was written; it is not the release integration contract.
+
 Selected host-adapter checks passed on macOS ARM64 using an explicitly selected
 local AWS named profile configured for IAM Identity Center/SSO. The administrator
 renewed the SSO session before testing. No remote secrets were created, updated,

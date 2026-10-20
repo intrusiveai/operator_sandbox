@@ -1,9 +1,8 @@
 # Durable attempt admission
 
-Status: implemented in `internal/campaign`. This stage joins the existing shared
-attempt ledger to the host journal. It adds no host/harness wire fields and needs
-no Interceptor or Attack Harness changes. The [durable native executor](NATIVE_EXECUTION.md)
-now provides the per-step dispatch/audit boundary; the typed adapter and feedback publication are integrated.
+The durable attempt layer connects the shared attempt ledger to the host journal.
+The [native executor](NATIVE_EXECUTION.md) supplies the per-step dispatch/audit
+boundary used by the typed adapter and feedback publication.
 
 ## Startup and authority
 
@@ -166,7 +165,7 @@ produce success responses, and a failed ledger cannot admit more work. Read-only
 missing results remain unknown. It cannot recreate an executable attempt ledger.
 `Status` is live bookkeeping; after failure, use retained evidence for reporting.
 
-## Validation and remaining work
+## Validation
 
 Tests exercise rejection gaps, zero/exhausted admissions, changed commands/plans,
 concurrent duplicate observations/admissions/dispatches, restoration with new worker
@@ -180,5 +179,4 @@ and step audit, model/ordinary-operation accounting and service finalization tim
 The launcher arms the [Docker observer](DOCKER_TERMINATION.md) before admission.
 The [host transport layer](HOST_TRANSPORT.md) supplies physical queues and
 startup/transfer/operation/campaign timers. This bookkeeping package itself does
-not start containers or send native requests. Full runtime qualification remains
-outstanding.
+not start containers or send native requests.

@@ -1,5 +1,8 @@
 # Azure OpenAI and Gemini qualification — 2026-09-30
 
+> Historical engineering record. This captures the instructions and evidence at
+> the time it was written; it is not the release integration contract.
+
 All five selected production host-adapter conversations passed on macOS ARM64.
 Evidence timestamps use UTC (2026-10-01); the record uses the runner's local date.
 These are host-adapter checks, not full Docker campaigns or runtime qualification.

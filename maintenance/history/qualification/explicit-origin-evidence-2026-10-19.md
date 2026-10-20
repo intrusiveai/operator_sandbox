@@ -1,5 +1,8 @@
 # Explicit attempt origin and retained evidence — controlled verification
 
+> Historical engineering record. This captures the instructions and evidence at
+> the time it was written; it is not the release integration contract.
+
 ## Contract and scope
 
 Operator branch `fix/explicit-origin-evidence` targets `candidate-v0.1.0`.

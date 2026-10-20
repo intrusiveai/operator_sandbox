@@ -26,6 +26,5 @@ reports, exported events and failed worker completion retain these causes. A
 corrected submission may still finish normally; earlier rejections remain history.
 
 For administrator examples, retained stopping diagnostics and separate
-inspection/export, see [simple campaigns](SIMPLE_CAMPAIGNS.md). The exact breaking
-package and separate Harness responsibilities are in the
-[coordinated handoff](SIMPLE_CAMPAIGN_HANDOFF.md).
+inspection/export, see [simple campaigns](SIMPLE_CAMPAIGNS.md). The exact package
+selection and Harness responsibilities are defined in [Harness integration](HARNESS_INTEGRATION.md).

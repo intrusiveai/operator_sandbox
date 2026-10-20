@@ -1,11 +1,11 @@
 # Shared validation foundation
 
-This is the validation and protocol foundation of `operator-contracts`. It validates the
-59 schemas currently listed in [the catalog](../schemas/catalog.json) in Go and
-Python. It is a development library, not the published `0.1.0` contract package.
-The authoritative design remains [SHARED_CONTRACT.md](../schemas/SHARED_CONTRACT.md).
+This library validates the [shared schema catalog](../schemas/catalog.json) in Go
+and Python. [SHARED_CONTRACT.md](../schemas/SHARED_CONTRACT.md) defines its semantic
+rules. The [release contract lock](../release/contract-lock.json) identifies the
+source and content digest of the package shipped with Operator.
 
-## Implemented
+## Validation capabilities
 
 - Strict UTF-8 JSON decoding with duplicate-key, trailing-value, malformed Unicode,
   unsafe-number and nesting checks before structural validation.
@@ -17,7 +17,7 @@ The authoritative design remains [SHARED_CONTRACT.md](../schemas/SHARED_CONTRACT
 - Go-embedded schemas and generated Go/Python schema-ID constants.
 - One set of 154 accepted/rejected byte vectors used by both language runners,
   plus tests for unavailable external references and invalid catalog inventories.
-- Typed ordinary envelopes generated from a 13-operation registry, spool ACK
+- Typed ordinary envelopes generated from a operation registry, spool ACK
   validation, and 182 shared protocol cases covering request/result correlation,
   artifact chunks, snapshot metadata, restore transitions, typed records, errors and graceful stop.
 - Structured conclusions and completion-chain consistency checks, with 74 shared
@@ -54,8 +54,8 @@ reject a trailing newline in both languages.
 
 ## Development
 
-Use Go 1.26 and Python 3.12 or later. This stage was tested with Go 1.26.5 and
-Python 3.14.6 on macOS ARM64; it does not qualify container/runtime support.
+Use the repository-pinned Go toolchain and Python 3.12 or later. Library tests
+exercise contract behavior; container runtime requirements are separate.
 
 ```sh
 make setup
@@ -157,8 +157,8 @@ adds bounded filesystem reads and `operatorctl contract check`; the shared APIs
 continue to operate on explicit payload bytes in both languages.
 The [package builder](../docs/CONTRACT_PUBLICATION.md) now exposes `operatorctl
 contract build` for reproducible content-only snapshots containing both validator
-sources and their common fixtures. A development snapshot is not a qualified
-`0.1.0` release.
+sources and their common fixtures. Use the exact release lock when building
+a package for integration.
 
 Use `EncodeFrame` / `encode_frame` and `NewFrameDecoder` / `new_frame_decoder` for
 bounded FIFO messages. `NewTransportState` / `new_transport_state` tracks lane
@@ -189,7 +189,7 @@ host policy, in addition to ordinary envelope validation. `ModelDisposition` /
 [model codec contract](../schemas/MODEL_CODEC_CONTRACT.md) for required runtime
 receipt checks, preserved argument strings and provider qualification limits.
 
-## Remaining stages
+## Runtime validation boundaries
 
 Structural validation is one gate. Receipt lookup, operation identity, digests,
 cross-field constraints, authorization, profile filtering and lifecycle rules
@@ -197,13 +197,6 @@ are covered by additional semantic validators and host runtime policy checks.
 Schema `format` annotations are not a substitute for those checks; structural
 validation alone cannot admit campaign execution.
 
-The 13-operation registry, native identity verification, typed message bindings,
-all five native codec families and package build/check tools are implemented.
-Shared semantic fixtures pass in Go and Python. The physical host/Python transports,
-durable journals, native/model dispatch, accounting, launch/termination observers
-and progress/finalization timers are integrated. Before publishing `0.1.0`, complete
-the required shared process conformance, first native model-route qualification
-and distribution/install tooling. Full provider/target and native host
-qualification remain separate release gates. Package integrity checks and
-component tests alone do not qualify a runtime. See
-[current implementation status](../docs/IMPLEMENTATION_STATUS.md) for remaining work.
+Runtime callers MUST also enforce durable admission, receipt identity, accounting,
+deadlines and cleanup. Component validation alone does not authorize a target
+effect or establish container confinement.

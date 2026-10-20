@@ -1,11 +1,9 @@
 # Structured objectives and scenarios bundle
 
-Status: accepted input design, updated 2026-09-21. The closed
-[ScenarioBundle schema](scenario-bundle.schema.json) and public capability schema
-are published in the local catalog with reference-chain fixtures. Full Go/Python
-package conformance and runtime implementation remain prerequisites to release.
-This document completes the ScenarioBundle input requirement in the
-[existing shared package](SHARED_CONTRACT.md#7-full-inputs-and-skill-manifests-without-oversized-control-frames).
+The closed [ScenarioBundle schema](scenario-bundle.schema.json) and public
+capability schema are published in the offline catalog with reference-chain
+fixtures. This document defines the ScenarioBundle input requirements in the
+[shared package](SHARED_CONTRACT.md#7-full-inputs-and-skill-manifests-without-oversized-control-frames).
 
 ## 1. Ownership and execution boundary
 

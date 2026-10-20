@@ -1,29 +1,25 @@
 # Shared host/harness contract
 
-Status: accepted design; schemas, shared validators/fixtures and host/harness
-runtime integration implemented as of 2026-09-28. Package publication and complete
-process/native qualification remain outstanding. This is the authoritative
-Operator-owned source for shared wire semantics, identity, startup, manifest
-delivery and completion. Component specs MUST reference these rules rather than
-define competing wire contracts. See [implementation status](../docs/IMPLEMENTATION_STATUS.md).
+This is the authoritative Operator-owned contract for shared wire semantics,
+identity, startup, manifest delivery and completion. Component specifications MUST
+reference these rules rather than define competing contracts. The
+[release contract lock](../release/contract-lock.json) identifies the exact
+source and package digest consumed by both products.
 
-JSON Schemas, Go/Python bindings, semantic validators and shared fixtures are
-implemented. Publish package `0.2.0` only after both conformance runners and the
-required Section 12 conformance tests pass. Existing attempt/feedback schemas
-remain active as specified below.
+JSON Schemas, Go/Python bindings, semantic validators and shared fixtures define
+package `0.2.1`. Section 12 defines its conformance requirements.
 In every attempt, `generator.release_digest` MUST equal the frozen
 `EngineContext.release.release_record_digest`. It identifies the validated
 embedded compatibility file. `release.image_digest` separately pins the harness image
 through startup and MUST NOT be substituted for this field.
 The closed ScenarioBundle and TargetCapabilityManifest schemas are now in the
 catalog. Their [capability mapping](CAPABILITY_EXPORT_CONTRACT.md) and reference-chain
-fixtures define compatibility-based admission and opt-in exact projection pins;
-this does not complete the remaining package publication or runtime gates.
+fixtures define compatibility-based admission and opt-in exact projection pins.
 
 The [validation foundation](../contracts/README.md) implements strict JSON decoding
 and offline structural validation of the current catalog in Go and Python, with
 shared byte fixtures and generated schema-ID constants. The
-[ordinary protocol stage](ORDINARY_WIRE_CONTRACT.md) supplies typed envelopes for 13
+[ordinary protocol stage](ORDINARY_WIRE_CONTRACT.md) supplies typed envelopes for the registry
 operations, their registry, spool ACK schema and stateless correlation checks.
 The [assessment contract](ASSESSMENT_CONTRACT.md) supplies typed record append,
 conclusion content and assessment normalization and finish validation.
@@ -31,18 +27,15 @@ The [startup/manifest stage](STARTUP_MANIFEST_CONTRACT.md) supplies closed contr
 messages, successful-transcript checks, bounded input/skill inventories and shared
 raw-descriptor/path validation. The [input-content stage](ENGINE_INPUT_CONTRACT.md)
 adds EngineContext, prompt provenance/composition and launch byte consistency.
-Full runtime qualification remains separate work.
 The [canonical identity stage](CANONICAL_IDENTITY_CONTRACT.md) implements `jcs-v1`,
 raw/canonical digest helpers, canonical launch bindings and artifact-content checks.
 The [package integrity stage](PACKAGE_INTEGRITY_CONTRACT.md) adds the closed package
 manifest, deterministic construction, payload verification and a loader that retains
-the verified version/digest. Package publication and runtime qualification remain pending.
+the verified version/digest.
 The [transport codec stage](TRANSPORT_CODEC_CONTRACT.md) implements bounded FIFO
 frames, spool naming, lane validation, consecutive sequences and cumulative ACK
 checks. The [host transport layer](../docs/HOST_TRANSPORT.md) implements physical
-FIFO/spool I/O, queues and startup/transfer/operation/campaign deadlines. Python
-peer I/O and broker integration are implemented; complete process exchanges and
-Docker qualification remain outstanding.
+FIFO/spool I/O, queues and startup/transfer/operation/campaign deadlines.
 The [attempt bookkeeping stage](ATTEMPT_BOOKKEEPING_CONTRACT.md) implements
 campaign-wide allocation and in-memory duplicate/admission/result transitions.
 The [loop accounting stage](HARNESS_LOOP_ACCOUNTING_CONTRACT.md) implements
@@ -53,12 +46,10 @@ The [model codec stage](MODEL_CODEC_CONTRACT.md) supplies typed model relay,
 trusted policy binding and correlated native continuation segments for Chat
 Completions, OpenAI Responses, Anthropic Messages, Bedrock Converse and Gemini
 GenerateContent. Their schemas, bindings and stateful checks are implemented.
-Real provider/route qualification and complete process transport conformance
-remain outstanding.
 
 ## 1. One owner and one pinned package
 
-Operator owns `operator-contracts`, initially package version `0.2.0`, with package
+Operator owns `operator-contracts`, package version `0.2.1`, with package
 manifest schema `operator.dev/contract-package/v1alpha1`. The package contains
 closed JSON Schemas, the offline URI catalog, operation registry, semantic rules,
 Go/Python bindings and validators, and shared golden test vectors. Engine builds
@@ -511,9 +502,8 @@ catalog; the guest continues to consume the existing startup fields and digests.
 The current [ordinary wire implementation](ORDINARY_WIRE_CONTRACT.md) fixes concrete
 artifact, snapshot, restore and stop fields and binds the existing attempt/cleanup/
 feedback schemas. Typed records and conclusions are defined in the
-[assessment contract](ASSESSMENT_CONTRACT.md). The model family remains required before
-publication. The checked-in registry is a development subset, not the complete
-released tool catalog.
+[assessment contract](ASSESSMENT_CONTRACT.md). The registry is the complete
+allowlist for ordinary operation dispatch in this package.
 
 `operations.json` binds each operation name to exact request/result/error schema
 IDs, permitted lifecycle states, timeout and size ceilings, effect classification
@@ -524,7 +514,7 @@ Arbitrary strings, unknown fields and generic forwarding are not dispatch paths.
 |---|---|
 | Model | engine.model_generate; pinned provider-native codec/profile, no guest endpoint selection or silent translation. Codec-specific schemas/vectors are package members. |
 | Artifacts | engine.artifact_begin / put_part / commit; begin fixes purpose/media/raw size/digest, parts identify upload/offset/base64 bytes, commit verifies complete content and returns immutable receipt. Parts ≤256 KiB; objects ≤16 MiB. |
-| Attempts | engine.attempt_execute; retain current v1alpha2 request/result, observation selection and native delivery semantics. |
+| Attempts | engine.attempt_execute; compact v1alpha4 request with explicit origin and direct/artifact input, v1alpha2 result, permitted observation selection and native delivery semantics. |
 | Cleanup | engine.injection_delete; [closed schemas and semantics](INJECTION_CLEANUP_CONTRACT.md), one attempt-receipt/action handle, current-target deletion, confirmed absence succeeds, restore-aware duplicate behavior. |
 | Feedback | engine.observation_read; retain adopted receipt/entry/range contract and profile-limited manifest. |
 | Records | engine.record_append; closed record_kind union for hypothesis, progress, lineage and coverage; host supplies authoritative attribution and committed record receipt. |
@@ -656,8 +646,7 @@ single-call batches, malformed arguments in skipped calls, duplicate transition
 results, every supported provider's call-ID/name correlation and required result
 order, budget accounting and compaction preserving the complete tool segment.
 Structural vectors are in `fixtures/restore-batch-not-executed.json`; state-machine
-and dispatcher tests are implemented. Complete process and real-provider
-qualification remain outstanding.
+and dispatcher tests verify the same semantics.
 
 ## 10. Assessment and finish
 
@@ -733,24 +722,17 @@ A small Go fake broker and Python fake harness must exchange messages over both
 real named FIFOs and regular-file spools for startup → attempt/result → feedback read → restore → finish. These tests qualify shared syntax/state semantics, not production
 containment, real-provider behavior or Operator runtime implementation.
 
-## 13. Publication and implementation status
+## 13. Package distribution
 
-Attempt numbering after rejection and harness-loop defaults/accounting are resolved
-by [Harness execution rules](HARNESS_EXECUTION_RULES.md). Attempt allocation and
-admission transitions have [shared semantic traces](ATTEMPT_BOOKKEEPING_CONTRACT.md);
-finite-loop/progress/finalization accounting has
-[shared semantic traces](HARNESS_LOOP_ACCOUNTING_CONTRACT.md). Durable runtime
-integration and progress/finalization timers are implemented. Complete cross-language
-process transport conformance and native qualification remain outstanding.
+The [release contract lock](../release/contract-lock.json) pins the shared package
+source, version, catalog, registry and complete content identity. The package
+contains these semantic documents as well as schemas, Go/Python validators and
+shared fixtures. Documentation changes therefore also change its digest.
+Both products MUST consume the same exact package. Distribution MUST run the
+Section 12 conformance checks and package verification before admitting a build.
 
-The package, startup/manifest flow, identity/deadline rules, completion semantics
-and physical transports are implemented. The operation registry, closed schemas,
-semantic validators, fixtures, five native codec families and host-private
-RunManifest/journal admission are available. Reproducible package build/check tooling
-is implemented. Complete Section 12 conformance before
-publishing package `0.2.0`; passing component tests or building a development
-package does not establish complete runtime qualification.
-
+[Harness execution rules](HARNESS_EXECUTION_RULES.md),
+[attempt bookkeeping](ATTEMPT_BOOKKEEPING_CONTRACT.md) and
+[loop accounting](HARNESS_LOOP_ACCOUNTING_CONTRACT.md) define admission,
+numbering, progress and finalization independently of the transport.
 Interceptor's native APIs remain separately versioned; Operator is the adapter.
-This contract introduces no additional lifecycle service, gateway, harness restart
-or authentication scheme.

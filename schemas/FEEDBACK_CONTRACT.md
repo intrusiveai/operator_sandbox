@@ -1,13 +1,10 @@
 # Live attempt feedback contract
 
-Status: agreed container contract; native/effective profile mapping updated
-2026-09-21. Operator's [host adapter and projection](../docs/FEEDBACK_PROJECTION.md)
-now implement selection, native receipt checks, filtering and bounded reads.
-Durable receipt publication, campaign service wiring and harness feedback handling
-are implemented; complete process/native qualification remains outstanding.
-The current attempt request/result schemas define this integration.
-`catalog.json` maps their absolute schema URNs to local files for offline resolution.
-Closed schemas validate structure; the semantic rules below also require validators.
+Operator's [host adapter and projection](../docs/FEEDBACK_PROJECTION.md) implement
+selection, native receipt checks, filtering, durable publication and bounded
+reads. The attempt request/result schemas define this integration. `catalog.json`
+maps their absolute schema URNs to local files for offline resolution. Closed
+schemas validate structure; these semantic rules also require runtime validation.
 
 ## Selection and profiles
 
