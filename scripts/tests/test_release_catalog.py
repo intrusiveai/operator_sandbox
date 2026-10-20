@@ -69,7 +69,7 @@ class CatalogTest(unittest.TestCase):
         self.assertEqual({a["platform"] for a in candidate["artifacts"]}, release.PLATFORMS)
         for artifact in candidate["artifacts"]:
             self.assertEqual(artifact["filename"],
-                             "operator_sandbox-" + artifact["platform"].replace("/", "_") + ".tar.gz")
+                             "operator_sandbox-v1.2.3-" + artifact["platform"].replace("/", "_") + ".tar.gz")
             self.assertEqual(artifact["sha256"], release.hashlib.sha256(packages[artifact["filename"]]).hexdigest())
         self.github.pr = pull(FIRST)
         release.promote(self.github, 42)
@@ -132,10 +132,10 @@ class CatalogTest(unittest.TestCase):
         original = self.github.assets
         def altered(item):
             assets = original(item)
-            assets[0]["browser_download_url"] = "https://github.com/intrusiveai/interceptor_sandbox/releases/download/v1.2.3/operator_sandbox-darwin_amd64.tar.gz"
+            assets[0]["browser_download_url"] = "https://github.com/intrusiveai/interceptor_sandbox/releases/download/v1.2.3/operator_sandbox-v1.2.3-darwin_amd64.tar.gz"
             # Explicitly alter one of the archives, rather than a signature.
             for a in assets:
-                if a["name"] == "operator_sandbox-darwin_amd64.tar.gz":
+                if a["name"] == "operator_sandbox-v1.2.3-darwin_amd64.tar.gz":
                     a["browser_download_url"] = "https://example.invalid/archive.tar.gz"
             return assets
         self.github.assets = altered

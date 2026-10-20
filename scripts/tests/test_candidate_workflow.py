@@ -101,7 +101,7 @@ class CandidateWorkflowTest(unittest.TestCase):
         context = release.event_context({}, "push", "refs/heads/" + BRANCH, source, REPO)
         self.assertEqual(context["mode"], "publish")
         files = []
-        for name in sorted(release.expected_assets() - {release.INVENTORY_ASSET}):
+        for name in sorted(release.expected_assets(self.github.version) - {release.INVENTORY_ASSET}):
             path = self.root / name
             path.write_bytes((name + ":" + source).encode())
             files.append(path)
@@ -155,7 +155,7 @@ class CandidateWorkflowTest(unittest.TestCase):
             release.promote(self.github, 42)
         self.github.fail_upload = False
         self.assertEqual(self.publish(), "prerelease-published")
-        self.assertEqual(set(self.github.uploaded), release.expected_assets())
+        self.assertEqual(set(self.github.uploaded), release.expected_assets(self.github.version))
 
     def test_main_merge_must_match_candidate_source_and_tree(self):
         self.publish()
@@ -171,12 +171,14 @@ class CandidateWorkflowTest(unittest.TestCase):
         self.publish()
         self.github.pr = pull(FIRST)
         original = dict(self.github.uploaded)
-        for change in ("changed", "missing", "extra"):
+        for change in ("changed", "missing", "extra", "wrong-version"):
             self.github.uploaded = dict(original)
             if change == "changed":
-                self.github.uploaded["operator_sandbox-linux_amd64.tar.gz"] = b"unexpected bytes"
+                self.github.uploaded["operator_sandbox-v1.2.3-linux_amd64.tar.gz"] = b"unexpected bytes"
             elif change == "missing":
-                self.github.uploaded.pop("operator_sandbox-linux_amd64.tar.gz")
+                self.github.uploaded.pop("operator_sandbox-v1.2.3-linux_amd64.tar.gz")
+            elif change == "wrong-version":
+                self.github.uploaded["operator_sandbox-v1.2.4-linux_amd64.tar.gz"] = self.github.uploaded.pop("operator_sandbox-v1.2.3-linux_amd64.tar.gz")
             else:
                 self.github.uploaded["unexpected.exe"] = b"extra"
             with self.assertRaises(ValueError):

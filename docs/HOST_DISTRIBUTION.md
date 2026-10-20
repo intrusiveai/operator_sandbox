@@ -4,9 +4,12 @@
 
 Administrators MUST obtain release archives from the project's GitHub releases.
 Packages MUST include a file manifest, and publication MUST provide archive
-checksums. Archives MUST be named `operator_sandbox-<os>_<arch>.tar.gz` and
+checksums. Archives MUST be named `operator_sandbox-v<version>-<os>_<architecture>.tar.gz` and
 extract into one top-level directory named `operator_sandbox/`. These checks detect
 corruption; they do not authenticate the publisher.
+The filename version MUST be the product release version recorded in the verified
+host manifest. The shared contract version remains in package and catalog metadata;
+it MUST NOT be added to the filename.
 
 `operatorctl release manifest` MUST bind the host version, platform, source commit,
 Go toolchain, exact shared-contract pin and every payload file's name, size, mode
@@ -56,21 +59,22 @@ activation. For upgrades from v0.1.0, use the newly extracted `operatorctl` show
 below: the older installer does not recognize the product-prefixed archive layout.
 Installers from v0.1.1 onward MAY install subsequent archives directly.
 
-For Linux AMD64, with both downloaded files in the current directory:
+For Linux AMD64, with both downloaded files in the current directory (replace
+`0.1.3` with the product version being installed):
 
 ```sh
-sha256sum --check operator_sandbox-linux_amd64-SHA256SUMS
+sha256sum --check operator_sandbox-v0.1.3-linux_amd64-SHA256SUMS
 umask 077
 mkdir operator-staging
-tar -xzf operator_sandbox-linux_amd64.tar.gz -C operator-staging
+tar -xzf operator_sandbox-v0.1.3-linux_amd64.tar.gz -C operator-staging
 ./operator-staging/operator_sandbox/bin/operatorctl install \
-  --archive "$PWD/operator_sandbox-linux_amd64.tar.gz" \
+  --archive "$PWD/operator_sandbox-v0.1.3-linux_amd64.tar.gz" \
   --image registry.example.com/attack_harness:local
 ```
 
-On macOS, select `operator_sandbox-darwin_arm64.tar.gz` or
-`operator_sandbox-darwin_amd64.tar.gz` and use
-`shasum -a 256 --check operator_sandbox-<os>_<arch>-SHA256SUMS`.
+On macOS, select `operator_sandbox-v0.1.3-darwin_arm64.tar.gz` or
+`operator_sandbox-v0.1.3-darwin_amd64.tar.gz` and use
+`shasum -a 256 --check operator_sandbox-v<version>-<os>_<architecture>-SHA256SUMS`.
 Complete Linux provisioning below before running `install` as the `operator`
 account; ensure that account can read the archive and access the staged executable.
 
@@ -131,7 +135,7 @@ it MUST NOT execute with silently substituted inputs or resume an earlier campai
 
 ## Reproducible candidates and publication
 
-`python3 scripts/build_host_release.py --version 0.1.0 --output dist/candidate`
+`python3 scripts/build_host_release.py --version 0.1.3 --output dist/candidate`
 MUST build all four host platforms from a clean committed checkout with Go 1.26.5,
 CGO disabled, fixed architecture baselines, trimmed paths and VCS/time-independent
 build flags. `go mod download` is the explicit dependency-preparation step; the
@@ -162,12 +166,12 @@ To package a reviewed build using a native `operatorctl`:
 
 ```sh
 /absolute/operatorctl release archive --directory dist/candidate/linux-amd64 \
-  --output operator_sandbox-linux_amd64.tar.gz
-sha256sum operator_sandbox-linux_amd64.tar.gz > operator_sandbox-linux_amd64-SHA256SUMS
+  --output operator_sandbox-v0.1.3-linux_amd64.tar.gz
+sha256sum operator_sandbox-v0.1.3-linux_amd64.tar.gz > operator_sandbox-v0.1.3-linux_amd64-SHA256SUMS
 ```
 
 The publisher MUST validate each manifest and payload before archiving it and
-emit a corresponding `operator_sandbox-<os>_<arch>-SHA256SUMS` file for each archive.
+emit a corresponding `operator_sandbox-v<version>-<os>_<architecture>-SHA256SUMS` file for each archive.
 
 GitHub Actions MUST publish a rolling prerelease for each successful push to
 `candidate-v<major.minor.patch>`, including merge commits. The branch version MUST
