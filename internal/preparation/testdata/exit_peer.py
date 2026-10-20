@@ -1,4 +1,4 @@
-"""Controlled Docker/spool finish peer. No model, network, or target calls."""
+"""Controlled Docker/spool finish peer. No model or network calls; scenario mode uses a controlled target."""
 import json, os, sys, time
 from pathlib import Path
 spool=Path('/spool'); mode=sys.argv[1]
@@ -20,15 +20,21 @@ init=read('control-in',1);ack(1);init['kind']='initialized';init['body'].pop('ti
 read('control-in',2);ack(2)
 if mode=='no-finish': sys.exit(0)
 seq=0
-def finish(body):
+def call(operation, body):
     global seq
-    q=dict(api_version='operator.dev/engine-pipe/v1alpha1',kind='request',seq=seq,campaign_id='campaign-1',launch_id='launch-1',run_revision=1,call_id=f'call-{seq}',operation_id=f'finish-{seq}',operation='engine.finish',timeout_ms=30000,body=body)
+    q=dict(api_version='operator.dev/engine-pipe/v1alpha1',kind='request',seq=seq,campaign_id='campaign-1',launch_id='launch-1',run_revision=1,call_id=f'call-{seq}',operation_id=f'finish-{seq}',operation=operation,timeout_ms=30000,body=body)
     put('ordinary-out',seq,q);r=read('ordinary-in',seq);ack(2,seq);(spool/'ordinary-out'/f'{seq:020d}.json').unlink();seq+=1;return r
 assessment=dict(summary='No target invocation was required by this lifecycle test.',objectives=[])
+if mode=='scenario':
+    execution=call('engine.attempt_execute',dict(origin='scenario',scenario_id='scenario-marker',operation_id='invoke',input=dict(encoding='json',value=dict(query='marker'))))['result']
+    entry=execution['feedback']['entries'][0]
+    observed=call('engine.observation_read',dict(receipt_id=execution['receipt_id'],entry_id=entry['entry_id'],offset=0,max_bytes=2048))['result']
+    assert observed['availability']=='available' and observed['raw_length']>0
+    assessment=dict(summary='Observed the controlled target response.',objectives=[dict(objective_id='objective-marker',outcome='supported',summary='A response was retained.',attempt_receipt_refs=[execution['receipt_id']])])
 if mode=='corrected':
     bad=dict(summary='Rejected reference',objectives=[dict(objective_id='objective-marker',outcome='inconclusive',summary='No evidence',attempt_receipt_refs=['missing'])])
-    assert 'error' in finish(dict(finish_reason='objectives-addressed',assessment=bad))
-r=finish(dict(finish_reason='objectives-addressed',assessment=assessment)); assert r['result']['status']=='accepted',r
+    assert 'error' in call('engine.finish',dict(finish_reason='objectives-addressed',assessment=bad))
+r=call('engine.finish',dict(finish_reason='objectives-addressed',assessment=assessment)); assert r['result']['status']=='accepted',r
 if mode=='peer-first':
     (spool/'peer-closed').write_text('closed');time.sleep(.8)
 if mode=='timeout': time.sleep(20)

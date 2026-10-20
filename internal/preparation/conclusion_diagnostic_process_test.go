@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -32,15 +33,24 @@ func TestPythonProcessConclusionAndSeparateInspection(t *testing.T) {
 		for _, invalid := range []bool{false, true} {
 			name := transport + "/accepted"
 			if invalid {
-				name = transport + "/rejected"
+				name = transport + "/corrected"
 			}
 			t.Run(name, func(t *testing.T) {
 				r := newProcessRun(t, processCase{transport: transport, prompt: "default", reply: func(turn int, request map[string]any) ([]byte, error) {
-					if turn != 1 {
-						t.Fatal("unexpected model retry")
+					if turn != 1 && !(invalid && turn == 2) {
+						return nil, fmt.Errorf("unexpected model turn after finish")
+					}
+					if turn == 2 {
+						rejected, err := modelToolResult(request, "finish-1")
+						if err != nil {
+							return nil, err
+						}
+						if !strings.Contains(string(encode(rejected)), "hyp-missing") {
+							return nil, fmt.Errorf("missing actionable conclusion rejection")
+						}
 					}
 					h := localHypothesis("hyp-configuration-1", "")
-					if invalid {
+					if invalid && turn == 1 {
 						h["provenance"].(map[string]any)["parent_hypothesis_id"] = "hyp-missing"
 					}
 					draft := modelDraft([]string{}, "")
@@ -49,18 +59,18 @@ func TestPythonProcessConclusionAndSeparateInspection(t *testing.T) {
 					draft["status"] = "partial"
 					draft["finish_reason"] = "no-useful-next-experiment"
 					draft["hypotheses"] = []any{h}
-					return processResponse([]any{modelCall("finish", "finish", finishDraft(draft))}), nil
+					return processResponse([]any{modelCall(fmt.Sprintf("finish-%d", turn), "finish", finishDraft(draft))}), nil
 				}})
-				if invalid {
-					r.failed(t)
-				} else {
-					r.finish(t)
-					if e := r.writer.Close(); e != nil {
-						t.Fatal(e)
-					}
+				r.finish(t)
+				if e := r.writer.Close(); e != nil {
+					t.Fatal(e)
 				}
-				if len(r.provider.requests) != 1 {
-					t.Fatal("replayed model request")
+				expectedCalls := 1
+				if invalid {
+					expectedCalls = 2
+				}
+				if len(r.provider.requests) != expectedCalls {
+					t.Fatal("unexpected model calls")
 				}
 				r.native.mu.Lock()
 				closed := r.native.closed
@@ -87,20 +97,18 @@ func TestPythonProcessConclusionAndSeparateInspection(t *testing.T) {
 				if !invalid && d != nil {
 					t.Fatal(d)
 				}
-				records := 0
+				records, accepted := 0, 0
 				_, e := campaign.Inspect(r.root, "campaign-1", func(event campaign.Event) error {
 					if event.Kind == "assessment.record" {
 						records++
-						var m map[string]any
-						_ = json.Unmarshal(event.Metadata, &m)
-						if m["record_kind"] != "conclusion" {
-							t.Fatal("synthesized history", m)
-						}
+					}
+					if event.Kind == "service.stop-accepted" {
+						accepted++
 					}
 					return nil
 				})
-				if e != nil || (!invalid && records != 1) || (invalid && records != 0) {
-					t.Fatal(records, e)
+				if e != nil || records != 0 || accepted != 1 {
+					t.Fatal("finish must not synthesize historical records", records, accepted, e)
 				}
 				cli := func(args ...string) []byte {
 					t.Helper()

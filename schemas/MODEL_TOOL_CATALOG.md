@@ -8,7 +8,7 @@ sending it. Declarations grant no authority.
 
 ## Ordinary workflow
 
-Use `attempt_execute` with `operation_id` and direct `input`, then read returned
+Use `attempt_execute` with explicit `origin`, `operation_id` and direct `input`, then read returned
 permitted observations with `observation_read`, then use `finish`. See
 [SIMPLE_CAMPAIGN_CONTRACT.md](SIMPLE_CAMPAIGN_CONTRACT.md) for exact fields, defaults,
 limits, reference categories and finalization semantics. No model-supplied request
@@ -18,7 +18,7 @@ large/reusable input or large assessment drafts.
 
 | Tool | Meaning |
 |---|---|
-| `attempt_execute` | Invoke a permitted target operation with direct input or a committed payload/carrier receipt. Optional setup, scenario and verified parent receipt. |
+| `attempt_execute` | Invoke a permitted target operation with direct input or a committed payload/carrier receipt. Scenario origin requires a submitted scenario_id; exploratory origin forbids it. Optional setup and verified parent receipt. |
 | `observation_read` | Read permitted bytes using the returned execution receipt and observation entry ID. |
 | `finish` | Submit an honest minimal assessment, a committed assessment-artifact receipt, or an explicit unavailable reason. Acceptance closes admission; cleanup remains pending. |
 | `artifact_publish` | Publish bounded bytes for size, reuse or advanced workflows; returns an artifact receipt. It is not an execution or historical-record receipt. |

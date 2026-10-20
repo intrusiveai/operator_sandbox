@@ -41,7 +41,7 @@ func modelDraft(receipts []string, record string) map[string]any {
 func processAttempt(origin, record string, raw []byte, parent string) map[string]any {
 	var value any
 	_ = json.Unmarshal(raw, &value)
-	q := map[string]any{"operation_id": "invoke", "input": map[string]any{"encoding": "json", "value": value}, "rationale": "Compare a bounded input variant against observed feedback."}
+	q := map[string]any{"origin": origin, "operation_id": "invoke", "input": map[string]any{"encoding": "json", "value": value}, "rationale": "Compare a bounded input variant against observed feedback."}
 	if record != "" {
 		q["strategy_provenance_ref"] = record
 	}

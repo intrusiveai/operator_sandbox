@@ -23,7 +23,7 @@ def openai_parameters(name, arguments):
         projected.pop('allOf', None)
         projected.pop('oneOf', None)
         projected['description'] = (
-            'Runtime validates cross-field rules. Attempt setup requires injection_input; '
+            'Runtime validates cross-field rules. origin is required: scenario requires scenario_id from the submitted bundle; exploratory forbids scenario_id. Attempt setup requires injection_input; '
             'injection_input and retain_injections require nonempty pre_actions. '
             'Finish requires exactly one of assessment, artifact_receipt or unavailable. '
             'Direct inputs are limited to 32768 decoded bytes and JSON depth 16.')
@@ -72,7 +72,7 @@ def build():
     identifier=inline(wire['id'],'urn:operator:schema:wire-common:v1alpha1')
     artifact=load('engine-artifact-begin-request')
     media=artifact['properties']['artifact']['properties']['media_type']
-    attempt=load('engine-attempt-request','v1alpha3')
+    attempt=load('engine-attempt-request','v1alpha4')
     finish=load('engine-finish-request')
     records=load('engine-record-append-request')
     records['oneOf']=[b for b in records['oneOf'] if b['properties']['record_kind']['const']!='conclusion']
@@ -87,7 +87,7 @@ def build():
     entries=[
       ('reference_read','Read a bounded range from a verified reference handle in the campaign index. Never accepts a filesystem path.',[],reference),
       ('artifact_publish','Publish supplied data and return a committed artifact receipt. JSON encoding uses canonical JSON; strings remain JSON strings.',upload,publish),
-      ('attempt_execute','Invoke a permitted target operation. Use direct input normally, or an artifact receipt returned by artifact_publish for large/reusable input. Operator assigns bookkeeping; never invent descriptors or receipts.',['engine.attempt_execute'],attempt),
+      ('attempt_execute','Invoke a permitted target operation. Always specify origin: scenario requires scenario_id from the submitted bundle; exploratory forbids scenario_id. Use direct input normally, or an artifact receipt returned by artifact_publish for large/reusable input. Operator assigns bookkeeping; never invent descriptors or receipts.',['engine.attempt_execute'],attempt),
       ('injection_delete','Delete a retained injection using its known attempt receipt and action ID.',['engine.injection_delete'],load('engine-injection-delete-request')),
       ('observation_read','Read permitted feedback bytes using the host attempt receipt and observation entry ID.',['engine.observation_read'],load('engine-observation-read-request')),
       ('record_append','Append a typed hypothesis, progress, lineage or coverage assertion. These records do not establish observed effects.',['engine.record_append'],records),
@@ -102,7 +102,7 @@ def build():
         branch=object_schema(dict(name={'const':name},arguments=arguments))
         provider=arguments
         if name=='attempt_execute':
-            provider=inline(documents['urn:operator:schema:engine-attempt-request:v1alpha3'],'urn:operator:schema:engine-attempt-request:v1alpha3',compact=True)
+            provider=inline(documents['urn:operator:schema:engine-attempt-request:v1alpha4'],'urn:operator:schema:engine-attempt-request:v1alpha4',compact=True)
             branch['x-operator-provider-parameters']=provider
         projected=openai_parameters(name,provider)
         if projected is not None:branch['x-operator-openai-parameters']=projected

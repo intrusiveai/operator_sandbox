@@ -87,6 +87,11 @@ func (p *Protocol) ValidateToolArguments(name string, raw []byte) (map[string]an
 	if !ok {
 		return nil, ErrProtocol
 	}
+	if name == "attempt_execute" {
+		if err := ValidateAttemptOrigin(object, nil); err != nil {
+			return nil, err
+		}
+	}
 	document, _ := Decode(p.catalog.sources[ModelToolArgumentsSchema], OrdinaryLimit)
 	matched := false
 	for index, value := range document.(map[string]any)["oneOf"].([]any) {

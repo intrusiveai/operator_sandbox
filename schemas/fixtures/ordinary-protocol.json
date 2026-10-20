@@ -407,7 +407,8 @@
           "value": {
             "prompt": "fixture"
           }
-        }
+        },
+        "origin": "exploratory"
       }
     },
     "valid": true
@@ -432,7 +433,8 @@
           "value": {
             "prompt": "fixture"
           }
-        }
+        },
+        "origin": "exploratory"
       }
     },
     "valid": true,

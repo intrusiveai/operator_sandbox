@@ -91,7 +91,7 @@
     },
     {
       "name": "engine.attempt_execute",
-      "request_schema": "urn:operator:schema:engine-attempt-request:v1alpha3",
+      "request_schema": "urn:operator:schema:engine-attempt-request:v1alpha4",
       "result_schema": "urn:operator:schema:engine-attempt-result:v1alpha2",
       "error_schema": "urn:operator:schema:operation-error:v1alpha1",
       "error_codes": [

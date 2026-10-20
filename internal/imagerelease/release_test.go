@@ -75,3 +75,34 @@ func TestStrictRecordAndCompatibility(t *testing.T) {
 		}
 	}
 }
+
+func TestExplicitOriginPackageRejectsImplicitOriginImage(t *testing.T) {
+	// Existing local compatibility matching is the sole admission mechanism.
+	current := contracts.PackageIdentity{Version: "0.2.0", Digest: "sha256:057c4a53997b94bcd8ae18012daca4ec4610cd26abab9f32f748867362b422ee"}
+	old := contracts.PackageIdentity{Version: "0.1.0", Digest: "sha256:a9e65f23eda2fe5f578a4da8a1128da45b7ee8f623cfd0a38066332877a61b0b"}
+	host := requirements()
+	host.OperatorVersion = "0.1.0"
+	host.Contract = current
+	record := release()
+	record.MinimumOperatorVersion = "0.1.0"
+	record.ContractPackageVersion = current.Version
+	record.ContractPackageDigest = current.Digest
+	if err := record.Compatible(host); err != nil {
+		t.Fatal(err)
+	}
+	record.ContractPackageVersion = old.Version
+	record.ContractPackageDigest = old.Digest
+	if err := record.Compatible(host); err == nil {
+		t.Fatal("implicit-origin image accepted")
+	}
+	record.ContractPackageVersion = current.Version
+	if err := record.Compatible(host); err == nil {
+		t.Fatal("relabeling old package bypassed digest match")
+	}
+	host.Contract = old
+	record.ContractPackageVersion = current.Version
+	record.ContractPackageDigest = current.Digest
+	if err := record.Compatible(host); err == nil {
+		t.Fatal("new image accepted by implicit-origin host")
+	}
+}

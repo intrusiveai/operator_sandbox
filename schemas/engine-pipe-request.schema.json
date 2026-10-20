@@ -104,7 +104,7 @@
           "const": "engine.attempt_execute"
         },
         "body": {
-          "$ref": "urn:operator:schema:engine-attempt-request:v1alpha3"
+          "$ref": "urn:operator:schema:engine-attempt-request:v1alpha4"
         }
       }
     },

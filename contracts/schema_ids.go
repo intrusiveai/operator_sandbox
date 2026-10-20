@@ -35,7 +35,7 @@ const EngineArtifactPutPartRequestSchema = "urn:operator:schema:engine-artifact-
 
 const EngineArtifactPutPartResultSchema = "urn:operator:schema:engine-artifact-put-part-result:v1alpha1"
 
-const EngineAttemptRequestSchema = "urn:operator:schema:engine-attempt-request:v1alpha3"
+const EngineAttemptRequestSchema = "urn:operator:schema:engine-attempt-request:v1alpha4"
 
 const EngineAttemptResultSchema = "urn:operator:schema:engine-attempt-result:v1alpha2"
 

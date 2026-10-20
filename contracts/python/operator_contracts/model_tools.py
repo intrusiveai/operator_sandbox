@@ -35,6 +35,9 @@ def validate_tool_arguments(protocol,name,raw):
     validator=protocol._catalog._validators[MODEL_TOOL_ARGUMENTS_SCHEMA]
     branch=next((b for b in validator.schema['oneOf'] if b['properties']['name']['const']==name),None)
     if branch is None: raise ContractError('unsupported_tool: Use a tool from the advertised catalog.',reason='unsupported_tool',field_path='/name')
+    if name == "attempt_execute":
+        from .simple import validate_attempt_origin
+        validate_attempt_origin(value)
     try: validator.evolve(schema=branch['properties']['arguments']).validate(value)
     except ValidationError as error:
         raise ContractError('invalid_structure: Supply the required fields with the documented types and no unknown fields.',reason='invalid_structure',field_path=schema_error_path(error),correction='Supply the required fields with the documented types and no unknown fields.') from None

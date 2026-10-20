@@ -303,7 +303,7 @@ func attemptWire(p *peer, revision int, index int, release string) []byte {
 	id := fmt.Sprintf("request-%d", index)
 	var value any
 	_ = json.Unmarshal(p.input.Artifacts[0].Bytes, &value)
-	body := map[string]any{"operation_id": "invoke", "scenario_id": "scenario-marker", "input": map[string]any{"encoding": "json", "value": value}, "observation_selection": map[string]any{"mode": "selected", "kinds": []string{"oracle_outcome"}}}
+	body := map[string]any{"origin": "scenario", "operation_id": "invoke", "scenario_id": "scenario-marker", "input": map[string]any{"encoding": "json", "value": value}, "observation_selection": map[string]any{"mode": "selected", "kinds": []string{"oracle_outcome"}}}
 	return encode(map[string]any{"api_version": "operator.dev/engine-pipe/v1alpha1", "kind": "request", "seq": index - 1, "campaign_id": "campaign-1", "launch_id": "launch-1", "run_revision": revision, "call_id": id, "operation_id": id, "operation": "engine.attempt_execute", "timeout_ms": 30000, "body": body})
 }
 func TestServiceAdmitsVerifiedStartupTracksRevisionAndCloses(t *testing.T) {

@@ -64,3 +64,20 @@ def normalize_assessment(protocol, raw, binding, finish):
             if entry['outcome'] == 'supported' and not entry['attempt_receipt_refs']:
                 raise ContractError('Supported outcomes require execution evidence.', reason='evidence_required', field_path='/'+field+'/'+str(i)+'/attempt_receipt_refs', correction='Use real execution receipts or report an untested/inconclusive outcome.')
     return c
+
+
+def validate_attempt_origin(body, scenarios=None):
+    origin = body.get('origin')
+    reason = path = correction = None
+    if origin not in ('scenario', 'exploratory'):
+        reason, path, correction = 'origin_required', '/origin', 'Set origin to scenario with a submitted scenario_id, or exploratory without scenario_id.'
+    elif origin == 'exploratory' and 'scenario_id' in body:
+        reason, path, correction = 'scenario_forbidden', '/scenario_id', 'Exploratory origin forbids scenario_id. Remove it or select scenario origin.'
+    elif origin == 'scenario':
+        if not isinstance(body.get('scenario_id'), str) or not body['scenario_id']:
+            reason, path, correction = 'scenario_required', '/scenario_id', 'Scenario origin requires a scenario_id from the submitted bundle.'
+        elif scenarios is not None and body['scenario_id'] not in scenarios:
+            reason, path, correction = 'unknown_scenario', '/scenario_id', 'Select a scenario_id from the submitted bundle, or exploratory origin without scenario_id.'
+    if reason:
+        correction += ' Execution did not occur; correction is safe with a new operation ID.'
+        raise ContractError(correction, reason=reason, field_path=path, correction=correction)
