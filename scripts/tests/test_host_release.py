@@ -56,16 +56,20 @@ class PublicationPreflightTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 check_candidates(hosts)
 
-    def test_public_asset_names_identify_product_and_platform(self):
+    def test_public_asset_names_identify_product_version_and_platform(self):
         from publish_host_release import expected_assets, asset_stem
         stems = {
-            "operator_sandbox-linux_amd64", "operator_sandbox-linux_arm64",
-            "operator_sandbox-darwin_amd64", "operator_sandbox-darwin_arm64",
+            "operator_sandbox-v0.1.3-linux_amd64", "operator_sandbox-v0.1.3-linux_arm64",
+            "operator_sandbox-v0.1.3-darwin_amd64", "operator_sandbox-v0.1.3-darwin_arm64",
         }
-        self.assertEqual(expected_assets(), {"candidate.json"} |
+        self.assertEqual(expected_assets("0.1.3"), {"candidate.json"} |
                          {s + suffix for s in stems for suffix in (".tar.gz", "-SHA256SUMS")})
         with self.assertRaises(ValueError):
-            asset_stem("windows/amd64")
+            asset_stem("0.1.3", "windows/amd64")
+        for version in (None, "v0.1.3", "01.1.3", "0.1", "0.1.3-rc1", "0.1.3/other", "0.1.3\n"):
+            with self.subTest(version=version), self.assertRaises(ValueError):
+                asset_stem(version, "linux/amd64")
+        self.assertEqual(expected_assets("0.1.3") & expected_assets("0.1.4"), {"candidate.json"})
 
     def test_requires_all_platforms_matching_source_and_contract(self):
         from publish_host_release import PLATFORMS, check_candidates

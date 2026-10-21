@@ -317,11 +317,14 @@ maintenance version does not deliberately replace a newer release.
 
 ## What is published
 
-Each release includes four platform archives (`operator_sandbox-linux_amd64.tar.gz`,
-`operator_sandbox-linux_arm64.tar.gz`, `operator_sandbox-darwin_amd64.tar.gz`,
-`operator_sandbox-darwin_arm64.tar.gz`), each containing the executable, contract,
+Archive names follow `operator_sandbox-v<version>-<os>_<architecture>.tar.gz`, using
+the product version from the verified build. The contract version is catalog and
+package metadata, not part of the filename. For example, v0.1.3 includes four
+platform archives (`operator_sandbox-v0.1.3-linux_amd64.tar.gz`,
+`operator_sandbox-v0.1.3-linux_arm64.tar.gz`, `operator_sandbox-v0.1.3-darwin_amd64.tar.gz`,
+`operator_sandbox-v0.1.3-darwin_arm64.tar.gz`), each containing the executable, contract,
 configuration templates, documentation, SBOM, provenance and file manifest.
-Each has a corresponding `operator_sandbox-<os>_<arch>-SHA256SUMS` file.
+Each has a corresponding `operator_sandbox-v<version>-<os>_<architecture>-SHA256SUMS` file.
 All archives extract into a single `operator_sandbox/` directory. Internal build
 job directories keep their platform names; those names are not public asset names.
 See [installation instructions](../../docs/HOST_DISTRIBUTION.md#installing-an-archive),

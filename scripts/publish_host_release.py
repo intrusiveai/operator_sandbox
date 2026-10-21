@@ -114,10 +114,12 @@ def checksum(path):
         return "sha256:" + hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def asset_stem(platform):
+def asset_stem(version, platform):
+    if not isinstance(version, str) or not re.fullmatch(VERSION, version):
+        raise ValueError("asset version must be numeric major.minor.patch")
     if platform not in PLATFORMS:
         raise ValueError("unsupported host platform")
-    return "operator_sandbox-" + platform.replace("/", "_")
+    return "operator_sandbox-v" + version + "-" + platform.replace("/", "_")
 
 
 def assemble(directory, output, operatorctl=None):
@@ -130,7 +132,7 @@ def assemble(directory, output, operatorctl=None):
     operator = str((operatorctl or directory / "linux-amd64/bin/operatorctl").resolve())
     output.mkdir(mode=0o700)
     for host, d in zip(hosts, directories):
-        stem = asset_stem(host["platform"])
+        stem = asset_stem(version, host["platform"])
         archive = output / (stem + ".tar.gz")
         subprocess.run([operator, "release", "archive", "--directory", str(d),
                         "--output", str(archive)], check=True)
@@ -144,10 +146,10 @@ def assemble(directory, output, operatorctl=None):
     return inventory, sorted(output.iterdir())
 
 
-def expected_assets():
+def expected_assets(version):
     names = {"candidate.json"}
     for platform in PLATFORMS:
-        slug = asset_stem(platform)
+        slug = asset_stem(version, platform)
         names.update({slug + ".tar.gz", slug + "-SHA256SUMS"})
     return names
 
@@ -185,7 +187,7 @@ def catalog_entry(github, tag, source):
     record = json.loads(release["body"].removeprefix(MARKER + "\n"))
     if record["version"] != version or record["source_commit"] != source or github.api("commits/" + tag)["sha"] != source:
         raise ValueError("catalog source/tag differs from the published candidate")
-    if set(record["assets"]) != expected_assets():
+    if set(record["assets"]) != expected_assets(version):
         raise ValueError("catalog requires all package assets")
     verify_uploaded(github, release, record["assets"])
     inventory = verify_inventory(github.download_inventory(tag), record)
@@ -200,7 +202,7 @@ def catalog_entry(github, tag, source):
     assets = {a["name"]: a for a in github.assets(release)}
     artifacts = []
     for platform in sorted(PLATFORMS):
-        name = asset_stem(platform) + ".tar.gz"
+        name = asset_stem(version, platform) + ".tar.gz"
         asset = assets[name]
         url = f"https://github.com/{github.repository}/releases/download/{tag}/{name}"
         if asset.get("browser_download_url") != url:
@@ -263,7 +265,7 @@ def publish(github, branch, source, inventory, files):
     if release and (not release["prerelease"] or release.get("immutable") or MARKER not in (release.get("body") or "")):
         raise ValueError("cannot replace a stable, immutable or unmanaged release")
     digests = {f.name: checksum(f) for f in files}
-    if set(digests) != expected_assets():
+    if set(digests) != expected_assets(version):
         raise ValueError("candidate file set is incomplete")
     record = {"version": version, "source_commit": source, "assets": digests}
     inventory_file = next(f for f in files if f.name == INVENTORY_ASSET)
@@ -313,7 +315,7 @@ def promote(github, number):
     record = json.loads(body.removeprefix(MARKER + "\n"))
     if record["source_commit"] != source or record["version"] != version:
         raise ValueError("prerelease was not built from the merged candidate head")
-    if set(record["assets"]) != expected_assets():
+    if set(record["assets"]) != expected_assets(version):
         raise ValueError("prerelease is missing required artifacts")
     if github.api("commits/v" + version)["sha"] != source:
         raise ValueError("release tag differs from built candidate")
