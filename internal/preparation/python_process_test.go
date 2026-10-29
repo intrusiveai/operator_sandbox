@@ -65,6 +65,8 @@ func processResponse(calls []any) []byte {
 }
 
 type processCase struct {
+	nativePeer        campaignservice.Peer
+	timeout           time.Duration
 	modelProvider     campaignservice.ModelProvider
 	transport, prompt string
 	native            func(*peer)
@@ -102,10 +104,14 @@ func newProcessRun(t *testing.T, tc processCase) *processRun {
 	if v := os.Getenv("OPERATOR_TEST_HARNESS_SOURCE"); v != "" {
 		harness = v
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	timeout := tc.timeout
+	if timeout == 0 {
+		timeout = 60 * time.Second
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	t.Cleanup(cancel)
 	pkg := filepath.Join(t.TempDir(), "contracts")
-	report, err := contractpublish.Build(ctx, operator, pkg, "0.2.0")
+	report, err := contractpublish.Build(ctx, operator, pkg, "0.3.0")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -213,7 +219,10 @@ func newProcessRun(t *testing.T, tc processCase) *processRun {
 		provider.reply = func(int, map[string]any) ([]byte, error) { return processResponse(nil), nil }
 	}
 	rt := &runtime{killed: make(chan struct{})}
-	serviceConfig := campaignservice.Config{Prepared: stored, Peer: native, Runtime: rt, Docker: binding, StateRoot: root, Deadline: time.Now().Add(time.Minute), Model: &campaignservice.ModelConfig{Provider: provider, ProfileDigest: cfg.Model.Digest(), Tools: launch.ModelTools, MaximumPromptTokens: 10000}}
+	serviceConfig := campaignservice.Config{Prepared: stored, Peer: native, Runtime: rt, Docker: binding, StateRoot: root, Deadline: time.Now().Add(timeout), Model: &campaignservice.ModelConfig{Provider: provider, ProfileDigest: cfg.Model.Digest(), Tools: launch.ModelTools, MaximumPromptTokens: 10000}}
+	if tc.nativePeer != nil {
+		serviceConfig.Peer = tc.nativePeer
+	}
 	if tc.modelProvider != nil {
 		serviceConfig.Model.Provider = tc.modelProvider
 	}
@@ -234,7 +243,7 @@ func newProcessRun(t *testing.T, tc processCase) *processRun {
 	if tc.transport == "fifo" {
 		create = transport.NewFIFO
 	}
-	channel, err := create(ipc, transport.Config{Protocol: in.Protocol, CampaignID: m.CampaignID, LaunchID: m.LaunchID, Fence: writer.Fence(), CampaignDeadline: time.Now().Add(time.Minute), SpoolMaxBytes: tc.spoolMaxBytes})
+	channel, err := create(ipc, transport.Config{Protocol: in.Protocol, CampaignID: m.CampaignID, LaunchID: m.LaunchID, Fence: writer.Fence(), CampaignDeadline: time.Now().Add(timeout), SpoolMaxBytes: tc.spoolMaxBytes})
 	if err != nil {
 		t.Fatal(err)
 	}

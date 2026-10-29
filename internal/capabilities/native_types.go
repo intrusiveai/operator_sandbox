@@ -54,7 +54,15 @@ type InjectionProfile struct {
 	SelectorFields []string `json:"selector_fields"`
 	Carriers       []string `json:"carriers"`
 }
+type DatabaseTableCapability struct {
+	ID          string   `json:"id"`
+	Keys        []string `json:"keys"`
+	Fields      []string `json:"fields"`
+	AllowCreate bool     `json:"allow_create"`
+	MaxRecords  int      `json:"max_records,omitempty"`
+}
 type ServiceCapability struct {
+	DatabaseTables       []DatabaseTableCapability    `json:"database_tables,omitempty"`
 	Implementation       string                       `json:"implementation,omitempty"`
 	Endpoints            []nativedelivery.Endpoint    `json:"endpoints,omitempty"`
 	ID                   string                       `json:"id"`

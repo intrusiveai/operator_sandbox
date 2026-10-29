@@ -39,15 +39,16 @@ type EvidenceIdentity struct {
 }
 
 type ProvenanceReceipt struct {
-	Identity     EvidenceIdentity `json:"identity"`
-	Transfer     EvidenceReceipt  `json:"transfer"`
-	BundleDigest string           `json:"bundle_digest"`
-	EventHead    string           `json:"event_head"`
-	StateHead    string           `json:"state_head"`
-	EventCount   int              `json:"event_count"`
-	StateCount   int              `json:"state_count"`
-	State        string           `json:"state"` // complete or partial; never an execution-success claim
-	Gaps         []string         `json:"gaps"`
+	Database     *DatabaseEvidence `json:"database,omitempty"`
+	Identity     EvidenceIdentity  `json:"identity"`
+	Transfer     EvidenceReceipt   `json:"transfer"`
+	BundleDigest string            `json:"bundle_digest"`
+	EventHead    string            `json:"event_head"`
+	StateHead    string            `json:"state_head"`
+	EventCount   int               `json:"event_count"`
+	StateCount   int               `json:"state_count"`
+	State        string            `json:"state"` // complete or partial; never an execution-success claim
+	Gaps         []string          `json:"gaps"`
 }
 
 // VerifiedEvidence can only be constructed by semantic verification. It remains
@@ -60,6 +61,12 @@ type VerifiedEvidence struct {
 func (v *VerifiedEvidence) Receipt() ProvenanceReceipt {
 	r := v.receipt
 	r.Gaps = slices.Clone(r.Gaps)
+	if r.Database != nil {
+		copy := *r.Database
+		copy.Events = slices.Clone(copy.Events)
+		copy.Oracles = slices.Clone(copy.Oracles)
+		r.Database = &copy
+	}
 	return r
 }
 func (v *VerifiedEvidence) Reader() (io.Reader, error) { return v.archive.download.Reader() }
@@ -149,6 +156,16 @@ func (a *EvidenceArchive) VerifyProvenance(ctx context.Context, id EvidenceIdent
 		return nil, ErrProvenance
 	}
 	for _, o := range report.Oracles {
+		if o.Kind == "database_query_match" && identifier.MatchString(o.ID) {
+			if v.database == nil {
+				v.database = &DatabaseEvidence{Events: []DatabaseEvent{}, Oracles: []DatabaseOracle{}}
+			}
+			if len(v.database.Oracles) < 128 {
+				v.database.Oracles = append(v.database.Oracles, DatabaseOracle{o.ID, o.Fired, o.FirstEventSeq, o.FirstEventDigest})
+			} else {
+				v.database.Truncated = true
+			}
+		}
 		if o.FirstEventSeq >= uint64(len(v.eventHashes)) || o.FirstEventDigest != "" && (o.FirstEventSeq == 0 || o.FirstEventDigest != v.eventHashes[o.FirstEventSeq]) {
 			return nil, ErrProvenance
 		}
@@ -190,7 +207,7 @@ func (a *EvidenceArchive) VerifyProvenance(ctx context.Context, id EvidenceIdent
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
-	return &VerifiedEvidence{a, ProvenanceReceipt{id, receipt, wantDigest, v.eventHashes[len(v.eventHashes)-1], v.stateHashes[len(v.stateHashes)-1], len(v.eventHashes) - 1, len(v.stateHashes) - 1, state, gaps}}, nil
+	return &VerifiedEvidence{a, ProvenanceReceipt{v.database, id, receipt, wantDigest, v.eventHashes[len(v.eventHashes)-1], v.stateHashes[len(v.stateHashes)-1], len(v.eventHashes) - 1, len(v.stateHashes) - 1, state, gaps}}, nil
 }
 func nativeHash(v any) string {
 	raw, err := json.Marshal(v)

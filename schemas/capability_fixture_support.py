@@ -50,16 +50,17 @@ def project(source, source_raw, target_id):
     native_ops = set(source['cross_vm_operations'])
     if {'injection.arm', 'injection.delete'} <= native_ops:
         for profile in source.get('injection_profiles') or []:
-            if profile['surface'] not in ['model_tool_result','service_response','mcp_tool_result','environment_state']:
+            if profile['surface'] not in ['model_tool_result','service_response','mcp_tool_result','environment_state','database_response']:
                 raise ValueError('unsupported injection surface')
             item = {'ref':'action:injection:'+profile['surface'], 'action_type':'interceptor.injection/v1alpha1', 'surface':profile['surface']}
             for key in ['scopes', 'placements', 'selector_fields', 'carriers']: item[key] = sorted(set(profile[key]))
             public['actions'].append(item)
     for service in source.get('services') or []:
         item = {'ref':'service:'+service['id'], 'service_id': service['id'], 'injection_surfaces': sorted(set(service.get('injection_surfaces') or []))}
-        for key in ['kind','role','transports','implementation','response_mode','mcp','endpoints','creatable_collections']:
+        for key in ['kind','role','transports','implementation','response_mode','mcp','endpoints','creatable_collections','database_tables']:
             if key in service: item[key] = deepcopy(service[key])
         item['transports'] = sorted(set(item['transports']))
+        if 'database_tables' in item: item['database_tables'].sort(key=lambda x:x['id'])
         if 'endpoints' in item: item['endpoints'].sort(key=lambda x:x['id'])
         if 'creatable_collections' in item: item['creatable_collections'].sort(key=lambda x:x['collection'])
         public['services'].append(item)

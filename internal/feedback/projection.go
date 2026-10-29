@@ -173,9 +173,9 @@ func Project(catalog *contracts.Catalog, p *Policy, source Source, receiptID str
 			case "available":
 				c.State, c.Reason = "available", ""
 			case "partial":
-				c.State, c.Reason = "partial", "capture_partial"
+				c.State, c.Reason = "partial", safeFailureReason(native.Reason, "capture_partial")
 			default:
-				c.State, c.Reason = "unavailable", "feedback_unavailable"
+				c.State, c.Reason = "unavailable", safeFailureReason(native.Reason, "feedback_unavailable")
 			}
 		}
 		count := 0
@@ -298,7 +298,7 @@ func normalize(kind string, b []byte, truncated bool, actions map[string]string,
 	case "oracle_outcome":
 		id, _ := m["oracle_id"].(string)
 		k, _ := m["oracle_kind"].(string)
-		if id == "" || len(id) > 256 || m["fired"] != true || !slices.Contains([]string{"attacker_sink_match", "output_contains", "model_output_contains", "tool_call_match", "event_match"}, k) {
+		if id == "" || len(id) > 256 || m["fired"] != true || !slices.Contains([]string{"attacker_sink_match", "output_contains", "model_output_contains", "tool_call_match", "event_match", "database_query_match"}, k) {
 			return nil, ErrFeedback
 		}
 		result = map[string]any{"detector_id": handle("detector", session, id), "detector_kind": k, "fired": true}
@@ -306,4 +306,12 @@ func normalize(kind string, b []byte, truncated bool, actions map[string]string,
 		return nil, ErrFeedback
 	}
 	return json.Marshal(result)
+}
+
+func safeFailureReason(reason, fallback string) string {
+	switch reason {
+	case "oracle_evaluation_unavailable", "state_oracles_require_post_run_evidence":
+		return reason
+	}
+	return fallback
 }

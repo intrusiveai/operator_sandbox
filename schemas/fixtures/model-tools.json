@@ -32,8 +32,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:5d21dba039447fc39676d3c9748a2e680369ff7ed1bc968b8a798b8f6f68dc70",
-    "size_bytes": 39767,
+    "digest": "sha256:cc3825537fce6249e54f741ca4a325a8afb964fc42300cceae80db094db80071",
+    "size_bytes": 41570,
     "valid": true
   },
   {
@@ -114,8 +114,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:1b9d04a23f18f7227b1ba388bc8051f038747ee70d0355b4ef57970538371dbb",
-    "size_bytes": 38726,
+    "digest": "sha256:0a68b591d967185983a25feeeb0f3df83f0b270f586037808e7f6b1099478c49",
+    "size_bytes": 40529,
     "valid": true
   },
   {
@@ -151,8 +151,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:23e1f4a821b03b00c6f00adedba1f996354664f61c8a61892e22bbaa3f0dc271",
-    "size_bytes": 39624,
+    "digest": "sha256:8c31de772c49473f8a2f4fb71a9708aaa74e1338ad926c3f669c33c11aa36e94",
+    "size_bytes": 41427,
     "valid": true
   },
   {
@@ -233,8 +233,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:0cc34acc6e78922d705a0b9dd8d713e411d143c4c8e507f34379d0365bef46d6",
-    "size_bytes": 38596,
+    "digest": "sha256:592dc50c66372c3a1f81c5473c843258959b3e394ed1a3acce60f8aa059a955c",
+    "size_bytes": 40399,
     "valid": true
   },
   {
@@ -270,8 +270,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:73376fd209f92c4fbc43b4917b75462a57b9f098dec7d356acdac3e8cabbeea2",
-    "size_bytes": 39381,
+    "digest": "sha256:9378e30b554d5fd3cdb60a9ce5c0d13bf9009267229c511199287bfbbbe02776",
+    "size_bytes": 41184,
     "valid": true
   },
   {
@@ -352,8 +352,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:8aa2edadefc215676287e3ce95d26f035168ade31b4d2ef342546f9c66fc14aa",
-    "size_bytes": 38384,
+    "digest": "sha256:7b47e5f156e2926f657f122c7935468d568cdde8dcdb3663c60e25c0b0890db1",
+    "size_bytes": 40187,
     "valid": true
   },
   {
@@ -389,8 +389,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:ebb73f03ce7b1676d0924b62ad43ea28b151568b2b887d3a01b9e797a12a52cd",
-    "size_bytes": 39612,
+    "digest": "sha256:1cf653f83d1eace7501b3ecd3a8cb1f0ca47ada6b773ffd03c25370593d0c370",
+    "size_bytes": 41415,
     "valid": true
   },
   {
@@ -471,8 +471,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:1163621f261619587326f71c87568496c8981d845c461ef38e4a24c90376bca0",
-    "size_bytes": 38594,
+    "digest": "sha256:41f544185b320e29fa4015cf5945175feb4a70698ef1f13cefbe6da075b522ee",
+    "size_bytes": 40397,
     "valid": true
   },
   {
@@ -508,8 +508,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:6b00eeafbe6c4233e04e6e248c2818383cd09db2d877be9df90caf90919e8571",
-    "size_bytes": 39496,
+    "digest": "sha256:6361930c3a6b7749cbb0869f307d7c1086f93e8264ad88bce24cd63c6bb22507",
+    "size_bytes": 41299,
     "valid": true
   },
   {
@@ -590,8 +590,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:7ecae0b89aa7b0d603d6bb7efe4ff17e0307620c33f713ddd5115333643d8f2d",
-    "size_bytes": 38491,
+    "digest": "sha256:6bcbcaff1533d8270703ee8d2e8978260f95198be30199baee118b836564ed20",
+    "size_bytes": 40294,
     "valid": true
   },
   {
@@ -912,6 +912,169 @@
     },
     "valid": true,
     "openai_valid": true
+  },
+  {
+    "name": "database result setup",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "json",
+        "value": {
+          "prompt": "fixture"
+        }
+      },
+      "origin": "exploratory",
+      "pre_actions": [
+        {
+          "action_id": "setup",
+          "action_type": "interceptor.injection/v1alpha1",
+          "parameters": {
+            "surface": "database_response",
+            "mode": "simulation",
+            "scope": "once",
+            "selector": {
+              "service": "database",
+              "call_ordinal": "first"
+            },
+            "placement": {
+              "operation": "append_text",
+              "pointer": "/rows/0/0"
+            }
+          }
+        }
+      ],
+      "injection_input": {
+        "encoding": "json",
+        "value": "replacement"
+      }
+    },
+    "valid": true,
+    "openai_valid": true
+  },
+  {
+    "name": "database disallows method",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "json",
+        "value": {
+          "prompt": "fixture"
+        }
+      },
+      "origin": "exploratory",
+      "pre_actions": [
+        {
+          "action_id": "setup",
+          "action_type": "interceptor.injection/v1alpha1",
+          "parameters": {
+            "surface": "database_response",
+            "mode": "simulation",
+            "scope": "once",
+            "selector": {
+              "service": "database",
+              "call_ordinal": "first",
+              "method": "invalid"
+            },
+            "placement": {
+              "operation": "append_text",
+              "pointer": "/rows/0/0"
+            }
+          }
+        }
+      ],
+      "injection_input": {
+        "encoding": "json",
+        "value": "replacement"
+      }
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "database disallows tool_name",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "json",
+        "value": {
+          "prompt": "fixture"
+        }
+      },
+      "origin": "exploratory",
+      "pre_actions": [
+        {
+          "action_id": "setup",
+          "action_type": "interceptor.injection/v1alpha1",
+          "parameters": {
+            "surface": "database_response",
+            "mode": "simulation",
+            "scope": "once",
+            "selector": {
+              "service": "database",
+              "call_ordinal": "first",
+              "tool_name": "invalid"
+            },
+            "placement": {
+              "operation": "append_text",
+              "pointer": "/rows/0/0"
+            }
+          }
+        }
+      ],
+      "injection_input": {
+        "encoding": "json",
+        "value": "replacement"
+      }
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "database disallows turn_id",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "json",
+        "value": {
+          "prompt": "fixture"
+        }
+      },
+      "origin": "exploratory",
+      "pre_actions": [
+        {
+          "action_id": "setup",
+          "action_type": "interceptor.injection/v1alpha1",
+          "parameters": {
+            "surface": "database_response",
+            "mode": "simulation",
+            "scope": "once",
+            "selector": {
+              "service": "database",
+              "call_ordinal": "first",
+              "turn_id": "invalid"
+            },
+            "placement": {
+              "operation": "append_text",
+              "pointer": "/rows/0/0"
+            }
+          }
+        }
+      ],
+      "injection_input": {
+        "encoding": "json",
+        "value": "replacement"
+      }
+    },
+    "valid": false,
+    "openai_valid": false
   },
   {
     "name": "no irrelevant injection input",

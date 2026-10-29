@@ -39,7 +39,7 @@ def validate_public(export):
         for item in export['capabilities'][group]:
             if item['ref'] != prefix+item[field]: raise ValueError('public ref does not name its item')
     for service in export['capabilities']['services']:
-        for group,field in [('endpoints','id'),('creatable_collections','collection')]:
+        for group,field in [('endpoints','id'),('creatable_collections','collection'),('database_tables','id')]:
             ids = [item[field] for item in service.get(group,[])]
             if ids != sorted(set(ids)): raise ValueError('duplicate or unsorted service identifiers')
 
@@ -156,3 +156,14 @@ assert 'model_providers' not in public['capabilities']
 assert 'method' not in public['capabilities']['operations'][0]
 assert 'path' not in public['capabilities']['operations'][0]
 print(f'{count} capability/bundle conformance cases passed; native and projection digest preimages verified')
+
+# A native code adapter with PostgreSQL table policy and live oracle evidence.
+pgdir=ROOT/'fixtures/postgresql-capability-chain'
+pgnative=load(pgdir/'interceptor-export.json')
+pgpublic=load(pgdir/'public-capabilities.json')
+pgbundle=load(pgdir/'submitted-bundle.json')
+validate_public(pgpublic)
+validate_bundle(pgbundle)
+assert project(pgnative,(pgdir/'interceptor-export.json').read_bytes(),'delivery-example') == pgpublic
+assert check_admission(pgbundle,pgpublic,pgpublic,native_profile='oracle-assisted') == []
+print('PostgreSQL native/public/bundle chain passed')

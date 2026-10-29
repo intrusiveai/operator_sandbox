@@ -187,3 +187,28 @@ invalid arguments receives a retained, correlated error, not an execution receip
 Successful responses require a fully valid request; error responses may correlate
 to an invalid body. Malformed JSON, invalid envelope identities and unknown routes
 remain transport violations. See SIMPLE_CAMPAIGN_CONTRACT.md for the ordinary workflow.
+
+### Database setup actions
+
+`database_response` is an optional simulation surface on a declared PostgreSQL
+service. Its selector requires `service` and `call_ordinal`, and may narrow the
+captured `{query, parameters, result}` request with `request_body_pointer`,
+`request_body_equal`, or `request_body_contain`. It does not accept HTTP selectors,
+model tool names, or a turn selector. Scopes are `once` and `standing`. Placement
+selects `/rows/<row>/<column>` and optional JSON members; the host permits only
+installed pointers and native validation preserves column types and row shape.
+
+Database state uses `environment_state`/`fidelity`, a declared table policy ID as
+`collection`, and a JSON-encoded object string as `key`, for example
+`"{\"id\":\"document-one\"}"`. Composite keys must include exactly the declared
+key columns with non-null scalar values. Equivalent JSON keys compare by value;
+invalid supplied keys are not repaired. Existing-row writes require a permitted
+writable-field pointer. Root `replace` requires explicit creation permission,
+matching payload keys, and only declared fields; it never upserts. Removing an
+injection does not undo committed state. Restore a checkpoint to reset saved data.
+
+Both surfaces retain existing input limits, artifact ownership, origin, budgets,
+no-replay rules, and the ordinary one-finish workflow. A database setup policy
+rejection uses `database_setup_denied` with the setup field path and confirms that
+execution did not occur. No arbitrary SQL tool or direct database credential is
+provided to the Harness.

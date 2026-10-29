@@ -286,7 +286,8 @@
                           "model_tool_result",
                           "service_response",
                           "mcp_tool_result",
-                          "environment_state"
+                          "environment_state",
+                          "database_response"
                         ]
                       },
                       "mode": {
@@ -303,7 +304,7 @@
                         ]
                       },
                       "selector": {
-                        "oneOf": [
+                        "anyOf": [
                           {
                             "type": "object",
                             "additionalProperties": false,
@@ -1775,6 +1776,438 @@
                                 }
                               }
                             ]
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "service",
+                              "call_ordinal"
+                            ],
+                            "properties": {
+                              "service": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 128,
+                                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                                "not": {
+                                  "pattern": "[\\r\\n]"
+                                }
+                              },
+                              "call_ordinal": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 10,
+                                "pattern": "^(first|every|[1-9][0-9]{0,9})$",
+                                "not": {
+                                  "pattern": "[\\r\\n]"
+                                }
+                              },
+                              "request_body_pointer": {
+                                "type": "string",
+                                "maxLength": 2048,
+                                "pattern": "^(?:/(?:[^~/\\x00-\\x1f\\x7f]|~[01])*)*$",
+                                "description": "RFC 6901 JSON Pointer; empty string selects the whole value.",
+                                "not": {
+                                  "pattern": "[\\r\\n]"
+                                }
+                              },
+                              "request_body_equal": {
+                                "oneOf": [
+                                  {
+                                    "oneOf": [
+                                      {
+                                        "type": "null"
+                                      },
+                                      {
+                                        "type": "boolean"
+                                      },
+                                      {
+                                        "type": "number",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      {
+                                        "type": "string",
+                                        "maxLength": 1024
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "array",
+                                    "maxItems": 16,
+                                    "items": {
+                                      "oneOf": [
+                                        {
+                                          "oneOf": [
+                                            {
+                                              "type": "null"
+                                            },
+                                            {
+                                              "type": "boolean"
+                                            },
+                                            {
+                                              "type": "number",
+                                              "minimum": -9007199254740991,
+                                              "maximum": 9007199254740991
+                                            },
+                                            {
+                                              "type": "string",
+                                              "maxLength": 1024
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "array",
+                                          "maxItems": 16,
+                                          "items": {
+                                            "oneOf": [
+                                              {
+                                                "oneOf": [
+                                                  {
+                                                    "type": "null"
+                                                  },
+                                                  {
+                                                    "type": "boolean"
+                                                  },
+                                                  {
+                                                    "type": "number",
+                                                    "minimum": -9007199254740991,
+                                                    "maximum": 9007199254740991
+                                                  },
+                                                  {
+                                                    "type": "string",
+                                                    "maxLength": 1024
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "array",
+                                                "maxItems": 16,
+                                                "items": {
+                                                  "oneOf": [
+                                                    {
+                                                      "type": "null"
+                                                    },
+                                                    {
+                                                      "type": "boolean"
+                                                    },
+                                                    {
+                                                      "type": "number",
+                                                      "minimum": -9007199254740991,
+                                                      "maximum": 9007199254740991
+                                                    },
+                                                    {
+                                                      "type": "string",
+                                                      "maxLength": 1024
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              {
+                                                "type": "object",
+                                                "maxProperties": 16,
+                                                "propertyNames": {
+                                                  "maxLength": 128
+                                                },
+                                                "additionalProperties": {
+                                                  "oneOf": [
+                                                    {
+                                                      "type": "null"
+                                                    },
+                                                    {
+                                                      "type": "boolean"
+                                                    },
+                                                    {
+                                                      "type": "number",
+                                                      "minimum": -9007199254740991,
+                                                      "maximum": 9007199254740991
+                                                    },
+                                                    {
+                                                      "type": "string",
+                                                      "maxLength": 1024
+                                                    }
+                                                  ]
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        {
+                                          "type": "object",
+                                          "maxProperties": 16,
+                                          "propertyNames": {
+                                            "maxLength": 128
+                                          },
+                                          "additionalProperties": {
+                                            "oneOf": [
+                                              {
+                                                "oneOf": [
+                                                  {
+                                                    "type": "null"
+                                                  },
+                                                  {
+                                                    "type": "boolean"
+                                                  },
+                                                  {
+                                                    "type": "number",
+                                                    "minimum": -9007199254740991,
+                                                    "maximum": 9007199254740991
+                                                  },
+                                                  {
+                                                    "type": "string",
+                                                    "maxLength": 1024
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "array",
+                                                "maxItems": 16,
+                                                "items": {
+                                                  "oneOf": [
+                                                    {
+                                                      "type": "null"
+                                                    },
+                                                    {
+                                                      "type": "boolean"
+                                                    },
+                                                    {
+                                                      "type": "number",
+                                                      "minimum": -9007199254740991,
+                                                      "maximum": 9007199254740991
+                                                    },
+                                                    {
+                                                      "type": "string",
+                                                      "maxLength": 1024
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              {
+                                                "type": "object",
+                                                "maxProperties": 16,
+                                                "propertyNames": {
+                                                  "maxLength": 128
+                                                },
+                                                "additionalProperties": {
+                                                  "oneOf": [
+                                                    {
+                                                      "type": "null"
+                                                    },
+                                                    {
+                                                      "type": "boolean"
+                                                    },
+                                                    {
+                                                      "type": "number",
+                                                      "minimum": -9007199254740991,
+                                                      "maximum": 9007199254740991
+                                                    },
+                                                    {
+                                                      "type": "string",
+                                                      "maxLength": 1024
+                                                    }
+                                                  ]
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "type": "object",
+                                    "maxProperties": 16,
+                                    "propertyNames": {
+                                      "maxLength": 128
+                                    },
+                                    "additionalProperties": {
+                                      "oneOf": [
+                                        {
+                                          "oneOf": [
+                                            {
+                                              "type": "null"
+                                            },
+                                            {
+                                              "type": "boolean"
+                                            },
+                                            {
+                                              "type": "number",
+                                              "minimum": -9007199254740991,
+                                              "maximum": 9007199254740991
+                                            },
+                                            {
+                                              "type": "string",
+                                              "maxLength": 1024
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "array",
+                                          "maxItems": 16,
+                                          "items": {
+                                            "oneOf": [
+                                              {
+                                                "oneOf": [
+                                                  {
+                                                    "type": "null"
+                                                  },
+                                                  {
+                                                    "type": "boolean"
+                                                  },
+                                                  {
+                                                    "type": "number",
+                                                    "minimum": -9007199254740991,
+                                                    "maximum": 9007199254740991
+                                                  },
+                                                  {
+                                                    "type": "string",
+                                                    "maxLength": 1024
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "array",
+                                                "maxItems": 16,
+                                                "items": {
+                                                  "oneOf": [
+                                                    {
+                                                      "type": "null"
+                                                    },
+                                                    {
+                                                      "type": "boolean"
+                                                    },
+                                                    {
+                                                      "type": "number",
+                                                      "minimum": -9007199254740991,
+                                                      "maximum": 9007199254740991
+                                                    },
+                                                    {
+                                                      "type": "string",
+                                                      "maxLength": 1024
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              {
+                                                "type": "object",
+                                                "maxProperties": 16,
+                                                "propertyNames": {
+                                                  "maxLength": 128
+                                                },
+                                                "additionalProperties": {
+                                                  "oneOf": [
+                                                    {
+                                                      "type": "null"
+                                                    },
+                                                    {
+                                                      "type": "boolean"
+                                                    },
+                                                    {
+                                                      "type": "number",
+                                                      "minimum": -9007199254740991,
+                                                      "maximum": 9007199254740991
+                                                    },
+                                                    {
+                                                      "type": "string",
+                                                      "maxLength": 1024
+                                                    }
+                                                  ]
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        {
+                                          "type": "object",
+                                          "maxProperties": 16,
+                                          "propertyNames": {
+                                            "maxLength": 128
+                                          },
+                                          "additionalProperties": {
+                                            "oneOf": [
+                                              {
+                                                "oneOf": [
+                                                  {
+                                                    "type": "null"
+                                                  },
+                                                  {
+                                                    "type": "boolean"
+                                                  },
+                                                  {
+                                                    "type": "number",
+                                                    "minimum": -9007199254740991,
+                                                    "maximum": 9007199254740991
+                                                  },
+                                                  {
+                                                    "type": "string",
+                                                    "maxLength": 1024
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "array",
+                                                "maxItems": 16,
+                                                "items": {
+                                                  "oneOf": [
+                                                    {
+                                                      "type": "null"
+                                                    },
+                                                    {
+                                                      "type": "boolean"
+                                                    },
+                                                    {
+                                                      "type": "number",
+                                                      "minimum": -9007199254740991,
+                                                      "maximum": 9007199254740991
+                                                    },
+                                                    {
+                                                      "type": "string",
+                                                      "maxLength": 1024
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              {
+                                                "type": "object",
+                                                "maxProperties": 16,
+                                                "propertyNames": {
+                                                  "maxLength": 128
+                                                },
+                                                "additionalProperties": {
+                                                  "oneOf": [
+                                                    {
+                                                      "type": "null"
+                                                    },
+                                                    {
+                                                      "type": "boolean"
+                                                    },
+                                                    {
+                                                      "type": "number",
+                                                      "minimum": -9007199254740991,
+                                                      "maximum": 9007199254740991
+                                                    },
+                                                    {
+                                                      "type": "string",
+                                                      "maxLength": 1024
+                                                    }
+                                                  ]
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ]
+                              },
+                              "request_body_contain": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 1024
+                              }
+                            }
                           }
                         ]
                       },
@@ -3423,6 +3856,454 @@
                             ]
                           }
                         }
+                      },
+                      {
+                        "properties": {
+                          "surface": {
+                            "const": "database_response"
+                          },
+                          "mode": {
+                            "const": "simulation"
+                          },
+                          "scope": {
+                            "enum": [
+                              "once",
+                              "standing"
+                            ]
+                          },
+                          "selector": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "service",
+                              "call_ordinal"
+                            ],
+                            "properties": {
+                              "service": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 128,
+                                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                                "not": {
+                                  "pattern": "[\\r\\n]"
+                                }
+                              },
+                              "call_ordinal": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 10,
+                                "pattern": "^(first|every|[1-9][0-9]{0,9})$",
+                                "not": {
+                                  "pattern": "[\\r\\n]"
+                                }
+                              },
+                              "request_body_pointer": {
+                                "type": "string",
+                                "maxLength": 2048,
+                                "pattern": "^(?:/(?:[^~/\\x00-\\x1f\\x7f]|~[01])*)*$",
+                                "description": "RFC 6901 JSON Pointer; empty string selects the whole value.",
+                                "not": {
+                                  "pattern": "[\\r\\n]"
+                                }
+                              },
+                              "request_body_equal": {
+                                "oneOf": [
+                                  {
+                                    "oneOf": [
+                                      {
+                                        "type": "null"
+                                      },
+                                      {
+                                        "type": "boolean"
+                                      },
+                                      {
+                                        "type": "number",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      {
+                                        "type": "string",
+                                        "maxLength": 1024
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "array",
+                                    "maxItems": 16,
+                                    "items": {
+                                      "oneOf": [
+                                        {
+                                          "oneOf": [
+                                            {
+                                              "type": "null"
+                                            },
+                                            {
+                                              "type": "boolean"
+                                            },
+                                            {
+                                              "type": "number",
+                                              "minimum": -9007199254740991,
+                                              "maximum": 9007199254740991
+                                            },
+                                            {
+                                              "type": "string",
+                                              "maxLength": 1024
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "array",
+                                          "maxItems": 16,
+                                          "items": {
+                                            "oneOf": [
+                                              {
+                                                "oneOf": [
+                                                  {
+                                                    "type": "null"
+                                                  },
+                                                  {
+                                                    "type": "boolean"
+                                                  },
+                                                  {
+                                                    "type": "number",
+                                                    "minimum": -9007199254740991,
+                                                    "maximum": 9007199254740991
+                                                  },
+                                                  {
+                                                    "type": "string",
+                                                    "maxLength": 1024
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "array",
+                                                "maxItems": 16,
+                                                "items": {
+                                                  "oneOf": [
+                                                    {
+                                                      "type": "null"
+                                                    },
+                                                    {
+                                                      "type": "boolean"
+                                                    },
+                                                    {
+                                                      "type": "number",
+                                                      "minimum": -9007199254740991,
+                                                      "maximum": 9007199254740991
+                                                    },
+                                                    {
+                                                      "type": "string",
+                                                      "maxLength": 1024
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              {
+                                                "type": "object",
+                                                "maxProperties": 16,
+                                                "propertyNames": {
+                                                  "maxLength": 128
+                                                },
+                                                "additionalProperties": {
+                                                  "oneOf": [
+                                                    {
+                                                      "type": "null"
+                                                    },
+                                                    {
+                                                      "type": "boolean"
+                                                    },
+                                                    {
+                                                      "type": "number",
+                                                      "minimum": -9007199254740991,
+                                                      "maximum": 9007199254740991
+                                                    },
+                                                    {
+                                                      "type": "string",
+                                                      "maxLength": 1024
+                                                    }
+                                                  ]
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        {
+                                          "type": "object",
+                                          "maxProperties": 16,
+                                          "propertyNames": {
+                                            "maxLength": 128
+                                          },
+                                          "additionalProperties": {
+                                            "oneOf": [
+                                              {
+                                                "oneOf": [
+                                                  {
+                                                    "type": "null"
+                                                  },
+                                                  {
+                                                    "type": "boolean"
+                                                  },
+                                                  {
+                                                    "type": "number",
+                                                    "minimum": -9007199254740991,
+                                                    "maximum": 9007199254740991
+                                                  },
+                                                  {
+                                                    "type": "string",
+                                                    "maxLength": 1024
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "array",
+                                                "maxItems": 16,
+                                                "items": {
+                                                  "oneOf": [
+                                                    {
+                                                      "type": "null"
+                                                    },
+                                                    {
+                                                      "type": "boolean"
+                                                    },
+                                                    {
+                                                      "type": "number",
+                                                      "minimum": -9007199254740991,
+                                                      "maximum": 9007199254740991
+                                                    },
+                                                    {
+                                                      "type": "string",
+                                                      "maxLength": 1024
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              {
+                                                "type": "object",
+                                                "maxProperties": 16,
+                                                "propertyNames": {
+                                                  "maxLength": 128
+                                                },
+                                                "additionalProperties": {
+                                                  "oneOf": [
+                                                    {
+                                                      "type": "null"
+                                                    },
+                                                    {
+                                                      "type": "boolean"
+                                                    },
+                                                    {
+                                                      "type": "number",
+                                                      "minimum": -9007199254740991,
+                                                      "maximum": 9007199254740991
+                                                    },
+                                                    {
+                                                      "type": "string",
+                                                      "maxLength": 1024
+                                                    }
+                                                  ]
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "type": "object",
+                                    "maxProperties": 16,
+                                    "propertyNames": {
+                                      "maxLength": 128
+                                    },
+                                    "additionalProperties": {
+                                      "oneOf": [
+                                        {
+                                          "oneOf": [
+                                            {
+                                              "type": "null"
+                                            },
+                                            {
+                                              "type": "boolean"
+                                            },
+                                            {
+                                              "type": "number",
+                                              "minimum": -9007199254740991,
+                                              "maximum": 9007199254740991
+                                            },
+                                            {
+                                              "type": "string",
+                                              "maxLength": 1024
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "array",
+                                          "maxItems": 16,
+                                          "items": {
+                                            "oneOf": [
+                                              {
+                                                "oneOf": [
+                                                  {
+                                                    "type": "null"
+                                                  },
+                                                  {
+                                                    "type": "boolean"
+                                                  },
+                                                  {
+                                                    "type": "number",
+                                                    "minimum": -9007199254740991,
+                                                    "maximum": 9007199254740991
+                                                  },
+                                                  {
+                                                    "type": "string",
+                                                    "maxLength": 1024
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "array",
+                                                "maxItems": 16,
+                                                "items": {
+                                                  "oneOf": [
+                                                    {
+                                                      "type": "null"
+                                                    },
+                                                    {
+                                                      "type": "boolean"
+                                                    },
+                                                    {
+                                                      "type": "number",
+                                                      "minimum": -9007199254740991,
+                                                      "maximum": 9007199254740991
+                                                    },
+                                                    {
+                                                      "type": "string",
+                                                      "maxLength": 1024
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              {
+                                                "type": "object",
+                                                "maxProperties": 16,
+                                                "propertyNames": {
+                                                  "maxLength": 128
+                                                },
+                                                "additionalProperties": {
+                                                  "oneOf": [
+                                                    {
+                                                      "type": "null"
+                                                    },
+                                                    {
+                                                      "type": "boolean"
+                                                    },
+                                                    {
+                                                      "type": "number",
+                                                      "minimum": -9007199254740991,
+                                                      "maximum": 9007199254740991
+                                                    },
+                                                    {
+                                                      "type": "string",
+                                                      "maxLength": 1024
+                                                    }
+                                                  ]
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        {
+                                          "type": "object",
+                                          "maxProperties": 16,
+                                          "propertyNames": {
+                                            "maxLength": 128
+                                          },
+                                          "additionalProperties": {
+                                            "oneOf": [
+                                              {
+                                                "oneOf": [
+                                                  {
+                                                    "type": "null"
+                                                  },
+                                                  {
+                                                    "type": "boolean"
+                                                  },
+                                                  {
+                                                    "type": "number",
+                                                    "minimum": -9007199254740991,
+                                                    "maximum": 9007199254740991
+                                                  },
+                                                  {
+                                                    "type": "string",
+                                                    "maxLength": 1024
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "array",
+                                                "maxItems": 16,
+                                                "items": {
+                                                  "oneOf": [
+                                                    {
+                                                      "type": "null"
+                                                    },
+                                                    {
+                                                      "type": "boolean"
+                                                    },
+                                                    {
+                                                      "type": "number",
+                                                      "minimum": -9007199254740991,
+                                                      "maximum": 9007199254740991
+                                                    },
+                                                    {
+                                                      "type": "string",
+                                                      "maxLength": 1024
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              {
+                                                "type": "object",
+                                                "maxProperties": 16,
+                                                "propertyNames": {
+                                                  "maxLength": 128
+                                                },
+                                                "additionalProperties": {
+                                                  "oneOf": [
+                                                    {
+                                                      "type": "null"
+                                                    },
+                                                    {
+                                                      "type": "boolean"
+                                                    },
+                                                    {
+                                                      "type": "number",
+                                                      "minimum": -9007199254740991,
+                                                      "maximum": 9007199254740991
+                                                    },
+                                                    {
+                                                      "type": "string",
+                                                      "maxLength": 1024
+                                                    }
+                                                  ]
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ]
+                              },
+                              "request_body_contain": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 1024
+                              }
+                            }
+                          }
+                        }
                       }
                     ]
                   }
@@ -3853,7 +4734,8 @@
                         "model_tool_result",
                         "service_response",
                         "mcp_tool_result",
-                        "environment_state"
+                        "environment_state",
+                        "database_response"
                       ]
                     },
                     "mode": {
@@ -3870,7 +4752,7 @@
                       ]
                     },
                     "selector": {
-                      "oneOf": [
+                      "anyOf": [
                         {
                           "type": "object",
                           "additionalProperties": false,
@@ -4181,6 +5063,51 @@
                               }
                             }
                           ]
+                        },
+                        {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "service",
+                            "call_ordinal"
+                          ],
+                          "properties": {
+                            "service": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 128,
+                              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            },
+                            "call_ordinal": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 10,
+                              "pattern": "^(first|every|[1-9][0-9]{0,9})$",
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            },
+                            "request_body_pointer": {
+                              "type": "string",
+                              "maxLength": 2048,
+                              "pattern": "^(?:/(?:[^~/\\x00-\\x1f\\x7f]|~[01])*)*$",
+                              "description": "RFC 6901 JSON Pointer; empty string selects the whole value.",
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            },
+                            "request_body_equal": {
+                              "description": "Bounded JSON value. Runtime validates the selector-specific nesting, property, item and string limits; invalid values are rejected."
+                            },
+                            "request_body_contain": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 1024
+                            }
+                          }
                         }
                       ]
                     },
@@ -4666,6 +5593,67 @@
                               }
                             }
                           ]
+                        }
+                      }
+                    },
+                    {
+                      "properties": {
+                        "surface": {
+                          "const": "database_response"
+                        },
+                        "mode": {
+                          "const": "simulation"
+                        },
+                        "scope": {
+                          "enum": [
+                            "once",
+                            "standing"
+                          ]
+                        },
+                        "selector": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "service",
+                            "call_ordinal"
+                          ],
+                          "properties": {
+                            "service": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 128,
+                              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            },
+                            "call_ordinal": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 10,
+                              "pattern": "^(first|every|[1-9][0-9]{0,9})$",
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            },
+                            "request_body_pointer": {
+                              "type": "string",
+                              "maxLength": 2048,
+                              "pattern": "^(?:/(?:[^~/\\x00-\\x1f\\x7f]|~[01])*)*$",
+                              "description": "RFC 6901 JSON Pointer; empty string selects the whole value.",
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            },
+                            "request_body_equal": {
+                              "description": "Bounded JSON value. Runtime validates the selector-specific nesting, property, item and string limits; invalid values are rejected."
+                            },
+                            "request_body_contain": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 1024
+                            }
+                          }
                         }
                       }
                     }
@@ -5093,7 +6081,8 @@
                         "model_tool_result",
                         "service_response",
                         "mcp_tool_result",
-                        "environment_state"
+                        "environment_state",
+                        "database_response"
                       ]
                     },
                     "mode": {
@@ -5110,7 +6099,7 @@
                       ]
                     },
                     "selector": {
-                      "oneOf": [
+                      "anyOf": [
                         {
                           "type": "object",
                           "additionalProperties": false,
@@ -5421,6 +6410,51 @@
                               }
                             }
                           ]
+                        },
+                        {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "service",
+                            "call_ordinal"
+                          ],
+                          "properties": {
+                            "service": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 128,
+                              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            },
+                            "call_ordinal": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 10,
+                              "pattern": "^(first|every|[1-9][0-9]{0,9})$",
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            },
+                            "request_body_pointer": {
+                              "type": "string",
+                              "maxLength": 2048,
+                              "pattern": "^(?:/(?:[^~/\\x00-\\x1f\\x7f]|~[01])*)*$",
+                              "description": "RFC 6901 JSON Pointer; empty string selects the whole value.",
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            },
+                            "request_body_equal": {
+                              "description": "Bounded JSON value. Runtime validates the selector-specific nesting, property, item and string limits; invalid values are rejected."
+                            },
+                            "request_body_contain": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 1024
+                            }
+                          }
                         }
                       ]
                     },
@@ -5906,6 +6940,67 @@
                               }
                             }
                           ]
+                        }
+                      }
+                    },
+                    {
+                      "properties": {
+                        "surface": {
+                          "const": "database_response"
+                        },
+                        "mode": {
+                          "const": "simulation"
+                        },
+                        "scope": {
+                          "enum": [
+                            "once",
+                            "standing"
+                          ]
+                        },
+                        "selector": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "service",
+                            "call_ordinal"
+                          ],
+                          "properties": {
+                            "service": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 128,
+                              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            },
+                            "call_ordinal": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 10,
+                              "pattern": "^(first|every|[1-9][0-9]{0,9})$",
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            },
+                            "request_body_pointer": {
+                              "type": "string",
+                              "maxLength": 2048,
+                              "pattern": "^(?:/(?:[^~/\\x00-\\x1f\\x7f]|~[01])*)*$",
+                              "description": "RFC 6901 JSON Pointer; empty string selects the whole value.",
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            },
+                            "request_body_equal": {
+                              "description": "Bounded JSON value. Runtime validates the selector-specific nesting, property, item and string limits; invalid values are rejected."
+                            },
+                            "request_body_contain": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 1024
+                            }
+                          }
                         }
                       }
                     }

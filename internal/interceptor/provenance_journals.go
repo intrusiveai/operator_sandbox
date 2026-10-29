@@ -12,6 +12,7 @@ import (
 )
 
 type evidenceVerifier struct {
+	database                 *DatabaseEvidence
 	archive                  *EvidenceArchive
 	id                       EvidenceIdentity
 	eventHashes, stateHashes []string
@@ -93,6 +94,7 @@ func (v *evidenceVerifier) events(ctx context.Context) error {
 			return ErrProvenance
 		}
 		v.eventHashes = append(v.eventHashes, h)
+		v.summarizeDatabaseEvent(e, h)
 		if e.RawRef != "" {
 			if err := v.blob(e.RawRef, -1); err != nil {
 				return err
@@ -110,6 +112,16 @@ func (v *evidenceVerifier) events(ctx context.Context) error {
 				return ErrProvenance
 			}
 			v.attemptEvents[e.AttemptID] = append(v.attemptEvents[e.AttemptID], e.Seq)
+		}
+		// Native attempt evidence also associates observations with the attempt
+		// during which they were seen. This does not assert causal attribution.
+		if observed := e.Attribution.ObservedAttemptID; observed != "" {
+			if !identifier.MatchString(observed) || (e.Attribution.ObservedPayloadDigest != "" && !digest.MatchString(e.Attribution.ObservedPayloadDigest)) {
+				return ErrProvenance
+			}
+			if observed != e.AttemptID {
+				v.attemptEvents[observed] = append(v.attemptEvents[observed], e.Seq)
+			}
 		}
 		return nil
 	})
@@ -134,7 +146,7 @@ func (v *evidenceVerifier) transactions(ctx context.Context, name, session strin
 			if !validEvidenceOperation(op) {
 				return ErrProvenance
 			}
-			if op.Kind == "file_upsert" {
+			if op.Kind == "file_upsert" || op.Kind == "database_checkpoint" {
 				if err := v.blob(op.Blob, op.Size); err != nil {
 					return err
 				}
@@ -172,6 +184,11 @@ func validEvidenceOperation(o evidenceOperation) bool {
 	allowed := []string{"kind"}
 	p := path.IsAbs(o.Path) && path.Clean(o.Path) == o.Path && o.Path != "/"
 	switch o.Kind {
+	case "database_checkpoint":
+		if !identifier.MatchString(o.Service) || !digest.MatchString(o.Blob) || o.Size < 0 || !validDatabaseCheckpoint(o.Value) {
+			return false
+		}
+		allowed = append(allowed, "service", "blob", "size", "value")
 	case "file_upsert":
 		if !p || !digest.MatchString(o.Blob) || o.Size < 0 {
 			return false
@@ -268,4 +285,26 @@ func (v *evidenceVerifier) files() error {
 		}
 	}
 	return nil
+}
+
+// Engine-version compatibility is enforced by native restore, not guessed by
+// the evidence reader. Here validate the recorded metadata and backup envelope.
+func validDatabaseCheckpoint(raw json.RawMessage) bool {
+	var value struct {
+		Version         string                     `json:"version"`
+		OracleBaselines map[string]json.RawMessage `json:"oracle_baselines,omitempty"`
+	}
+	if strictEvidence(raw, &value) != nil || len(value.Version) == 0 || len(value.Version) > 128 || strings.ContainsAny(value.Version, "\x00\r\n") {
+		return false
+	}
+	for id, raw := range value.OracleBaselines {
+		if !identifier.MatchString(id) {
+			return false
+		}
+		var rows [][]json.RawMessage
+		if json.Unmarshal(raw, &rows) != nil || rows == nil {
+			return false
+		}
+	}
+	return true
 }

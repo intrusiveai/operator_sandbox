@@ -1,0 +1,24 @@
+// Overlay into Interceptor internal/adaptive to regenerate the native fixture.
+// Uses its PostgreSQL example and native exporter; no Docker/model calls.
+package adaptive
+
+import (
+ "encoding/json"
+ "os"
+ "testing"
+ "github.com/intrusive-ai/interceptor-sandbox/internal/environment"
+ "github.com/intrusive-ai/interceptor-sandbox/internal/delivery"
+ "github.com/intrusive-ai/interceptor-sandbox/internal/digest"
+)
+func TestOperatorPostgreSQLExport(t *testing.T) {
+ b,err:=environment.Load("../../examples/postgresql/python/environment");if err!=nil{t.Fatal(err)}
+ b.APIVersion=environment.DeliveryAPIVersion
+ b.Application.Interface.Operations[0].Delivery=&delivery.Contract{
+ Description:"Invoke the seeded PostgreSQL support application", Input:delivery.Body{MediaType:"application/json",Encoding:"json",MaxBytes:65536,Basis:"synthetic",Schema:map[string]any{"type":"object","additionalProperties":false,"required":[]any{"message"},"properties":map[string]any{"message":map[string]any{"type":"string"}}}},
+ Output:delivery.Body{MediaType:"application/json",Encoding:"json",MaxBytes:65536,Basis:"unknown"},}
+ b.Services[0].PostgreSQL.Tables[0].AllowCreate=false
+ b.Services[0].PostgreSQL.Tables[0].MaxRecords=0
+ m,err:=BuildCapabilityManifest(b,digest.Bytes([]byte("postgresql-test-environment")),digest.Bytes([]byte("postgresql-test-application")));if err!=nil{t.Fatal(err)}
+ raw,err:=json.MarshalIndent(m,"","  ");if err!=nil{t.Fatal(err)}
+ if err=os.WriteFile(os.Getenv("OPERATOR_POSTGRESQL_FIXTURE"),append(raw,'\n'),0600);err!=nil{t.Fatal(err)}
+}

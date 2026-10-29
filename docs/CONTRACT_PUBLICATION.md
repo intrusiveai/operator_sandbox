@@ -7,7 +7,7 @@ its embedded schemas MUST match the selected source schemas.
 
 ```sh
 operatorctl contract build --source /absolute/operator_sandbox \
-  --output /absolute/new-contract-package --package-version 0.2.1
+  --output /absolute/new-contract-package --package-version 0.3.0
 ```
 
 The output MUST be a new directory. The receipt contains the exact package version
@@ -56,7 +56,7 @@ running the check:
 
 ```sh
 operatorctl contract check --package-dir /absolute/new-contract-package \
-  --package-version 0.2.1 --package-digest "$CONTRACT_DIGEST"
+  --package-version 0.3.0 --package-digest "$CONTRACT_DIGEST"
 ```
 
 Operator's private `contract.directory`, `contract.version` and `contract.digest`
