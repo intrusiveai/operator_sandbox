@@ -33,6 +33,14 @@ The [host transport implementation](docs/HOST_TRANSPORT.md) supplies FIFO/spool
 I/O, bounded queues, deadlines and confirmed-exit transport cleanup, coordinated
 with Docker, startup verification and the durable broker.
 
+PostgreSQL/pgvector targets MUST follow the
+[database integration contract](specs/postgresql-integration.md). Operator MUST
+retain the compact input/observation/finish workflow, enforce the native table
+policy and host-authorized injection routes, preserve live oracle feedback
+visibility, and verify database backup blobs in native evidence. Interceptor
+owns database execution and coordinated restoration. See the
+[administrator guide](docs/POSTGRESQL.md) for profile examples and report semantics.
+
 ## 2. Principal requirements and boundaries
 
 1. Provide one CLI for staged or end-to-end input submission, validation,
