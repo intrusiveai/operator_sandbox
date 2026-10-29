@@ -51,6 +51,7 @@ type Attempt struct {
 	Feedback        *feedback.Manifest `json:"feedback,omitempty"`
 }
 type Result struct {
+	DatabaseEvidence      []DatabaseSummary               `json:"database_evidence,omitempty"`
 	RequestedObjectives   []RequestedObjective            `json:"requested_objectives"`
 	RequestedScenarios    []RequestedScenario             `json:"requested_scenarios"`
 	Observations          []ObservationSummary            `json:"observations"`
@@ -612,6 +613,9 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 			archive := &sessions[i].Archives[j]
 			if archive.Verified {
 				archives = append(archives, archive.Record)
+				if d := archive.Record.Provenance.Database; d != nil {
+					result.DatabaseEvidence = append(result.DatabaseEvidence, DatabaseSummary{sessions[i].Identity.SessionID, "evidence/" + archive.Record.Provenance.Transfer.SHA256[7:] + ".tar", *d})
+				}
 				if archive.Record.Provenance.State == "complete" {
 					complete = true
 				}

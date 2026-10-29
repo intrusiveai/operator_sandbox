@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
+	"os"
 	"testing"
 )
 
@@ -81,5 +82,67 @@ func TestDatabaseOracleProjection(t *testing.T) {
 	}
 	if _, err = normalize("oracle_outcome", []byte(`{"oracle_id":"refund","oracle_kind":"database_query_match","fired":false}`), false, nil, "session"); err == nil {
 		t.Fatal("negative verdict accepted")
+	}
+}
+
+func TestNativeDatabaseFeedbackFixtures(t *testing.T) {
+	raw, err := os.ReadFile("testdata/database-native.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var cases []struct {
+		Name    string            `json:"name"`
+		View    json.RawMessage   `json:"view"`
+		Content map[string][]byte `json:"content"`
+	}
+	if err = json.Unmarshal(raw, &cases); err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range cases {
+		t.Run(tc.Name, func(t *testing.T) {
+			var v interceptor.ObservationView
+			if err := json.Unmarshal(tc.View, &v); err != nil {
+				t.Fatal(err)
+			}
+			source := Source{CampaignID: v.CampaignID, SessionID: v.SessionID, AttemptID: v.AttemptID, AttemptContextDigest: v.AttemptContextDigest, TurnID: v.TurnID, RunRevision: 1, SessionRevision: v.SessionRevision}
+			policy, err := New("oracle-assisted", "oracle-assisted", []string{"oracle_outcome"}, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			r, err := Project(catalog(t), policy, source, "receipt", tc.View, tc.Content, nil, 65536)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var manifest Manifest
+			_ = json.Unmarshal(r.ManifestJSON(), &manifest)
+			want := "empty"
+			reason := "no_positive_attributed_result_not_proof_of_failure"
+			positive := false
+			switch tc.Name {
+			case "positive":
+				want = "available"
+				reason = ""
+				positive = true
+			case "missing", "late", "ambiguous":
+				want = "unavailable"
+				reason = "oracle_evaluation_unavailable"
+			case "mixed":
+				want = "partial"
+				reason = "oracle_evaluation_unavailable"
+				positive = true
+			case "other-state":
+				want = "partial"
+				reason = "state_oracles_require_post_run_evidence"
+				positive = true
+			}
+			for _, c := range manifest.Categories {
+				if c.Kind == "oracle_outcome" && (c.State != want || c.Reason != reason) {
+					t.Fatal("native category lost", c, want, reason)
+				}
+			}
+			if (len(r.entries) > 0) != positive {
+				t.Fatal("native boundary changed", tc.Name, len(r.entries))
+			}
+		})
 	}
 }

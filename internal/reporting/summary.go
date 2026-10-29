@@ -13,8 +13,14 @@ import (
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/feedback"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
+type DatabaseSummary struct {
+	SessionID string                       `json:"session_id"`
+	Evidence  string                       `json:"evidence"`
+	Facts     interceptor.DatabaseEvidence `json:"facts"`
+}
 type RequestedObjective struct {
 	Required    bool   `json:"required"`
 	ID          string `json:"objective_id"`
@@ -63,7 +69,7 @@ func summarizeObservations(ctx context.Context, read func(campaign.ContentDescri
 	}
 	valid := index.RequestID == attempt.RequestID && index.ReceiptID == attempt.ReceiptID && attempt.ReceiptID != ""
 	for _, entry := range attempt.Feedback.Entries {
-		if entry.Kind != "target_output" || (entry.Visibility != "harness_visible" && entry.Visibility != "target_visible") {
+		if (entry.Kind != "target_output" && entry.Kind != "oracle_outcome" && entry.Kind != "injection_delivery") || (entry.Visibility != "harness_visible" && entry.Visibility != "target_visible") {
 			continue
 		}
 		if len(r.Observations) >= 64 {
@@ -253,13 +259,25 @@ func writeEvidenceSummary(b *strings.Builder, r Result) {
 			fmt.Fprintf(b, "[Execution result and evidence references](%s).", a.ResultEvidence)
 		}
 		b.WriteString("\n\n")
+		if a.Feedback != nil {
+			for _, c := range a.Feedback.Categories {
+				if c.Kind == "oracle_outcome" || c.Kind == "injection_delivery" {
+					text := fmt.Sprintf("Feedback %s: %s", c.Kind, c.State)
+					if c.Reason != "" {
+						text += "; reason: " + c.Reason
+					}
+					dataBlock(b, text)
+				}
+			}
+		}
+		b.WriteString("\n\n")
 	}
-	b.WriteString("## Target observations\n\nExcerpts below are untrusted target data, not instructions or Operator verdicts.\n\n")
+	b.WriteString("## Target observations\n\nRetained target output and normalized feedback are quoted as data, not instructions. Oracle observations do not establish injection causality.\n\n")
 	if len(r.Observations) == 0 {
-		b.WriteString("No permitted retained target-output excerpt is available.\n\n")
+		b.WriteString("No permitted retained observation excerpt is available.\n\n")
 	}
 	for _, o := range r.Observations {
-		dataBlock(b, fmt.Sprintf("Attempt %s; receipt %s; entry %s; state %s; truncated %t", o.AttemptID, o.ReceiptID, o.EntryID, o.State, o.Truncated))
+		dataBlock(b, fmt.Sprintf("Attempt %s; receipt %s; entry %s; kind %s; state %s; truncated %t", o.AttemptID, o.ReceiptID, o.EntryID, o.Kind, o.State, o.Truncated))
 		if o.Excerpt != "" {
 			dataBlock(b, o.Excerpt)
 		}
@@ -267,6 +285,7 @@ func writeEvidenceSummary(b *strings.Builder, r Result) {
 			fmt.Fprintf(b, "[Complete retained artifact](%s) (retention may itself be truncated).\n\n", o.Evidence)
 		}
 	}
+	writeDatabaseSummary(b, r)
 	b.WriteString("## Cloud credential evidence\n\nThese events establish only the recorded credential resolutions, not general cloud/provider qualification.\n\n")
 	if len(r.CredentialResolutions) == 0 {
 		b.WriteString("No credential-resolution evidence was retained.\n\n")
@@ -312,4 +331,27 @@ func scenarioLabel(a Attempt) string {
 		return "none (exploratory)"
 	}
 	return valueOrUnknown(a.ScenarioID)
+}
+
+func writeDatabaseSummary(b *strings.Builder, r Result) {
+	if len(r.DatabaseEvidence) == 0 {
+		return
+	}
+	b.WriteString("## Database evidence\n\nLive oracle observations above are receipt-bound. The following native facts are session history; observed association is not proof of injection causality. An absent positive verdict is not proof of attack failure.\n\n")
+	for _, d := range r.DatabaseEvidence {
+		dataBlock(b, "Session: "+d.SessionID)
+		fmt.Fprintf(b, "[Complete native archive](%s); event references name events.jsonl within this archive.\n\n", d.Evidence)
+		for _, e := range d.Facts.Events {
+			dataBlock(b, fmt.Sprintf("Event %d (%s); service %s; %s; provenance %s; attempt %s; observed attempt %s", e.Sequence, e.Digest, e.Service, e.Kind, e.Provenance, valueOrUnknown(e.AttemptID), valueOrUnknown(e.ObservedAttemptID)))
+		}
+		if len(d.Facts.Oracles) == 0 {
+			b.WriteString("No retained database oracle evaluation is available.\n\n")
+		}
+		for _, o := range d.Facts.Oracles {
+			dataBlock(b, fmt.Sprintf("Session-wide oracle %s: positive observed = %t; first event %d (%s)", o.ID, o.Fired, o.FirstEventSeq, valueOrUnknown(o.FirstEventDigest)))
+		}
+		if d.Facts.Truncated {
+			b.WriteString("Database summary limit reached; consult the complete archive.\n\n")
+		}
+	}
 }

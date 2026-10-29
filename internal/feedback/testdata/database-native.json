@@ -1,0 +1,792 @@
+[
+  {
+    "content": {
+      "entry-1": "",
+      "entry-2": "eyJmaXJlZCI6dHJ1ZSwib3JhY2xlX2lkIjoicmVmdW5kIiwib3JhY2xlX2tpbmQiOiJkYXRhYmFzZV9xdWVyeV9tYXRjaCJ9"
+    },
+    "name": "positive",
+    "view": {
+      "receipt_id": "feedback-32f0170a2ad31056289f3befb1ce2b7dfd6f7aaf62b2b83ac499782ffd23341f",
+      "campaign_id": "campaign",
+      "attempt_context_digest": "sha256:5387f48f66ac2ba35771cd228eab5ad0af9cfe8b8401446df5365c137785715b",
+      "turn_id": "turn-db",
+      "captured_at": "2026-10-29T21:39:01.405526Z",
+      "window_start": "2026-10-29T14:39:00.404729-07:00",
+      "window_end": "2026-10-29T21:39:01.404733Z",
+      "through_event_seq": 10,
+      "collection_state": "complete",
+      "categories": [
+        {
+          "kind": "target_output",
+          "state": "available"
+        },
+        {
+          "kind": "operation_error",
+          "state": "empty",
+          "reason": "no_recorded_observation_not_proof_of_absence"
+        },
+        {
+          "kind": "injection_delivery",
+          "state": "empty",
+          "reason": "no_recorded_observation_not_proof_of_absence"
+        },
+        {
+          "kind": "oracle_outcome",
+          "state": "available"
+        }
+      ],
+      "entries": [
+        {
+          "id": "entry-1",
+          "kind": "target_output",
+          "visibility": "target_visible",
+          "source": "application",
+          "assurance": "target-response",
+          "availability": "available",
+          "artifact": {
+            "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size_bytes": 0,
+            "media_type": "application/octet-stream",
+            "canonicalization": "raw"
+          },
+          "truncated": false,
+          "original_size_bytes": 0
+        },
+        {
+          "id": "entry-2",
+          "kind": "oracle_outcome",
+          "visibility": "harness_visible",
+          "source": "interceptor",
+          "assurance": "recorded-attributed-fact",
+          "availability": "available",
+          "artifact": {
+            "digest": "sha256:f57281013af92782733e48989e156500018b93a84ec9b46b4642e2a456d54d30",
+            "size_bytes": 72,
+            "media_type": "application/json",
+            "canonicalization": "raw"
+          },
+          "truncated": false,
+          "original_size_bytes": 72
+        }
+      ],
+      "hash": "sha256:9f17170bae822107c71a15434ed10965f9e89daae296ca1a0ae3dc3b455ff5f8",
+      "api_version": "interceptor.dev/observation-view/v1alpha2",
+      "session_id": "sess-1-000000000000000000000000",
+      "attempt_id": "attempt",
+      "feedback_profile": "oracle-assisted",
+      "operation": {
+        "state": "SUCCEEDED",
+        "receipt_id": "turn-db"
+      },
+      "target_output": {
+        "artifact_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "media_type": "application/octet-stream"
+      },
+      "observations": [
+        {
+          "kind": "oracle_outcome",
+          "visibility": "harness_visible",
+          "value": {
+            "fired": true,
+            "oracle_id": "refund",
+            "oracle_kind": "database_query_match"
+          }
+        }
+      ],
+      "session_revision": 4
+    }
+  },
+  {
+    "content": {
+      "entry-1": ""
+    },
+    "name": "nonmatching",
+    "view": {
+      "receipt_id": "feedback-32f0170a2ad31056289f3befb1ce2b7dfd6f7aaf62b2b83ac499782ffd23341f",
+      "campaign_id": "campaign",
+      "attempt_context_digest": "sha256:bfe40d64510ce90da0d8ce676627ffba6a52f910e0d2efabb0727c9ef31ce8d1",
+      "turn_id": "turn-db",
+      "captured_at": "2026-10-29T21:39:01.838887Z",
+      "window_start": "2026-10-29T14:39:00.837601-07:00",
+      "window_end": "2026-10-29T21:39:01.837611Z",
+      "through_event_seq": 10,
+      "collection_state": "complete",
+      "categories": [
+        {
+          "kind": "target_output",
+          "state": "available"
+        },
+        {
+          "kind": "operation_error",
+          "state": "empty",
+          "reason": "no_recorded_observation_not_proof_of_absence"
+        },
+        {
+          "kind": "injection_delivery",
+          "state": "empty",
+          "reason": "no_recorded_observation_not_proof_of_absence"
+        },
+        {
+          "kind": "oracle_outcome",
+          "state": "empty",
+          "reason": "no_positive_attributed_result_not_proof_of_failure"
+        }
+      ],
+      "entries": [
+        {
+          "id": "entry-1",
+          "kind": "target_output",
+          "visibility": "target_visible",
+          "source": "application",
+          "assurance": "target-response",
+          "availability": "available",
+          "artifact": {
+            "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size_bytes": 0,
+            "media_type": "application/octet-stream",
+            "canonicalization": "raw"
+          },
+          "truncated": false,
+          "original_size_bytes": 0
+        }
+      ],
+      "hash": "sha256:605ad20ea3615aaaf6aa87bd363cd74834eeddccef51d3f6f30687caca03d927",
+      "api_version": "interceptor.dev/observation-view/v1alpha2",
+      "session_id": "sess-1-000000000000000000000000",
+      "attempt_id": "attempt",
+      "feedback_profile": "oracle-assisted",
+      "operation": {
+        "state": "SUCCEEDED",
+        "receipt_id": "turn-db"
+      },
+      "target_output": {
+        "artifact_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "media_type": "application/octet-stream"
+      },
+      "observations": [],
+      "session_revision": 4
+    }
+  },
+  {
+    "content": {
+      "entry-1": ""
+    },
+    "name": "missing",
+    "view": {
+      "receipt_id": "feedback-32f0170a2ad31056289f3befb1ce2b7dfd6f7aaf62b2b83ac499782ffd23341f",
+      "campaign_id": "campaign",
+      "attempt_context_digest": "sha256:8fc435499f07485b660d5cfe5874b1ca17619c8fc45eb28f06ef74577189256b",
+      "turn_id": "turn-db",
+      "captured_at": "2026-10-29T21:39:02.236104Z",
+      "window_start": "2026-10-29T14:39:01.235425-07:00",
+      "window_end": "2026-10-29T21:39:02.23543Z",
+      "through_event_seq": 9,
+      "collection_state": "partial",
+      "categories": [
+        {
+          "kind": "target_output",
+          "state": "available"
+        },
+        {
+          "kind": "operation_error",
+          "state": "empty",
+          "reason": "no_recorded_observation_not_proof_of_absence"
+        },
+        {
+          "kind": "injection_delivery",
+          "state": "empty",
+          "reason": "no_recorded_observation_not_proof_of_absence"
+        },
+        {
+          "kind": "oracle_outcome",
+          "state": "unavailable",
+          "reason": "oracle_evaluation_unavailable"
+        }
+      ],
+      "entries": [
+        {
+          "id": "entry-1",
+          "kind": "target_output",
+          "visibility": "target_visible",
+          "source": "application",
+          "assurance": "target-response",
+          "availability": "available",
+          "artifact": {
+            "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size_bytes": 0,
+            "media_type": "application/octet-stream",
+            "canonicalization": "raw"
+          },
+          "truncated": false,
+          "original_size_bytes": 0
+        }
+      ],
+      "hash": "sha256:8219f7dbb52b70b1a32b4b462b5cff57bf6131ee9b2a81ab33dded1f2a159061",
+      "api_version": "interceptor.dev/observation-view/v1alpha2",
+      "session_id": "sess-1-000000000000000000000000",
+      "attempt_id": "attempt",
+      "feedback_profile": "oracle-assisted",
+      "operation": {
+        "state": "SUCCEEDED",
+        "receipt_id": "turn-db"
+      },
+      "target_output": {
+        "artifact_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "media_type": "application/octet-stream"
+      },
+      "observations": [],
+      "session_revision": 4
+    }
+  },
+  {
+    "content": {
+      "entry-1": "",
+      "entry-2": "eyJmaXJlZCI6dHJ1ZSwib3JhY2xlX2lkIjoicmVmdW5kIiwib3JhY2xlX2tpbmQiOiJkYXRhYmFzZV9xdWVyeV9tYXRjaCJ9"
+    },
+    "name": "mixed",
+    "view": {
+      "receipt_id": "feedback-32f0170a2ad31056289f3befb1ce2b7dfd6f7aaf62b2b83ac499782ffd23341f",
+      "campaign_id": "campaign",
+      "attempt_context_digest": "sha256:a3bd23fff54bf66e392d6bf0f47bef4033ab477d47948df843ec2d117bff0854",
+      "turn_id": "turn-db",
+      "captured_at": "2026-10-29T21:39:02.668881Z",
+      "window_start": "2026-10-29T14:39:01.668426-07:00",
+      "window_end": "2026-10-29T21:39:02.668428Z",
+      "through_event_seq": 10,
+      "collection_state": "partial",
+      "categories": [
+        {
+          "kind": "target_output",
+          "state": "available"
+        },
+        {
+          "kind": "operation_error",
+          "state": "empty",
+          "reason": "no_recorded_observation_not_proof_of_absence"
+        },
+        {
+          "kind": "injection_delivery",
+          "state": "empty",
+          "reason": "no_recorded_observation_not_proof_of_absence"
+        },
+        {
+          "kind": "oracle_outcome",
+          "state": "partial",
+          "reason": "oracle_evaluation_unavailable"
+        }
+      ],
+      "entries": [
+        {
+          "id": "entry-1",
+          "kind": "target_output",
+          "visibility": "target_visible",
+          "source": "application",
+          "assurance": "target-response",
+          "availability": "available",
+          "artifact": {
+            "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size_bytes": 0,
+            "media_type": "application/octet-stream",
+            "canonicalization": "raw"
+          },
+          "truncated": false,
+          "original_size_bytes": 0
+        },
+        {
+          "id": "entry-2",
+          "kind": "oracle_outcome",
+          "visibility": "harness_visible",
+          "source": "interceptor",
+          "assurance": "recorded-attributed-fact",
+          "availability": "available",
+          "artifact": {
+            "digest": "sha256:f57281013af92782733e48989e156500018b93a84ec9b46b4642e2a456d54d30",
+            "size_bytes": 72,
+            "media_type": "application/json",
+            "canonicalization": "raw"
+          },
+          "truncated": false,
+          "original_size_bytes": 72
+        }
+      ],
+      "hash": "sha256:651d29fe275fa1682832d95f3762713a30ae11b750c93b2c545800256c03b524",
+      "api_version": "interceptor.dev/observation-view/v1alpha2",
+      "session_id": "sess-1-000000000000000000000000",
+      "attempt_id": "attempt",
+      "feedback_profile": "oracle-assisted",
+      "operation": {
+        "state": "SUCCEEDED",
+        "receipt_id": "turn-db"
+      },
+      "target_output": {
+        "artifact_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "media_type": "application/octet-stream"
+      },
+      "observations": [
+        {
+          "kind": "oracle_outcome",
+          "visibility": "harness_visible",
+          "value": {
+            "fired": true,
+            "oracle_id": "refund",
+            "oracle_kind": "database_query_match"
+          }
+        }
+      ],
+      "session_revision": 4
+    }
+  },
+  {
+    "content": {
+      "entry-1": "",
+      "entry-2": "eyJmaXJlZCI6dHJ1ZSwib3JhY2xlX2lkIjoicmVmdW5kIiwib3JhY2xlX2tpbmQiOiJkYXRhYmFzZV9xdWVyeV9tYXRjaCJ9"
+    },
+    "name": "other-state",
+    "view": {
+      "receipt_id": "feedback-32f0170a2ad31056289f3befb1ce2b7dfd6f7aaf62b2b83ac499782ffd23341f",
+      "campaign_id": "campaign",
+      "attempt_context_digest": "sha256:25257fcfc6fd39d44d8131bd852c23481171900a333cdc608ee4455da1c0a529",
+      "turn_id": "turn-db",
+      "captured_at": "2026-10-29T21:39:02.959115Z",
+      "window_start": "2026-10-29T14:39:01.958631-07:00",
+      "window_end": "2026-10-29T21:39:02.958635Z",
+      "through_event_seq": 10,
+      "collection_state": "partial",
+      "categories": [
+        {
+          "kind": "target_output",
+          "state": "available"
+        },
+        {
+          "kind": "operation_error",
+          "state": "empty",
+          "reason": "no_recorded_observation_not_proof_of_absence"
+        },
+        {
+          "kind": "injection_delivery",
+          "state": "empty",
+          "reason": "no_recorded_observation_not_proof_of_absence"
+        },
+        {
+          "kind": "oracle_outcome",
+          "state": "partial",
+          "reason": "state_oracles_require_post_run_evidence"
+        }
+      ],
+      "entries": [
+        {
+          "id": "entry-1",
+          "kind": "target_output",
+          "visibility": "target_visible",
+          "source": "application",
+          "assurance": "target-response",
+          "availability": "available",
+          "artifact": {
+            "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size_bytes": 0,
+            "media_type": "application/octet-stream",
+            "canonicalization": "raw"
+          },
+          "truncated": false,
+          "original_size_bytes": 0
+        },
+        {
+          "id": "entry-2",
+          "kind": "oracle_outcome",
+          "visibility": "harness_visible",
+          "source": "interceptor",
+          "assurance": "recorded-attributed-fact",
+          "availability": "available",
+          "artifact": {
+            "digest": "sha256:f57281013af92782733e48989e156500018b93a84ec9b46b4642e2a456d54d30",
+            "size_bytes": 72,
+            "media_type": "application/json",
+            "canonicalization": "raw"
+          },
+          "truncated": false,
+          "original_size_bytes": 72
+        }
+      ],
+      "hash": "sha256:bc5b66203f0c1b312316e4166cb78dcbd20a8caa5dfe47b5458d8401c1c7feb0",
+      "api_version": "interceptor.dev/observation-view/v1alpha2",
+      "session_id": "sess-1-000000000000000000000000",
+      "attempt_id": "attempt",
+      "feedback_profile": "oracle-assisted",
+      "operation": {
+        "state": "SUCCEEDED",
+        "receipt_id": "turn-db"
+      },
+      "target_output": {
+        "artifact_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "media_type": "application/octet-stream"
+      },
+      "observations": [
+        {
+          "kind": "oracle_outcome",
+          "visibility": "harness_visible",
+          "value": {
+            "fired": true,
+            "oracle_id": "refund",
+            "oracle_kind": "database_query_match"
+          }
+        }
+      ],
+      "session_revision": 4
+    }
+  },
+  {
+    "content": {
+      "entry-1": ""
+    },
+    "name": "earlier-turn",
+    "view": {
+      "receipt_id": "feedback-32f0170a2ad31056289f3befb1ce2b7dfd6f7aaf62b2b83ac499782ffd23341f",
+      "campaign_id": "campaign",
+      "attempt_context_digest": "sha256:3b1082f4cacb7362b815f1891b4109973077aa3683859305ed440d1d956c3c14",
+      "turn_id": "turn-db",
+      "captured_at": "2026-10-29T21:39:03.384849Z",
+      "window_start": "2026-10-29T14:39:02.384496-07:00",
+      "window_end": "2026-10-29T21:39:03.384498Z",
+      "through_event_seq": 11,
+      "collection_state": "complete",
+      "categories": [
+        {
+          "kind": "target_output",
+          "state": "available"
+        },
+        {
+          "kind": "operation_error",
+          "state": "empty",
+          "reason": "no_recorded_observation_not_proof_of_absence"
+        },
+        {
+          "kind": "injection_delivery",
+          "state": "empty",
+          "reason": "no_recorded_observation_not_proof_of_absence"
+        },
+        {
+          "kind": "oracle_outcome",
+          "state": "empty",
+          "reason": "no_positive_attributed_result_not_proof_of_failure"
+        }
+      ],
+      "entries": [
+        {
+          "id": "entry-1",
+          "kind": "target_output",
+          "visibility": "target_visible",
+          "source": "application",
+          "assurance": "target-response",
+          "availability": "available",
+          "artifact": {
+            "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size_bytes": 0,
+            "media_type": "application/octet-stream",
+            "canonicalization": "raw"
+          },
+          "truncated": false,
+          "original_size_bytes": 0
+        }
+      ],
+      "hash": "sha256:4fc5be7fa167822897d2d28e0a776efc35da3823b3d32848fba2e07792ded087",
+      "api_version": "interceptor.dev/observation-view/v1alpha2",
+      "session_id": "sess-1-000000000000000000000000",
+      "attempt_id": "attempt",
+      "feedback_profile": "oracle-assisted",
+      "operation": {
+        "state": "SUCCEEDED",
+        "receipt_id": "turn-db"
+      },
+      "target_output": {
+        "artifact_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "media_type": "application/octet-stream"
+      },
+      "observations": [],
+      "session_revision": 4
+    }
+  },
+  {
+    "content": {
+      "entry-1": ""
+    },
+    "name": "other-attempt",
+    "view": {
+      "receipt_id": "feedback-32f0170a2ad31056289f3befb1ce2b7dfd6f7aaf62b2b83ac499782ffd23341f",
+      "campaign_id": "campaign",
+      "attempt_context_digest": "sha256:2e728250549f7f286e003afe651b4d370cb4e5e3cbaac56d126cae81cc506dc8",
+      "turn_id": "turn-db",
+      "captured_at": "2026-10-29T21:39:03.775047Z",
+      "window_start": "2026-10-29T14:39:02.77448-07:00",
+      "window_end": "2026-10-29T21:39:03.774483Z",
+      "through_event_seq": 11,
+      "collection_state": "complete",
+      "categories": [
+        {
+          "kind": "target_output",
+          "state": "available"
+        },
+        {
+          "kind": "operation_error",
+          "state": "empty",
+          "reason": "no_recorded_observation_not_proof_of_absence"
+        },
+        {
+          "kind": "injection_delivery",
+          "state": "empty",
+          "reason": "no_recorded_observation_not_proof_of_absence"
+        },
+        {
+          "kind": "oracle_outcome",
+          "state": "empty",
+          "reason": "no_positive_attributed_result_not_proof_of_failure"
+        }
+      ],
+      "entries": [
+        {
+          "id": "entry-1",
+          "kind": "target_output",
+          "visibility": "target_visible",
+          "source": "application",
+          "assurance": "target-response",
+          "availability": "available",
+          "artifact": {
+            "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size_bytes": 0,
+            "media_type": "application/octet-stream",
+            "canonicalization": "raw"
+          },
+          "truncated": false,
+          "original_size_bytes": 0
+        }
+      ],
+      "hash": "sha256:cf6947d7434d05cbef362236089a57e5c3930f3d47f29e3414db8ce89c9e96d1",
+      "api_version": "interceptor.dev/observation-view/v1alpha2",
+      "session_id": "sess-1-000000000000000000000000",
+      "attempt_id": "attempt",
+      "feedback_profile": "oracle-assisted",
+      "operation": {
+        "state": "SUCCEEDED",
+        "receipt_id": "turn-db"
+      },
+      "target_output": {
+        "artifact_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "media_type": "application/octet-stream"
+      },
+      "observations": [],
+      "session_revision": 4
+    }
+  },
+  {
+    "content": {
+      "entry-1": ""
+    },
+    "name": "late",
+    "view": {
+      "receipt_id": "feedback-32f0170a2ad31056289f3befb1ce2b7dfd6f7aaf62b2b83ac499782ffd23341f",
+      "campaign_id": "campaign",
+      "attempt_context_digest": "sha256:79a4ccd2bea172f4ee536605b706c9b60d969f8792020c46193dcb5e757ddee9",
+      "turn_id": "turn-db",
+      "captured_at": "2026-10-29T21:39:04.072064Z",
+      "window_start": "2026-10-29T14:39:03.071448-07:00",
+      "window_end": "2026-10-29T21:39:04.071449Z",
+      "through_event_seq": 9,
+      "collection_state": "partial",
+      "categories": [
+        {
+          "kind": "target_output",
+          "state": "available"
+        },
+        {
+          "kind": "operation_error",
+          "state": "empty",
+          "reason": "no_recorded_observation_not_proof_of_absence"
+        },
+        {
+          "kind": "injection_delivery",
+          "state": "empty",
+          "reason": "no_recorded_observation_not_proof_of_absence"
+        },
+        {
+          "kind": "oracle_outcome",
+          "state": "unavailable",
+          "reason": "oracle_evaluation_unavailable"
+        }
+      ],
+      "entries": [
+        {
+          "id": "entry-1",
+          "kind": "target_output",
+          "visibility": "target_visible",
+          "source": "application",
+          "assurance": "target-response",
+          "availability": "available",
+          "artifact": {
+            "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size_bytes": 0,
+            "media_type": "application/octet-stream",
+            "canonicalization": "raw"
+          },
+          "truncated": false,
+          "original_size_bytes": 0
+        }
+      ],
+      "hash": "sha256:262e028226fc650cff13932e6b670f32329ab5e66f2b1fddaeafda98417c8b13",
+      "api_version": "interceptor.dev/observation-view/v1alpha2",
+      "session_id": "sess-1-000000000000000000000000",
+      "attempt_id": "attempt",
+      "feedback_profile": "oracle-assisted",
+      "operation": {
+        "state": "SUCCEEDED",
+        "receipt_id": "turn-db"
+      },
+      "target_output": {
+        "artifact_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "media_type": "application/octet-stream"
+      },
+      "observations": [],
+      "session_revision": 4
+    }
+  },
+  {
+    "content": {
+      "entry-1": ""
+    },
+    "name": "ambiguous",
+    "view": {
+      "receipt_id": "feedback-32f0170a2ad31056289f3befb1ce2b7dfd6f7aaf62b2b83ac499782ffd23341f",
+      "campaign_id": "campaign",
+      "attempt_context_digest": "sha256:ff5d425dc377681e811411e5c6190e37cd42c1a18204f9d5b1ef02ba75820468",
+      "turn_id": "turn-db",
+      "captured_at": "2026-10-29T21:39:04.487079Z",
+      "window_start": "2026-10-29T14:39:03.485697-07:00",
+      "window_end": "2026-10-29T21:39:04.485701Z",
+      "through_event_seq": 10,
+      "collection_state": "partial",
+      "categories": [
+        {
+          "kind": "target_output",
+          "state": "available"
+        },
+        {
+          "kind": "operation_error",
+          "state": "empty",
+          "reason": "no_recorded_observation_not_proof_of_absence"
+        },
+        {
+          "kind": "injection_delivery",
+          "state": "empty",
+          "reason": "no_recorded_observation_not_proof_of_absence"
+        },
+        {
+          "kind": "oracle_outcome",
+          "state": "unavailable",
+          "reason": "oracle_evaluation_unavailable"
+        }
+      ],
+      "entries": [
+        {
+          "id": "entry-1",
+          "kind": "target_output",
+          "visibility": "target_visible",
+          "source": "application",
+          "assurance": "target-response",
+          "availability": "available",
+          "artifact": {
+            "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size_bytes": 0,
+            "media_type": "application/octet-stream",
+            "canonicalization": "raw"
+          },
+          "truncated": false,
+          "original_size_bytes": 0
+        }
+      ],
+      "hash": "sha256:b77bb488721b4011da3d53c5573df881e3b488b2198bbce6d6da34cb334d3928",
+      "api_version": "interceptor.dev/observation-view/v1alpha2",
+      "session_id": "sess-1-000000000000000000000000",
+      "attempt_id": "attempt",
+      "feedback_profile": "oracle-assisted",
+      "operation": {
+        "state": "SUCCEEDED",
+        "receipt_id": "turn-db"
+      },
+      "target_output": {
+        "artifact_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "media_type": "application/octet-stream"
+      },
+      "observations": [],
+      "session_revision": 4
+    }
+  },
+  {
+    "content": {
+      "entry-1": ""
+    },
+    "name": "harness-only",
+    "view": {
+      "receipt_id": "feedback-32f0170a2ad31056289f3befb1ce2b7dfd6f7aaf62b2b83ac499782ffd23341f",
+      "campaign_id": "campaign",
+      "attempt_context_digest": "sha256:04bca4dc20a98f0f55d686ead1612bb2af7a88b68b683db23027528d79e66c2c",
+      "turn_id": "turn-db",
+      "captured_at": "2026-10-29T21:39:04.838622Z",
+      "window_start": "2026-10-29T14:39:03.838277-07:00",
+      "window_end": "2026-10-29T21:39:04.838279Z",
+      "through_event_seq": 11,
+      "collection_state": "complete",
+      "categories": [
+        {
+          "kind": "target_output",
+          "state": "available"
+        },
+        {
+          "kind": "operation_error",
+          "state": "empty",
+          "reason": "no_recorded_observation_not_proof_of_absence"
+        },
+        {
+          "kind": "injection_delivery",
+          "state": "empty",
+          "reason": "no_recorded_observation_not_proof_of_absence"
+        },
+        {
+          "kind": "oracle_outcome",
+          "state": "empty",
+          "reason": "no_positive_attributed_result_not_proof_of_failure"
+        }
+      ],
+      "entries": [
+        {
+          "id": "entry-1",
+          "kind": "target_output",
+          "visibility": "target_visible",
+          "source": "application",
+          "assurance": "target-response",
+          "availability": "available",
+          "artifact": {
+            "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "size_bytes": 0,
+            "media_type": "application/octet-stream",
+            "canonicalization": "raw"
+          },
+          "truncated": false,
+          "original_size_bytes": 0
+        }
+      ],
+      "hash": "sha256:a7f7d08eaf99a4879e8f2fb8e8fa99dcbf4ca7e0476ca59272bddfc37719f471",
+      "api_version": "interceptor.dev/observation-view/v1alpha2",
+      "session_id": "sess-1-000000000000000000000000",
+      "attempt_id": "attempt",
+      "feedback_profile": "oracle-assisted",
+      "operation": {
+        "state": "SUCCEEDED",
+        "receipt_id": "turn-db"
+      },
+      "target_output": {
+        "artifact_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "media_type": "application/octet-stream"
+      },
+      "observations": [],
+      "session_revision": 4
+    }
+  }
+]

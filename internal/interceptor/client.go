@@ -43,9 +43,22 @@ func (r Response) Code() string {
 	if e != nil {
 		return ""
 	}
-	var code string
-	if json.Unmarshal(m["code"], &code) != nil || !identifier.MatchString(code) {
-		return ""
+	// Admission/lifecycle rejections carry body.code; dispatched native HTTP
+	// handlers carry body.error.code. Never interpret arbitrary messages or
+	// choose between conflicting representations.
+	code := ""
+	if raw, exists := m["code"]; exists {
+		if json.Unmarshal(raw, &code) != nil || !identifier.MatchString(code) {
+			return ""
+		}
+	}
+	if raw, exists := m["error"]; exists {
+		nested, err := object(raw)
+		var native string
+		if err != nil || json.Unmarshal(nested["code"], &native) != nil || !identifier.MatchString(native) || (code != "" && code != native) {
+			return ""
+		}
+		code = native
 	}
 	return code
 }

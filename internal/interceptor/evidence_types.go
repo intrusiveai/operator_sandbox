@@ -10,9 +10,12 @@ import (
 )
 
 type evidenceAttribution struct {
-	ToolCallID string `json:"tool_call_id,omitempty"`
-	PID        int    `json:"pid,omitempty"`
-	Confidence string `json:"confidence,omitempty"`
+	Window                string `json:"window,omitempty"`
+	ObservedAttemptID     string `json:"observed_attempt_id,omitempty"`
+	ObservedPayloadDigest string `json:"observed_payload_digest,omitempty"`
+	ToolCallID            string `json:"tool_call_id,omitempty"`
+	PID                   int    `json:"pid,omitempty"`
+	Confidence            string `json:"confidence,omitempty"`
 }
 
 type evidenceEvent struct {
