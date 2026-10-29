@@ -202,3 +202,19 @@ The host's existing source-companion storage fields MAY retain their native
 names for compatibility; consumers MUST interpret provenance using `adapter`.
 An HTTPS execution binding's opaque session field identifies local campaign
 attribution only. It MUST NOT imply a remote session, readiness lease or reset.
+
+## Managed PostgreSQL services
+
+The native decoder accepts the `code` application adapter with an explicitly
+reviewed operation delivery contract. PostgreSQL services use kind `postgresql`,
+transport `postgresql+tls`, and the `database_response` surface. The public service
+projection retains `database_tables`, sorted by policy ID: each policy contains
+`id`, ordered `keys`, ordered writable `fields`, `allow_create`, and optional
+`max_records`. Creation-enabled policies require a positive bounded record limit.
+Key and writable-field names are disjoint. These fields describe eligibility;
+installed route policy still authorizes every concrete injection. No database
+credentials, management addresses, or sealed oracle SQL are projected.
+
+The decoder accepts native oracle type `database_query_match`. Permitted live
+outcomes use the existing `oracle_outcome` evidence class. Capability publication
+does not grant access to that evidence or bypass effective-profile narrowing.

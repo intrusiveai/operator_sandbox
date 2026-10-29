@@ -129,7 +129,7 @@ func validNative(n *nativeManifest) bool {
 	if n.DeliverySchemaProfile != "" && !deliveryVersion {
 		return false
 	}
-	if !allowed(n.Target.Interface, "http", "command", "stdio", "repl") || len(n.FeedbackProfiles) == 0 || !uniqueIDs(n.FeedbackProfiles) || !subset(n.FeedbackProfiles, "black-box", "diagnostic", "oracle-assisted") {
+	if !allowed(n.Target.Interface, "http", "command", "stdio", "repl", "code") || len(n.FeedbackProfiles) == 0 || !uniqueIDs(n.FeedbackProfiles) || !subset(n.FeedbackProfiles, "black-box", "diagnostic", "oracle-assisted") {
 		return false
 	}
 	if n.Feedback.ViewVersion != "interceptor.dev/observation-view/v1alpha2" || !subset(n.Feedback.SelectionModes, "all-permitted", "selected") || !subset(n.Feedback.Kinds, profileKinds["oracle-assisted"]...) || n.Feedback.MaximumChunkBytes < 1 || n.Feedback.MaximumChunkBytes > 262144 || n.Feedback.MaximumEntries < 1 || n.Feedback.MaximumEntries > 64 {
@@ -138,7 +138,7 @@ func validNative(n *nativeManifest) bool {
 	if !subset(n.CrossVMOperations, "application.invoke", "artifact.read", "artifact.register", "attempt.register", "capabilities.read", "injection.arm", "injection.delete", "observation.content.read", "observation.read", "operation.status", "session.owner", "session.status", "session.stop", "snapshot.create") {
 		return false
 	}
-	surfaces := []string{"model_tool_result", "service_response", "mcp_tool_result", "environment_state"}
+	surfaces := []string{"model_tool_result", "service_response", "mcp_tool_result", "environment_state", "database_response"}
 	if !subset(n.InjectionSurfaces, surfaces...) {
 		return false
 	}
@@ -173,7 +173,10 @@ func validNative(n *nativeManifest) bool {
 	ids = nil
 	for _, svc := range n.Services {
 		ids = append(ids, svc.ID)
-		if !allowed(svc.Kind, "fixture_http", "stateful_http", "mcp_http", "oidc", "http_sink") || !allowed(svc.Role, "environment", "identity", "attacker") || !allowed(svc.Implementation, "", "generic") || !allowed(svc.ResponseMode, "", "static", "dynamic") || !subset(svc.Transports, "http", "https") || !subset(svc.InjectionSurfaces, surfaces...) {
+		if !allowed(svc.Kind, "fixture_http", "stateful_http", "mcp_http", "oidc", "http_sink", "postgresql") || !allowed(svc.Role, "environment", "identity", "attacker") || !allowed(svc.Implementation, "", "generic") || !allowed(svc.ResponseMode, "", "static", "dynamic") || !subset(svc.Transports, "http", "https", "postgresql+tls") || !subset(svc.InjectionSurfaces, surfaces...) {
+			return false
+		}
+		if !validDatabaseService(svc) {
 			return false
 		}
 		endpoints := []string{}
@@ -207,11 +210,55 @@ func validNative(n *nativeManifest) bool {
 	if !uniqueIDs(ids) {
 		return false
 	}
-	if !subset(n.Oracles, "attacker_sink_match", "output_contains", "model_output_contains", "tool_call_match", "service_state_match", "file_state_match", "event_match") {
+	if !subset(n.Oracles, "attacker_sink_match", "output_contains", "model_output_contains", "tool_call_match", "service_state_match", "file_state_match", "event_match", "database_query_match") {
 		return false
 	}
 	if !subset(n.Network.DNS.RecordTypes, "A") || !allowed(n.Network.DNS.UnknownPolicy, "", "nxdomain", "refused") || !allowed(n.Network.HTTPS.TrustMode, "", "auto", "bundle", "application-managed") || !allowed(n.Network.HTTPS.MinimumVersion, "", "TLS1.2") {
 		return false
 	}
 	return n.Limits.MaximumAttempts > 0 && n.Limits.MaximumArtifacts > 0 && n.Limits.MaximumArtifactBytes > 0 && n.Limits.MaximumInvocations > 0 && n.Limits.MaximumSnapshots >= 0
+}
+
+// Database policy fields are public eligibility, never credentials or SQL.
+var databaseIdentifier = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]{0,62}$`)
+
+func validDatabaseService(s ServiceCapability) bool {
+	if s.Kind != "postgresql" {
+		return len(s.DatabaseTables) == 0 && !contains(s.Transports, "postgresql+tls") && !contains(s.InjectionSurfaces, "database_response")
+	}
+	if len(s.Transports) != 1 || s.Transports[0] != "postgresql+tls" || len(s.Endpoints) != 0 || s.MCP || !subset(s.InjectionSurfaces, "database_response", "environment_state") {
+		return false
+	}
+	ids := []string{}
+	creates := map[string]int{}
+	for _, t := range s.DatabaseTables {
+		ids = append(ids, t.ID)
+		if !databaseIdentifier.MatchString(t.ID) || len(t.Keys) < 1 || len(t.Keys) > 8 || len(t.Fields) < 1 || len(t.Fields) > 64 {
+			return false
+		}
+		names := append(append([]string{}, t.Keys...), t.Fields...)
+		if !uniqueIDs(names) {
+			return false
+		}
+		for _, name := range names {
+			if !databaseIdentifier.MatchString(name) {
+				return false
+			}
+		}
+		if t.AllowCreate {
+			if t.MaxRecords < 1 || t.MaxRecords > 100000 {
+				return false
+			}
+			creates[t.ID] = t.MaxRecords
+		}
+	}
+	if !uniqueIDs(ids) || (len(ids) > 0) != contains(s.InjectionSurfaces, "environment_state") || len(creates) != len(s.CreatableCollections) {
+		return false
+	}
+	for _, c := range s.CreatableCollections {
+		if creates[c.Collection] != c.MaxResources || c.MaxResources <= 0 {
+			return false
+		}
+	}
+	return true
 }

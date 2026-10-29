@@ -74,8 +74,8 @@ func FromNative(catalog *contracts.Catalog, raw []byte, targetID string) (*Expor
 	}
 	for _, svc := range records(source["services"]) {
 		item := map[string]any{"ref": "service:" + svc["id"].(string), "service_id": svc["id"], "transports": sorted(stringsOf(svc["transports"])), "injection_surfaces": sorted(stringsOf(svc["injection_surfaces"]))}
-		copyFields(item, svc, "kind", "role", "implementation", "response_mode", "mcp", "endpoints", "creatable_collections")
-		for key, id := range map[string]string{"endpoints": "id", "creatable_collections": "collection"} {
+		copyFields(item, svc, "kind", "role", "implementation", "response_mode", "mcp", "endpoints", "creatable_collections", "database_tables")
+		for key, id := range map[string]string{"endpoints": "id", "creatable_collections": "collection", "database_tables": "id"} {
 			if value, ok := item[key]; ok {
 				items := records(value)
 				sort.Slice(items, func(i, j int) bool { return items[i][id].(string) < items[j][id].(string) })
