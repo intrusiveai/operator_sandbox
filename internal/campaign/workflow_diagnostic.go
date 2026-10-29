@@ -29,6 +29,7 @@ type WorkflowDiagnostic struct {
 }
 
 var workflowReasons = map[string]string{
+	"database_setup_denied":       "Use a permitted database service/table, exact key and writable placement. Creation requires explicit permission and matching payload keys. Execution did not occur; correct and resubmit with a new operation ID.",
 	"origin_required":             "Set origin to scenario with a submitted scenario_id, or exploratory without scenario_id. Execution did not occur; correct and resubmit with a new operation ID.",
 	"scenario_required":           "Scenario origin requires a scenario_id from the submitted bundle. Execution did not occur; correction is safe with a new operation ID.",
 	"scenario_forbidden":          "Exploratory origin forbids scenario_id. Remove it or select scenario origin. Execution did not occur; correction is safe with a new operation ID.",

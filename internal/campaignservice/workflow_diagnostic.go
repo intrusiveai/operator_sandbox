@@ -106,7 +106,7 @@ func (s *Service) recordArgumentRejection(id string, cause error) (json.RawMessa
 	if errors.As(cause, &issue) {
 		reason, path = issue.Reason, issue.FieldPath
 	}
-	if errors.Is(cause, attemptadapter.ErrPolicy) {
+	if issue == nil && errors.Is(cause, attemptadapter.ErrPolicy) {
 		reason = "policy_denied"
 	}
 	d := campaign.NewWorkflowDiagnostic(id, "operator", "arguments", reason, path, "", "")

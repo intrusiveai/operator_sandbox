@@ -259,3 +259,26 @@ execution attribution and omit a native receipt identity. Native receipt checks
 remain mandatory for Interceptor records. HTTPS receipts MUST NOT contain
 injection-delivery or oracle entries. Recovery MUST retain uncertainty and MUST
 NOT issue a replacement request to reconstruct missing feedback.
+
+## Recorded database oracle outcomes
+
+`oracle_outcome` supports `database_query_match` through the existing
+`oracle-assisted` profile and selection rules. Operator translates native
+`oracle_id`, `oracle_kind`, `fired: true` to its opaque session-bound `detector_id`,
+`detector_kind`, `fired: true`. Only those selected fields are exposed. SQL, private
+results, definitions, and credentials are excluded. Effective black-box and
+diagnostic profiles still withhold these outcomes even from an oracle-assisted
+native session.
+
+Live results cover recorded application observations bound to the requested turn
+and attempt through its completion boundary. Receipt reads do not query current
+database state. They remain immutable after later writes or restore; cumulative
+session history, seed state, Harness mutations, and other or later turns cannot
+substitute for the requested observations. An observed condition is not proof that
+the injection caused it. No positive observation is not proof of attack failure.
+
+Preserve `oracle_evaluation_unavailable` for incomplete/unavailable evaluation and
+`no_positive_attributed_result_not_proof_of_failure` for complete empty results.
+A partial category can retain valid results from independent oracles.
+`state_oracles_require_post_run_evidence` applies only to other unsupported state
+oracles when reported by Interceptor. Unknown reasons use bounded safe fallbacks.

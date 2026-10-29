@@ -3,6 +3,7 @@ package attemptadapter
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"regexp"
 	"slices"
 	"time"
@@ -198,13 +199,17 @@ func compile(catalog *contracts.Catalog, raw []byte, in Inputs, external *httpsE
 	if len(r.PreActions) > 0 && !r.Cleanup.Delete && !in.Policy.scopes.AllowRetainedInjections {
 		return nil, ErrPolicy
 	}
-	for _, action := range r.PreActions {
+	for actionIndex, action := range r.PreActions {
 		if seen[action.ActionID] || action.Parameters.PayloadDigest != r.Payload.Digest {
 			return nil, ErrAttempt
 		}
 		seen[action.ActionID] = true
 		d := action.Parameters
+		d.Payload = artifactBytes[r.Payload.Digest]
 		if err = in.Policy.authorizeInjection(d, in.KnownTurnIDs); err != nil {
+			if databaseService(in.Policy.facts, d.Selector.Service) != nil {
+				return nil, &contracts.ArgumentError{Reason: "database_setup_denied", FieldPath: fmt.Sprintf("/pre_actions/%d/parameters", actionIndex), Correction: "Use an authorized database service, table, exact key and placement; creation requires explicit permission and matching payload keys. Execution did not occur; correct and resubmit.", Cause: err}
+			}
 			return nil, err
 		}
 		payload := artifactBytes[r.Payload.Digest]

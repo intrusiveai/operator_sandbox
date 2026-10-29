@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 )
 
 func TestPostgreSQLNativeExportAndAdmission(t *testing.T) {
-	raw, err := os.ReadFile("testdata/postgresql-native.json")
+	raw, err := os.ReadFile("../../schemas/fixtures/postgresql-capability-chain/interceptor-export.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -19,6 +20,24 @@ func TestPostgreSQLNativeExportAndAdmission(t *testing.T) {
 		t.Fatal(err)
 	}
 	if _, err = Import(c, e.PublicJSON(), raw, e.TargetID()); err != nil {
+		t.Fatal(err)
+	}
+	gold, err := os.ReadFile("../../schemas/fixtures/postgresql-capability-chain/public-capabilities.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(object(t, gold), object(t, e.PublicJSON())) {
+		t.Fatal("Go/Python public projection drift")
+	}
+	submitted, err := os.ReadFile("../../schemas/fixtures/postgresql-capability-chain/submitted-bundle.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	dbBundle, err := ParseBundle(c, submitted)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = Check(dbBundle, e, bind(t, c, e, "oracle-assisted"), Policy{AllowedRefs: []string{"operation:ask", "service:database", "action:injection:database_response", "action:injection:environment_state", "evidence:target_output", "evidence:oracle_outcome"}}); err != nil {
 		t.Fatal(err)
 	}
 	facts := e.ExecutionFacts()

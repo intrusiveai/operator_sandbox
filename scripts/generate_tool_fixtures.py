@@ -50,6 +50,12 @@ attempt_case('parent receipt',lambda a:a.update(parent_attempt_receipt_id='execu
 action=dict(action_id='setup',action_type='interceptor.injection/v1alpha1',parameters=dict(surface='model_tool_result',mode='simulation',scope='once',selector=dict(tool_name='search',call_ordinal='first'),placement=dict(operation='replace',pointer='')))
 attempt_case('setup requires injection input',lambda a:a.update(pre_actions=[action]),False)
 attempt_case('setup with injection input',lambda a:a.update(pre_actions=[action],injection_input=dict(encoding='json',value='replacement')),True)
+database=deepcopy(action)
+database['parameters']=dict(surface='database_response',mode='simulation',scope='once',selector=dict(service='database',call_ordinal='first'),placement=dict(operation='append_text',pointer='/rows/0/0'))
+attempt_case('database result setup',lambda a:a.update(pre_actions=[database],injection_input=dict(encoding='json',value='replacement')),True)
+for field in ('method','tool_name','turn_id'):
+ bad=deepcopy(database);bad['parameters']['selector'][field]='invalid'
+ attempt_case('database disallows '+field,lambda a:a.update(pre_actions=[bad],injection_input=dict(encoding='json',value='replacement')),False,False)
 attempt_case('no irrelevant injection input',lambda a:a.update(injection_input=dict(encoding='json',value='replacement')),False)
 attempt_case('no cleanup flags without setup',lambda a:a.update(retain_injections=False),False)
 attempt_case('unknown attempt field',lambda a:a.update(unexpected=True),False,False)

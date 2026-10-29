@@ -573,7 +573,8 @@
             "model_tool_result",
             "service_response",
             "mcp_tool_result",
-            "environment_state"
+            "environment_state",
+            "database_response"
           ]
         },
         "mode": {
@@ -590,7 +591,7 @@
           ]
         },
         "selector": {
-          "oneOf": [
+          "anyOf": [
             {
               "$ref": "#/$defs/modelSelector"
             },
@@ -602,6 +603,9 @@
             },
             {
               "$ref": "#/$defs/stateSelector"
+            },
+            {
+              "$ref": "#/$defs/databaseSelector"
             }
           ]
         },
@@ -697,8 +701,52 @@
               "$ref": "#/$defs/stateSelector"
             }
           }
+        },
+        {
+          "properties": {
+            "surface": {
+              "const": "database_response"
+            },
+            "mode": {
+              "const": "simulation"
+            },
+            "scope": {
+              "enum": [
+                "once",
+                "standing"
+              ]
+            },
+            "selector": {
+              "$ref": "#/$defs/databaseSelector"
+            }
+          }
         }
       ]
+    },
+    "databaseSelector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "service",
+        "call_ordinal"
+      ],
+      "properties": {
+        "service": {
+          "$ref": "#/$defs/id"
+        },
+        "call_ordinal": {
+          "$ref": "#/$defs/ordinal"
+        },
+        "request_body_pointer": {
+          "$ref": "#/$defs/pointer"
+        },
+        "request_body_equal": {
+          "$ref": "#/$defs/json3"
+        },
+        "request_body_contain": {
+          "$ref": "#/$defs/contains"
+        }
+      }
     }
   },
   "allOf": [

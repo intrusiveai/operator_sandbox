@@ -218,3 +218,7 @@ credentials, management addresses, or sealed oracle SQL are projected.
 The decoder accepts native oracle type `database_query_match`. Permitted live
 outcomes use the existing `oracle_outcome` evidence class. Capability publication
 does not grant access to that evidence or bypass effective-profile narrowing.
+
+The shared `fixtures/postgresql-capability-chain/` files bind a native PostgreSQL
+code-adapter export to its public projection and submitted ScenarioBundle. Go and
+Python conformance checks MUST agree on this projection and its admission.

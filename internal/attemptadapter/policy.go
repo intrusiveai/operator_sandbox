@@ -184,6 +184,10 @@ func validRoute(f capabilities.ExecutionFacts, r Route) bool {
 		if t != (Target{Service: t.Service, ToolName: t.ToolName}) || t.ToolName == "" {
 			return false
 		}
+	case "database_response":
+		if t != (Target{Service: t.Service}) || t.Service == "" {
+			return false
+		}
 	case "service_response":
 		if t != (Target{Service: t.Service, Method: t.Method, Path: t.Path}) || t.Method == "" || !cleanAbsolute(t.Path) {
 			return false
@@ -200,7 +204,7 @@ func validRoute(f capabilities.ExecutionFacts, r Route) bool {
 			}
 			return false
 		}
-		if t != (Target{Service: t.Service, Collection: t.Collection, Key: t.Key}) || t.Collection == "" || t.Key == "" || t.Key == "." || t.Key == ".." || strings.ContainsAny(t.Key, "/\\\x00\r\n") {
+		if t != (Target{Service: t.Service, Collection: t.Collection, Key: t.Key}) || t.Collection == "" || t.Key == "" {
 			return false
 		}
 	default:
@@ -209,6 +213,12 @@ func validRoute(f capabilities.ExecutionFacts, r Route) bool {
 	for _, svc := range f.Services {
 		if svc.ID != t.Service || !slices.Contains(svc.InjectionSurfaces, r.Surface) {
 			continue
+		}
+		if svc.Kind == "postgresql" {
+			return validDatabaseRoute(svc, r)
+		}
+		if t.Key == "." || t.Key == ".." || strings.ContainsAny(t.Key, "/\\\x00\r\n") {
+			return false
 		}
 		for _, ep := range svc.Endpoints {
 			switch r.Surface {
@@ -293,7 +303,7 @@ func (p *Policy) authorizeInjection(d interceptor.Definition, knownTurns []strin
 	}
 	t := Target{ToolName: s.ToolName, Service: s.Service, Method: s.Method, Path: s.Path, Collection: s.Collection, Key: s.Key, FileNamespace: s.FileNamespace, RelativePath: s.RelativePath}
 	for _, r := range p.scopes.Routes {
-		if r.Surface != d.Surface || r.Target != t || !slices.Contains(r.Scopes, d.Scope) || !slices.Contains(r.Placements, d.Placement.Operation) || !slices.Contains(r.Pointers, d.Placement.Pointer) {
+		if r.Surface != d.Surface || !sameTarget(p.facts, r.Target, t) || !slices.Contains(r.Scopes, d.Scope) || !slices.Contains(r.Placements, d.Placement.Operation) || !slices.Contains(r.Pointers, d.Placement.Pointer) {
 			continue
 		}
 		for _, k := range d.Placement.AllowedFields {
@@ -301,7 +311,7 @@ func (p *Policy) authorizeInjection(d interceptor.Definition, knownTurns []strin
 				return ErrPolicy
 			}
 		}
-		return nil
+		return p.validateDatabaseInjection(d)
 	}
 	return ErrPolicy
 }
