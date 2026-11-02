@@ -47,7 +47,7 @@ func (e *execution) provider(ctx context.Context, g generator) error {
 		}
 		result := map[string]any{"codec_id": c.body["codec_id"], "profile_id": c.body["profile_id"], "profile_digest": c.body["profile_digest"], "receipt_id": "qualification-receipt", "response": json.RawMessage(raw)}
 		resultRaw := jsonBytes(result)
-		if _, err = c.protocol.ValidateModelExchange(c.policy, request, resultRaw); err != nil {
+		if _, err = c.protocol.ValidateNativeModelExchange(c.policy, request, resultRaw); err != nil {
 			return e.failedCheck(check, "native_exchange_rejected")
 		}
 		usage, err := c.protocol.ModelUsage(resultRaw)

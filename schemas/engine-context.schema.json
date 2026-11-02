@@ -203,6 +203,9 @@
               "$ref": "urn:operator:schema:openai-responses-common:v1alpha1#/$defs/settings"
             }
           ]
+        },
+        "context_limits": {
+          "$ref": "urn:operator:schema:model-context-limits:v1alpha1"
         }
       },
       "required": [
@@ -210,7 +213,8 @@
         "profile_id",
         "profile_digest",
         "model_id",
-        "features"
+        "features",
+        "context_limits"
       ],
       "allOf": [
         {

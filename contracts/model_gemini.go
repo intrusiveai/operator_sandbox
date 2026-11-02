@@ -228,7 +228,7 @@ type GeminiToolResult struct {
 }
 
 func (p *Protocol) GeminiContinuation(resultRaw []byte, results []GeminiToolResult) ([]byte, error) {
-	v, err := p.catalog.Validate(EngineModelGenerateResultSchema, resultRaw, OrdinaryLimit)
+	v, err := p.catalog.Validate(NativeModelResultSchema, resultRaw, OrdinaryLimit)
 	if err != nil {
 		return nil, err
 	}

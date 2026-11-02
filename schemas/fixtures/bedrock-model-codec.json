@@ -6269,6 +6269,17 @@
             }
           ]
         }
+      },
+      "context_budget": {
+        "input_tokens": 140,
+        "output_tokens": 20,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32628,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -6367,6 +6378,17 @@
             }
           ]
         }
+      },
+      "context_budget": {
+        "input_tokens": 140,
+        "output_tokens": 20,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32628,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": false
@@ -6395,7 +6417,12 @@
             }
           }
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "bedrock-converse-text-tools-v1",
@@ -6878,6 +6905,11 @@
         "codec_settings": {
           "max_tokens": 2048,
           "tools_digest": "sha256:9c1f49677f1ec5692080f07cd7cf0392e1f041ea606f992ac156fc9aff1a5739"
+        },
+        "context_limits": {
+          "maximum_prompt_tokens": 32768,
+          "maximum_completion_tokens": 2048,
+          "warning_threshold_tokens": 26214
         }
       },
       "operations": [

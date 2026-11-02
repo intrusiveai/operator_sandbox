@@ -40,7 +40,7 @@ class ModelTest(unittest.TestCase):
                         self.assertEqual(policy,canonicalize(encoded(c['policy'])))
                         p.validate_model_request(policy,encoded(c['request']))
                     elif c['mode']=='bound':
-                        self.assertEqual(p.validate_model_exchange(encoded(c['policy']),encoded(c['request']),encoded(c['result'])),c['result'])
+                        self.assertEqual(p.validate_native_model_exchange(encoded(c['policy']),encoded(c['request']),encoded(c['result'])),c['result'])
                     elif c['mode']=='wire':
                         p.validate_response(envelope(c['request']),envelope(c['result'],True))
                     elif c['mode'].endswith('continuation'):

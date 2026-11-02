@@ -388,7 +388,12 @@
     "features": [
       "text",
       "function-tools"
-    ]
+    ],
+    "context_limits": {
+      "maximum_prompt_tokens": 32768,
+      "maximum_completion_tokens": 1024,
+      "warning_threshold_tokens": 26214
+    }
   },
   "operations": [
     "engine.artifact_begin",

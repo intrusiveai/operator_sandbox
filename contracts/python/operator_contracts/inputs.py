@@ -92,6 +92,10 @@ def validate_engine_context(protocol, raw):
     for op in target['operations']:
         require(op['ref'] == 'operation:' + op['operation_id'])
     require(c['model']['features'] == ['text', 'function-tools'])
+    from .model import check_context_limits
+    m = c['model']; check_context_limits(m['context_limits'])
+    key = {'openai-chat-text-tools-v1':'max_completion_tokens','anthropic-messages-text-tools-v1':'max_tokens','bedrock-converse-text-tools-v1':'max_tokens'}.get(m['codec_id'],'max_output_tokens')
+    require('codec_settings' not in m or m['codec_settings'][key] == m['context_limits']['maximum_completion_tokens'])
     return c
 
 

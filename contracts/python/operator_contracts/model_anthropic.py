@@ -2,7 +2,7 @@
 from .startup import require
 from .validation import ORDINARY_LIMIT, ContractError
 from .canonical import _canonical_value, _object_digest
-from .schema_ids import ENGINE_MODEL_GENERATE_RESULT_SCHEMA
+from .schema_ids import NATIVE_MODEL_RESULT_SCHEMA
 
 CODEC = 'anthropic-messages-text-tools-v1'
 POLICY_FIELDS=('max_tokens','thinking','response_models')
@@ -100,7 +100,7 @@ def disposition(response):
 
 
 def continuation(protocol,result_raw,results):
-    result=protocol._catalog.validate(ENGINE_MODEL_GENERATE_RESULT_SCHEMA,result_raw)
+    result=protocol._catalog.validate(NATIVE_MODEL_RESULT_SCHEMA,result_raw)
     require(result['codec_id']==CODEC)
     response=result['response']; check_response(response)
     require(disposition(response) in ('tool-calls','text','refusal'))

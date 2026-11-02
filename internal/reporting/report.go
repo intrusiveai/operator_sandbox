@@ -50,7 +50,13 @@ type Attempt struct {
 	Cleanup         string             `json:"cleanup_state"`
 	Feedback        *feedback.Manifest `json:"feedback,omitempty"`
 }
+type ModelContextUsage struct {
+	Event       int64                   `json:"event"`
+	OperationID string                  `json:"operation_id"`
+	Budget      contracts.ContextBudget `json:"context_budget"`
+}
 type Result struct {
+	ModelContexts         []ModelContextUsage             `json:"model_context_usage,omitempty"`
 	DatabaseEvidence      []DatabaseSummary               `json:"database_evidence,omitempty"`
 	RequestedObjectives   []RequestedObjective            `json:"requested_objectives"`
 	RequestedScenarios    []RequestedScenario             `json:"requested_scenarios"`
@@ -252,6 +258,13 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 			}
 		}
 		if event.Kind == "model.intent" || event.Kind == "model.exchange" || event.Kind == "model.usage" {
+			if budget := contracts.DecodeContextBudget(metadata["context_budget"]); budget != nil {
+				var op string
+				if json.Unmarshal(metadata["operation_id"], &op) == nil && safeContextOperation(op) {
+					keep["context_budget"], _ = json.Marshal(budget)
+					result.ModelContexts = append(result.ModelContexts, ModelContextUsage{event.Sequence, op, *budget})
+				}
+			}
 			for _, key := range []string{"reserved_tokens", "elapsed_ms"} {
 				var n int64
 				if json.Unmarshal(metadata[key], &n) == nil && n >= 0 && n <= contracts.MaxSafeInteger {
@@ -738,6 +751,13 @@ func markdown(r Result, digest string) []byte {
 	writeEvidenceSummary(&b, r)
 	fmt.Fprintf(&b, "| Recorded fact | Value |\n| --- | --- |\n| Journal intact | %t |\n| Verified events | %d |\n| Execution | %s |\n| Container cleanup | %s |\n| Target closure | %s |\n| Injection cleanup | %s |\n| Target stop | %s |\n| Attempts | %d |\n| Harness claim records | %d |\n", r.JournalIntact, r.VerifiedEvents, r.Execution, r.ContainerCleanup, r.TargetClosure, r.InjectionCleanup, r.TargetStop, len(r.Attempts), r.HarnessClaims)
 	b.WriteString("\nAttempt completion is not proof of exploitation. Delivery, target responses and scoped oracle observations remain source evidence. Harness conclusions are claims; missing oracle evidence is unknown. No model interpretation is performed.\n")
+	if len(r.ModelContexts) > 0 {
+		b.WriteString("\n## Model context usage\n\nCounts describe completed calls, not guaranteed headroom for the next request. Reservations are not consumption.\n\n| Event | Operation | Input | Output | Total | Remaining prompt | Warning | Reserved | Remaining campaign tokens / turns |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n")
+		for _, c := range r.ModelContexts {
+			u := c.Budget
+			fmt.Fprintf(&b, "| %d | `%s` | %d | %d | %d | %d | %t | %d | %d / %d |\n", c.Event, c.OperationID, u.InputTokens, u.OutputTokens, u.TotalTokens, u.RemainingPromptTokens, u.NearPromptLimit, u.ReservedTokens, u.RemainingModelTokens, u.RemainingModelTurns)
+		}
+	}
 	if len(r.ModelFailures) > 0 {
 		b.WriteString("\n## Model request failure\n\n")
 		for _, d := range r.ModelFailures {
@@ -775,4 +795,16 @@ func markdown(r Result, digest string) []byte {
 		}
 	}
 	return []byte(b.String())
+}
+
+func safeContextOperation(s string) bool {
+	if len(s) < 1 || len(s) > 128 {
+		return false
+	}
+	for _, r := range s {
+		if !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_' || r == '.' || r == ':') {
+			return false
+		}
+	}
+	return true
 }

@@ -32,6 +32,7 @@ type ModelConfig struct {
 	MaximumPromptTokens int64
 }
 type modelState struct {
+	limits        contracts.ContextLimits
 	policy        []byte
 	turns, tokens int64
 }
@@ -144,10 +145,11 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 	}
 	result := map[string]any{"codec_id": value["codec_id"], "profile_id": value["profile_id"], "profile_digest": value["profile_digest"], "receipt_id": "model-" + termination.NewRequestID(), "response": json.RawMessage(response)}
 	body := marshal(result)
+	var budget contracts.ContextBudget
 	var total int64
 	var toolCalls int64
 	if failureCode == "" {
-		if _, err = s.target().Protocol().ValidateModelExchange(s.model.policy, q.Body, body); err != nil {
+		if _, err = s.target().Protocol().ValidateNativeModelExchange(s.model.policy, q.Body, body); err != nil {
 			reason = "contract_invalid"
 			failureCode, effect = "INTERNAL_ERROR", "known"
 		} else if usage, usageErr := s.target().Protocol().ModelUsage(body); usageErr != nil {
@@ -162,6 +164,16 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 			failureCode, effect = "INTERNAL_ERROR", "known"
 		} else {
 			total, toolCalls = usage.TotalTokens, usage.ToolCalls
+			budget, err = contracts.NewContextBudget(s.model.limits, usage, completion, remaining["model_tokens"]-total, remaining["model_turns"]-1)
+			if err == nil {
+				result["context_budget"] = budget
+				body = marshal(result)
+				_, err = s.target().Protocol().ValidateModelExchange(s.model.policy, q.Body, body)
+			}
+			if err != nil {
+				reason = "contract_invalid"
+				failureCode, effect = "INTERNAL_ERROR", "known"
+			}
 		}
 	}
 	if reason != "" {
@@ -169,6 +181,9 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 		outcome = "invalid-response"
 	}
 	metadata := map[string]any{"operation_id": q.ID, "outcome": outcome, "elapsed_ms": time.Since(started).Milliseconds(), "reserved_tokens": reserve}
+	if failureCode == "" {
+		metadata["context_budget"] = budget
+	}
 	var primary error
 	if failureCode != "" {
 		if !observed.Valid() {

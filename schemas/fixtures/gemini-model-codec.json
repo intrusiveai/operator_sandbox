@@ -9145,6 +9145,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -9276,6 +9287,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": false
@@ -9311,7 +9333,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -9800,6 +9827,11 @@
             "fixture-gemini-001"
           ],
           "tools_digest": "sha256:ecf55e192c4a20875a203a4fa95305e5dc2bc9939e25aa3902df9574c6f407ce"
+        },
+        "context_limits": {
+          "maximum_prompt_tokens": 32768,
+          "maximum_completion_tokens": 2048,
+          "warning_threshold_tokens": 26214
         }
       },
       "operations": [

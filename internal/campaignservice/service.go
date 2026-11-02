@@ -429,6 +429,15 @@ func (s *Service) Admit(ctx context.Context, in campaign.LaunchInputs) error {
 			s.Stop(err)
 			return err
 		}
+		var context struct {
+			Model struct {
+				ContextLimits contracts.ContextLimits `json:"context_limits"`
+			} `json:"model"`
+		}
+		if json.Unmarshal(s.config.Prepared.Context(), &context) != nil || !context.Model.ContextLimits.Valid() || context.Model.ContextLimits.MaximumPromptTokens != s.config.Model.MaximumPromptTokens {
+			return ErrService
+		}
+		s.model.limits = context.Model.ContextLimits
 		s.model.policy = policy
 	}
 	if s.config.HTTPS == nil {
