@@ -136,3 +136,19 @@ func TestRegistryAndAckGuards(t *testing.T) {
 		})
 	}
 }
+
+func TestAttemptRequestRegistryTimeout(t *testing.T) {
+	p, err := LoadProtocol(schemas.Files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, op := range p.Operations() {
+		if op.Name == "engine.attempt_execute" {
+			if op.TimeoutMS != 120000 {
+				t.Fatal(op.TimeoutMS)
+			}
+			return
+		}
+	}
+	t.Fatal("missing attempt operation")
+}

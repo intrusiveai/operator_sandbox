@@ -43,7 +43,7 @@ attempt request_id from the envelope operation_id; call_id remains exchange corr
 The host clamps the requested timeout to the registry ceiling and remaining campaign
 time. An otherwise valid longer requested timeout is not a new authorization or an
 encoding error. Snapshot creation/restore have 300-second ceilings; other operations
-in this stage have 30-second ceilings. Every deadline is host-monotonic.
+use their registry ceilings; attempt execution requests allow 120 seconds. Every deadline is host-monotonic.
 
 Only admitted execution permits normal work. Finalization admits artifact operations
 for a large assessment draft, local diagnostic reports and finish. For part/commit, determine purpose from the host's saved upload

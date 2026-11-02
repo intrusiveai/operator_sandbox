@@ -1,6 +1,6 @@
 # Model context contract
 
-Shared package 0.4.0 requires matching host and Harness package identities through
+Shared package 0.5.0 requires matching host and Harness package identities through
 the existing embedded compatibility record. Earlier packages are incompatible.
 This contract does not add token counting services or change execution authority.
 

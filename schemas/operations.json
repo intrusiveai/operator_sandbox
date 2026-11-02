@@ -109,7 +109,7 @@
         "admitted"
       ],
       "finalization_rule": "denied",
-      "timeout_ms": 30000,
+      "timeout_ms": 120000,
       "max_request_bytes": 65536,
       "max_result_bytes": 4194304,
       "effect": "target-write",
