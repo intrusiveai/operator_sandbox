@@ -70,7 +70,7 @@ arming it with the saved binding remains part of launcher integration.
 | Spool ACK | 1 KiB, cumulative positions, no sequence slot or ACK-of-ACK |
 | Transfer / backpressure | Non-renewing 5-second deadline; partial progress and stale ACKs do not renew it |
 | Startup | Up to 60 seconds for confinement, then 60 seconds for initialization; bounded by campaign deadline |
-| Ordinary execution | Minimum of requested timeout, registry ceiling, campaign deadline and any supplied native deadline |
+| Ordinary execution | Minimum of requested timeout, frozen configured operation wait, campaign deadline and any supplied native deadline |
 | Spool polling / size check | Poll every 10 ms; logical-size scan initially and every second |
 | Spool quota | `Config.SpoolMaxBytes`, default 512 MiB; excess signals `SPOOL_SIZE_LIMIT` |
 

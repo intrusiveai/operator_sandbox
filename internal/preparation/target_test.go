@@ -3,6 +3,7 @@ package preparation_test
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 	"io/fs"
 	"os"
 	"sort"
@@ -97,6 +98,12 @@ func preparedLaunchConfigured(t *testing.T, target *preparation.Target, configur
 		sort.Strings(operations)
 		template["operations"] = operations
 	}
+	selectedOps := template["operations"].([]string)
+	timeouts, err := operationpolicy.Select(selectedOps, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	template["operation_timeouts_ms"] = timeouts
 	template["remaining_limits"].(map[string]any)["artifact_bytes"] = 4 << 20
 	template["limits"].(map[string]any)["campaign"].(map[string]any)["artifact_bytes"] = 4 << 20
 	for _, limits := range []map[string]any{template["remaining_limits"].(map[string]any), template["limits"].(map[string]any)["campaign"].(map[string]any)} {

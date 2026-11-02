@@ -6,29 +6,35 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"slices"
 )
 
 // WorkflowDiagnostic is a bounded selection of facts, not submitted diagnostic prose.
 // Harness reports are attributed as such; dispatch/cleanup remain host evidence.
 type WorkflowDiagnostic struct {
-	HostFinalized      bool   `json:"host_finalized,omitempty"`
-	Dispatched         int64  `json:"attempts_dispatched,omitempty"`
-	AssessmentAccepted bool   `json:"assessment_accepted,omitempty"`
-	CleanupCompleted   bool   `json:"cleanup_completed,omitempty"`
-	OperationID        string `json:"operation_id,omitempty"`
-	Source             string `json:"source"`
-	Stage              string `json:"stage"`
-	Reason             string `json:"reason"`
-	FieldPath          string `json:"field_path,omitempty"`
-	Tool               string `json:"tool,omitempty"`
-	CallID             string `json:"call_id,omitempty"`
-	Omitted            bool   `json:"unsafe_fields_omitted,omitempty"`
-	Stopping           string `json:"stopping_condition,omitempty"`
-	Observed           int64  `json:"observed_count,omitempty"`
-	Limit              int64  `json:"configured_limit,omitempty"`
+	Timeout            *AttemptTimeout `json:"timeout,omitempty"`
+	AttemptID          string          `json:"attempt_id,omitempty"`
+	Invocation         string          `json:"target_invocation,omitempty"`
+	ResultDelivery     string          `json:"result_delivery,omitempty"`
+	HostFinalized      bool            `json:"host_finalized,omitempty"`
+	Dispatched         int64           `json:"attempts_dispatched,omitempty"`
+	AssessmentAccepted bool            `json:"assessment_accepted,omitempty"`
+	CleanupCompleted   bool            `json:"cleanup_completed,omitempty"`
+	OperationID        string          `json:"operation_id,omitempty"`
+	Source             string          `json:"source"`
+	Stage              string          `json:"stage"`
+	Reason             string          `json:"reason"`
+	FieldPath          string          `json:"field_path,omitempty"`
+	Tool               string          `json:"tool,omitempty"`
+	CallID             string          `json:"call_id,omitempty"`
+	Omitted            bool            `json:"unsafe_fields_omitted,omitempty"`
+	Stopping           string          `json:"stopping_condition,omitempty"`
+	Observed           int64           `json:"observed_count,omitempty"`
+	Limit              int64           `json:"configured_limit,omitempty"`
 }
 
 var workflowReasons = map[string]string{
+	"attempt_timeout":             "Attempt execution exceeded its deadline; execution is closed without replay.",
 	"database_setup_denied":       "Use a permitted database service/table, exact key and writable placement. Creation requires explicit permission and matching payload keys. Execution did not occur; correct and resubmit with a new operation ID.",
 	"origin_required":             "Set origin to scenario with a submitted scenario_id, or exploratory without scenario_id. Execution did not occur; correct and resubmit with a new operation ID.",
 	"scenario_required":           "Scenario origin requires a scenario_id from the submitted bundle. Execution did not occur; correction is safe with a new operation ID.",
@@ -47,7 +53,8 @@ var workflowReasons = map[string]string{
 	"invalid_structure":           "Tool arguments do not match the required structure; check the indicated field.",
 	"duplicate_json_key":          "A JSON key occurs more than once. Supply each key once.",
 	"unsupported_tool":            "The requested tool is not advertised for this campaign.",
-	"direct_input_too_large":      "Direct input exceeds 32768 bytes. Publish an artifact and use its returned receipt.",
+	"direct_input_too_large":      "Direct input exceeds the wire safety ceiling. Publish an artifact and use its returned receipt.",
+	"configured_size_exceeded":    "The indicated field exceeds its host-configured size allowance in size_limits. Reduce it or use an artifact receipt for direct input. Execution did not occur; correction is safe.",
 	"input_depth_exceeded":        "Direct JSON input exceeds 16 nested containers. Reduce nesting or publish an artifact.",
 	"invalid_base64":              "Input is not canonical padded base64. Correct the encoding or use JSON/UTF-8 input.",
 	"invalid_artifact_receipt":    "Use direct input or a committed payload/carrier artifact receipt returned in this campaign.",
@@ -97,6 +104,14 @@ func NewWorkflowDiagnostic(operation, source, stage, reason, path, tool, call st
 	return d
 }
 func (d WorkflowDiagnostic) Valid() bool {
+	if d.Timeout != nil {
+		id, why := diagnosticID(d.AttemptID)
+		if !d.Timeout.Valid() || d.Reason != "attempt_timeout" || d.Source != "operator" || id != d.AttemptID || why != "" || !slices.Contains([]string{"not-dispatched", "succeeded", "failed", "unknown"}, d.Invocation) || !slices.Contains([]string{"unconfirmed", "published", "unavailable"}, d.ResultDelivery) {
+			return false
+		}
+	} else if d.AttemptID != "" || d.Invocation != "" || d.ResultDelivery != "" {
+		return false
+	}
 	v := NewWorkflowDiagnostic(d.OperationID, d.Source, d.Stage, d.Reason, d.FieldPath, d.Tool, d.CallID)
 	if v.OperationID != d.OperationID || v.Source != d.Source || v.Stage != d.Stage || v.Reason != d.Reason || v.FieldPath != d.FieldPath || v.Tool != d.Tool || v.CallID != d.CallID {
 		return false
@@ -110,6 +125,9 @@ func (d WorkflowDiagnostic) Valid() bool {
 }
 func (d WorkflowDiagnostic) Message() string {
 	text := workflowReasons[d.Reason]
+	if d.Timeout != nil {
+		text = d.Timeout.Message(d.Invocation)
+	}
 	if d.Stopping != "" {
 		text = fmt.Sprintf("Harness stopped: %s (observed %d; configured limit %d). %s", d.Stopping, d.Observed, d.Limit, text)
 	}

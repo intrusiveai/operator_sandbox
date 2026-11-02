@@ -12,6 +12,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/httpstarget"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"slices"
+	"time"
 )
 
 type httpsExecution struct {
@@ -101,7 +102,14 @@ func (p *Plan) runHTTPS(ctx context.Context, a *campaign.Attempts) (Result, erro
 		}
 		errors = append(errors, map[string]string{"code": code, "instance_path": "", "message": "The HTTPS operation did not produce complete permitted feedback."})
 	}
-	raw, err := json.Marshal(map[string]any{"api_version": "operator.dev/engine-attempt-result/v1alpha2", "kind": "EngineAttemptResult", "request_id": p.request.RequestID, "attempt_id": p.request.AttemptID, "receipt_id": receiptID, "status": out.Status, "stage": stage, "target_contact": out.Contact, "invocation_state": invocation, "cleanup_state": "not-needed", "retry_disposition": retry, "errors": errors, "feedback": json.RawMessage(receipt.ManifestJSON())})
+	body := map[string]any{"api_version": "operator.dev/engine-attempt-result/v1alpha2", "kind": "EngineAttemptResult", "request_id": p.request.RequestID, "attempt_id": p.request.AttemptID, "receipt_id": receiptID, "status": out.Status, "stage": stage, "target_contact": out.Contact, "invocation_state": invocation, "cleanup_state": "not-needed", "retry_disposition": retry, "errors": errors, "feedback": json.RawMessage(receipt.ManifestJSON())}
+	if ctx.Err() == context.DeadlineExceeded || ctx.Err() == nil && !time.Now().Before(p.deadline) {
+		timing := campaign.AttemptTimeout{NativeOperation: "https.invoke", AllowanceMS: p.allowanceMS, ElapsedMS: time.Since(p.started).Milliseconds(), DeadlineSource: p.deadlineSource, Observation: "not-started"}
+		if timing.Valid() {
+			body["timeout"] = timing
+		}
+	}
+	raw, err := json.Marshal(body)
 	if err == nil {
 		_, err = p.catalog.Validate(contracts.EngineAttemptResultSchema, raw, contracts.OrdinaryLimit)
 	}

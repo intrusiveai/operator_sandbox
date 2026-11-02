@@ -81,6 +81,10 @@ func printWorkerFailure(w io.Writer, code string, d *hostrun.PreparationDiagnost
 		}
 		if d.Workflow.Valid() {
 			fmt.Fprintln(w, "Operation:", d.Workflow.OperationID)
+			if d.Workflow.Timeout != nil {
+				fmt.Fprintln(w, "Attempt:", d.Workflow.AttemptID)
+				fmt.Fprintln(w, "Result delivery:", d.Workflow.ResultDelivery)
+			}
 			if d.Workflow.Tool != "" {
 				fmt.Fprintln(w, "Tool:", d.Workflow.Tool)
 			}

@@ -27,7 +27,7 @@ type ReadResult struct {
 // Original source bindings remain fixed across restore. No worker/revision access
 // gate exists, and this method performs no native reads or target effects.
 func (r *Receipt) Read(campaign, receipt, entry string, offset int64, maximum int, admitted bool, currentlyAllowed []string) ([]byte, error) {
-	if !admitted || campaign != r.source.CampaignID || receipt != r.id || offset < 0 || maximum < 1 || maximum > MaxChunk {
+	if !admitted || campaign != r.source.CampaignID || receipt != r.id || offset < 0 || maximum < 1 || maximum > 1<<20 {
 		return nil, ErrRead
 	}
 	for _, e := range r.entries {

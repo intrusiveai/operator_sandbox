@@ -502,7 +502,7 @@ connections still validate TLS.
 Use the accepted `operator.dev/engine-pipe/v1alpha1` envelope. Linux prefixes
 each strict UTF-8 JSON object with a four-byte unsigned big-endian length; macOS
 publishes one complete JSON object per file. Maximum ordinary JSON size is
-4 MiB encoded; control is 64 KiB. Artifact parts contain at most 256 KiB raw bytes, with encoded
+4 MiB encoded; control is 64 KiB. Artifact parts obey `size_limits.artifact_part_bytes`, with a 1 MiB decoded wire ceiling, with encoded
 overhead counted. Commands/results carry protocol version, consecutive per-direction
 sequence, request correlation, bounded operation payload and deadline. Durable
 operation identity is distinct from a transport request ID.
@@ -680,7 +680,7 @@ Use the current [attempt request](schemas/engine-attempt-request.schema.json),
 [feedback contract](schemas/FEEDBACK_CONTRACT.md), with strict validation and
 native selector semantics. These container request/result schemas use v1alpha2
 for this integration. Limits are
-256 KiB attempt arguments, 512 KiB local tool envelopes, 16 setup actions,
+4 MiB encoded ordinary/tool envelopes, configured direct-input and transfer byte allowances within wire safety ceilings, 16 setup actions,
 32 diagnostics, 64 observation references, 128-character ASCII IDs and maximum
 parser nesting 32, subject to narrower policy. A model-facing schema projection
 does not replace complete local and host validation.
@@ -712,7 +712,7 @@ are outside this collection boundary and may appear only in later assessment.
 
 `engine.observation_read` takes `receipt_id`, `entry_id`, byte `offset` and
 `max_bytes`; it returns bounded base64 bytes, actual length/range, EOF, stored
-artifact identity, availability and truncation. Maximum raw chunk is 256 KiB,
+artifact identity, availability and truncation. Raw chunks obey the configured `size_limits.observation_chunk_bytes` allowance (1 MiB wire ceiling),
 within the 4 MiB ordinary frame. Initial campaign ceilings are 1 GiB returned
 bytes and 8,192 reads, narrowed by policy and never reset on restore. Return
 explicit unavailable/range/budget errors; do not hide feedback loss or replay

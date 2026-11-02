@@ -25,7 +25,7 @@ func TestProfilePrivateFrozenAndClosed(t *testing.T) {
 	if p.Settings().Scopes.OperationIDs[0] != "invoke" || p.JSON()[0] != '{' {
 		t.Fatal("mutable policy")
 	}
-	for _, raw := range [][]byte{bytes.Replace(example, []byte(`"black-box"`), []byte(`"unknown"`), 1), bytes.Replace(example, []byte(`30000`), []byte(`30001`), 1), bytes.Replace(example, []byte(`"target_output"`), []byte(`"oracle_outcome"`), 1), bytes.Replace(example, []byte(`"id":"local"`), []byte(`"id":"local","id":"other"`), 1), bytes.Replace(example, []byte(`"id":"local"`), []byte(`"id":"local","shell":"exec"`), 1)} {
+	for _, raw := range [][]byte{bytes.Replace(example, []byte(`"black-box"`), []byte(`"unknown"`), 1), bytes.Replace(example, []byte(`30000`), []byte(`1800001`), 1), bytes.Replace(example, []byte(`"target_output"`), []byte(`"oracle_outcome"`), 1), bytes.Replace(example, []byte(`"id":"local"`), []byte(`"id":"local","id":"other"`), 1), bytes.Replace(example, []byte(`"id":"local"`), []byte(`"id":"local","shell":"exec"`), 1)} {
 		if _, err := Parse(raw); err == nil {
 			t.Fatal("invalid profile accepted")
 		}
@@ -35,5 +35,26 @@ func TestProfilePrivateFrozenAndClosed(t *testing.T) {
 	}
 	if _, err = Load(name); err == nil {
 		t.Fatal("public policy file accepted")
+	}
+}
+
+func TestCompleteAttemptAllowance(t *testing.T) {
+	for _, ms := range []string{"30001", "90000", "120000"} {
+		if _, err := Parse(bytes.Replace(example, []byte(`30000`), []byte(ms), 1)); err != nil {
+			t.Fatal(ms, err)
+		}
+	}
+}
+
+func TestInstallationTimeoutCeiling(t *testing.T) {
+	p, err := Parse(bytes.Replace(example, []byte(`30000`), []byte(`180000`), 1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.CheckTimeoutLimit(0) == nil || p.CheckTimeoutLimit(90000) == nil {
+		t.Fatal("global ceiling ignored")
+	}
+	if p.CheckTimeoutLimit(180000) != nil {
+		t.Fatal("configured increase rejected")
 	}
 }

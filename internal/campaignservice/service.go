@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 	"slices"
 	"sync"
 	"sync/atomic"
@@ -53,6 +54,8 @@ type Config struct {
 	CheckHost func() error // Installed host lifetime gate; called before admission and every ordinary request.
 }
 type Service struct {
+	sizes                contracts.SizeLimits
+	operationTimeouts    map[string]int64
 	resolvedAttempts     map[string]resolvedAttempt
 	modelDiagnostic      atomic.Pointer[modelprovider.Diagnostic]
 	conclusionDiagnostic atomic.Pointer[campaign.ConclusionDiagnostic]
@@ -181,14 +184,18 @@ func New(ctx context.Context, c Config) (*Service, error) {
 	if _, err = w.AppendReserving(campaign.Entry{RunRevision: m.InitialRevision, Kind: "service.terminal-reserved", Metadata: meta}, terminalReservation, terminalCapacity); err != nil {
 		return nil, err
 	}
-	s := &Service{config: c, writer: w, attempts: a, gate: make(chan struct{}, 1), operations: operations, deadline: deadline, killDone: make(chan struct{}), terminalDone: make(chan struct{})}
+	sizes, err := contracts.SizeLimitsFromContext(c.Prepared.Context())
+	if err != nil {
+		return nil, err
+	}
+	s := &Service{sizes: sizes, operationTimeouts: operationpolicy.FromContext(c.Prepared.Context()), config: c, writer: w, attempts: a, gate: make(chan struct{}, 1), operations: operations, deadline: deadline, killDone: make(chan struct{}), terminalDone: make(chan struct{})}
 	s.live.Store(c.Prepared.Target())
 	s.artifacts = newArtifactStore()
 	s.lineage = cloneLineage(nativeLineage{}, "")
 	s.history = map[string]attemptadapter.Parent{}
 	s.checkpointLineage = map[string]nativeLineage{}
 	s.gate <- struct{}{}
-	b, err := attemptadapter.NewBroker(attemptadapter.BrokerConfig{Catalog: c.Prepared.Target().Protocol().Catalog(), Protocol: c.Prepared.Target().Protocol(), Writer: w, Attempts: a, Deadline: deadline, Admitted: s.admitted.Load, Prepare: s.prepare, ResolveAttempt: s.resolveAttempt, Rejection: s.recordArgumentRejection, Cleanup: s.cleanupTarget, ReadKinds: func() []string { return s.target().ReadKinds() }})
+	b, err := attemptadapter.NewBroker(attemptadapter.BrokerConfig{Catalog: c.Prepared.Target().Protocol().Catalog(), Protocol: c.Prepared.Target().Protocol(), Writer: w, Attempts: a, Deadline: deadline, AttemptAllowanceMS: c.Prepared.Target().Profile().Settings().OperationTimeoutMS, OperationTimeouts: s.operationTimeouts, Admitted: s.admitted.Load, Prepare: s.prepare, ResolveAttempt: s.resolveAttempt, Rejection: s.recordArgumentRejection, TimeoutDiagnostic: s.recordAttemptTimeout, Cleanup: s.cleanupTarget, ReadKinds: func() []string { return s.target().ReadKinds() }})
 	if err != nil {
 		w.Fence().Stop(err)
 		return nil, err
@@ -369,10 +376,7 @@ func (s *Service) prepare(ctx context.Context, raw []byte, deadline time.Time) (
 	in.SessionRevision = view.Session.Revision
 	in.CreatedAt = time.Now()
 	in.Deadline = deadline
-	bound := in.CreatedAt.Add(time.Duration(s.target().Profile().Settings().OperationTimeoutMS) * time.Millisecond)
-	if bound.Before(in.Deadline) {
-		in.Deadline = bound
-	}
+	// The caller supplies the original whole-attempt deadline, including preparation.
 	if s.config.HTTPS != nil {
 		p, e := attemptadapter.CompileHTTPS(s.target().Protocol().Catalog(), raw, in, s.target().Profile().HTTPS(), s.config.HTTPS)
 		if e != nil {
@@ -464,6 +468,7 @@ func (s *Service) Admit(ctx context.Context, in campaign.LaunchInputs) error {
 // Handle retains the exact transport envelopes around broker work. Caller passes
 // the transport's original absolute operation deadline, never a refreshed timer.
 func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byte, error) {
+	started := time.Now()
 	ctx, cancel := context.WithDeadline(ctx, s.deadline)
 	defer cancel()
 
@@ -499,23 +504,34 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 	if !s.phaseAllows(request["operation"].(string), request["body"].(map[string]any)) {
 		return s.stateEnvelope(raw, sequence, stateDenied("STATE_CHANGED"))
 	}
-	if _, validationErr := s.target().Protocol().ValidateRequest(raw); validationErr != nil {
+	if validationErr := s.target().Protocol().ValidateRequestSizes(raw, s.sizes); validationErr != nil {
 		reply, rejectionErr := s.rejectArguments(raw, sequence, validationErr)
 		if rejectionErr != nil {
 			s.Stop(rejectionErr)
 		}
 		return reply, rejectionErr
 	}
-	ceiling := s.target().Profile().Settings().OperationTimeoutMS
-	if request["operation"] == "engine.snapshot_request" || request["operation"] == "engine.restore_request" {
-		ceiling = 300000
-	}
-	if request["operation"] == "engine.model_generate" {
-		ceiling = 120000
+	ceiling := s.operationTimeouts[request["operation"].(string)]
+	if request["operation"] == "engine.attempt_execute" {
+		ceiling = min(ceiling, s.target().Profile().Settings().OperationTimeoutMS)
 	}
 	milliseconds, _ := request["timeout_ms"].(json.Number).Float64()
-	ctx, operationCancel := context.WithTimeout(ctx, time.Duration(min(int64(milliseconds), ceiling))*time.Millisecond)
+	replyDeadline, _ := ctx.Deadline()
+	requestLimit := int64(milliseconds)
+	requestLimit = min(requestLimit, s.operationTimeouts[request["operation"].(string)])
+	if requested := started.Add(time.Duration(requestLimit) * time.Millisecond); requested.Before(replyDeadline) {
+		replyDeadline = requested
+	}
+	ctx, operationCancel := context.WithDeadline(ctx, started.Add(time.Duration(min(requestLimit, ceiling))*time.Millisecond))
 	defer operationCancel()
+	if request["operation"] == "engine.attempt_execute" {
+		s.writer.Fence().ArmTimeoutReply(ctx, replyDeadline)
+		defer func() {
+			if !s.writer.Fence().Reporting() {
+				s.writer.Fence().EndTimeoutReply()
+			}
+		}()
+	}
 	reservation := "wire-" + termination.NewRequestID()
 	deadline, _ := ctx.Deadline()
 	meta, _ := json.Marshal(map[string]any{"deadline": deadline.UTC().Format(time.RFC3339Nano)})
@@ -594,6 +610,9 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 					reason, source = "cleanup_failed", "cleanup"
 				}
 				d := campaign.NewWorkflowDiagnostic(request["operation_id"].(string), source, reply.Result.Stage, reason, "", "attempt_execute", request["call_id"].(string))
+				if known := s.WorkflowFailure(); known != nil && known.Timeout != nil && known.OperationID == d.OperationID {
+					return result, nil
+				}
 				s.workflowDiagnostic.Store(&d)
 				if _, e := s.writer.AppendStored(campaign.Entry{RunRevision: s.attempts.Status().RunRevision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d})}, "", false); e != nil {
 					s.Stop(errors.Join(d, e))
@@ -614,6 +633,12 @@ func (s *Service) ServeOrdinary(ctx context.Context, channel *transport.Session)
 	}
 	ticker := time.NewTicker(transport.SpoolPoll)
 	defer ticker.Stop()
+	defer func() {
+		if d := s.WorkflowFailure(); d != nil && d.Timeout != nil && d.ResultDelivery == "unconfirmed" {
+			_ = s.recordTimeoutDelivery("unavailable")
+		}
+		s.writer.Fence().EndTimeoutReply()
+	}()
 	sequence := int64(0)
 	for {
 		select {
@@ -656,6 +681,33 @@ func (s *Service) ServeOrdinary(ctx context.Context, channel *transport.Session)
 					return s.writer.Fence().Err()
 				case <-ticker.C:
 				}
+			}
+			if d := s.WorkflowFailure(); d != nil && d.Timeout != nil {
+				// Published means complete FIFO write/atomic file publication, not consumption.
+				for !channel.Published("ordinary-in", sequence) && s.writer.Fence().Reporting() {
+					select {
+					case <-ctx.Done():
+						s.Stop(ctx.Err())
+					case <-s.writer.Fence().Done():
+					case <-ticker.C:
+					}
+				}
+				delivery := "unavailable"
+				if channel.Published("ordinary-in", sequence) {
+					delivery = "published"
+				}
+				saveErr := s.recordTimeoutDelivery(delivery)
+				// Allow the peer to capture the published reply before owned kill.
+				// This uses the original non-renewing two-second grace timer.
+				if saveErr == nil && delivery == "published" {
+					select {
+					case <-ctx.Done():
+						s.Stop(ctx.Err())
+					case <-s.writer.Fence().Done():
+					}
+				}
+				s.writer.Fence().EndTimeoutReply()
+				return errors.Join(*d, saveErr)
 			}
 			sequence++
 		}

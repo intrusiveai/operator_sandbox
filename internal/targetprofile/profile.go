@@ -21,6 +21,9 @@ import (
 const Version = "operator.dev/target-profile/v1alpha1"
 const Limit = 64 << 10
 
+// MaximumOperationTimeoutMS bounds the complete attempt, never each native step.
+const MaximumOperationTimeoutMS int64 = hostconfig.MaximumOperationTimeoutMS
+
 var ErrProfile = errors.New("invalid administrator target profile")
 var identifier = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$`)
 
@@ -48,7 +51,7 @@ type Profile struct {
 
 func Parse(raw []byte) (*Profile, error) {
 	var s Settings
-	if interceptor.DecodeTypedBody(raw, &s, Limit) != nil || s.APIVersion != Version || !identifier.MatchString(s.ID) || !identifier.MatchString(s.TargetID) || !slices.Contains([]string{"interceptor/v1", httpstarget.Adapter}, s.Adapter) || s.OperationTimeoutMS < 1 || s.OperationTimeoutMS > 30000 || s.Feedback.MaxAttemptBytes < 0 || s.Feedback.MaxAttemptBytes > 1<<30 || len(s.Scopes.OperationIDs) == 0 || len(s.Scopes.OperationIDs) > 64 || len(s.Scopes.Routes) > 64 || len(s.Scopes.CallerPrincipalIDs) > 64 {
+	if interceptor.DecodeTypedBody(raw, &s, Limit) != nil || s.APIVersion != Version || !identifier.MatchString(s.ID) || !identifier.MatchString(s.TargetID) || !slices.Contains([]string{"interceptor/v1", httpstarget.Adapter}, s.Adapter) || s.OperationTimeoutMS < 1 || s.OperationTimeoutMS > MaximumOperationTimeoutMS || s.Feedback.MaxAttemptBytes < 0 || s.Feedback.MaxAttemptBytes > 1<<30 || len(s.Scopes.OperationIDs) == 0 || len(s.Scopes.OperationIDs) > 64 || len(s.Scopes.Routes) > 64 || len(s.Scopes.CallerPrincipalIDs) > 64 {
 		return nil, ErrProfile
 	}
 	if !slices.Contains([]string{"black-box", "diagnostic", "oracle-assisted"}, s.Feedback.Ceiling) || s.Feedback.Kinds == nil || len(s.Feedback.Kinds) > 4 {
@@ -137,4 +140,25 @@ func (p *Profile) RetainedJSON() []byte {
 	out["private_profile_digest"] = p.Digest()
 	raw, _ = json.Marshal(out)
 	return raw
+}
+
+// LoadWithLimit applies installation policy as well as the profile's numeric bounds.
+func LoadWithLimit(name string, maximumMS int64) (*Profile, error) {
+	p, err := Load(name)
+	if err != nil {
+		return nil, err
+	}
+	if err = p.CheckTimeoutLimit(maximumMS); err != nil {
+		return nil, err
+	}
+	return p, nil
+}
+func (p *Profile) CheckTimeoutLimit(maximumMS int64) error {
+	if maximumMS == 0 {
+		maximumMS = hostconfig.DefaultOperationTimeoutMS
+	}
+	if p == nil || maximumMS < 1 || maximumMS > MaximumOperationTimeoutMS || p.settings.OperationTimeoutMS > maximumMS {
+		return errors.New("target operation_timeout_ms exceeds the installation target.max_operation_timeout_ms ceiling")
+	}
+	return nil
 }

@@ -83,7 +83,7 @@ func (r *Retained) Entries() []Entry {
 // optional content yields explicit unavailability; malformed receipt metadata
 // is rejected by OpenRecord. Policy checks precede all content access.
 func (r *Retained) Read(campaign, receipt, entry string, offset int64, maximum int, admitted bool, allowed []string, load func(string, Artifact) ([]byte, error)) ([]byte, error) {
-	if !admitted || campaign != r.record.Source.CampaignID || receipt != r.record.ReceiptID || offset < 0 || maximum < 1 || maximum > MaxChunk {
+	if !admitted || campaign != r.record.Source.CampaignID || receipt != r.record.ReceiptID || offset < 0 || maximum < 1 || maximum > 1<<20 {
 		return nil, ErrRead
 	}
 	for _, e := range r.manifest.Entries {

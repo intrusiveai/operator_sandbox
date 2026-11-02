@@ -383,3 +383,25 @@ func TestHarnessExitCompletionRetainsCauseAndIgnoresRecoveredRejection(t *testin
 		t.Fatal("exit diagnostic not persisted", disk, e)
 	}
 }
+
+func TestAttemptTimeoutCompletionPreservesPrimaryCause(t *testing.T) {
+	saved, inputs := jobFixture(t)
+	r := saved.Request
+	d := campaign.NewWorkflowDiagnostic("request-1", "operator", "observation", "attempt_timeout", "", "attempt_execute", "call-1")
+	d.AttemptID = "attempt-1"
+	d.Invocation = "succeeded"
+	d.ResultDelivery = "published"
+	d.Timeout = &campaign.AttemptTimeout{NativeOperation: "observation.content.read", AllowanceMS: 90000, ElapsedMS: 90001, DeadlineSource: "attempt", Observation: "incomplete"}
+	inputs.run.workflowDiagnostic = &d
+	inputs.run.harnessExit = &campaign.HarnessExit{Outcome: "failed", ExitObserved: true, ExitCode: 137, Forced: true, Cause: "secondary Harness shutdown", StderrState: "empty", CleanupComplete: true, Details: "campaign journal event launch.exit"}
+	inputs.run.runError = d
+	load := func(context.Context, startrequest.Request) (verifiedInputs, error) { return inputs, nil }
+	result, err := run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", load)
+	if err == nil || result.Diagnostic == nil || result.Diagnostic.Message != d.Message() || result.Diagnostic.HarnessExit.ExitCode != 137 {
+		t.Fatal(result, err)
+	}
+	disk, err := startrequest.Read(r.StateRoot, r.Selection.StartRequestID)
+	if err != nil || disk.Completion == nil || disk.Completion.Diagnostic == nil || disk.Completion.Diagnostic.Workflow.Timeout == nil || *disk.Completion.Diagnostic.Workflow.Timeout != *d.Timeout || disk.Completion.Diagnostic.Workflow.Invocation != "succeeded" {
+		t.Fatal(disk, err)
+	}
+}

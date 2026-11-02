@@ -597,3 +597,31 @@ func TestHarnessExitFailureForegroundAndWorkerOutput(t *testing.T) {
 	}
 	t.Log(stderr)
 }
+
+func TestAttemptTimeoutForegroundAndWorkerOutput(t *testing.T) {
+	dir, paths, deps, _ := startFixture(t)
+	detail := campaign.NewWorkflowDiagnostic("request-1", "operator", "observation", "attempt_timeout", "", "attempt_execute", "call-1")
+	detail.AttemptID = "attempt-1"
+	detail.Invocation = "succeeded"
+	detail.ResultDelivery = "published"
+	detail.Timeout = &campaign.AttemptTimeout{NativeOperation: "observation.content.read", AllowanceMS: 30000, ElapsedMS: 30005, DeadlineSource: "attempt", Observation: "incomplete"}
+	d := &hostrun.PreparationDiagnostic{Stage: "Operator observation", Message: detail.Message(), Workflow: detail}
+	deps.run = func(context.Context, string, string, string) (workerjob.Result, error) {
+		return workerjob.Result{Code: "execution_failed", Diagnostic: d, CompletionRecording: "recorded"}, detail
+	}
+	code, _, stderr := invokeStart(t, context.Background(), "start", []string{"--run", dir}, paths, deps)
+	if code != 1 {
+		t.Fatal(code, stderr)
+	}
+	for _, want := range []string{"Campaign execution failed", "Attempt timed out during observation collection", "observation.content.read", "Target invocation: succeeded", "Observation collection: incomplete", "30000 ms", "30005 ms", "Operation: request-1", "Attempt: attempt-1", "Result delivery: published", "Execution will not resume."} {
+		if !strings.Contains(stderr, want) {
+			t.Fatalf("missing %q: %s", want, stderr)
+		}
+	}
+	var supervised bytes.Buffer
+	printWorkerFailure(&supervised, "execution_failed", d, "recorded")
+	if supervised.String() != stderr {
+		t.Fatal("foreground/supervised mismatch")
+	}
+	t.Log(stderr)
+}

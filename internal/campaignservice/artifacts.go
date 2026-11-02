@@ -91,6 +91,13 @@ func (s *Service) artifactOperation(q stateRequest, raw []byte) (stateReply, err
 		if json.Unmarshal(q.Body, &declaration) != nil {
 			return stateReply{}, ErrService
 		}
+		limit := s.sizes.Artifact
+		if declaration.Purpose == "conclusion" {
+			limit = min(limit, s.sizes.Assessment)
+		}
+		if declaration.Artifact.SizeBytes > limit {
+			return stateDenied("LIMIT_EXCEEDED"), nil
+		}
 		remaining := s.remaining()
 		availableBytes, availableObjects := remaining["artifact_bytes"], remaining["artifact_objects"]
 		if declaration.Purpose != "conclusion" && !s.artifacts.conclusionAllocated {
@@ -102,7 +109,7 @@ func (s *Service) artifactOperation(q stateRequest, raw []byte) (stateReply, err
 			}
 			_ = json.Unmarshal(s.writer.Manifest().RemainingLimits, &limits)
 			if limits.Objects > initialObjects {
-				availableBytes -= min(int64(1<<20), limits.Bytes-initialBytes)
+				availableBytes -= min(s.sizes.Assessment, limits.Bytes-initialBytes)
 				availableObjects--
 			}
 		}

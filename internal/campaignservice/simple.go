@@ -25,7 +25,7 @@ func (s *Service) resolveAttempt(ctx context.Context, id string, raw []byte) ([]
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	canonical, err := contracts.Canonicalize(raw, contracts.ControlLimit)
+	canonical, err := contracts.Canonicalize(raw, contracts.OrdinaryLimit)
 	if err != nil {
 		return nil, err
 	}

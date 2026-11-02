@@ -161,7 +161,7 @@ func LoadInputs(ctx context.Context, configPath string, defaults hostconfig.Path
 		profileFile = target.ProfileFile
 	}
 	stage = "target profile loading"
-	profile, err := targetprofile.Load(profileFile)
+	profile, err := targetprofile.LoadWithLimit(profileFile, c.Target.MaxOperationTimeoutMS)
 	if err != nil {
 		return nil, err
 	}
@@ -361,7 +361,9 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 	var https *httpstarget.Client
 	if profile.HTTPS() != nil {
 		stage = "HTTPS target initialization"
-		https, err = httpstarget.New(profile.HTTPS(), audited, time.Duration(profile.Settings().OperationTimeoutMS)*time.Millisecond)
+		allowance := profile.Settings().OperationTimeoutMS
+		allowance = min(allowance, c.OperationTimeouts["engine.attempt_execute"])
+		https, err = httpstarget.New(profile.HTTPS(), audited, time.Duration(allowance)*time.Millisecond)
 		if err != nil {
 			return nil, err
 		}
@@ -382,7 +384,7 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 	}
 	stage = "campaign launch preparation"
 	session, err := Prepare(ctx, Config{StateRoot: c.State.Root, Target: target,
-		Launch:       preparation.LaunchConfig{LaunchID: selected.LaunchID, ContainerID: selected.ContainerID, CreatedAt: time.Now().UTC().Truncate(time.Second), Image: image, Embedded: embedded, Model: model, Skills: selectedSkills, Limits: c.Limits, Retention: campaign.Retention{Mode: "manual-purge", MaxJournalBytes: c.Journal.MaxBytes, MaxSegmentBytes: c.Journal.SegmentBytes}, PromptMode: selected.PromptMode, Replacement: replacement, Appends: appends},
+		Launch:       preparation.LaunchConfig{Sizes: c.Sizes, OperationTimeouts: c.OperationTimeouts, LaunchID: selected.LaunchID, ContainerID: selected.ContainerID, CreatedAt: time.Now().UTC().Truncate(time.Second), Image: image, Embedded: embedded, Model: model, Skills: selectedSkills, Limits: c.Limits, Retention: campaign.Retention{Mode: "manual-purge", MaxJournalBytes: c.Journal.MaxBytes, MaxSegmentBytes: c.Journal.SegmentBytes}, PromptMode: selected.PromptMode, Replacement: replacement, Appends: appends},
 		Requirements: requirements, Peer: native, HTTPS: https, Docker: docker, Provider: provider, MinimumFreeBytes: c.Journal.MinimumFreeBytes, SpoolMaxBytes: c.Spool.MaxBytes, EvidenceMaxBytes: c.Evidence.MaxArchiveBytes, StartRequestID: selected.StartRequestID, Gate: gate, Recovery: recovered})
 	if err != nil {
 		return nil, err

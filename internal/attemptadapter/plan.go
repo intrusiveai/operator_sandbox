@@ -83,6 +83,9 @@ type command struct {
 // Plan is pure, immutable translation. Its commands contain exact verified bytes
 // and declared selectors. Rationale/technique prose never selects a native tactic.
 type Plan struct {
+	started                        time.Time
+	allowanceMS                    int64
+	deadlineSource                 string
 	https                          *httpsExecution
 	catalog                        *contracts.Catalog
 	request                        request
@@ -109,7 +112,7 @@ func Compile(catalog *contracts.Catalog, raw []byte, in Inputs) (*Plan, error) {
 	return compile(catalog, raw, in, nil)
 }
 func compile(catalog *contracts.Catalog, raw []byte, in Inputs, external *httpsExecution) (*Plan, error) {
-	if catalog == nil || in.Live == nil || in.Compatibility == nil || in.Policy == nil || in.SessionRevision == 0 || in.CreatedAt.IsZero() || !in.Deadline.After(in.CreatedAt) || in.Deadline.Sub(in.CreatedAt) > interceptor.MaxOperationTimeout || !digestID.MatchString(in.ReleaseDigest) || in.FeedbackBytes < 0 || in.FeedbackBytes > 64*feedback.MaxArtifact {
+	if catalog == nil || in.Live == nil || in.Compatibility == nil || in.Policy == nil || in.SessionRevision == 0 || in.CreatedAt.IsZero() || !in.Deadline.After(in.CreatedAt) || in.Deadline.Sub(in.CreatedAt) > 30*time.Minute || !digestID.MatchString(in.ReleaseDigest) || in.FeedbackBytes < 0 || in.FeedbackBytes > 64*feedback.MaxArtifact {
 		return nil, ErrAttempt
 	}
 	if _, err := catalog.Validate(contracts.AttemptPlanSchema, raw, contracts.OrdinaryLimit); err != nil {

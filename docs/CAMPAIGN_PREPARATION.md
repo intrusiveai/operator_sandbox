@@ -28,7 +28,7 @@ The initial profile is closed JSON:
     "allowed_kinds": ["target_output"],
     "max_attempt_bytes": 1048576
   },
-  "operation_timeout_ms": 30000
+  "operation_timeout_ms": 90000
 }
 ```
 
@@ -142,3 +142,20 @@ stopped or permit execution recovery. Startup MUST reconcile persisted Docker
 bindings and unresolved launch outcomes before accepting another campaign.
 Administrative termination, status and evidence inspection MUST remain usable
 without acquiring the execution lease.
+
+### Attempt timeouts
+
+`operation_timeout_ms` accepts positive milliseconds up to the global
+`target.max_operation_timeout_ms` ceiling (default 120,000; configurable up to
+1,800,000, the maximum supported campaign lifetime) and bounds the complete attempt,
+including setup, target execution and observation collection. For multi-step
+agents, use 90,000 ms with a separately configured 60-second Interceptor target
+turn. Harness uses the startup-supplied `operation_timeouts_ms` wait (120,000 ms by default for attempts). Shorter requests and remaining
+campaign time always take precedence; individual native calls do not reset the
+attempt budget.
+
+If the target succeeds but observation collection times out, inspection and the
+report identify the timed-out operation and keep the successful invocation fact.
+The campaign still fails because the required evidence is incomplete. No target
+retry occurs. A result marked `published` was written to the transport; it does
+not prove Harness consumption or completed cleanup.

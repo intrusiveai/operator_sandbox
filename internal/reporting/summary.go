@@ -148,6 +148,14 @@ func valueOrUnknown(s string) string {
 
 func writeEvidenceSummary(b *strings.Builder, r Result) {
 	b.WriteString("## Summary\n\n")
+	for i := len(r.WorkflowDiagnostics) - 1; i >= 0; i-- {
+		d := r.WorkflowDiagnostics[i]
+		if d.Timeout != nil {
+			dataBlock(b, d.Message())
+			fmt.Fprintf(b, "Request: %s; attempt: %s; result delivery: %s. See retained workflow diagnostics in [execution-bundle.json](execution-bundle.json).\n\n", d.OperationID, d.AttemptID, d.ResultDelivery)
+			break
+		}
+	}
 	if h := r.HarnessExit; h != nil {
 		if h.Outcome == "succeeded" && h.FinishAccepted && h.ExitObserved && h.ExitCode == 0 && !h.Forced && h.CleanupComplete && r.JournalIntact {
 			fmt.Fprintf(b, "Execution completed successfully. Operator accepted engine.finish, Harness exited with code 0, and cleanup completed (%s).\n\n", eventLink(r.ExitEvent))

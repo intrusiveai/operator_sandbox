@@ -400,7 +400,7 @@ func (d *spool) scanSize(s *Session, now time.Time) error {
 		}
 		defer f.Close()
 		for {
-			if err := s.config.Fence.Err(); err != nil {
+			if err := s.config.Fence.Err(); err != nil && !s.config.Fence.Reporting() {
 				return err
 			}
 			if !s.now().Before(deadline) {
