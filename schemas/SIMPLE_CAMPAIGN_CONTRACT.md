@@ -34,7 +34,7 @@ Input MUST be exactly one of:
 - `{"artifact_receipt":"..."}`: an already committed payload or carrier artifact
   in this campaign. The host resolves its descriptor and verifies bytes and purpose.
 
-Direct decoded input MUST be at most **32,768 bytes**, with JSON nesting at most
+Direct decoded input MUST fit EngineContext `size_limits.direct_input_bytes` (safety ceiling 1 MiB), with JSON nesting at most
 **16 containers** (scalar depth zero), and obey the smaller target input limit.
 The entire request MUST fit the registry limit. Larger inputs use artifact
 publication. Unknown fields, duplicate keys, noncanonical base64 and invalid

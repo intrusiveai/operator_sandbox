@@ -176,7 +176,7 @@ func TestModelCodecBoundsAndRegistry(t *testing.T) {
 		t.Fatal(err)
 	}
 	op, ok := p.operations["engine.model_generate"]
-	if !ok || op.TimeoutMS != 120000 || op.Effect != "model-call" || op.FinalizationRule != "denied" || op.ReceiptPolicy != "durable" {
+	if !ok || op.Effect != "model-call" || op.FinalizationRule != "denied" || op.ReceiptPolicy != "durable" {
 		t.Fatal("incorrect model admission metadata")
 	}
 	cases := modelFixtures(t)

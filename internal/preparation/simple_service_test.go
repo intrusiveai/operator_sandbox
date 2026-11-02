@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -235,6 +236,49 @@ func TestExplicitOriginRejectCorrectAndDoNotReplay(t *testing.T) {
 			if n != 1 {
 				t.Fatalf("dispatch count %d", n)
 			}
+		})
+	}
+}
+
+func TestConfiguredInputSizeAdmission(t *testing.T) {
+	for _, allowance := range []int64{32, 65536} {
+		t.Run(fmt.Sprint(allowance), func(t *testing.T) {
+			s, p, _, _, launch := serviceWithTemplate(t, 0, []string{"engine.attempt_execute"}, nil, func(v map[string]any) {
+				v["size_limits"].(map[string]any)["direct_input_bytes"] = allowance
+			})
+			if err := s.Admit(context.Background(), launch); err != nil {
+				t.Fatal(err)
+			}
+			body := map[string]any{"origin": "exploratory", "operation_id": "invoke", "input": map[string]any{"encoding": "json", "value": map[string]any{"query": strings.Repeat("x", 40000)}}}
+			raw, err := s.Handle(context.Background(), stateWire("engine.attempt_execute", "input-policy", 1, body), 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if allowance == 32 {
+				if !strings.Contains(string(raw), "configured_size_exceeded") || !strings.Contains(string(raw), "/input") {
+					t.Fatal(string(raw))
+				}
+				for _, op := range p.calls {
+					if op == "application.invoke" {
+						t.Fatal("size rejection dispatched")
+					}
+				}
+				body["input"].(map[string]any)["value"] = map[string]any{"query": "ok"}
+				raw, err = s.Handle(context.Background(), stateWire("engine.attempt_execute", "corrected-input-policy", 1, body), 1)
+			}
+			if err != nil || !strings.Contains(string(raw), `"invocation_state":"succeeded"`) {
+				t.Fatal(string(raw), err)
+			}
+			n := 0
+			for _, op := range p.calls {
+				if op == "application.invoke" {
+					n++
+				}
+			}
+			if n != 1 {
+				t.Fatal("duplicate invocation", n)
+			}
+			s.Shutdown(context.Background())
 		})
 	}
 }

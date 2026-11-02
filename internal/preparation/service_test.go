@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,6 +24,8 @@ import (
 )
 
 type peer struct {
+	delayOperation      string
+	delay               time.Duration
 	feedbackView        interceptor.ObservationView
 	statusSample        *delayedStatus
 	mu                  sync.Mutex
@@ -76,7 +79,16 @@ func (p *peer) Status(ctx context.Context, _ string) (interceptor.Status, error)
 	}
 	return status, nil
 }
-func (p *peer) Execute(_ context.Context, q interceptor.PreparedOperation) (interceptor.Response, error) {
+func (p *peer) Execute(ctx context.Context, q interceptor.PreparedOperation) (interceptor.Response, error) {
+	if q.Request().Operation == p.delayOperation {
+		timer := time.NewTimer(p.delay)
+		defer timer.Stop()
+		select {
+		case <-timer.C:
+		case <-ctx.Done():
+			return interceptor.Response{}, &interceptor.CallError{Kind: "timeout", Uncertain: true}
+		}
+	}
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	r := q.Request()
@@ -485,7 +497,7 @@ func serviceSpool(t *testing.T, s *campaignservice.Service, p *peer, w *campaign
 	t.Helper()
 	dir := t.TempDir()
 	_ = os.Chmod(dir, 0700)
-	channel, err := transport.NewSpool(dir, transport.Config{Protocol: p.input.Protocol, CampaignID: "campaign-1", LaunchID: "launch-1", Fence: w.Fence(), CampaignDeadline: time.Now().Add(time.Minute)})
+	channel, err := transport.NewSpool(dir, transport.Config{OperationTimeouts: operationpolicy.FromContext(launch.EngineContext), Protocol: p.input.Protocol, CampaignID: "campaign-1", LaunchID: "launch-1", Fence: w.Fence(), CampaignDeadline: time.Now().Add(time.Minute)})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -177,7 +177,7 @@ func (t *Tools) ReserveRead(id string, maximum int64) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	r, ok := a.tools[id]
-	if !ok || r.Operation != "engine.observation_read" || r.Result != nil || r.ReadCharged || maximum < 1 || maximum > 262144 {
+	if !ok || r.Operation != "engine.observation_read" || r.Result != nil || r.ReadCharged || maximum < 1 || maximum > 1<<20 {
 		return ErrInvalid
 	}
 	if err := a.ready(); err != nil {

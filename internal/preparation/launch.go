@@ -5,6 +5,7 @@ package preparation
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 	"sort"
 	"strings"
 	"sync/atomic"
@@ -19,6 +20,8 @@ import (
 )
 
 type LaunchConfig struct {
+	Sizes                 contracts.SizeLimits
+	OperationTimeouts     map[string]int64
 	LaunchID, ContainerID string // Fresh host-generated identities; never bundle-selected.
 	CreatedAt             time.Time
 	Image                 imagerelease.Prepared
@@ -125,7 +128,16 @@ func (t *Target) BuildLaunch(c LaunchConfig) (*Launch, error) {
 	}
 	modelObject["tool_selection"] = map[string]any{"injection_surfaces": surfaces}
 	model, _ = json.Marshal(modelObject)
+	sizes, err := operationpolicy.SizesForLaunch(c.Sizes)
+	if err != nil {
+		return nil, err
+	}
+	timeouts, err := operationpolicy.Select(operations, c.OperationTimeouts)
+	if err != nil {
+		return nil, err
+	}
 	template, err := canonicalJSON(map[string]any{
+		"operation_timeouts_ms": timeouts, "size_limits": sizes,
 		"api_version": "operator.dev/engine-context/v1alpha1", "campaign_id": t.live.CampaignID(), "launch_id": c.LaunchID, "attempt_index_high_watermark": 0,
 		"release":         map[string]any{"image_digest": c.Image.Image.ImageID, "release_record_digest": c.Image.Release.Digest()},
 		"scenario_bundle": inputDescriptor("bundle", "scenario-bundle.json", "scenario-bundle", "application/json", contracts.ScenarioBundleSchema, t.BundleJSON()),

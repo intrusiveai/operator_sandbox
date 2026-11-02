@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -151,7 +152,7 @@ func Prepare(ctx context.Context, c Config) (session *Session, err error) {
 			return nil, err
 		}
 	}
-	transportConfig := transport.Config{Protocol: c.Target.Protocol(), CampaignID: launch.Manifest.CampaignID, LaunchID: launch.Manifest.LaunchID, Fence: s.writer.Fence(), CampaignDeadline: deadline, SpoolMaxBytes: c.SpoolMaxBytes}
+	transportConfig := transport.Config{OperationTimeouts: operationpolicy.FromContext(launch.Inputs.EngineContext), Protocol: c.Target.Protocol(), CampaignID: launch.Manifest.CampaignID, LaunchID: launch.Manifest.LaunchID, Fence: s.writer.Fence(), CampaignDeadline: deadline, SpoolMaxBytes: c.SpoolMaxBytes}
 	path := filepath.Join(campaignDir, "runtime/transport")
 	if launch.Manifest.Transport == "fifo" {
 		s.channel, err = transport.NewFIFO(path, transportConfig)

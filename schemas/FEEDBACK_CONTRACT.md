@@ -180,7 +180,7 @@ with EOF; offset beyond it is a range error. Unavailability returns no bytes and
 EOF false. Only a valid response from the still-live host can describe optional
 unavailability; transport loss/protocol corruption retains terminal semantics.
 
-Bound ordinary frames to 4 MiB and raw chunks to 256 KiB. Initial campaign read
+Bound ordinary frames to 4 MiB. Raw chunks MUST obey the configured `size_limits.observation_chunk_bytes` allowance (wire safety ceiling 1 MiB). Initial campaign read
 ceilings are 1 GiB of returned raw bytes and 8,192 read requests, narrowed by policy
 and disclosed in EngineContext/remaining limits. Charge repeated reads as reads,
 never as new target attempts; do not reset counters on target restore. Limits

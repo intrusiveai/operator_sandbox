@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 	"slices"
 	"sync"
 	"time"
@@ -20,17 +21,20 @@ import (
 // Cleanup must check current native capability/policy before supplying its target.
 // These callbacks never come from a guest or a submitted scenario bundle.
 type BrokerConfig struct {
-	Catalog        *contracts.Catalog
-	Protocol       *contracts.Protocol
-	Writer         *campaign.Writer
-	Attempts       *campaign.Attempts
-	Deadline       time.Time
-	Admitted       func() bool
-	ResolveAttempt func(context.Context, string, []byte) ([]byte, error)
-	Rejection      func(string, error) (json.RawMessage, string, string, error)
-	Prepare        func(context.Context, []byte, time.Time) (*Plan, *nativeexec.Guard, error)
-	Cleanup        func(context.Context, time.Time) (CleanupTarget, error)
-	ReadKinds      func() []string
+	OperationTimeouts  map[string]int64
+	TimeoutDiagnostic  func(string, string, []byte) error
+	Catalog            *contracts.Catalog
+	Protocol           *contracts.Protocol
+	Writer             *campaign.Writer
+	Attempts           *campaign.Attempts
+	Deadline           time.Time
+	AttemptAllowanceMS int64
+	Admitted           func() bool
+	ResolveAttempt     func(context.Context, string, []byte) ([]byte, error)
+	Rejection          func(string, error) (json.RawMessage, string, string, error)
+	Prepare            func(context.Context, []byte, time.Time) (*Plan, *nativeexec.Guard, error)
+	Cleanup            func(context.Context, time.Time) (CleanupTarget, error)
+	ReadKinds          func() []string
 }
 type CleanupTarget struct {
 	Guard           *nativeexec.Guard
@@ -46,6 +50,7 @@ type Broker struct {
 var ErrOperation = errors.New("operation belongs to another host broker route")
 
 type wireRequest struct {
+	CallID    string          `json:"call_id"`
 	Campaign  string          `json:"campaign_id"`
 	Launch    string          `json:"launch_id"`
 	Revision  int64           `json:"run_revision"`
@@ -77,6 +82,11 @@ func NewBroker(c BrokerConfig) (*Broker, error) {
 	if c.Catalog == nil || c.Protocol == nil || c.Writer == nil || c.Attempts == nil || !c.Attempts.BelongsTo(c.Writer) || c.Admitted == nil || c.Prepare == nil || c.Cleanup == nil || c.ReadKinds == nil || !c.Deadline.After(time.Now()) {
 		return nil, ErrAttempt
 	}
+	timeouts, err := operationpolicy.Resolve(c.OperationTimeouts)
+	if err != nil {
+		return nil, err
+	}
+	c.OperationTimeouts = timeouts
 	return &Broker{config: c, manifest: c.Writer.Manifest()}, nil
 }
 func (b *Broker) stop(err error) error { b.config.Writer.Fence().Stop(err); return err }
@@ -132,12 +142,7 @@ func (b *Broker) Handle(ctx context.Context, raw []byte, responseSequence int64)
 		return nil, err
 	}
 	// Clamp before converting milliseconds to a duration; wire integers can be large.
-	ceiling := int64(30000)
-	for _, op := range b.config.Protocol.Operations() {
-		if op.Name == q.Operation {
-			ceiling = op.TimeoutMS
-		}
-	}
+	ceiling := b.config.OperationTimeouts[q.Operation]
 	deadline := time.Now().Add(time.Duration(min(q.Timeout, ceiling)) * time.Millisecond)
 	if b.config.Deadline.Before(deadline) {
 		deadline = b.config.Deadline
@@ -161,7 +166,7 @@ func (b *Broker) Handle(ctx context.Context, raw []byte, responseSequence int64)
 	if err != nil {
 		return nil, err
 	}
-	if ctx.Err() != nil {
+	if ctx.Err() != nil && !(q.Operation == "engine.attempt_execute" && len(r.Result) > 0) {
 		return nil, b.stop(ctx.Err())
 	}
 	return b.envelope(raw, responseSequence, r)
@@ -179,6 +184,7 @@ func (b *Broker) reject(q wireRequest, code string) (reply, error) {
 	return r, b.auditDenial(q, r)
 }
 func (b *Broker) attempt(ctx context.Context, q wireRequest, deadline time.Time) (reply, error) {
+	started := time.Now()
 	if _, _, lookupErr := b.config.Attempts.Tools().Lookup(q.ID); lookupErr == nil {
 		return b.saveRejectedAttempt(q, reply{})
 	}
@@ -277,6 +283,19 @@ func (b *Broker) attempt(ctx context.Context, q wireRequest, deadline time.Time)
 	if plan == nil || (guard == nil && plan.https == nil) || plan.RequestID() != q.ID || plan.deadline.After(deadline) || !plan.deadline.After(time.Now()) || plan.binding.SessionID != saved.Target.SessionID || plan.binding.RunRevision != uint64(q.Revision) {
 		return reply{}, b.stop(ErrAttempt)
 	}
+	plan.started = started
+	plan.allowanceMS = b.config.AttemptAllowanceMS
+	if plan.allowanceMS == 0 {
+		plan.allowanceMS = q.Timeout
+	}
+	plan.deadlineSource = "attempt"
+	requestMS := min(q.Timeout, b.config.OperationTimeouts[q.Operation])
+	if requestMS <= plan.allowanceMS {
+		plan.deadlineSource = "request"
+	}
+	if !b.config.Deadline.After(plan.deadline) {
+		plan.deadlineSource = "campaign"
+	}
 	if fresh, err := a.Admit(q.ID, plan.RecordJSON()); err != nil {
 		if errors.Is(err, contracts.ErrLimit) {
 			return reject("LIMIT_EXCEEDED")
@@ -310,6 +329,11 @@ func (b *Broker) attempt(ctx context.Context, q wireRequest, deadline time.Time)
 	}
 	if len(result.GuestJSON) == 0 {
 		return reply{}, b.stop(runErr)
+	}
+	if b.config.TimeoutDiagnostic != nil {
+		if err := b.config.TimeoutDiagnostic(q.ID, q.CallID, result.GuestJSON); err != nil {
+			return reply{}, errors.Join(runErr, err)
+		}
 	}
 	var outcome struct {
 		Status string `json:"status"`

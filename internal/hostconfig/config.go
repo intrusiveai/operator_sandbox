@@ -23,9 +23,15 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/campaignlimits"
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
+	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 )
 
 const MaxBytes = 64 << 10
+const DefaultOperationTimeoutMS int64 = 120000
+
+// No attempt can outlive the supported 30-minute campaign lifetime.
+const MaximumOperationTimeoutMS int64 = operationpolicy.MaximumMS
+
 const DefaultSpoolBytes int64 = 512 << 20
 const DefaultEvidenceBytes int64 = 4 << 30
 const DefaultJournalBytes int64 = 8 << 30
@@ -60,7 +66,9 @@ func Defaults(goos, home string) (Paths, error) {
 }
 
 type Config struct {
-	Journal struct {
+	Sizes             contracts.SizeLimits `json:"size_limits"`
+	OperationTimeouts map[string]int64     `json:"operation_timeouts_ms"`
+	Journal           struct {
 		MinimumFreeBytes int64 `json:"minimum_free_bytes"`
 		MaxBytes         int64 `json:"max_bytes"`
 		SegmentBytes     int64 `json:"segment_bytes"`
@@ -78,7 +86,8 @@ type Config struct {
 		Digest    string `json:"digest"`
 	} `json:"contract"`
 	Target struct {
-		ProfileFile string `json:"profile_file"`
+		MaxOperationTimeoutMS int64  `json:"max_operation_timeout_ms"`
+		ProfileFile           string `json:"profile_file"`
 	} `json:"target"`
 	Engine struct {
 		Image string `json:"image"`
@@ -149,6 +158,12 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 	if err != nil {
 		return c, err
 	}
+	c.OperationTimeouts, err = operationpolicy.Resolve(nil)
+	if err != nil {
+		return Config{}, err
+	}
+	c.Sizes = operationpolicy.SizeDefaults()
+	c.Target.MaxOperationTimeoutMS = DefaultOperationTimeoutMS
 	c.State.Root = defaults.StateRoot
 	c.Docker.Endpoint = defaults.DockerEndpoint
 	c.Spool.MaxBytes = DefaultSpoolBytes
@@ -170,6 +185,32 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 		"cache":       {"release_directory": &c.Cache.ReleaseDirectory},
 	}
 	for section, node := range sections {
+		if section == "size_limits" || section == "operation_timeouts_ms" {
+			values, e := mapping(node)
+			if e != nil {
+				return Config{}, ErrInvalid
+			}
+			overrides := map[string]int64{}
+			for name, value := range values {
+				if value.Kind != yaml.ScalarNode || value.Tag != "!!int" || !decimal.MatchString(value.Value) {
+					return Config{}, ErrInvalid
+				}
+				n, e := strconv.ParseInt(value.Value, 10, 64)
+				if e != nil {
+					return Config{}, ErrInvalid
+				}
+				overrides[name] = n
+			}
+			if section == "size_limits" {
+				c.Sizes, e = operationpolicy.ResolveSizes(overrides)
+			} else {
+				c.OperationTimeouts, e = operationpolicy.Resolve(overrides)
+			}
+			if e != nil {
+				return Config{}, e
+			}
+			continue
+		}
 		if section == "limits" {
 			raw, e := limitsJSON(node, true)
 			if e != nil {
@@ -192,6 +233,17 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 		for name, value := range values {
 			if value.Kind != yaml.ScalarNode || value.Anchor != "" {
 				return Config{}, ErrInvalid
+			}
+			if section == "target" && name == "max_operation_timeout_ms" {
+				if value.Tag != "!!int" || !decimal.MatchString(value.Value) {
+					return Config{}, ErrInvalid
+				}
+				n, err := strconv.ParseInt(value.Value, 10, 64)
+				if err != nil || n > MaximumOperationTimeoutMS {
+					return Config{}, ErrInvalid
+				}
+				c.Target.MaxOperationTimeoutMS = n
+				continue
 			}
 			if section == "spool" || section == "evidence" || section == "journal" {
 				key, dst, invalid := "max_bytes", &c.Spool.MaxBytes, ErrSpool

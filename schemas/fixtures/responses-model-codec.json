@@ -17283,6 +17283,29 @@
         "snapshot_bytes": 1,
         "observation_reads": 1,
         "observation_bytes": 1
+      },
+      "operation_timeouts_ms": {
+        "engine.artifact_begin": 30000,
+        "engine.artifact_commit": 30000,
+        "engine.artifact_put_part": 30000,
+        "engine.attempt_execute": 120000,
+        "engine.finish": 30000,
+        "engine.injection_delete": 30000,
+        "engine.model_generate": 120000,
+        "engine.observation_read": 30000,
+        "engine.record_append": 30000,
+        "engine.restore_request": 300000,
+        "engine.snapshot_inspect": 30000,
+        "engine.snapshot_list": 30000,
+        "engine.snapshot_request": 300000
+      },
+      "size_limits": {
+        "direct_input_bytes": 32768,
+        "assessment_bytes": 1048576,
+        "artifact_bytes": 16777216,
+        "artifact_part_bytes": 262144,
+        "observation_chunk_bytes": 262144,
+        "snapshot_page_items": 100
       }
     },
     "tools": [

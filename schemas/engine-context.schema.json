@@ -395,6 +395,62 @@
     },
     "remaining_limits": {
       "$ref": "urn:operator:schema:remaining-limits:v1alpha1"
+    },
+    "operation_timeouts_ms": {
+      "type": "object",
+      "minProperties": 0,
+      "maxProperties": 64,
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 9007199254740991
+      },
+      "description": "Frozen host-configured request waits, with exactly one entry for each advertised operation. No operational durations are fixed in the operation registry."
+    },
+    "size_limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "direct_input_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "assessment_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "artifact_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        },
+        "artifact_part_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "observation_chunk_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "snapshot_page_items": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "direct_input_bytes",
+        "assessment_bytes",
+        "artifact_bytes",
+        "artifact_part_bytes",
+        "observation_chunk_bytes",
+        "snapshot_page_items"
+      ],
+      "description": "Host-configured operating sizes. Maxima are implementation safety ceilings; defaults are host policy, not contract values."
     }
   },
   "required": [
@@ -416,6 +472,8 @@
     "model",
     "operations",
     "limits",
-    "remaining_limits"
+    "remaining_limits",
+    "operation_timeouts_ms",
+    "size_limits"
   ]
 }

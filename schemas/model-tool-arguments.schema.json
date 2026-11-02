@@ -199,7 +199,7 @@
               }
             },
             "input": {
-              "description": "Exactly one direct encoding or a committed artifact receipt. Direct decoded bytes are limited to 32768 and JSON nesting to 16. Publish larger input as an artifact. The host computes all identities.",
+              "description": "Exactly one direct encoding or a committed artifact receipt. The host supplies the decoded byte allowance in size_limits.direct_input_bytes. JSON nesting is bounded to 16 for recursive canonicalization. Publish larger input as an artifact. The host computes all identities.",
               "oneOf": [
                 {
                   "type": "object",
@@ -4462,7 +4462,7 @@
               }
             },
             "injection_input": {
-              "description": "Exactly one direct encoding or a committed artifact receipt. Direct decoded bytes are limited to 32768 and JSON nesting to 16. Publish larger input as an artifact. The host computes all identities.",
+              "description": "Exactly one direct encoding or a committed artifact receipt. The host supplies the decoded byte allowance in size_limits.direct_input_bytes. JSON nesting is bounded to 16 for recursive canonicalization. Publish larger input as an artifact. The host computes all identities.",
               "oneOf": [
                 {
                   "type": "object",
@@ -4643,7 +4643,7 @@
             "maxLength": 128
           },
           "input": {
-            "description": "Exactly one direct encoding or a committed artifact receipt. Direct decoded bytes are limited to 32768 and JSON nesting to 16. Publish larger input as an artifact. The host computes all identities.",
+            "description": "Exactly one direct encoding or a committed artifact receipt. The host supplies the decoded byte allowance in size_limits.direct_input_bytes. JSON nesting is bounded to 16 for recursive canonicalization. Publish larger input as an artifact. The host computes all identities.",
             "oneOf": [
               {
                 "type": "object",
@@ -5298,7 +5298,7 @@
             }
           },
           "injection_input": {
-            "description": "Exactly one direct encoding or a committed artifact receipt. Direct decoded bytes are limited to 32768 and JSON nesting to 16. Publish larger input as an artifact. The host computes all identities.",
+            "description": "Exactly one direct encoding or a committed artifact receipt. The host supplies the decoded byte allowance in size_limits.direct_input_bytes. JSON nesting is bounded to 16 for recursive canonicalization. Publish larger input as an artifact. The host computes all identities.",
             "oneOf": [
               {
                 "type": "object",
@@ -5441,7 +5441,7 @@
             "maxLength": 128
           },
           "input": {
-            "description": "Exactly one direct encoding or a committed artifact receipt. Direct decoded bytes are limited to 32768 and JSON nesting to 16. Publish larger input as an artifact. The host computes all identities.",
+            "description": "Exactly one direct encoding or a committed artifact receipt. The host supplies the decoded byte allowance in size_limits.direct_input_bytes. JSON nesting is bounded to 16 for recursive canonicalization. Publish larger input as an artifact. The host computes all identities.",
             "oneOf": [
               {
                 "type": "object",
@@ -6096,7 +6096,7 @@
             }
           },
           "injection_input": {
-            "description": "Exactly one direct encoding or a committed artifact receipt. Direct decoded bytes are limited to 32768 and JSON nesting to 16. Publish larger input as an artifact. The host computes all identities.",
+            "description": "Exactly one direct encoding or a committed artifact receipt. The host supplies the decoded byte allowance in size_limits.direct_input_bytes. JSON nesting is bounded to 16 for recursive canonicalization. Publish larger input as an artifact. The host computes all identities.",
             "oneOf": [
               {
                 "type": "object",
@@ -6189,7 +6189,7 @@
           "operation_id",
           "input"
         ],
-        "description": "Runtime validates cross-field rules. origin is required: scenario requires scenario_id from the submitted bundle; exploratory forbids scenario_id. Attempt setup requires injection_input; injection_input and retain_injections require nonempty pre_actions. Finish requires exactly one of assessment, artifact_receipt or unavailable. Direct inputs are limited to 32768 decoded bytes and JSON depth 16."
+        "description": "Runtime validates cross-field rules. origin is required: scenario requires scenario_id from the submitted bundle; exploratory forbids scenario_id. Attempt setup requires injection_input; injection_input and retain_injections require nonempty pre_actions. Finish requires exactly one of assessment, artifact_receipt or unavailable. Direct input must fit the host size_limits.direct_input_bytes allowance and JSON depth 16."
       },
       "description": "Invoke a permitted target operation. Always specify origin: scenario requires scenario_id from the submitted bundle; exploratory forbids scenario_id. Use direct input normally, or an artifact receipt returned by artifact_publish for large/reusable input. Operator assigns bookkeeping; never invent descriptors or receipts. Runtime enforces identifier and content limits. Advanced guidance: tool-guide:attempt_execute.",
       "x-operator-required-operations": [
@@ -8077,7 +8077,7 @@
         "required": [
           "finish_reason"
         ],
-        "description": "Runtime validates cross-field rules. origin is required: scenario requires scenario_id from the submitted bundle; exploratory forbids scenario_id. Attempt setup requires injection_input; injection_input and retain_injections require nonempty pre_actions. Finish requires exactly one of assessment, artifact_receipt or unavailable. Direct inputs are limited to 32768 decoded bytes and JSON depth 16."
+        "description": "Runtime validates cross-field rules. origin is required: scenario requires scenario_id from the submitted bundle; exploratory forbids scenario_id. Attempt setup requires injection_input; injection_input and retain_injections require nonempty pre_actions. Finish requires exactly one of assessment, artifact_receipt or unavailable. Direct input must fit the host size_limits.direct_input_bytes allowance and JSON depth 16."
       },
       "description": "Finish with a minimal honest assessment: summary and objective outcomes. Cite only returned execution receipts. Empty references are valid for untested objectives. Operator retains the assessment and starts cleanup; acceptance is not cleanup completion. Runtime enforces identifier and content limits. Advanced guidance: tool-guide:finish.",
       "x-operator-required-operations": [
@@ -8196,7 +8196,7 @@
             "max_bytes": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 262144,
+              "maximum": 1048576,
               "default": 4096
             }
           }
@@ -8232,7 +8232,7 @@
           "max_bytes": {
             "type": "integer",
             "minimum": 1,
-            "maximum": 262144,
+            "maximum": 1048576,
             "default": 4096
           }
         }

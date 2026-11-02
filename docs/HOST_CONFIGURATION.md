@@ -19,6 +19,7 @@ The initial loader accepts exactly these fields:
 | --- | --- |
 | `engine.image` | Required local image selector: name/tag, repository reference with full SHA-256 digest, or full image ID. |
 | `target.profile_file` | Optional clean absolute path to the default private administrator TargetProfile; required at preparation unless submission explicitly selected another profile. See [campaign preparation](CAMPAIGN_PREPARATION.md). |
+| `target.max_operation_timeout_ms` | Global ceiling for target-profile `operation_timeout_ms`; default `120000`, positive integer at most `1800000` (the supported campaign lifetime). A profile exceeding this ceiling is rejected before attachment. Actual execution also obeys the shorter configured request and campaign deadlines. |
 | `docker.endpoint` | Canonical local `unix:///` socket. Linux default: `unix:///var/run/docker.sock`; macOS default: `unix://<home>/.docker/run/docker.sock`. Configure rootless/custom socket locations explicitly. |
 | `docker.executable` | Optional absolute Docker CLI path; omitted means resolve from the administrator/service `PATH` when constructing the Docker client. |
 | `state.root` | Linux default: `/var/lib/operator`; macOS default: `<home>/Library/Application Support/Operator/data`. |
@@ -158,3 +159,55 @@ MUST agree with the effective harness model-turn/read-byte ceilings. Snapshot ze
 MUST remain zero even when a bundle requests snapshots. Fresh result maps MUST NOT
 mutate installed defaults or other campaigns. Target/native enforcement and any
 stricter installed runtime policy remain independent admission gates.
+
+## Request waits and operating sizes
+
+Operator owns these settings; they are frozen for each launch and supplied to
+Attack Harness in its verified startup context. Changing them affects future
+campaigns. It does not extend an active campaign or require a contract update.
+
+```yaml
+target:
+  profile_file: /path/to/target-profile.json
+  max_operation_timeout_ms: 120000
+operation_timeouts_ms:
+  engine.attempt_execute: 120000
+  engine.model_generate: 120000
+  engine.snapshot_request: 300000
+  engine.restore_request: 300000
+size_limits:
+  direct_input_bytes: 32768
+  assessment_bytes: 1048576
+  artifact_bytes: 16777216
+  artifact_part_bytes: 262144
+  observation_chunk_bytes: 262144
+  snapshot_page_items: 100
+```
+
+Only overrides need to be supplied. Unlisted ordinary operations default to
+30,000 ms; the four listed operations default to the values above. Waits and the
+global attempt ceiling accept 1..1,800,000 ms, within Operator's supported campaign
+lifetime. Unknown operation names, zero, fractional and out-of-range values fail
+configuration validation. The global ceiling defaults to 120,000 ms; the target
+profile selects its actual complete-attempt allowance independently.
+
+For a multi-step agent, a useful starting configuration is a 60-second target turn
+(configured in Interceptor), a 90,000 ms target-profile `operation_timeout_ms`, and
+120,000 ms for `engine.attempt_execute`. Setup and observation collection consume
+the same 90-second budget. A shorter caller deadline or remaining campaign lifetime
+still wins. Model and artifact waits are not shortened to the target-profile budget.
+
+Sizing values above are defaults. Direct input, artifact parts and observation
+chunks may be raised to 1 MiB; assessments are capped at 1 MiB, whole artifacts at
+16 MiB, and snapshot pages at 100 entries. These remaining ceilings protect current
+bounded parsing, framing and integrity-verification behavior. See the authoritative
+[operating-limit contract](../schemas/OPERATING_LIMITS_CONTRACT.md) for their rationale.
+An encoded request must also fit the 4 MiB frame; JSON escaping can make it larger
+than its decoded input. Larger inputs use committed artifacts. Target-specific
+limits and cumulative campaign budgets still apply.
+
+If an invocation succeeds but observation collection expires, inspection and reports
+retain both facts. The diagnostic identifies the request, attempt, native operation,
+allowance, elapsed time and whether the terminal result was published to Harness.
+Publication is not proof that Harness consumed it. Owned cleanup runs independently
+of the expired attempt budget and its outcome is reported separately.

@@ -24,7 +24,6 @@ type Operation struct {
 	ErrorCodes       []string `json:"error_codes"`
 	LifecycleStates  []string `json:"lifecycle_states"`
 	FinalizationRule string   `json:"finalization_rule"`
-	TimeoutMS        int64    `json:"timeout_ms"`
 	MaxRequestBytes  int      `json:"max_request_bytes"`
 	MaxResultBytes   int      `json:"max_result_bytes"`
 	Effect           string   `json:"effect"`
@@ -81,7 +80,6 @@ func LoadProtocol(files fs.FS) (*Protocol, error) {
 			ResultSchema:     fields["result_schema"].(string),
 			ErrorSchema:      fields["error_schema"].(string),
 			FinalizationRule: fields["finalization_rule"].(string),
-			TimeoutMS:        number(fields["timeout_ms"]),
 			MaxRequestBytes:  int(number(fields["max_request_bytes"])),
 			MaxResultBytes:   int(number(fields["max_result_bytes"])),
 			Effect:           fields["effect"].(string),
@@ -293,7 +291,7 @@ func descriptionOK(object map[string]any) bool {
 func part(value any) ([]byte, bool) {
 	encoded := value.(string)
 	decoded, err := base64.StdEncoding.Strict().DecodeString(encoded)
-	return decoded, err == nil && len(decoded) <= 262144 && base64.StdEncoding.EncodeToString(decoded) == encoded
+	return decoded, err == nil && len(decoded) <= 1<<20 && base64.StdEncoding.EncodeToString(decoded) == encoded
 }
 func sameArtifact(left, right any) bool {
 	l, r := left.(map[string]any), right.(map[string]any)

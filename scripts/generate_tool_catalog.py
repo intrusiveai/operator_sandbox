@@ -26,7 +26,7 @@ def openai_parameters(name, arguments):
             'Runtime validates cross-field rules. origin is required: scenario requires scenario_id from the submitted bundle; exploratory forbids scenario_id. Attempt setup requires injection_input; '
             'injection_input and retain_injections require nonempty pre_actions. '
             'Finish requires exactly one of assessment, artifact_receipt or unavailable. '
-            'Direct inputs are limited to 32768 decoded bytes and JSON depth 16.')
+            'Direct input must fit the host size_limits.direct_input_bytes allowance and JSON depth 16.')
         return projected
     if name == 'record_append':
         variants = arguments['oneOf']

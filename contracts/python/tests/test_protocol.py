@@ -62,9 +62,9 @@ class ProtocolTest(unittest.TestCase):
                 elif mutation == "bad-finalization-rule": items[0]["finalization_rule"] = "anything"
                 (directory / "operations.json").write_bytes(encode(registry))
                 if mutation == "integer-exponent":
-                    raw = (directory / "operations.json").read_bytes().replace(b'"timeout_ms":30000,', b'"timeout_ms":3e4,')
+                    raw = (directory / "operations.json").read_bytes().replace(b'"max_request_bytes":4194304,', b'"max_request_bytes":4.194304e6,')
                     (directory / "operations.json").write_bytes(raw)
-                    self.assertEqual(Protocol(directory).operations()[0]["timeout_ms"], 30000)
+                    self.assertEqual(Protocol(directory).operations()[0]["max_request_bytes"], 4194304)
                 else:
                     with self.assertRaises(ContractError):
                         Protocol(directory)

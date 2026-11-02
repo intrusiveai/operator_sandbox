@@ -24,7 +24,7 @@ def _part(encoded):
         value = base64.b64decode(encoded, validate=True)
     except (ValueError, binascii.Error):
         raise ContractError("contract message consistency check failed") from None
-    _require(len(value) <= 262144 and base64.b64encode(value).decode("ascii") == encoded)
+    _require(len(value) <= 1 << 20 and base64.b64encode(value).decode("ascii") == encoded)
     return value
 
 
@@ -230,6 +230,10 @@ class Protocol:
     def validate_request_envelope(self, raw):
         message=self._catalog.validate('urn:operator:schema:engine-request-envelope:v1alpha1',raw)
         return message
+
+    def validate_request_sizes(self, raw, sizes):
+        from .sizes import validate_request_sizes
+        return validate_request_sizes(self, raw, sizes)
 
     def validate_request(self, raw: bytes):
         message = self.validate_request_envelope(raw)

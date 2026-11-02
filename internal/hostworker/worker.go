@@ -212,7 +212,7 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 				h.Outcome = "failed"
 				h.Cause = result.ModelDiagnostic.Summary()
 			}
-			if result.WorkflowDiagnostic != nil && result.WorkflowDiagnostic.Stopping != "" {
+			if result.WorkflowDiagnostic != nil && (result.WorkflowDiagnostic.Stopping != "" || result.WorkflowDiagnostic.Timeout != nil) {
 				h.Outcome = "failed"
 				h.Cause = result.WorkflowDiagnostic.Message()
 			}

@@ -82,7 +82,7 @@ func (s *Service) stateOperation(ctx context.Context, q stateRequest, reservatio
 			return stateDenied("INVALID_ARGUMENTS"), nil, nil
 		}
 		if body.Limit == 0 {
-			body.Limit = 100
+			body.Limit = int(s.sizes.SnapshotPage)
 		}
 		page, err := peer.ListSnapshots(ctx, interceptor.SnapshotListRequest{CampaignID: q.Campaign, SourceSessionID: body.Source, Offset: int(body.Offset), Limit: body.Limit})
 		if err != nil {

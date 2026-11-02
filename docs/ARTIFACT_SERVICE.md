@@ -15,7 +15,7 @@ wire schemas; upload IDs and receipts are opaque campaign-local handles.
 - The host MUST protect one conclusion slot and up to 1 MiB of the initially
   available artifact allowance. Ordinary uploads MUST NOT consume this reserve.
   The first conclusion upload uses this allowance; it does not add budget.
-- Parts MUST be contiguous, at most 256 KiB decoded, and fit the original size.
+- Parts MUST be contiguous, within the frozen `size_limits.artifact_part_bytes` decoded-byte allowance (1 MiB wire ceiling), and fit the original size.
   New operations with gaps, overlap, or writes after commitment MUST be denied.
   Exact duplicates MUST return their saved result without appending bytes again.
 - Bytes MUST be retained as private immutable journal content. Upload indexes

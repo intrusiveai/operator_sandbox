@@ -11,7 +11,7 @@ read, typed record append, snapshot create/list/inspect, restore, finish, local 
 and model generation. The [model codec contract](MODEL_CODEC_CONTRACT.md) fixes
 the model exchange's native subset and trusted profile binding. Each entry identifies
 request/result/error schemas, allowed error codes, lifecycle states, finalization
-restrictions, timeout ceiling, encoded request/result ceilings, effect kind and
+restrictions, encoded request/result ceilings, effect kind and
 receipt policy. Native Interceptor operation names and schemas stay in its adapter.
 
 Receipt policy `durable` requires saving the operation result before replying,
@@ -40,10 +40,10 @@ The response echoes the request's campaign, launch, revision, call ID, operation
 ID and operation name. The body operation_id selects a target capability. Operator assigns internal
 attempt request_id from the envelope operation_id; call_id remains exchange correlation.
 
-The host clamps the requested timeout to the registry ceiling and remaining campaign
-time. An otherwise valid longer requested timeout is not a new authorization or an
-encoding error. Snapshot creation/restore have 300-second ceilings; other operations
-in this stage have 30-second ceilings. Every deadline is host-monotonic.
+The host clamps the requested timeout to the frozen EngineContext operation wait
+and remaining campaign time. Attempts additionally use their complete-attempt
+profile allowance. See [operating limits](OPERATING_LIMITS_CONTRACT.md). An otherwise
+valid longer requested wait does not grant extra time. Every deadline is host-monotonic.
 
 Only admitted execution permits normal work. Finalization admits artifact operations
 for a large assessment draft, local diagnostic reports and finish. For part/commit, determine purpose from the host's saved upload

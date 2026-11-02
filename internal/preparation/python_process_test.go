@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -71,6 +72,7 @@ type processCase struct {
 	block             bool
 	spoolMaxBytes     int64
 	large, skill      bool
+	settings          func(*preparation.LaunchConfig)
 	change            func(*preparation.Input)
 	reply             func(int, map[string]any) ([]byte, error)
 }
@@ -163,6 +165,9 @@ func newProcessRun(t *testing.T, tc processCase) *processRun {
 			t.Fatal(e)
 		}
 	}
+	if tc.settings != nil {
+		tc.settings(&cfg)
+	}
 	launch, err := target.BuildLaunch(cfg)
 	if err != nil {
 		t.Fatal(err)
@@ -232,7 +237,7 @@ func newProcessRun(t *testing.T, tc processCase) *processRun {
 	if tc.transport == "fifo" {
 		create = transport.NewFIFO
 	}
-	channel, err := create(ipc, transport.Config{Protocol: in.Protocol, CampaignID: m.CampaignID, LaunchID: m.LaunchID, Fence: writer.Fence(), CampaignDeadline: time.Now().Add(timeout), SpoolMaxBytes: tc.spoolMaxBytes})
+	channel, err := create(ipc, transport.Config{OperationTimeouts: operationpolicy.FromContext(launch.Inputs.EngineContext), Protocol: in.Protocol, CampaignID: m.CampaignID, LaunchID: m.LaunchID, Fence: writer.Fence(), CampaignDeadline: time.Now().Add(timeout), SpoolMaxBytes: tc.spoolMaxBytes})
 	if err != nil {
 		t.Fatal(err)
 	}

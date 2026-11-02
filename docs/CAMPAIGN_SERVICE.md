@@ -50,7 +50,7 @@ The broker MUST preserve cumulative admission/read accounting and duplicate rule
 `ServeOrdinary` MUST have one owner per service. It receives the guest's
 `ordinary-out` lane and sends replies through `ordinary-in`, starting host sequence
 numbers at zero. It MUST carry the transport's original absolute operation deadline
-into dispatch and tighten it by the private profile's operation timeout. Physical
+into dispatch and tighten attempts by the private profile's complete-attempt timeout. Physical
 FIFO/spool pumping and control consumption MUST run
 independently; an ordinary request MUST NOT block urgent termination. The launcher
 MUST open transport admission only after service admission succeeds. Spool cleanup
@@ -112,3 +112,11 @@ Finalization now collects each verified native source/replacement session after
 cleanup. The [evidence service](EVIDENCE_SERVICE.md) defines saved selection,
 verification, retention, limits and per-session outcomes. Collection and publication
 are independent of Docker termination and do not reopen execution.
+
+Attempt timeout diagnostics retain request/attempt identity, native operation,
+allowance, elapsed time, limiting deadline, invocation outcome, observation state
+and transport publication state. The primary Operator diagnostic precedes Harness
+exit details in reports. A timeout permits only the existing reply to drain for
+at most two seconds, within the original request/campaign limit; execution
+admission is already closed. Cancellation and independent failures bypass this
+grace. Native terminal cleanup retains its independent bounded deadline.

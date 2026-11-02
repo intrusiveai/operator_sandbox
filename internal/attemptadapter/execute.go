@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"slices"
 	"sync"
+	"time"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
@@ -162,10 +163,12 @@ func (e *Execution) Run(ctx context.Context) (result Result, runErr error) {
 	cleanup := "not-needed"
 	contact := "none"
 	lastOutcome := ""
+	nativeOperation := "artifact.register"
+	observationState := "not-started"
 	result.Injections = []InjectionHandle{}
 	result.StepIDs = []string{}
 	defer func() {
-		if runErr != nil {
+		if runErr != nil && e.attempts.NativeSteps().Fence().Err() == nil {
 			e.attempts.NativeSteps().Fence().Stop(runErr)
 		}
 		status, retry, code, message := "completed", "do-not-retry", "", ""
@@ -186,6 +189,16 @@ func (e *Execution) Run(ctx context.Context) (result Result, runErr error) {
 			stage = "complete"
 		}
 		body := map[string]any{"api_version": "operator.dev/engine-attempt-result/v1alpha2", "kind": "EngineAttemptResult", "request_id": p.request.RequestID, "attempt_id": p.request.AttemptID, "receipt_id": receiptID, "status": status, "stage": stage, "target_contact": contact, "invocation_state": invocation, "cleanup_state": cleanup, "retry_disposition": retry, "errors": []any{}}
+		if runErr != nil && (ctx.Err() == context.DeadlineExceeded || ctx.Err() == nil && !time.Now().Before(p.deadline)) {
+			timing := campaign.AttemptTimeout{NativeOperation: nativeOperation, AllowanceMS: p.allowanceMS, ElapsedMS: time.Since(p.started).Milliseconds(), DeadlineSource: p.deadlineSource, Observation: observationState}
+			if timing.Valid() {
+				body["timeout"] = timing
+				message = timing.Message(invocation)
+				if stage == "observation" && invocation == "succeeded" {
+					code = "OBSERVATION_UNAVAILABLE"
+				}
+			}
+		}
 		if code != "" {
 			body["errors"] = []any{map[string]string{"code": code, "instance_path": "", "message": message}}
 		}
@@ -204,10 +217,15 @@ func (e *Execution) Run(ctx context.Context) (result Result, runErr error) {
 		result.GuestJSON = raw
 	}()
 	send := func(c command) (interceptor.Response, error) {
+		nativeOperation = c.Operation
 		lastOutcome = ""
 		index++
 		id := opaque("step", p.context.CampaignID, p.request.AttemptID, fmt.Sprint(index))
-		q := interceptor.OperationRequest{RequestID: id, OperationID: id, Operation: c.Operation, CampaignID: p.context.CampaignID, SessionID: p.binding.SessionID, WorkerInstanceID: p.binding.WorkerInstanceID, RunRevision: p.binding.RunRevision, ExpectedSessionRevision: revision, AttemptID: p.request.AttemptID, AttemptContextDigest: p.context.Digest, Deadline: p.deadline}
+		deadline := p.deadline
+		if native := time.Now().Add(interceptor.MaxOperationTimeout); native.Before(deadline) {
+			deadline = native
+		}
+		q := interceptor.OperationRequest{RequestID: id, OperationID: id, Operation: c.Operation, CampaignID: p.context.CampaignID, SessionID: p.binding.SessionID, WorkerInstanceID: p.binding.WorkerInstanceID, RunRevision: p.binding.RunRevision, ExpectedSessionRevision: revision, AttemptID: p.request.AttemptID, AttemptContextDigest: p.context.Digest, Deadline: deadline}
 		prepared, err := interceptor.PrepareOperation(q, c.Body)
 		if err != nil {
 			return interceptor.Response{}, err
@@ -263,6 +281,7 @@ func (e *Execution) Run(ctx context.Context) (result Result, runErr error) {
 		}
 	}
 	stage = "observation"
+	observationState = "incomplete"
 	source := feedback.Source{CampaignID: p.context.CampaignID, SessionID: p.binding.SessionID, AttemptID: p.request.AttemptID, AttemptContextDigest: p.context.Digest, TurnID: turn.ID, RunRevision: p.binding.RunRevision, SessionRevision: revision}
 	e.adapter.source = source
 	e.adapter.turn = turn
@@ -323,6 +342,7 @@ func (e *Execution) Run(ctx context.Context) (result Result, runErr error) {
 	if err != nil {
 		return result, err
 	}
+	observationState = "complete"
 	if p.request.Cleanup.Delete && len(p.cleanup) > 0 {
 		stage = "cleanup"
 		for i, cmd := range p.cleanup {

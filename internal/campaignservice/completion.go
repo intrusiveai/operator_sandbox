@@ -317,6 +317,9 @@ func (s *Service) acceptFinish(q stateRequest) (stateReply, error) {
 				return s.rejectConclusion(q, referenceIssue("artifact_integrity_failed", "/artifact_receipt", receipt, nil))
 			}
 		}
+		if int64(len(draft)) > s.sizes.Assessment {
+			return s.rejectConclusion(q, &contracts.ConclusionError{Reason: "invalid_structure", FieldPath: "/assessment", Cause: contracts.ErrLimit})
+		}
 		conclusion, err := s.target().Protocol().NormalizeAssessment(draft, s.conclusionBinding(), finish)
 		if err != nil {
 			var issue *contracts.ConclusionError

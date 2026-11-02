@@ -56,7 +56,7 @@ func doctor(ctx context.Context, args []string, stdout, stderr io.Writer, defaul
 		if c.Target.ProfileFile == "" {
 			checks = append(checks, diagnosticCheck{Name: "target_profile", Status: "not_checked", Action: "select_explicit_submission_target"})
 		} else {
-			_, err = targetprofile.Load(c.Target.ProfileFile)
+			_, err = targetprofile.LoadWithLimit(c.Target.ProfileFile, c.Target.MaxOperationTimeoutMS)
 			add("target_profile", err, "check_private_target_profile")
 		}
 		model, modelErr := modelprovider.Load(c.Model.ProfileFile)

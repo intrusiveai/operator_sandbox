@@ -129,3 +129,40 @@ func (s *Service) retentionFailure(id, field string, primary error) error {
 	s.Stop(failure)
 	return failure
 }
+
+// recordAttemptTimeout selects only validated, product-authored result fields.
+func (s *Service) recordAttemptTimeout(operationID, callID string, raw []byte) error {
+	var r struct {
+		AttemptID  string                   `json:"attempt_id"`
+		Stage      string                   `json:"stage"`
+		Invocation string                   `json:"invocation_state"`
+		Timeout    *campaign.AttemptTimeout `json:"timeout"`
+	}
+	if json.Unmarshal(raw, &r) != nil || r.Timeout == nil {
+		return nil
+	}
+	d := campaign.NewWorkflowDiagnostic(operationID, "operator", r.Stage, "attempt_timeout", "", "attempt_execute", callID)
+	d.AttemptID = r.AttemptID
+	d.Timeout = r.Timeout
+	d.Invocation = r.Invocation
+	d.ResultDelivery = "unconfirmed"
+	if !d.Valid() {
+		return ErrService
+	}
+	s.workflowDiagnostic.Store(&d)
+	_, err := s.writer.AppendStored(campaign.Entry{RunRevision: s.attempts.Status().RunRevision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d})}, "", false)
+	if err != nil {
+		return errors.Join(d, err)
+	}
+	return nil
+}
+func (s *Service) recordTimeoutDelivery(delivery string) error {
+	d := s.WorkflowFailure()
+	if d == nil || d.Timeout == nil {
+		return nil
+	}
+	d.ResultDelivery = delivery
+	s.workflowDiagnostic.Store(d)
+	_, err := s.writer.AppendStored(campaign.Entry{RunRevision: s.attempts.Status().RunRevision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d})}, "", false)
+	return err
+}

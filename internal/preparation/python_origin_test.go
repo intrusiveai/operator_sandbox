@@ -11,12 +11,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
+	"github.com/intrusiveai/operator_sandbox/internal/preparation"
 	"github.com/intrusiveai/operator_sandbox/internal/reporting"
 )
 
 func TestPythonExplicitOriginWorkflow(t *testing.T) {
 	for _, lane := range []string{"spool", "fifo"} {
-		for _, mode := range []string{"scenario", "corrected", "exploratory"} {
+		for _, mode := range []string{"scenario", "corrected", "corrected-size", "exploratory"} {
 			// Run every semantic case once and the scenario/evidence/finish workflow on both transports.
 			if lane == "spool" && mode != "scenario" {
 				continue
@@ -25,8 +27,11 @@ func TestPythonExplicitOriginWorkflow(t *testing.T) {
 				var execution map[string]any
 				readDone := false
 				reply := func(turn int, q map[string]any) ([]byte, error) {
-					if mode == "corrected" {
+					if mode == "corrected" || mode == "corrected-size" {
 						if turn == 1 {
+							if mode == "corrected-size" {
+								return processResponse([]any{modelCall("invalid-origin", "attempt_execute", processAttempt("scenario", "", encode(map[string]any{"query": strings.Repeat("x", 70000)}), ""))}), nil
+							}
 							return processResponse([]any{modelCall("invalid-origin", "attempt_execute", map[string]any{"operation_id": "invoke", "input": map[string]any{"encoding": "json", "value": map[string]any{"query": "marker"}}})}), nil
 						}
 						if turn == 2 {
@@ -35,7 +40,11 @@ func TestPythonExplicitOriginWorkflow(t *testing.T) {
 								return nil, err
 							}
 							encoded := string(encode(bad))
-							if !strings.Contains(encoded, "origin_required") || !strings.Contains(encoded, "/origin") {
+							reason, path := "origin_required", "/origin"
+							if mode == "corrected-size" {
+								reason, path = "configured_size_exceeded", "/input"
+							}
+							if !strings.Contains(encoded, reason) || !strings.Contains(encoded, path) {
 								return nil, fmt.Errorf("missing origin diagnostic")
 							}
 						}
@@ -47,7 +56,7 @@ func TestPythonExplicitOriginWorkflow(t *testing.T) {
 						if mode == "exploratory" {
 							origin = "exploratory"
 						}
-						return processResponse([]any{modelCall("invoke", "attempt_execute", processAttempt(origin, "", []byte(`{"query":"marker"}`), ""))}), nil
+						return processResponse([]any{modelCall("invoke", "attempt_execute", processAttempt(origin, "", encode(map[string]any{"query": strings.Repeat("x", 40000)}), ""))}), nil
 					case 2:
 						var err error
 						execution, err = modelToolResult(q, "invoke")
@@ -59,7 +68,7 @@ func TestPythonExplicitOriginWorkflow(t *testing.T) {
 							return nil, fmt.Errorf("missing execution feedback")
 						}
 						entry := feedback["entries"].([]any)[0].(map[string]any)
-						return processResponse([]any{modelCall("observe", "observation_read", map[string]any{"receipt_id": execution["receipt_id"], "entry_id": entry["entry_id"], "offset": 0, "max_bytes": 2048})}), nil
+						return processResponse([]any{modelCall("observe", "observation_read", map[string]any{"receipt_id": execution["receipt_id"], "entry_id": entry["entry_id"], "offset": 0, "max_bytes": 524288})}), nil
 					case 3:
 						observed, err := modelToolResult(q, "observe")
 						if err != nil {
@@ -73,7 +82,12 @@ func TestPythonExplicitOriginWorkflow(t *testing.T) {
 					}
 					return nil, fmt.Errorf("unexpected model turn; finish should exit")
 				}
-				r := newProcessRun(t, processCase{transport: lane, prompt: "default", reply: reply})
+				r := newProcessRun(t, processCase{transport: lane, prompt: "default", reply: reply, settings: func(c *preparation.LaunchConfig) {
+					c.OperationTimeouts = map[string]int64{"engine.attempt_execute": 150000, "engine.observation_read": 45000, "engine.finish": 60000}
+					c.Sizes = operationpolicy.SizeDefaults()
+					c.Sizes.DirectInput = 65536
+					c.Sizes.ObservationChunk = 524288
+				}})
 				r.finish(t)
 				if !readDone || r.cmd.ProcessState.ExitCode() != 0 || !r.service.AssessmentCommitted() {
 					t.Fatal("workflow incomplete")

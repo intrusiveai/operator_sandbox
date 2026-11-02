@@ -94,7 +94,7 @@ func exportCapabilities(ctx context.Context, args []string, stdout, stderr io.Wr
 	if profileFile == "" {
 		profileFile = loaded.Config.Target.ProfileFile
 	}
-	profile, err := targetprofile.Load(profileFile)
+	profile, err := targetprofile.LoadWithLimit(profileFile, loaded.Config.Target.MaxOperationTimeoutMS)
 	if err != nil {
 		fmt.Fprintln(stderr, "cannot load private target profile")
 		return 1

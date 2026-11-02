@@ -6,7 +6,7 @@ from .canonical import _canonical_value
 from .schema_ids import EXECUTION_INPUT_SCHEMA, ASSESSMENT_SCHEMA, CONCLUSION_BINDING_SCHEMA
 from .assessment import validate_conclusion, CONCLUSION_LIMIT
 
-DIRECT_INPUT_LIMIT = 32768
+DIRECT_INPUT_LIMIT = 1 << 20
 DIRECT_INPUT_DEPTH = 16
 
 
@@ -36,7 +36,7 @@ def resolve_direct_input(protocol, value):
             raise ContractError('Supply canonical padded base64 or use JSON/UTF-8 input.', reason='invalid_base64', field_path='/data', correction='Supply canonical padded base64 or use JSON/UTF-8 input.') from None
         media_type = value['media_type']
     if len(content) > DIRECT_INPUT_LIMIT:
-        raise ContractError('Direct input is limited to 32768 bytes.', reason='direct_input_too_large', correction='Publish this input as an artifact and pass its returned artifact_receipt.')
+        raise ContractError('Direct input exceeds the 1 MiB wire safety ceiling.', reason='direct_input_too_large', correction='Publish this input as an artifact and pass its returned artifact_receipt.')
     return dict(content=content, media_type=media_type, canonicalization=canonicalization)
 
 
