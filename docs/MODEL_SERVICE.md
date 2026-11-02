@@ -120,3 +120,29 @@ records without these optional fields MUST remain readable.
 `model_diagnostic`; `--run` also exposes the retained start completion.
 [Reports and exports](REPORTING.md) MUST carry the same selected facts and keep
 reserved allowance separate from confirmed token usage.
+
+### Usage rejected against local allowances
+
+After successful response/usage validation, `usage_exceeds_reservation` means
+Operator rejected the call against its local prompt or total-token allowance.
+It MUST NOT be described as provider throttling or cloud quota exhaustion. The
+diagnostic MUST retain `usage_allowance` with validated normalized `input_tokens`,
+`output_tokens`, `total_tokens`, configured `maximum_prompt_tokens`, the request's
+`requested_completion_tokens`, and the actual `reserved_tokens` for this call.
+`prompt_allowance_exceeded` and `total_reservation_exceeded` MUST independently
+record the two comparisons, including both when applicable. Counts include the
+existing codec's cache/thinking accounting; no new token estimate is introduced.
+
+These bounded numeric facts MUST survive native journaling, selected event export,
+completion diagnostics, inspection, CLI rendering and the human-readable report.
+Missing/malformed/unknown usage MUST NOT be represented as validated counts.
+Older diagnostics without `usage_allowance` remain valid and MUST NOT acquire
+invented counts. Rejected response content MUST still be discarded.
+
+Enforcement and budget charging remain unchanged: rejection terminates execution,
+retains the reservation charge and does not retry or settle that call into accepted
+usage totals. The retained diagnostic counts are distinct from that reservation.
+Subsequent Harness termination, including a forced exit 137, MUST remain secondary
+to the original model failure. Output exceeding the requested completion limit
+continues to fail the earlier response-contract check; diagnostic reporting MUST
+NOT bypass that validation to reach the local allowance comparison.

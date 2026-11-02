@@ -34,6 +34,7 @@ type Diagnostic struct {
 	Omissions         DetailOmissions `json:"omissions,omitempty,omitzero"`
 	Reason            string          `json:"reason,omitempty"`
 	Message           string          `json:"message,omitempty"`
+	UsageAllowance    UsageAllowance  `json:"usage_allowance,omitempty,omitzero"`
 }
 
 var reasons = map[string]string{
@@ -78,13 +79,33 @@ func (d Diagnostic) Valid() bool {
 	if !validDetail(d.ProviderCode, 128) || !validDetail(d.ProviderType, 128) || !validDetail(d.ProviderParameter, 256) || !validDetail(d.ProviderMessage, 1024) || !d.Omissions.valid() {
 		return false
 	}
-	return reasons[d.Reason] != "" && d.Message == reasons[d.Reason]
+	if d.UsageAllowance != (UsageAllowance{}) && (d.Category != "response_validation" || d.Reason != "usage_exceeds_reservation" || !d.UsageAllowance.valid()) {
+		return false
+	}
+	expected := reasons[d.Reason]
+	if d.UsageAllowance != (UsageAllowance{}) {
+		expected = usageRejectionMessage
+	}
+	return expected != "" && d.Message == expected
 }
 func (d Diagnostic) WithFailure(category, reason string) Diagnostic {
 	d.Category, d.Reason, d.Message = category, reason, reasons[reason]
+	if reason == "usage_exceeds_reservation" && d.UsageAllowance != (UsageAllowance{}) {
+		d.Message = usageRejectionMessage
+	}
 	return d
 }
 func (d Diagnostic) Summary() string {
+	if d.UsageAllowance != (UsageAllowance{}) && d.Valid() {
+		text := "Operator rejected model usage against a local token allowance after the provider returned successfully"
+		if d.Provider != "" {
+			text += " (" + d.Provider + ")"
+		}
+		if d.HTTPStatus != 0 {
+			text += fmt.Sprintf("; HTTP %d", d.HTTPStatus)
+		}
+		return text + "."
+	}
 	text := "Model request failed"
 	if d.Provider != "" {
 		text = d.Provider
@@ -185,6 +206,18 @@ func DecodeDiagnostic(raw []byte) *Diagnostic {
 	for k := range m {
 		switch k {
 		case "category", "provider", "model", "operation_id", "http_status", "request_id", "provider_code", "provider_message", "provider_type", "provider_parameter", "omissions", "reason", "message":
+		case "usage_allowance":
+			// All numeric facts and both comparisons must be explicit, not
+			// zero-filled by JSON decoding of a partial or null object.
+			u, ok := m[k].(map[string]any)
+			if !ok || len(u) != 8 {
+				return nil
+			}
+			for _, field := range []string{"input_tokens", "output_tokens", "total_tokens", "maximum_prompt_tokens", "requested_completion_tokens", "reserved_tokens", "prompt_allowance_exceeded", "total_reservation_exceeded"} {
+				if u[field] == nil {
+					return nil
+				}
+			}
 		default:
 			return nil
 		}
@@ -192,6 +225,9 @@ func DecodeDiagnostic(raw []byte) *Diagnostic {
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.DisallowUnknownFields()
 	if decoder.Decode(&d) != nil || !d.Valid() {
+		return nil
+	}
+	if _, supplied := m["usage_allowance"]; supplied && !d.UsageAllowance.valid() {
 		return nil
 	}
 	return &d

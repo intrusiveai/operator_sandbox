@@ -157,6 +157,7 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 			reason = "usage_unknown"
 			failureCode, effect = "OUTCOME_UNKNOWN", "unknown"
 		} else if usage.InputTokens > s.config.Model.MaximumPromptTokens || usage.TotalTokens > reserve {
+			observed = observed.WithUsageRejection(usage, s.config.Model.MaximumPromptTokens, completion, reserve)
 			reason = "usage_exceeds_reservation"
 			failureCode, effect = "INTERNAL_ERROR", "known"
 		} else {
