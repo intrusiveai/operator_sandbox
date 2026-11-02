@@ -489,6 +489,43 @@ func TestModelFailureForegroundAndWorkerOutput(t *testing.T) {
 	t.Log(stderr)
 }
 
+func TestModelUsageFailureForegroundAndWorkerOutput(t *testing.T) {
+	dir, paths, deps, _ := startFixture(t)
+	model := modelprovider.Diagnostic{Provider: "bedrock-converse", Model: "mistral-fixture", OperationID: "model-1", HTTPStatus: 200}.WithUsageRejection(
+		contracts.ModelMetrics{Known: true, InputTokens: 33500, OutputTokens: 300, TotalTokens: 33800}, 32768, 4096, 36864)
+	h := campaign.HarnessExit{Outcome: "failed", ExitObserved: true, ExitCode: 137, Forced: true, WorkerCause: "model_failure", Cause: model.Summary(), StderrState: "empty", CleanupComplete: true, Details: "campaign journal event launch.exit"}
+	d := &hostrun.PreparationDiagnostic{Stage: "model request (response_validation)", Message: model.Summary(), Model: model, HarnessExit: h}
+	if !d.Valid() {
+		t.Fatal("invalid completion diagnostic", d)
+	}
+	deps.run = func(context.Context, string, string, string) (workerjob.Result, error) {
+		return workerjob.Result{Code: "execution_failed", Diagnostic: d, CompletionRecording: "recorded"}, modelprovider.FailureError(model)
+	}
+	code, _, stderr := invokeStart(t, context.Background(), "start", []string{"--run", dir}, paths, deps)
+	if code != 1 {
+		t.Fatal(code, stderr)
+	}
+	for _, want := range []string{model.Summary(), "Campaign execution failed", "exit", "137", "model_failure", "Operation: model-1", "Execution will not resume."} {
+		if !strings.Contains(stderr, want) {
+			t.Fatalf("missing %q: %s", want, stderr)
+		}
+	}
+	for _, line := range strings.Split(model.UsageDetailsText(), "\n") {
+		if !strings.Contains(stderr, line) {
+			t.Fatal("usage details lost", stderr)
+		}
+	}
+	if strings.Index(stderr, model.Summary()) > strings.Index(stderr, "137") {
+		t.Fatal("exit replaced original cause", stderr)
+	}
+	var supervised bytes.Buffer
+	printWorkerFailure(&supervised, "execution_failed", d, "recorded")
+	if supervised.String() != stderr {
+		t.Fatal("foreground/supervised mismatch")
+	}
+	t.Log(stderr)
+}
+
 func TestConclusionFailureForegroundAndWorkerOutput(t *testing.T) {
 	dir, paths, deps, _ := startFixture(t)
 	detail := campaign.NewConclusionDiagnostic("conclusion-record", &contracts.ConclusionError{Reason: "unresolved_hypothesis", FieldPath: "/hypotheses/0/provenance/parent_hypothesis_id", Identifier: "hyp-missing"})

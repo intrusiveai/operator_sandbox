@@ -184,6 +184,25 @@ The immediate start receipt has the same completion diagnostic. Reports expose
 `model_failures`; exported model events retain the selected facts and timing.
 A resolved credential event proves secret retrieval, not provider acceptance.
 
+If a provider returns successfully but exceeds Operator's local allowance, the
+diagnostic retains `usage_exceeds_reservation` and adds numeric `usage_allowance`
+details. For example (illustrative counts, not a recovered campaign):
+
+```text
+Operator rejected model usage against a local token allowance after the provider returned successfully (bedrock-converse); HTTP 200.
+Local allowance exceeded: input tokens exceeded the configured prompt allowance.
+Validated input tokens: 33500; configured prompt allowance: 32768.
+Validated output tokens: 300; requested completion allowance: 4096.
+Validated total tokens: 33800; reserved total: 36864.
+```
+
+The two structured flags identify prompt overflow, total-reservation overflow,
+or both. This is local rejection, not AWS throttling or quota exhaustion. The
+same inspection/export commands above retrieve these details without retaining
+the rejected provider body. A later forced Harness exit remains a consequence;
+it does not replace the model failure. Operator does not increase allowances,
+retry, or resume. Older evidence without the numeric fields cannot recover them.
+
 For `invalid_function_parameters` naming `attempt_execute` or `record_append`,
 confirm both Operator and the Harness image use the corrected shared contract
 package with OpenAI object declarations. The older declarations use root `allOf`

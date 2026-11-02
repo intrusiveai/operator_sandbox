@@ -743,7 +743,7 @@ func markdown(r Result, digest string) []byte {
 		for _, d := range r.ModelFailures {
 			fmt.Fprintf(&b, "Operation `%s`; category `%s`:\n\n", d.OperationID, d.Category)
 			// Indented code keeps provider text from creating Markdown links/HTML.
-			for _, line := range strings.Split(d.Summary()+"\n"+d.ProviderDetailsText(), "\n") {
+			for _, line := range strings.Split(d.Summary()+"\n"+d.UsageDetailsText()+"\n"+d.ProviderDetailsText(), "\n") {
 				fmt.Fprintf(&b, "    %s\n", line)
 			}
 			if d.RequestID != "" {
@@ -751,6 +751,7 @@ func markdown(r Result, digest string) []byte {
 			}
 		}
 		b.WriteString("\nReserved tokens are an allowance held against the budget, not confirmed consumption. See cumulative_usage in result-manifest.json.\n")
+		b.WriteString("\nFor a local usage rejection, usage_allowance retains validated provider counts. The reservation remains charged; that rejected call is not settled into accepted usage totals.\n")
 	}
 	if r.HarnessExit != nil {
 		fmt.Fprintf(&b, "\n## Harness exit\n\n    %s\n\nWorker cause: %s. Details: %s. Cleanup complete: %t.\n", r.HarnessExit.Summary(), r.HarnessExit.WorkerCause, r.HarnessExit.Details, r.HarnessExit.CleanupComplete)
