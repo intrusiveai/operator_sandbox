@@ -104,7 +104,14 @@ func (t *Target) BuildLaunch(c LaunchConfig) (*Launch, error) {
 		}
 		operations = append(operations, op.Name)
 	}
-	tools, err := t.protocol.ModelTools(c.Model.Settings().Codec, operations)
+	surfaces := []string{}
+	for _, ref := range t.policy.CapabilityPolicy().SelectableActionRefs {
+		if strings.HasPrefix(ref, "action:injection:") {
+			surfaces = append(surfaces, strings.TrimPrefix(ref, "action:injection:"))
+		}
+	}
+	sort.Strings(surfaces)
+	tools, err := t.protocol.ModelToolsSelected(c.Model.Settings().Codec, operations, surfaces)
 	if err != nil {
 		return nil, err
 	}
@@ -112,6 +119,12 @@ func (t *Target) BuildLaunch(c LaunchConfig) (*Launch, error) {
 	if err != nil {
 		return nil, err
 	}
+	var modelObject map[string]any
+	if json.Unmarshal(model, &modelObject) != nil {
+		return nil, ErrPreparation
+	}
+	modelObject["tool_selection"] = map[string]any{"injection_surfaces": surfaces}
+	model, _ = json.Marshal(modelObject)
 	template, err := canonicalJSON(map[string]any{
 		"api_version": "operator.dev/engine-context/v1alpha1", "campaign_id": t.live.CampaignID(), "launch_id": c.LaunchID, "attempt_index_high_watermark": 0,
 		"release":         map[string]any{"image_digest": c.Image.Image.ImageID, "release_record_digest": c.Image.Release.Digest()},

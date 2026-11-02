@@ -113,6 +113,11 @@ func TestServiceNativeCacheAccountingAndRestore(t *testing.T) {
 						return
 					}
 					first := stateResult(t, raw, err)
+					budgetRaw, _ := json.Marshal(first["context_budget"])
+					budget := contracts.DecodeContextBudget(budgetRaw)
+					if budget == nil || budget.InputTokens+budget.RemainingPromptTokens != 200 {
+						t.Fatal("missing validated context budget", string(budgetRaw))
+					}
 					raw, err = s.Handle(context.Background(), stateWire("engine.model_generate", "messages-1", 1, request), 0)
 					if stateResult(t, raw, err)["receipt_id"] != first["receipt_id"] || p.calls != 1 {
 						t.Fatal("model replay executed twice")

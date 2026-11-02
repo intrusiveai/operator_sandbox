@@ -105,5 +105,7 @@ context['prompt']['provenance']['effective']=dict(size_bytes=len(policy['prompt'
 context['prompt']['provenance']['base']=deepcopy(context['prompt']['provenance']['effective'])
 if 'engine.model_generate' not in context['operations']: context['operations'].append('engine.model_generate');context['operations'].sort()
 item=case('startup policy',mode='context');item.update(context=context,tools=policy['tools'],prompt=policy['prompt'])
+from model_context_fixture_support import enrich
+enrich(cases)
 (ROOT/'anthropic-model-codec.json').write_text(json.dumps(cases,ensure_ascii=False,indent=2)+'\n')
 print(len(cases),'Anthropic model fixtures')

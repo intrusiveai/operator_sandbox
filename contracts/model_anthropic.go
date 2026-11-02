@@ -186,7 +186,7 @@ func anthropicDisposition(response map[string]any) string {
 // AnthropicContinuation preserves all assistant content blocks, including opaque
 // thinking signatures, and appends one correlated native user tool-result batch.
 func (p *Protocol) AnthropicContinuation(resultRaw []byte, results []ChatToolResult) ([]byte, error) {
-	v, err := p.catalog.Validate(EngineModelGenerateResultSchema, resultRaw, OrdinaryLimit)
+	v, err := p.catalog.Validate(NativeModelResultSchema, resultRaw, OrdinaryLimit)
 	if err != nil {
 		return nil, err
 	}

@@ -146,3 +146,32 @@ Subsequent Harness termination, including a forced exit 137, MUST remain seconda
 to the original model failure. Output exceeding the requested completion limit
 continues to fail the earlier response-contract check; diagnostic reporting MUST
 NOT bypass that validation to reach the local allowance comparison.
+
+## Context allowances and response accounting
+
+The frozen startup model includes `context_limits`: the local maximum prompt and
+completion tokens and a warning threshold. These are Operator policy, not a claim
+about the model's physical context window. `context_warning_percent` defaults to
+80 in the private model profile; explicit values must be integers from 1 to 99.
+The resolved default participates in the profile fingerprint.
+
+Successful model results include `context_budget`, binding validated native usage,
+the actual requested completion allowance/reservation, remaining prompt allowance,
+a near-limit warning, and remaining campaign tokens/turns to that response receipt.
+Remaining prompt allowance describes the completed request, not guaranteed space
+for the next one. Duplicate operations return the original snapshot. Unknown usage
+and hard overflows retain terminal behavior; no automatic retry or limit increase
+is performed. Reports and exports retain the numeric accounting without requiring
+prompt content in diagnostics.
+
+Model context reports include local prompt/completion allowances and the warning
+threshold, validated per-response usage and remaining budgets, and native request
+byte partitions. Bytes and local estimates are not exact token counts. Operator
+does not perform rejecting token-count preflight. See the
+[shared model context rules](../schemas/MODEL_CONTEXT_CONTRACT.md).
+
+Harness reads small text chunks directly, loads resource details on demand and
+compacts after a warning before its next generation. If the fixed task cannot fit
+or the remaining campaign budget cannot fund another call, it finishes honestly
+with the existing context/budget-limit reason. Raising budgets is not an automatic
+recovery action. Existing post-response overflow diagnostics remain authoritative.

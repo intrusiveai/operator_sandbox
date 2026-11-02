@@ -90,3 +90,30 @@ func (t *Target) ReferenceContents() map[string][]byte {
 	}
 	return out
 }
+
+// Resource details and tool guidance use the same inventory, digest and read
+// bounds as submitted passive references. They are not executable artifacts.
+func (t *Target) addContextReferences() error {
+	_, resources, err := t.protocol.CompactTargetContext(t.live.Export().PublicJSON())
+	if err != nil {
+		return err
+	}
+	for _, tool := range []string{"attempt_execute", "artifact_publish", "record_append", "finish", "reference_read", "observation_read", "injection_delete", "snapshot_request", "snapshot_list", "snapshot_inspect", "restore_request"} {
+		raw, err := t.protocol.ToolGuidance(tool)
+		if err != nil {
+			return err
+		}
+		resources["tool-guide:"+tool] = raw
+	}
+	for id, raw := range resources {
+		digest := contracts.RawDigest(raw)
+		path := "context/" + strings.TrimPrefix(digest, "sha256:") + ".json"
+		entry := map[string]any{"entry_id": id, "root_kind": "input", "role": "reference", "path": path, "media_type": "application/json", "size_bytes": len(raw), "digest": digest}
+		t.references.entries = append(t.references.entries, entry)
+		t.references.contents["input/"+path] = bytes.Clone(raw)
+	}
+	sort.Slice(t.references.entries, func(i, j int) bool {
+		return t.references.entries[i]["path"].(string) < t.references.entries[j]["path"].(string)
+	})
+	return nil
+}

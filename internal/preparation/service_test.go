@@ -242,7 +242,31 @@ func serviceWithTemplate(t *testing.T, budget time.Duration, operations []string
 	if err != nil {
 		t.Fatal(err)
 	}
-	w, launch, root := preparedLaunchConfigured(t, target, template, "", operations...)
+	var modelConfig campaignservice.Config
+	for _, op := range operations {
+		if op == "engine.model_generate" && settings != nil {
+			settings(&modelConfig)
+		}
+	}
+	wrappedTemplate := func(c map[string]any) {
+		if template != nil {
+			template(c)
+		}
+		if modelConfig.Model != nil {
+			m := c["model"].(map[string]any)
+			m["tool_selection"] = map[string]any{"injection_surfaces": []string{}}
+			settings := m["codec_settings"].(map[string]any)
+			completion := settings["max_completion_tokens"]
+			if completion == nil {
+				completion = settings["max_tokens"]
+			}
+			if completion == nil {
+				completion = settings["max_output_tokens"]
+			}
+			m["context_limits"] = map[string]any{"maximum_prompt_tokens": modelConfig.Model.MaximumPromptTokens, "maximum_completion_tokens": completion, "warning_threshold_tokens": contracts.ContextWarningThreshold(modelConfig.Model.MaximumPromptTokens, 80)}
+		}
+	}
+	w, launch, root := preparedLaunchConfigured(t, target, wrappedTemplate, "", operations...)
 	stored, err := target.Persist(w, launch.EngineContext)
 	if err != nil {
 		t.Fatal(err)

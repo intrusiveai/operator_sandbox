@@ -209,7 +209,7 @@ func bedrockDisposition(response map[string]any) string {
 	return "text"
 }
 func (p *Protocol) BedrockContinuation(resultRaw []byte, results []ChatToolResult) ([]byte, error) {
-	v, err := p.catalog.Validate(EngineModelGenerateResultSchema, resultRaw, OrdinaryLimit)
+	v, err := p.catalog.Validate(NativeModelResultSchema, resultRaw, OrdinaryLimit)
 	if err != nil {
 		return nil, err
 	}

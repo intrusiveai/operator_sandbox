@@ -40,7 +40,7 @@ func (p *Protocol) ModelPolicyFromContext(contextRaw, toolsRaw, promptRaw []byte
 		return nil, ErrProtocol
 	}
 	policy := map[string]any{"codec_id": m["codec_id"], "profile_id": m["profile_id"], "profile_digest": m["profile_digest"],
-		"request_model": m["model_id"], "prompt": string(promptRaw), "tools": tools}
+		"request_model": m["model_id"], "prompt": string(promptRaw), "tools": tools, "context_limits": m["context_limits"]}
 	keys := []string{"instruction_role", "max_completion_tokens", "response_models"}
 	if m["codec_id"] == anthropicCodec {
 		keys = []string{"max_tokens", "thinking", "response_models"}
@@ -292,12 +292,12 @@ func (p *Protocol) ValidateModelRequest(policyRaw, requestRaw []byte) (map[strin
 
 // ValidateModelExchange additionally binds a result BODY to request, profile,
 // supported response-model IDs, usage and historical tool-call identities.
-func (p *Protocol) ValidateModelExchange(policyRaw, requestRaw, resultRaw []byte) (map[string]any, error) {
+func (p *Protocol) ValidateNativeModelExchange(policyRaw, requestRaw, resultRaw []byte) (map[string]any, error) {
 	body, err := p.ValidateModelRequest(policyRaw, requestRaw)
 	if err != nil {
 		return nil, err
 	}
-	value, err := p.catalog.Validate(EngineModelGenerateResultSchema, resultRaw, OrdinaryLimit)
+	value, err := p.catalog.Validate(NativeModelResultSchema, resultRaw, OrdinaryLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -328,7 +328,7 @@ func (p *Protocol) ValidateModelExchange(policyRaw, requestRaw, resultRaw []byte
 // ModelDisposition does not authorize dispatch. Validate the bound exchange and
 // host receipt first. Unknown usage is preserved, never replaced by zero.
 func (p *Protocol) ModelDisposition(resultRaw []byte) (string, error) {
-	value, err := p.catalog.Validate(EngineModelGenerateResultSchema, resultRaw, OrdinaryLimit)
+	value, err := p.catalog.Validate(NativeModelResultSchema, resultRaw, OrdinaryLimit)
 	if err != nil {
 		return "", err
 	}
@@ -422,7 +422,7 @@ type ChatToolResult struct {
 // original order, including explicit invalid/not-executed tool results. Argument
 // strings remain opaque, so invalid local arguments can be corrected next turn.
 func (p *Protocol) ChatContinuation(resultRaw []byte, results []ChatToolResult) ([]byte, error) {
-	value, err := p.catalog.Validate(EngineModelGenerateResultSchema, resultRaw, OrdinaryLimit)
+	value, err := p.catalog.Validate(NativeModelResultSchema, resultRaw, OrdinaryLimit)
 	if err != nil {
 		return nil, err
 	}

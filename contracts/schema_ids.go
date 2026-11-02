@@ -111,9 +111,15 @@ const InputTreeManifestSchema = "urn:operator:schema:input-tree-manifest:v1alpha
 
 const ModelCodecPolicySchema = "urn:operator:schema:model-codec-policy:v1alpha1"
 
+const ModelContextBudgetSchema = "urn:operator:schema:model-context-budget:v1alpha1"
+
+const ModelContextLimitsSchema = "urn:operator:schema:model-context-limits:v1alpha1"
+
 const ModelToolArgumentsSchema = "urn:operator:schema:model-tool-arguments:v1alpha1"
 
 const ModelToolNotExecutedResultSchema = "urn:operator:schema:model-tool-not-executed-result:v1alpha1"
+
+const NativeModelResultSchema = "urn:operator:schema:native-model-result:v1alpha1"
 
 const ObservationSelectionSchema = "urn:operator:schema:observation-selection:v1alpha1"
 

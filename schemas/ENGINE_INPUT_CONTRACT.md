@@ -159,3 +159,7 @@ The shared [input fixtures](fixtures/engine-inputs.json) cover 90 cases in both
 languages, including source-byte preservation, launch mismatches, references and
 omissions, profile narrowing and budget consistency. Additional tests cover exact
 prompt byte boundaries, including multibyte UTF-8.
+
+The [model context contract](MODEL_CONTEXT_CONTRACT.md) defines frozen local allowances,
+validated response budgets, compact target references, selected tools and bounded
+read defaults for the current shared package.

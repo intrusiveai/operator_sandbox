@@ -222,3 +222,20 @@ installed package, use host credential/provider I/O and durable admission/usage
 records, and preserve correlated Harness dispatch. Integration checks MUST cover
 text/tool continuations, refusals, cancellation and ambiguous outcomes. A passing
 codec test does not establish live provider or model behavior.
+
+## Host context accounting
+
+A successful ordinary model result MUST include the closed `context_budget`
+object defined in `model-context-budget.schema.json`. Startup MUST include
+`model.context_limits`; its completion ceiling MUST match the native codec setting.
+The threshold MUST be positive and no greater than the prompt ceiling. The complete
+bound exchange validator MUST compare budget usage with normalized native metrics,
+completion with the original request, reservation with prompt ceiling plus requested
+completion, and warning/remaining prompt with the frozen limits. Remaining campaign
+counters are host-owned snapshots after settlement, retained on duplicate delivery.
+
+Native provider validation and probes use `native-model-result.schema.json` and
+`ValidateNativeModelExchange` / `validate_native_model_exchange`, before host
+accounting exists. This internal validation stage does not admit an older ordinary
+wire result: `engine-model-generate-result.schema.json` requires the budget object.
+Unknown native usage cannot produce a successful host budget snapshot.

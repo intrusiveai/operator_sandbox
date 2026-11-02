@@ -203,6 +203,32 @@
               "$ref": "urn:operator:schema:openai-responses-common:v1alpha1#/$defs/settings"
             }
           ]
+        },
+        "context_limits": {
+          "$ref": "urn:operator:schema:model-context-limits:v1alpha1"
+        },
+        "tool_selection": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "injection_surfaces": {
+              "type": "array",
+              "maxItems": 5,
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "database_response",
+                  "environment_state",
+                  "mcp_tool_result",
+                  "model_tool_result",
+                  "service_response"
+                ]
+              }
+            }
+          },
+          "required": [
+            "injection_surfaces"
+          ]
         }
       },
       "required": [
@@ -210,7 +236,9 @@
         "profile_id",
         "profile_digest",
         "model_id",
-        "features"
+        "features",
+        "context_limits",
+        "tool_selection"
       ],
       "allOf": [
         {

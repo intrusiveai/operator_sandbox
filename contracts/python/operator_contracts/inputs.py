@@ -1,6 +1,6 @@
 """Immutable launch inputs and exact prompt composition; no filesystem access."""
 import hashlib
-from .validation import ContractError
+from .validation import ContractError, ORDINARY_LIMIT
 from .startup import require, inventory_paths, check_skill_set, check_admission
 from .schema_ids import ENGINE_CONTEXT_SCHEMA, PROMPT_PROVENANCE_SCHEMA, SCENARIO_BUNDLE_SCHEMA
 
@@ -66,13 +66,25 @@ def validate_engine_context(protocol, raw):
     inventory_paths(c['references'])
     ids = {c['scenario_bundle']['entry_id'], c['prompt']['entry_id']}
     require(len(ids) == 2)
+    context_refs = {}
+    generated_ids = set()
     for e in c['references']:
-        require(e['entry_id'] not in ids and e['path'] == 'artifacts/sha256-' + e['digest'][7:])
+        if e['path'].startswith('context/'):
+            from .target_context import compact_target_context
+            from .model_tools import tool_guidance
+            from .canonical import _canonical_value, raw_digest
+            if not context_refs: _,context_refs=compact_target_context(protocol,_canonical_value(c['target'],ORDINARY_LIMIT))
+            content=context_refs.get(e['entry_id'])
+            if e['entry_id'].startswith('tool-guide:'):content=tool_guidance(protocol,e['entry_id'].removeprefix('tool-guide:'))
+            require(content is not None and e['entry_id'] not in ids)
+            require(e['digest']==raw_digest(content) and e['size_bytes']==len(content) and e['media_type']=='application/json' and e['path']=='context/'+raw_digest(content)[7:]+'.json')
+            generated_ids.add(e['entry_id'])
+        else:require(e['entry_id'] not in ids and e['path'] == 'artifacts/sha256-' + e['digest'][7:])
         ids.add(e['entry_id'])
     for key in ('artifact_bindings', 'omissions'):
         names = [item['artifact_id'] for item in c[key]]
         require(names == sorted(set(names)))
-    used, bound = set(), set()
+    used, bound = set(generated_ids), set()
     reference_ids = {e['entry_id'] for e in c['references']}
     for a in c['artifact_bindings']:
         require(a['entry_id'] in reference_ids)
@@ -92,6 +104,10 @@ def validate_engine_context(protocol, raw):
     for op in target['operations']:
         require(op['ref'] == 'operation:' + op['operation_id'])
     require(c['model']['features'] == ['text', 'function-tools'])
+    from .model import check_context_limits
+    m = c['model']; check_context_limits(m['context_limits'])
+    key = {'openai-chat-text-tools-v1':'max_completion_tokens','anthropic-messages-text-tools-v1':'max_tokens','bedrock-converse-text-tools-v1':'max_tokens'}.get(m['codec_id'],'max_output_tokens')
+    require('codec_settings' not in m or m['codec_settings'][key] == m['context_limits']['maximum_completion_tokens'])
     return c
 
 

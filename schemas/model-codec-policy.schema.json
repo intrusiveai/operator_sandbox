@@ -51,6 +51,9 @@
           },
           "minItems": 0,
           "maxItems": 128
+        },
+        "context_limits": {
+          "$ref": "urn:operator:schema:model-context-limits:v1alpha1"
         }
       },
       "required": [
@@ -122,6 +125,9 @@
           },
           "minItems": 0,
           "maxItems": 128
+        },
+        "context_limits": {
+          "$ref": "urn:operator:schema:model-context-limits:v1alpha1"
         }
       },
       "required": [
@@ -175,6 +181,9 @@
           },
           "minItems": 0,
           "maxItems": 128
+        },
+        "context_limits": {
+          "$ref": "urn:operator:schema:model-context-limits:v1alpha1"
         }
       },
       "required": [
@@ -282,6 +291,9 @@
           },
           "minItems": 0,
           "maxItems": 1
+        },
+        "context_limits": {
+          "$ref": "urn:operator:schema:model-context-limits:v1alpha1"
         }
       },
       "required": [
@@ -360,6 +372,9 @@
           },
           "minItems": 0,
           "maxItems": 128
+        },
+        "context_limits": {
+          "$ref": "urn:operator:schema:model-context-limits:v1alpha1"
         }
       },
       "required": [

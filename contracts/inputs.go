@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"strconv"
+	"strings"
 	"unicode/utf8"
 )
 
@@ -170,10 +171,30 @@ func (p *Protocol) ValidateEngineContext(raw []byte) (map[string]any, error) {
 	}
 	refIDs, used, bound := map[any]bool{}, map[any]bool{}, map[any]bool{}
 	total := int64(len(raw)) + number(scenario["size_bytes"]) + number(provenance["effective"].(map[string]any)["size_bytes"])
+	var contextRefs map[string][]byte
 	for _, value := range refs {
 		e := value.(map[string]any)
 		id := e["entry_id"]
-		if ids[id] || e["path"] != "artifacts/sha256-"+e["digest"].(string)[7:] {
+		if strings.HasPrefix(e["path"].(string), "context/") {
+			if contextRefs == nil {
+				targetRaw, _ := canonicalValue(c["target"], OrdinaryLimit)
+				_, contextRefs, err = p.CompactTargetContext(targetRaw)
+				if err != nil {
+					return nil, err
+				}
+			}
+			content := contextRefs[id.(string)]
+			if strings.HasPrefix(id.(string), "tool-guide:") {
+				content, err = p.ToolGuidance(strings.TrimPrefix(id.(string), "tool-guide:"))
+				if err != nil {
+					return nil, err
+				}
+			}
+			if content == nil || e["digest"] != RawDigest(content) || number(e["size_bytes"]) != int64(len(content)) || e["media_type"] != "application/json" || e["path"] != "context/"+RawDigest(content)[7:]+".json" || ids[id] {
+				return nil, ErrProtocol
+			}
+			used[id] = true
+		} else if ids[id] || e["path"] != "artifacts/sha256-"+e["digest"].(string)[7:] {
 			return nil, ErrProtocol
 		}
 		ids[id], refIDs[id] = true, true
@@ -236,6 +257,22 @@ func (p *Protocol) ValidateEngineContext(raw []byte) (map[string]any, error) {
 		}
 	}
 	if !wireEqual(c["model"].(map[string]any)["features"], []any{"text", "function-tools"}) {
+		return nil, ErrProtocol
+	}
+	model := c["model"].(map[string]any)
+	limits, err := contextLimits(model["context_limits"])
+	if err != nil {
+		return nil, err
+	}
+	settings, hasSettings := model["codec_settings"].(map[string]any)
+	key := "max_output_tokens"
+	switch model["codec_id"] {
+	case "openai-chat-text-tools-v1":
+		key = "max_completion_tokens"
+	case anthropicCodec, bedrockCodec:
+		key = "max_tokens"
+	}
+	if hasSettings && number(settings[key]) != limits.MaximumCompletionTokens {
 		return nil, ErrProtocol
 	}
 	return c, nil

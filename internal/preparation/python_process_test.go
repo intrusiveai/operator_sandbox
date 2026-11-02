@@ -111,7 +111,7 @@ func newProcessRun(t *testing.T, tc processCase) *processRun {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	t.Cleanup(cancel)
 	pkg := filepath.Join(t.TempDir(), "contracts")
-	report, err := contractpublish.Build(ctx, operator, pkg, "0.3.0")
+	report, err := contractpublish.Build(ctx, operator, pkg, "0.4.0")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -196,7 +196,7 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 			}
 			parent := t.TempDir()
 			_ = os.Chmod(parent, 0700)
-			tree, err := staging.Create(ctx, input.Protocol, parent, staging.Manifests{InputTree: launch.InputTree, SkillSet: launch.SkillSet, Skills: launch.Skills}, map[string][]byte{"input/run-context.json": launch.EngineContext, "input/scenario-bundle.json": launch.ScenarioBundle, "input/system-prompt.txt": launch.Prompt})
+			tree, err := staging.Create(ctx, input.Protocol, parent, staging.Manifests{InputTree: launch.InputTree, SkillSet: launch.SkillSet, Skills: launch.Skills}, stagedContextContents(target, launch))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -372,4 +372,12 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 
 		})
 	}
+}
+
+func stagedContextContents(target *preparation.Target, launch campaign.LaunchInputs) map[string][]byte {
+	contents := target.ReferenceContents()
+	contents["input/run-context.json"] = launch.EngineContext
+	contents["input/scenario-bundle.json"] = launch.ScenarioBundle
+	contents["input/system-prompt.txt"] = launch.Prompt
+	return contents
 }

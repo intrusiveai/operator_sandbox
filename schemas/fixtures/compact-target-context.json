@@ -1,0 +1,2101 @@
+[
+  {
+    "name": "capability-chain",
+    "target": {
+      "schema_version": "operator.dev/target-capability-manifest/v1alpha1",
+      "source": {
+        "adapter": "interceptor/v1",
+        "schema_version": "interceptor.dev/capability-manifest/v1alpha3",
+        "capability_source_digest": "sha256:d948076ee132b1f34d6ffb4e22059c664e1f1a985cf64ade37822a29fc0c4de1",
+        "raw_digest": "sha256:5ac52ab281acb27c9c42a16092abc31a018163f2bd2bce6d30e58beb99e3b1f3"
+      },
+      "capabilities": {
+        "target_id": "delivery-example",
+        "adapter": "interceptor/v1",
+        "operations": [
+          {
+            "ref": "operation:invoke",
+            "operation_id": "invoke",
+            "delivery_status": "described",
+            "maximum_input_bytes": 65536,
+            "delivery": {
+              "description": "Submit a task to the synthetic agent",
+              "input": {
+                "media_type": "application/json",
+                "encoding": "json",
+                "max_bytes": 65536,
+                "basis": "synthetic",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "query": {
+                      "description": "Task text for the agent",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                }
+              },
+              "output": {
+                "media_type": "application/json",
+                "encoding": "json",
+                "max_bytes": 65536,
+                "basis": "unknown"
+              },
+              "examples": [
+                {
+                  "id": "benign",
+                  "input": {
+                    "query": "Summarize ticket T-1"
+                  },
+                  "output": {
+                    "answer": "Illustrative summary"
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "actions": [
+          {
+            "ref": "action:injection:environment_state",
+            "action_type": "interceptor.injection/v1alpha1",
+            "surface": "environment_state",
+            "scopes": [
+              "next_turn",
+              "once",
+              "standing"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "selector_fields": [
+              "collection",
+              "file_namespace",
+              "key",
+              "path",
+              "relative_path",
+              "service",
+              "turn_id"
+            ],
+            "carriers": [
+              "managed_service_state",
+              "mutable_file"
+            ]
+          },
+          {
+            "ref": "action:injection:mcp_tool_result",
+            "action_type": "interceptor.injection/v1alpha1",
+            "surface": "mcp_tool_result",
+            "scopes": [
+              "once",
+              "standing"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "selector_fields": [
+              "arguments_contain",
+              "arguments_equal",
+              "arguments_json_pointer",
+              "call_ordinal",
+              "service",
+              "tool_name",
+              "turn_id"
+            ],
+            "carriers": [
+              "mcp_tools_call_result"
+            ]
+          },
+          {
+            "ref": "action:injection:model_tool_result",
+            "action_type": "interceptor.injection/v1alpha1",
+            "surface": "model_tool_result",
+            "scopes": [
+              "next_turn",
+              "once",
+              "standing"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "selector_fields": [
+              "arguments_contain",
+              "arguments_equal",
+              "arguments_json_pointer",
+              "call_ordinal",
+              "tool_name",
+              "turn_id"
+            ],
+            "carriers": [
+              "model_client_tool_result"
+            ]
+          },
+          {
+            "ref": "action:injection:service_response",
+            "action_type": "interceptor.injection/v1alpha1",
+            "surface": "service_response",
+            "scopes": [
+              "once",
+              "standing"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "selector_fields": [
+              "call_ordinal",
+              "headers_equal",
+              "method",
+              "path",
+              "query_equal",
+              "request_body_contain",
+              "request_body_equal",
+              "request_body_json_pointer",
+              "service",
+              "turn_id"
+            ],
+            "carriers": [
+              "dynamic_attacker_sink_response",
+              "managed_http_response"
+            ]
+          }
+        ],
+        "services": [
+          {
+            "ref": "service:tickets",
+            "service_id": "tickets",
+            "injection_surfaces": [
+              "environment_state",
+              "mcp_tool_result",
+              "service_response"
+            ],
+            "kind": "mcp_http",
+            "role": "environment",
+            "transports": [
+              "http"
+            ],
+            "implementation": "generic",
+            "mcp": true,
+            "endpoints": [
+              {
+                "id": "get_ticket",
+                "kind": "mcp-tool",
+                "collection": "tickets",
+                "delivery": {
+                  "description": "Read a synthetic ticket record",
+                  "input": {
+                    "media_type": "application/json",
+                    "encoding": "json",
+                    "max_bytes": 1048576,
+                    "basis": "synthetic",
+                    "schema": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "id": {
+                          "description": "Ticket key",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "output": {
+                    "media_type": "application/json",
+                    "encoding": "json",
+                    "max_bytes": 1048576,
+                    "basis": "synthetic",
+                    "schema": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "description": {
+                          "description": "Benign customer-supplied ticket text",
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "description",
+                        "status"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "examples": [
+                    {
+                      "id": "benign",
+                      "input": {
+                        "id": "T-1"
+                      },
+                      "output": {
+                        "description": "An illustrative ticket",
+                        "id": "T-1",
+                        "status": "open"
+                      }
+                    }
+                  ]
+                },
+                "injection_root": "mcp-tool-result",
+                "output_pointer": "/structuredContent",
+                "maximum_request_bytes": 1048576
+              },
+              {
+                "id": "search_notes",
+                "kind": "mcp-tool",
+                "delivery": {
+                  "description": "Search synthetic notes; output structure is not guaranteed",
+                  "input": {
+                    "media_type": "application/json",
+                    "encoding": "json",
+                    "max_bytes": 1048576,
+                    "basis": "observed",
+                    "schema": {
+                      "properties": {
+                        "query": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "query"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "output": {
+                    "media_type": "application/json",
+                    "encoding": "json",
+                    "max_bytes": 1048576,
+                    "basis": "unknown"
+                  }
+                },
+                "injection_root": "mcp-tool-result",
+                "output_pointer": "/structuredContent",
+                "maximum_request_bytes": 1048576
+              }
+            ]
+          }
+        ],
+        "file_namespaces": [
+          {
+            "ref": "file_namespace:records",
+            "namespace_id": "records",
+            "allow_create": false
+          }
+        ],
+        "evidence_classes": [
+          {
+            "ref": "evidence:target_output",
+            "feedback_kind": "target_output",
+            "profiles": [
+              "black-box"
+            ]
+          }
+        ],
+        "features": [],
+        "feedback_profiles": [
+          "black-box"
+        ]
+      },
+      "capability_projection_digest": "sha256:c35a54f77e1625f629071f6c29a7025a36e0f802eb980d1e7ff2e3dd15fedeca"
+    },
+    "view": {
+      "capabilities": {
+        "actions": [
+          {
+            "action_type": "interceptor.injection/v1alpha1",
+            "carriers": [
+              "managed_service_state",
+              "mutable_file"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "ref": "action:injection:environment_state",
+            "scopes": [
+              "next_turn",
+              "once",
+              "standing"
+            ],
+            "selector_fields": [
+              "collection",
+              "file_namespace",
+              "key",
+              "path",
+              "relative_path",
+              "service",
+              "turn_id"
+            ],
+            "surface": "environment_state"
+          },
+          {
+            "action_type": "interceptor.injection/v1alpha1",
+            "carriers": [
+              "mcp_tools_call_result"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "ref": "action:injection:mcp_tool_result",
+            "scopes": [
+              "once",
+              "standing"
+            ],
+            "selector_fields": [
+              "arguments_contain",
+              "arguments_equal",
+              "arguments_json_pointer",
+              "call_ordinal",
+              "service",
+              "tool_name",
+              "turn_id"
+            ],
+            "surface": "mcp_tool_result"
+          },
+          {
+            "action_type": "interceptor.injection/v1alpha1",
+            "carriers": [
+              "model_client_tool_result"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "ref": "action:injection:model_tool_result",
+            "scopes": [
+              "next_turn",
+              "once",
+              "standing"
+            ],
+            "selector_fields": [
+              "arguments_contain",
+              "arguments_equal",
+              "arguments_json_pointer",
+              "call_ordinal",
+              "tool_name",
+              "turn_id"
+            ],
+            "surface": "model_tool_result"
+          },
+          {
+            "action_type": "interceptor.injection/v1alpha1",
+            "carriers": [
+              "dynamic_attacker_sink_response",
+              "managed_http_response"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "ref": "action:injection:service_response",
+            "scopes": [
+              "once",
+              "standing"
+            ],
+            "selector_fields": [
+              "call_ordinal",
+              "headers_equal",
+              "method",
+              "path",
+              "query_equal",
+              "request_body_contain",
+              "request_body_equal",
+              "request_body_json_pointer",
+              "service",
+              "turn_id"
+            ],
+            "surface": "service_response"
+          }
+        ],
+        "adapter": "interceptor/v1",
+        "evidence_classes": [
+          {
+            "feedback_kind": "target_output",
+            "profiles": [
+              "black-box"
+            ],
+            "ref": "evidence:target_output"
+          }
+        ],
+        "features": [],
+        "feedback_profiles": [
+          "black-box"
+        ],
+        "file_namespaces": [
+          {
+            "details_reference": "target-841f380798f5e71883ba189cfb6d2f1fafd9f9c1cebf0c1611a214260454eefb",
+            "namespace_id": "records",
+            "ref": "file_namespace:records"
+          }
+        ],
+        "operations": [
+          {
+            "delivery": {
+              "description": "Submit a task to the synthetic agent",
+              "input": {
+                "basis": "synthetic",
+                "encoding": "json",
+                "max_bytes": 65536,
+                "media_type": "application/json",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "query": {
+                      "description": "Task text for the agent",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "delivery_status": "described",
+            "details_reference": "target-799b9ad402bd430ac2d1d9257a11812bf6f293060703f1b55138a06b136e93ad",
+            "maximum_input_bytes": 65536,
+            "operation_id": "invoke",
+            "ref": "operation:invoke"
+          }
+        ],
+        "services": [
+          {
+            "details_reference": "target-d2cd90860592412c325fc83d7ae0154f7c62a14397aeb75bb52849e1056062cc",
+            "endpoints": [
+              {
+                "collection": "tickets",
+                "details_reference": "target-5330d50d8102580f5c1dde32825f043dbf4cae11f6656c4d5bd4d1b9b5f6ea54",
+                "id": "get_ticket",
+                "kind": "mcp-tool"
+              },
+              {
+                "details_reference": "target-e87f6eb6d3dbef1f25e2426220ca5abd5aa66322eddaa128f9d77abe64c849e3",
+                "id": "search_notes",
+                "kind": "mcp-tool"
+              }
+            ],
+            "injection_surfaces": [
+              "environment_state",
+              "mcp_tool_result",
+              "service_response"
+            ],
+            "kind": "mcp_http",
+            "ref": "service:tickets",
+            "role": "environment",
+            "service_id": "tickets",
+            "transports": [
+              "http"
+            ]
+          }
+        ],
+        "target_id": "delivery-example"
+      },
+      "capability_projection_digest": "sha256:c35a54f77e1625f629071f6c29a7025a36e0f802eb980d1e7ff2e3dd15fedeca",
+      "details_deferred": true,
+      "schema_version": "operator.dev/target-capability-manifest/v1alpha1",
+      "source": {
+        "adapter": "interceptor/v1",
+        "capability_source_digest": "sha256:d948076ee132b1f34d6ffb4e22059c664e1f1a985cf64ade37822a29fc0c4de1",
+        "raw_digest": "sha256:5ac52ab281acb27c9c42a16092abc31a018163f2bd2bce6d30e58beb99e3b1f3",
+        "schema_version": "interceptor.dev/capability-manifest/v1alpha3"
+      }
+    },
+    "references": {
+      "target-799b9ad402bd430ac2d1d9257a11812bf6f293060703f1b55138a06b136e93ad": {
+        "delivery": {
+          "description": "Submit a task to the synthetic agent",
+          "examples": [
+            {
+              "id": "benign",
+              "input": {
+                "query": "Summarize ticket T-1"
+              },
+              "output": {
+                "answer": "Illustrative summary"
+              }
+            }
+          ],
+          "input": {
+            "basis": "synthetic",
+            "encoding": "json",
+            "max_bytes": 65536,
+            "media_type": "application/json",
+            "schema": {
+              "additionalProperties": false,
+              "properties": {
+                "query": {
+                  "description": "Task text for the agent",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "query"
+              ],
+              "type": "object"
+            }
+          },
+          "output": {
+            "basis": "unknown",
+            "encoding": "json",
+            "max_bytes": 65536,
+            "media_type": "application/json"
+          }
+        },
+        "delivery_status": "described",
+        "maximum_input_bytes": 65536,
+        "operation_id": "invoke",
+        "ref": "operation:invoke"
+      },
+      "target-d2cd90860592412c325fc83d7ae0154f7c62a14397aeb75bb52849e1056062cc": {
+        "endpoints": [
+          {
+            "collection": "tickets",
+            "delivery": {
+              "description": "Read a synthetic ticket record",
+              "examples": [
+                {
+                  "id": "benign",
+                  "input": {
+                    "id": "T-1"
+                  },
+                  "output": {
+                    "description": "An illustrative ticket",
+                    "id": "T-1",
+                    "status": "open"
+                  }
+                }
+              ],
+              "input": {
+                "basis": "synthetic",
+                "encoding": "json",
+                "max_bytes": 1048576,
+                "media_type": "application/json",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "description": "Ticket key",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "type": "object"
+                }
+              },
+              "output": {
+                "basis": "synthetic",
+                "encoding": "json",
+                "max_bytes": 1048576,
+                "media_type": "application/json",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "description": {
+                      "description": "Benign customer-supplied ticket text",
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "description",
+                    "status"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "id": "get_ticket",
+            "injection_root": "mcp-tool-result",
+            "kind": "mcp-tool",
+            "maximum_request_bytes": 1048576,
+            "output_pointer": "/structuredContent"
+          },
+          {
+            "delivery": {
+              "description": "Search synthetic notes; output structure is not guaranteed",
+              "input": {
+                "basis": "observed",
+                "encoding": "json",
+                "max_bytes": 1048576,
+                "media_type": "application/json",
+                "schema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                }
+              },
+              "output": {
+                "basis": "unknown",
+                "encoding": "json",
+                "max_bytes": 1048576,
+                "media_type": "application/json"
+              }
+            },
+            "id": "search_notes",
+            "injection_root": "mcp-tool-result",
+            "kind": "mcp-tool",
+            "maximum_request_bytes": 1048576,
+            "output_pointer": "/structuredContent"
+          }
+        ],
+        "implementation": "generic",
+        "injection_surfaces": [
+          "environment_state",
+          "mcp_tool_result",
+          "service_response"
+        ],
+        "kind": "mcp_http",
+        "mcp": true,
+        "ref": "service:tickets",
+        "role": "environment",
+        "service_id": "tickets",
+        "transports": [
+          "http"
+        ]
+      },
+      "target-5330d50d8102580f5c1dde32825f043dbf4cae11f6656c4d5bd4d1b9b5f6ea54": {
+        "resource": {
+          "collection": "tickets",
+          "delivery": {
+            "description": "Read a synthetic ticket record",
+            "examples": [
+              {
+                "id": "benign",
+                "input": {
+                  "id": "T-1"
+                },
+                "output": {
+                  "description": "An illustrative ticket",
+                  "id": "T-1",
+                  "status": "open"
+                }
+              }
+            ],
+            "input": {
+              "basis": "synthetic",
+              "encoding": "json",
+              "max_bytes": 1048576,
+              "media_type": "application/json",
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "description": "Ticket key",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id"
+                ],
+                "type": "object"
+              }
+            },
+            "output": {
+              "basis": "synthetic",
+              "encoding": "json",
+              "max_bytes": 1048576,
+              "media_type": "application/json",
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "description": {
+                    "description": "Benign customer-supplied ticket text",
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "description",
+                  "status"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "id": "get_ticket",
+          "injection_root": "mcp-tool-result",
+          "kind": "mcp-tool",
+          "maximum_request_bytes": 1048576,
+          "output_pointer": "/structuredContent"
+        },
+        "resource_kind": "endpoints",
+        "service_id": "tickets"
+      },
+      "target-e87f6eb6d3dbef1f25e2426220ca5abd5aa66322eddaa128f9d77abe64c849e3": {
+        "resource": {
+          "delivery": {
+            "description": "Search synthetic notes; output structure is not guaranteed",
+            "input": {
+              "basis": "observed",
+              "encoding": "json",
+              "max_bytes": 1048576,
+              "media_type": "application/json",
+              "schema": {
+                "properties": {
+                  "query": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "query"
+                ],
+                "type": "object"
+              }
+            },
+            "output": {
+              "basis": "unknown",
+              "encoding": "json",
+              "max_bytes": 1048576,
+              "media_type": "application/json"
+            }
+          },
+          "id": "search_notes",
+          "injection_root": "mcp-tool-result",
+          "kind": "mcp-tool",
+          "maximum_request_bytes": 1048576,
+          "output_pointer": "/structuredContent"
+        },
+        "resource_kind": "endpoints",
+        "service_id": "tickets"
+      },
+      "target-841f380798f5e71883ba189cfb6d2f1fafd9f9c1cebf0c1611a214260454eefb": {
+        "allow_create": false,
+        "namespace_id": "records",
+        "ref": "file_namespace:records"
+      }
+    }
+  },
+  {
+    "name": "postgresql-capability-chain",
+    "target": {
+      "schema_version": "operator.dev/target-capability-manifest/v1alpha1",
+      "source": {
+        "adapter": "interceptor/v1",
+        "schema_version": "interceptor.dev/capability-manifest/v1alpha3",
+        "capability_source_digest": "sha256:36ffaa718abba75bbd260ada3b5c88e195c8abb43da1f78dd2c25913aa23a8b9",
+        "raw_digest": "sha256:d05b67b8b9a2cd95918be7fff7fc3d8a93a433b1ea9f67eb932e5ddcb29d4716"
+      },
+      "capabilities": {
+        "target_id": "delivery-example",
+        "adapter": "interceptor/v1",
+        "operations": [
+          {
+            "ref": "operation:ask",
+            "operation_id": "ask",
+            "delivery_status": "described",
+            "maximum_input_bytes": 65536,
+            "delivery": {
+              "description": "Invoke the seeded PostgreSQL support application",
+              "input": {
+                "media_type": "application/json",
+                "encoding": "json",
+                "max_bytes": 65536,
+                "basis": "synthetic",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "type": "object"
+                }
+              },
+              "output": {
+                "media_type": "application/json",
+                "encoding": "json",
+                "max_bytes": 65536,
+                "basis": "unknown"
+              }
+            }
+          }
+        ],
+        "actions": [
+          {
+            "ref": "action:injection:database_response",
+            "action_type": "interceptor.injection/v1alpha1",
+            "surface": "database_response",
+            "scopes": [
+              "once",
+              "standing"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "selector_fields": [
+              "call_ordinal",
+              "request_body_contain",
+              "request_body_equal",
+              "request_body_json_pointer",
+              "service"
+            ],
+            "carriers": [
+              "postgresql_result"
+            ]
+          },
+          {
+            "ref": "action:injection:environment_state",
+            "action_type": "interceptor.injection/v1alpha1",
+            "surface": "environment_state",
+            "scopes": [
+              "next_turn",
+              "once",
+              "standing"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "selector_fields": [
+              "collection",
+              "file_namespace",
+              "key",
+              "path",
+              "relative_path",
+              "service",
+              "turn_id"
+            ],
+            "carriers": [
+              "managed_service_state",
+              "mutable_file"
+            ]
+          },
+          {
+            "ref": "action:injection:model_tool_result",
+            "action_type": "interceptor.injection/v1alpha1",
+            "surface": "model_tool_result",
+            "scopes": [
+              "next_turn",
+              "once",
+              "standing"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "selector_fields": [
+              "arguments_contain",
+              "arguments_equal",
+              "arguments_json_pointer",
+              "call_ordinal",
+              "tool_name",
+              "turn_id"
+            ],
+            "carriers": [
+              "model_client_tool_result"
+            ]
+          }
+        ],
+        "services": [
+          {
+            "ref": "service:database",
+            "service_id": "database",
+            "injection_surfaces": [
+              "database_response",
+              "environment_state"
+            ],
+            "kind": "postgresql",
+            "role": "environment",
+            "transports": [
+              "postgresql+tls"
+            ],
+            "creatable_collections": [
+              {
+                "collection": "refunds",
+                "max_resources": 10
+              }
+            ],
+            "database_tables": [
+              {
+                "id": "documents",
+                "keys": [
+                  "id"
+                ],
+                "fields": [
+                  "body",
+                  "metadata",
+                  "embedding",
+                  "author_id"
+                ],
+                "allow_create": false
+              },
+              {
+                "id": "refunds",
+                "keys": [
+                  "id"
+                ],
+                "fields": [
+                  "amount"
+                ],
+                "allow_create": true,
+                "max_records": 10
+              }
+            ]
+          }
+        ],
+        "file_namespaces": [],
+        "evidence_classes": [
+          {
+            "ref": "evidence:injection_delivery",
+            "feedback_kind": "injection_delivery",
+            "profiles": [
+              "oracle-assisted"
+            ]
+          },
+          {
+            "ref": "evidence:operation_error",
+            "feedback_kind": "operation_error",
+            "profiles": [
+              "oracle-assisted"
+            ]
+          },
+          {
+            "ref": "evidence:oracle_outcome",
+            "feedback_kind": "oracle_outcome",
+            "profiles": [
+              "oracle-assisted"
+            ]
+          },
+          {
+            "ref": "evidence:target_output",
+            "feedback_kind": "target_output",
+            "profiles": [
+              "black-box",
+              "oracle-assisted"
+            ]
+          }
+        ],
+        "features": [
+          "feature:snapshots"
+        ],
+        "feedback_profiles": [
+          "black-box",
+          "oracle-assisted"
+        ]
+      },
+      "capability_projection_digest": "sha256:78ec285a2f108ce09d667b296457134eb93000b4e961fb9d19812138c4d62d1d"
+    },
+    "view": {
+      "capabilities": {
+        "actions": [
+          {
+            "action_type": "interceptor.injection/v1alpha1",
+            "carriers": [
+              "postgresql_result"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "ref": "action:injection:database_response",
+            "scopes": [
+              "once",
+              "standing"
+            ],
+            "selector_fields": [
+              "call_ordinal",
+              "request_body_contain",
+              "request_body_equal",
+              "request_body_json_pointer",
+              "service"
+            ],
+            "surface": "database_response"
+          },
+          {
+            "action_type": "interceptor.injection/v1alpha1",
+            "carriers": [
+              "managed_service_state",
+              "mutable_file"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "ref": "action:injection:environment_state",
+            "scopes": [
+              "next_turn",
+              "once",
+              "standing"
+            ],
+            "selector_fields": [
+              "collection",
+              "file_namespace",
+              "key",
+              "path",
+              "relative_path",
+              "service",
+              "turn_id"
+            ],
+            "surface": "environment_state"
+          },
+          {
+            "action_type": "interceptor.injection/v1alpha1",
+            "carriers": [
+              "model_client_tool_result"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "ref": "action:injection:model_tool_result",
+            "scopes": [
+              "next_turn",
+              "once",
+              "standing"
+            ],
+            "selector_fields": [
+              "arguments_contain",
+              "arguments_equal",
+              "arguments_json_pointer",
+              "call_ordinal",
+              "tool_name",
+              "turn_id"
+            ],
+            "surface": "model_tool_result"
+          }
+        ],
+        "adapter": "interceptor/v1",
+        "evidence_classes": [
+          {
+            "feedback_kind": "injection_delivery",
+            "profiles": [
+              "oracle-assisted"
+            ],
+            "ref": "evidence:injection_delivery"
+          },
+          {
+            "feedback_kind": "operation_error",
+            "profiles": [
+              "oracle-assisted"
+            ],
+            "ref": "evidence:operation_error"
+          },
+          {
+            "feedback_kind": "oracle_outcome",
+            "profiles": [
+              "oracle-assisted"
+            ],
+            "ref": "evidence:oracle_outcome"
+          },
+          {
+            "feedback_kind": "target_output",
+            "profiles": [
+              "black-box",
+              "oracle-assisted"
+            ],
+            "ref": "evidence:target_output"
+          }
+        ],
+        "features": [
+          "feature:snapshots"
+        ],
+        "feedback_profiles": [
+          "black-box",
+          "oracle-assisted"
+        ],
+        "file_namespaces": [],
+        "operations": [
+          {
+            "delivery": {
+              "description": "Invoke the seeded PostgreSQL support application",
+              "input": {
+                "basis": "synthetic",
+                "encoding": "json",
+                "max_bytes": 65536,
+                "media_type": "application/json",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "delivery_status": "described",
+            "details_reference": "target-a6827c1a92f45f81a148358476516270fc39b11a8afbc8bb6c2416916cf86e89",
+            "maximum_input_bytes": 65536,
+            "operation_id": "ask",
+            "ref": "operation:ask"
+          }
+        ],
+        "services": [
+          {
+            "creatable_collections": [
+              {
+                "collection": "refunds",
+                "details_reference": "target-83ce50c1dfa0bf81b7c8d74c4a25fd310dbc81a000d8ec998544d19cf40fa174"
+              }
+            ],
+            "database_tables": [
+              {
+                "details_reference": "target-4208e3905dd6876abed0100eaa96ae37c24b34f97f2bafc78c4e5f727032a46d",
+                "id": "documents"
+              },
+              {
+                "details_reference": "target-814671847aebf2c38eaa69d4acde153b0a27c35c32dd6c16deb31a426678ecea",
+                "id": "refunds"
+              }
+            ],
+            "details_reference": "target-316a22f659345729ab68fdcbc9bd8363fbaa082bd5165434a6e04a9a13100de5",
+            "injection_surfaces": [
+              "database_response",
+              "environment_state"
+            ],
+            "kind": "postgresql",
+            "ref": "service:database",
+            "role": "environment",
+            "service_id": "database",
+            "transports": [
+              "postgresql+tls"
+            ]
+          }
+        ],
+        "target_id": "delivery-example"
+      },
+      "capability_projection_digest": "sha256:78ec285a2f108ce09d667b296457134eb93000b4e961fb9d19812138c4d62d1d",
+      "details_deferred": true,
+      "schema_version": "operator.dev/target-capability-manifest/v1alpha1",
+      "source": {
+        "adapter": "interceptor/v1",
+        "capability_source_digest": "sha256:36ffaa718abba75bbd260ada3b5c88e195c8abb43da1f78dd2c25913aa23a8b9",
+        "raw_digest": "sha256:d05b67b8b9a2cd95918be7fff7fc3d8a93a433b1ea9f67eb932e5ddcb29d4716",
+        "schema_version": "interceptor.dev/capability-manifest/v1alpha3"
+      }
+    },
+    "references": {
+      "target-a6827c1a92f45f81a148358476516270fc39b11a8afbc8bb6c2416916cf86e89": {
+        "delivery": {
+          "description": "Invoke the seeded PostgreSQL support application",
+          "input": {
+            "basis": "synthetic",
+            "encoding": "json",
+            "max_bytes": 65536,
+            "media_type": "application/json",
+            "schema": {
+              "additionalProperties": false,
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "message"
+              ],
+              "type": "object"
+            }
+          },
+          "output": {
+            "basis": "unknown",
+            "encoding": "json",
+            "max_bytes": 65536,
+            "media_type": "application/json"
+          }
+        },
+        "delivery_status": "described",
+        "maximum_input_bytes": 65536,
+        "operation_id": "ask",
+        "ref": "operation:ask"
+      },
+      "target-316a22f659345729ab68fdcbc9bd8363fbaa082bd5165434a6e04a9a13100de5": {
+        "creatable_collections": [
+          {
+            "collection": "refunds",
+            "max_resources": 10
+          }
+        ],
+        "database_tables": [
+          {
+            "allow_create": false,
+            "fields": [
+              "body",
+              "metadata",
+              "embedding",
+              "author_id"
+            ],
+            "id": "documents",
+            "keys": [
+              "id"
+            ]
+          },
+          {
+            "allow_create": true,
+            "fields": [
+              "amount"
+            ],
+            "id": "refunds",
+            "keys": [
+              "id"
+            ],
+            "max_records": 10
+          }
+        ],
+        "injection_surfaces": [
+          "database_response",
+          "environment_state"
+        ],
+        "kind": "postgresql",
+        "ref": "service:database",
+        "role": "environment",
+        "service_id": "database",
+        "transports": [
+          "postgresql+tls"
+        ]
+      },
+      "target-4208e3905dd6876abed0100eaa96ae37c24b34f97f2bafc78c4e5f727032a46d": {
+        "resource": {
+          "allow_create": false,
+          "fields": [
+            "body",
+            "metadata",
+            "embedding",
+            "author_id"
+          ],
+          "id": "documents",
+          "keys": [
+            "id"
+          ]
+        },
+        "resource_kind": "database_tables",
+        "service_id": "database"
+      },
+      "target-814671847aebf2c38eaa69d4acde153b0a27c35c32dd6c16deb31a426678ecea": {
+        "resource": {
+          "allow_create": true,
+          "fields": [
+            "amount"
+          ],
+          "id": "refunds",
+          "keys": [
+            "id"
+          ],
+          "max_records": 10
+        },
+        "resource_kind": "database_tables",
+        "service_id": "database"
+      },
+      "target-83ce50c1dfa0bf81b7c8d74c4a25fd310dbc81a000d8ec998544d19cf40fa174": {
+        "resource": {
+          "collection": "refunds",
+          "max_resources": 10
+        },
+        "resource_kind": "creatable_collections",
+        "service_id": "database"
+      }
+    }
+  },
+  {
+    "name": "wide-table-context",
+    "target": {
+      "schema_version": "operator.dev/target-capability-manifest/v1alpha1",
+      "source": {
+        "adapter": "interceptor/v1",
+        "schema_version": "interceptor.dev/capability-manifest/v1alpha3",
+        "capability_source_digest": "sha256:36ffaa718abba75bbd260ada3b5c88e195c8abb43da1f78dd2c25913aa23a8b9",
+        "raw_digest": "sha256:d05b67b8b9a2cd95918be7fff7fc3d8a93a433b1ea9f67eb932e5ddcb29d4716"
+      },
+      "capabilities": {
+        "target_id": "delivery-example",
+        "adapter": "interceptor/v1",
+        "operations": [
+          {
+            "ref": "operation:ask",
+            "operation_id": "ask",
+            "delivery_status": "described",
+            "maximum_input_bytes": 65536,
+            "delivery": {
+              "description": "Invoke the seeded PostgreSQL support application",
+              "input": {
+                "media_type": "application/json",
+                "encoding": "json",
+                "max_bytes": 65536,
+                "basis": "synthetic",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "type": "object"
+                }
+              },
+              "output": {
+                "media_type": "application/json",
+                "encoding": "json",
+                "max_bytes": 65536,
+                "basis": "unknown"
+              }
+            }
+          }
+        ],
+        "actions": [
+          {
+            "ref": "action:injection:database_response",
+            "action_type": "interceptor.injection/v1alpha1",
+            "surface": "database_response",
+            "scopes": [
+              "once",
+              "standing"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "selector_fields": [
+              "call_ordinal",
+              "request_body_contain",
+              "request_body_equal",
+              "request_body_json_pointer",
+              "service"
+            ],
+            "carriers": [
+              "postgresql_result"
+            ]
+          },
+          {
+            "ref": "action:injection:environment_state",
+            "action_type": "interceptor.injection/v1alpha1",
+            "surface": "environment_state",
+            "scopes": [
+              "next_turn",
+              "once",
+              "standing"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "selector_fields": [
+              "collection",
+              "file_namespace",
+              "key",
+              "path",
+              "relative_path",
+              "service",
+              "turn_id"
+            ],
+            "carriers": [
+              "managed_service_state",
+              "mutable_file"
+            ]
+          },
+          {
+            "ref": "action:injection:model_tool_result",
+            "action_type": "interceptor.injection/v1alpha1",
+            "surface": "model_tool_result",
+            "scopes": [
+              "next_turn",
+              "once",
+              "standing"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "selector_fields": [
+              "arguments_contain",
+              "arguments_equal",
+              "arguments_json_pointer",
+              "call_ordinal",
+              "tool_name",
+              "turn_id"
+            ],
+            "carriers": [
+              "model_client_tool_result"
+            ]
+          }
+        ],
+        "services": [
+          {
+            "ref": "service:database",
+            "service_id": "database",
+            "injection_surfaces": [
+              "database_response",
+              "environment_state"
+            ],
+            "kind": "postgresql",
+            "role": "environment",
+            "transports": [
+              "postgresql+tls"
+            ],
+            "creatable_collections": [
+              {
+                "collection": "refunds",
+                "max_resources": 10
+              }
+            ],
+            "database_tables": [
+              {
+                "id": "documents",
+                "keys": [
+                  "id"
+                ],
+                "fields": [
+                  "column_0",
+                  "column_1",
+                  "column_2",
+                  "column_3",
+                  "column_4",
+                  "column_5",
+                  "column_6",
+                  "column_7",
+                  "column_8",
+                  "column_9",
+                  "column_10",
+                  "column_11",
+                  "column_12",
+                  "column_13",
+                  "column_14",
+                  "column_15",
+                  "column_16",
+                  "column_17",
+                  "column_18",
+                  "column_19",
+                  "column_20",
+                  "column_21",
+                  "column_22",
+                  "column_23",
+                  "column_24",
+                  "column_25",
+                  "column_26",
+                  "column_27",
+                  "column_28",
+                  "column_29",
+                  "column_30",
+                  "column_31",
+                  "column_32",
+                  "column_33",
+                  "column_34",
+                  "column_35",
+                  "column_36",
+                  "column_37",
+                  "column_38",
+                  "column_39",
+                  "column_40",
+                  "column_41",
+                  "column_42",
+                  "column_43",
+                  "column_44",
+                  "column_45",
+                  "column_46",
+                  "column_47",
+                  "column_48",
+                  "column_49",
+                  "column_50",
+                  "column_51",
+                  "column_52",
+                  "column_53",
+                  "column_54",
+                  "column_55",
+                  "column_56",
+                  "column_57",
+                  "column_58",
+                  "column_59",
+                  "column_60",
+                  "column_61",
+                  "column_62",
+                  "column_63"
+                ],
+                "allow_create": false
+              },
+              {
+                "id": "refunds",
+                "keys": [
+                  "id"
+                ],
+                "fields": [
+                  "amount"
+                ],
+                "allow_create": true,
+                "max_records": 10
+              }
+            ]
+          }
+        ],
+        "file_namespaces": [],
+        "evidence_classes": [
+          {
+            "ref": "evidence:injection_delivery",
+            "feedback_kind": "injection_delivery",
+            "profiles": [
+              "oracle-assisted"
+            ]
+          },
+          {
+            "ref": "evidence:operation_error",
+            "feedback_kind": "operation_error",
+            "profiles": [
+              "oracle-assisted"
+            ]
+          },
+          {
+            "ref": "evidence:oracle_outcome",
+            "feedback_kind": "oracle_outcome",
+            "profiles": [
+              "oracle-assisted"
+            ]
+          },
+          {
+            "ref": "evidence:target_output",
+            "feedback_kind": "target_output",
+            "profiles": [
+              "black-box",
+              "oracle-assisted"
+            ]
+          }
+        ],
+        "features": [
+          "feature:snapshots"
+        ],
+        "feedback_profiles": [
+          "black-box",
+          "oracle-assisted"
+        ]
+      },
+      "capability_projection_digest": "sha256:78ec285a2f108ce09d667b296457134eb93000b4e961fb9d19812138c4d62d1d"
+    },
+    "view": {
+      "capabilities": {
+        "actions": [
+          {
+            "action_type": "interceptor.injection/v1alpha1",
+            "carriers": [
+              "postgresql_result"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "ref": "action:injection:database_response",
+            "scopes": [
+              "once",
+              "standing"
+            ],
+            "selector_fields": [
+              "call_ordinal",
+              "request_body_contain",
+              "request_body_equal",
+              "request_body_json_pointer",
+              "service"
+            ],
+            "surface": "database_response"
+          },
+          {
+            "action_type": "interceptor.injection/v1alpha1",
+            "carriers": [
+              "managed_service_state",
+              "mutable_file"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "ref": "action:injection:environment_state",
+            "scopes": [
+              "next_turn",
+              "once",
+              "standing"
+            ],
+            "selector_fields": [
+              "collection",
+              "file_namespace",
+              "key",
+              "path",
+              "relative_path",
+              "service",
+              "turn_id"
+            ],
+            "surface": "environment_state"
+          },
+          {
+            "action_type": "interceptor.injection/v1alpha1",
+            "carriers": [
+              "model_client_tool_result"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "ref": "action:injection:model_tool_result",
+            "scopes": [
+              "next_turn",
+              "once",
+              "standing"
+            ],
+            "selector_fields": [
+              "arguments_contain",
+              "arguments_equal",
+              "arguments_json_pointer",
+              "call_ordinal",
+              "tool_name",
+              "turn_id"
+            ],
+            "surface": "model_tool_result"
+          }
+        ],
+        "adapter": "interceptor/v1",
+        "evidence_classes": [
+          {
+            "feedback_kind": "injection_delivery",
+            "profiles": [
+              "oracle-assisted"
+            ],
+            "ref": "evidence:injection_delivery"
+          },
+          {
+            "feedback_kind": "operation_error",
+            "profiles": [
+              "oracle-assisted"
+            ],
+            "ref": "evidence:operation_error"
+          },
+          {
+            "feedback_kind": "oracle_outcome",
+            "profiles": [
+              "oracle-assisted"
+            ],
+            "ref": "evidence:oracle_outcome"
+          },
+          {
+            "feedback_kind": "target_output",
+            "profiles": [
+              "black-box",
+              "oracle-assisted"
+            ],
+            "ref": "evidence:target_output"
+          }
+        ],
+        "features": [
+          "feature:snapshots"
+        ],
+        "feedback_profiles": [
+          "black-box",
+          "oracle-assisted"
+        ],
+        "file_namespaces": [],
+        "operations": [
+          {
+            "delivery": {
+              "description": "Invoke the seeded PostgreSQL support application",
+              "input": {
+                "basis": "synthetic",
+                "encoding": "json",
+                "max_bytes": 65536,
+                "media_type": "application/json",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "delivery_status": "described",
+            "details_reference": "target-a6827c1a92f45f81a148358476516270fc39b11a8afbc8bb6c2416916cf86e89",
+            "maximum_input_bytes": 65536,
+            "operation_id": "ask",
+            "ref": "operation:ask"
+          }
+        ],
+        "services": [
+          {
+            "creatable_collections": [
+              {
+                "collection": "refunds",
+                "details_reference": "target-83ce50c1dfa0bf81b7c8d74c4a25fd310dbc81a000d8ec998544d19cf40fa174"
+              }
+            ],
+            "database_tables": [
+              {
+                "details_reference": "target-30110431a66541928d68769bb9753ec67430aa1f0d8da7f1713a72e3b2b2d1cf",
+                "id": "documents"
+              },
+              {
+                "details_reference": "target-814671847aebf2c38eaa69d4acde153b0a27c35c32dd6c16deb31a426678ecea",
+                "id": "refunds"
+              }
+            ],
+            "details_reference": "target-3fadcdaed9a6d5265f1e900df72c61c1399a3d1a9aebf0ed477c9ba3ad885ed1",
+            "injection_surfaces": [
+              "database_response",
+              "environment_state"
+            ],
+            "kind": "postgresql",
+            "ref": "service:database",
+            "role": "environment",
+            "service_id": "database",
+            "transports": [
+              "postgresql+tls"
+            ]
+          }
+        ],
+        "target_id": "delivery-example"
+      },
+      "capability_projection_digest": "sha256:78ec285a2f108ce09d667b296457134eb93000b4e961fb9d19812138c4d62d1d",
+      "details_deferred": true,
+      "schema_version": "operator.dev/target-capability-manifest/v1alpha1",
+      "source": {
+        "adapter": "interceptor/v1",
+        "capability_source_digest": "sha256:36ffaa718abba75bbd260ada3b5c88e195c8abb43da1f78dd2c25913aa23a8b9",
+        "raw_digest": "sha256:d05b67b8b9a2cd95918be7fff7fc3d8a93a433b1ea9f67eb932e5ddcb29d4716",
+        "schema_version": "interceptor.dev/capability-manifest/v1alpha3"
+      }
+    },
+    "references": {
+      "target-a6827c1a92f45f81a148358476516270fc39b11a8afbc8bb6c2416916cf86e89": {
+        "delivery": {
+          "description": "Invoke the seeded PostgreSQL support application",
+          "input": {
+            "basis": "synthetic",
+            "encoding": "json",
+            "max_bytes": 65536,
+            "media_type": "application/json",
+            "schema": {
+              "additionalProperties": false,
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "message"
+              ],
+              "type": "object"
+            }
+          },
+          "output": {
+            "basis": "unknown",
+            "encoding": "json",
+            "max_bytes": 65536,
+            "media_type": "application/json"
+          }
+        },
+        "delivery_status": "described",
+        "maximum_input_bytes": 65536,
+        "operation_id": "ask",
+        "ref": "operation:ask"
+      },
+      "target-3fadcdaed9a6d5265f1e900df72c61c1399a3d1a9aebf0ed477c9ba3ad885ed1": {
+        "creatable_collections": [
+          {
+            "collection": "refunds",
+            "max_resources": 10
+          }
+        ],
+        "database_tables": [
+          {
+            "allow_create": false,
+            "fields": [
+              "column_0",
+              "column_1",
+              "column_2",
+              "column_3",
+              "column_4",
+              "column_5",
+              "column_6",
+              "column_7",
+              "column_8",
+              "column_9",
+              "column_10",
+              "column_11",
+              "column_12",
+              "column_13",
+              "column_14",
+              "column_15",
+              "column_16",
+              "column_17",
+              "column_18",
+              "column_19",
+              "column_20",
+              "column_21",
+              "column_22",
+              "column_23",
+              "column_24",
+              "column_25",
+              "column_26",
+              "column_27",
+              "column_28",
+              "column_29",
+              "column_30",
+              "column_31",
+              "column_32",
+              "column_33",
+              "column_34",
+              "column_35",
+              "column_36",
+              "column_37",
+              "column_38",
+              "column_39",
+              "column_40",
+              "column_41",
+              "column_42",
+              "column_43",
+              "column_44",
+              "column_45",
+              "column_46",
+              "column_47",
+              "column_48",
+              "column_49",
+              "column_50",
+              "column_51",
+              "column_52",
+              "column_53",
+              "column_54",
+              "column_55",
+              "column_56",
+              "column_57",
+              "column_58",
+              "column_59",
+              "column_60",
+              "column_61",
+              "column_62",
+              "column_63"
+            ],
+            "id": "documents",
+            "keys": [
+              "id"
+            ]
+          },
+          {
+            "allow_create": true,
+            "fields": [
+              "amount"
+            ],
+            "id": "refunds",
+            "keys": [
+              "id"
+            ],
+            "max_records": 10
+          }
+        ],
+        "injection_surfaces": [
+          "database_response",
+          "environment_state"
+        ],
+        "kind": "postgresql",
+        "ref": "service:database",
+        "role": "environment",
+        "service_id": "database",
+        "transports": [
+          "postgresql+tls"
+        ]
+      },
+      "target-30110431a66541928d68769bb9753ec67430aa1f0d8da7f1713a72e3b2b2d1cf": {
+        "resource": {
+          "allow_create": false,
+          "fields": [
+            "column_0",
+            "column_1",
+            "column_2",
+            "column_3",
+            "column_4",
+            "column_5",
+            "column_6",
+            "column_7",
+            "column_8",
+            "column_9",
+            "column_10",
+            "column_11",
+            "column_12",
+            "column_13",
+            "column_14",
+            "column_15",
+            "column_16",
+            "column_17",
+            "column_18",
+            "column_19",
+            "column_20",
+            "column_21",
+            "column_22",
+            "column_23",
+            "column_24",
+            "column_25",
+            "column_26",
+            "column_27",
+            "column_28",
+            "column_29",
+            "column_30",
+            "column_31",
+            "column_32",
+            "column_33",
+            "column_34",
+            "column_35",
+            "column_36",
+            "column_37",
+            "column_38",
+            "column_39",
+            "column_40",
+            "column_41",
+            "column_42",
+            "column_43",
+            "column_44",
+            "column_45",
+            "column_46",
+            "column_47",
+            "column_48",
+            "column_49",
+            "column_50",
+            "column_51",
+            "column_52",
+            "column_53",
+            "column_54",
+            "column_55",
+            "column_56",
+            "column_57",
+            "column_58",
+            "column_59",
+            "column_60",
+            "column_61",
+            "column_62",
+            "column_63"
+          ],
+          "id": "documents",
+          "keys": [
+            "id"
+          ]
+        },
+        "resource_kind": "database_tables",
+        "service_id": "database"
+      },
+      "target-814671847aebf2c38eaa69d4acde153b0a27c35c32dd6c16deb31a426678ecea": {
+        "resource": {
+          "allow_create": true,
+          "fields": [
+            "amount"
+          ],
+          "id": "refunds",
+          "keys": [
+            "id"
+          ],
+          "max_records": 10
+        },
+        "resource_kind": "database_tables",
+        "service_id": "database"
+      },
+      "target-83ce50c1dfa0bf81b7c8d74c4a25fd310dbc81a000d8ec998544d19cf40fa174": {
+        "resource": {
+          "collection": "refunds",
+          "max_resources": 10
+        },
+        "resource_kind": "creatable_collections",
+        "service_id": "database"
+      }
+    }
+  }
+]

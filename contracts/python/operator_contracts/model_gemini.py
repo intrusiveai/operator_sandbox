@@ -2,7 +2,7 @@
 from .startup import require
 from .validation import ORDINARY_LIMIT, ContractError
 from .canonical import _canonical_value, _object_digest
-from .schema_ids import ENGINE_MODEL_GENERATE_RESULT_SCHEMA
+from .schema_ids import NATIVE_MODEL_RESULT_SCHEMA
 
 CODEC='gemini-text-tools-v1'
 POLICY_FIELDS=('max_output_tokens','thinking_config','response_models')
@@ -95,7 +95,7 @@ def disposition(response):
 
 
 def continuation(protocol,result_raw,results):
-    body=protocol._catalog.validate(ENGINE_MODEL_GENERATE_RESULT_SCHEMA,result_raw)
+    body=protocol._catalog.validate(NATIVE_MODEL_RESULT_SCHEMA,result_raw)
     require(body['codec_id']==CODEC);response=body['response'];check_response(response)
     require(disposition(response) in ('tool-calls','text'))
     current=[(i,p['functionCall']) for i,p in enumerate(parts(response)) if 'functionCall' in p]

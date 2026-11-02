@@ -3,7 +3,7 @@ from .model_azure import filtered as azure_filtered
 from .validation import ORDINARY_LIMIT, ContractError, decode
 from .startup import require
 from .canonical import _canonical_value, _object_digest, raw_digest
-from .schema_ids import MODEL_CODEC_POLICY_SCHEMA, ENGINE_MODEL_GENERATE_REQUEST_SCHEMA, ENGINE_MODEL_GENERATE_RESULT_SCHEMA
+from .schema_ids import MODEL_CODEC_POLICY_SCHEMA, ENGINE_MODEL_GENERATE_REQUEST_SCHEMA, NATIVE_MODEL_RESULT_SCHEMA
 from . import model_anthropic as anthropic
 from . import model_bedrock as bedrock
 
@@ -29,7 +29,7 @@ def model_policy_from_context(protocol, context_raw, tools_raw, prompt_raw):
     settings=model['codec_settings']
     require(settings['tools_digest']==_object_digest(tools,ORDINARY_LIMIT))
     policy={key:model[key] for key in ('codec_id','profile_id','profile_digest')}
-    policy.update(request_model=model['model_id'],prompt=prompt,tools=tools)
+    policy.update(request_model=model['model_id'],prompt=prompt,tools=tools,context_limits=model['context_limits'])
     codec=NATIVE_CODECS.get(model['codec_id'])
     keys=codec.POLICY_FIELDS if codec else ('instruction_role','max_completion_tokens','response_models')
     policy.update({key:settings[key] for key in keys})
@@ -118,9 +118,9 @@ def validate_model_request(protocol, policy_raw, request_raw):
     return body
 
 
-def validate_model_exchange(protocol, policy_raw, request_raw, result_raw):
+def validate_native_model_exchange(protocol, policy_raw, request_raw, result_raw):
     body = validate_model_request(protocol,policy_raw,request_raw)
-    result = protocol._catalog.validate(ENGINE_MODEL_GENERATE_RESULT_SCHEMA,result_raw)
+    result = protocol._catalog.validate(NATIVE_MODEL_RESULT_SCHEMA,result_raw)
     check_correlation(body,result)
     policy = protocol._catalog.validate(MODEL_CODEC_POLICY_SCHEMA,policy_raw)
     if 'response_models' in policy:
@@ -143,7 +143,7 @@ def disposition(response):
 
 
 def model_disposition(protocol, result_raw):
-    result = protocol._catalog.validate(ENGINE_MODEL_GENERATE_RESULT_SCHEMA,result_raw)
+    result = protocol._catalog.validate(NATIVE_MODEL_RESULT_SCHEMA,result_raw)
     codec=NATIVE_CODECS.get(result['codec_id'])
     if codec:
         codec.check_response(result['response'])
@@ -158,7 +158,7 @@ def chat_continuation(protocol, result_raw, results):
     results contains {tool_call_id, content} per original call, including explicit
     invalid or not-executed local results. Never parses native argument strings.
     """
-    result = protocol._catalog.validate(ENGINE_MODEL_GENERATE_RESULT_SCHEMA,result_raw)
+    result = protocol._catalog.validate(NATIVE_MODEL_RESULT_SCHEMA,result_raw)
     require(result['codec_id']=='openai-chat-text-tools-v1')
     response = result['response']
     check_response(response)
@@ -200,7 +200,7 @@ def model_output_limit(protocol,raw):
 
 
 def model_usage(protocol,raw):
-    body=protocol._catalog.validate(ENGINE_MODEL_GENERATE_RESULT_SCHEMA,raw)
+    body=protocol._catalog.validate(NATIVE_MODEL_RESULT_SCHEMA,raw)
     native_response(body)
     response=body['response']
     codec=NATIVE_CODECS.get(body['codec_id'])
@@ -210,3 +210,31 @@ def model_usage(protocol,raw):
     if usage is not None:
         result.update(known=True,input_tokens=usage['prompt_tokens'],output_tokens=usage['completion_tokens'],total_tokens=usage['total_tokens'])
     return result
+
+
+def validate_model_exchange(protocol, policy_raw, request_raw, result_raw):
+    from .schema_ids import ENGINE_MODEL_GENERATE_RESULT_SCHEMA
+    result = validate_native_model_exchange(protocol, policy_raw, request_raw, result_raw)
+    protocol._catalog.validate(ENGINE_MODEL_GENERATE_RESULT_SCHEMA, result_raw)
+    policy = decode(policy_raw, ORDINARY_LIMIT)
+    limits = policy.get('context_limits', {})
+    check_context_limits(limits)
+    metrics = model_usage(protocol, result_raw)
+    require(metrics['known'])
+    budget = result['context_budget']
+    completion = model_output_limit(protocol, request_raw)
+    require(0 < completion <= limits['maximum_completion_tokens'])
+    require(metrics['input_tokens'] <= limits['maximum_prompt_tokens'] and metrics['total_tokens'] <= limits['maximum_prompt_tokens'] + completion)
+    require(all(budget[k] == metrics[k] for k in ('input_tokens','output_tokens','total_tokens')))
+    require(budget['requested_completion_tokens'] == completion)
+    require(budget['reserved_tokens'] == limits['maximum_prompt_tokens'] + completion)
+    require(budget['remaining_prompt_tokens'] == limits['maximum_prompt_tokens'] - metrics['input_tokens'])
+    require(budget['near_prompt_limit'] == (metrics['input_tokens'] >= limits['warning_threshold_tokens']))
+    return result
+
+
+def check_context_limits(limits):
+    require(type(limits) is dict and all(type(limits.get(k)) is int for k in
+        ('maximum_prompt_tokens','maximum_completion_tokens','warning_threshold_tokens')))
+    require(0 < limits['warning_threshold_tokens'] <= limits['maximum_prompt_tokens'])
+    require(0 < limits['maximum_completion_tokens'] <= 2**53-1-limits['maximum_prompt_tokens'])

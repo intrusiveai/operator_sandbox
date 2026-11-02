@@ -42,6 +42,7 @@ type Settings struct {
 	APIVersionHeader        string          `json:"anthropic_version,omitempty"`
 	Authentication          string          `json:"authentication"`
 	CredentialID            string          `json:"credential_id,omitempty"`
+	ContextWarningPercent   int64           `json:"context_warning_percent,omitempty"`
 	MaximumPromptTokens     int64           `json:"maximum_prompt_tokens"`
 	MaximumCompletionTokens int64           `json:"maximum_completion_tokens"`
 	MaximumResponseBytes    int64           `json:"maximum_response_bytes"`
@@ -94,6 +95,15 @@ func Parse(raw []byte) (*Profile, error) {
 		}
 	}
 	if !supported || s.MaximumPromptTokens < 1 || s.MaximumCompletionTokens < 1 || s.MaximumPromptTokens > contracts.MaxSafeInteger/2 || s.MaximumCompletionTokens > contracts.MaxSafeInteger/2 || s.MaximumResponseBytes < 1 || s.MaximumResponseBytes > contracts.OrdinaryLimit {
+		return nil, ErrProfile
+	}
+	// Resolve omission, but reject an explicitly invalid zero.
+	var fields map[string]json.RawMessage
+	_ = json.Unmarshal(raw, &fields)
+	if _, present := fields["context_warning_percent"]; !present {
+		s.ContextWarningPercent = 80
+	}
+	if s.ContextWarningPercent < 1 || s.ContextWarningPercent > 99 {
 		return nil, ErrProfile
 	}
 	if s.CACertificatesPEM != "" && !x509.NewCertPool().AppendCertsFromPEM([]byte(s.CACertificatesPEM)) {
@@ -186,7 +196,12 @@ func Parse(raw []byte) (*Profile, error) {
 	if _, err := publicPolicy(s, "sha256:"+strings.Repeat("0", 64), []byte("[]")); err != nil {
 		return nil, ErrProfile
 	}
-	canonical, err := contracts.Canonicalize(raw, 64<<10)
+	fields["context_warning_percent"], _ = json.Marshal(s.ContextWarningPercent)
+	resolved, err := json.Marshal(fields)
+	if err != nil {
+		return nil, ErrProfile
+	}
+	canonical, err := contracts.Canonicalize(resolved, 64<<10)
 	if err != nil {
 		return nil, ErrProfile
 	}

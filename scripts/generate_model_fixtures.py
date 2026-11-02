@@ -220,6 +220,8 @@ context_case('startup model generation not admitted',lambda c:c['context']['oper
 context_case('startup unsupported codec',lambda c:(c['context']['model'].update(codec_id='unimplemented'),c['context']['model'].pop('codec_settings')),False)
 context_case('startup native tools changed',lambda c:c['tools'][0]['function'].update(description='Changed'),False)
 
+from model_context_fixture_support import enrich
+enrich(cases)
 (ROOT/'model-codec.json').write_text(json.dumps(cases,ensure_ascii=False,indent=2)+'\n')
 ordinary_path=ROOT/'ordinary-protocol.json'
 ordinary=json.loads(ordinary_path.read_text())
@@ -228,7 +230,9 @@ ordinary=[c for c in ordinary if c['name'] not in names]
 envelope=dict(api_version='operator.dev/engine-pipe/v1alpha1',seq=0,campaign_id='campaign-1',
               launch_id='launch-1',run_revision=1,call_id='model-call-1',operation_id='model-operation-1',operation='engine.model_generate')
 wire_request=dict(envelope,kind='request',timeout_ms=120000,body=request)
-ordinary.append(dict(name='model relay native exchange',request=wire_request,response=dict(envelope,kind='response',result=response),valid=True))
+wire_result=deepcopy(response)
+enrich([dict(mode='wire',request=request,result=wire_result)])
+ordinary.append(dict(name='model relay native exchange',request=wire_request,response=dict(envelope,kind='response',result=wire_result),valid=True))
 error=dict(code='OUTCOME_UNKNOWN',message='Model execution outcome is unknown.',effect_state='unknown',disposition='terminate')
 ordinary.append(dict(name='model relay unknown provider outcome',request=wire_request,response=dict(envelope,kind='response',error=error),valid=True))
 ordinary.append(dict(name='model relay cannot continue unknown provider outcome',request=wire_request,

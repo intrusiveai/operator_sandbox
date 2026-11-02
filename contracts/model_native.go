@@ -69,7 +69,7 @@ func (p *Protocol) ModelOutputLimit(raw []byte) (int64, error) {
 	return number(request["max_completion_tokens"]), nil
 }
 func (p *Protocol) ModelUsage(raw []byte) (ModelMetrics, error) {
-	v, err := p.catalog.Validate(EngineModelGenerateResultSchema, raw, OrdinaryLimit)
+	v, err := p.catalog.Validate(NativeModelResultSchema, raw, OrdinaryLimit)
 	if err != nil {
 		return ModelMetrics{}, err
 	}

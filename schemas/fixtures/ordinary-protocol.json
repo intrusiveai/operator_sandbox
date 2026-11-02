@@ -6495,6 +6495,73 @@
     "valid": false
   },
   {
+    "name": "diagnostic report request",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.diagnostic_report",
+      "timeout_ms": 30000,
+      "body": {
+        "diagnostic": {
+          "source": "harness-local",
+          "stage": "arguments",
+          "reason": "invalid_arguments",
+          "message": "Required input is absent.",
+          "execution_occurred": "no",
+          "resubmission_safe": true
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "diagnostic report response",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.diagnostic_report",
+      "timeout_ms": 30000,
+      "body": {
+        "diagnostic": {
+          "source": "harness-local",
+          "stage": "arguments",
+          "reason": "invalid_arguments",
+          "message": "Required input is absent.",
+          "execution_occurred": "no",
+          "resubmission_safe": true
+        }
+      }
+    },
+    "response": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "response",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 3,
+      "call_id": "call-1",
+      "operation_id": "operation-1",
+      "operation": "engine.diagnostic_report",
+      "result": {
+        "status": "retained",
+        "receipt_id": "diagnostic-1"
+      }
+    },
+    "valid": true
+  },
+  {
     "name": "model relay native exchange",
     "request": {
       "api_version": "operator.dev/engine-pipe/v1alpha1",
@@ -6597,6 +6664,17 @@
           },
           "service_tier": "default",
           "system_fingerprint": null
+        },
+        "context_budget": {
+          "input_tokens": 100,
+          "output_tokens": 20,
+          "total_tokens": 120,
+          "requested_completion_tokens": 1024,
+          "reserved_tokens": 33792,
+          "remaining_prompt_tokens": 32668,
+          "near_prompt_limit": false,
+          "remaining_model_tokens": 99880,
+          "remaining_model_turns": 9
         }
       }
     },
@@ -6745,72 +6823,5 @@
       }
     },
     "valid": false
-  },
-  {
-    "name": "diagnostic report request",
-    "request": {
-      "api_version": "operator.dev/engine-pipe/v1alpha1",
-      "kind": "request",
-      "seq": 0,
-      "campaign_id": "campaign-1",
-      "launch_id": "launch-1",
-      "run_revision": 3,
-      "call_id": "call-1",
-      "operation_id": "operation-1",
-      "operation": "engine.diagnostic_report",
-      "timeout_ms": 30000,
-      "body": {
-        "diagnostic": {
-          "source": "harness-local",
-          "stage": "arguments",
-          "reason": "invalid_arguments",
-          "message": "Required input is absent.",
-          "execution_occurred": "no",
-          "resubmission_safe": true
-        }
-      }
-    },
-    "valid": true
-  },
-  {
-    "name": "diagnostic report response",
-    "request": {
-      "api_version": "operator.dev/engine-pipe/v1alpha1",
-      "kind": "request",
-      "seq": 0,
-      "campaign_id": "campaign-1",
-      "launch_id": "launch-1",
-      "run_revision": 3,
-      "call_id": "call-1",
-      "operation_id": "operation-1",
-      "operation": "engine.diagnostic_report",
-      "timeout_ms": 30000,
-      "body": {
-        "diagnostic": {
-          "source": "harness-local",
-          "stage": "arguments",
-          "reason": "invalid_arguments",
-          "message": "Required input is absent.",
-          "execution_occurred": "no",
-          "resubmission_safe": true
-        }
-      }
-    },
-    "response": {
-      "api_version": "operator.dev/engine-pipe/v1alpha1",
-      "kind": "response",
-      "seq": 0,
-      "campaign_id": "campaign-1",
-      "launch_id": "launch-1",
-      "run_revision": 3,
-      "call_id": "call-1",
-      "operation_id": "operation-1",
-      "operation": "engine.diagnostic_report",
-      "result": {
-        "status": "retained",
-        "receipt_id": "diagnostic-1"
-      }
-    },
-    "valid": true
   }
 ]

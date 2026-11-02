@@ -110,7 +110,7 @@ func preparedLaunchConfigured(t *testing.T, target *preparation.Target, configur
 		if op == "engine.model_generate" {
 			policy, _, _ := modelFixture(t)
 			toolsDigest, _ := contracts.CanonicalDigest(encode(policy["tools"]), contracts.OrdinaryLimit)
-			template["model"] = map[string]any{"codec_id": policy["codec_id"], "profile_id": policy["profile_id"], "profile_digest": policy["profile_digest"], "model_id": policy["request_model"], "features": []string{"text", "function-tools"}, "codec_settings": map[string]any{"instruction_role": policy["instruction_role"], "max_completion_tokens": policy["max_completion_tokens"], "response_models": policy["response_models"], "tools_digest": toolsDigest}}
+			template["model"] = map[string]any{"codec_id": policy["codec_id"], "profile_id": policy["profile_id"], "profile_digest": policy["profile_digest"], "model_id": policy["request_model"], "features": []string{"text", "function-tools"}, "context_limits": contracts.ContextLimits{MaximumPromptTokens: 200, MaximumCompletionTokens: 1024, WarningThresholdTokens: 160}, "codec_settings": map[string]any{"instruction_role": policy["instruction_role"], "max_completion_tokens": policy["max_completion_tokens"], "response_models": policy["response_models"], "tools_digest": toolsDigest}}
 			for _, limits := range []map[string]any{template["remaining_limits"].(map[string]any), template["limits"].(map[string]any)["campaign"].(map[string]any)} {
 				limits["model_turns"] = 3
 				limits["model_tokens"] = 10000

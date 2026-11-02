@@ -84,6 +84,7 @@ func TestPublicModelMatchesSharedStartupForEveryCodec(t *testing.T) {
 				}
 				f.Policy["profile_id"] = s.ID
 				f.Policy["profile_digest"] = p.Digest()
+				f.Policy["context_limits"] = public["context_limits"]
 				expected, _ := json.Marshal(f.Policy)
 				expected, err = contracts.Canonicalize(expected, contracts.OrdinaryLimit)
 				if err != nil || !bytes.Equal(policy, expected) {
@@ -127,4 +128,30 @@ func TestProfileRejectsUnboundCodecOptions(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestContextWarningConfiguration(t *testing.T) {
+	p := profile(t, "openai-chat", "https://example.test/chat/completions")
+	var fields map[string]any
+	_ = json.Unmarshal(p.JSON(), &fields)
+	delete(fields, "context_warning_percent")
+	raw, _ := json.Marshal(fields)
+	omitted, err := Parse(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fields["context_warning_percent"] = 80
+	raw, _ = json.Marshal(fields)
+	explicit, err := Parse(raw)
+	if err != nil || omitted.Digest() != explicit.Digest() {
+		t.Fatal("default must be fingerprinted", err)
+	}
+	for _, value := range []any{0, 100, -1, 80.5, nil, "80"} {
+		fields["context_warning_percent"] = value
+		raw, _ = json.Marshal(fields)
+		if _, err = Parse(raw); err == nil {
+			t.Fatal("invalid warning", value)
+		}
+	}
+
 }

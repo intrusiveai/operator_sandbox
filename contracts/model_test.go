@@ -87,7 +87,7 @@ func TestSharedModelCodec(t *testing.T) {
 				}
 			case "bound":
 				var got map[string]any
-				got, err = p.ValidateModelExchange(c.Policy, c.Request, c.Result)
+				got, err = p.ValidateNativeModelExchange(c.Policy, c.Request, c.Result)
 				if err == nil {
 					expected, e := Decode(c.Result, OrdinaryLimit)
 					if e != nil {

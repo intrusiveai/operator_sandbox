@@ -132,7 +132,7 @@ func TestPythonProcessCampaigns(t *testing.T) {
 						if e != nil {
 							return nil, e
 						}
-						raw, e := base64.StdEncoding.DecodeString(fmt.Sprint(o["content"]))
+						raw, e := modelContent(o)
 						if e != nil || string(raw) != `{"answer":"test"}` {
 							return nil, fmt.Errorf("wrong observation bytes: %v", o)
 						}
@@ -195,4 +195,15 @@ func TestPythonProcessCampaigns(t *testing.T) {
 			})
 		}
 	}
+}
+
+func modelContent(value map[string]any) ([]byte, error) {
+	text, ok := value["content"].(string)
+	if !ok {
+		return nil, fmt.Errorf("missing content")
+	}
+	if value["encoding"] == "utf8" {
+		return []byte(text), nil
+	}
+	return base64.StdEncoding.DecodeString(text)
 }

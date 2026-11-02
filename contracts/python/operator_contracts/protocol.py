@@ -98,6 +98,9 @@ class Protocol:
     def model_policy_from_context(self, context, tools, prompt):
         return model.model_policy_from_context(self,context,tools,prompt)
 
+    def validate_native_model_exchange(self, policy, request, result):
+        return model.validate_native_model_exchange(self,policy,request,result)
+
     def validate_model_exchange(self, policy, request, result):
         return model.validate_model_exchange(self,policy,request,result)
 
@@ -110,9 +113,9 @@ class Protocol:
     def anthropic_continuation(self, result, tool_results):
         return model.anthropic.continuation(self,result,tool_results)
 
-    def model_tools(self, codec, operations):
+    def model_tools(self, codec, operations, surfaces=None):
         from .model_tools import model_tools
-        return model_tools(self, codec, operations)
+        return model_tools(self, codec, operations, surfaces)
 
     def resolve_direct_input(self, value):
         from .simple import resolve_direct_input
