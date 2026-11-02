@@ -2,8 +2,8 @@
   "api_version": "operator.dev/host-contract-lock/v1alpha1",
   "source": {
     "repository": "https://github.com/intrusiveai/operator_sandbox.git",
-    "commit": "b4c8292150a7baaa703015bd19ddb96d43f5e14a",
-    "tree": "d683e2c85d70c7d490dd91274e01c0c6ae3126cb"
+    "commit": "485042787cc75e1776acaac11023ba9d210cc1f3",
+    "tree": "992210e4d42f3aa30a1ea740ccb16f88941a250a"
   },
   "package": {
     "package_version": "0.5.0",
