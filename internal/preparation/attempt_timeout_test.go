@@ -3,6 +3,7 @@ package preparation_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -108,13 +109,17 @@ func TestAttemptTimeoutAfterSuccessfulTarget(t *testing.T) {
 	}
 }
 func TestAttemptLargerBudgetAndShorterDeadlines(t *testing.T) {
-	for _, mode := range []string{"long-success", "request", "campaign"} {
+	for _, mode := range []string{"long-success", "request", "campaign", "campaign-expired-before-admission"} {
 		t.Run(mode, func(t *testing.T) {
-			campaignBudget := time.Duration(0)
-			if mode == "campaign" {
-				campaignBudget = 300 * time.Millisecond
-			}
-			s, p, _, w, launch := serviceWithDeadline(t, campaignBudget, timeoutProfile(t, 90000))
+			campaignDeadline := strings.HasPrefix(mode, "campaign")
+			// Use the retained remaining lifetime: the service starts this clock
+			// after validating its inputs. An absolute fixture deadline would
+			// also charge the test's expensive construction/validation work.
+			s, p, _, w, launch := serviceWithTemplate(t, 0, nil, nil, func(c map[string]any) {
+				if campaignDeadline {
+					c["remaining_limits"].(map[string]any)["campaign_time_ms"] = 300
+				}
+			}, timeoutProfile(t, 90000))
 			p.delayOperation = "application.invoke"
 			p.delay = 31 * time.Second
 			wait := int64(120000)
@@ -122,22 +127,54 @@ func TestAttemptLargerBudgetAndShorterDeadlines(t *testing.T) {
 				p.delay = time.Second
 				wait = 200
 			}
-			if mode == "campaign" {
+			if campaignDeadline {
 				wait = 120000
 			}
-			if err := s.Admit(context.Background(), launch); err != nil {
-				t.Fatal(err)
-			}
-			started := time.Now()
-			raw, err := s.Handle(context.Background(), timeoutRequest(p, w, wait), 0)
-			if mode == "long-success" {
-				if err != nil || !strings.Contains(string(raw), `"status":"completed"`) || time.Since(started) < 30*time.Second {
-					t.Fatalf("%s %v", raw, err)
+			if mode == "campaign-expired-before-admission" {
+				// Exercise the slow-runner ordering without depending on how long
+				// manifest validation or scheduling happens to take.
+				select {
+				case <-w.Fence().Done():
+				case <-time.After(3 * time.Second):
+					t.Fatal("campaign deadline did not close admission")
 				}
-			} else if time.Since(started) > 2*time.Second {
-				t.Fatal("short deadline ignored")
 			}
-			s.Shutdown(context.Background())
+			admitErr := s.Admit(context.Background(), launch)
+			if admitErr != nil {
+				// The campaign budget starts before admission. Expiration here is
+				// correct enforcement, not a failure to honor the attempt budget.
+				if !campaignDeadline || !errors.Is(w.Fence().Err(), context.DeadlineExceeded) {
+					t.Fatalf("admission: %v; terminal cause: %v", admitErr, w.Fence().Err())
+				}
+			} else {
+				if mode == "campaign-expired-before-admission" {
+					t.Fatal("admitted an expired campaign")
+				}
+				started := time.Now()
+				raw, err := s.Handle(context.Background(), timeoutRequest(p, w, wait), 0)
+				if mode == "long-success" {
+					if err != nil || !strings.Contains(string(raw), `"status":"completed"`) || time.Since(started) < 30*time.Second {
+						t.Fatalf("%s %v", raw, err)
+					}
+				} else {
+					if time.Since(started) > 2*time.Second {
+						t.Fatal("short deadline ignored")
+					}
+					if strings.Contains(string(raw), `"status":"completed"`) || w.Fence().Err() == nil {
+						t.Fatalf("deadline did not stop execution: %s %v", raw, err)
+					}
+				}
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+			if _, err := s.Shutdown(ctx); err != nil {
+				t.Fatalf("cleanup did not complete: %v", err)
+			}
+			if mode != "long-success" && s.Admit(ctx, launch) == nil {
+				t.Fatal("readmitted a terminated campaign")
+			}
+			p.mu.Lock()
+			defer p.mu.Unlock()
 			count := 0
 			for _, op := range p.calls {
 				if op == "application.invoke" {
@@ -146,6 +183,9 @@ func TestAttemptLargerBudgetAndShorterDeadlines(t *testing.T) {
 			}
 			if count > 1 {
 				t.Fatal("replayed invocation")
+			}
+			if admitErr != nil && count != 0 {
+				t.Fatal("invoked target without admission")
 			}
 		})
 	}
