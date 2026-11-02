@@ -3,10 +3,15 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
   push:
-    branches: [main, 'candidate-v*']
+    branches: ['candidate-v*']
   workflow_dispatch:
 permissions:
   contents: read
+# Only active PR checks supersede each other. Candidate runs and promotion have
+# unique groups here; release mutations remain serialized by their job groups.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.action != 'closed' && format('pr-{0}', github.event.number) || format('run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' }}
 jobs:
   context:
     runs-on: ubuntu-24.04
@@ -39,15 +44,19 @@ jobs:
           cache-dependency-path: go.sum
       - name: Prepare locked dependencies
         run: make setup
+      - name: Fast pull-request checks
+        if: needs.context.outputs.mode == 'verify'
+        run: make test-pr
       - name: Verify shared contracts and host behavior
+        if: needs.context.outputs.mode == 'publish'
         run: |
           make test
           go vet ./...
           go test -race ./internal/hostrelease ./internal/contractstore ./internal/supervisor
   candidates:
     needs: [context, verify]
-    # main verifies merged code; it never rebuilds the promoted release.
-    if: github.ref != 'refs/heads/main'
+    # Build artifacts only for a candidate update, after the complete test gate.
+    if: needs.context.outputs.mode == 'publish'
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     strategy:
@@ -99,6 +108,7 @@ jobs:
     concurrency:
       group: operator-release-v${{ needs.context.outputs.version }}
       cancel-in-progress: false
+      queue: max
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -147,6 +157,7 @@ jobs:
     concurrency:
       group: operator-release-v${{ needs.context.outputs.version }}
       cancel-in-progress: false
+      queue: max
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

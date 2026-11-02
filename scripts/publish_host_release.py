@@ -26,9 +26,11 @@ def candidate_version(branch):
 
 
 def event_context(event, name, ref, sha, repository):
-    result = {"mode": "verify", "version": "0.1.0", "source": sha, "branch": ref.removeprefix("refs/heads/"), "pr": ""}
+    result = {"mode": "ignore", "version": "0.1.0", "source": sha, "branch": ref.removeprefix("refs/heads/"), "pr": ""}
     if name == "pull_request":
         pr = event["pull_request"]
+        if event["action"] in ("opened", "synchronize", "reopened"):
+            result["mode"] = "verify"
         if event["action"] == "closed":
             result["mode"] = "ignore"
             if pr["merged"] and pr["base"]["ref"] == "main" and pr["head"]["ref"].startswith("candidate-v"):
@@ -45,6 +47,8 @@ def event_context(event, name, ref, sha, repository):
             result["mode"] = "ignore"
         else:
             result.update(mode="publish", version=candidate_version(result["branch"]))
+    elif name == "workflow_dispatch":
+        result["mode"] = "verify"
     return result
 
 

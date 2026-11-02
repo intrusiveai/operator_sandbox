@@ -1,6 +1,6 @@
 PYTHON ?= .venv/bin/python
 
-.PHONY: setup test generate test-integration release-candidate test-release-publisher
+.PHONY: setup test test-pr check-generated generate test-integration release-candidate test-release-publisher
 
 setup:
 	python3 -m venv .venv
@@ -18,15 +18,29 @@ generate:
 	$(PYTHON) scripts/generate_envelopes.py
 	$(PYTHON) scripts/generate_schema_ids.py
 
-test:
+check-generated:
 	go run ./scripts/generate_path_unicode.go -check
 	$(PYTHON) scripts/generate_model_schemas.py --check
 	$(PYTHON) scripts/generate_tool_catalog.py --check
 	$(PYTHON) scripts/generate_envelopes.py --check
 	$(PYTHON) scripts/generate_schema_ids.py --check
+
+test: check-generated
 	OPERATOR_TEST_PYTHON="$(abspath $(PYTHON))" OPERATOR_CONTROLLED_PEER_TEST=1 go test ./...
 	python3 -m unittest discover -s scripts/tests
 	PYTHONPATH=contracts/python $(PYTHON) -m unittest discover -s contracts/python/tests -v
+	$(PYTHON) schemas/validate_cleanup_fixtures.py
+	$(PYTHON) schemas/validate_feedback_fixtures.py
+	$(PYTHON) schemas/validate_capability_fixtures.py
+	$(MAKE) test-release-publisher
+
+# Fast PR checks. Candidate pushes retain the complete test/build gate below CI.
+test-pr: check-generated
+	go build ./...
+	go vet ./...
+	go test ./contracts ./internal/hostconfig ./internal/targetprofile ./internal/modelprovider
+	python3 -m unittest discover -s scripts/tests
+	PYTHONPATH=contracts/python $(PYTHON) -m unittest discover -s contracts/python/tests
 	$(PYTHON) schemas/validate_cleanup_fixtures.py
 	$(PYTHON) schemas/validate_feedback_fixtures.py
 	$(PYTHON) schemas/validate_capability_fixtures.py

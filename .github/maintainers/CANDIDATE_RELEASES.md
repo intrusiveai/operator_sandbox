@@ -4,6 +4,26 @@ Use this guide to configure release publication once, publish a rolling candidat
 and promote its existing packages to stable. All settings and commands
 apply to `intrusiveai/operator_sandbox` unless explicitly stated otherwise.
 
+## Verification schedule
+
+| Event | Checks and release work |
+| --- | --- |
+| PR opened, updated or reopened | `context` and `verify`: fast compilation, vet, focused Go tests, shared-contract fixtures and publisher tests (`make test-pr`). No release builds. |
+| Merge or direct push to `candidate-v*` | Complete existing test suite, four platform builds, reproducibility and installed-package checks, then prerelease publication. |
+| Candidate PR merged into `main` | Promotion eligibility and existing-artifact checks, followed by promotion/catalog publication. No rebuild or test-suite rerun. |
+| Other PR closure or push to `main` | No full verification or publication. |
+
+New commits cancel older active PR-check runs for the same PR. Candidate updates
+and promotion are isolated from PR cancellation; release mutations remain queued
+and serialized. Feature-branch pushes without an open PR do not start verification.
+Manual dispatch on a candidate performs full verification/publication; other refs
+run the fast checks. Promotion still requires a merged candidate PR.
+
+Use `context` and `verify` for required PR status checks, rather than candidate-only
+build matrix jobs. A fast PR pass does not qualify release artifacts. Integration
+or packaging failures may be found after the candidate merge and MUST block
+publication; correct the candidate and wait for its complete run before promotion.
+
 ## How the release moves through the system
 
 1. A push to `candidate-v<major.minor.patch>` (including a merged feature PR)
@@ -310,7 +330,7 @@ Running campaigns retain their previously installed binaries and frozen inputs.
 The executable version remains `1.2.3` throughout. Merge, squash and rebase merges
 are supported if the resulting tree matches the published candidate. A direct
 local merge pushed to `main` has no merged-PR receipt and does not promote. Ordinary
-`main` pushes verify code without rebuilding release packages. A stable version
+`main` pushes do not start this verification workflow. A stable version
 cannot be replaced by candidate pushes; start a new version for later changes.
 GitHub's Latest designation follows semantic version ordering, so an older
 maintenance version does not deliberately replace a newer release.
