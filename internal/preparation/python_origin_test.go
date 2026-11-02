@@ -17,6 +17,10 @@ import (
 func TestPythonExplicitOriginWorkflow(t *testing.T) {
 	for _, lane := range []string{"spool", "fifo"} {
 		for _, mode := range []string{"scenario", "corrected", "exploratory"} {
+			// Run every semantic case once and the scenario/evidence/finish workflow on both transports.
+			if lane == "spool" && mode != "scenario" {
+				continue
+			}
 			t.Run(lane+"/"+mode, func(t *testing.T) {
 				var execution map[string]any
 				readDone := false

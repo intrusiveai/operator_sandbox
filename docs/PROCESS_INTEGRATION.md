@@ -7,12 +7,16 @@ direct Go invocations MAY set `OPERATOR_TEST_PYTHON` to the same absolute path.
 The integration target MUST fail if the selected harness or Python dependencies
 are unavailable. Ordinary `go test` MUST skip these explicitly opt-in cases.
 
-The tests build a fresh contract package from the current Operator source, load
-its exact digest on both ends, stage immutable inputs with the production launcher,
+The tests build one fresh contract package from the current Operator source per
+test process, load its exact digest on both ends, stage immutable inputs with the production launcher,
 and exchange real bytes with a separate Python process. The Python process invokes
 `attack_harness.entrypoint.main`, including contract/input validation, startup,
 campaign composition and the adaptive loop. The Go side uses production bootstrap,
-transport, campaign service and journal implementations.
+transport, campaign service and journal implementations. The package and CLI
+executable are built lazily once per test process and removed when the suite exits.
+Only immutable prerequisites are reused: each campaign has independent input
+objects, directories, journal, target peer, transport and Python process. Package
+corruption tests use their own fixtures in the contract packages.
 
 The test-only Python launch adapter relocates fixed filesystem paths into private
 temporary directories and supplies a no-op confinement callback. It MUST NOT be
@@ -29,7 +33,10 @@ environment. It enables `OPERATOR_CONTROLLED_PEER_TEST=1` for the in-repository
 controlled Python campaign peer, including separate CLI inspection/report/export.
 It MUST NOT enable `OPERATOR_PYTHON_PEER_TEST`, which selects the sibling Harness
 transport tests. `make test-integration` explicitly enables those tests along with
-the production Harness process tests. A missing selected peer MUST fail promptly
+the production Harness process tests, selecting `^Test(Python|Harness)` rather than
+rerunning Operator-only service/unit tests from `make test`. New cross-component
+tests MUST use those prefixes. The aggregate test-package timeout is 20 minutes;
+individual operation deadlines are unchanged. A missing selected peer MUST fail promptly
 with its path; an exited peer MUST report its output instead of a transport timeout.
 
 ## Startup coverage
@@ -43,11 +50,11 @@ an accepted stop acknowledgement. No fabricated guest startup transcript is used
 ## Campaign coverage
 
 `TestPythonProcessCampaigns` exercises objectives-only, scenario-guided and
-exploratory campaigns on both transports. A controlled model requests hypothesis
+exploratory and HTTPS campaigns on FIFO, plus the scenario workflow on spool. A controlled model requests hypothesis
 records, local reference reads, multipart artifact publication, two related
 attempts, receipt-scoped feedback reads and a structured conclusion. Later model
 responses depend on the actual earlier receipt IDs and feedback bytes. The tests
-verify retained reports and accepted stop acknowledgement. The HTTPS variants use
+verify retained reports and accepted stop acknowledgement. The HTTPS variant uses
 the production HTTPS adapter and a local TLS server, preserving observer assurance.
 
 The joined test discovered a release-identity disagreement: attempts MUST use the
@@ -84,3 +91,15 @@ provider qualification.
 Record the exact Operator and Harness source and contract identities with test
 results. A package/image built from different pins MUST NOT be described as having
 passed those tests.
+
+## Coverage without duplicate campaigns
+
+Business-rule variations run once through a real Harness process. Explicit-origin
+and campaign-mode tests retain a scenario/observation/finish case on both
+transports. Provider diagnostics retain HTTP rejection plus inspection/export on
+both; contract-validation and usage-limit variants run on FIFO. Conclusion tests
+retain acceptance on both and detailed correction on FIFO. The separate Harness
+exit suite retains corrected finish and fatal-exit checks on both transports.
+Startup/prompt/large-input, compaction, restore, disconnect, cancellation and
+transport-specific failure coverage remain unchanged. Host-only validation,
+recovery and reporting cases remain in Operator's ordinary suite.

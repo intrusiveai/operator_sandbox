@@ -65,6 +65,10 @@ func publishCall(id, query string) any {
 func TestPythonProcessCampaigns(t *testing.T) {
 	for _, transport := range []string{"fifo", "spool"} {
 		for _, mode := range []string{"objectives-only", "scenario", "exploratory", "https"} {
+			// Run every semantic case once and the scenario/evidence/finish workflow on both transports.
+			if transport == "spool" && mode != "scenario" {
+				continue
+			}
 			t.Run(transport+"/"+mode, func(t *testing.T) {
 				origin := "exploratory"
 				if mode == "scenario" {

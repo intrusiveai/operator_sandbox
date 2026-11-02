@@ -18,8 +18,6 @@ import (
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/campaignservice"
-	"github.com/intrusiveai/operator_sandbox/internal/contractpublish"
-	"github.com/intrusiveai/operator_sandbox/internal/contractstore"
 	"github.com/intrusiveai/operator_sandbox/internal/hostworker"
 	"github.com/intrusiveai/operator_sandbox/internal/httpstarget"
 	"github.com/intrusiveai/operator_sandbox/internal/preparation"
@@ -110,17 +108,8 @@ func newProcessRun(t *testing.T, tc processCase) *processRun {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	t.Cleanup(cancel)
-	pkg := filepath.Join(t.TempDir(), "contracts")
-	report, err := contractpublish.Build(ctx, operator, pkg, "0.4.0")
-	if err != nil {
-		t.Fatal(err)
-	}
-	installed, err := contractstore.Load(ctx, pkg, report.Package)
-	if err != nil {
-		t.Fatal(err)
-	}
-	in := fixture(t)
-	in.Protocol = installed.Protocol()
+	pkg, protocol := processContract(t)
+	in := fixtureWithProtocol(t, protocol)
 	var bundle map[string]any
 	_ = json.Unmarshal(in.Bundle, &bundle)
 	count := 1
