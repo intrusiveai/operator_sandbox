@@ -4,8 +4,9 @@
 
 Operator and Attack Harness MUST support longer campaigns by exposing the prompt
 allowance before execution, reporting validated usage after each model response,
-reducing fixed tool-description overhead, and keeping evidence reads deliberate
-and bounded. Harness MUST be able to compact before crossing a hard allowance,
+reducing initial target context and repeated tool-description/schema overhead,
+and keeping reference/evidence reads deliberate and bounded. Harness MUST be able
+to compact before crossing a hard allowance,
 then continue the same campaign without replaying target work.
 
 The ordinary workflow remains direct input → inspect permitted evidence → one
@@ -27,12 +28,16 @@ Read the implementation with these contracts before editing:
   [model providers](../docs/MODEL_PROVIDERS.md), and
   [campaign startup](../docs/CAMPAIGN_START.md).
 - [Shared contract](../schemas/SHARED_CONTRACT.md),
+  [target capability export](../schemas/CAPABILITY_EXPORT_CONTRACT.md),
   [model-tool catalog](../schemas/MODEL_TOOL_CATALOG.md),
   [feedback](../schemas/FEEDBACK_CONTRACT.md), and
   [Harness execution rules](../schemas/HARNESS_EXECUTION_RULES.md).
 - Operator: `internal/modelprovider/profile.go`, `public.go`,
   `internal/preparation/launch.go`, `internal/campaignservice/model.go`,
   `internal/reporting/`, `internal/workerjob/`, and `cmd/operatorctl/`.
+- Target descriptions and reference delivery: `internal/capabilities/`,
+  `internal/preparation/target.go`, and the existing startup reference manifest
+  and `reference_read` implementation.
 - Shared Go/Python model policy, usage, tool-projection and loop implementations
   under `contracts/`; generators under `scripts/`; schemas/fixtures under
   `schemas/`. Generated files MUST be changed through their generators.
@@ -125,7 +130,76 @@ Keep reservations, validated consumption, and campaign-wide remaining budgets
 distinct. Existing post-dispatch failure diagnostics MUST remain primary when
 later Harness shutdown or cleanup fails.
 
-## 3. Smaller, capability-appropriate tool definitions
+## 3. Compact target context and tool definitions
+
+### 3.1 Target index with details available on demand
+
+Operator MUST retain the complete verified public capability description for host
+validation and Harness reference access. Harness MUST initially present a compact
+index to the model instead of automatically expanding all service, database and
+file details. This is a presentation change, not deletion of capabilities or a
+change to the native Interceptor capability contract.
+
+The initial context MUST identify permitted target operations and enough of their
+input contract to perform an ordinary direct invocation without a documentation
+read. It MUST also identify the effective feedback policy and provide a compact
+index of available injection surfaces, services, database table policies and file
+namespaces. Index entries MUST preserve exact logical identifiers, short roles or
+purposes where supplied, applicable action/resource relationships, and verified
+reference handles for details. Do not manufacture descriptions missing from the
+source. The index MUST distinguish capability availability from authorization.
+
+Detailed service endpoint/input/output schemas, MCP contracts, database key columns
+and writable fields, creation rules, file limits, extensive examples and advanced
+injection guidance MUST remain retrievable through existing `reference_read`
+mechanisms. Reuse verified startup references and immutable content; implementation
+MUST ensure the referenced material is actually readable, not merely advertise a
+handle. Use resource-level references or an index into existing bounded references
+so requesting one resource does not require loading the entire manifest. Any new
+reference metadata MUST use the shared contract and existing integrity checks;
+do not add a discovery service, tool or parallel capability store.
+
+The reference index MUST make clear which details were deferred and where to read
+them. Harness guidance MUST direct the model to retrieve the relevant resource
+contract before constructing an advanced action whose selectors or payload depend
+on it. For example, replacing an MCP result requires its service/tool selector and
+result structure; database mutation requires its table policy, keys and writable
+fields; file mutation requires its namespace and applicable restrictions. Generic
+injection-family descriptions alone MUST NOT be treated as sufficient resource
+contracts. Explicitly supplied scenario details can avoid a redundant read when
+sufficient, but MUST NOT override the verified resource contract.
+
+Repeated service-level injection descriptions SHOULD be consolidated into shared
+surface descriptions plus resource associations. Preserve every unique selector,
+constraint and supported action. Scenario selection MUST NOT hide resources needed
+for permitted exploratory work. Retrieved details MUST remain untrusted target
+data, obey the existing read/visibility limits, and keep source identity when
+compacted. Missing or partial details MUST be explicit; neither product may guess
+resource identifiers or silently relax validation.
+
+### 3.2 Concise descriptions with optional advanced guidance
+
+Each tool description MUST retain its purpose, when to use it, essential argument
+relationships, the source and meaning of valid handles, and consequential effects.
+In particular, restore changes target state and finish acceptance closes admission
+without establishing completed cleanup. Descriptions and schemas together MUST
+make the ordinary execute → inspect evidence → finish workflow self-contained;
+do not require a documentation read before every basic invocation.
+
+Move extensive examples, uncommon combinations and detailed injection instructions
+to verified reference material accessible through the same mechanism as target
+details. Compact descriptions MUST point to discoverable guidance when needed.
+Do not repeat long explanations in the trusted prompt, each tool and target
+descriptions. Keep the short product-owned rules about explicit origin, direct
+input, exact returned handles, evidence inspection and honest assessment.
+
+For example, `attempt_execute` can explain that it invokes a permitted operation,
+accepts direct input or a committed artifact receipt, requires a scenario ID for
+scenario origin and forbids one for exploratory origin, and returns an execution
+receipt only for dispatched attempts. Its declaration MUST retain the corresponding
+fields and relationships; prose alone is not a replacement for validation.
+
+### 3.3 Smaller, capability-appropriate schemas
 
 Measure generated declarations for every supported codec before changing them.
 The full Bedrock projection inspected for this design was 41,415 JSON bytes,
@@ -139,14 +213,30 @@ functions, rather than maintaining independent Harness schemas:
    substructures where a concise provider declaration can describe the accepted
    form. Preserve clear field types, required fields, explicit origin, direct
    versus artifact input choices, reference categories and correction guidance.
+   Start with injection payload and selector expansions. Keep explicit typed
+   action/surface, destination selector, placement and payload fields using the
+   existing names and accepted forms. Target-dependent content MAY use a bounded
+   JSON value in the provider projection instead of recursively enumerating every
+   possible structure. Fixed selector fields MUST remain explicit; do not replace
+   a whole action with an undocumented arbitrary object. Where provider schemas
+   cannot express the JSON union or limits, describe them concisely and enforce
+   them in the shared runtime validator. Preserve byte, nesting and target limits.
 2. Keep every omitted declarative constraint enforced by the authoritative runtime
    validator before effects. Compact descriptions MUST name applicable bounds or
    cross-field rules; they MUST NOT imply arbitrary values are accepted. Unknown
    fields, duplicate keys and invalid references remain errors.
+   Both Harness validation and Operator admission MUST use the authoritative
+   contract, with Operator enforcing selected-resource rules before effects.
+   Rejections MUST retain the existing actionable field/rule/correction and
+   no-dispatch/safe-resubmission diagnostics; no new error envelope is required.
 3. Derive a minimal frozen projection from admitted operations, target capabilities
    and installed route permissions. Include the available injection surfaces and
    applicable setup alternatives; omit unavailable ones. Do not duplicate whole
    capability manifests or enumerate large collections of resource IDs into tools.
+   A target without database support MUST omit database-specific branches. Keep
+   operation-specific payload schemas in target references, not copied into every
+   execution tool. The tool MUST still specify how to select the operation and
+   encode direct input or supply an artifact receipt unambiguously.
 4. Preserve valid exploratory, artifact, history, injection cleanup and snapshot
    workflows. Scenario wording alone MUST NOT remove a capability. Removing setup
    alternatives MUST NOT remove cleanup needed for already retained injections.
@@ -154,17 +244,24 @@ functions, rather than maintaining independent Harness schemas:
    resulting tool digest to the frozen model policy. Harness MUST derive identical
    tools from those verified inputs. Go and Python MUST use the same deterministic
    derivation and fixtures. Tools MUST NOT change per turn or after target restore.
+   Reading resource details MUST NOT change the catalog. Freeze only the tool
+   projection; this does not freeze conversation content or current target state.
 
 Operator MUST continue authorizing actual operations against complete host policy;
 provider declarations are guidance, not authorization. Preserve supported provider
 schema restrictions, including OpenAI object roots without forbidden combinators.
 Do not enable strict mode as a substitute for runtime validation.
 
-Tests MUST establish reduced serialized bytes for representative full-capability
-and restricted targets, plus byte-identical Go/Python projections. Record per-tool
-and total before/after measurements. Maintain explicit fixture size budgets after
-reviewing the resulting projections. A schema reduction that breaks legitimate
-calls or weakens runtime enforcement is not acceptable.
+Tests MUST establish reduced initial target-context bytes and serialized tool bytes
+for representative full-capability and restricted targets, plus byte-identical
+Go/Python projections. Record target index versus full-description size, per-tool
+description and schema sizes, and total before/after measurements for each codec.
+Include the cost and number of reference reads in representative workflows;
+deferring a large description only to reread it in full every turn is not a useful
+reduction. Keep byte measurements distinct from measured or estimated tokens.
+Maintain explicit fixture size budgets after reviewing the resulting projections.
+A reduction that breaks legitimate calls, weakens runtime enforcement or simply
+shifts essential instructions into repeated validation failures is not acceptable.
 
 ## 4. Bounded evidence entering model context
 
@@ -319,9 +416,11 @@ Use these boundaries; each MUST include relevant tests and current behavior docs
    Implement Operator publication and usage retention; publish a reviewed exact
    package for the matching Harness implementation. Update existing authoritative
    contract documents so old assumptions do not conflict with these semantics.
-2. **Compact tools and bounded read defaults.** Implement deterministic capability
-   projection, smaller declarations, exact runtime validation and shared read
-   defaults. Update all provider codecs, build digests and shared fixtures together.
+2. **Compact target context, tools and bounded read defaults.** Implement the
+   resource index and verified detail references, deterministic capability-filtered
+   tool projection, concise descriptions, smaller schemas, exact runtime validation
+   and shared read defaults. Update all provider codecs, build digests and shared
+   fixtures together. Keep complete host capability validation intact.
 3. **Harness integration and observability.** Consume the exact package, schedule
    early compaction, keep headroom/receipt semantics, and add the journal/export/
    report size facts. Demonstrate the baseline complete workflow before treating
@@ -351,6 +450,19 @@ Add shared Go/Python fixtures and focused integration tests covering:
 - All five codec projections: reduced size, identical Go/Python output, provider
   declaration validity, legitimate advanced/exploratory calls and runtime rejection
   of constraints compacted out of declarations. No capability granted by prose.
+- Compact target indexes preserve exact resource identifiers, associations and
+  readable detail handles. Exercise MCP/service-result injection, database-state
+  mutation and file mutation after bounded detail reads. Verify unchanged selector,
+  writable-field, creation, size and authorization enforcement. Missing, truncated
+  or unavailable references cannot become guessed contracts or dispatched actions.
+- Unavailable capability branches are absent; permitted exploratory, retained
+  injection cleanup, snapshot/restore and optional history remain usable. Tool
+  declarations and their digest remain unchanged after detail reads and restores.
+- The basic direct-input/evidence/finish workflow needs neither advanced guidance
+  reads nor artifact publication for small inputs. A controlled invalid advanced
+  call receives a precise correction and succeeds on corrected submission without
+  duplicate execution. Runtime validation rejects invalid values even when their
+  full constraints were intentionally compacted out of the provider declaration.
 - Small default reads, explicit larger reads, truncation/availability indicators,
   exact receipt/range references, visibility denial and unchanged retained bytes.
 - A large fixed prompt/tool set and rapidly growing observations: Harness compacts
@@ -373,11 +485,17 @@ It MUST execute an explicit scenario, inspect evidence, approach the allowance,
 compact or correct before dispatch, execute a follow-up without replay, accept
 one finish, observe Harness exit 0, complete owned cleanup and generate exported
 evidence plus a readable report. Include a failure variant and both supported
-transport paths. Separately demonstrate preflight using an instrumented counter
+transport paths. Add an advanced variant that discovers a resource in the compact
+index, reads only its relevant details, performs a permitted injection, inspects
+the resulting evidence and cleans up. Test all resource families above with local
+fixtures and identify which have complete process coverage. Measure total model
+request bytes and reference-read counts for basic and advanced workflows, alongside
+the initial-context and fixed-tool reductions. Separately demonstrate preflight using an instrumented counter
 and provider; label synthetic counting separately from a qualified real counter.
 
-Report exact component/contract identities, before/after tool sizes, relevant
-usage measurements, observed dispatch counts, preserved evidence and any unqualified
+Report exact component/contract identities, before/after target-context, description
+and schema sizes, reference-read costs, relevant usage measurements, observed
+dispatch counts, preserved evidence and any unqualified
 counter/provider combinations. Controlled tests establish behavior, not live
 provider reliability. Live model/counting calls, cloud writes and release
 publication require separate authorization.
