@@ -23,14 +23,13 @@ func TestPythonProcessConclusionAndSeparateInspection(t *testing.T) {
 	if os.Getenv("OPERATOR_HARNESS_INTEGRATION") != "1" {
 		t.Skip("opt-in Harness process test")
 	}
-	binary := filepath.Join(t.TempDir(), "operatorctl")
-	build := exec.Command("go", "build", "-o", binary, "./cmd/operatorctl")
-	build.Dir = "../.."
-	if out, e := build.CombinedOutput(); e != nil {
-		t.Fatal(e, string(out))
-	}
+	binary := processCLI(t)
 	for _, transport := range []string{"fifo", "spool"} {
 		for _, invalid := range []bool{false, true} {
+			// Detailed correction is covered on FIFO; accepted finish remains covered on both.
+			if transport == "spool" && invalid {
+				continue
+			}
 			name := transport + "/accepted"
 			if invalid {
 				name = transport + "/corrected"

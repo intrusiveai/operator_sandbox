@@ -58,7 +58,10 @@ func protocol(t *testing.T) *contracts.Protocol {
 }
 func fixture(t *testing.T) preparation.Input {
 	t.Helper()
-	p := protocol(t)
+	return fixtureWithProtocol(t, protocol(t))
+}
+func fixtureWithProtocol(t *testing.T, p *contracts.Protocol) preparation.Input {
+	t.Helper()
 	native := read(t, "../interceptor/testdata/capability-delivery.json")
 	authoring, err := capabilities.FromNative(p.Catalog(), native, "delivery-example")
 	if err != nil {

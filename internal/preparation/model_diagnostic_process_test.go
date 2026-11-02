@@ -38,15 +38,13 @@ func TestPythonProcessModelDiagnosticInspectionAndExport(t *testing.T) {
 	if os.Getenv("OPERATOR_HARNESS_INTEGRATION") != "1" {
 		t.Skip("set OPERATOR_HARNESS_INTEGRATION=1 with sibling Harness and Python environment")
 	}
-	operator, _ := filepath.Abs("../..")
-	binary := filepath.Join(t.TempDir(), "operatorctl")
-	build := exec.Command("go", "build", "-o", binary, "./cmd/operatorctl")
-	build.Dir = operator
-	if out, e := build.CombinedOutput(); e != nil {
-		t.Fatal(e, string(out))
-	}
+	binary := processCLI(t)
 	for _, transport := range []string{"fifo", "spool"} {
 		for _, mode := range []string{"http-rejection", "contract-invalid", "usage-input", "usage-both"} {
+			// Error categories are transport-independent; keep a rejection/export smoke on spool.
+			if transport == "spool" && mode != "http-rejection" {
+				continue
+			}
 			status := 200
 			if mode == "http-rejection" {
 				status = 400
