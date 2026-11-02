@@ -53,10 +53,14 @@ func TestPassiveReferencesAreFrozenAndBound(t *testing.T) {
 			raw[0] = 'X'
 			files := target.ReferenceContents()
 			for key, data := range files {
-				if !bytes.Equal(data, []byte("Passive scenario guidance.")) {
+				if key == "input/artifacts/sha256-"+digest[7:] && !bytes.Equal(data, []byte("Passive scenario guidance.")) {
 					t.Fatal("source mutated")
 				}
-				data[0] = 'Y'
+				original := append([]byte(nil), data...)
+				data[0] ^= 1
+				if !bytes.Equal(target.ReferenceContents()[key], original) {
+					t.Fatal("returned reference aliased immutable source")
+				}
 				files[key] = data
 			}
 			// Existing launch fixture supplies the three core descriptors; add the real
@@ -68,7 +72,7 @@ func TestPassiveReferencesAreFrozenAndBound(t *testing.T) {
 			}
 			refs := context["references"].([]any)
 			bindings := context["artifact_bindings"].([]any)
-			if len(refs) != 1 || len(bindings) != 2 || bindings[0].(map[string]any)["artifact_id"] != "a-ref" || bindings[1].(map[string]any)["artifact_id"] != "z-ref" {
+			if len(refs) != len(files) || len(bindings) != 2 || bindings[0].(map[string]any)["artifact_id"] != "a-ref" || bindings[1].(map[string]any)["artifact_id"] != "z-ref" {
 				t.Fatal("alias/order binding wrong")
 			}
 			if len(context["omissions"].([]any)) != 1 {
@@ -77,7 +81,7 @@ func TestPassiveReferencesAreFrozenAndBound(t *testing.T) {
 			if _, err = target.Persist(writer, launch.EngineContext); err != nil {
 				t.Fatal(err)
 			}
-			if len(target.ReferenceContents()) != 1 {
+			if len(target.ReferenceContents()) != len(files) {
 				t.Fatal("inventory changed")
 			}
 			// The journal retains passive bytes under their own attribution, without
@@ -92,7 +96,7 @@ func TestPassiveReferencesAreFrozenAndBound(t *testing.T) {
 				}
 				return nil
 			})
-			if err != nil || count != 1 {
+			if err != nil || count != len(files) {
 				t.Fatal("reference journal retention", count, err)
 			}
 		})

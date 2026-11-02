@@ -1,9 +1,36 @@
 package contracts
 
+import "encoding/json"
+
 // ModelTools returns the package-owned native projection for a verified operation
 // set. This only declares tools; the fixed runtime dispatcher grants no authority
 // from a declaration and independently validates every call and live binding.
 func (p *Protocol) ModelTools(codec string, operations []string) ([]byte, error) {
+	return p.modelTools(codec, operations, nil)
+}
+
+// ModelToolsSelected freezes the supported injection alternatives for a campaign.
+func (p *Protocol) ModelToolsSelected(codec string, operations, surfaces []string) ([]byte, error) {
+	if surfaces == nil {
+		surfaces = []string{}
+	}
+	previous := ""
+	for _, s := range surfaces {
+		if s <= previous || !validSurface(s) {
+			return nil, ErrProtocol
+		}
+		previous = s
+	}
+	return p.modelTools(codec, operations, surfaces)
+}
+func validSurface(s string) bool {
+	switch s {
+	case "model_tool_result", "service_response", "mcp_tool_result", "environment_state", "database_response":
+		return true
+	}
+	return false
+}
+func (p *Protocol) modelTools(codec string, operations, surfaces []string) ([]byte, error) {
 	if len(operations) > 64 {
 		return nil, ErrProtocol
 	}
@@ -48,12 +75,30 @@ func (p *Protocol) ModelTools(codec string, operations []string) ([]byte, error)
 				parameters = projected
 			}
 		}
-		if name == "attempt_execute" && !admitted["engine.injection_delete"] {
+		if name == "attempt_execute" && (!admitted["engine.injection_delete"] || (surfaces != nil && len(surfaces) == 0)) {
 			// Each declaration is decoded afresh, so narrowing cannot mutate the catalog.
 			props := parameters.(map[string]any)["properties"].(map[string]any)
 			for _, field := range []string{"pre_actions", "injection_input", "retain_injections"} {
 				delete(props, field)
 			}
+		}
+		if name == "attempt_execute" && admitted["engine.injection_delete"] && len(surfaces) > 0 {
+			injection := parameters.(map[string]any)["properties"].(map[string]any)["pre_actions"].(map[string]any)["items"].(map[string]any)["properties"].(map[string]any)["parameters"].(map[string]any)
+			surfaceValues := []any{}
+			for _, s := range surfaces {
+				surfaceValues = append(surfaceValues, s)
+			}
+			injection["properties"].(map[string]any)["surface"] = map[string]any{"enum": surfaceValues}
+			selected := []any{}
+			for _, branch := range injection["oneOf"].([]any) {
+				surface := branch.(map[string]any)["properties"].(map[string]any)["surface"].(map[string]any)["const"]
+				for _, s := range surfaces {
+					if s == surface {
+						selected = append(selected, branch)
+					}
+				}
+			}
+			injection["oneOf"] = selected
 		}
 		description := branch["description"]
 		switch codec {
@@ -114,5 +159,27 @@ func (p *Protocol) ValidateToolArguments(name string, raw []byte) (map[string]an
 			return nil, err
 		}
 	}
+	if name == "reference_read" || name == "observation_read" {
+		if _, ok := object["max_bytes"]; !ok {
+			object["max_bytes"] = json.Number("4096")
+		}
+	}
 	return object, nil
+}
+
+// ToolGuidance is versioned reference material, not another tool catalog.
+func (p *Protocol) ToolGuidance(name string) ([]byte, error) {
+	raw := p.catalog.sources[ModelToolArgumentsSchema]
+	v, err := Decode(raw, OrdinaryLimit)
+	if err != nil {
+		return nil, err
+	}
+	for _, item := range v.(map[string]any)["oneOf"].([]any) {
+		branch := item.(map[string]any)
+		props := branch["properties"].(map[string]any)
+		if props["name"].(map[string]any)["const"] == name {
+			return canonicalValue(map[string]any{"tool": name, "description": branch["description"], "arguments": props["arguments"], "guidance": "Use the selected resource's details_reference for valid selectors and content. Receipts must come from the corresponding successful tool result; never manufacture them. Runtime rejects invalid values before dispatch."}, OrdinaryLimit)
+		}
+	}
+	return nil, ErrProtocol
 }

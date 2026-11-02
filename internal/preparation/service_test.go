@@ -254,6 +254,7 @@ func serviceWithTemplate(t *testing.T, budget time.Duration, operations []string
 		}
 		if modelConfig.Model != nil {
 			m := c["model"].(map[string]any)
+			m["tool_selection"] = map[string]any{"injection_surfaces": []string{}}
 			settings := m["codec_settings"].(map[string]any)
 			completion := settings["max_completion_tokens"]
 			if completion == nil {

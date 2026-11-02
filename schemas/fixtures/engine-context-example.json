@@ -393,6 +393,9 @@
       "maximum_prompt_tokens": 32768,
       "maximum_completion_tokens": 1024,
       "warning_threshold_tokens": 26214
+    },
+    "tool_selection": {
+      "injection_surfaces": []
     }
   },
   "operations": [

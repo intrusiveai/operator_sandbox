@@ -15,6 +15,10 @@ func TestContextBudgetValidation(t *testing.T) {
 	if ContextWarningThreshold(32768, 80) != 26214 || ContextWarningThreshold(MaxSafeInteger, 99) > MaxSafeInteger || ContextWarningThreshold(1, 1) != 1 {
 		t.Fatal("warning arithmetic")
 	}
+	// Preserve the existing input/total enforcement; do not add a new output cap.
+	if _, err := NewContextBudget(l, ModelMetrics{Known: true, InputTokens: 10, OutputTokens: 1100, TotalTokens: 1110}, 1024, 0, 0); err != nil {
+		t.Fatal(err)
+	}
 	for _, input := range []int64{0, 26213, 26214, 32768} {
 		b, err := NewContextBudget(l, ModelMetrics{Known: true, InputTokens: input, OutputTokens: 1024, TotalTokens: input + 1024}, 1024, 0, 0)
 		if err != nil || b.NearPromptLimit != (input >= 26214) || b.RemainingPromptTokens != 32768-input {
@@ -48,7 +52,10 @@ func TestContextBudgetValidation(t *testing.T) {
 	if _, err = p.ValidateModelExchange(policyRaw, f.Request, raw); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = p.ValidateModelExchange(policyRaw, f.Request, f.Result); err == nil {
+	old, _ := Decode(f.Result, OrdinaryLimit)
+	delete(old.(map[string]any), "context_budget")
+	oldRaw, _ := json.Marshal(old)
+	if _, err = p.ValidateModelExchange(policyRaw, f.Request, oldRaw); err == nil {
 		t.Fatal("old wire result accepted")
 	}
 	b.InputTokens++

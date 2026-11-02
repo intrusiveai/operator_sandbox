@@ -34,7 +34,7 @@ type ContextBudget struct {
 
 func NewContextBudget(l ContextLimits, m ModelMetrics, completion, remainingTokens, remainingTurns int64) (ContextBudget, error) {
 	if !l.Valid() || !m.Known || m.InputTokens < 0 || m.OutputTokens < 0 || m.InputTokens > l.MaximumPromptTokens ||
-		completion < 1 || completion > l.MaximumCompletionTokens || m.OutputTokens > completion ||
+		completion < 1 || completion > l.MaximumCompletionTokens || m.TotalTokens > l.MaximumPromptTokens+completion ||
 		m.TotalTokens != m.InputTokens+m.OutputTokens || remainingTokens < 0 || remainingTokens > MaxSafeInteger || remainingTurns < 0 || remainingTurns > MaxSafeInteger {
 		return ContextBudget{}, ErrProtocol
 	}
@@ -76,7 +76,7 @@ func DecodeContextBudget(raw []byte) *ContextBudget {
 		return nil
 	}
 	var b ContextBudget
-	if json.Unmarshal(raw, &b) != nil || b.RequestedCompletionTokens < 1 || b.OutputTokens > b.RequestedCompletionTokens ||
+	if json.Unmarshal(raw, &b) != nil || b.RequestedCompletionTokens < 1 || b.TotalTokens > b.ReservedTokens ||
 		b.TotalTokens != b.InputTokens+b.OutputTokens || b.ReservedTokens != b.InputTokens+b.RemainingPromptTokens+b.RequestedCompletionTokens {
 		return nil
 	}
@@ -121,4 +121,27 @@ func (p *Protocol) ValidateModelExchange(policyRaw, requestRaw, resultRaw []byte
 		return nil, ErrProtocol
 	}
 	return result, nil
+}
+
+// DecodeContextLimits projects only validated, content-free local allowances.
+func DecodeContextLimits(raw []byte) *ContextLimits {
+	value, err := Decode(raw, 4096)
+	m, ok := value.(map[string]any)
+	if err != nil || !ok || len(m) != 3 {
+		return nil
+	}
+	for _, key := range []string{"maximum_prompt_tokens", "maximum_completion_tokens", "warning_threshold_tokens"} {
+		n, ok := m[key].(json.Number)
+		if !ok {
+			return nil
+		}
+		if _, err := n.Int64(); err != nil {
+			return nil
+		}
+	}
+	l, err := contextLimits(m)
+	if err != nil {
+		return nil
+	}
+	return &l
 }

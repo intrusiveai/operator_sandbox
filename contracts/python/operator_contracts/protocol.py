@@ -113,9 +113,9 @@ class Protocol:
     def anthropic_continuation(self, result, tool_results):
         return model.anthropic.continuation(self,result,tool_results)
 
-    def model_tools(self, codec, operations):
+    def model_tools(self, codec, operations, surfaces=None):
         from .model_tools import model_tools
-        return model_tools(self, codec, operations)
+        return model_tools(self, codec, operations, surfaces)
 
     def resolve_direct_input(self, value):
         from .simple import resolve_direct_input

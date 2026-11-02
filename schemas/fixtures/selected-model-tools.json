@@ -1,0 +1,497 @@
+[
+  {
+    "codec": "openai-chat-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "surfaces": [],
+    "digest": "sha256:b48fb0e2bb53ce81a2a7a0ac9d5ba763af446f022d88ce499f18d20266196762",
+    "size_bytes": 21939
+  },
+  {
+    "codec": "openai-chat-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "surfaces": [
+      "mcp_tool_result"
+    ],
+    "digest": "sha256:e784e508b0c20eb8a8d8399ccacd14a1d4af36cc14a26d284d856f076879407b",
+    "size_bytes": 25919
+  },
+  {
+    "codec": "openai-chat-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "surfaces": [
+      "database_response",
+      "environment_state"
+    ],
+    "digest": "sha256:b690ceb7ec2eec0f025433c8814d634855f664a36117ce381f8f868ddd92441b",
+    "size_bytes": 26633
+  },
+  {
+    "codec": "openai-chat-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "surfaces": [
+      "database_response",
+      "environment_state",
+      "mcp_tool_result",
+      "model_tool_result",
+      "service_response"
+    ],
+    "digest": "sha256:116216dadaaae647785e1d061ae5d7a48c00d5606c7c537e883069fa07dcb974",
+    "size_bytes": 29925
+  },
+  {
+    "codec": "openai-responses-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "surfaces": [],
+    "digest": "sha256:9caac5850eb15226b14932561223663cd1a74d9d060ba2636a082fb039957a2d",
+    "size_bytes": 21796
+  },
+  {
+    "codec": "openai-responses-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "surfaces": [
+      "mcp_tool_result"
+    ],
+    "digest": "sha256:2252c45d26364530eb7a739662766b58792caf18d4e5debf73ea58fc695075a5",
+    "size_bytes": 25776
+  },
+  {
+    "codec": "openai-responses-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "surfaces": [
+      "database_response",
+      "environment_state"
+    ],
+    "digest": "sha256:dc7dd63e34fdf8490aa96dff5e3e843cd5b10bf74ec98a04ca51a0ddd0074f9d",
+    "size_bytes": 26490
+  },
+  {
+    "codec": "openai-responses-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "surfaces": [
+      "database_response",
+      "environment_state",
+      "mcp_tool_result",
+      "model_tool_result",
+      "service_response"
+    ],
+    "digest": "sha256:d5b4427ed933b0791bd34a64fa9ddd63c941cfa0892a1c8c9f3ffc046e3dfb6c",
+    "size_bytes": 29782
+  },
+  {
+    "codec": "anthropic-messages-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "surfaces": [],
+    "digest": "sha256:ba1a0cc9b65b6555a638bcd333dd4bbf5ddc5c604cdede58e3b1d117f17e6f15",
+    "size_bytes": 21198
+  },
+  {
+    "codec": "anthropic-messages-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "surfaces": [
+      "mcp_tool_result"
+    ],
+    "digest": "sha256:2b1ad253516863448c0f5dd8755942d6dcc783db8eba735686268b2d457a58f0",
+    "size_bytes": 25178
+  },
+  {
+    "codec": "anthropic-messages-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "surfaces": [
+      "database_response",
+      "environment_state"
+    ],
+    "digest": "sha256:6a88a5714a4d34baac71894b6e483a649316dfc3e961a386e9590b6ec7c423b6",
+    "size_bytes": 25892
+  },
+  {
+    "codec": "anthropic-messages-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "surfaces": [
+      "database_response",
+      "environment_state",
+      "mcp_tool_result",
+      "model_tool_result",
+      "service_response"
+    ],
+    "digest": "sha256:3ab617e0c82097deea5afa54962556ad293c11388d8947224d9932e63c0e0dd1",
+    "size_bytes": 29184
+  },
+  {
+    "codec": "bedrock-converse-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "surfaces": [],
+    "digest": "sha256:377d52fdf3d688cfbe74801b37af0d97269bb535fed2c43efac5d851ca055528",
+    "size_bytes": 21429
+  },
+  {
+    "codec": "bedrock-converse-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "surfaces": [
+      "mcp_tool_result"
+    ],
+    "digest": "sha256:2d5f5e2909fcbc13b9fc7dbb864700fc1a3258f06083d3b5e6b79910faca00ff",
+    "size_bytes": 25409
+  },
+  {
+    "codec": "bedrock-converse-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "surfaces": [
+      "database_response",
+      "environment_state"
+    ],
+    "digest": "sha256:1b35c8b37185853acf16ccd94743875c7adccf14632fd259d173d78236790500",
+    "size_bytes": 26123
+  },
+  {
+    "codec": "bedrock-converse-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "surfaces": [
+      "database_response",
+      "environment_state",
+      "mcp_tool_result",
+      "model_tool_result",
+      "service_response"
+    ],
+    "digest": "sha256:35d735e2a4d493b6922887340e64fb66d1d38b6c14c2fdadb3536588b944ec06",
+    "size_bytes": 29415
+  },
+  {
+    "codec": "gemini-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "surfaces": [],
+    "digest": "sha256:e7114eebf8e26fd977e9dd50491649e575f3331cdfca45760cc76c6a27b0c2b2",
+    "size_bytes": 21313
+  },
+  {
+    "codec": "gemini-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "surfaces": [
+      "mcp_tool_result"
+    ],
+    "digest": "sha256:34aa8b38d232de1f036e9a15fd8923bdb4ee8fb823347001299c3088d9397f1c",
+    "size_bytes": 25293
+  },
+  {
+    "codec": "gemini-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "surfaces": [
+      "database_response",
+      "environment_state"
+    ],
+    "digest": "sha256:d6c6cfc5531d697ef4626326e5818efa0a92229f4ff04fdb5f8e1234504fa196",
+    "size_bytes": 26007
+  },
+  {
+    "codec": "gemini-text-tools-v1",
+    "operations": [
+      "engine.artifact_begin",
+      "engine.artifact_commit",
+      "engine.artifact_put_part",
+      "engine.attempt_execute",
+      "engine.diagnostic_report",
+      "engine.finish",
+      "engine.injection_delete",
+      "engine.model_generate",
+      "engine.observation_read",
+      "engine.record_append",
+      "engine.restore_request",
+      "engine.snapshot_inspect",
+      "engine.snapshot_list",
+      "engine.snapshot_request"
+    ],
+    "surfaces": [
+      "database_response",
+      "environment_state",
+      "mcp_tool_result",
+      "model_tool_result",
+      "service_response"
+    ],
+    "digest": "sha256:3d27531590996f6c2a74cf9458a03b332dba12fe381d97dd9f9d616f68303ced",
+    "size_bytes": 29299
+  }
+]

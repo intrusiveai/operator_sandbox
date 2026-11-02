@@ -151,7 +151,7 @@ func TestNativeDockerFinishExit(t *testing.T) {
 			}
 			parent := t.TempDir()
 			os.Chmod(parent, 0700)
-			tree, e := staging.Create(ctx, input.Protocol, parent, staging.Manifests{InputTree: launch.InputTree, SkillSet: launch.SkillSet, Skills: launch.Skills}, map[string][]byte{"input/run-context.json": launch.EngineContext, "input/scenario-bundle.json": launch.ScenarioBundle, "input/system-prompt.txt": launch.Prompt})
+			tree, e := staging.Create(ctx, input.Protocol, parent, staging.Manifests{InputTree: launch.InputTree, SkillSet: launch.SkillSet, Skills: launch.Skills}, stagedContextContents(target, launch))
 			if e != nil {
 				t.Fatal(e)
 			}

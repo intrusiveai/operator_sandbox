@@ -25,7 +25,12 @@
             "additionalProperties": false
           }
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "anthropic-messages-text-tools-v1",
@@ -99,6 +104,17 @@
           "service_tier": "standard",
           "inference_geo": "global"
         }
+      },
+      "context_budget": {
+        "input_tokens": 140,
+        "output_tokens": 20,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32628,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -138,7 +154,12 @@
             "additionalProperties": false
           }
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "anthropic-messages-text-tools-v1",
@@ -219,6 +240,17 @@
           "service_tier": "standard",
           "inference_geo": "global"
         }
+      },
+      "context_budget": {
+        "input_tokens": 140,
+        "output_tokens": 20,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32628,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -447,7 +479,12 @@
             "additionalProperties": false
           }
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "anthropic-messages-text-tools-v1",
@@ -522,6 +559,17 @@
           "service_tier": "standard",
           "inference_geo": "global"
         }
+      },
+      "context_budget": {
+        "input_tokens": 140,
+        "output_tokens": 20,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32628,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -554,7 +602,12 @@
             "additionalProperties": false
           }
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "anthropic-messages-text-tools-v1",
@@ -631,6 +684,17 @@
           "service_tier": "standard",
           "inference_geo": "global"
         }
+      },
+      "context_budget": {
+        "input_tokens": 140,
+        "output_tokens": 20,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32628,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -663,7 +727,12 @@
             "additionalProperties": false
           }
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "anthropic-messages-text-tools-v1",
@@ -737,6 +806,17 @@
           "service_tier": "standard",
           "inference_geo": "global"
         }
+      },
+      "context_budget": {
+        "input_tokens": 140,
+        "output_tokens": 20,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32628,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -769,7 +849,12 @@
             "additionalProperties": false
           }
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "anthropic-messages-text-tools-v1",
@@ -848,6 +933,17 @@
           "category": "example",
           "explanation": "Declined."
         }
+      },
+      "context_budget": {
+        "input_tokens": 140,
+        "output_tokens": 20,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32628,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -880,7 +976,12 @@
             "additionalProperties": false
           }
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "anthropic-messages-text-tools-v1",
@@ -955,6 +1056,17 @@
           "service_tier": "standard",
           "inference_geo": "global"
         }
+      },
+      "context_budget": {
+        "input_tokens": 140,
+        "output_tokens": 20,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32628,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -987,7 +1099,12 @@
             "additionalProperties": false
           }
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "anthropic-messages-text-tools-v1",
@@ -1062,6 +1179,17 @@
           "service_tier": "standard",
           "inference_geo": "global"
         }
+      },
+      "context_budget": {
+        "input_tokens": 140,
+        "output_tokens": 20,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32628,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -1094,7 +1222,12 @@
             "additionalProperties": false
           }
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "anthropic-messages-text-tools-v1",
@@ -1169,6 +1302,17 @@
           "service_tier": "standard",
           "inference_geo": "global"
         }
+      },
+      "context_budget": {
+        "input_tokens": 140,
+        "output_tokens": 20,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32628,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -1201,7 +1345,12 @@
             "additionalProperties": false
           }
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "anthropic-messages-text-tools-v1",
@@ -1275,6 +1424,17 @@
           "service_tier": "standard",
           "inference_geo": "global"
         }
+      },
+      "context_budget": {
+        "input_tokens": 140,
+        "output_tokens": 20,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32628,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -1307,7 +1467,12 @@
             "additionalProperties": false
           }
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "anthropic-messages-text-tools-v1",
@@ -1381,6 +1546,17 @@
           "service_tier": "standard",
           "inference_geo": "global"
         }
+      },
+      "context_budget": {
+        "input_tokens": 140,
+        "output_tokens": 20,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32628,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -1414,7 +1590,12 @@
             "additionalProperties": false
           }
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "anthropic-messages-text-tools-v1",
@@ -1489,6 +1670,17 @@
           "service_tier": "standard",
           "inference_geo": "global"
         }
+      },
+      "context_budget": {
+        "input_tokens": 140,
+        "output_tokens": 20,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32628,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -4280,7 +4472,12 @@
             "additionalProperties": false
           }
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "anthropic-messages-text-tools-v1",
@@ -4370,6 +4567,17 @@
           "service_tier": "standard",
           "inference_geo": "global"
         }
+      },
+      "context_budget": {
+        "input_tokens": 140,
+        "output_tokens": 20,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32628,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -5099,7 +5307,12 @@
             "additionalProperties": false
           }
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "anthropic-messages-text-tools-v1",
@@ -5291,17 +5504,6 @@
           "service_tier": "standard",
           "inference_geo": "global"
         }
-      },
-      "context_budget": {
-        "input_tokens": 140,
-        "output_tokens": 20,
-        "total_tokens": 160,
-        "requested_completion_tokens": 2048,
-        "reserved_tokens": 34816,
-        "remaining_prompt_tokens": 32628,
-        "near_prompt_limit": false,
-        "remaining_model_tokens": 99840,
-        "remaining_model_turns": 9
       }
     },
     "valid": false
@@ -5816,6 +6018,9 @@
             "fixture-model-2026"
           ],
           "tools_digest": "sha256:148ecd781e9c159542bf81cdd9175fbdc53563437945f440980a2b0244ea2ee3"
+        },
+        "tool_selection": {
+          "injection_surfaces": []
         },
         "context_limits": {
           "maximum_prompt_tokens": 32768,

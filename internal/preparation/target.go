@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/attemptadapter"
@@ -87,6 +88,9 @@ func Build(in Input) (*Target, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err = t.addContextReferences(); err != nil {
+		return nil, err
+	}
 	t.nativeEvidence = interceptor.EvidenceIdentity{CampaignID: in.Attachment.CampaignID, SessionID: in.Attachment.Session.ID, EnvironmentDigest: in.Attachment.Session.EnvironmentDigest, ApplicationDigest: in.Attachment.Session.AppDigest, CapabilityDigest: in.Attachment.Session.CapabilityManifestDigest, FeedbackProfile: in.Attachment.Session.FeedbackProfile}
 	t.evidenceMaxBytes = in.Attachment.EvidenceMaxBytes
 	if len(in.Artifacts) > 4096 {
@@ -158,6 +162,14 @@ func (t *Target) Context(template []byte) ([]byte, error) {
 	reg := t.protocol.RegistryDigests()
 	c["contract"] = map[string]any{"version": pin.Version, "digest": pin.Digest, "catalog_digest": reg["catalog_digest"], "operations_digest": reg["operations_digest"]}
 	c["target"] = json.RawMessage(t.live.Export().PublicJSON())
+	surfaces := []string{}
+	for _, ref := range t.policy.CapabilityPolicy().SelectableActionRefs {
+		if strings.HasPrefix(ref, "action:injection:") {
+			surfaces = append(surfaces, strings.TrimPrefix(ref, "action:injection:"))
+		}
+	}
+	sort.Strings(surfaces)
+	c["model"].(map[string]any)["tool_selection"] = map[string]any{"injection_surfaces": surfaces}
 	c["references"] = t.references.entries
 	c["artifact_bindings"] = t.references.bindings
 	c["omissions"] = t.references.omissions

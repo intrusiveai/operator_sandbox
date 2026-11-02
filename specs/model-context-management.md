@@ -315,8 +315,9 @@ cleanup semantics remain unchanged.
 
 ## 6. Pre-dispatch context checks and safe correction
 
-Implement this as a second increment after the baseline allowance/usage and schema
-work. Use the existing model admission path, not a new endpoint or service.
+This separately qualified increment is excluded from the baseline implementation
+by the administrator's explicit decision. Implement it only after counter
+qualification; baseline admission keeps exact preflight disabled. Use the existing model admission path, not a new endpoint or service.
 
 ### Counter qualification
 

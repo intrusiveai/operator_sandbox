@@ -81,15 +81,15 @@ def build():
         object_schema(dict(encoding={'const':'utf8'},text=dict(type='string',maxLength=1048576))),
         object_schema(dict(encoding={'const':'base64'},data=dict(type='string',maxLength=1398104))),
         object_schema(dict(encoding={'const':'json'},value={}))]}
-    reference=object_schema(dict(reference_id=identifier,offset=dict(type='integer',minimum=0,maximum=2**53-1),max_bytes=dict(type='integer',minimum=1,maximum=262144)))
+    reference=object_schema(dict(reference_id=identifier,offset=dict(type='integer',minimum=0,maximum=2**53-1),max_bytes=dict(type='integer',minimum=1,maximum=262144,default=4096)),['reference_id','offset'])
     publish=object_schema(dict(purpose={'enum':['payload','carrier','supporting-data','conclusion']},media_type=media,content=content))
     upload=['engine.artifact_begin','engine.artifact_put_part','engine.artifact_commit']
     entries=[
-      ('reference_read','Read a bounded range from a verified reference handle in the campaign index. Never accepts a filesystem path.',[],reference),
+      ('reference_read','Read a bounded range from a verified reference handle in the campaign index. Never accepts a filesystem path. max_bytes defaults to 4096; inspect eof/size and request more ranges if needed.',[],reference),
       ('artifact_publish','Publish supplied data and return a committed artifact receipt. JSON encoding uses canonical JSON; strings remain JSON strings.',upload,publish),
       ('attempt_execute','Invoke a permitted target operation. Always specify origin: scenario requires scenario_id from the submitted bundle; exploratory forbids scenario_id. Use direct input normally, or an artifact receipt returned by artifact_publish for large/reusable input. Operator assigns bookkeeping; never invent descriptors or receipts.',['engine.attempt_execute'],attempt),
       ('injection_delete','Delete a retained injection using its known attempt receipt and action ID.',['engine.injection_delete'],load('engine-injection-delete-request')),
-      ('observation_read','Read permitted feedback bytes using the host attempt receipt and observation entry ID.',['engine.observation_read'],load('engine-observation-read-request')),
+      ('observation_read','Read permitted feedback bytes using the host attempt receipt and observation entry ID. max_bytes defaults to 4096; inspect availability, eof and truncation before requesting more ranges.',['engine.observation_read'],load('engine-observation-read-request')),
       ('record_append','Append a typed hypothesis, progress, lineage or coverage assertion. These records do not establish observed effects.',['engine.record_append'],records),
       ('finish','Finish with a minimal honest assessment: summary and objective outcomes. Cite only returned execution receipts. Empty references are valid for untested objectives. Operator retains the assessment and starts cleanup; acceptance is not cleanup completion.',['engine.finish'],finish),
       ('restore_request','Restore a known checkpoint while retaining this conversation. Success skips later calls from the current model response.',['engine.restore_request'],load('engine-restore-request')),
@@ -97,6 +97,19 @@ def build():
       ('snapshot_list','List checkpoints available to this campaign, with bounded pagination.',['engine.snapshot_list'],load('engine-snapshot-list-request')),
       ('snapshot_inspect','Inspect a checkpoint and its metadata by source-session/checkpoint identity.',['engine.snapshot_inspect'],load('engine-snapshot-inspect-request')),
     ]
+    for name,_,_,arguments in entries:
+        if name == 'observation_read':
+            arguments['required'].remove('max_bytes')
+            arguments['properties']['max_bytes']['default']=4096
+    def compact_schema(value):
+        if isinstance(value,list): return [compact_schema(v) for v in value]
+        if not isinstance(value,dict):return value
+        # Regex/string constraints remain in the full shared runtime schema.
+        out={k:compact_schema(v) for k,v in value.items() if k not in ('pattern','not')}
+        if out.get('type')=='object' and set(out.get('properties',{}))=={'surface','mode','scope','selector','placement'}:
+            out['properties']['selector']={'type':'object'}  # Each surface branch supplies its exact selector once.
+            out['description']='Surface selects matching selector, mode and placement. Read the resource contract before setup; runtime rejects invalid combinations.'
+        return out
     branches=[]
     for name,description,operations,arguments in sorted(entries):
         branch=object_schema(dict(name={'const':name},arguments=arguments))
@@ -104,9 +117,11 @@ def build():
         if name=='attempt_execute':
             provider=inline(documents['urn:operator:schema:engine-attempt-request:v1alpha4'],'urn:operator:schema:engine-attempt-request:v1alpha4',compact=True)
             branch['x-operator-provider-parameters']=provider
+        provider=compact_schema(provider)
+        branch['x-operator-provider-parameters']=provider
         projected=openai_parameters(name,provider)
         if projected is not None:branch['x-operator-openai-parameters']=projected
-        branch['description']=description;branch['x-operator-required-operations']=sorted(operations);branches.append(branch)
+        branch['description']=description+' Runtime enforces identifier and content limits. Advanced guidance: tool-guide:'+name+'.';branch['x-operator-required-operations']=sorted(operations);branches.append(branch)
     return {'$schema':'https://json-schema.org/draft/2020-12/schema','$id':ID,
         '$comment':'Generated by scripts/generate_tool_catalog.py; see MODEL_TOOL_CATALOG.md.','oneOf':branches}
 

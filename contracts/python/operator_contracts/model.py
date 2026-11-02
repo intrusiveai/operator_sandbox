@@ -224,7 +224,7 @@ def validate_model_exchange(protocol, policy_raw, request_raw, result_raw):
     budget = result['context_budget']
     completion = model_output_limit(protocol, request_raw)
     require(0 < completion <= limits['maximum_completion_tokens'])
-    require(metrics['input_tokens'] <= limits['maximum_prompt_tokens'] and metrics['output_tokens'] <= completion)
+    require(metrics['input_tokens'] <= limits['maximum_prompt_tokens'] and metrics['total_tokens'] <= limits['maximum_prompt_tokens'] + completion)
     require(all(budget[k] == metrics[k] for k in ('input_tokens','output_tokens','total_tokens')))
     require(budget['requested_completion_tokens'] == completion)
     require(budget['reserved_tokens'] == limits['maximum_prompt_tokens'] + completion)

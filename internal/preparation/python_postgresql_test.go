@@ -4,7 +4,7 @@ package preparation_test
 
 import (
 	"context"
-	"encoding/base64"
+
 	"encoding/json"
 	"fmt"
 	"os"
@@ -114,11 +114,11 @@ func TestPythonPostgreSQLWorkflow(t *testing.T) {
 		if v["availability"] != "available" {
 			return "", fmt.Errorf("observation unavailable: %s", encode(v))
 		}
-		raw, ok := v["content"].(string)
+		_, ok := v["content"].(string)
 		if !ok {
 			return "", fmt.Errorf("missing bytes: %s", encode(v))
 		}
-		b, e := base64.StdEncoding.DecodeString(raw)
+		b, e := modelContent(v)
 		return string(b), e
 	}
 	reply := func(turn int, q map[string]any) ([]byte, error) {
@@ -184,11 +184,11 @@ func TestPythonPostgreSQLWorkflow(t *testing.T) {
 			if err != nil {
 				return nil, err
 			}
-			encoded, ok := observed["content"].(string)
+			_, ok := observed["content"].(string)
 			if !ok {
 				return nil, fmt.Errorf("missing state output bytes")
 			}
-			raw, err := base64.StdEncoding.DecodeString(encoded)
+			raw, err := modelContent(observed)
 			if err != nil {
 				return nil, err
 			}

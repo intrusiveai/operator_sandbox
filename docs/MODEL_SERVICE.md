@@ -163,3 +163,15 @@ for the next one. Duplicate operations return the original snapshot. Unknown usa
 and hard overflows retain terminal behavior; no automatic retry or limit increase
 is performed. Reports and exports retain the numeric accounting without requiring
 prompt content in diagnostics.
+
+Model context reports include local prompt/completion allowances and the warning
+threshold, validated per-response usage and remaining budgets, and native request
+byte partitions. Bytes and local estimates are not exact token counts. Operator
+does not perform rejecting token-count preflight. See the
+[shared model context rules](../schemas/MODEL_CONTEXT_CONTRACT.md).
+
+Harness reads small text chunks directly, loads resource details on demand and
+compacts after a warning before its next generation. If the fixed task cannot fit
+or the remaining campaign budget cannot fund another call, it finishes honestly
+with the existing context/budget-limit reason. Raising budgets is not an automatic
+recovery action. Existing post-response overflow diagnostics remain authoritative.

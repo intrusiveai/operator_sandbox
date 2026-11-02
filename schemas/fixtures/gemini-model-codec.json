@@ -30,7 +30,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -113,6 +118,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -157,7 +173,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -241,6 +262,17 @@
           "cachedContentTokenCount": 30,
           "trafficType": "TRAFFIC_TYPE_UNSPECIFIED"
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -285,7 +317,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -369,6 +406,17 @@
           "cachedContentTokenCount": 30,
           "trafficType": "ON_DEMAND"
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -413,7 +461,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -497,6 +550,17 @@
           "cachedContentTokenCount": 30,
           "trafficType": "PROVISIONED_THROUGHPUT"
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -541,7 +605,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -625,6 +694,17 @@
           "cachedContentTokenCount": 30,
           "trafficType": "ON_DEMAND_PRIORITY"
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -669,7 +749,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -753,6 +838,17 @@
           "cachedContentTokenCount": 30,
           "trafficType": "ON_DEMAND_FLEX"
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -1154,7 +1250,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -1246,6 +1347,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -1290,7 +1402,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -1384,6 +1501,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -1421,7 +1549,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -1504,6 +1637,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -1527,7 +1671,12 @@
         "thinkingBudget": -1,
         "includeThoughts": true
       },
-      "tools": []
+      "tools": [],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -1596,6 +1745,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -1964,7 +2124,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -2050,6 +2215,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -2087,7 +2263,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -2175,6 +2356,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -2212,7 +2404,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -2297,6 +2494,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -2334,7 +2542,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -2420,6 +2633,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -2457,7 +2681,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -2543,6 +2772,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -2580,7 +2820,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -2666,6 +2911,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -2703,7 +2959,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -2789,6 +3050,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -2826,7 +3098,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -2912,6 +3189,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -2949,7 +3237,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -3035,6 +3328,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -3072,7 +3376,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -3158,6 +3467,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -3195,7 +3515,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -3281,6 +3606,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -3318,7 +3654,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -3404,6 +3745,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -3441,7 +3793,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -3527,6 +3884,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -3564,7 +3932,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -3650,6 +4023,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -3687,7 +4071,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -3773,6 +4162,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -3810,7 +4210,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -3896,6 +4301,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -3933,7 +4349,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -4019,6 +4440,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -4056,7 +4488,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -4131,6 +4568,17 @@
             }
           ]
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 0,
+        "total_tokens": 100,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99900,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -6431,7 +6879,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -6532,6 +6985,17 @@
             }
           ]
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -6927,7 +7391,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -7002,6 +7471,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -7789,7 +8269,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -7891,6 +8376,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -8556,7 +9052,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -8691,6 +9192,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -9062,7 +9574,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -9287,17 +9804,6 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
-      },
-      "context_budget": {
-        "input_tokens": 100,
-        "output_tokens": 60,
-        "total_tokens": 160,
-        "requested_completion_tokens": 2048,
-        "reserved_tokens": 34816,
-        "remaining_prompt_tokens": 32668,
-        "near_prompt_limit": false,
-        "remaining_model_tokens": 99840,
-        "remaining_model_turns": 9
       }
     },
     "valid": false
@@ -9827,6 +10333,9 @@
             "fixture-gemini-001"
           ],
           "tools_digest": "sha256:ecf55e192c4a20875a203a4fa95305e5dc2bc9939e25aa3902df9574c6f407ce"
+        },
+        "tool_selection": {
+          "injection_surfaces": []
         },
         "context_limits": {
           "maximum_prompt_tokens": 32768,

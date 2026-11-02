@@ -55,3 +55,7 @@ no later tool may execute. Do not replay pending/unknown operations.
 
 Shared model-tools and simple-workflow fixtures MUST pass in Go and Python. Test
 provider declaration validity separately from stricter runtime acceptance.
+
+The [model context contract](MODEL_CONTEXT_CONTRACT.md) defines frozen local allowances,
+validated response budgets, compact target references, selected tools and bounded
+read defaults for the current shared package.

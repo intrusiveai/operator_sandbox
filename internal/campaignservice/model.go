@@ -94,7 +94,11 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 	started := time.Now()
 	reservation := "model:" + contracts.RawDigest([]byte(q.ID))[7:]
 	request := marshal(native)
-	meta := marshal(map[string]any{"operation_id": q.ID, "profile_digest": s.config.Model.ProfileDigest, "model_turns": s.model.turns + 1, "model_tokens": s.model.tokens + reserve, "reserved_tokens": reserve, "started_at": started.UTC().Format(time.RFC3339Nano)})
+	sizes, err := contracts.MeasureModelRequest(value["codec_id"].(string), request)
+	if err != nil {
+		return stateReply{}, err
+	}
+	meta := marshal(map[string]any{"operation_id": q.ID, "profile_digest": s.config.Model.ProfileDigest, "model_turns": s.model.turns + 1, "model_tokens": s.model.tokens + reserve, "reserved_tokens": reserve, "started_at": started.UTC().Format(time.RFC3339Nano), "request_sizes": sizes, "context_limits": s.model.limits})
 	if _, err = s.writer.AppendReserving(campaign.Entry{RunRevision: q.Revision, Kind: "model.intent", Metadata: meta, Content: []campaign.Content{{Role: "provider-request", MediaType: "application/json", Bytes: request}}}, reservation, campaign.MaxContentBytes+2*(campaign.MaxEventBytes+1)); err != nil {
 		return stateReply{}, err
 	}

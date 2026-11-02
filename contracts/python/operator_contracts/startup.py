@@ -108,7 +108,7 @@ def validate_input_tree(protocol, raw):
         roles[role] = roles.get(role, 0) + 1
         total += entry["size_bytes"]
         if role == "reference":
-            require(entry["path"] == "artifacts/sha256-" + entry["digest"][7:])
+            require(entry["path"] in ("artifacts/sha256-" + entry["digest"][7:],"context/"+entry["digest"][7:]+".json"))
     require(total <= 64 << 20 and all(roles.get(role) == 1 for role in ("engine-context", "scenario-bundle", "system-prompt")))
     return manifest
 

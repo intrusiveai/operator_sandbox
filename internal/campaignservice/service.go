@@ -435,6 +435,7 @@ func (s *Service) Admit(ctx context.Context, in campaign.LaunchInputs) error {
 			} `json:"model"`
 		}
 		if json.Unmarshal(s.config.Prepared.Context(), &context) != nil || !context.Model.ContextLimits.Valid() || context.Model.ContextLimits.MaximumPromptTokens != s.config.Model.MaximumPromptTokens {
+			s.Stop(ErrService)
 			return ErrService
 		}
 		s.model.limits = context.Model.ContextLimits

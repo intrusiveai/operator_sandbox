@@ -101,7 +101,7 @@ func (p *Profile) PublicModel(nativeTools []byte) (json.RawMessage, error) {
 		settings[key] = policy[key]
 	}
 	model := map[string]any{"codec_id": p.settings.Codec, "profile_id": p.settings.ID, "profile_digest": p.digest, "model_id": p.settings.Model,
-		"features": []string{"text", "function-tools"}, "codec_settings": settings,
+		"features": []string{"text", "function-tools"}, "codec_settings": settings, "tool_selection": map[string]any{"injection_surfaces": []string{}},
 		"context_limits": contracts.ContextLimits{MaximumPromptTokens: p.settings.MaximumPromptTokens, MaximumCompletionTokens: p.settings.MaximumCompletionTokens, WarningThresholdTokens: contracts.ContextWarningThreshold(p.settings.MaximumPromptTokens, p.settings.ContextWarningPercent)}}
 	raw, err := json.Marshal(model)
 	if err != nil {
