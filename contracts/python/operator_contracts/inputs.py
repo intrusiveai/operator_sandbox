@@ -62,6 +62,9 @@ def validate_engine_context(protocol, raw):
     c = protocol._catalog.validate(ENGINE_CONTEXT_SCHEMA, raw, ENGINE_CONTEXT_LIMIT)
     check_provenance(c['prompt']['provenance'])
     check_admission(protocol, c)
+    require(set(c['operation_timeouts_ms']) == set(c['operations']))
+    from .sizes import validate_sizes
+    validate_sizes(c['size_limits'])
     # Reuse inventory semantics without encoding decoded numeric values again.
     inventory_paths(c['references'])
     ids = {c['scenario_bundle']['entry_id'], c['prompt']['entry_id']}

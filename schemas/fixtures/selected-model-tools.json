@@ -18,8 +18,8 @@
       "engine.snapshot_request"
     ],
     "surfaces": [],
-    "digest": "sha256:b48fb0e2bb53ce81a2a7a0ac9d5ba763af446f022d88ce499f18d20266196762",
-    "size_bytes": 21939
+    "digest": "sha256:44c47516e582f4102583b9b14740d1b5df2ab803f784ca6ffaf80fb2ca60c529",
+    "size_bytes": 22062
   },
   {
     "codec": "openai-chat-text-tools-v1",
@@ -42,8 +42,8 @@
     "surfaces": [
       "mcp_tool_result"
     ],
-    "digest": "sha256:e784e508b0c20eb8a8d8399ccacd14a1d4af36cc14a26d284d856f076879407b",
-    "size_bytes": 25919
+    "digest": "sha256:e3e864ea01f9acdca7006927f6b33d5839e5a534943c1ebbab673f101d9c01ef",
+    "size_bytes": 26118
   },
   {
     "codec": "openai-chat-text-tools-v1",
@@ -67,8 +67,8 @@
       "database_response",
       "environment_state"
     ],
-    "digest": "sha256:b690ceb7ec2eec0f025433c8814d634855f664a36117ce381f8f868ddd92441b",
-    "size_bytes": 26633
+    "digest": "sha256:9284290b3a198d3f5f9c4f6b833391db688470a1902bb8ea8cb3e11056c6f358",
+    "size_bytes": 26832
   },
   {
     "codec": "openai-chat-text-tools-v1",
@@ -95,8 +95,8 @@
       "model_tool_result",
       "service_response"
     ],
-    "digest": "sha256:116216dadaaae647785e1d061ae5d7a48c00d5606c7c537e883069fa07dcb974",
-    "size_bytes": 29925
+    "digest": "sha256:1bcd69c9f62d04ff3aa70a4857bd5af9032a9f50c513a17b6667ebbe7023fe2e",
+    "size_bytes": 30124
   },
   {
     "codec": "openai-responses-text-tools-v1",
@@ -117,8 +117,8 @@
       "engine.snapshot_request"
     ],
     "surfaces": [],
-    "digest": "sha256:9caac5850eb15226b14932561223663cd1a74d9d060ba2636a082fb039957a2d",
-    "size_bytes": 21796
+    "digest": "sha256:5573c8a8713193e17f294b468efdbe4b9fd6c28e39f8bbd03d3b220be3535ebe",
+    "size_bytes": 21919
   },
   {
     "codec": "openai-responses-text-tools-v1",
@@ -141,8 +141,8 @@
     "surfaces": [
       "mcp_tool_result"
     ],
-    "digest": "sha256:2252c45d26364530eb7a739662766b58792caf18d4e5debf73ea58fc695075a5",
-    "size_bytes": 25776
+    "digest": "sha256:51e10272cccdb10398f47306e111441f3100e9ab3ca4e88af051dcb5cc2502c9",
+    "size_bytes": 25975
   },
   {
     "codec": "openai-responses-text-tools-v1",
@@ -166,8 +166,8 @@
       "database_response",
       "environment_state"
     ],
-    "digest": "sha256:dc7dd63e34fdf8490aa96dff5e3e843cd5b10bf74ec98a04ca51a0ddd0074f9d",
-    "size_bytes": 26490
+    "digest": "sha256:d1d22af78eeceaa891791d7ee62d89cdc7396f36b01636b74d7651765cb8ea2e",
+    "size_bytes": 26689
   },
   {
     "codec": "openai-responses-text-tools-v1",
@@ -194,8 +194,8 @@
       "model_tool_result",
       "service_response"
     ],
-    "digest": "sha256:d5b4427ed933b0791bd34a64fa9ddd63c941cfa0892a1c8c9f3ffc046e3dfb6c",
-    "size_bytes": 29782
+    "digest": "sha256:b7426bb67c3670c21ea6a2edaeeeb3f4a6eb9be3d6cdb925e87bd6e2b3b695e8",
+    "size_bytes": 29981
   },
   {
     "codec": "anthropic-messages-text-tools-v1",
@@ -216,8 +216,8 @@
       "engine.snapshot_request"
     ],
     "surfaces": [],
-    "digest": "sha256:ba1a0cc9b65b6555a638bcd333dd4bbf5ddc5c604cdede58e3b1d117f17e6f15",
-    "size_bytes": 21198
+    "digest": "sha256:db18cd916f6b152c3c9eeefb0f1b509c1a8a3a48e8b17ca2859f00dc3698ce9c",
+    "size_bytes": 21275
   },
   {
     "codec": "anthropic-messages-text-tools-v1",
@@ -240,8 +240,8 @@
     "surfaces": [
       "mcp_tool_result"
     ],
-    "digest": "sha256:2b1ad253516863448c0f5dd8755942d6dcc783db8eba735686268b2d457a58f0",
-    "size_bytes": 25178
+    "digest": "sha256:3b249f883e3651827941feb8f82ca4766df3147614a74c293904de85135dcde2",
+    "size_bytes": 25331
   },
   {
     "codec": "anthropic-messages-text-tools-v1",
@@ -265,8 +265,8 @@
       "database_response",
       "environment_state"
     ],
-    "digest": "sha256:6a88a5714a4d34baac71894b6e483a649316dfc3e961a386e9590b6ec7c423b6",
-    "size_bytes": 25892
+    "digest": "sha256:481ad44b9399ebeb8707060ee1b071b7abcb41fefaf58679fa811425267d4ae7",
+    "size_bytes": 26045
   },
   {
     "codec": "anthropic-messages-text-tools-v1",
@@ -293,8 +293,8 @@
       "model_tool_result",
       "service_response"
     ],
-    "digest": "sha256:3ab617e0c82097deea5afa54962556ad293c11388d8947224d9932e63c0e0dd1",
-    "size_bytes": 29184
+    "digest": "sha256:38443d7caa92e51e01ca978c710114e7e0ab3638228e10e3331d2a4a44935585",
+    "size_bytes": 29337
   },
   {
     "codec": "bedrock-converse-text-tools-v1",
@@ -315,8 +315,8 @@
       "engine.snapshot_request"
     ],
     "surfaces": [],
-    "digest": "sha256:377d52fdf3d688cfbe74801b37af0d97269bb535fed2c43efac5d851ca055528",
-    "size_bytes": 21429
+    "digest": "sha256:10f23d7f0f16bbfb05afa0774d1fc0dd6be8d3b2d062a8eb704e002cba55b64d",
+    "size_bytes": 21506
   },
   {
     "codec": "bedrock-converse-text-tools-v1",
@@ -339,8 +339,8 @@
     "surfaces": [
       "mcp_tool_result"
     ],
-    "digest": "sha256:2d5f5e2909fcbc13b9fc7dbb864700fc1a3258f06083d3b5e6b79910faca00ff",
-    "size_bytes": 25409
+    "digest": "sha256:24ac6a10018c1d4482fa27109a45b492385b8ddb3b18382f17ef60ab5a8bbbe2",
+    "size_bytes": 25562
   },
   {
     "codec": "bedrock-converse-text-tools-v1",
@@ -364,8 +364,8 @@
       "database_response",
       "environment_state"
     ],
-    "digest": "sha256:1b35c8b37185853acf16ccd94743875c7adccf14632fd259d173d78236790500",
-    "size_bytes": 26123
+    "digest": "sha256:b3c0d839975caee8846a7fc72b808764d1d034171088dfb676e60b0dda1d459d",
+    "size_bytes": 26276
   },
   {
     "codec": "bedrock-converse-text-tools-v1",
@@ -392,8 +392,8 @@
       "model_tool_result",
       "service_response"
     ],
-    "digest": "sha256:35d735e2a4d493b6922887340e64fb66d1d38b6c14c2fdadb3536588b944ec06",
-    "size_bytes": 29415
+    "digest": "sha256:5fd33d51a53d35305ce0b25682f2629c3c92140589d6233d501c6f23b824ae57",
+    "size_bytes": 29568
   },
   {
     "codec": "gemini-text-tools-v1",
@@ -414,8 +414,8 @@
       "engine.snapshot_request"
     ],
     "surfaces": [],
-    "digest": "sha256:e7114eebf8e26fd977e9dd50491649e575f3331cdfca45760cc76c6a27b0c2b2",
-    "size_bytes": 21313
+    "digest": "sha256:f4f245c501918432e383b34849ffed97a43694fcde60a075e434fea9d9b6456a",
+    "size_bytes": 21390
   },
   {
     "codec": "gemini-text-tools-v1",
@@ -438,8 +438,8 @@
     "surfaces": [
       "mcp_tool_result"
     ],
-    "digest": "sha256:34aa8b38d232de1f036e9a15fd8923bdb4ee8fb823347001299c3088d9397f1c",
-    "size_bytes": 25293
+    "digest": "sha256:ceeb41b8389a68589ed3c9a90dc3636765ede16667038dfb88ec85b2869851a5",
+    "size_bytes": 25446
   },
   {
     "codec": "gemini-text-tools-v1",
@@ -463,8 +463,8 @@
       "database_response",
       "environment_state"
     ],
-    "digest": "sha256:d6c6cfc5531d697ef4626326e5818efa0a92229f4ff04fdb5f8e1234504fa196",
-    "size_bytes": 26007
+    "digest": "sha256:f9b860b38fde03948c64f2dc8ea410ed5923299a92643ddc1626cc550ee5d374",
+    "size_bytes": 26160
   },
   {
     "codec": "gemini-text-tools-v1",
@@ -491,7 +491,7 @@
       "model_tool_result",
       "service_response"
     ],
-    "digest": "sha256:3d27531590996f6c2a74cf9458a03b332dba12fe381d97dd9f9d616f68303ced",
-    "size_bytes": 29299
+    "digest": "sha256:c642eedf2c891be56bb2881c4ac0086584f45461d040cc5379c0c525ddffd858",
+    "size_bytes": 29452
   }
 ]

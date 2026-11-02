@@ -64,8 +64,8 @@ class ModelTest(unittest.TestCase):
     def test_bounds_and_registry(self):
         p=self.protocol
         op=next(o for o in p.operations() if o['name']=='engine.model_generate')
-        self.assertEqual((op['timeout_ms'],op['effect'],op['receipt_policy'],op['finalization_rule']),
-                         (120000,'model-call','durable','denied'))
+        self.assertEqual((op['effect'],op['receipt_policy'],op['finalization_rule']),
+                         ('model-call','durable','denied'))
         c=next(c for c in self.cases if c['name']=='invalid local arguments remain exact in followup')
         for content in ('\ud800','x'*(1048576+1)):
             with self.assertRaises(ContractError): p.chat_continuation(encoded(c['result']),[dict(tool_call_id='call-1',content=content)])

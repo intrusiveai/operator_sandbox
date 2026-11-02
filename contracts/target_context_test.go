@@ -73,7 +73,7 @@ func TestSharedSelectedTools(t *testing.T) {
 			t.Fatal(tool, v, err)
 		}
 
-		for _, value := range []string{"0", "-1", "262145", "null", "1.5", "\"4096\""} {
+		for _, value := range []string{"0", "-1", "1048577", "null", "1.5", "\"4096\""} {
 			bad := append([]byte(nil), args[:len(args)-1]...)
 			bad = append(bad, []byte(",\"max_bytes\":"+value+"}")...)
 			if _, err := p.ValidateToolArguments(tool, bad); err == nil {

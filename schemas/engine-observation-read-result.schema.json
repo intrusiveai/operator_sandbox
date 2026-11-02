@@ -50,12 +50,12 @@
     "content": {
       "type": "string",
       "contentEncoding": "base64",
-      "maxLength": 349528
+      "maxLength": 1398104
     },
     "raw_length": {
       "type": "integer",
       "minimum": 0,
-      "maximum": 262144
+      "maximum": 1048576
     },
     "eof": {
       "type": "boolean"

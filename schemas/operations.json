@@ -23,7 +23,6 @@
         "finalizing"
       ],
       "finalization_rule": "conclusion-only",
-      "timeout_ms": 30000,
       "max_request_bytes": 4194304,
       "max_result_bytes": 4194304,
       "effect": "artifact-write",
@@ -53,7 +52,6 @@
         "finalizing"
       ],
       "finalization_rule": "conclusion-only",
-      "timeout_ms": 30000,
       "max_request_bytes": 4194304,
       "max_result_bytes": 4194304,
       "effect": "artifact-write",
@@ -83,7 +81,6 @@
         "finalizing"
       ],
       "finalization_rule": "conclusion-only",
-      "timeout_ms": 30000,
       "max_request_bytes": 4194304,
       "max_result_bytes": 4194304,
       "effect": "artifact-write",
@@ -109,8 +106,7 @@
         "admitted"
       ],
       "finalization_rule": "denied",
-      "timeout_ms": 120000,
-      "max_request_bytes": 65536,
+      "max_request_bytes": 4194304,
       "max_result_bytes": 4194304,
       "effect": "target-write",
       "receipt_policy": "durable"
@@ -136,7 +132,6 @@
         "finalizing"
       ],
       "finalization_rule": "diagnostic",
-      "timeout_ms": 30000,
       "max_request_bytes": 65536,
       "max_result_bytes": 65536,
       "effect": "record-write",
@@ -164,7 +159,6 @@
         "finalizing"
       ],
       "finalization_rule": "stop",
-      "timeout_ms": 30000,
       "max_request_bytes": 65536,
       "max_result_bytes": 4194304,
       "effect": "stop",
@@ -192,7 +186,6 @@
         "admitted"
       ],
       "finalization_rule": "denied",
-      "timeout_ms": 30000,
       "max_request_bytes": 4194304,
       "max_result_bytes": 4194304,
       "effect": "target-write",
@@ -218,7 +211,6 @@
         "admitted"
       ],
       "finalization_rule": "denied",
-      "timeout_ms": 120000,
       "max_request_bytes": 4194304,
       "max_result_bytes": 4194304,
       "effect": "model-call",
@@ -250,7 +242,6 @@
         "admitted"
       ],
       "finalization_rule": "denied",
-      "timeout_ms": 30000,
       "max_request_bytes": 4194304,
       "max_result_bytes": 4194304,
       "effect": "read",
@@ -277,7 +268,6 @@
         "admitted"
       ],
       "finalization_rule": "denied",
-      "timeout_ms": 30000,
       "max_request_bytes": 65536,
       "max_result_bytes": 65536,
       "effect": "record-write",
@@ -306,7 +296,6 @@
         "admitted"
       ],
       "finalization_rule": "denied",
-      "timeout_ms": 300000,
       "max_request_bytes": 4194304,
       "max_result_bytes": 4194304,
       "effect": "target-write",
@@ -333,7 +322,6 @@
         "admitted"
       ],
       "finalization_rule": "denied",
-      "timeout_ms": 30000,
       "max_request_bytes": 4194304,
       "max_result_bytes": 4194304,
       "effect": "read",
@@ -360,7 +348,6 @@
         "admitted"
       ],
       "finalization_rule": "denied",
-      "timeout_ms": 30000,
       "max_request_bytes": 4194304,
       "max_result_bytes": 4194304,
       "effect": "read",
@@ -388,7 +375,6 @@
         "admitted"
       ],
       "finalization_rule": "denied",
-      "timeout_ms": 300000,
       "max_request_bytes": 4194304,
       "max_result_bytes": 4194304,
       "effect": "target-write",

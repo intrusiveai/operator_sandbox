@@ -365,11 +365,12 @@ target restores retain all transport/ACK state.
 
 The guest requests positive relative `timeout_ms`. Operator computes a monotonic
 host deadline from the smaller request, operation-policy limit and remaining
-campaign time. Guest timestamps/heartbeats cannot extend it. Initial operation
-ceilings: model generation 120 seconds; snapshot creation/restore 300 seconds;
-attempt execution requests 120 seconds, and other ordinary operations 30 seconds. Target invocations also obey their declared
-adapter timeout. Initial phase limits remain 60 seconds for confinement/readiness
-and 60 seconds for input initialization. The 30-minute campaign hard ceiling stays.
+campaign time. Guest timestamps/heartbeats cannot extend it. Ordinary-operation waits
+come from the verified EngineContext `operation_timeouts_ms` map; durations and sizing
+policy are defined in [Operating limits](OPERATING_LIMITS_CONTRACT.md). Target invocations
+also obey their complete-attempt profile allowance and native limits. Initial phase
+limits remain 60 seconds for confinement/readiness and 60 seconds for input initialization.
+The host's supported campaign lifetime bounds its configurable operating waits.
 
 Snapshot creation uses configurable campaign defaults of 20 admissions and
 1,073,741,824 cumulative committed canonical file bytes, as defined in Operator
@@ -506,14 +507,14 @@ feedback schemas. Typed records and conclusions are defined in the
 allowlist for ordinary operation dispatch in this package.
 
 `operations.json` binds each operation name to exact request/result/error schema
-IDs, permitted lifecycle states, timeout and size ceilings, effect classification
+IDs, permitted lifecycle states, framing ceilings, effect classification
 and receipt policy. Both tool catalog generation and broker dispatch use it.
 Arbitrary strings, unknown fields and generic forwarding are not dispatch paths.
 
 | Family | Operations and important constraints |
 |---|---|
 | Model | engine.model_generate; pinned provider-native codec/profile, no guest endpoint selection or silent translation. Codec-specific schemas/vectors are package members. |
-| Artifacts | engine.artifact_begin / put_part / commit; begin fixes purpose/media/raw size/digest, parts identify upload/offset/base64 bytes, commit verifies complete content and returns immutable receipt. Parts ≤256 KiB; objects ≤16 MiB. |
+| Artifacts | engine.artifact_begin / put_part / commit; begin fixes purpose/media/raw size/digest, parts identify upload/offset/base64 bytes, commit verifies complete content and returns immutable receipt. Parts obey the frozen artifact_part_bytes allowance (wire ceiling 1 MiB); objects obey artifact_bytes (integrity-verification ceiling 16 MiB). |
 | Attempts | engine.attempt_execute; compact v1alpha4 request with explicit origin and direct/artifact input, v1alpha2 result, permitted observation selection and native delivery semantics. |
 | Cleanup | engine.injection_delete; [closed schemas and semantics](INJECTION_CLEANUP_CONTRACT.md), one attempt-receipt/action handle, current-target deletion, confirmed absence succeeds, restore-aware duplicate behavior. |
 | Feedback | engine.observation_read; retain adopted receipt/entry/range contract and profile-limited manifest. |
@@ -743,3 +744,7 @@ read defaults for the current shared package.
 
 Complete-attempt execution budgets, bounded terminal reply delivery and timeout facts
 MUST follow [Attempt deadlines](ATTEMPT_TIMEOUT_CONTRACT.md).
+
+Ordinary-operation durations and operating sizes are supplied by Operator at startup
+as specified in [Operating limits](OPERATING_LIMITS_CONTRACT.md). Numeric registry
+timeouts are not part of this contract.

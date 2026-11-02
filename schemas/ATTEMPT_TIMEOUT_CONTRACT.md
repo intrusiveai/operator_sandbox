@@ -1,9 +1,9 @@
 # Attempt execution and reply deadlines
 
-`engine.attempt_execute` MUST use the operation registry's 120,000 ms request
-ceiling. Harness MUST select its default wait from that registry, not a separate
-constant. A caller MAY request less time. Exact shared package identity checks
-MUST reject components pinned to a different contract before execution.
+`engine.attempt_execute` MUST use the host-configured request wait supplied in
+EngineContext, as specified in [operating limits](OPERATING_LIMITS_CONTRACT.md).
+Harness MUST NOT substitute a registry constant. A caller MAY request less time.
+Exact shared package identity checks MUST reject incompatible components before execution.
 
 Operator's administrator target profile `operation_timeout_ms` MUST be within the global installation
 `target.max_operation_timeout_ms` ceiling (default 120000; configurable in
@@ -13,7 +13,7 @@ MUST inherit the same absolute execution deadline. Operator MUST also honor the
 earlier caller deadline and remaining campaign lifetime; no step resets a budget.
 
 For multi-step targets, configure the native target turn to 60 seconds and the
-Operator attempt to 90 seconds, leaving the registry-based Harness wait at
+Operator attempt to 90 seconds, setting the host-configured Harness wait to
 120 seconds. These are operating recommendations, not automatic configuration or
 an increase to a native target's own turn limit. Operator MUST NOT modify the
 target turn setting. Shorter request/campaign limits can remove reporting headroom.

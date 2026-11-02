@@ -36,7 +36,7 @@ func TestSharedSimpleWorkflow(t *testing.T) {
 	for _, c := range fixtures.Cases {
 		t.Run(c.Name, func(t *testing.T) {
 			if c.Mode == "input" {
-				value, e := Decode(c.Value, ControlLimit)
+				value, e := Decode(c.Value, OrdinaryLimit)
 				if e != nil {
 					t.Fatal(e)
 				}

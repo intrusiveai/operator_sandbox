@@ -134,7 +134,7 @@
         "attempt_allowance_ms": {
           "type": "integer",
           "minimum": 1,
-          "maximum": 1800000
+          "maximum": 9007199254740991
         },
         "elapsed_ms": {
           "type": "integer",

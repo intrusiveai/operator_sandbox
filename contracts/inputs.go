@@ -160,6 +160,18 @@ func (p *Protocol) ValidateEngineContext(raw []byte) (map[string]any, error) {
 	if err := p.checkAdmission(c); err != nil {
 		return nil, err
 	}
+	timeouts := c["operation_timeouts_ms"].(map[string]any)
+	if len(timeouts) != len(c["operations"].([]any)) {
+		return nil, ErrProtocol
+	}
+	for _, name := range c["operations"].([]any) {
+		if _, ok := timeouts[name.(string)]; !ok {
+			return nil, ErrProtocol
+		}
+	}
+	if _, err := SizeLimitsFromContext(raw); err != nil {
+		return nil, err
+	}
 	refs := c["references"].([]any)
 	if !inventoryPaths(refs) {
 		return nil, ErrProtocol
