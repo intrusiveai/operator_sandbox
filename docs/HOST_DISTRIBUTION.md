@@ -66,7 +66,10 @@ GitHub release. Check the archive checksum, then extract it into a private stagi
 directory. The installer MUST validate the internal manifest and every file before
 activation. For upgrades from v0.1.0, use the newly extracted `operatorctl` shown
 below: the older installer does not recognize the product-prefixed archive layout.
-Installers from v0.1.1 onward MAY install subsequent archives directly.
+Use the newly extracted installer for upgrades as well: an older strict manifest
+decoder may not recognize newly added metadata, including
+`interceptor_contract_version`. The new installer preserves existing state and
+configuration while accepting historical manifests with an unknown integration pin.
 
 For Linux AMD64, with both downloaded files in the current directory (replace
 `0.1.3` with the product version being installed):

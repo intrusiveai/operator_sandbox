@@ -26,9 +26,9 @@ class QualificationTest(unittest.TestCase):
                     'event': 'push', 'path': q.WORKFLOW, 'status': 'completed', 'conclusion': 'success',
                     'head_repository': {'full_name': 'intrusiveai/operator_sandbox'}}
         self.result = {'schema_version': 1, 'passed': True, 'platform': 'linux/amd64', 'source_commit': 'a' * 40,
-                       'test_revision': 'a' * 40, 'inventory_digest': 'sha256:' + 'c' * 64, 'dependencies': self.pin,
+                       'test_revision': 'a' * 40, 'test_worktree_modified': False, 'local_verification': False, 'inventory_digest': 'sha256:' + 'c' * 64, 'dependencies': self.pin,
                        'contract': self.inventory['contract'], 'interceptor_contract_version': '0.1.0',
-                       'operator_archive_sha256': 'sha256:' + 'b' * 64, 'workflow_run_id': 123, 'workflow_run_attempt': 1,
+                       'interceptor_archive_sha256': self.pin['archive_sha256'], 'operator_archive_sha256': 'sha256:' + 'b' * 64, 'workflow_run_id': 123, 'workflow_run_attempt': 1,
                        'checks': {name: True for name in q.CHECKS}}
 
     def test_exact_results_and_dependency_binding(self):
@@ -110,6 +110,26 @@ class QualificationTest(unittest.TestCase):
         for key in report:
             with self.subTest(key=key), self.assertRaises(ValueError):
                 validate_report(dict(report, **{key: None}), host, report['archive_sha256'])
+
+
+class ControlledModelTest(unittest.TestCase):
+    def test_receipts_and_readable_observations_drive_finish_without_paid_calls(self):
+        from qualification_model import ModelFixture
+        for encoding in ('utf8', 'base64'):
+            model = ModelFixture.__new__(ModelFixture)
+            model.turns, model.observed, model.receipt = 0, False, None
+            self.assertEqual(model.reply({'messages': []})['choices'][0]['message']['tool_calls'][0]['function']['name'], 'attempt_execute')
+            execution = {'receipt_id': 'actual-receipt', 'feedback': {'entries': [{'entry_id': 'actual-entry', 'kind': 'target_output'}]}}
+            def reply(call, value):
+                return model.reply({'messages': [{'role': 'tool', 'tool_call_id': call, 'content': json.dumps(value)}]})
+            read = reply('invoke', execution)
+            self.assertIn('actual-entry', read['choices'][0]['message']['tool_calls'][0]['function']['arguments'])
+            content = 'QA_CONFIG_OK' if encoding == 'utf8' else base64.b64encode(b'QA_CONFIG_OK').decode()
+            finish = reply('observe', {'availability': 'available', 'encoding': encoding, 'content': content})
+            self.assertTrue(model.observed)
+            self.assertIn('actual-receipt', finish['choices'][0]['message']['tool_calls'][0]['function']['arguments'])
+            with self.assertRaises(ValueError):
+                model.reply({'messages': []})
 
 
 class PromotionGateTest(unittest.TestCase):

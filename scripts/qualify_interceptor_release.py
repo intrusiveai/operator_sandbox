@@ -42,7 +42,6 @@ def download(url, path, expected):
 
 
 def campaign(operator_archive, interceptor_archive, pin, output):
-    arch = {'arm64': 'arm64', 'aarch64': 'arm64', 'x86_64': 'amd64'}[platform.machine()]
     with closing(socket.socket()) as check:
         check.bind(('127.0.0.1', 8080))  # Never displace another Interceptor.
     suffix = uuid.uuid4().hex
@@ -88,7 +87,7 @@ HTTPServer(("127.0.0.1",8080),Handler).serve_forever()
             blueprint = work / 'environment'; (blueprint / 'assets').mkdir(parents=True)
             save(blueprint / 'environment.yaml', {'api_version': 'interceptor.dev/v1alpha2', 'kind': 'Environment',
                 'metadata': {'name': 'operator-qualification', 'version': '0.1.0', 'reviewed_by': 'controlled-fixture', 'reviewed_at': '2026-11-03T00:00:00Z'},
-                'application': {'image': target + '@' + image, 'launch': {'command': ['python3', '-B', '/app/app.py'], 'workdir': '/app'},
+                'application': {'image': target + '@' + image, 'launch': {'command': ['python3', '-B', '/app/app.py'], 'workdir': '/app', 'environment': {'MODEL_BASE_URL': 'http://127.0.0.1:18080/v1'}},
                     'interface': {'kind': 'http', 'operations': [{'id': 'invoke', 'method': 'POST', 'path': '/invoke', 'delivery_asset': 'assets/invoke.json'}],
                         'http': {'listen': 'http://127.0.0.1:8080'}, 'startup_timeout_ms': 30000, 'turn_timeout_ms': 60000},
                     'persistence': {'snapshot_capable': False, 'mutable_roots': ['/state/app'], 'quiesce': {'kind': 'none'}}}})
@@ -106,7 +105,7 @@ HTTPServer(("127.0.0.1",8080),Handler).serve_forever()
             with ModelFixture(work / 'tls.pem', work / 'tls.key') as model, (output / 'interceptor.log').open('w') as log:
                 process = subprocess.Popen([str(native), 'run', '--environment', str(blueprint), '--model-provider', 'openai-chat',
                     '--provider-auth', 'api-key-env', '--model-api-key-env', 'QUALIFICATION_UNUSED_KEY', '--allow-model', 'unused-model',
-                    '--feedback-profile', 'black-box'], env=env, stdout=log, stderr=subprocess.STDOUT)
+                    '--provider-base-url', 'http://127.0.0.1:1/v1', '--feedback-profile', 'black-box'], env=env, stdout=log, stderr=subprocess.STDOUT)
                 deadline = time.monotonic() + 120
                 while 'Interceptor local API:' not in (output / 'interceptor.log').read_text():
                     if process.poll() is not None or time.monotonic() > deadline:
@@ -127,13 +126,16 @@ HTTPServer(("127.0.0.1",8080),Handler).serve_forever()
                 public = json.loads((work / 'capabilities.json').read_text())
                 bundle = json.loads((Path(__file__).resolve().parents[1] / 'schemas/fixtures/scenario-bundle-scenarios.json').read_text())
                 bundle['target_requirements'] = {'target_id': 'qualification', 'capability_source_digest': public['source']['capability_source_digest']}
+                bundle['objectives'][0]['description'] = 'Verify the controlled target returns its marker through permitted observation bytes.'
+                bundle['scenarios'][0]['hypothesis'] = 'The direct invocation returns QA_CONFIG_OK.'
+                bundle['scenarios'][0]['guidance']['surfaces'] = ['Direct application input.']
                 bundle['scenarios'][0]['required'] = True
                 save(work / 'bundle.json', bundle)
                 run(op, 'submit', '--config', config, '--bundle', work / 'bundle.json', '--capabilities', work / 'capabilities.json', '--output', work / 'run')
                 result = subprocess.run([str(op), 'campaign', 'start', '--config', str(config), '--run', str(work / 'run')], text=True, capture_output=True, timeout=300)
                 (output / 'operator.log').write_text(result.stdout + result.stderr)
                 # Export even if execution failed, using a fresh CLI invocation.
-                run(op, 'campaign', 'export', '--run', work / 'run', '--output', output / 'campaign')
+                run(op, 'export', '--run', work / 'run', '--output', output / 'campaign')
                 facts = json.loads((output / 'campaign/result-manifest.json').read_text())
                 exit_info = facts.get('harness_exit') or {}
                 events = [json.loads(line) for path in (output / 'campaign').rglob('*.jsonl') for line in path.read_text().splitlines()]
@@ -159,10 +161,10 @@ HTTPServer(("127.0.0.1",8080),Handler).serve_forever()
             if not succeeded and (work / 'run/start.json').exists():
                 try:
                     stopped = subprocess.run([str(op), 'campaign', 'terminate', '--config', str(work / 'config/config.yaml'),
-                        '--campaign', json.loads((work / 'run/start.json').read_text())['campaign_id']],
+                        '--campaign', json.loads(run(op, 'inspect', '--run', work / 'run'))['campaign_id']],
                         capture_output=True, text=True, timeout=45)
                     (output / 'fixture-cleanup.log').write_text(stopped.stdout + stopped.stderr)
-                except (OSError, ValueError, subprocess.TimeoutExpired):
+                except (OSError, ValueError, KeyError, RuntimeError, subprocess.TimeoutExpired):
                     # Incomplete exports still retain the state for inspection.
                     import shutil
                     if (work / 'state').exists():
@@ -203,8 +205,8 @@ def main():
                 parser.error('published qualification requires native Linux AMD64, version and source')
             github = GitHub('intrusiveai/operator_sandbox')
             release = github.release('v' + args.version)
-            if not release or release['draft'] or not release['prerelease'] or not release['body'].startswith(MARKER + '\n'):
-                raise ValueError('expected a published managed candidate')
+            if not release or release['draft'] or not release['body'].startswith(MARKER + '\n'):
+                raise ValueError('expected published managed release bytes')
             record = json.loads(release['body'].removeprefix(MARKER + '\n'))
             raw = github.download_inventory('v' + args.version)
             inventory = verify_inventory(raw, record); verify_uploaded(github, release, record['assets'])
@@ -220,7 +222,8 @@ def main():
         result = {'schema_version': 1, 'passed': True, 'platform': platform.system().lower() + '/' + {'x86_64': 'amd64', 'arm64': 'arm64', 'aarch64': 'arm64'}[platform.machine()],
             'source_commit': metadata['source_commit'], 'test_revision': run('git', 'rev-parse', 'HEAD'), 'dependencies': pin,
             'contract': pin['harness']['contract'], 'interceptor_contract_version': pin['interceptor_contract_version'],
-            'operator_archive_sha256': digest(operator.read_bytes()), 'checks': checks,
+            'operator_archive_sha256': digest(operator.read_bytes()), 'interceptor_archive_sha256': digest(native.read_bytes()), 'checks': checks,
+            'test_worktree_modified': bool(run('git', 'status', '--porcelain')),
             'workflow_run_id': int(os.environ.get('GITHUB_RUN_ID', '0')), 'workflow_run_attempt': int(os.environ.get('GITHUB_RUN_ATTEMPT', '0')),
             'inventory_digest': digest(raw) if not args.local else None, 'local_verification': args.local}
         save(args.output / 'result.json', result)

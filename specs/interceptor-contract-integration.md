@@ -42,13 +42,11 @@ returns before host reconciliation, attachment, or target access. The contract
 describes implemented product capabilities; the existing environment manifest
 still describes the capabilities available in a particular sandbox.
 
-Operator currently attaches through `hostrun.attachRecorded` without this check.
-It also performs prior-campaign native recovery earlier in installed preparation.
-Its release manifest and catalog generator carry only the Operator–Attack Harness
-contract identity. The installed publisher snapshot does not recognize
-`interceptor_contract_version`. Implementation MUST address all three paths without
-mistaking this new contract for the existing environment manifest or Harness
-contract.
+Operator's attachment, prior-campaign recovery and late-evidence collection paths
+MUST apply the same integration check at their respective admission boundaries.
+Release metadata MUST distinguish this contract from the Operator–Attack Harness
+package and the environment capability manifest. The product-local publisher
+MUST support both contract fields.
 
 ## 1. One authoritative Operator integration pin
 
@@ -221,8 +219,8 @@ Release verification MUST compare the reported pin from each actual packaged
 candidate inventory. Retain the result with the archive checksum and source
 revision. Extend the existing build/install checks; do not duplicate the full
 product suite per platform or require Interceptor's release workflow/test suite.
-The current native installed-package test runs only for Linux AMD64, so source
-inspection or that one test alone does not verify every archived executable.
+The Linux AMD64 installed-package test MUST be complemented by native archived
+executable checks on all four platforms; source inspection alone is insufficient.
 
 Existing strict host-manifest decoders and installer paths MUST be updated
 together. Preserve inspection of historical metadata where currently supported;

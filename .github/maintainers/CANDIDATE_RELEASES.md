@@ -317,7 +317,8 @@ Running campaigns retain their previously installed binaries and frozen inputs.
    publication and testing to finish. The merge into `main` must preserve the
    candidate's file tree.
 2. Open a same-repository PR with **base: main** and **compare: candidate-v1.2.3**.
-   Review it and merge only after the latest candidate publish job succeeds.
+   Review it and merge only after the latest candidate publish and
+   `qualify-interceptor` jobs succeed.
 3. Open the merged PR's **verify-host-candidates** run and follow its **promote**
    job. Approve the resulting catalog deployment if required; wait for both jobs
    to finish successfully.

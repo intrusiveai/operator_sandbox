@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
+import tempfile
 import zipfile
 
 CHECKS = ('compatibility', 'attachment', 'invocation', 'observation_read',
@@ -44,11 +45,12 @@ def read_pin(contract, integration):
 
 def validate_result(result, inventory, inventory_digest, run):
     from publish_host_release import asset_stem
-    expected = {'schema_version': 1, 'passed': True, 'platform': 'linux/amd64',
+    expected = {'schema_version': 1, 'passed': True, 'platform': 'linux/amd64', 'local_verification': False, 'test_worktree_modified': False,
                 'source_commit': inventory['source_commit'], 'test_revision': inventory['source_commit'],
                 'inventory_digest': inventory_digest, 'dependencies': inventory['qualification_dependencies'],
                 'contract': inventory['contract'], 'interceptor_contract_version': inventory['interceptor_contract_version'],
                 'operator_archive_sha256': inventory['assets'][asset_stem(inventory['version'], 'linux/amd64') + '.tar.gz'],
+                'interceptor_archive_sha256': inventory['qualification_dependencies']['archive_sha256'],
                 'workflow_run_id': run['id'], 'workflow_run_attempt': run['run_attempt'],
                 'checks': {name: True for name in CHECKS}}
     if any(result.get(key) != value for key, value in expected.items()):
@@ -97,7 +99,7 @@ def require_qualification(github, inventory, inventory_digest):
         artifact = artifacts[0]
         if artifact.get('workflow_run', {}).get('head_sha') != inventory['source_commit']:
             continue
-        with __import__('tempfile').TemporaryDirectory(prefix='operator-qualification-') as directory:
+        with tempfile.TemporaryDirectory(prefix='operator-qualification-') as directory:
             path = Path(directory) / 'artifact.zip'
             with path.open('wb') as output:
                 subprocess.run(['gh', 'api', github.prefix + f"actions/artifacts/{artifact['id']}/zip"], stdout=output, check=True, timeout=60)

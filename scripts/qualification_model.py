@@ -77,7 +77,8 @@ class ModelFixture:
             args = {'receipt_id': self.receipt, 'entry_id': entries[0]['entry_id'], 'offset': 0, 'max_bytes': 8192}
         elif self.turns == 3:
             observed = tool_result('observe')
-            if observed['availability'] != 'available' or b'QA_CONFIG_OK' not in base64.b64decode(observed['content'], validate=True):
+            content = observed['content'].encode('utf-8') if observed.get('encoding') == 'utf8' else base64.b64decode(observed['content'], validate=True)
+            if observed['availability'] != 'available' or b'QA_CONFIG_OK' not in content:
                 raise ValueError('controlled target observation was not read')
             self.observed = True
             name, call = 'finish', 'finish'
