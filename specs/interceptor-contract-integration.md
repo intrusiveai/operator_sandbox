@@ -244,6 +244,59 @@ with changed artifacts and repeated verification. Promotion MUST preserve the
 qualified bytes and both versions. Existing historical catalog entries MUST remain
 intact; no missing contract field may be fabricated for them.
 
+### Candidate integration qualification and stable promotion
+
+The release sequence MUST be build and package verification → candidate
+publication → integration qualification of the published bytes → stable
+promotion. Initial prerelease publication MUST NOT depend on this qualification:
+the candidate must exist before it can be qualified. A failed or unavailable
+qualification MUST leave the candidate a prerelease and block stable promotion.
+
+Operator MUST maintain a reviewed Interceptor qualification dependency pin in
+`release/interceptor-qualification.json`. It MUST identify an available published
+Interceptor candidate or stable artifact, its source revision, Linux AMD64 archive
+URL and SHA-256, and its expected Interceptor contract version. Initially that
+contract is `0.1.0`. This is a test dependency, not a configurable runtime pin;
+it MUST agree with Operator's compiled integration pin. Do not select `latest`,
+trust a mutable candidate tag alone, or invent an artifact identity before an
+Interceptor candidate containing the discovery endpoint is available.
+
+After candidate publication, an Operator-owned GitHub Actions job MUST download
+and verify Operator's published Linux AMD64 archive and the pinned Interceptor
+archive, then run a representative controlled campaign on a Linux AMD64 runner
+with Docker. It MUST exercise compatibility discovery, attachment, target
+invocation, observation inspection, accepted finish, Harness exit code zero,
+cleanup and exported evidence. Use a deterministic local target and controlled
+model responses; no paid model API or cloud credentials are required for campaign
+execution. Record the matching Harness image/contract identity used by the test.
+Do not rebuild Operator or substitute a development executable for the archive.
+
+Reuse the existing local integration fixture and release workflow. Run this
+campaign once per candidate artifact set, not in every platform packaging job or
+every PR check. It validates Operator's integration using an Interceptor artifact;
+it MUST NOT invoke Interceptor's full test suite or require a successful run of
+Interceptor's release workflow. Existing per-platform packaging checks and other
+qualification requirements remain separate; this Linux result MUST NOT be
+reported as native macOS or ARM64 runtime qualification.
+
+Retain machine-readable qualification results and the campaign evidence through
+the existing workflow artifact mechanism. Results MUST identify the workflow run,
+test revision, Operator source revision and candidate inventory digest, the actual
+Operator and Interceptor archive hashes and source revisions, both relevant
+contract identities, Harness image identity, and each required workflow outcome.
+Retention MUST cover the promotion window; expired or missing evidence requires
+qualification again. A skipped, cancelled, incomplete or failed run is not a pass.
+
+Before changing GitHub's prerelease status or publishing `tags: ["release"]`,
+the promotion job MUST require a passing result from the designated trusted
+Operator qualification workflow and verify that it describes the exact candidate
+inventory and tested dependencies. It MUST reject stale evidence after candidate
+replacement, changed dependency pins, mismatched hashes/versions, or missing
+results. Do not accept an arbitrary uploaded JSON file merely because it claims
+success. Promotion MUST reuse the qualified artifact bytes rather than rebuilding.
+The existing candidate and promotion triggers and approval controls remain intact;
+implement the gate inside those paths.
+
 Keep the existing workflow triggers, protected release tags, environment approval,
 catalog role, conditional writes and exact cache invalidation. Validate entries
 before acquiring cloud credentials. Integrate workflow changes through the normal
@@ -273,6 +326,10 @@ Focused tests MUST cover:
 - Release pin omission, invalid syntax, platform disagreement, binary/metadata
   disagreement, historical metadata handling, and changed pins during promotion.
   Run the complete reviewed publisher's synthetic catalog tests locally.
+- Candidate publication succeeding before integration qualification; stable
+  promotion refusing missing, failed, skipped, expired or untrusted qualification
+  evidence; replacement artifacts or dependencies invalidating an earlier pass;
+  and promotion accepting matching passing evidence without rebuilding artifacts.
 
 Use Operator's existing controlled campaign/process fixtures for the full
 check → attach → invoke → inspect evidence → finish → Harness exit → cleanup →
@@ -283,12 +340,18 @@ qualification suite or require paid model calls. If Docker/native execution is
 unavailable, report that exact limitation rather than calling mocked HTTP coverage
 full integration qualification.
 
+Local source-build verification during development MUST be distinguished from
+the published-artifact qualification required for stable promotion above.
+
 Update `docs/INTERCEPTOR_CLIENT.md`, `docs/CAMPAIGN_START.md`, relevant preparation
 troubleshooting and Operator specification sections, release metadata/installation
 documentation, and `.github/maintainers/CANDIDATE_RELEASES.md`. Explain automatic
 comparison, mismatch remediation, the distinct environment manifest, both catalog
 fields and the publisher upgrade. Campaign instructions MUST NOT add manual
-contract export or comparison steps.
+contract export or comparison steps. Release-maintainer instructions MUST explain
+how to update the qualification dependency pin, locate the retained results,
+rerun qualification against unchanged candidate bytes, and resolve a blocked
+promotion without bypassing the gate.
 
 Implementation SHOULD use three reviewable commit boundaries: typed discovery and
 pin with focused tests; campaign/recovery diagnostics with representative workflows;
