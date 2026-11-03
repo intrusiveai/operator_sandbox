@@ -240,15 +240,26 @@ func diagnosticFixture(t *testing.T) (hostconfig.Paths, string) {
 }
 
 func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
-	for _, fault := range []string{"image", "image-missing", "image-timeout", "attach"} {
+	for _, fault := range []string{"image", "image-missing", "image-timeout", "attach", "contract"} {
 		t.Run(fault, func(t *testing.T) {
 			var requests atomic.Int64
-			if fault == "attach" {
+			if fault == "attach" || fault == "contract" {
 				listener, e := net.Listen("tcp4", "127.0.0.1:8080")
 				if e != nil {
 					t.Skip("controlled attachment test requires unused localhost port 8080:", e)
 				}
 				server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+					if r.URL.Path == "/v1/contract-version" {
+						w.Header().Set("Content-Type", "application/json")
+						version := "0.1.0"
+						if fault == "contract" {
+							version = "0.2.0"
+							requests.Add(1)
+						}
+						fmt.Fprintf(w, `{"status":200,"session_revision":0,"body":{"interceptor_contract_version":%q}}`, version)
+						return
+					}
 					requests.Add(1)
 					if r.Method != "POST" || r.URL.Path != "/v1/attach" {
 						t.Errorf("unexpected native request %s %s", r.Method, r.URL.Path)
@@ -301,6 +312,10 @@ func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
 						if d.Stage != "local Harness image inspection" || !strings.Contains(d.Message, expected) {
 							t.Fatal(d)
 						}
+					} else if fault == "contract" {
+						if d.Stage != "Interceptor compatibility check" || d.Interceptor.Reason != "version_mismatch" || !strings.Contains(d.Message, "0.2.0") {
+							t.Fatal(d)
+						}
 					} else if d.Stage != "Interceptor attachment" || !strings.Contains(d.Message, "HTTP 409") {
 						t.Fatal(d)
 					}
@@ -350,7 +365,7 @@ func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
 					}
 				})
 			}
-			if fault == "attach" && requests.Load() != 2 {
+			if (fault == "attach" || fault == "contract") && requests.Load() != 2 {
 				t.Fatal("attachment replayed or skipped", requests.Load())
 			}
 		})

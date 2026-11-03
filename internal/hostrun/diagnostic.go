@@ -32,18 +32,22 @@ import (
 // object directly from an unrestricted error string, URL or response body.
 // It belongs to the host start record, not the shared host/harness contract.
 type PreparationDiagnostic struct {
-	HarnessExit   campaign.HarnessExit          `json:"harness_exit,omitempty,omitzero"`
-	Workflow      campaign.WorkflowDiagnostic   `json:"workflow,omitempty,omitzero"`
-	Conclusion    campaign.ConclusionDiagnostic `json:"conclusion,omitempty,omitzero"`
-	Stage         string                        `json:"stage"`
-	Message       string                        `json:"message"`
-	CleanupFailed bool                          `json:"cleanup_failed,omitempty"`
-	Model         modelprovider.Diagnostic      `json:"model,omitempty,omitzero"`
+	Interceptor   interceptor.CompatibilityError `json:"interceptor,omitempty,omitzero"`
+	HarnessExit   campaign.HarnessExit           `json:"harness_exit,omitempty,omitzero"`
+	Workflow      campaign.WorkflowDiagnostic    `json:"workflow,omitempty,omitzero"`
+	Conclusion    campaign.ConclusionDiagnostic  `json:"conclusion,omitempty,omitzero"`
+	Stage         string                         `json:"stage"`
+	Message       string                         `json:"message"`
+	CleanupFailed bool                           `json:"cleanup_failed,omitempty"`
+	Model         modelprovider.Diagnostic       `json:"model,omitempty,omitzero"`
 }
 
 func (d *PreparationDiagnostic) Valid() bool {
 	if d == nil {
 		return true
+	}
+	if d.Interceptor != (interceptor.CompatibilityError{}) && !d.Interceptor.Valid() {
+		return false
 	}
 	if d.HarnessExit != (campaign.HarnessExit{}) && !d.HarnessExit.Valid() {
 		return false
@@ -89,7 +93,13 @@ func PreparationFailure(stage string, err error) error {
 			stage = "local Harness image inspection"
 		}
 	}
-	return &preparationError{PreparationDiagnostic{Stage: stage, Message: preparationMessage(err)}, err}
+	diagnostic := PreparationDiagnostic{Stage: stage, Message: preparationMessage(err)}
+	var compatibility *interceptor.CompatibilityError
+	if errors.As(err, &compatibility) && compatibility.Valid() {
+		diagnostic.Interceptor = *compatibility
+		diagnostic.Stage = "Interceptor compatibility check"
+	}
+	return &preparationError{diagnostic, err}
 }
 
 // PreparationDetails returns a copy, never an unrestricted underlying error.
@@ -116,6 +126,10 @@ func preparationCleanup(stage string, primary, cleanup error) error {
 }
 
 func preparationMessage(err error) string {
+	var compatibility *interceptor.CompatibilityError
+	if errors.As(err, &compatibility) {
+		return compatibility.Error()
+	}
 	// Prefer the originating error when a lower-level operation has joined errors.
 	if joined, ok := err.(interface{ Unwrap() []error }); ok {
 		for _, cause := range joined.Unwrap() {

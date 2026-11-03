@@ -17,6 +17,7 @@ import (
 )
 
 type EvidencePeer interface {
+	CheckContract(context.Context) error
 	nativeevidence.Peer
 	Status(context.Context, string) (interceptor.Status, error)
 }
@@ -57,6 +58,11 @@ func CollectEvidence(ctx context.Context, root, id string, docker EvidenceDocker
 	out = EvidenceReport{APIVersion: "operator.dev/evidence-collection/v1alpha1", CampaignID: id, Outcomes: []campaign.EvidenceOutcome{}}
 	defer func() {
 		if err == nil {
+			return
+		}
+		var compatibility *interceptor.CompatibilityError
+		if errors.As(err, &compatibility) {
+			out.Reason = "interceptor_" + compatibility.Reason
 			return
 		}
 		switch {
@@ -263,6 +269,16 @@ func collectEvidenceSession(ctx context.Context, a *campaign.NativeRecovery, f f
 		out.ArchiveDigest = record.Provenance.Transfer.SHA256
 		out.Recorded = true
 		return verifyEvidenceOutcome(ctx, a, record, out), nil
+	}
+	previous, e := a.ReadEvidence(out.SessionID, digest)
+	if e != nil {
+		return out, e
+	}
+	if previous == nil || campaign.EvidenceRetryable(previous.Outcome) {
+		if e = peer.CheckContract(ctx); e != nil {
+			out.Reason = "interceptor_compatibility_failed"
+			return out, e
+		}
 	}
 	fresh, saved, e := a.BeginEvidence(out.SessionID, digest)
 	if e != nil {

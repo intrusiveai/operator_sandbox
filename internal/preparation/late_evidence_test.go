@@ -24,11 +24,12 @@ import (
 )
 
 type latePeer struct {
-	native       *peer
-	export       *exportPeer
-	statusCalls  int
-	beforeExport func()
-	archives     map[string][]byte
+	native        *peer
+	export        *exportPeer
+	contractError error
+	statusCalls   int
+	beforeExport  func()
+	archives      map[string][]byte
 }
 
 func (p *latePeer) Status(ctx context.Context, id string) (interceptor.Status, error) {
@@ -400,5 +401,35 @@ func TestLateEvidencePersistenceFailureReportsUnattemptedSessions(t *testing.T) 
 	report, e := nativerecovery.CollectEvidence(context.Background(), root, "campaign-1", &lateDocker{}, p)
 	if e == nil || len(report.Outcomes) != 2 || report.Outcomes[1].Reason != "collection_aborted" || report.Outcomes[1].Recorded || len(p.export.calls) != 1 {
 		t.Fatal(report, e)
+	}
+}
+
+func (p *latePeer) CheckContract(ctx context.Context) error {
+	if p.contractError != nil {
+		return p.contractError
+	}
+	return p.native.CheckContract(ctx)
+}
+
+func TestLateEvidenceCompatibilityDoesNotConsumeClaim(t *testing.T) {
+	root, w, p, _, selection := lateFixture(t)
+	w.Close()
+	p.contractError = &interceptor.CompatibilityError{Reason: "version_mismatch", Expected: "0.1.0", Actual: "0.2.0"}
+	out, err := nativerecovery.CollectEvidence(context.Background(), root, "campaign-1", &lateDocker{}, p)
+	if err == nil || out.Reason != "interceptor_version_mismatch" || p.statusCalls != 0 {
+		t.Fatal(out, err)
+	}
+	if _, err = os.Stat(filepath.Join(root, "campaigns/campaign-1/evidence-recovery", selection.Identity.SessionID, "intent.json")); !os.IsNotExist(err) {
+		t.Fatal("consumed evidence claim", err)
+	}
+	p.contractError = nil
+	out, err = nativerecovery.CollectEvidence(context.Background(), root, "campaign-1", &lateDocker{}, p)
+	if err != nil || !out.Complete() {
+		t.Fatal(out, err)
+	}
+	p.contractError = errors.New("must not query retained collection")
+	out, err = nativerecovery.CollectEvidence(context.Background(), root, "campaign-1", &lateDocker{}, p)
+	if err != nil || !out.Complete() {
+		t.Fatal(out, err)
 	}
 }

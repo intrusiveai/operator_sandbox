@@ -16,6 +16,7 @@ import (
 )
 
 type Peer interface {
+	CheckContract(context.Context) error
 	Status(context.Context, string) (interceptor.Status, error)
 	Execute(context.Context, interceptor.PreparedOperation) (interceptor.Response, error)
 	ExecuteLifecycle(context.Context, interceptor.PreparedLifecycle) (interceptor.Response, error)
@@ -99,8 +100,12 @@ func finalize(ctx context.Context, a *campaign.NativeRecovery, f facts, peer Pee
 		out.TargetStop = "unconfirmed"
 	}
 	out.CleanupRemaining = len(f.injections)
-	fresh, saved, err := a.Begin()
+	fresh, saved, err := a.BeginChecked(func() error { return peer.CheckContract(ctx) })
 	if err != nil {
+		var compatibility *interceptor.CompatibilityError
+		if errors.As(err, &compatibility) {
+			out.Reason = "interceptor_" + compatibility.Reason
+		}
 		return out, err
 	}
 	if !fresh {

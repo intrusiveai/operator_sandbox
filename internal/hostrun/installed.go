@@ -357,6 +357,7 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 	}()
 	stage = "target preparation"
 	bundle, authoring, references := submitted.Inputs()
+	var interceptorCheckedAt time.Time
 	var target *preparation.Target
 	var https *httpstarget.Client
 	if profile.HTTPS() != nil {
@@ -376,6 +377,7 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 		if e != nil {
 			return nil, e
 		}
+		interceptorCheckedAt = time.Now().UTC()
 		stage = "target preparation"
 		target, err = preparation.Build(preparation.Input{Protocol: p, Profile: profile, Attachment: attached, Status: status, InstanceID: status.InstanceID, Authoring: authoring, Bundle: bundle, References: references})
 	}
@@ -383,7 +385,7 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 		return nil, err
 	}
 	stage = "campaign launch preparation"
-	session, err := Prepare(ctx, Config{StateRoot: c.State.Root, Target: target,
+	session, err := Prepare(ctx, Config{StateRoot: c.State.Root, Target: target, InterceptorCheckedAt: interceptorCheckedAt,
 		Launch:       preparation.LaunchConfig{Sizes: c.Sizes, OperationTimeouts: c.OperationTimeouts, LaunchID: selected.LaunchID, ContainerID: selected.ContainerID, CreatedAt: time.Now().UTC().Truncate(time.Second), Image: image, Embedded: embedded, Model: model, Skills: selectedSkills, Limits: c.Limits, Retention: campaign.Retention{Mode: "manual-purge", MaxJournalBytes: c.Journal.MaxBytes, MaxSegmentBytes: c.Journal.SegmentBytes}, PromptMode: selected.PromptMode, Replacement: replacement, Appends: appends},
 		Requirements: requirements, Peer: native, HTTPS: https, Docker: docker, Provider: provider, MinimumFreeBytes: c.Journal.MinimumFreeBytes, SpoolMaxBytes: c.Spool.MaxBytes, EvidenceMaxBytes: c.Evidence.MaxArchiveBytes, StartRequestID: selected.StartRequestID, Gate: gate, Recovery: recovered})
 	if err != nil {

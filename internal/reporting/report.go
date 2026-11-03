@@ -10,10 +10,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
@@ -226,6 +228,16 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 		for _, key := range []string{"operation_id", "attempt_index_high_watermark", "attempt_admissions", "snapshot_admissions", "snapshot_bytes", "model_turns", "model_tokens", "actual_tokens", "finish_reason", "conclusion_state", "assessment_state", "unavailable", "finalization_status", "assertion_origin", "record_kind", "receipt_id", "part_index", "parts", "digest", "size_bytes"} {
 			if value, ok := metadata[key]; ok {
 				keep[key] = value
+			}
+		}
+		if event.Kind == "interceptor.compatibility" {
+			var expected, actual, at string
+			if json.Unmarshal(metadata["expected"], &expected) == nil && json.Unmarshal(metadata["actual"], &actual) == nil && interceptor.ValidContractVersion(expected) && actual == expected && json.Unmarshal(metadata["checked_at"], &at) == nil {
+				if _, err := time.Parse(time.RFC3339Nano, at); err == nil {
+					for _, key := range []string{"expected", "actual", "checked_at"} {
+						keep[key] = metadata[key]
+					}
+				}
 			}
 		}
 		if event.Kind == "credential.resolution" {

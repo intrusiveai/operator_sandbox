@@ -760,3 +760,5 @@ func TestServiceCampaignDeadlineTerminatesWithoutOrdinaryWork(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func (p *peer) CheckContract(context.Context) error { return nil }

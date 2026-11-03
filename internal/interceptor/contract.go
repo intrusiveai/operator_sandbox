@@ -101,3 +101,21 @@ func (c *Client) CheckContract(ctx context.Context) error {
 	}
 	return nil
 }
+
+// Valid permits only bounded diagnostic facts suitable for retained start records.
+func (e CompatibilityError) Valid() bool {
+	if !ValidContractVersion(e.Expected) || (e.HTTPStatus != 0 && (e.HTTPStatus < 100 || e.HTTPStatus > 599)) {
+		return false
+	}
+	if e.Reason == "version_mismatch" {
+		return ValidContractVersion(e.Actual) && e.Actual != e.Expected
+	}
+	if e.Actual != "" {
+		return false
+	}
+	switch e.Reason {
+	case "endpoint_unavailable", "invalid_version", "invalid_response", "http_rejection", "transport_failure", "timeout", "canceled":
+		return true
+	}
+	return false
+}
