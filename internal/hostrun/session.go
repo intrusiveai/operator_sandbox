@@ -22,6 +22,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/hostworker"
 	"github.com/intrusiveai/operator_sandbox/internal/httpstarget"
 	"github.com/intrusiveai/operator_sandbox/internal/imagerelease"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/preparation"
 	"github.com/intrusiveai/operator_sandbox/internal/staging"
 	"github.com/intrusiveai/operator_sandbox/internal/startup"
@@ -31,21 +32,22 @@ import (
 var ErrSession = errors.New("campaign launch session is invalid or already consumed")
 
 type Config struct {
-	HTTPS            *httpstarget.Client
-	StateRoot        string
-	Target           *preparation.Target
-	Launch           preparation.LaunchConfig
-	Requirements     imagerelease.Requirements
-	Peer             campaignservice.Peer
-	Docker           hostworker.Docker
-	Provider         campaignservice.ModelProvider
-	MinimumFreeBytes int64
-	SpoolMaxBytes    int64
-	EvidenceMaxBytes int64
-	StartRequestID   string
-	Gate             *startup.Gate // Ownership transfers after successful Claim, including later failures.
-	Recovery         []startup.Prior
-	Lifetime         *hostlifetime.Manager
+	InterceptorCheckedAt time.Time
+	HTTPS                *httpstarget.Client
+	StateRoot            string
+	Target               *preparation.Target
+	Launch               preparation.LaunchConfig
+	Requirements         imagerelease.Requirements
+	Peer                 campaignservice.Peer
+	Docker               hostworker.Docker
+	Provider             campaignservice.ModelProvider
+	MinimumFreeBytes     int64
+	SpoolMaxBytes        int64
+	EvidenceMaxBytes     int64
+	StartRequestID       string
+	Gate                 *startup.Gate // Ownership transfers after successful Claim, including later failures.
+	Recovery             []startup.Prior
+	Lifetime             *hostlifetime.Manager
 }
 
 type Receipt struct {
@@ -141,6 +143,13 @@ func Prepare(ctx context.Context, c Config) (session *Session, err error) {
 	stored, err := c.Target.Persist(s.writer, launch.Inputs.EngineContext)
 	if err != nil {
 		return nil, err
+	}
+
+	if !c.InterceptorCheckedAt.IsZero() {
+		raw, _ := json.Marshal(map[string]any{"expected": interceptor.SupportedContractVersion, "actual": interceptor.SupportedContractVersion, "checked_at": c.InterceptorCheckedAt.UTC().Format(time.RFC3339Nano)})
+		if _, err = s.writer.Append(campaign.Entry{RunRevision: launch.Manifest.InitialRevision, Kind: "interceptor.compatibility", Metadata: raw}); err != nil {
+			return nil, err
+		}
 	}
 	// Each recovery result stays bounded by the ordinary event metadata ceiling.
 	for _, prior := range c.Recovery {

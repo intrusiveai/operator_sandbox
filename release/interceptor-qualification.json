@@ -1,0 +1,14 @@
+{
+  "interceptor_contract_version": "0.1.0",
+  "source_commit": "acf9d739c6ee1ed433745d5c0f4c1eb40c25c067",
+  "archive_url": "https://github.com/intrusiveai/interceptor_sandbox/releases/download/v0.1.4/interceptor_sandbox-v0.1.4-linux_amd64.tar.gz",
+  "archive_sha256": "sha256:b4aef4c31219fb7561a82c52b73adccd397bea3515b5fc9a8f7645250154d737",
+  "harness": {
+    "image": "ghcr.io/intrusiveai/attack_harness@sha256:cb5a1ff4eafc8083acfd48778cf3604def1913e2e7ac29c017e362c30bfbce26",
+    "source_commit": "bd5379834206803ce0be796d3386255323bbae9d",
+    "contract": {
+      "package_version": "0.5.0",
+      "package_digest": "sha256:9db8d03e9d759eba0c002444c9c96dbbe77991d47f97e2e9fd1b4b182bec74c3"
+    }
+  }
+}

@@ -13,6 +13,7 @@ import (
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/hostrelease"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
 // releaseCommand operates on explicit administrator-selected distribution files.
@@ -52,7 +53,7 @@ func releaseCommand(ctx context.Context, action string, args []string, stdout, s
 	case "manifest":
 		files, e := hostrelease.Inventory(ctx, dir)
 		err = e
-		m := hostrelease.Manifest{APIVersion: hostrelease.ManifestVersion, Version: *version, Platform: *platform, SourceCommit: *commit, GoToolchain: "go1.26.5", Contract: contracts.PackageIdentity{Version: *contractVersion, Digest: *contractDigest}, Files: files}
+		m := hostrelease.Manifest{APIVersion: hostrelease.ManifestVersion, Version: *version, Platform: *platform, SourceCommit: *commit, GoToolchain: "go1.26.5", Contract: contracts.PackageIdentity{Version: *contractVersion, Digest: *contractDigest}, Files: files, InterceptorContractVersion: interceptor.SupportedContractVersion}
 		if err == nil {
 			err = hostrelease.CheckContents(ctx, dir, m)
 		}

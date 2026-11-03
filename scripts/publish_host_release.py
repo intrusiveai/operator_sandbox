@@ -55,10 +55,11 @@ def event_context(event, name, ref, sha, repository):
 def check_candidates(hosts):
     if len(hosts) != 4 or {h["platform"] for h in hosts} != PLATFORMS:
         raise ValueError("four distinct host platforms are required")
-    identity = [(h["version"], h["source_commit"], h["contract"]) for h in hosts]
+    identity = [(h["version"], h["source_commit"], h["contract"], h.get("interceptor_contract_version")) for h in hosts]
     if any(item != identity[0] for item in identity):
         raise ValueError("host source/version/contract identities differ")
     contract_version(identity[0][2])
+    integration_version(identity[0][3])
     return identity[0][0]
 
 
@@ -68,6 +69,14 @@ def contract_version(contract):
             not re.fullmatch(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", version)):
         raise ValueError("build contract.package_version must be an exact major.minor.patch version")
     return version
+
+
+def integration_version(version):
+    # Same catalog syntax, a separate source of truth from the Harness package.
+    try:
+        return contract_version({"package_version": version})
+    except ValueError as e:
+        raise ValueError("interceptor_contract_version must be an exact major.minor.patch version") from e
 
 
 class GitHub:
@@ -135,16 +144,23 @@ def assemble(directory, output, operatorctl=None):
         raise ValueError("candidate platform differs from its directory")
     operator = str((operatorctl or directory / "linux-amd64/bin/operatorctl").resolve())
     output.mkdir(mode=0o700)
+    reports = []
+    from verify_host_contract import validate_report
+    from integration_qualification import read_pin
     for host, d in zip(hosts, directories):
         stem = asset_stem(version, host["platform"])
         archive = output / (stem + ".tar.gz")
         subprocess.run([operator, "release", "archive", "--directory", str(d),
                         "--output", str(archive)], check=True)
+        report = json.loads((directory / "contract-verification" / (host["platform"].replace("/", "-") + ".json")).read_text())
+        validate_report(report, host, checksum(archive))
+        reports.append(report)
         (output / (stem + "-SHA256SUMS")).write_text(
             checksum(archive).removeprefix("sha256:") + "  " + archive.name + "\n")
     files = sorted(output.iterdir())
     inventory = {"version": version, "source_commit": hosts[0]["source_commit"],
-                 "contract": hosts[0]["contract"], "assets": {f.name: checksum(f) for f in files}}
+                 "qualification_dependencies": read_pin(hosts[0]["contract"], hosts[0]["interceptor_contract_version"]),
+                 "contract_verification": reports, "contract": hosts[0]["contract"], "interceptor_contract_version": hosts[0]["interceptor_contract_version"], "assets": {f.name: checksum(f) for f in files}}
     record = output / "candidate.json"
     record.write_text(json.dumps(inventory, sort_keys=True, indent=2) + "\n")
     return inventory, sorted(output.iterdir())
@@ -178,6 +194,9 @@ def verify_inventory(raw, record):
             inventory.get("assets") != {k: v for k, v in record["assets"].items() if k != INVENTORY_ASSET}):
         raise ValueError("candidate inventory does not describe the published source and artifacts")
     contract_version(inventory.get("contract"))
+    integration_version(inventory.get("interceptor_contract_version"))
+    from integration_qualification import validate_pin
+    validate_pin(inventory.get("qualification_dependencies"), inventory["contract"], inventory["interceptor_contract_version"])
     return inventory
 
 
@@ -214,7 +233,8 @@ def catalog_entry(github, tag, source):
         artifacts.append({"platform": platform, "filename": name, "url": asset["browser_download_url"],
                           "sha256": asset["digest"].removeprefix("sha256:")})
     return {"version": tag, "latest": True, "tags": ["rc" if release["prerelease"] else "release"],
-            "contract_package_version": contract_version(inventory["contract"]), "artifacts": artifacts}
+            "contract_package_version": contract_version(inventory["contract"]),
+            "interceptor_contract_version": integration_version(inventory["interceptor_contract_version"]), "artifacts": artifacts}
 
 
 def catalog_context(github, tag, source):
@@ -328,8 +348,10 @@ def promote(github, number):
     if candidate_tree != merged_tree:
         raise ValueError("main merge changed the candidate tree; merge main into the candidate and rebuild before release")
     verify_uploaded(github, release, record["assets"])
-    verify_inventory(github.download_inventory("v" + version), record)
-    promoted_record = dict(record, promotion_pr=number)
+    inventory = verify_inventory(github.download_inventory("v" + version), record)
+    from integration_qualification import require_qualification
+    qualification = require_qualification(github, inventory, record["assets"][INVENTORY_ASSET])
+    promoted_record = dict(record, promotion_pr=number, qualification=qualification)
     body = MARKER + "\n" + json.dumps(promoted_record, sort_keys=True)
     if not release["prerelease"]:
         if record != promoted_record:

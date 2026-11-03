@@ -21,6 +21,7 @@ import (
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/contractstore"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
 const ManifestVersion = "operator.dev/host-release/v1alpha1"
@@ -42,13 +43,14 @@ type File struct {
 	Mode   uint32 `json:"mode"`
 }
 type Manifest struct {
-	APIVersion   string                    `json:"api_version"`
-	Version      string                    `json:"version"`
-	Platform     string                    `json:"platform"`
-	SourceCommit string                    `json:"source_commit"`
-	GoToolchain  string                    `json:"go_toolchain"`
-	Contract     contracts.PackageIdentity `json:"contract"`
-	Files        []File                    `json:"files"`
+	APIVersion                 string                    `json:"api_version"`
+	Version                    string                    `json:"version"`
+	Platform                   string                    `json:"platform"`
+	SourceCommit               string                    `json:"source_commit"`
+	GoToolchain                string                    `json:"go_toolchain"`
+	Contract                   contracts.PackageIdentity `json:"contract"`
+	Files                      []File                    `json:"files"`
+	InterceptorContractVersion string                    `json:"interceptor_contract_version,omitempty"`
 }
 
 func validPath(name string) bool {
@@ -66,6 +68,9 @@ func validPlatform(p string) bool {
 	return p == "linux/amd64" || p == "linux/arm64" || p == "darwin/amd64" || p == "darwin/arm64"
 }
 func (m Manifest) Validate() error {
+	if m.InterceptorContractVersion != "" && !interceptor.ValidContractVersion(m.InterceptorContractVersion) {
+		return ErrRelease
+	}
 	if m.APIVersion != ManifestVersion || !versionPattern.MatchString(m.Version) || !validPlatform(m.Platform) || !hexPattern.MatchString(m.SourceCommit) || m.GoToolchain != "go1.26.5" || !versionPattern.MatchString(m.Contract.Version) || !digestPattern.MatchString(m.Contract.Digest) || len(m.Files) == 0 || len(m.Files) > MaxFiles {
 		return ErrRelease
 	}

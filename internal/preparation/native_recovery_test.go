@@ -224,3 +224,38 @@ func TestStartupGateFinalizesNativeBeforeFreshWorkerClaim(t *testing.T) {
 		t.Fatal("finalization after worker claim")
 	}
 }
+
+type contractRecoveryPeer struct {
+	*peer
+	fail   bool
+	checks int
+}
+
+func (p *contractRecoveryPeer) CheckContract(context.Context) error {
+	p.checks++
+	if p.fail {
+		return &interceptor.CompatibilityError{Reason: "version_mismatch", Expected: "0.1.0", Actual: "0.2.0"}
+	}
+	return nil
+}
+func TestNativeRecoveryCompatibilityDoesNotConsumeClaim(t *testing.T) {
+	root, w, native := recoveryFixture(t, true)
+	w.Close()
+	p := &contractRecoveryPeer{peer: native, fail: true}
+	out, err := nativerecovery.Run(context.Background(), root, "campaign-1", true, p)
+	if err == nil || out.Reason != "interceptor_version_mismatch" || len(p.calls) != 0 {
+		t.Fatal(out, err, p.calls)
+	}
+	if _, err = os.Stat(filepath.Join(root, "campaigns/campaign-1/native-recovery/intent.json")); !os.IsNotExist(err) {
+		t.Fatal("consumed claim", err)
+	}
+	p.fail = false
+	out, err = nativerecovery.Run(context.Background(), root, "campaign-1", true, p)
+	if err != nil || out.Closure != "confirmed" {
+		t.Fatal(out, err)
+	}
+	p.fail = true
+	if _, err = nativerecovery.Run(context.Background(), root, "campaign-1", true, p); err != nil || p.checks != 2 {
+		t.Fatal("retained cleanup required live server", err, p.checks)
+	}
+}

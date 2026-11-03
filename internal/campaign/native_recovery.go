@@ -116,6 +116,12 @@ func (r *NativeRecovery) RecoveryResult() ([]byte, error) {
 // Begin never reclaims an existing intent. A lost process/reply remains unknown;
 // a later invocation can read the result but cannot dispatch a second cleanup pass.
 func (r *NativeRecovery) Begin() (fresh bool, result []byte, err error) {
+	return r.BeginChecked(nil)
+}
+
+// BeginChecked runs a read-only preflight only for new work, before the durable
+// one-shot claim. Retained outcomes remain readable without a live dependency.
+func (r *NativeRecovery) BeginChecked(check func() error) (fresh bool, result []byte, err error) {
 	if r.started {
 		return false, nil, ErrActive
 	}
@@ -166,6 +172,11 @@ func (r *NativeRecovery) Begin() (fresh bool, result []byte, err error) {
 	names, e := directoryNames(r.root, "native-recovery")
 	if e != nil || len(names) != 0 {
 		return false, nil, ErrCorrupt
+	}
+	if check != nil {
+		if err = check(); err != nil {
+			return false, nil, err
+		}
 	}
 	if err = r.checkSpace(); err != nil {
 		return false, nil, err

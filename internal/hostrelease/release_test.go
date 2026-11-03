@@ -43,7 +43,7 @@ func candidate(t *testing.T) (string, Manifest) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	m := Manifest{ManifestVersion, "0.1.0", runtime.GOOS + "/" + runtime.GOARCH, strings.Repeat("a", 40), "go1.26.5", report.Package, files}
+	m := Manifest{ManifestVersion, "0.1.0", runtime.GOOS + "/" + runtime.GOARCH, strings.Repeat("a", 40), "go1.26.5", report.Package, files, "0.1.0"}
 	raw, err := json.Marshal(m)
 	if err != nil {
 		t.Fatal(err)
@@ -176,6 +176,7 @@ func TestExtractRejectsMixedAndUnsafeProductLayouts(t *testing.T) {
 func TestManifestRejectsAmbiguousInventory(t *testing.T) {
 	_, m := candidate(t)
 	tests := []func(*Manifest){
+		func(m *Manifest) { m.InterceptorContractVersion = "v0.1.0" },
 		func(m *Manifest) { m.Platform = "windows/amd64" }, func(m *Manifest) { m.Version = "01.2.3" },
 		func(m *Manifest) { m.Files[0].Path = "../escape" }, func(m *Manifest) { m.Files[0].Mode = 04755 },
 		func(m *Manifest) { m.Files[0].Size = MaxFileBytes + 1 }, func(m *Manifest) { m.Files[0].Digest = "sha256:bad" },
@@ -189,6 +190,13 @@ func TestManifestRejectsAmbiguousInventory(t *testing.T) {
 		if _, err := DecodeManifest(raw); err == nil {
 			t.Fatal("accepted invalid manifest")
 		}
+	}
+	historical := m
+	historical.InterceptorContractVersion = ""
+	old, _ := json.Marshal(historical)
+	decoded, err := DecodeManifest(old)
+	if err != nil || decoded.InterceptorContractVersion != "" {
+		t.Fatal("historical metadata must remain unknown", err)
 	}
 	raw, _ := json.Marshal(m)
 	raw = append([]byte(`{"version":"0.1.0",`), raw[1:]...)

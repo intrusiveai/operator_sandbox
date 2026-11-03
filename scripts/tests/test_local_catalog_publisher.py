@@ -89,7 +89,7 @@ class LocalCatalogIntegrationTest(unittest.TestCase):
         manifest = json.loads((PUBLISHER / "publisher-source.json").read_text())
         self.assertEqual(manifest["product"], "operator_sandbox")
         self.assertFalse(manifest["working_tree"])
-        self.assertEqual(manifest["source_revision"], "0a88c3564b5266581dc94d3f1ce71880cac2376a")
+        self.assertEqual(manifest["source_revision"], "381271ccaa48a1af631ea052217b97196735786d")
         for path, expected in manifest["sha256"].items():
             with self.subTest(path=path):
                 self.assertEqual(hashlib.sha256((PUBLISHER / path).read_bytes()).hexdigest(), expected)
