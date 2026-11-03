@@ -19,8 +19,9 @@ const MaxOperationTimeout = 300 * time.Second
 // CallError distinguishes local refusal from a sent request whose result is not
 // trustworthy. Uncertain never permits a replacement mutation or resumed work.
 type CallError struct {
-	Kind      string
-	Uncertain bool
+	Kind       string
+	Uncertain  bool
+	HTTPStatus int
 }
 
 func (e *CallError) Error() string { return "Interceptor call failed: " + e.Kind }
@@ -113,7 +114,9 @@ func (c *Client) postBounded(ctx context.Context, route string, raw []byte, resp
 }
 
 func readJSONResponse(ctx context.Context, response *http.Response, responseLimit int64) (Response, error) {
-	fail := func() (Response, error) { return Response{}, &CallError{Kind: "invalid_response", Uncertain: true} }
+	fail := func() (Response, error) {
+		return Response{}, &CallError{Kind: "invalid_response", Uncertain: true, HTTPStatus: response.StatusCode}
+	}
 	media, _, err := mime.ParseMediaType(response.Header.Get("Content-Type"))
 	if err != nil || media != "application/json" || (response.Header.Get("Content-Encoding") != "" && response.Header.Get("Content-Encoding") != "identity") || response.ContentLength > responseLimit {
 		return fail()
