@@ -96,6 +96,9 @@ class CandidateWorkflowTest(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.github = GitHubFixture()
+        gate = patch("integration_qualification.require_qualification", return_value={"run_id": 100, "run_attempt": 1, "artifact_digest": "sha256:" + "e" * 64})
+        self.qualification = gate.start()
+        self.addCleanup(gate.stop)
 
     def publish(self, source=FIRST, contract_version="0.2.1"):
         context = release.event_context({}, "push", "refs/heads/" + BRANCH, source, REPO)
@@ -106,8 +109,11 @@ class CandidateWorkflowTest(unittest.TestCase):
             path.write_bytes((name + ":" + source).encode())
             files.append(path)
         inventory = {"version": context["version"], "source_commit": source,
-                     "contract": {"package_version": contract_version, "package_digest": "sha256:" + "a" * 64},
+                     "interceptor_contract_version": "0.1.0", "contract": {"package_version": contract_version, "package_digest": "sha256:" + "a" * 64},
                      "assets": {f.name: release.checksum(f) for f in files}}
+        pin = json.loads((ROOT / "release/interceptor-qualification.json").read_text())
+        pin["harness"]["contract"] = inventory["contract"]
+        inventory["qualification_dependencies"] = pin
         path = self.root / release.INVENTORY_ASSET
         path.write_text(json.dumps(inventory))
         files.append(path)

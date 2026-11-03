@@ -49,6 +49,7 @@ def main():
         command = Path(first["command"])
         version = json.loads(run([command, "version"], env))
         assert version["version"] == manifests[0]["version"]
+        assert version["interceptor_contract_version"] == manifests[0]["interceptor_contract_version"]
         assert version["contract_digest"] == manifests[0]["contract"]["package_digest"]
         run([command, "contract", "check", "--package-dir", Path(first["release_directory"]) / "contract",
              "--package-version", version["contract_version"], "--package-digest", version["contract_digest"]], env)

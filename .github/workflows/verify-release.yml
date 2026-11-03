@@ -94,8 +94,55 @@ jobs:
           path: dist/host-candidate.tar
           if-no-files-found: error
           retention-days: 14
-  publish:
+  packaged-contract:
     needs: [context, candidates]
+    if: needs.context.outputs.mode == 'publish'
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-amd64
+            runner: ubuntu-24.04
+            artifact: 0
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+            artifact: 1
+          - platform: darwin-amd64
+            runner: macos-15-intel
+            artifact: 2
+          - platform: darwin-arm64
+            runner: macos-15
+            artifact: 3
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verify native archived executable identities offline
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ARTIFACT: ${{ matrix.artifact }}
+          TARGET_PLATFORM: ${{ matrix.platform }}
+        run: |
+          gh run download "$GITHUB_RUN_ID" --name "host-candidate-$ARTIFACT" --dir dist/download
+          mkdir -p dist/candidates
+          tar -xf dist/download/host-candidate.tar -C dist/candidates
+          python3 scripts/verify_host_contract.py --candidate "dist/candidates/$TARGET_PLATFORM" --output "dist/contract-verification/$TARGET_PLATFORM.json"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: host-contract-${{ matrix.artifact }}
+          path: dist/contract-verification/*.json
+          if-no-files-found: error
+          retention-days: 90
+  publish:
+    outputs:
+      published: ${{ steps.publication.outputs.published }}
+    needs: [context, candidates, packaged-contract]
     if: >-
       needs.context.outputs.mode == 'publish' &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
@@ -122,6 +169,7 @@ jobs:
           for index in 0 1 2 3; do
             gh run download "$GITHUB_RUN_ID" --name "host-candidate-$index" --dir "dist/download-$index"
             tar -xf "dist/download-$index/host-candidate.tar" -C dist/candidates
+            gh run download "$GITHUB_RUN_ID" --name "host-contract-$index" --dir dist/candidates/contract-verification
           done
       - name: Publish rolling prerelease
         id: publication
@@ -140,6 +188,40 @@ jobs:
           RELEASE_TAG: v${{ needs.context.outputs.version }}
           RELEASE_SOURCE: ${{ needs.context.outputs.source }}
         run: python3 scripts/publish_host_release.py catalog-sync --tag "$RELEASE_TAG" --source "$RELEASE_SOURCE"
+  qualify-interceptor:
+    needs: [context, publish]
+    if: needs.publish.outputs.published == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Qualify the published archive against pinned Interceptor and Harness
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ needs.context.outputs.version }}
+          RELEASE_SOURCE: ${{ needs.context.outputs.source }}
+        run: python3 scripts/qualify_interceptor_release.py --version "$RELEASE_VERSION" --source "$RELEASE_SOURCE" --output dist/qualification
+      - name: Retain qualification result
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: interceptor-qualification
+          path: dist/qualification/result.json
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 90
+      - name: Retain controlled campaign evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: interceptor-qualification-evidence
+          path: dist/qualification
+          if-no-files-found: warn
+          overwrite: true
+          retention-days: 90
   promote:
     needs: context
     if: >-

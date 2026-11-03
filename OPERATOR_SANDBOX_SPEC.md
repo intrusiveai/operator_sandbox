@@ -751,12 +751,16 @@ environment/image preparation and provider configuration remain explicit
 Interceptor CLI setup before Operator attaches. Operator does not provision
 remote targets or supply arbitrary image names, host paths or commands.
 
-The initial [native client implementation](docs/INTERCEPTOR_CLIENT.md) provides
-fixed-loopback attachment/status, exact native operation bytes and typed admission
-closure. Persist effect requests before dispatch, interpret native results separately
-from transport success, and reconcile uncertain outcomes without automatic retries.
-Lifecycle, capability/feedback adapters and campaign-worker integration remain
-required before live execution. This client does not alter the shared harness API.
+The [native client](docs/INTERCEPTOR_CLIENT.md) uses fixed-loopback requests,
+exact native operation bytes and typed admission closure. Before attachment intent,
+Operator MUST query `POST /v1/contract-version` and exactly match its compiled
+Interceptor integration pin (`0.1.0`). A mismatch or failed discovery MUST prevent
+attachment and retain an actionable preparation diagnostic. Fresh native recovery
+and evidence collection clients MUST check before claiming new work; retained
+inspection and independent Docker termination MUST remain available.
+The integration version is independent of the environment capability manifest
+and the Operator–Harness package. A match MUST NOT relax instance, capability,
+binding, or authorization checks. See [integration requirements](specs/interceptor-contract-integration.md).
 
 Before guest launch, Operator posts its campaign ID, actual `worker_instance_id`
 and explicit final-stop choice to `/v1/attach`. Interceptor associates this campaign

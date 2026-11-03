@@ -52,7 +52,7 @@ class PublicationPreflightTest(unittest.TestCase):
         boundary = "1" * 124 + ".0.0"
         self.assertEqual(contract_version({"package_version": boundary}), boundary)
         for contract in (None, {}, {"package_version": ""}):
-            hosts = [{"platform": p, "version": "1.2.3", "source_commit": "a" * 40, "contract": contract} for p in PLATFORMS]
+            hosts = [{"platform": p, "version": "1.2.3", "source_commit": "a" * 40, "interceptor_contract_version": "0.1.0", "contract": contract} for p in PLATFORMS]
             with self.assertRaises(ValueError):
                 check_candidates(hosts)
 
@@ -74,7 +74,7 @@ class PublicationPreflightTest(unittest.TestCase):
     def test_requires_all_platforms_matching_source_and_contract(self):
         from publish_host_release import PLATFORMS, check_candidates
         pin = {"package_version": "0.0.0", "package_digest": "sha256:" + "a" * 64}
-        hosts = [{"platform": p, "version": "0.1.0", "source_commit": "a" * 40, "contract": dict(pin)}
+        hosts = [{"platform": p, "version": "0.1.0", "source_commit": "a" * 40, "interceptor_contract_version": "0.1.0", "contract": dict(pin)}
                  for p in PLATFORMS]
         self.assertEqual(check_candidates(hosts), "0.1.0")
         with self.assertRaises(ValueError):

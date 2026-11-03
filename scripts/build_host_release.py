@@ -83,6 +83,7 @@ def build(root, output, version, platforms, python):
         temp = Path(temp)
         helper = temp / "operatorctl"
         run(["go", "build", "-mod=readonly", "-trimpath", "-buildvcs=false", "-o", str(helper), "./cmd/operatorctl"], root, env)
+        interceptor_contract = json.loads(run([str(helper), "version"], root, env))["interceptor_contract_version"]
         contract = temp / "contract"
         report = json.loads(run([str(helper), "contract", "build", "--source", str(root),
                                 "--output", str(contract), "--package-version", expected["package_version"]], root, env))
@@ -114,7 +115,7 @@ def build(root, output, version, platforms, python):
                 "subject": [{"name": "bin/operatorctl", "digest": {"sha256": binary_digest}}],
                 "predicateType": "https://slsa.dev/provenance/v1",
                 "predicate": {"buildDefinition": {"buildType": "https://intrusive.ai/build/operator-host/v1",
-                    "externalParameters": {"version": version, "platform": platform, "contract": expected},
+                    "externalParameters": {"version": version, "platform": platform, "contract": expected, "interceptor_contract_version": interceptor_contract},
                     "internalParameters": {"toolchain": TOOLCHAIN, "cgo_enabled": False},
                     "resolvedDependencies": [{"uri": "git+https://github.com/intrusiveai/operator_sandbox",
                         "digest": {"gitCommit": commit}}]},

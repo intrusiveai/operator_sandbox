@@ -353,7 +353,7 @@ Verify those named checksum files before unpacking, as described in
 [host distribution](../../docs/HOST_DISTRIBUTION.md).
 
 `candidate.json` binds the four packages to their version,
-source commit and shared contract. Release metadata records the complete package asset
+source commit, shared contract, and Interceptor integration contract. Release metadata records the complete package asset
 inventory and GitHub-reported SHA-256 digests for promotion checks.
 
 `release-index-entry.json` is mutable catalog metadata, outside the package
@@ -371,8 +371,57 @@ Promotion retains this version and the archive identities.
 
 After publication, check `contract_package_version` in the public catalog against
 the release's `candidate.json`. After stable promotion, also check the website's
-**Shared contract: <version>** indicator. Matching displayed versions do not replace
+**Operator / Attack Harness contract** and **Interceptor / Operator contract** indicators. Matching displayed versions do not replace
 Operator's exact contract-digest compatibility checks.
+
+## Integration qualification before stable promotion
+
+1. Before creating a candidate, review `release/interceptor-qualification.json`.
+   Pin a published Interceptor Linux AMD64 archive URL, its verified SHA-256,
+   source commit and contract version. Pin the matching Harness image by repository
+   digest, source commit and exact shared package identity. Use actual published
+   artifacts, not `latest`. Commit dependency changes with the candidate source.
+2. Push the candidate through the ordinary workflow. The `packaged-contract` jobs
+   execute each of the four archived binaries on its matching native runner and
+   compare version output with package metadata. `candidate.json` retains these
+   results and archive hashes. No Interceptor or Docker is needed for these checks.
+3. Wait for candidate publication and the `qualify-interceptor` job. This job
+   downloads the published Operator archive, verifies the pinned Interceptor
+   archive and pulls the pinned Harness image. It runs one deterministic local
+   campaign using Docker, a marker-returning target and three controlled model
+   replies. It checks discovery, attachment, invocation, observation reading,
+   accepted finish, exit zero, cleanup and exported evidence. It uses no paid
+   model API or cloud credential. This qualifies Linux AMD64 only.
+4. In the same Actions run, download `interceptor-qualification` for `result.json`
+   and `interceptor-qualification-evidence` for the campaign export and logs.
+   Both are retained for 90 days. A failed campaign leaves diagnostic evidence;
+   the absence of a passing result blocks stable promotion, not initial prerelease
+   publication.
+5. Resolve failures and rerun the failed qualification job from that candidate's
+   workflow run. Rerunning it downloads the same published bytes; it does not
+   rebuild Operator. A replaced candidate or changed dependency requires a new
+   matching qualification. If evidence expired, rerun qualification before
+   promotion. Do not upload a replacement result manually.
+6. Merge the candidate PR into `main` only after qualification passes. Promotion
+   requires a successful candidate push/manual workflow at the exact source,
+   its successful qualification job, and an unexpired result artifact whose digest,
+   source, run attempt, dependency pins and inventory match. Missing, stale,
+   skipped, failed or untrusted evidence blocks both stable GitHub promotion and
+   the stable catalog. Existing package hashes and both contract versions remain
+   unchanged; nothing is rebuilt during promotion.
+
+For development, `scripts/qualify_interceptor_release.py --local` accepts a local
+Operator archive and a published native Interceptor archive with its independently
+verified checksum. Its result is explicitly local evidence and cannot pass the
+stable-promotion gate. See the script's `--help` for arguments. Run on an otherwise
+idle Docker host with port 8080 free; the fixture builds a small Python target and
+cleans up its owned containers. It never runs Interceptor's full test suite.
+
+Operator catalog entries MUST contain `interceptor_contract_version` from every
+verified package, alongside `contract_package_version`. The first identifies the
+native integration and the second identifies the Harness protocol. Neither is the
+product release version. Historical catalog entries stay unchanged; absent fields
+mean unknown rather than the current compiled value.
 
 ## Catalog publication and recovery
 
@@ -449,7 +498,7 @@ publish or configure GitHub, AWS, the releases service, or the public website.
 ## Updating the local publisher
 
 `tools/release-publisher` is the complete catalog-only export from reviewed
-releases commit `0a88c3564b5266581dc94d3f1ce71880cac2376a`.
+releases commit `381271ccaa48a1af631ea052217b97196735786d`.
 `publisher-source.json` records the source revision and each file's SHA-256.
 The private module name is only a local Go import namespace; publication runs
 with `GOWORK=off`, `GOPROXY=off`, and `GOTOOLCHAIN=local` and fetches no private code.

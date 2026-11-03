@@ -38,7 +38,7 @@ type Index struct {
 	Releases      []Entry `json:"releases"`
 }
 
-// ContractVersion is the exact package version embedded in the released artifact.
+// ContractVersion is an exact contract version recorded for a released artifact.
 // Missing metadata is readable; a supplied value must match the package contract.
 type ContractVersion string
 
@@ -48,7 +48,7 @@ func (v *ContractVersion) UnmarshalJSON(raw []byte) error {
 		return err
 	}
 	if !validContractVersion(value) {
-		return errors.New("contract_package_version must be an exact major.minor.patch version (maximum 128 characters)")
+		return errors.New("contract version must be an exact major.minor.patch version (maximum 128 characters)")
 	}
 	*v = ContractVersion(value)
 	return nil
@@ -58,18 +58,23 @@ func validContractVersion(value string) bool {
 	return len(value) <= 128 && contractVersionPattern.MatchString(value)
 }
 
-func (p Product) UsesSharedContract() bool {
+func (p Product) UsesHarnessContract() bool {
 	return p.ID == "operator_sandbox" || p.ID == "attack_harness"
 }
 
+func (p Product) UsesInterceptorContract() bool {
+	return p.ID == "operator_sandbox" || p.ID == "interceptor_sandbox"
+}
+
 type Entry struct {
-	ContractPackageVersion ContractVersion `json:"contract_package_version,omitempty"`
-	Version                string          `json:"version"`
-	Latest                 bool            `json:"latest"`
-	Tags                   []string        `json:"tags,omitempty"`
-	Artifacts              []Artifact      `json:"artifacts,omitempty"`
-	Image                  string          `json:"image,omitempty"`
-	Digest                 string          `json:"digest,omitempty"`
+	InterceptorContractVersion ContractVersion `json:"interceptor_contract_version,omitempty"`
+	ContractPackageVersion     ContractVersion `json:"contract_package_version,omitempty"`
+	Version                    string          `json:"version"`
+	Latest                     bool            `json:"latest"`
+	Tags                       []string        `json:"tags,omitempty"`
+	Artifacts                  []Artifact      `json:"artifacts,omitempty"`
+	Image                      string          `json:"image,omitempty"`
+	Digest                     string          `json:"digest,omitempty"`
 }
 
 type Artifact struct {
@@ -113,11 +118,19 @@ func Validate(index Index, product Product) error {
 		}
 		versions[release.Version] = struct{}{}
 		if release.ContractPackageVersion != "" {
-			if !product.UsesSharedContract() {
+			if !product.UsesHarnessContract() {
 				return errors.New("contract_package_version is only supported for Operator and Attack Harness")
 			}
 			if !validContractVersion(string(release.ContractPackageVersion)) {
 				return errors.New("invalid contract_package_version: expected exact major.minor.patch")
+			}
+		}
+		if release.InterceptorContractVersion != "" {
+			if !product.UsesInterceptorContract() {
+				return errors.New("interceptor_contract_version is only supported for Interceptor and Operator")
+			}
+			if !validContractVersion(string(release.InterceptorContractVersion)) {
+				return errors.New("invalid interceptor_contract_version: expected exact major.minor.patch")
 			}
 		}
 		tags := make(map[string]struct{}, len(release.Tags))
