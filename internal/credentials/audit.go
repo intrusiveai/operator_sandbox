@@ -63,7 +63,7 @@ func (r *AuditedResolver) Resolve(ctx context.Context, id string) (Resolution, e
 		return Resolution{}, ErrAudit
 	}
 	if err != nil {
-		return Resolution{}, errors.New("credential resolution failed")
+		return Resolution{}, err
 	}
 	return resolved, nil
 }

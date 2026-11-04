@@ -34,7 +34,7 @@ func projectCredential(sequence int64, at string, metadata map[string]json.RawMe
 		allowed []string
 	}{
 		{"credential_id", &c.CredentialID, nil}, {"profile_id", &c.ProfileID, nil},
-		{"backend", &c.Backend, []string{"aws-secrets-manager", "azure-key-vault", "gcp-secret-manager", "hashicorp-vault"}},
+		{"backend", &c.Backend, []string{"aws-secrets-manager", "azure-key-vault", "gcp-secret-manager", "hashicorp-vault", "onepassword"}},
 		{"outcome", &c.Outcome, []string{"resolved", "failed"}},
 		{"code", &c.Code, []string{"ok", "resolution_failed", "canceled"}},
 	} {
