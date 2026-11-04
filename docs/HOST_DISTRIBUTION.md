@@ -148,11 +148,11 @@ it MUST NOT execute with silently substituted inputs or resume an earlier campai
 ## Reproducible candidates and publication
 
 `python3 scripts/build_host_release.py --version 0.1.3 --output dist/candidate`
-MUST build all four host platforms from a clean committed checkout with Go 1.26.5,
-CGO disabled, fixed architecture baselines, trimmed paths and VCS/time-independent
+MUST build the current native host platform from a clean committed checkout with Go 1.26.5,
+CGO enabled, the native C compiler, fixed architecture baselines, trimmed paths and VCS/time-independent
 build flags. `go mod download` is the explicit dependency-preparation step; the
 builder MUST verify module sums and disable dependency network access during build.
-`--platform` MAY select a subset for development. Build output MUST be a new directory.
+`--platform` MAY explicitly select the current native OS/architecture only. CI uses matching Linux/macOS AMD64/ARM64 runners. Build output MUST be a new directory.
 
 The builder MUST reproduce `release/contract-lock.json`, using the existing contract
 publisher and exact matching schema bytes. The host executable MUST embed this

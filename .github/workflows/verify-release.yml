@@ -57,13 +57,24 @@ jobs:
     needs: [context, verify]
     # Build artifacts only for a candidate update, after the complete test gate.
     if: needs.context.outputs.mode == 'publish'
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
-        platform: [linux/amd64, linux/arm64, darwin/amd64, darwin/arm64]
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+          - platform: darwin/amd64
+            runner: macos-15-intel
+          - platform: darwin/arm64
+            runner: macos-15
     steps:
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.13.15'
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -83,8 +94,11 @@ jobs:
           python3 scripts/build_host_release.py --version "$RELEASE_VERSION" --platform "$TARGET_PLATFORM" --output dist/second
           diff -r dist/first dist/second
       - name: Exercise native installed package
-        if: matrix.platform == 'linux/amd64'
-        run: python3 scripts/test_installed_release.py --candidate dist/first/linux-amd64
+        env:
+          TARGET_PLATFORM: ${{ matrix.platform }}
+        run: |
+          python3 scripts/test_installed_release.py --candidate "dist/first/${TARGET_PLATFORM/\//-}"
+          python3 scripts/check_onepassword_binary.py "dist/first/${TARGET_PLATFORM/\//-}/bin/operatorctl"
       - name: Preserve candidate file modes
         run: tar -C dist/first -cf dist/host-candidate.tar .
       - name: Retain host candidate
@@ -119,6 +133,9 @@ jobs:
             runner: macos-15
             artifact: 3
     steps:
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.13.15'
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false

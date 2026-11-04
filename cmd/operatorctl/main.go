@@ -17,6 +17,7 @@ import (
 
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/contractstore"
+	"github.com/intrusiveai/operator_sandbox/internal/credentials"
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
@@ -24,6 +25,9 @@ import (
 )
 
 func main() {
+	if len(os.Args) == 2 && os.Args[1] == credentials.OnePasswordChildCommand {
+		os.Exit(credentials.ServeOnePasswordChild(context.Background(), os.Stdin, os.Stdout, "Operator Sandbox", operatorVersion))
+	}
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 	code := run(ctx, os.Args[1:], os.Stdout, os.Stderr)
 	cancel()
