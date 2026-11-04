@@ -9,6 +9,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+from native_build import native_environment, native_platform, inspect_binary
 
 TOOLCHAIN = "go1.26.5"
 PLATFORMS = ("linux/amd64", "linux/arm64", "darwin/amd64", "darwin/arm64")
@@ -67,13 +68,13 @@ def build(root, output, version, platforms, python):
         raise ValueError("host version must be numeric major.minor.patch")
     if output.exists():
         raise ValueError("output must be a new directory")
+    if list(platforms) != [native_platform()]:
+        raise ValueError("build exactly the platform of this native runner")
     if run(["git", "status", "--porcelain", "--untracked-files=all"], root):
         raise ValueError("release source must be a clean committed checkout")
     commit = run(["git", "rev-parse", "HEAD"], root)
-    env = dict(os.environ, GOTOOLCHAIN="local", GOWORK="off", GOFLAGS="", CGO_ENABLED="0",
-               GOPROXY="off", GOSUMDB="off", GOAMD64="v1", GOARM64="v8.0")
-    env.pop("GOOS", None)
-    env.pop("GOARCH", None)
+    env, native = native_environment(platforms[0])
+    env.update(GOPROXY="off", GOSUMDB="off")
     if run(["go", "env", "GOVERSION"], root, env) != TOOLCHAIN:
         raise ValueError("release builds require " + TOOLCHAIN)
     run(["go", "mod", "verify"], root, env)
@@ -116,7 +117,7 @@ def build(root, output, version, platforms, python):
                 "predicateType": "https://slsa.dev/provenance/v1",
                 "predicate": {"buildDefinition": {"buildType": "https://intrusive.ai/build/operator-host/v1",
                     "externalParameters": {"version": version, "platform": platform, "contract": expected, "interceptor_contract_version": interceptor_contract},
-                    "internalParameters": {"toolchain": TOOLCHAIN, "cgo_enabled": False},
+                    "internalParameters": {"toolchain": TOOLCHAIN, **native, **inspect_binary(dest / "bin/operatorctl", platform)},
                     "resolvedDependencies": [{"uri": "git+https://github.com/intrusiveai/operator_sandbox",
                         "digest": {"gitCommit": commit}}]},
                     "runDetails": {"builder": {"id": "https://github.com/intrusiveai/operator_sandbox/scripts/build_host_release.py"}}}})
@@ -138,7 +139,7 @@ def main():
     p.add_argument("--platform", choices=PLATFORMS, action="append")
     p.add_argument("--python", type=Path, help="prepared interpreter with locked contract dependencies")
     a = p.parse_args()
-    build(a.source.resolve(), a.output.resolve(), a.version, a.platform or PLATFORMS,
+    build(a.source.resolve(), a.output.resolve(), a.version, a.platform or [native_platform()],
           (a.python or a.source / ".venv/bin/python").absolute())
 
 
