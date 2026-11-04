@@ -154,6 +154,22 @@ build flags. `go mod download` is the explicit dependency-preparation step; the
 builder MUST verify module sums and disable dependency network access during build.
 `--platform` MAY explicitly select the current native OS/architecture only. CI uses matching Linux/macOS AMD64/ARM64 runners. Build output MUST be a new directory.
 
+CI MUST use `--output dist/first --reproduce-output dist/second` to validate
+contracts once per native platform, independently rebuild the candidate, and
+compare all output paths, bytes and file modes. A validation failure MUST stop
+before the rebuild; a difference MUST block publication. Standalone builds MUST
+still validate contracts. The rebuild MUST still reconstruct the contract and
+check its pinned identity; only the already-passed test suites are omitted.
+
+Build commands MUST report their start, elapsed time and outcome. Test/compiler
+output MUST stream while those commands execute. Each Go build has a ten-minute
+limit, each contract test suite a five-minute limit (Go's internal test deadline
+is four minutes), and other builder commands a two-minute limit. Native compiler
+and binary-inspection commands retain their existing 30-second limits. A timeout
+MUST identify the command and terminate its process group. The workflow retains
+its 40-minute overall candidate job limit. Timing logs MUST NOT enter release
+payloads or alter deterministic artifact bytes.
+
 The builder MUST reproduce `release/contract-lock.json`, using the existing contract
 publisher and exact matching schema bytes. The host executable MUST embed this
 supported pin and source commit; `operatorctl version` MUST expose them. Runtime

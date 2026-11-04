@@ -564,3 +564,25 @@ For a local release build, use a clean committed checkout, the pinned Go version
 and a native C compiler. Select only the current host platform. Run the existing
 archive and installed-binary checks before publication. CI's four native runners
 are required to validate all four release outputs.
+
+### Diagnose a slow candidate build
+
+The candidate job uses one command:
+
+```sh
+python3 scripts/build_host_release.py --version 0.1.4 --platform darwin/arm64 \
+  --output dist/first --reproduce-output dist/second
+```
+
+Select the native platform and intended version. The first build runs the Go and
+Python contract suites; the second rebuilds the complete payload without repeating
+those suites. Both builds verify the pinned contract, and all paths, bytes and
+file modes must match before the workflow can publish.
+
+Look for `[host-release] START`, `OK`, `FAILED` or `TIMEOUT` in the job log.
+Each command identifies its limit and elapsed duration; test output streams as
+it runs. Go builds are capped at ten minutes, contract suites at five minutes,
+and other builder commands at two minutes. A timeout kills the command and its
+children and fails the job. Native compiler/binary inspections retain their
+30-second bounds. The overall job limit remains 40 minutes. Inspect the named
+command before changing a timeout; a failed validation never triggers a rebuild.
