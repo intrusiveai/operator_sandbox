@@ -199,9 +199,17 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Install the qualification Docker CLI and daemon
+        uses: docker/setup-docker-action@2bf61fb9464cc67f0cbdeabed6aa0380accd1c70 # v5.5.0
+        with:
+          version: v29.0.1
+          set-host: true
+          daemon-config: |
+            {"features":{"containerd-snapshotter":true}}
       - name: Qualify the published archive against pinned Interceptor and Harness
         env:
           GH_TOKEN: ${{ github.token }}
+          QUALIFICATION_DOCKER_VERSION: '29.0.1'
           RELEASE_VERSION: ${{ needs.context.outputs.version }}
           RELEASE_SOURCE: ${{ needs.context.outputs.source }}
         run: python3 scripts/qualify_interceptor_release.py --version "$RELEASE_VERSION" --source "$RELEASE_SOURCE" --output dist/qualification
