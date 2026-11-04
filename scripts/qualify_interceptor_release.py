@@ -10,9 +10,11 @@ import json
 import os
 from pathlib import Path
 import platform
+import shutil
 import signal
 import socket
 import subprocess
+import sys
 import tarfile
 import tempfile
 import time
@@ -41,7 +43,74 @@ def download(url, path, expected):
         raise ValueError('downloaded archive checksum differs')
 
 
-def campaign(operator_archive, interceptor_archive, pin, output):
+def docker_runtime(output):
+    """Freeze the same local daemon for fixture CLI calls and both products."""
+    executable = shutil.which('docker')
+    if not executable:
+        raise RuntimeError('qualification requires the Docker CLI')
+    context = os.environ.get('DOCKER_CONTEXT')
+    endpoint = os.environ.get('DOCKER_HOST') if not context else None
+    if not endpoint:
+        endpoint = run(executable, 'context', 'inspect', '--format', '{{.Endpoints.docker.Host}}', *([context] if context else []))
+    path = endpoint.removeprefix('unix://')
+    if (not endpoint.startswith('unix:///') or str(Path(path)) != path or
+            '..' in Path(path).parts or any(ord(c) < 32 for c in endpoint)):
+        raise ValueError('qualification requires a local Docker Unix socket')
+    # setup-docker-action uses its own socket. Operator intentionally ignores
+    # ambient Docker variables, so its private config must name this socket too.
+    for key in list(os.environ):
+        if key.startswith('DOCKER_') and key != 'DOCKER_CONFIG':
+            os.environ.pop(key)
+    os.environ['DOCKER_HOST'] = endpoint
+    version = json.loads(run(executable, '--host', endpoint, 'version', '--format', '{{json .}}'))
+    record = {'executable': executable, 'endpoint': endpoint,
+              'client': {k: version['Client'].get(k) for k in ('Version', 'ApiVersion', 'Os', 'Arch')},
+              'server': {k: version['Server'].get(k) for k in ('Version', 'ApiVersion', 'Os', 'Arch')},
+              'daemon_id': run(executable, '--host', endpoint, 'info', '--format', '{{.ID}}')}
+    save(output / 'docker-runtime.json', record)
+    print('Qualification Docker: ' + json.dumps(record), flush=True)
+    expected = os.environ.get('QUALIFICATION_DOCKER_VERSION')
+    if expected and any(record[side]['Version'] != expected for side in ('client', 'server')):
+        raise RuntimeError('qualification Docker CLI and daemon must both match the workflow pin; see docker-runtime.json')
+    return record
+
+
+def execute_campaign(op, config, work, output):
+    """Keep the start failure primary, even if no reportable journal exists."""
+    try:
+        result = subprocess.run([str(op), 'campaign', 'start', '--config', str(config), '--run', str(work / 'run')],
+                                text=True, capture_output=True, timeout=300)
+    except subprocess.TimeoutExpired as error:
+        def text(value):
+            return value.decode('utf-8', errors='replace') if isinstance(value, bytes) else value or ''
+        result = subprocess.CompletedProcess(error.cmd, 124, text(error.stdout), text(error.stderr) + '\nQualification campaign deadline exceeded.')
+    (output / 'operator.log').write_text(result.stdout + result.stderr)
+    secondary = []
+    try:
+        # This works before a campaign journal exists. Preserve the original
+        # start records as well as a fresh CLI inspection before temp cleanup.
+        if (work / 'state/starts').exists():
+            shutil.copytree(work / 'state/starts', output / 'start-records')
+        if (work / 'run/start.json').exists():
+            shutil.copyfile(work / 'run/start.json', output / 'start-link.json')
+        save(output / 'start-inspection.json', json.loads(run(op, 'inspect', '--run', work / 'run', timeout=45)))
+    except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as error:
+        secondary.append('Start inspection/retention: ' + str(error))
+    try:
+        run(op, 'export', '--run', work / 'run', '--output', output / 'campaign', timeout=120)
+    except (OSError, RuntimeError, subprocess.TimeoutExpired) as error:
+        secondary.append('Campaign export: ' + str(error))
+    if secondary:
+        (output / 'secondary-failures.log').write_text('\n'.join(secondary) + '\n')
+    if result.returncode:
+        raise RuntimeError(f'Operator campaign failed (exit {result.returncode}); see operator.log and start-inspection.json.\n'
+                           + (result.stderr or result.stdout)[-8192:])
+    if secondary:
+        raise RuntimeError('Campaign completed but required evidence retention failed; see secondary-failures.log')
+    return json.loads((output / 'campaign/result-manifest.json').read_text())
+
+
+def campaign(operator_archive, interceptor_archive, pin, output, runtime):
     with closing(socket.socket()) as check:
         check.bind(('127.0.0.1', 8080))  # Never displace another Interceptor.
     suffix = uuid.uuid4().hex
@@ -122,6 +191,7 @@ HTTPServer(("127.0.0.1",8080),Handler).serve_forever()
                     'codec_options': {'instruction_role': 'developer', 'response_models': ['test-model']}, 'ca_certificates_pem': (work / 'tls.pem').read_text()})
                 with config.open('a') as stream:
                     stream.write(f'\ntarget: {{profile_file: {json.dumps(str(target_profile))}}}\nmodel: {{profile_file: {json.dumps(str(work / "model.json"))}}}\n')
+                    stream.write('docker: ' + json.dumps({k: runtime[k] for k in ('executable', 'endpoint')}) + '\n')
                 run(op, 'capabilities', 'export', '--config', config, '--native', work / 'native.json', '--output', work / 'capabilities.json', '--target-profile', target_profile)
                 public = json.loads((work / 'capabilities.json').read_text())
                 bundle = json.loads((Path(__file__).resolve().parents[1] / 'schemas/fixtures/scenario-bundle-scenarios.json').read_text())
@@ -132,11 +202,7 @@ HTTPServer(("127.0.0.1",8080),Handler).serve_forever()
                 bundle['scenarios'][0]['required'] = True
                 save(work / 'bundle.json', bundle)
                 run(op, 'submit', '--config', config, '--bundle', work / 'bundle.json', '--capabilities', work / 'capabilities.json', '--output', work / 'run')
-                result = subprocess.run([str(op), 'campaign', 'start', '--config', str(config), '--run', str(work / 'run')], text=True, capture_output=True, timeout=300)
-                (output / 'operator.log').write_text(result.stdout + result.stderr)
-                # Export even if execution failed, using a fresh CLI invocation.
-                run(op, 'export', '--run', work / 'run', '--output', output / 'campaign')
-                facts = json.loads((output / 'campaign/result-manifest.json').read_text())
+                facts = execute_campaign(op, config, work, output)
                 exit_info = facts.get('harness_exit') or {}
                 events = [json.loads(line) for path in (output / 'campaign').rglob('*.jsonl') for line in path.read_text().splitlines()]
                 checked = [e for e in events if e.get('kind') == 'interceptor.compatibility']
@@ -149,37 +215,56 @@ HTTPServer(("127.0.0.1",8080),Handler).serve_forever()
                     'exit_zero': exit_info.get('exit_observed') is True and exit_info.get('exit_code') == 0 and not exit_info.get('forced_termination'),
                     'cleanup': exit_info.get('cleanup_complete') is True and facts['target_stop'] == 'confirmed',
                     'export': facts['journal_intact'] is True and (output / 'campaign/report.md').is_file()}
-                save(output / 'checks.json', dict(checks=checks, model_failures=model.failures, cli_exit=result.returncode))
-                if result.returncode or not all(checks.values()):
+                save(output / 'checks.json', dict(checks=checks, model_failures=model.failures, cli_exit=0))
+                if not all(checks.values()):
                     raise RuntimeError('controlled campaign did not pass every check; inspect retained evidence')
                 succeeded = True
                 return checks, metadata
         finally:
-            # A timed-out host subprocess may have left an owned Harness. Use
-            # Operator's normal exact-identity termination path before discarding
-            # the private state; never kill containers by a shared image tag.
-            if not succeeded and (work / 'run/start.json').exists():
+            primary = sys.exc_info()[1]
+            cleanup_errors = []
+            # Each cleanup step is independent. A secondary failure must neither
+            # replace the campaign error nor prevent remaining owned cleanup.
+            def cleanup_step(name, action):
                 try:
+                    action()
+                except Exception as error:
+                    cleanup_errors.append(name + ': ' + str(error))
+
+            def stop_harness():
+                if not succeeded and (work / 'run/start.json').exists():
+                    observed = json.loads(run(op, 'inspect', '--run', work / 'run', timeout=45))
                     stopped = subprocess.run([str(op), 'campaign', 'terminate', '--config', str(work / 'config/config.yaml'),
-                        '--campaign', json.loads(run(op, 'inspect', '--run', work / 'run'))['campaign_id']],
-                        capture_output=True, text=True, timeout=45)
+                        '--campaign', observed['campaign_id']], capture_output=True, text=True, timeout=45)
                     (output / 'fixture-cleanup.log').write_text(stopped.stdout + stopped.stderr)
-                except (OSError, ValueError, KeyError, RuntimeError, subprocess.TimeoutExpired):
-                    # Incomplete exports still retain the state for inspection.
-                    import shutil
-                    if (work / 'state').exists():
-                        shutil.copytree(work / 'state', output / 'retained-state', dirs_exist_ok=True)
-            if process and process.poll() is None:
-                process.send_signal(signal.SIGINT)
-                try:
-                    process.wait(timeout=45)
-                except subprocess.TimeoutExpired:
-                    process.kill(); process.wait()
-            ids = run('docker', 'ps', '-aq', '--filter', 'ancestor=' + wrapper).splitlines()
-            if ids:
-                run('docker', 'rm', '-f', *ids)
+
+            def stop_interceptor():
+                if process and process.poll() is None:
+                    process.send_signal(signal.SIGINT)
+                    try:
+                        process.wait(timeout=45)
+                    except subprocess.TimeoutExpired:
+                        process.kill(); process.wait(timeout=10)
+
+            def remove_target():
+                ids = run('docker', 'ps', '-aq', '--filter', 'ancestor=' + wrapper, timeout=45).splitlines()
+                if ids:
+                    run('docker', 'rm', '-f', *ids, timeout=45)
+
+            cleanup_step('Harness cleanup', stop_harness)
+            cleanup_step('Interceptor shutdown', stop_interceptor)
+            cleanup_step('Target cleanup', remove_target)
             for image in (wrapper, target):
-                subprocess.run(['docker', 'image', 'rm', image], capture_output=True, timeout=60)
+                cleanup_step('Fixture image removal', lambda: subprocess.run(['docker', 'image', 'rm', image], capture_output=True, timeout=30))
+            if cleanup_errors:
+                diagnostic = '\n'.join(cleanup_errors) + '\n'
+                print('Secondary fixture cleanup failure: ' + diagnostic, file=sys.stderr)
+                try:
+                    (output / 'fixture-cleanup-errors.log').write_text(diagnostic)
+                except OSError:
+                    pass
+                if primary is None:
+                    raise RuntimeError('Qualification cleanup failed; see fixture-cleanup-errors.log')
 
 
 def main():
@@ -193,6 +278,7 @@ def main():
     parser.add_argument('--interceptor-sha256')
     args = parser.parse_args()
     args.output = args.output.resolve(); args.output.mkdir(mode=0o700, parents=True, exist_ok=False)
+    runtime = docker_runtime(args.output)
     pin = json.loads((Path(__file__).resolve().parents[1] / 'release/interceptor-qualification.json').read_text())
     with tempfile.TemporaryDirectory(prefix='operator-qualification-download-') as temp:
         work = Path(temp)
@@ -218,7 +304,11 @@ def main():
             download(f'https://github.com/{github.repository}/releases/download/v{args.version}/{name}', operator, inventory['assets'][name])
             download(pin['archive_url'], native, pin['archive_sha256'])
         run('docker', 'pull', '--platform', 'linux/' + {'x86_64': 'amd64', 'arm64': 'arm64', 'aarch64': 'arm64'}[platform.machine()], pin['harness']['image'], timeout=600)
-        checks, metadata = campaign(operator, native, pin, args.output)
+        image_platform = 'linux/' + {'x86_64': 'amd64', 'arm64': 'arm64', 'aarch64': 'arm64'}[platform.machine()]
+        # Exercise the actual required feature before creating a target session.
+        run(runtime['executable'], '--host', runtime['endpoint'], 'image', 'inspect', '--platform', image_platform,
+            '--format', '{{.Id}}', pin['harness']['image'])
+        checks, metadata = campaign(operator, native, pin, args.output, runtime)
         result = {'schema_version': 1, 'passed': True, 'platform': platform.system().lower() + '/' + {'x86_64': 'amd64', 'arm64': 'arm64', 'aarch64': 'arm64'}[platform.machine()],
             'source_commit': metadata['source_commit'], 'test_revision': run('git', 'rev-parse', 'HEAD'), 'dependencies': pin,
             'contract': pin['harness']['contract'], 'interceptor_contract_version': pin['interceptor_contract_version'],

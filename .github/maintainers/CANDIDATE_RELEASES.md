@@ -71,6 +71,8 @@ role and environment; step 6 configures the required GitHub identity format.
    `actions/checkout`, `actions/setup-go`, and `actions/upload-artifact` actions
    (or enable **Allow actions created by GitHub**). Also allow
    `aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd`.
+   Integration qualification also uses
+   `docker/setup-docker-action@2bf61fb9464cc67f0cbdeabed6aa0380accd1c70`.
    Use the exact pins in both workflow files if your policy permits individual
    SHAs rather than GitHub-owned actions generally. Remove the obsolete
    `intrusiveai-engineering/releases/.github/workflows/publish-catalog.yml` exception;
@@ -393,11 +395,25 @@ Operator's exact contract-digest compatibility checks.
    replies. It checks discovery, attachment, invocation, observation reading,
    accepted finish, exit zero, cleanup and exported evidence. It uses no paid
    model API or cloud credential. This qualifies Linux AMD64 only.
+   The job installs Docker CLI and Engine 29.0.1 with the containerd image store,
+   using the same pinned setup action as Attack Harness. It verifies both versions
+   and records them, the daemon identity, and its local Unix socket in
+   `docker-runtime.json`. The fixture commands, Interceptor and Operator all use
+   that socket; Operator's private configuration names it explicitly because
+   Operator does not use ambient Docker environment variables. Platform-specific
+   [image inspection requires Docker API 1.49 or later](https://docs.docker.com/reference/cli/docker/image/inspect/).
+   The runner tests that operation on the pulled Harness image before starting
+   Interceptor. This is a CI runtime pin, not a new product version allowlist.
 4. In the same Actions run, download `interceptor-qualification` for `result.json`
    and `interceptor-qualification-evidence` for the campaign export and logs.
    Both are retained for 90 days. A failed campaign leaves diagnostic evidence;
    the absence of a passing result blocks stable promotion, not initial prerelease
    publication.
+   For preparation failures, read `operator.log` and `start-inspection.json` first.
+   `start-records/` and `start-link.json` preserve the original start records even
+   when no campaign journal exists. Export or inspection failures are secondary
+   entries in `secondary-failures.log`; cleanup errors have their own log and do
+   not replace the original failure. These failed tests produce no passing result.
 5. Resolve failures and rerun the failed qualification job from that candidate's
    workflow run. Rerunning it downloads the same published bytes; it does not
    rebuild Operator. A replaced candidate or changed dependency requires a new
