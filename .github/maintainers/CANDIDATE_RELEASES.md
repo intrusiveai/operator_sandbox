@@ -395,9 +395,8 @@ Operator's exact contract-digest compatibility checks.
 3. Wait for candidate publication and the `qualify-interceptor` job. This job
    downloads the published Operator archive, verifies the pinned Interceptor
    archive and pulls the pinned Harness image. It runs one deterministic local
-   campaign using Docker, a target that obtains its marker through a declared
-   Interceptor HTTPS seam to a local TLS fixture, and three controlled model
-   replies. It checks discovery, HTTPS seam use, attachment, invocation, observation reading,
+   campaign using Docker, a marker-returning target and three controlled model
+   replies. It checks discovery, attachment, invocation, observation reading,
    accepted finish, exit zero, cleanup and exported evidence. It uses no paid
    model API or cloud credential. This qualifies Linux AMD64 only.
    The job installs Docker CLI and Engine 29.0.1 with the containerd image store,

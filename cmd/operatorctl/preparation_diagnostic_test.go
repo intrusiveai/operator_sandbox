@@ -28,7 +28,6 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
 	"github.com/intrusiveai/operator_sandbox/internal/hostrun"
 	"github.com/intrusiveai/operator_sandbox/internal/imagerelease"
-	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/startrequest"
 	"github.com/intrusiveai/operator_sandbox/internal/workerjob"
@@ -253,9 +252,9 @@ func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
 
 					if r.URL.Path == "/v1/contract-version" {
 						w.Header().Set("Content-Type", "application/json")
-						version := interceptor.SupportedContractVersion
+						version := "0.1.0"
 						if fault == "contract" {
-							version = "0.1.0"
+							version = "0.2.0"
 							requests.Add(1)
 						}
 						fmt.Fprintf(w, `{"status":200,"session_revision":0,"body":{"interceptor_contract_version":%q}}`, version)
@@ -314,7 +313,7 @@ func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
 							t.Fatal(d)
 						}
 					} else if fault == "contract" {
-						if d.Stage != "Interceptor compatibility check" || d.Interceptor.Reason != "version_mismatch" || !strings.Contains(d.Message, interceptor.SupportedContractVersion) {
+						if d.Stage != "Interceptor compatibility check" || d.Interceptor.Reason != "version_mismatch" || !strings.Contains(d.Message, "0.2.0") {
 							t.Fatal(d)
 						}
 					} else if d.Stage != "Interceptor attachment" || !strings.Contains(d.Message, "HTTP 409") {

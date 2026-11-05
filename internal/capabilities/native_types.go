@@ -84,15 +84,10 @@ type FileNamespaceCapability struct {
 	MaxFiles     int    `json:"max_files,omitempty"`
 	MaxFileBytes int64  `json:"max_file_bytes,omitempty"`
 }
-type HTTPSSeamCapability struct {
-	ID                  string `json:"id"`
-	MaximumMessageBytes int64  `json:"maximum_message_bytes"`
-}
 type NetworkCapability struct {
-	HTTPSSeams []HTTPSSeamCapability `json:"https_seams,omitempty"`
-	DNS        DNSCapability         `json:"dns"`
-	HTTP       bool                  `json:"http_frontdoor"`
-	HTTPS      TLSCapability         `json:"https_frontdoor"`
+	DNS   DNSCapability `json:"dns"`
+	HTTP  bool          `json:"http_frontdoor"`
+	HTTPS TLSCapability `json:"https_frontdoor"`
 }
 type DNSCapability struct {
 	Enabled        bool     `json:"enabled"`

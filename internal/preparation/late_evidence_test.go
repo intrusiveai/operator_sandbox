@@ -414,7 +414,7 @@ func (p *latePeer) CheckContract(ctx context.Context) error {
 func TestLateEvidenceCompatibilityDoesNotConsumeClaim(t *testing.T) {
 	root, w, p, _, selection := lateFixture(t)
 	w.Close()
-	p.contractError = &interceptor.CompatibilityError{Reason: "version_mismatch", Expected: interceptor.SupportedContractVersion, Actual: "0.1.0"}
+	p.contractError = &interceptor.CompatibilityError{Reason: "version_mismatch", Expected: "0.1.0", Actual: "0.2.0"}
 	out, err := nativerecovery.CollectEvidence(context.Background(), root, "campaign-1", &lateDocker{}, p)
 	if err == nil || out.Reason != "interceptor_version_mismatch" || p.statusCalls != 0 {
 		t.Fatal(out, err)
