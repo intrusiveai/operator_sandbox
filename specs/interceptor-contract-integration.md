@@ -37,9 +37,10 @@ Implementers MUST read these sources together:
   Publisher updates MUST follow the complete reviewed-export procedure there.
 
 The reviewed Interceptor implementation at source revision
-`684c8468f9c668951a8a7f717e71bf12edf8ef4a` embeds contract `0.1.0`. Its endpoint
+`6bff35e6841f058943a70c1309ee3de6b18bb09d` embeds contract `0.1.0`. Its endpoint
 returns before host reconciliation, attachment, or target access. The contract
-describes implemented product capabilities; the existing environment manifest
+describes behavior Operator consumes or relies on, not every Interceptor feature;
+the existing environment manifest
 still describes the capabilities available in a particular sandbox.
 
 Operator's attachment, prior-campaign recovery and late-evidence collection paths
@@ -51,7 +52,7 @@ MUST support both contract fields.
 ## 1. One authoritative Operator integration pin
 
 Operator MUST define one release-independent supported Interceptor contract
-version, initially `0.1.0`, alongside its native integration code. A small
+version, currently `0.1.0`, alongside its native integration code. A small
 `internal/interceptor/contract.go` is the preferred location. Runtime comparison,
 CLI version reporting, and release metadata MUST derive from that same source.
 

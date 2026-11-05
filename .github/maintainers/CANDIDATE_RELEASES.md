@@ -384,6 +384,10 @@ Operator's exact contract-digest compatibility checks.
    source commit and contract version. Pin the matching Harness image by repository
    digest, source commit and exact shared package identity. Use actual published
    artifacts, not `latest`. Commit dependency changes with the candidate source.
+   A rolling Interceptor prerelease can replace the bytes at the same URL. If
+   qualification reports a checksum mismatch, review the new source and contract,
+   verify the published archive checksum, and commit the complete updated pin.
+   Do not accept new bytes by changing only the checksum or bypassing verification.
 2. Push the candidate through the ordinary workflow. The `packaged-contract` jobs
    execute each of the four archived binaries on its matching native runner and
    compare version output with package metadata. `candidate.json` retains these

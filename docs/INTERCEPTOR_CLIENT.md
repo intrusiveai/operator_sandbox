@@ -18,6 +18,9 @@ with `{}` to the same local Interceptor API. Its compiled integration pin is
 `0.1.0`; exact equality is required. Product versions need not match. No manual
 contract export, configured expected version, CLI fallback or Internet lookup is
 used. The environment capability manifest and policy checks still apply.
+The integration contract covers Operator-facing calls, inputs, outputs and
+guarantees; private Interceptor configuration and internal features do not
+become Operator or Harness capabilities.
 
 A mismatch or unavailable/malformed response fails preparation with stage
 `Interceptor compatibility check`. Inspect the saved run with `operatorctl inspect
