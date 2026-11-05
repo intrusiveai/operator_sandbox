@@ -64,9 +64,9 @@ func TestSharedSelectedTools(t *testing.T) {
 		}
 	}
 	for _, tool := range []string{"reference_read", "observation_read"} {
-		args := []byte(`{"reference_id":"reference-1","offset":0}`)
+		args := []byte(`{"reference":"reference-1","offset":0}`)
 		if tool == "observation_read" {
-			args = []byte(`{"receipt_id":"attempt-1","entry_id":"output","offset":0}`)
+			args = []byte(`{"observation":"obs-1","offset":0}`)
 		}
 		v, err := p.ValidateToolArguments(tool, args)
 		if err != nil || number(v["max_bytes"]) != 4096 {

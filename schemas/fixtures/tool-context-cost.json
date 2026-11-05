@@ -1,0 +1,4186 @@
+{
+  "baseline_source": "485042787cc75e1776acaac11023ba9d210cc1f3",
+  "estimate_method": "ceil(canonical UTF-8 bytes / 4), v1; estimate, not a model tokenizer",
+  "scope": "Catalog only; matching Harness session measures trusted prompt, workload history, retries and compaction.",
+  "cases": [
+    {
+      "codec": "openai-chat-text-tools-v1",
+      "mode": "ordinary",
+      "operations": [
+        "engine.attempt_execute",
+        "engine.finish",
+        "engine.observation_read"
+      ],
+      "surfaces": [],
+      "baseline_bytes": 12426,
+      "revised_bytes": 8701,
+      "baseline_tokens_estimated": 3107,
+      "revised_tokens_estimated": 2176,
+      "baseline_tools": {
+        "attempt_execute": {
+          "declaration_bytes": 3556,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7386,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 698,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 657,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        }
+      },
+      "revised_tools": {
+        "attempt_execute": {
+          "declaration_bytes": 1984,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5405,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 618,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 565,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        }
+      }
+    },
+    {
+      "codec": "openai-chat-text-tools-v1",
+      "mode": "full",
+      "operations": [
+        "engine.artifact_begin",
+        "engine.artifact_commit",
+        "engine.artifact_put_part",
+        "engine.attempt_execute",
+        "engine.diagnostic_report",
+        "engine.finish",
+        "engine.injection_delete",
+        "engine.model_generate",
+        "engine.observation_read",
+        "engine.record_append",
+        "engine.restore_request",
+        "engine.snapshot_inspect",
+        "engine.snapshot_list",
+        "engine.snapshot_request"
+      ],
+      "surfaces": [],
+      "baseline_bytes": 22062,
+      "revised_bytes": 14844,
+      "baseline_tokens_estimated": 5516,
+      "revised_tokens_estimated": 3711,
+      "baseline_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 1024,
+          "description_bytes": 222,
+          "required_fields": [
+            "purpose",
+            "media_type",
+            "content"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 3556,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7386,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 806,
+          "description_bytes": 170,
+          "required_fields": [
+            "attempt_receipt_id",
+            "action_id"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 698,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 5630,
+          "description_bytes": 209,
+          "required_fields": [
+            "record_kind",
+            "record"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 657,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 523,
+          "description_bytes": 215,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 481,
+          "description_bytes": 172,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 492,
+          "description_bytes": 162,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 456,
+          "description_bytes": 189,
+          "required_fields": []
+        }
+      },
+      "revised_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 659,
+          "description_bytes": 254,
+          "required_fields": [
+            "purpose",
+            "media_type"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 1984,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5405,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 409,
+          "description_bytes": 190,
+          "required_fields": [
+            "injection"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 618,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 3113,
+          "description_bytes": 309,
+          "required_fields": [
+            "kind"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 565,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 396,
+          "description_bytes": 180,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 383,
+          "description_bytes": 166,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 482,
+          "description_bytes": 159,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 477,
+          "description_bytes": 210,
+          "required_fields": []
+        }
+      }
+    },
+    {
+      "codec": "openai-chat-text-tools-v1",
+      "mode": "full",
+      "operations": [
+        "engine.artifact_begin",
+        "engine.artifact_commit",
+        "engine.artifact_put_part",
+        "engine.attempt_execute",
+        "engine.diagnostic_report",
+        "engine.finish",
+        "engine.injection_delete",
+        "engine.model_generate",
+        "engine.observation_read",
+        "engine.record_append",
+        "engine.restore_request",
+        "engine.snapshot_inspect",
+        "engine.snapshot_list",
+        "engine.snapshot_request"
+      ],
+      "surfaces": [
+        "mcp_tool_result"
+      ],
+      "baseline_bytes": 26118,
+      "revised_bytes": 19970,
+      "baseline_tokens_estimated": 6530,
+      "revised_tokens_estimated": 4993,
+      "baseline_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 1024,
+          "description_bytes": 222,
+          "required_fields": [
+            "purpose",
+            "media_type",
+            "content"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 7612,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7386,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 806,
+          "description_bytes": 170,
+          "required_fields": [
+            "attempt_receipt_id",
+            "action_id"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 698,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 5630,
+          "description_bytes": 209,
+          "required_fields": [
+            "record_kind",
+            "record"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 657,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 523,
+          "description_bytes": 215,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 481,
+          "description_bytes": 172,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 492,
+          "description_bytes": 162,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 456,
+          "description_bytes": 189,
+          "required_fields": []
+        }
+      },
+      "revised_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 659,
+          "description_bytes": 254,
+          "required_fields": [
+            "purpose",
+            "media_type"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 7110,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5405,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 409,
+          "description_bytes": 190,
+          "required_fields": [
+            "injection"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 618,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 3113,
+          "description_bytes": 309,
+          "required_fields": [
+            "kind"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 565,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 396,
+          "description_bytes": 180,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 383,
+          "description_bytes": 166,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 482,
+          "description_bytes": 159,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 477,
+          "description_bytes": 210,
+          "required_fields": []
+        }
+      }
+    },
+    {
+      "codec": "openai-chat-text-tools-v1",
+      "mode": "full",
+      "operations": [
+        "engine.artifact_begin",
+        "engine.artifact_commit",
+        "engine.artifact_put_part",
+        "engine.attempt_execute",
+        "engine.diagnostic_report",
+        "engine.finish",
+        "engine.injection_delete",
+        "engine.model_generate",
+        "engine.observation_read",
+        "engine.record_append",
+        "engine.restore_request",
+        "engine.snapshot_inspect",
+        "engine.snapshot_list",
+        "engine.snapshot_request"
+      ],
+      "surfaces": [
+        "database_response",
+        "environment_state"
+      ],
+      "baseline_bytes": 26832,
+      "revised_bytes": 20817,
+      "baseline_tokens_estimated": 6708,
+      "revised_tokens_estimated": 5205,
+      "baseline_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 1024,
+          "description_bytes": 222,
+          "required_fields": [
+            "purpose",
+            "media_type",
+            "content"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 8326,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7386,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 806,
+          "description_bytes": 170,
+          "required_fields": [
+            "attempt_receipt_id",
+            "action_id"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 698,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 5630,
+          "description_bytes": 209,
+          "required_fields": [
+            "record_kind",
+            "record"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 657,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 523,
+          "description_bytes": 215,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 481,
+          "description_bytes": 172,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 492,
+          "description_bytes": 162,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 456,
+          "description_bytes": 189,
+          "required_fields": []
+        }
+      },
+      "revised_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 659,
+          "description_bytes": 254,
+          "required_fields": [
+            "purpose",
+            "media_type"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 7957,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5405,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 409,
+          "description_bytes": 190,
+          "required_fields": [
+            "injection"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 618,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 3113,
+          "description_bytes": 309,
+          "required_fields": [
+            "kind"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 565,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 396,
+          "description_bytes": 180,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 383,
+          "description_bytes": 166,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 482,
+          "description_bytes": 159,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 477,
+          "description_bytes": 210,
+          "required_fields": []
+        }
+      }
+    },
+    {
+      "codec": "openai-chat-text-tools-v1",
+      "mode": "full",
+      "operations": [
+        "engine.artifact_begin",
+        "engine.artifact_commit",
+        "engine.artifact_put_part",
+        "engine.attempt_execute",
+        "engine.diagnostic_report",
+        "engine.finish",
+        "engine.injection_delete",
+        "engine.model_generate",
+        "engine.observation_read",
+        "engine.record_append",
+        "engine.restore_request",
+        "engine.snapshot_inspect",
+        "engine.snapshot_list",
+        "engine.snapshot_request"
+      ],
+      "surfaces": [
+        "database_response",
+        "environment_state",
+        "mcp_tool_result",
+        "model_tool_result",
+        "service_response"
+      ],
+      "baseline_bytes": 30124,
+      "revised_bytes": 29764,
+      "baseline_tokens_estimated": 7531,
+      "revised_tokens_estimated": 7441,
+      "baseline_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 1024,
+          "description_bytes": 222,
+          "required_fields": [
+            "purpose",
+            "media_type",
+            "content"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 11618,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7386,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 806,
+          "description_bytes": 170,
+          "required_fields": [
+            "attempt_receipt_id",
+            "action_id"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 698,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 5630,
+          "description_bytes": 209,
+          "required_fields": [
+            "record_kind",
+            "record"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 657,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 523,
+          "description_bytes": 215,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 481,
+          "description_bytes": 172,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 492,
+          "description_bytes": 162,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 456,
+          "description_bytes": 189,
+          "required_fields": []
+        }
+      },
+      "revised_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 659,
+          "description_bytes": 254,
+          "required_fields": [
+            "purpose",
+            "media_type"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 16904,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5405,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 409,
+          "description_bytes": 190,
+          "required_fields": [
+            "injection"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 618,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 3113,
+          "description_bytes": 309,
+          "required_fields": [
+            "kind"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 565,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 396,
+          "description_bytes": 180,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 383,
+          "description_bytes": 166,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 482,
+          "description_bytes": 159,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 477,
+          "description_bytes": 210,
+          "required_fields": []
+        }
+      }
+    },
+    {
+      "codec": "openai-responses-text-tools-v1",
+      "mode": "ordinary",
+      "operations": [
+        "engine.attempt_execute",
+        "engine.finish",
+        "engine.observation_read"
+      ],
+      "surfaces": [],
+      "baseline_bytes": 12374,
+      "revised_bytes": 8649,
+      "baseline_tokens_estimated": 3094,
+      "revised_tokens_estimated": 2163,
+      "baseline_tools": {
+        "attempt_execute": {
+          "declaration_bytes": 3574,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7404,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 716,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 675,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        }
+      },
+      "revised_tools": {
+        "attempt_execute": {
+          "declaration_bytes": 2002,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5423,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 636,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 583,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        }
+      }
+    },
+    {
+      "codec": "openai-responses-text-tools-v1",
+      "mode": "full",
+      "operations": [
+        "engine.artifact_begin",
+        "engine.artifact_commit",
+        "engine.artifact_put_part",
+        "engine.attempt_execute",
+        "engine.diagnostic_report",
+        "engine.finish",
+        "engine.injection_delete",
+        "engine.model_generate",
+        "engine.observation_read",
+        "engine.record_append",
+        "engine.restore_request",
+        "engine.snapshot_inspect",
+        "engine.snapshot_list",
+        "engine.snapshot_request"
+      ],
+      "surfaces": [],
+      "baseline_bytes": 21919,
+      "revised_bytes": 14701,
+      "baseline_tokens_estimated": 5480,
+      "revised_tokens_estimated": 3676,
+      "baseline_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 1042,
+          "description_bytes": 222,
+          "required_fields": [
+            "purpose",
+            "media_type",
+            "content"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 3574,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7404,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 824,
+          "description_bytes": 170,
+          "required_fields": [
+            "attempt_receipt_id",
+            "action_id"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 716,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 5648,
+          "description_bytes": 209,
+          "required_fields": [
+            "record_kind",
+            "record"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 675,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 541,
+          "description_bytes": 215,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 499,
+          "description_bytes": 172,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 510,
+          "description_bytes": 162,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 474,
+          "description_bytes": 189,
+          "required_fields": []
+        }
+      },
+      "revised_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 677,
+          "description_bytes": 254,
+          "required_fields": [
+            "purpose",
+            "media_type"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 2002,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5423,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 427,
+          "description_bytes": 190,
+          "required_fields": [
+            "injection"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 636,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 3131,
+          "description_bytes": 309,
+          "required_fields": [
+            "kind"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 583,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 414,
+          "description_bytes": 180,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 401,
+          "description_bytes": 166,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 500,
+          "description_bytes": 159,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 495,
+          "description_bytes": 210,
+          "required_fields": []
+        }
+      }
+    },
+    {
+      "codec": "openai-responses-text-tools-v1",
+      "mode": "full",
+      "operations": [
+        "engine.artifact_begin",
+        "engine.artifact_commit",
+        "engine.artifact_put_part",
+        "engine.attempt_execute",
+        "engine.diagnostic_report",
+        "engine.finish",
+        "engine.injection_delete",
+        "engine.model_generate",
+        "engine.observation_read",
+        "engine.record_append",
+        "engine.restore_request",
+        "engine.snapshot_inspect",
+        "engine.snapshot_list",
+        "engine.snapshot_request"
+      ],
+      "surfaces": [
+        "mcp_tool_result"
+      ],
+      "baseline_bytes": 25975,
+      "revised_bytes": 19827,
+      "baseline_tokens_estimated": 6494,
+      "revised_tokens_estimated": 4957,
+      "baseline_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 1042,
+          "description_bytes": 222,
+          "required_fields": [
+            "purpose",
+            "media_type",
+            "content"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 7630,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7404,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 824,
+          "description_bytes": 170,
+          "required_fields": [
+            "attempt_receipt_id",
+            "action_id"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 716,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 5648,
+          "description_bytes": 209,
+          "required_fields": [
+            "record_kind",
+            "record"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 675,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 541,
+          "description_bytes": 215,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 499,
+          "description_bytes": 172,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 510,
+          "description_bytes": 162,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 474,
+          "description_bytes": 189,
+          "required_fields": []
+        }
+      },
+      "revised_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 677,
+          "description_bytes": 254,
+          "required_fields": [
+            "purpose",
+            "media_type"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 7128,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5423,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 427,
+          "description_bytes": 190,
+          "required_fields": [
+            "injection"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 636,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 3131,
+          "description_bytes": 309,
+          "required_fields": [
+            "kind"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 583,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 414,
+          "description_bytes": 180,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 401,
+          "description_bytes": 166,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 500,
+          "description_bytes": 159,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 495,
+          "description_bytes": 210,
+          "required_fields": []
+        }
+      }
+    },
+    {
+      "codec": "openai-responses-text-tools-v1",
+      "mode": "full",
+      "operations": [
+        "engine.artifact_begin",
+        "engine.artifact_commit",
+        "engine.artifact_put_part",
+        "engine.attempt_execute",
+        "engine.diagnostic_report",
+        "engine.finish",
+        "engine.injection_delete",
+        "engine.model_generate",
+        "engine.observation_read",
+        "engine.record_append",
+        "engine.restore_request",
+        "engine.snapshot_inspect",
+        "engine.snapshot_list",
+        "engine.snapshot_request"
+      ],
+      "surfaces": [
+        "database_response",
+        "environment_state"
+      ],
+      "baseline_bytes": 26689,
+      "revised_bytes": 20674,
+      "baseline_tokens_estimated": 6673,
+      "revised_tokens_estimated": 5169,
+      "baseline_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 1042,
+          "description_bytes": 222,
+          "required_fields": [
+            "purpose",
+            "media_type",
+            "content"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 8344,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7404,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 824,
+          "description_bytes": 170,
+          "required_fields": [
+            "attempt_receipt_id",
+            "action_id"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 716,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 5648,
+          "description_bytes": 209,
+          "required_fields": [
+            "record_kind",
+            "record"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 675,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 541,
+          "description_bytes": 215,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 499,
+          "description_bytes": 172,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 510,
+          "description_bytes": 162,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 474,
+          "description_bytes": 189,
+          "required_fields": []
+        }
+      },
+      "revised_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 677,
+          "description_bytes": 254,
+          "required_fields": [
+            "purpose",
+            "media_type"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 7975,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5423,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 427,
+          "description_bytes": 190,
+          "required_fields": [
+            "injection"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 636,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 3131,
+          "description_bytes": 309,
+          "required_fields": [
+            "kind"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 583,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 414,
+          "description_bytes": 180,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 401,
+          "description_bytes": 166,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 500,
+          "description_bytes": 159,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 495,
+          "description_bytes": 210,
+          "required_fields": []
+        }
+      }
+    },
+    {
+      "codec": "openai-responses-text-tools-v1",
+      "mode": "full",
+      "operations": [
+        "engine.artifact_begin",
+        "engine.artifact_commit",
+        "engine.artifact_put_part",
+        "engine.attempt_execute",
+        "engine.diagnostic_report",
+        "engine.finish",
+        "engine.injection_delete",
+        "engine.model_generate",
+        "engine.observation_read",
+        "engine.record_append",
+        "engine.restore_request",
+        "engine.snapshot_inspect",
+        "engine.snapshot_list",
+        "engine.snapshot_request"
+      ],
+      "surfaces": [
+        "database_response",
+        "environment_state",
+        "mcp_tool_result",
+        "model_tool_result",
+        "service_response"
+      ],
+      "baseline_bytes": 29981,
+      "revised_bytes": 29621,
+      "baseline_tokens_estimated": 7496,
+      "revised_tokens_estimated": 7406,
+      "baseline_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 1042,
+          "description_bytes": 222,
+          "required_fields": [
+            "purpose",
+            "media_type",
+            "content"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 11636,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7404,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 824,
+          "description_bytes": 170,
+          "required_fields": [
+            "attempt_receipt_id",
+            "action_id"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 716,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 5648,
+          "description_bytes": 209,
+          "required_fields": [
+            "record_kind",
+            "record"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 675,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 541,
+          "description_bytes": 215,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 499,
+          "description_bytes": 172,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 510,
+          "description_bytes": 162,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 474,
+          "description_bytes": 189,
+          "required_fields": []
+        }
+      },
+      "revised_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 677,
+          "description_bytes": 254,
+          "required_fields": [
+            "purpose",
+            "media_type"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 16922,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5423,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 427,
+          "description_bytes": 190,
+          "required_fields": [
+            "injection"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 636,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 3131,
+          "description_bytes": 309,
+          "required_fields": [
+            "kind"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 583,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 414,
+          "description_bytes": 180,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 401,
+          "description_bytes": 166,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 500,
+          "description_bytes": 159,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 495,
+          "description_bytes": 210,
+          "required_fields": []
+        }
+      }
+    },
+    {
+      "codec": "anthropic-messages-text-tools-v1",
+      "mode": "ordinary",
+      "operations": [
+        "engine.attempt_execute",
+        "engine.finish",
+        "engine.observation_read"
+      ],
+      "surfaces": [],
+      "baseline_bytes": 12010,
+      "revised_bytes": 8525,
+      "baseline_tokens_estimated": 3003,
+      "revised_tokens_estimated": 2132,
+      "baseline_tools": {
+        "attempt_execute": {
+          "declaration_bytes": 3640,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7036,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 685,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 644,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        }
+      },
+      "revised_tools": {
+        "attempt_execute": {
+          "declaration_bytes": 1971,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5392,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 605,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 552,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        }
+      }
+    },
+    {
+      "codec": "anthropic-messages-text-tools-v1",
+      "mode": "full",
+      "operations": [
+        "engine.artifact_begin",
+        "engine.artifact_commit",
+        "engine.artifact_put_part",
+        "engine.attempt_execute",
+        "engine.diagnostic_report",
+        "engine.finish",
+        "engine.injection_delete",
+        "engine.model_generate",
+        "engine.observation_read",
+        "engine.record_append",
+        "engine.restore_request",
+        "engine.snapshot_inspect",
+        "engine.snapshot_list",
+        "engine.snapshot_request"
+      ],
+      "surfaces": [],
+      "baseline_bytes": 21275,
+      "revised_bytes": 14360,
+      "baseline_tokens_estimated": 5319,
+      "revised_tokens_estimated": 3590,
+      "baseline_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 1011,
+          "description_bytes": 222,
+          "required_fields": [
+            "purpose",
+            "media_type",
+            "content"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 3640,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7036,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 793,
+          "description_bytes": 170,
+          "required_fields": [
+            "attempt_receipt_id",
+            "action_id"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 685,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 5554,
+          "description_bytes": 209,
+          "required_fields": []
+        },
+        "reference_read": {
+          "declaration_bytes": 644,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 510,
+          "description_bytes": 215,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 468,
+          "description_bytes": 172,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 479,
+          "description_bytes": 162,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 443,
+          "description_bytes": 189,
+          "required_fields": []
+        }
+      },
+      "revised_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 646,
+          "description_bytes": 254,
+          "required_fields": [
+            "purpose",
+            "media_type"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 1971,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5392,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 396,
+          "description_bytes": 190,
+          "required_fields": [
+            "injection"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 605,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 3100,
+          "description_bytes": 309,
+          "required_fields": [
+            "kind"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 552,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 383,
+          "description_bytes": 180,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 370,
+          "description_bytes": 166,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 469,
+          "description_bytes": 159,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 464,
+          "description_bytes": 210,
+          "required_fields": []
+        }
+      }
+    },
+    {
+      "codec": "anthropic-messages-text-tools-v1",
+      "mode": "full",
+      "operations": [
+        "engine.artifact_begin",
+        "engine.artifact_commit",
+        "engine.artifact_put_part",
+        "engine.attempt_execute",
+        "engine.diagnostic_report",
+        "engine.finish",
+        "engine.injection_delete",
+        "engine.model_generate",
+        "engine.observation_read",
+        "engine.record_append",
+        "engine.restore_request",
+        "engine.snapshot_inspect",
+        "engine.snapshot_list",
+        "engine.snapshot_request"
+      ],
+      "surfaces": [
+        "mcp_tool_result"
+      ],
+      "baseline_bytes": 25331,
+      "revised_bytes": 19486,
+      "baseline_tokens_estimated": 6333,
+      "revised_tokens_estimated": 4872,
+      "baseline_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 1011,
+          "description_bytes": 222,
+          "required_fields": [
+            "purpose",
+            "media_type",
+            "content"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 7696,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7036,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 793,
+          "description_bytes": 170,
+          "required_fields": [
+            "attempt_receipt_id",
+            "action_id"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 685,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 5554,
+          "description_bytes": 209,
+          "required_fields": []
+        },
+        "reference_read": {
+          "declaration_bytes": 644,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 510,
+          "description_bytes": 215,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 468,
+          "description_bytes": 172,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 479,
+          "description_bytes": 162,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 443,
+          "description_bytes": 189,
+          "required_fields": []
+        }
+      },
+      "revised_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 646,
+          "description_bytes": 254,
+          "required_fields": [
+            "purpose",
+            "media_type"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 7097,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5392,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 396,
+          "description_bytes": 190,
+          "required_fields": [
+            "injection"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 605,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 3100,
+          "description_bytes": 309,
+          "required_fields": [
+            "kind"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 552,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 383,
+          "description_bytes": 180,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 370,
+          "description_bytes": 166,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 469,
+          "description_bytes": 159,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 464,
+          "description_bytes": 210,
+          "required_fields": []
+        }
+      }
+    },
+    {
+      "codec": "anthropic-messages-text-tools-v1",
+      "mode": "full",
+      "operations": [
+        "engine.artifact_begin",
+        "engine.artifact_commit",
+        "engine.artifact_put_part",
+        "engine.attempt_execute",
+        "engine.diagnostic_report",
+        "engine.finish",
+        "engine.injection_delete",
+        "engine.model_generate",
+        "engine.observation_read",
+        "engine.record_append",
+        "engine.restore_request",
+        "engine.snapshot_inspect",
+        "engine.snapshot_list",
+        "engine.snapshot_request"
+      ],
+      "surfaces": [
+        "database_response",
+        "environment_state"
+      ],
+      "baseline_bytes": 26045,
+      "revised_bytes": 20333,
+      "baseline_tokens_estimated": 6512,
+      "revised_tokens_estimated": 5084,
+      "baseline_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 1011,
+          "description_bytes": 222,
+          "required_fields": [
+            "purpose",
+            "media_type",
+            "content"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 8410,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7036,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 793,
+          "description_bytes": 170,
+          "required_fields": [
+            "attempt_receipt_id",
+            "action_id"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 685,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 5554,
+          "description_bytes": 209,
+          "required_fields": []
+        },
+        "reference_read": {
+          "declaration_bytes": 644,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 510,
+          "description_bytes": 215,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 468,
+          "description_bytes": 172,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 479,
+          "description_bytes": 162,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 443,
+          "description_bytes": 189,
+          "required_fields": []
+        }
+      },
+      "revised_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 646,
+          "description_bytes": 254,
+          "required_fields": [
+            "purpose",
+            "media_type"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 7944,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5392,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 396,
+          "description_bytes": 190,
+          "required_fields": [
+            "injection"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 605,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 3100,
+          "description_bytes": 309,
+          "required_fields": [
+            "kind"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 552,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 383,
+          "description_bytes": 180,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 370,
+          "description_bytes": 166,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 469,
+          "description_bytes": 159,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 464,
+          "description_bytes": 210,
+          "required_fields": []
+        }
+      }
+    },
+    {
+      "codec": "anthropic-messages-text-tools-v1",
+      "mode": "full",
+      "operations": [
+        "engine.artifact_begin",
+        "engine.artifact_commit",
+        "engine.artifact_put_part",
+        "engine.attempt_execute",
+        "engine.diagnostic_report",
+        "engine.finish",
+        "engine.injection_delete",
+        "engine.model_generate",
+        "engine.observation_read",
+        "engine.record_append",
+        "engine.restore_request",
+        "engine.snapshot_inspect",
+        "engine.snapshot_list",
+        "engine.snapshot_request"
+      ],
+      "surfaces": [
+        "database_response",
+        "environment_state",
+        "mcp_tool_result",
+        "model_tool_result",
+        "service_response"
+      ],
+      "baseline_bytes": 29337,
+      "revised_bytes": 29280,
+      "baseline_tokens_estimated": 7335,
+      "revised_tokens_estimated": 7320,
+      "baseline_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 1011,
+          "description_bytes": 222,
+          "required_fields": [
+            "purpose",
+            "media_type",
+            "content"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 11702,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7036,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 793,
+          "description_bytes": 170,
+          "required_fields": [
+            "attempt_receipt_id",
+            "action_id"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 685,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 5554,
+          "description_bytes": 209,
+          "required_fields": []
+        },
+        "reference_read": {
+          "declaration_bytes": 644,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 510,
+          "description_bytes": 215,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 468,
+          "description_bytes": 172,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 479,
+          "description_bytes": 162,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 443,
+          "description_bytes": 189,
+          "required_fields": []
+        }
+      },
+      "revised_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 646,
+          "description_bytes": 254,
+          "required_fields": [
+            "purpose",
+            "media_type"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 16891,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5392,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 396,
+          "description_bytes": 190,
+          "required_fields": [
+            "injection"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 605,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 3100,
+          "description_bytes": 309,
+          "required_fields": [
+            "kind"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 552,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 383,
+          "description_bytes": 180,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 370,
+          "description_bytes": 166,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 469,
+          "description_bytes": 159,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 464,
+          "description_bytes": 210,
+          "required_fields": []
+        }
+      }
+    },
+    {
+      "codec": "bedrock-converse-text-tools-v1",
+      "mode": "ordinary",
+      "operations": [
+        "engine.attempt_execute",
+        "engine.finish",
+        "engine.observation_read"
+      ],
+      "surfaces": [],
+      "baseline_bytes": 12094,
+      "revised_bytes": 8609,
+      "baseline_tokens_estimated": 3024,
+      "revised_tokens_estimated": 2153,
+      "baseline_tools": {
+        "attempt_execute": {
+          "declaration_bytes": 3648,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7044,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 693,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 652,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        }
+      },
+      "revised_tools": {
+        "attempt_execute": {
+          "declaration_bytes": 1979,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5400,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 613,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 560,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        }
+      }
+    },
+    {
+      "codec": "bedrock-converse-text-tools-v1",
+      "mode": "full",
+      "operations": [
+        "engine.artifact_begin",
+        "engine.artifact_commit",
+        "engine.artifact_put_part",
+        "engine.attempt_execute",
+        "engine.diagnostic_report",
+        "engine.finish",
+        "engine.injection_delete",
+        "engine.model_generate",
+        "engine.observation_read",
+        "engine.record_append",
+        "engine.restore_request",
+        "engine.snapshot_inspect",
+        "engine.snapshot_list",
+        "engine.snapshot_request"
+      ],
+      "surfaces": [],
+      "baseline_bytes": 21506,
+      "revised_bytes": 14591,
+      "baseline_tokens_estimated": 5377,
+      "revised_tokens_estimated": 3648,
+      "baseline_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 1019,
+          "description_bytes": 222,
+          "required_fields": [
+            "purpose",
+            "media_type",
+            "content"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 3648,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7044,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 801,
+          "description_bytes": 170,
+          "required_fields": [
+            "attempt_receipt_id",
+            "action_id"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 693,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 5562,
+          "description_bytes": 209,
+          "required_fields": []
+        },
+        "reference_read": {
+          "declaration_bytes": 652,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 518,
+          "description_bytes": 215,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 476,
+          "description_bytes": 172,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 487,
+          "description_bytes": 162,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 451,
+          "description_bytes": 189,
+          "required_fields": []
+        }
+      },
+      "revised_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 654,
+          "description_bytes": 254,
+          "required_fields": [
+            "purpose",
+            "media_type"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 1979,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5400,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 404,
+          "description_bytes": 190,
+          "required_fields": [
+            "injection"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 613,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 3108,
+          "description_bytes": 309,
+          "required_fields": [
+            "kind"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 560,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 391,
+          "description_bytes": 180,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 378,
+          "description_bytes": 166,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 477,
+          "description_bytes": 159,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 472,
+          "description_bytes": 210,
+          "required_fields": []
+        }
+      }
+    },
+    {
+      "codec": "bedrock-converse-text-tools-v1",
+      "mode": "full",
+      "operations": [
+        "engine.artifact_begin",
+        "engine.artifact_commit",
+        "engine.artifact_put_part",
+        "engine.attempt_execute",
+        "engine.diagnostic_report",
+        "engine.finish",
+        "engine.injection_delete",
+        "engine.model_generate",
+        "engine.observation_read",
+        "engine.record_append",
+        "engine.restore_request",
+        "engine.snapshot_inspect",
+        "engine.snapshot_list",
+        "engine.snapshot_request"
+      ],
+      "surfaces": [
+        "mcp_tool_result"
+      ],
+      "baseline_bytes": 25562,
+      "revised_bytes": 19717,
+      "baseline_tokens_estimated": 6391,
+      "revised_tokens_estimated": 4930,
+      "baseline_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 1019,
+          "description_bytes": 222,
+          "required_fields": [
+            "purpose",
+            "media_type",
+            "content"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 7704,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7044,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 801,
+          "description_bytes": 170,
+          "required_fields": [
+            "attempt_receipt_id",
+            "action_id"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 693,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 5562,
+          "description_bytes": 209,
+          "required_fields": []
+        },
+        "reference_read": {
+          "declaration_bytes": 652,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 518,
+          "description_bytes": 215,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 476,
+          "description_bytes": 172,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 487,
+          "description_bytes": 162,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 451,
+          "description_bytes": 189,
+          "required_fields": []
+        }
+      },
+      "revised_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 654,
+          "description_bytes": 254,
+          "required_fields": [
+            "purpose",
+            "media_type"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 7105,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5400,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 404,
+          "description_bytes": 190,
+          "required_fields": [
+            "injection"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 613,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 3108,
+          "description_bytes": 309,
+          "required_fields": [
+            "kind"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 560,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 391,
+          "description_bytes": 180,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 378,
+          "description_bytes": 166,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 477,
+          "description_bytes": 159,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 472,
+          "description_bytes": 210,
+          "required_fields": []
+        }
+      }
+    },
+    {
+      "codec": "bedrock-converse-text-tools-v1",
+      "mode": "full",
+      "operations": [
+        "engine.artifact_begin",
+        "engine.artifact_commit",
+        "engine.artifact_put_part",
+        "engine.attempt_execute",
+        "engine.diagnostic_report",
+        "engine.finish",
+        "engine.injection_delete",
+        "engine.model_generate",
+        "engine.observation_read",
+        "engine.record_append",
+        "engine.restore_request",
+        "engine.snapshot_inspect",
+        "engine.snapshot_list",
+        "engine.snapshot_request"
+      ],
+      "surfaces": [
+        "database_response",
+        "environment_state"
+      ],
+      "baseline_bytes": 26276,
+      "revised_bytes": 20564,
+      "baseline_tokens_estimated": 6569,
+      "revised_tokens_estimated": 5141,
+      "baseline_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 1019,
+          "description_bytes": 222,
+          "required_fields": [
+            "purpose",
+            "media_type",
+            "content"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 8418,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7044,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 801,
+          "description_bytes": 170,
+          "required_fields": [
+            "attempt_receipt_id",
+            "action_id"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 693,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 5562,
+          "description_bytes": 209,
+          "required_fields": []
+        },
+        "reference_read": {
+          "declaration_bytes": 652,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 518,
+          "description_bytes": 215,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 476,
+          "description_bytes": 172,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 487,
+          "description_bytes": 162,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 451,
+          "description_bytes": 189,
+          "required_fields": []
+        }
+      },
+      "revised_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 654,
+          "description_bytes": 254,
+          "required_fields": [
+            "purpose",
+            "media_type"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 7952,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5400,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 404,
+          "description_bytes": 190,
+          "required_fields": [
+            "injection"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 613,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 3108,
+          "description_bytes": 309,
+          "required_fields": [
+            "kind"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 560,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 391,
+          "description_bytes": 180,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 378,
+          "description_bytes": 166,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 477,
+          "description_bytes": 159,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 472,
+          "description_bytes": 210,
+          "required_fields": []
+        }
+      }
+    },
+    {
+      "codec": "bedrock-converse-text-tools-v1",
+      "mode": "full",
+      "operations": [
+        "engine.artifact_begin",
+        "engine.artifact_commit",
+        "engine.artifact_put_part",
+        "engine.attempt_execute",
+        "engine.diagnostic_report",
+        "engine.finish",
+        "engine.injection_delete",
+        "engine.model_generate",
+        "engine.observation_read",
+        "engine.record_append",
+        "engine.restore_request",
+        "engine.snapshot_inspect",
+        "engine.snapshot_list",
+        "engine.snapshot_request"
+      ],
+      "surfaces": [
+        "database_response",
+        "environment_state",
+        "mcp_tool_result",
+        "model_tool_result",
+        "service_response"
+      ],
+      "baseline_bytes": 29568,
+      "revised_bytes": 29511,
+      "baseline_tokens_estimated": 7392,
+      "revised_tokens_estimated": 7378,
+      "baseline_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 1019,
+          "description_bytes": 222,
+          "required_fields": [
+            "purpose",
+            "media_type",
+            "content"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 11710,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7044,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 801,
+          "description_bytes": 170,
+          "required_fields": [
+            "attempt_receipt_id",
+            "action_id"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 693,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 5562,
+          "description_bytes": 209,
+          "required_fields": []
+        },
+        "reference_read": {
+          "declaration_bytes": 652,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 518,
+          "description_bytes": 215,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 476,
+          "description_bytes": 172,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 487,
+          "description_bytes": 162,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 451,
+          "description_bytes": 189,
+          "required_fields": []
+        }
+      },
+      "revised_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 654,
+          "description_bytes": 254,
+          "required_fields": [
+            "purpose",
+            "media_type"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 16899,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5400,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 404,
+          "description_bytes": 190,
+          "required_fields": [
+            "injection"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 613,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 3108,
+          "description_bytes": 309,
+          "required_fields": [
+            "kind"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 560,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 391,
+          "description_bytes": 180,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 378,
+          "description_bytes": 166,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 477,
+          "description_bytes": 159,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 472,
+          "description_bytes": 210,
+          "required_fields": []
+        }
+      }
+    },
+    {
+      "codec": "gemini-text-tools-v1",
+      "mode": "ordinary",
+      "operations": [
+        "engine.attempt_execute",
+        "engine.finish",
+        "engine.observation_read"
+      ],
+      "surfaces": [],
+      "baseline_bytes": 12069,
+      "revised_bytes": 8584,
+      "baseline_tokens_estimated": 3018,
+      "revised_tokens_estimated": 2146,
+      "baseline_tools": {
+        "attempt_execute": {
+          "declaration_bytes": 3648,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7044,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 693,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 652,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        }
+      },
+      "revised_tools": {
+        "attempt_execute": {
+          "declaration_bytes": 1979,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5400,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 613,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 560,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        }
+      }
+    },
+    {
+      "codec": "gemini-text-tools-v1",
+      "mode": "full",
+      "operations": [
+        "engine.artifact_begin",
+        "engine.artifact_commit",
+        "engine.artifact_put_part",
+        "engine.attempt_execute",
+        "engine.diagnostic_report",
+        "engine.finish",
+        "engine.injection_delete",
+        "engine.model_generate",
+        "engine.observation_read",
+        "engine.record_append",
+        "engine.restore_request",
+        "engine.snapshot_inspect",
+        "engine.snapshot_list",
+        "engine.snapshot_request"
+      ],
+      "surfaces": [],
+      "baseline_bytes": 21390,
+      "revised_bytes": 14475,
+      "baseline_tokens_estimated": 5348,
+      "revised_tokens_estimated": 3619,
+      "baseline_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 1019,
+          "description_bytes": 222,
+          "required_fields": [
+            "purpose",
+            "media_type",
+            "content"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 3648,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7044,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 801,
+          "description_bytes": 170,
+          "required_fields": [
+            "attempt_receipt_id",
+            "action_id"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 693,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 5562,
+          "description_bytes": 209,
+          "required_fields": []
+        },
+        "reference_read": {
+          "declaration_bytes": 652,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 518,
+          "description_bytes": 215,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 476,
+          "description_bytes": 172,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 487,
+          "description_bytes": 162,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 451,
+          "description_bytes": 189,
+          "required_fields": []
+        }
+      },
+      "revised_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 654,
+          "description_bytes": 254,
+          "required_fields": [
+            "purpose",
+            "media_type"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 1979,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5400,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 404,
+          "description_bytes": 190,
+          "required_fields": [
+            "injection"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 613,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 3108,
+          "description_bytes": 309,
+          "required_fields": [
+            "kind"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 560,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 391,
+          "description_bytes": 180,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 378,
+          "description_bytes": 166,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 477,
+          "description_bytes": 159,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 472,
+          "description_bytes": 210,
+          "required_fields": []
+        }
+      }
+    },
+    {
+      "codec": "gemini-text-tools-v1",
+      "mode": "full",
+      "operations": [
+        "engine.artifact_begin",
+        "engine.artifact_commit",
+        "engine.artifact_put_part",
+        "engine.attempt_execute",
+        "engine.diagnostic_report",
+        "engine.finish",
+        "engine.injection_delete",
+        "engine.model_generate",
+        "engine.observation_read",
+        "engine.record_append",
+        "engine.restore_request",
+        "engine.snapshot_inspect",
+        "engine.snapshot_list",
+        "engine.snapshot_request"
+      ],
+      "surfaces": [
+        "mcp_tool_result"
+      ],
+      "baseline_bytes": 25446,
+      "revised_bytes": 19601,
+      "baseline_tokens_estimated": 6362,
+      "revised_tokens_estimated": 4901,
+      "baseline_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 1019,
+          "description_bytes": 222,
+          "required_fields": [
+            "purpose",
+            "media_type",
+            "content"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 7704,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7044,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 801,
+          "description_bytes": 170,
+          "required_fields": [
+            "attempt_receipt_id",
+            "action_id"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 693,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 5562,
+          "description_bytes": 209,
+          "required_fields": []
+        },
+        "reference_read": {
+          "declaration_bytes": 652,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 518,
+          "description_bytes": 215,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 476,
+          "description_bytes": 172,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 487,
+          "description_bytes": 162,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 451,
+          "description_bytes": 189,
+          "required_fields": []
+        }
+      },
+      "revised_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 654,
+          "description_bytes": 254,
+          "required_fields": [
+            "purpose",
+            "media_type"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 7105,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5400,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 404,
+          "description_bytes": 190,
+          "required_fields": [
+            "injection"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 613,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 3108,
+          "description_bytes": 309,
+          "required_fields": [
+            "kind"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 560,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 391,
+          "description_bytes": 180,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 378,
+          "description_bytes": 166,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 477,
+          "description_bytes": 159,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 472,
+          "description_bytes": 210,
+          "required_fields": []
+        }
+      }
+    },
+    {
+      "codec": "gemini-text-tools-v1",
+      "mode": "full",
+      "operations": [
+        "engine.artifact_begin",
+        "engine.artifact_commit",
+        "engine.artifact_put_part",
+        "engine.attempt_execute",
+        "engine.diagnostic_report",
+        "engine.finish",
+        "engine.injection_delete",
+        "engine.model_generate",
+        "engine.observation_read",
+        "engine.record_append",
+        "engine.restore_request",
+        "engine.snapshot_inspect",
+        "engine.snapshot_list",
+        "engine.snapshot_request"
+      ],
+      "surfaces": [
+        "database_response",
+        "environment_state"
+      ],
+      "baseline_bytes": 26160,
+      "revised_bytes": 20448,
+      "baseline_tokens_estimated": 6540,
+      "revised_tokens_estimated": 5112,
+      "baseline_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 1019,
+          "description_bytes": 222,
+          "required_fields": [
+            "purpose",
+            "media_type",
+            "content"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 8418,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7044,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 801,
+          "description_bytes": 170,
+          "required_fields": [
+            "attempt_receipt_id",
+            "action_id"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 693,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 5562,
+          "description_bytes": 209,
+          "required_fields": []
+        },
+        "reference_read": {
+          "declaration_bytes": 652,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 518,
+          "description_bytes": 215,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 476,
+          "description_bytes": 172,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 487,
+          "description_bytes": 162,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 451,
+          "description_bytes": 189,
+          "required_fields": []
+        }
+      },
+      "revised_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 654,
+          "description_bytes": 254,
+          "required_fields": [
+            "purpose",
+            "media_type"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 7952,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5400,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 404,
+          "description_bytes": 190,
+          "required_fields": [
+            "injection"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 613,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 3108,
+          "description_bytes": 309,
+          "required_fields": [
+            "kind"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 560,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 391,
+          "description_bytes": 180,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 378,
+          "description_bytes": 166,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 477,
+          "description_bytes": 159,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 472,
+          "description_bytes": 210,
+          "required_fields": []
+        }
+      }
+    },
+    {
+      "codec": "gemini-text-tools-v1",
+      "mode": "full",
+      "operations": [
+        "engine.artifact_begin",
+        "engine.artifact_commit",
+        "engine.artifact_put_part",
+        "engine.attempt_execute",
+        "engine.diagnostic_report",
+        "engine.finish",
+        "engine.injection_delete",
+        "engine.model_generate",
+        "engine.observation_read",
+        "engine.record_append",
+        "engine.restore_request",
+        "engine.snapshot_inspect",
+        "engine.snapshot_list",
+        "engine.snapshot_request"
+      ],
+      "surfaces": [
+        "database_response",
+        "environment_state",
+        "mcp_tool_result",
+        "model_tool_result",
+        "service_response"
+      ],
+      "baseline_bytes": 29452,
+      "revised_bytes": 29395,
+      "baseline_tokens_estimated": 7363,
+      "revised_tokens_estimated": 7349,
+      "baseline_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 1019,
+          "description_bytes": 222,
+          "required_fields": [
+            "purpose",
+            "media_type",
+            "content"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 11710,
+          "description_bytes": 417,
+          "required_fields": [
+            "origin",
+            "operation_id",
+            "input"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 7044,
+          "description_bytes": 339,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 801,
+          "description_bytes": 170,
+          "required_fields": [
+            "attempt_receipt_id",
+            "action_id"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 693,
+          "description_bytes": 282,
+          "required_fields": [
+            "receipt_id",
+            "entry_id",
+            "offset"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 5562,
+          "description_bytes": 209,
+          "required_fields": []
+        },
+        "reference_read": {
+          "declaration_bytes": 652,
+          "description_bytes": 283,
+          "required_fields": [
+            "reference_id",
+            "offset"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 518,
+          "description_bytes": 215,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 476,
+          "description_bytes": 172,
+          "required_fields": [
+            "source_session",
+            "checkpoint_id"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 487,
+          "description_bytes": 162,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 451,
+          "description_bytes": 189,
+          "required_fields": []
+        }
+      },
+      "revised_tools": {
+        "artifact_publish": {
+          "declaration_bytes": 654,
+          "description_bytes": 254,
+          "required_fields": [
+            "purpose",
+            "media_type"
+          ]
+        },
+        "attempt_execute": {
+          "declaration_bytes": 16899,
+          "description_bytes": 489,
+          "required_fields": [
+            "origin",
+            "operation_id"
+          ]
+        },
+        "finish": {
+          "declaration_bytes": 5400,
+          "description_bytes": 403,
+          "required_fields": [
+            "finish_reason"
+          ]
+        },
+        "injection_delete": {
+          "declaration_bytes": 404,
+          "description_bytes": 190,
+          "required_fields": [
+            "injection"
+          ]
+        },
+        "observation_read": {
+          "declaration_bytes": 613,
+          "description_bytes": 267,
+          "required_fields": [
+            "observation"
+          ]
+        },
+        "record_append": {
+          "declaration_bytes": 3108,
+          "description_bytes": 309,
+          "required_fields": [
+            "kind"
+          ]
+        },
+        "reference_read": {
+          "declaration_bytes": 560,
+          "description_bytes": 221,
+          "required_fields": [
+            "reference"
+          ]
+        },
+        "restore_request": {
+          "declaration_bytes": 391,
+          "description_bytes": 180,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_inspect": {
+          "declaration_bytes": 378,
+          "description_bytes": 166,
+          "required_fields": [
+            "snapshot"
+          ]
+        },
+        "snapshot_list": {
+          "declaration_bytes": 477,
+          "description_bytes": 159,
+          "required_fields": []
+        },
+        "snapshot_request": {
+          "declaration_bytes": 472,
+          "description_bytes": 210,
+          "required_fields": []
+        }
+      }
+    }
+  ]
+}

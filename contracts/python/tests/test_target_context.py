@@ -16,4 +16,4 @@ class TargetContextTest(unittest.TestCase):
         for case in json.loads((root/'fixtures/selected-model-tools.json').read_text()):
             raw=p.model_tools(case['codec'],case['operations'],case['surfaces'])
             self.assertEqual((len(raw),raw_digest(raw)),(case['size_bytes'],case['digest']))
-        self.assertEqual(p.validate_tool_arguments('reference_read',enc(dict(reference_id='reference-1',offset=0)))['max_bytes'],4096)
+        self.assertEqual(p.validate_tool_arguments('reference_read',enc(dict(reference='reference-1',offset=0)))['max_bytes'],4096)

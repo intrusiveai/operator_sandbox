@@ -262,9 +262,14 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 			}
 		}
 		if event.Kind == "workflow.diagnostic" {
+			if selections := campaign.DecodeObservationSelections(metadata["observation_selections"]); len(selections) > 0 {
+				keep["observation_selections"], _ = json.Marshal(selections)
+			}
 			if d := campaign.DecodeWorkflowDiagnostic(metadata["diagnostic"]); d != nil {
 				keep["diagnostic"], _ = json.Marshal(d)
-				result.WorkflowDiagnostics = append(result.WorkflowDiagnostics, *d)
+				if d.Reason != "observation_selection" {
+					result.WorkflowDiagnostics = append(result.WorkflowDiagnostics, *d)
+				}
 				if d.Stage == "arguments" && d.Stopping == "" && len(result.Rejections) < 128 {
 					result.Rejections = append(result.Rejections, SubmissionRejection{Event: event.Sequence, OperationID: d.OperationID, Code: "INVALID_ARGUMENTS", Message: d.Message()})
 				}

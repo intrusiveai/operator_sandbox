@@ -26,7 +26,7 @@ func TestPythonProcessContextWarningAndFinish(t *testing.T) {
 						return nil, err
 					}
 					operation := task["target"].(map[string]any)["capabilities"].(map[string]any)["operations"].([]any)[0].(map[string]any)
-					detail := modelCall("detail", "reference_read", map[string]any{"reference_id": operation["details_reference"], "offset": 0})
+					detail := modelCall("detail", "reference_read", map[string]any{"reference": operation["details_reference"], "offset": 0})
 					var response map[string]any
 					_ = json.Unmarshal(processResponse([]any{detail, modelCall("first", "attempt_execute", processAttempt("scenario", "", []byte(`{"query":"baseline"}`), ""))}), &response)
 					// A completed native group contributes removable model reasoning.
@@ -41,14 +41,13 @@ func TestPythonProcessContextWarningAndFinish(t *testing.T) {
 					if err != nil {
 						return nil, err
 					}
-					first, _ = attempt["receipt_id"].(string)
+					first, _ = attempt["execution"].(string)
 					if first == "" {
 						return nil, fmt.Errorf("missing executed receipt")
 					}
-					feedback := attempt["feedback"].(map[string]any)
-					entries := feedback["entries"].([]any)
+					entries := attempt["observations"].([]any)
 					entry := entries[0].(map[string]any)
-					raw := processResponse([]any{modelCall("observe", "observation_read", map[string]any{"receipt_id": first, "entry_id": entry["entry_id"], "offset": 0})})
+					raw := processResponse([]any{modelCall("observe", "observation_read", map[string]any{"observation": entry["observation"], "offset": 0})})
 					var result map[string]any
 					_ = json.Unmarshal(raw, &result)
 					result["usage"] = map[string]any{"prompt_tokens": 8200, "completion_tokens": 20, "total_tokens": 8220}
@@ -68,7 +67,7 @@ func TestPythonProcessContextWarningAndFinish(t *testing.T) {
 					if err != nil {
 						return nil, err
 					}
-					receipt, _ := second["receipt_id"].(string)
+					receipt, _ := second["execution"].(string)
 					if receipt == "" {
 						return nil, fmt.Errorf("followup rejected")
 					}

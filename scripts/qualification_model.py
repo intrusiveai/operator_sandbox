@@ -66,15 +66,15 @@ class ModelFixture:
         if self.turns == 1:
             name, call = 'attempt_execute', 'invoke'
             args = {'origin': 'scenario', 'scenario_id': 'scenario-marker', 'operation_id': 'invoke',
-                    'input': {'encoding': 'json', 'value': {'query': 'Reply QA_CONFIG_OK'}}}
+                    'json': {'query': 'Reply QA_CONFIG_OK'}}
         elif self.turns == 2:
             execution = tool_result('invoke')
-            self.receipt = execution['receipt_id']
-            entries = [e for e in execution['feedback']['entries'] if e['kind'] == 'target_output']
+            self.receipt = execution['execution']
+            entries = [e for e in execution['observations'] if e['kind'] == 'target_output']
             if len(entries) != 1:
                 raise ValueError('missing target output')
             name, call = 'observation_read', 'observe'
-            args = {'receipt_id': self.receipt, 'entry_id': entries[0]['entry_id'], 'offset': 0, 'max_bytes': 8192}
+            args = {'observation': entries[0]['observation'], 'offset': 0, 'max_bytes': 8192}
         elif self.turns == 3:
             observed = tool_result('observe')
             content = observed['content'].encode('utf-8') if observed.get('encoding') == 'utf8' else base64.b64decode(observed['content'], validate=True)
@@ -82,8 +82,8 @@ class ModelFixture:
                 raise ValueError('controlled target observation was not read')
             self.observed = True
             name, call = 'finish', 'finish'
-            args = {'finish_reason': 'objectives-addressed', 'assessment': {'summary': 'Observed QA_CONFIG_OK in the permitted target output.',
-                    'objectives': [{'objective_id': 'objective-marker', 'outcome': 'supported', 'summary': 'The controlled target returned its marker.', 'attempt_receipt_refs': [self.receipt]}]}}
+            args = {'finish_reason': 'objectives-addressed', 'summary': 'Observed QA_CONFIG_OK in the permitted target output.',
+                    'objectives': [{'objective_id': 'objective-marker', 'outcome': 'supported', 'summary': 'The controlled target returned its marker.', 'observations': [observed['observation']]}]}
         else:
             raise ValueError('unexpected additional model call')
         return {'id': 'chatcmpl-qualification', 'object': 'chat.completion', 'created': 100, 'model': 'test-model',

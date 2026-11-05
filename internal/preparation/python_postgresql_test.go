@@ -65,40 +65,40 @@ func TestPythonPostgreSQLWorkflow(t *testing.T) {
 		return modelCall(last[id], name, args)
 	}
 	attempt := func(message, surface, payload string) map[string]any {
-		a := map[string]any{"origin": "scenario", "scenario_id": "scenario-marker", "operation_id": "ask", "input": map[string]any{"encoding": "json", "value": map[string]any{"message": message}}}
+		a := map[string]any{"origin": "scenario", "scenario_id": "scenario-marker", "operation_id": "ask", "json": map[string]any{"message": message}}
 		if surface != "" {
 			selector := map[string]any{"service": "database"}
 			pointer := "/rows/0/0"
 			if surface == "environment_state" {
 				selector["collection"] = "documents"
-				selector["key"] = `{"id":"one"}`
+				selector["key"] = map[string]any{"id": "one"}
 				pointer = "/body"
 			} else {
 				selector["call_ordinal"] = "first"
 			}
-			a["injection_input"] = map[string]any{"encoding": "json", "value": payload}
-			a["pre_actions"] = []any{map[string]any{"action_id": "setup", "action_type": "interceptor.injection/v1alpha1", "parameters": map[string]any{"surface": surface, "mode": map[bool]string{true: "fidelity", false: "simulation"}[surface == "environment_state"], "scope": "once", "selector": selector, "placement": map[string]any{"operation": "replace", "pointer": pointer}}}}
+			a["injection"] = map[string]any{"json": payload}
+			a["setup"] = []any{map[string]any{"surface": surface, "mode": map[bool]string{true: "fidelity", false: "simulation"}[surface == "environment_state"], "scope": "once", "selector": selector, "placement": map[string]any{"operation": "replace", "pointer": pointer}}}
 		}
 		return a
 	}
 	readCall := func(execution, entry map[string]any) []byte {
-		return processResponse([]any{call("observe", "observation_read", map[string]any{"receipt_id": execution["receipt_id"], "entry_id": entry["entry_id"], "offset": 0, "max_bytes": 8192})})
+		return processResponse([]any{call("observe", "observation_read", map[string]any{"observation": entry["observation"], "offset": 0, "max_bytes": 8192})})
 	}
 	selectEntry := func(q map[string]any, kind string) (map[string]any, map[string]any, error) {
 		v, err := modelToolResult(q, last["invoke"])
 		if err != nil {
 			return nil, nil, err
 		}
-		receipt, ok := v["receipt_id"].(string)
+		receipt, ok := v["execution"].(string)
 		if !ok {
 			return nil, nil, fmt.Errorf("attempt rejected: %s", encode(v))
 		}
 		receipts = append(receipts, receipt)
-		feedback, ok := v["feedback"].(map[string]any)
+		feedback, ok := v["observations"].([]any)
 		if !ok {
 			return nil, nil, fmt.Errorf("no feedback")
 		}
-		for _, entry := range feedback["entries"].([]any) {
+		for _, entry := range feedback {
 			e := entry.(map[string]any)
 			if e["kind"] == kind {
 				return v, e, nil
@@ -132,7 +132,8 @@ func TestPythonPostgreSQLWorkflow(t *testing.T) {
 				return nil, e
 			}
 			var ok bool
-			snapshot, ok = v["snapshot"].(map[string]any)
+			snapshot = v
+			_, ok = v["snapshot"].(string)
 			if !ok {
 				return nil, fmt.Errorf("snapshot failed: %s", encode(v))
 			}
@@ -159,7 +160,7 @@ func TestPythonPostgreSQLWorkflow(t *testing.T) {
 				return nil, err
 			}
 			var output map[string]any
-			for _, e := range oracleExecution["feedback"].(map[string]any)["entries"].([]any) {
+			for _, e := range oracleExecution["observations"].([]any) {
 				entry := e.(map[string]any)
 				if entry["kind"] == "target_output" {
 					output = entry
@@ -169,8 +170,8 @@ func TestPythonPostgreSQLWorkflow(t *testing.T) {
 				return nil, fmt.Errorf("missing state-mutation output")
 			}
 			return processResponse([]any{
-				call("observe", "observation_read", map[string]any{"receipt_id": oracleExecution["receipt_id"], "entry_id": oracleEntry["entry_id"], "offset": 0, "max_bytes": 8192}),
-				call("state-output", "observation_read", map[string]any{"receipt_id": oracleExecution["receipt_id"], "entry_id": output["entry_id"], "offset": 0, "max_bytes": 8192}),
+				call("observe", "observation_read", map[string]any{"observation": oracleEntry["observation"], "offset": 0, "max_bytes": 8192}),
+				call("state-output", "observation_read", map[string]any{"observation": output["observation"], "offset": 0, "max_bytes": 8192}),
 			}), nil
 		case 6:
 			text, e := content(q)
@@ -203,12 +204,12 @@ func TestPythonPostgreSQLWorkflow(t *testing.T) {
 			if err != nil {
 				return nil, err
 			}
-			for _, entry := range v["feedback"].(map[string]any)["entries"].([]any) {
+			for _, entry := range v["observations"].([]any) {
 				if entry.(map[string]any)["kind"] == "oracle_outcome" {
 					return nil, fmt.Errorf("old positive oracle leaked into later attempt")
 				}
 			}
-			return processResponse([]any{call("restore", "restore_request", map[string]any{"source_session": snapshot["source_session"], "checkpoint_id": snapshot["checkpoint_id"]})}), nil
+			return processResponse([]any{call("restore", "restore_request", map[string]any{"snapshot": snapshot["snapshot"]})}), nil
 		case 8:
 			v, e := modelToolResult(q, last["restore"])
 			if e != nil {
@@ -232,7 +233,7 @@ func TestPythonPostgreSQLWorkflow(t *testing.T) {
 			if err != nil {
 				return nil, err
 			}
-			for _, entry := range v["feedback"].(map[string]any)["entries"].([]any) {
+			for _, entry := range v["observations"].([]any) {
 				if entry.(map[string]any)["kind"] == "oracle_outcome" {
 					return nil, fmt.Errorf("rollback manufactured positive oracle evidence")
 				}
@@ -247,7 +248,7 @@ func TestPythonPostgreSQLWorkflow(t *testing.T) {
 			if json.Unmarshal([]byte(text), &target) != nil || target["body"] != "benign" || target["refunds"] != float64(0) || target["nearest"].([]any)[0] != "one" {
 				return nil, fmt.Errorf("database baseline not restored: %s", text)
 			}
-			return processResponse([]any{call("finish", "finish", map[string]any{"finish_reason": "objectives-addressed", "assessment": map[string]any{"summary": "Controlled database response and state mutations, live oracle evidence, and snapshot restoration were observed.", "objectives": []any{map[string]any{"objective_id": "objective-marker", "outcome": "supported", "summary": "Observed permitted target and oracle feedback; this is not a broader QA verdict.", "attempt_receipt_refs": receipts}}}})}), nil
+			return processResponse([]any{call("finish", "finish", map[string]any{"finish_reason": "objectives-addressed", "summary": "Controlled database response and state mutations, live oracle evidence, and snapshot restoration were observed.", "objectives": []any{map[string]any{"objective_id": "objective-marker", "outcome": "supported", "summary": "Observed permitted target and oracle feedback; this is not a broader QA verdict.", "attempts": receipts}}})}), nil
 		}
 		return nil, fmt.Errorf("unexpected model turn %d", turn)
 	}

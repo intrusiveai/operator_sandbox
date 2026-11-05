@@ -125,6 +125,10 @@ class Protocol:
         from .simple import normalize_assessment
         return normalize_assessment(self, raw, binding, finish)
 
+    def normalize_tool_arguments(self, name, raw, context):
+        from .tool_normalization import normalize_tool_arguments
+        return normalize_tool_arguments(self, name, raw, context)
+
     def validate_tool_arguments(self, name, raw):
         from .model_tools import validate_tool_arguments
         return validate_tool_arguments(self, name, raw)

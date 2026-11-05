@@ -6,6 +6,12 @@ facts, protected evidence, budget counters or final campaign status. Shared Go/P
 validators and broker/harness process tests implement these rules. Native runtime
 qualification remains a separate release gate.
 
+Model tools use flattened records and typed handles defined in
+[MODEL_TOOL_CATALOG.md](MODEL_TOOL_CATALOG.md). The shared
+[normalizer](MODEL_TOOL_NORMALIZATION.md) generates IDs, resolves local and
+historical references and derives receipt lists. The shapes below are canonical
+host messages, not the model's arguments. They retain independent host validation.
+
 ## Typed records
 
 `engine.record_append` takes exactly `record_kind` and `record` using the

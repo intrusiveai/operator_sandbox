@@ -36,13 +36,17 @@ func TestSimplePythonSpoolAndSeparateCLI(t *testing.T) {
 	if out, e := build.CombinedOutput(); e != nil {
 		t.Fatal(e, string(out))
 	}
-	for _, mode := range []string{"direct", "corrected", "invalid-limit"} {
+	for _, mode := range []string{"direct", "corrected", "qa-corrected", "invalid-limit"} {
 		t.Run(mode, func(t *testing.T) {
 			var root string
 			operations := append(append([]string{}, completionRoutes...), "engine.attempt_execute", "engine.observation_read", "engine.diagnostic_report")
 			s, p, _, w, launch := serviceWithTemplate(t, 0, operations, func(c *campaignservice.Config) { root = c.StateRoot }, func(v map[string]any) {
 				v["limits"].(map[string]any)["campaign"].(map[string]any)["observation_bytes"] = 4096
 				v["remaining_limits"].(map[string]any)["observation_bytes"] = 4096
+				// This fixture covers four invocations; the generic startup
+				// fixture intentionally budgets only one observation read.
+				v["limits"].(map[string]any)["campaign"].(map[string]any)["observation_reads"] = 16
+				v["remaining_limits"].(map[string]any)["observation_reads"] = 16
 			})
 			ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 			defer cancel()
@@ -67,15 +71,18 @@ func TestSimplePythonSpoolAndSeparateCLI(t *testing.T) {
 				t.Fatal(e, output.String())
 			}
 			expected := 1
+			if mode == "qa-corrected" {
+				expected = 4
+			}
 			if mode == "invalid-limit" {
 				expected = 0
 			}
 			if result.Dispatched != expected || !s.StopAccepted() {
 				t.Fatal(output.String())
 			}
-			if mode == "direct" && result.Calls != 4 {
+			if mode == "direct" && result.Calls != 5 {
 				t.Fatal("ordinary workflow requires extra steps", output.String())
-			} // Three ordinary calls plus duplicate-finish test.
+			} // Three model calls, one internal selection audit and duplicate-finish test.
 			terminal, e := s.Shutdown(context.Background())
 			if e != nil || terminal.Closure != "confirmed" || terminal.CleanupState != "complete" {
 				t.Fatal(terminal, e)
@@ -146,6 +153,39 @@ func TestSimplePythonSpoolAndSeparateCLI(t *testing.T) {
 						if e != nil {
 							t.Fatal(e)
 						}
+						if mode != "invalid-limit" {
+							files, err := filepath.Glob(filepath.Join(destination, "events", "*.jsonl"))
+							if err != nil {
+								t.Fatal(err)
+							}
+							selections := 0
+							for _, file := range files {
+								raw, err := os.ReadFile(file)
+								if err != nil {
+									t.Fatal(err)
+								}
+								for _, line := range bytes.Split(raw, []byte("\n")) {
+									if len(line) == 0 {
+										continue
+									}
+									var event struct {
+										Kind     string
+										Metadata struct {
+											Selections []map[string]any `json:"observation_selections"`
+										}
+									}
+									if err = json.Unmarshal(line, &event); err != nil {
+										t.Fatal(err)
+									}
+									if event.Kind == "workflow.diagnostic" {
+										selections += len(event.Metadata.Selections)
+									}
+								}
+							}
+							if selections != expected {
+								t.Fatalf("exported %d observation selections; want %d", selections, expected)
+							}
+						}
 						if mode == "invalid-limit" && !bytes.Contains(data, []byte("invalid-call-limit")) {
 							t.Fatal("export lost stopping cause")
 						}
@@ -155,7 +195,7 @@ func TestSimplePythonSpoolAndSeparateCLI(t *testing.T) {
 					var inspect struct {
 						Diagnostic *campaign.WorkflowDiagnostic `json:"workflow_diagnostic"`
 					}
-					if json.Unmarshal(raw, &inspect) != nil || inspect.Diagnostic == nil || inspect.Diagnostic.Stopping != "invalid-call-limit" || inspect.Diagnostic.Observed != 5 || inspect.Diagnostic.Limit != 5 || inspect.Diagnostic.FieldPath != "/input" {
+					if json.Unmarshal(raw, &inspect) != nil || inspect.Diagnostic == nil || inspect.Diagnostic.Stopping != "invalid-call-limit" || inspect.Diagnostic.Observed != 5 || inspect.Diagnostic.Limit != 5 || inspect.Diagnostic.FieldPath != "" {
 						t.Fatal(string(raw))
 					}
 					t.Log("separate inspection:", inspect.Diagnostic.Message())

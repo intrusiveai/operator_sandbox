@@ -31,8 +31,9 @@ func (s *Service) handleDiagnostic(ctx context.Context, raw []byte, seq int64) (
 		return nil, err
 	}
 	var body struct {
-		Tool       string `json:"tool_name"`
-		Call       string `json:"tool_call_id"`
+		Selections json.RawMessage `json:"observation_selections"`
+		Tool       string          `json:"tool_name"`
+		Call       string          `json:"tool_call_id"`
 		Diagnostic struct {
 			Source, Stage, Reason string
 			Path                  string `json:"field_path"`
@@ -56,11 +57,22 @@ func (s *Service) handleDiagnostic(ctx context.Context, raw []byte, seq int64) (
 	if !d.Valid() {
 		return s.stateEnvelope(raw, seq, stateDenied("INVALID_ARGUMENTS"))
 	}
+	selections := campaign.DecodeObservationSelections(body.Selections)
+	if len(body.Selections) > 0 && len(selections) == 0 {
+		return s.stateEnvelope(raw, seq, stateDenied("INVALID_ARGUMENTS"))
+	}
+	for _, selection := range selections {
+		if err = s.checkReferences(map[string]any{"observation_refs": []any{selection["observation_ref"]}}, "", true); err != nil {
+			return s.stateEnvelope(raw, seq, stateDenied("INVALID_ARGUMENTS"))
+		}
+	}
 	receipt := "diagnostic-" + termination.NewRequestID()
-	if _, err = s.writer.AppendStored(campaign.Entry{RunRevision: q.Revision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d, "receipt_id": receipt, "assertion_origin": "harness"})}, "", false); err != nil {
+	if _, err = s.writer.AppendStored(campaign.Entry{RunRevision: q.Revision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d, "receipt_id": receipt, "assertion_origin": "harness", "observation_selections": selections})}, "", false); err != nil {
 		return nil, err
 	}
-	s.workflowDiagnostic.Store(&d)
+	if d.Reason != "observation_selection" {
+		s.workflowDiagnostic.Store(&d)
+	}
 	reply := stateReply{Result: map[string]any{"status": "retained", "receipt_id": receipt}}
 	if err = s.attempts.Tools().Finish(q.ID, marshal(reply), 0); err != nil {
 		return nil, err

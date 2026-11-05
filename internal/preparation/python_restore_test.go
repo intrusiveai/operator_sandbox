@@ -24,20 +24,21 @@ func TestPythonProcessRestoreBatchBoundary(t *testing.T) {
 						return nil, e
 					}
 					var ok bool
-					snapshot, ok = v["snapshot"].(map[string]any)
+					snapshot = v
+					_, ok = v["snapshot"].(string)
 					if !ok {
 						return nil, fmt.Errorf("snapshot failed: %v", v)
 					}
-					return processResponse([]any{modelCall("list", "snapshot_list", map[string]any{}), modelCall("inspect", "snapshot_inspect", map[string]any{"source_session": snapshot["source_session"], "checkpoint_id": snapshot["checkpoint_id"]})}), nil
+					return processResponse([]any{modelCall("list", "snapshot_list", map[string]any{}), modelCall("inspect", "snapshot_inspect", map[string]any{"snapshot": snapshot["snapshot"]})}), nil
 				case 3:
 					v, e := modelToolResult(q, "inspect")
 					if e != nil {
 						return nil, e
 					}
-					if v["snapshot"].(map[string]any)["description"] != snapshot["description"] {
+					if v["description"] != snapshot["description"] {
 						return nil, fmt.Errorf("snapshot metadata lost")
 					}
-					return processResponse([]any{modelCall("restore", "restore_request", map[string]any{"source_session": snapshot["source_session"], "checkpoint_id": snapshot["checkpoint_id"]}), modelCall("skipped-attempt", "attempt_execute", map[string]any{"invalid": "must never be decoded"}), modelCall("skipped-read", "snapshot_list", map[string]any{}), modelCall("skipped-stop", "finish", map[string]any{})}), nil
+					return processResponse([]any{modelCall("restore", "restore_request", map[string]any{"snapshot": snapshot["snapshot"]}), modelCall("skipped-attempt", "attempt_execute", map[string]any{"invalid": "must never be decoded"}), modelCall("skipped-read", "snapshot_list", map[string]any{}), modelCall("skipped-stop", "finish", map[string]any{})}), nil
 				case 4:
 					restored, e := modelToolResult(q, "restore")
 					if e != nil {
@@ -83,17 +84,17 @@ func TestPythonProcessRestoredInjectionCleanupAndLineage(t *testing.T) {
 			reply := func(turn int, q map[string]any) ([]byte, error) {
 				switch turn {
 				case 1:
-					return processResponse([]any{modelCall("record", "record_append", map[string]any{"record_kind": "hypothesis", "record": map[string]any{"hypothesis_id": "hypothesis-marker", "objective_refs": []string{"objective-marker"}, "provenance": map[string]any{"origin": "scenario", "scenario_id": "scenario-marker"}, "statement": "Compare retained setup before and after restore.", "assumptions": []string{}, "predicted_observations": []string{}, "record_refs": []string{}}}), publishCall("payload", "baseline"), modelCall("carrier", "artifact_publish", map[string]any{"purpose": "carrier", "media_type": "application/json", "content": map[string]any{"encoding": "json", "value": map[string]any{"query": "baseline"}}})}), nil
+					return processResponse([]any{modelCall("record", "record_append", map[string]any{"kind": "hypothesis", "origin": "scenario", "scenario_id": "scenario-marker", "objective_refs": []string{"objective-marker"}, "statement": "Compare retained setup before and after restore."}), publishCall("payload", "baseline"), modelCall("carrier", "artifact_publish", map[string]any{"purpose": "carrier", "media_type": "application/json", "json": map[string]any{"query": "baseline"}})}), nil
 				case 2:
 					v, e := modelToolResult(q, "record")
 					if e != nil {
 						return nil, e
 					}
-					record, _ = v["receipt_id"].(string)
+					record, _ = v["record"].(string)
 					a := processAttempt("scenario", record, payload, "")
-					a["injection_input"] = a["input"]
+					a["injection"] = map[string]any{"json": a["json"]}
 					a["retain_injections"] = true
-					a["pre_actions"] = []any{map[string]any{"action_id": "setup", "action_type": "interceptor.injection/v1alpha1", "parameters": map[string]any{"surface": "mcp_tool_result", "mode": "simulation", "scope": "once", "selector": map[string]any{"service": "tickets", "tool_name": "get_ticket", "call_ordinal": "first"}, "placement": map[string]any{"operation": "replace", "pointer": "/structuredContent/description"}}}}
+					a["setup"] = []any{map[string]any{"surface": "mcp_tool_result", "mode": "simulation", "scope": "once", "selector": map[string]any{"service": "tickets", "tool_name": "get_ticket", "call_ordinal": "first"}, "placement": map[string]any{"operation": "replace", "pointer": "/structuredContent/description"}}}
 					return processResponse([]any{modelCall("attempt", "attempt_execute", a)}), nil
 				case 3:
 					var e error
@@ -107,14 +108,14 @@ func TestPythonProcessRestoredInjectionCleanupAndLineage(t *testing.T) {
 					if e != nil {
 						return nil, e
 					}
-					s := v["snapshot"].(map[string]any)
-					return processResponse([]any{modelCall("restore", "restore_request", map[string]any{"source_session": s["source_session"], "checkpoint_id": s["checkpoint_id"]})}), nil
+					s := v
+					return processResponse([]any{modelCall("restore", "restore_request", map[string]any{"snapshot": s["snapshot"]})}), nil
 				case 5:
 					v, e := modelToolResult(q, "restore")
 					if e != nil || v["run_revision"] != float64(2) {
 						return nil, fmt.Errorf("restore failed %v %v", v, e)
 					}
-					return processResponse([]any{modelCall("delete", "injection_delete", map[string]any{"attempt_receipt_id": attempt["receipt_id"], "action_id": "setup"}), modelCall("child", "attempt_execute", processAttempt("scenario", record, payload, attempt["receipt_id"].(string)))}), nil
+					return processResponse([]any{modelCall("delete", "injection_delete", map[string]any{"injection": attempt["injections"].([]any)[0].(map[string]any)["injection"]}), modelCall("child", "attempt_execute", processAttempt("scenario", record, payload, attempt["execution"].(string)))}), nil
 				case 6:
 					d, e := modelToolResult(q, "delete")
 					if e != nil || d["outcome"] != "deleted" {
