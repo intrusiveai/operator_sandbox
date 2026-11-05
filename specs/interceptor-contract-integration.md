@@ -37,10 +37,24 @@ Implementers MUST read these sources together:
   Publisher updates MUST follow the complete reviewed-export procedure there.
 
 The reviewed Interceptor implementation at source revision
-`684c8468f9c668951a8a7f717e71bf12edf8ef4a` embeds contract `0.1.0`. Its endpoint
+`5311ad5797d2b594993a5bea02d5aae71e724800` embeds contract `0.2.0`. Its endpoint
 returns before host reconciliation, attachment, or target access. The contract
 describes implemented product capabilities; the existing environment manifest
 still describes the capabilities available in a particular sandbox.
+
+Contract `0.2.0` adds declared HTTPS seams. Operator MUST strictly decode the
+optional native `network.https_seams` array in Interceptor's digest field order;
+each entry contains only `id` and `maximum_message_bytes`. IDs MUST be unique
+native lowercase identifiers, must not conflict with services or `model-proxy`,
+and message limits MUST be positive and at most Interceptor's 256 MiB blob limit.
+Seams require enabled DNS and TLS. The native companion and its identity MUST
+retain these declarations. Operator MUST NOT project seams into Harness services,
+injection controls or feedback: Interceptor provides none of those for seams.
+Host origins, credential references, trust bindings and private debug logs MUST
+remain owned by Interceptor. Snapshot quiescence and restore binding validation
+remain Interceptor responsibilities; remote effects are outside rollback and
+pending seam calls MUST NOT be replayed. This update does not change the
+Operator–Harness package.
 
 Operator's attachment, prior-campaign recovery and late-evidence collection paths
 MUST apply the same integration check at their respective admission boundaries.
@@ -51,7 +65,7 @@ MUST support both contract fields.
 ## 1. One authoritative Operator integration pin
 
 Operator MUST define one release-independent supported Interceptor contract
-version, initially `0.1.0`, alongside its native integration code. A small
+version, currently `0.2.0`, alongside its native integration code. A small
 `internal/interceptor/contract.go` is the preferred location. Runtime comparison,
 CLI version reporting, and release metadata MUST derive from that same source.
 
@@ -97,7 +111,7 @@ The implemented successful response is:
 ```json
 {
   "status": 200,
-  "body": {"interceptor_contract_version": "0.1.0"},
+  "body": {"interceptor_contract_version": "0.2.0"},
   "session_revision": 0
 }
 ```
@@ -186,8 +200,8 @@ Illustrative foreground output:
 
 ```text
 Campaign preparation failed during Interceptor compatibility check (preparation_failed):
-Operator requires Interceptor contract 0.1.0; the running Interceptor reports 0.2.0.
-Use an Interceptor release implementing contract 0.1.0, or an Operator release compatible with 0.2.0.
+Operator requires Interceptor contract 0.2.0; the running Interceptor reports 0.1.0.
+Use an Interceptor release implementing contract 0.2.0, or an Operator release compatible with 0.1.0.
 Execution will not resume.
 ```
 
@@ -224,7 +238,7 @@ executable checks on all four platforms; source inspection alone is insufficient
 
 Existing strict host-manifest decoders and installer paths MUST be updated
 together. Preserve inspection of historical metadata where currently supported;
-absence in an old record means unknown, not `0.1.0`. New candidate publication
+absence in an old record means unknown, not the current supported version. New candidate publication
 MUST reject missing pins. Do not rewrite existing immutable releases or infer
 missing historical contract versions from installed software.
 
@@ -253,8 +267,8 @@ qualification MUST leave the candidate a prerelease and block stable promotion.
 Operator MUST maintain a reviewed Interceptor qualification dependency pin in
 `release/interceptor-qualification.json`. It MUST identify an available published
 Interceptor candidate or stable artifact, its source revision, Linux AMD64 archive
-URL and SHA-256, and its expected Interceptor contract version. Initially that
-contract is `0.1.0`. This is a test dependency, not a configurable runtime pin;
+URL and SHA-256, and its expected Interceptor contract version. The reviewed
+contract is `0.2.0`. This is a test dependency, not a configurable runtime pin;
 it MUST agree with Operator's compiled integration pin. Do not select `latest`,
 trust a mutable candidate tag alone, or invent an artifact identity before an
 Interceptor candidate containing the discovery endpoint is available.
@@ -267,6 +281,9 @@ invocation, observation inspection, accepted finish, Harness exit code zero,
 cleanup and exported evidence. Use a deterministic local target and controlled
 model responses; no paid model API or cloud credentials are required for campaign
 execution. Record the matching Harness image/contract identity used by the test.
+The target MUST use a declared HTTPS seam backed by a local verified-TLS endpoint;
+the qualification MUST retain native/public capabilities and confirm that this
+seam was used without granting Harness injection or feedback access to it.
 Do not rebuild Operator or substitute a development executable for the archive.
 
 Reuse the existing local integration fixture and release workflow. Run this

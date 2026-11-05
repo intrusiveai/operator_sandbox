@@ -137,13 +137,17 @@ def campaign(operator_archive, interceptor_archive, pin, output, runtime):
         if metadata['interceptor_contract_version'] != pin['interceptor_contract_version'] or metadata['contract_digest'] != pin['harness']['contract']['package_digest']:
             raise ValueError('Operator executable differs from dependency contracts')
         save(output / 'operator-version.json', metadata)
-        # The local target has no model integration, tools, or network dependency.
+        # Fixed target-owned behavior calls a declared HTTPS seam backed by the
+        # local fixture. Harness cannot select or configure the seam/request.
+        # No external service, provider account or credentials are involved.
         context = work / 'target'; context.mkdir()
         (context / 'app.py').write_text('''from http.server import BaseHTTPRequestHandler, HTTPServer
+from urllib.request import urlopen
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         self.rfile.read(int(self.headers.get("Content-Length", "0")))
-        raw=b'{"answer":"QA_CONFIG_OK"}'
+        with urlopen("https://qualification.internal/guardrail", timeout=10) as response:
+            raw = response.read(65537)
         self.send_response(200); self.send_header("Content-Type","application/json")
         self.send_header("Content-Length",str(len(raw))); self.end_headers(); self.wfile.write(raw)
 HTTPServer(("127.0.0.1",8080),Handler).serve_forever()
@@ -159,7 +163,9 @@ HTTPServer(("127.0.0.1",8080),Handler).serve_forever()
                 'application': {'image': target + '@' + image, 'launch': {'command': ['python3', '-B', '/app/app.py'], 'workdir': '/app', 'environment': {'MODEL_BASE_URL': 'http://127.0.0.1:18080/v1'}},
                     'interface': {'kind': 'http', 'operations': [{'id': 'invoke', 'method': 'POST', 'path': '/invoke', 'delivery_asset': 'assets/invoke.json'}],
                         'http': {'listen': 'http://127.0.0.1:8080'}, 'startup_timeout_ms': 30000, 'turn_timeout_ms': 60000},
-                    'persistence': {'snapshot_capable': False, 'mutable_roots': ['/state/app'], 'quiesce': {'kind': 'none'}}}})
+                    'persistence': {'snapshot_capable': False, 'mutable_roots': ['/state/app'], 'quiesce': {'kind': 'none'}}},
+                'network': {'dns': {'enabled': True}, 'tls': {'enabled': True, 'trust_mode': 'auto'},
+                            'https_seams': [{'id': 'qualification-guardrail', 'hostname': 'qualification.internal'}]}})
             save(blueprint / 'assets/invoke.json', {'description': 'Return a controlled marker',
                 'input': {'media_type': 'application/json', 'encoding': 'json', 'max_bytes': 65536, 'basis': 'synthetic',
                     'schema': {'type': 'object', 'properties': {'query': {'type': 'string'}}, 'required': ['query'], 'additionalProperties': False}},
@@ -169,10 +175,14 @@ HTTPServer(("127.0.0.1",8080),Handler).serve_forever()
             run(native, 'app', 'build', '--environment', blueprint, '--tag', wrapper, '--json', env=env, timeout=600)
             run(native, 'app', 'verify', '--environment', blueprint, env=env)
             save(work / 'native.json', json.loads(run(native, 'capabilities', '--environment', blueprint, env=env)))
+            shutil.copyfile(work / 'native.json', output / 'native-capabilities.json')
             run('openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', work / 'tls.key', '-out', work / 'tls.pem',
                 '-days', '1', '-subj', '/CN=localhost', '-addext', 'subjectAltName=IP:127.0.0.1')
             with ModelFixture(work / 'tls.pem', work / 'tls.key') as model, (output / 'interceptor.log').open('w') as log:
+                save(work / 'seams.json', {'seams': [{'id': 'qualification-guardrail',
+                    'origin': model.url.removesuffix('/v1/chat/completions'), 'ca_file': str(work / 'tls.pem'), 'auth': {'kind': 'none'}}]})
                 process = subprocess.Popen([str(native), 'run', '--environment', str(blueprint), '--model-provider', 'openai-chat',
+                    '--https-seam-config', str(work / 'seams.json'),
                     '--provider-auth', 'api-key-env', '--model-api-key-env', 'QUALIFICATION_UNUSED_KEY', '--allow-model', 'unused-model',
                     '--provider-base-url', 'http://127.0.0.1:1/v1', '--feedback-profile', 'black-box'], env=env, stdout=log, stderr=subprocess.STDOUT)
                 deadline = time.monotonic() + 120
@@ -194,6 +204,7 @@ HTTPServer(("127.0.0.1",8080),Handler).serve_forever()
                     stream.write('docker: ' + json.dumps({k: runtime[k] for k in ('executable', 'endpoint')}) + '\n')
                 run(op, 'capabilities', 'export', '--config', config, '--native', work / 'native.json', '--output', work / 'capabilities.json', '--target-profile', target_profile)
                 public = json.loads((work / 'capabilities.json').read_text())
+                save(output / 'public-capabilities.json', public)
                 bundle = json.loads((Path(__file__).resolve().parents[1] / 'schemas/fixtures/scenario-bundle-scenarios.json').read_text())
                 bundle['target_requirements'] = {'target_id': 'qualification', 'capability_source_digest': public['source']['capability_source_digest']}
                 bundle['objectives'][0]['description'] = 'Verify the controlled target returns its marker through permitted observation bytes.'
@@ -208,6 +219,8 @@ HTTPServer(("127.0.0.1",8080),Handler).serve_forever()
                 checked = [e for e in events if e.get('kind') == 'interceptor.compatibility']
                 attempts = facts['attempts']
                 checks = {'compatibility': any(e.get('metadata', {}).get('actual') == pin['interceptor_contract_version'] for e in checked),
+                    'https_seam': model.seam_calls == 1 and 'network' not in public['capabilities']
+                        and all(s['service_id'] != 'qualification-guardrail' for s in public['capabilities']['services']),
                     'attachment': facts['target_adapter'] == 'interceptor/v1' and len(attempts) == 1,
                     'invocation': len(attempts) == 1 and attempts[0]['dispatched'] and attempts[0]['invocation_state'] == 'succeeded' and attempts[0]['scenario_id'] == 'scenario-marker',
                     'observation_read': model.observed and model.turns == 3 and not model.failures,
@@ -215,7 +228,7 @@ HTTPServer(("127.0.0.1",8080),Handler).serve_forever()
                     'exit_zero': exit_info.get('exit_observed') is True and exit_info.get('exit_code') == 0 and not exit_info.get('forced_termination'),
                     'cleanup': exit_info.get('cleanup_complete') is True and facts['target_stop'] == 'confirmed',
                     'export': facts['journal_intact'] is True and (output / 'campaign/report.md').is_file()}
-                save(output / 'checks.json', dict(checks=checks, model_failures=model.failures, cli_exit=0))
+                save(output / 'checks.json', dict(checks=checks, model_failures=model.failures, https_seam_calls=model.seam_calls, cli_exit=0))
                 if not all(checks.values()):
                     raise RuntimeError('controlled campaign did not pass every check; inspect retained evidence')
                 succeeded = True

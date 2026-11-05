@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 import zipfile
 
-CHECKS = ('compatibility', 'attachment', 'invocation', 'observation_read',
+CHECKS = ('compatibility', 'https_seam', 'attachment', 'invocation', 'observation_read',
           'finish_accepted', 'exit_zero', 'cleanup', 'export')
 WORKFLOW = '.github/workflows/verify-release.yml'
 ARTIFACT = 'interceptor-qualification'

@@ -15,7 +15,7 @@ The authoritative native contracts remain Interceptor's
 
 Before recording attachment intent, Operator sends `POST /v1/contract-version`
 with `{}` to the same local Interceptor API. Its compiled integration pin is
-`0.1.0`; exact equality is required. Product versions need not match. No manual
+`0.2.0`; exact equality is required. Product versions need not match. No manual
 contract export, configured expected version, CLI fallback or Internet lookup is
 used. The environment capability manifest and policy checks still apply.
 
@@ -32,6 +32,23 @@ unconfirmed without consuming its dispatch claim. Retained local evidence remain
 readable, and owned Docker termination remains independent of Interceptor.
 Completed recovery/collection records can be read without the API. Successful
 campaigns record `interceptor.compatibility` with the checked versions and time.
+
+### Declared HTTPS access (contract 0.2.0)
+
+Interceptor may declare `network.https_seams` in its native environment capability
+manifest. Operator validates the seam IDs, message bounds, DNS/TLS prerequisites
+and native manifest digest, retaining the complete native companion. These
+connections are host-managed application dependencies, not injectable services;
+they do not add Harness tools, observation kinds or oracle evidence. Operator's
+public capability projection and Operator–Harness contract are unchanged.
+
+Configure destinations, credentials and optional private certificate authorities
+on Interceptor using its [HTTPS egress guide](../../interceptor_sandbox/docs/https-egress.md).
+Operator neither receives nor configures those bindings. Seam connection/debug
+logs are private Interceptor diagnostics, not campaign feedback or exported
+evidence. Target behavior remains visible through the ordinary permitted output
+and oracles. Snapshot/restore retains Interceptor's coordinated draining and
+binding checks; external service effects are not rolled back or replayed.
 
 
 ## Transport

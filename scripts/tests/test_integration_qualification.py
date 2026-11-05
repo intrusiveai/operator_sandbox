@@ -20,19 +20,19 @@ class QualificationTest(unittest.TestCase):
     def setUp(self):
         self.pin = json.loads((ROOT / 'release/interceptor-qualification.json').read_text())
         self.inventory = {'version': '0.1.4', 'source_commit': 'a' * 40, 'qualification_dependencies': self.pin,
-                          'contract': self.pin['harness']['contract'], 'interceptor_contract_version': '0.1.0',
+                          'contract': self.pin['harness']['contract'], 'interceptor_contract_version': self.pin['interceptor_contract_version'],
                           'assets': {'operator_sandbox-v0.1.4-linux_amd64.tar.gz': 'sha256:' + 'b' * 64}}
         self.run = {'id': 123, 'run_attempt': 1, 'head_sha': 'a' * 40, 'head_branch': 'candidate-v0.1.4',
                     'event': 'push', 'path': q.WORKFLOW, 'status': 'completed', 'conclusion': 'success',
                     'head_repository': {'full_name': 'intrusiveai/operator_sandbox'}}
         self.result = {'schema_version': 1, 'passed': True, 'platform': 'linux/amd64', 'source_commit': 'a' * 40,
                        'test_revision': 'a' * 40, 'test_worktree_modified': False, 'local_verification': False, 'inventory_digest': 'sha256:' + 'c' * 64, 'dependencies': self.pin,
-                       'contract': self.inventory['contract'], 'interceptor_contract_version': '0.1.0',
+                       'contract': self.inventory['contract'], 'interceptor_contract_version': self.pin['interceptor_contract_version'],
                        'interceptor_archive_sha256': self.pin['archive_sha256'], 'operator_archive_sha256': 'sha256:' + 'b' * 64, 'workflow_run_id': 123, 'workflow_run_attempt': 1,
                        'checks': {name: True for name in q.CHECKS}}
 
     def test_exact_results_and_dependency_binding(self):
-        q.validate_pin(self.pin, self.inventory['contract'], '0.1.0')
+        q.validate_pin(self.pin, self.inventory['contract'], self.pin['interceptor_contract_version'])
         q.validate_result(self.result, self.inventory, 'sha256:' + 'c' * 64, self.run)
         for key in self.result:
             bad = copy.deepcopy(self.result); bad[key] = None
@@ -41,10 +41,10 @@ class QualificationTest(unittest.TestCase):
         changed = copy.deepcopy(self.inventory); changed['qualification_dependencies']['archive_sha256'] = 'sha256:' + 'd' * 64
         with self.assertRaises(ValueError):
             q.validate_result(self.result, changed, 'sha256:' + 'c' * 64, self.run)
-        for key, value in [('archive_url', 'https://untrusted.example/archive'), ('archive_sha256', 'unknown'), ('interceptor_contract_version', '0.2.0')]:
+        for key, value in [('archive_url', 'https://untrusted.example/archive'), ('archive_sha256', 'unknown'), ('interceptor_contract_version', '0.1.0')]:
             bad = dict(self.pin, **{key: value})
             with self.assertRaises(ValueError):
-                q.validate_pin(bad, self.inventory['contract'], '0.1.0')
+                q.validate_pin(bad, self.inventory['contract'], self.pin['interceptor_contract_version'])
 
     def test_trust_and_bounded_archive(self):
         self.assertTrue(q.trusted_run(self.run, self.inventory, 'intrusiveai/operator_sandbox'))
@@ -97,13 +97,13 @@ class QualificationTest(unittest.TestCase):
 
     def test_archived_identity_mismatch_and_platform_pins(self):
         host = {'platform': 'linux/amd64', 'version': '0.1.4', 'source_commit': 'a' * 40,
-                'interceptor_contract_version': '0.1.0', 'contract': self.inventory['contract'], 'files': [{'path': 'bin/operatorctl', 'digest': 'sha256:' + 'e' * 64}]}
+                'interceptor_contract_version': self.pin['interceptor_contract_version'], 'contract': self.inventory['contract'], 'files': [{'path': 'bin/operatorctl', 'digest': 'sha256:' + 'e' * 64}]}
         hosts = [dict(host, platform=p) for p in PLATFORMS]
         self.assertEqual(check_candidates(hosts), '0.1.4')
-        for value in (None, '0.2.0', 'v0.1.0', '01.0.0', ''):
+        for value in (None, '0.1.0', 'v0.1.0', '01.0.0', ''):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 check_candidates([dict(h, interceptor_contract_version=value) if i == 0 else h for i, h in enumerate(hosts)])
-        report = {'platform': host['platform'], 'version': host['version'], 'source_commit': host['source_commit'], 'interceptor_contract_version': '0.1.0',
+        report = {'platform': host['platform'], 'version': host['version'], 'source_commit': host['source_commit'], 'interceptor_contract_version': self.pin['interceptor_contract_version'],
                   'contract_version': host['contract']['package_version'], 'contract_digest': host['contract']['package_digest'],
                   'archive_sha256': 'sha256:' + 'b' * 64, 'binary_sha256': 'sha256:' + 'e' * 64, 'checks': ['archive-integrity', 'native-version']}
         validate_report(report, host, report['archive_sha256'])

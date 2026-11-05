@@ -16,8 +16,9 @@ func TestContractDiscovery(t *testing.T) {
 		name, body, reason string
 		status             int
 	}{
-		{"match", `{"interceptor_contract_version":"0.1.0"}`, "", 200},
-		{"mismatch", `{"interceptor_contract_version":"0.2.0"}`, "version_mismatch", 200},
+		{"match", `{"interceptor_contract_version":"0.2.0"}`, "", 200},
+		{"old mismatch", `{"interceptor_contract_version":"0.1.0"}`, "version_mismatch", 200},
+		{"future mismatch", `{"interceptor_contract_version":"0.3.0"}`, "version_mismatch", 200},
 		{"missing", `{}`, "invalid_version", 200},
 		{"null", `{"interceptor_contract_version":null}`, "invalid_version", 200},
 		{"number", `{"interceptor_contract_version":1}`, "invalid_version", 200},
@@ -48,7 +49,7 @@ func TestContractDiscovery(t *testing.T) {
 			if !errors.As(err, &failure) || failure.Reason != tc.reason || failure.Expected != SupportedContractVersion || calls != 1 || strings.Contains(err.Error(), "SECRET") {
 				t.Fatalf("%+v calls=%d", err, calls)
 			}
-			if tc.reason == "version_mismatch" && failure.Actual != "0.2.0" {
+			if tc.reason == "version_mismatch" && (failure.Actual == SupportedContractVersion || !strings.Contains(tc.body, `"`+failure.Actual+`"`)) {
 				t.Fatal(failure)
 			}
 		})
@@ -73,7 +74,7 @@ func TestContractTransportFailures(t *testing.T) {
 					<-r.Context().Done()
 					return nil, r.Context().Err()
 				}
-				rpl := wireResponse(t, 200, map[string]string{"interceptor_contract_version": "0.1.0"})
+				rpl := wireResponse(t, 200, map[string]string{"interceptor_contract_version": SupportedContractVersion})
 				switch mode {
 				case "non-json":
 					rpl.Header.Set("Content-Type", "text/html")

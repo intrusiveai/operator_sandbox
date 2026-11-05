@@ -9,7 +9,7 @@ import (
 
 // SupportedContractVersion is the integration implemented by this executable,
 // independent of both product releases and the Operator/Harness wire package.
-const SupportedContractVersion = "0.1.0"
+const SupportedContractVersion = "0.2.0"
 
 var contractVersionPattern = regexp.MustCompile(`^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$`)
 

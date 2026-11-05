@@ -384,6 +384,10 @@ Operator's exact contract-digest compatibility checks.
    source commit and contract version. Pin the matching Harness image by repository
    digest, source commit and exact shared package identity. Use actual published
    artifacts, not `latest`. Commit dependency changes with the candidate source.
+   A rolling Interceptor prerelease can replace the bytes at the same URL. If
+   qualification reports a checksum mismatch, review the new source and contract,
+   verify the published archive checksum, and commit the complete updated pin.
+   Do not accept new bytes by changing only the checksum or bypassing verification.
 2. Push the candidate through the ordinary workflow. The `packaged-contract` jobs
    execute each of the four archived binaries on its matching native runner and
    compare version output with package metadata. `candidate.json` retains these
@@ -391,8 +395,9 @@ Operator's exact contract-digest compatibility checks.
 3. Wait for candidate publication and the `qualify-interceptor` job. This job
    downloads the published Operator archive, verifies the pinned Interceptor
    archive and pulls the pinned Harness image. It runs one deterministic local
-   campaign using Docker, a marker-returning target and three controlled model
-   replies. It checks discovery, attachment, invocation, observation reading,
+   campaign using Docker, a target that obtains its marker through a declared
+   Interceptor HTTPS seam to a local TLS fixture, and three controlled model
+   replies. It checks discovery, HTTPS seam use, attachment, invocation, observation reading,
    accepted finish, exit zero, cleanup and exported evidence. It uses no paid
    model API or cloud credential. This qualifies Linux AMD64 only.
    The job installs Docker CLI and Engine 29.0.1 with the containerd image store,

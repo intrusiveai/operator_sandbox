@@ -16,11 +16,24 @@ class ModelFixture:
         self.receipt = None
         self.observed = False
         self.failures = []
+        self.seam_calls = 0
         fixture = self
 
         class Handler(BaseHTTPRequestHandler):
             def log_message(self, *args):
                 pass
+
+            def do_GET(self):
+                if self.path != '/guardrail':
+                    self.send_error(404)
+                    return
+                fixture.seam_calls += 1
+                raw = b'{"answer":"QA_CONFIG_OK"}'
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Content-Length', str(len(raw)))
+                self.end_headers()
+                self.wfile.write(raw)
 
             def do_POST(self):
                 try:

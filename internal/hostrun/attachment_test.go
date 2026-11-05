@@ -119,14 +119,14 @@ func TestRecordedAttachOrdersDurabilityBeforeEffects(t *testing.T) {
 func TestCompatibilityBeforeAttachmentIntent(t *testing.T) {
 	root := t.TempDir()
 	p := attachTestPeer{check: func() error {
-		return &interceptor.CompatibilityError{Reason: "version_mismatch", Expected: "0.1.0", Actual: "0.2.0", HTTPStatus: 200}
+		return &interceptor.CompatibilityError{Reason: "version_mismatch", Expected: interceptor.SupportedContractVersion, Actual: "0.1.0", HTTPStatus: 200}
 	}, attach: func() (interceptor.Attachment, error) {
 		t.Fatal("attached incompatible server")
 		return interceptor.Attachment{}, nil
 	}}
 	_, _, err := attachRecorded(context.Background(), root, campaign.AttachmentIntent{}, p)
 	d := PreparationDetails(err)
-	if d == nil || d.Stage != "Interceptor compatibility check" || !d.Valid() || d.Interceptor.Actual != "0.2.0" {
+	if d == nil || d.Stage != "Interceptor compatibility check" || !d.Valid() || d.Interceptor.Actual != "0.1.0" {
 		t.Fatal(err, d)
 	}
 	if _, err = os.Stat(filepath.Join(root, "attachments")); !os.IsNotExist(err) {

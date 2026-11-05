@@ -11,6 +11,8 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/nativedelivery"
 )
 
+var nativeIdentifier = regexp.MustCompile(`^[a-z][a-z0-9-]{0,62}$`)
+
 var digestPattern = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
 
 func verifyNative(raw []byte) (nativeManifest, map[string]any, error) {
@@ -214,6 +216,23 @@ func validNative(n *nativeManifest) bool {
 		return false
 	}
 	if !subset(n.Network.DNS.RecordTypes, "A") || !allowed(n.Network.DNS.UnknownPolicy, "", "nxdomain", "refused") || !allowed(n.Network.HTTPS.TrustMode, "", "auto", "bundle", "application-managed") || !allowed(n.Network.HTTPS.MinimumVersion, "", "TLS1.2") {
+		return false
+	}
+	// Seams describe host-managed external access, not injectable services or
+	// feedback. Keep them in native provenance without projecting Harness tools.
+	ids = nil
+	for _, seam := range n.Network.HTTPSSeams {
+		ids = append(ids, seam.ID)
+		if !nativeIdentifier.MatchString(seam.ID) || seam.ID == "model-proxy" || seam.MaximumMessageBytes < 1 || seam.MaximumMessageBytes > 256<<20 || !n.Network.DNS.Enabled || !n.Network.HTTPS.Enabled {
+			return false
+		}
+		for _, service := range n.Services {
+			if seam.ID == service.ID {
+				return false
+			}
+		}
+	}
+	if !uniqueIDs(ids) {
 		return false
 	}
 	return n.Limits.MaximumAttempts > 0 && n.Limits.MaximumArtifacts > 0 && n.Limits.MaximumArtifactBytes > 0 && n.Limits.MaximumInvocations > 0 && n.Limits.MaximumSnapshots >= 0

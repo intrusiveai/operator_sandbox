@@ -234,7 +234,7 @@ type contractRecoveryPeer struct {
 func (p *contractRecoveryPeer) CheckContract(context.Context) error {
 	p.checks++
 	if p.fail {
-		return &interceptor.CompatibilityError{Reason: "version_mismatch", Expected: "0.1.0", Actual: "0.2.0"}
+		return &interceptor.CompatibilityError{Reason: "version_mismatch", Expected: interceptor.SupportedContractVersion, Actual: "0.1.0"}
 	}
 	return nil
 }
