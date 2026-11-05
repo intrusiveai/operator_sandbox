@@ -7,7 +7,7 @@ reference these rules rather than define competing contracts. The
 source and package digest consumed by both products.
 
 JSON Schemas, Go/Python bindings, semantic validators and shared fixtures define
-package `0.5.0`. Section 12 defines its conformance requirements.
+package `0.6.0`. Section 12 defines its conformance requirements.
 In every attempt, `generator.release_digest` MUST equal the frozen
 `EngineContext.release.release_record_digest`. It identifies the validated
 embedded compatibility file. `release.image_digest` separately pins the harness image
@@ -49,7 +49,7 @@ GenerateContent. Their schemas, bindings and stateful checks are implemented.
 
 ## 1. One owner and one pinned package
 
-Operator owns `operator-contracts`, package version `0.5.0`, with package
+Operator owns `operator-contracts`, package version `0.6.0`, with package
 manifest schema `operator.dev/contract-package/v1alpha1`. The package contains
 closed JSON Schemas, the offline URI catalog, operation registry, semantic rules,
 Go/Python bindings and validators, and shared golden test vectors. Engine builds
@@ -58,7 +58,7 @@ must support that exact digest. No runtime negotiation, network schema fetching,
 unknown-field tolerance or silent fallback is needed in this MVP.
 
 Package version and individual message versions are separate. Keep the current
-attempt request/result v1alpha2 and observation read/selection/manifest schemas.
+attempt request v1alpha4/result v1alpha2 and observation read/selection/manifest schemas.
 Use engine-pipe/v1alpha1 for the new pipe envelope and engine-conclusion/v1alpha2
 for the expanded conclusion. Package upgrades publish a new immutable digest;
 a running campaign never changes its contract package.

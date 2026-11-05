@@ -1,6 +1,9 @@
 package contracts
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"errors"
+)
 
 // ModelTools returns the package-owned native projection for a verified operation
 // set. This only declares tools; the fixed runtime dispatcher grants no authority
@@ -78,12 +81,12 @@ func (p *Protocol) modelTools(codec string, operations, surfaces []string) ([]by
 		if name == "attempt_execute" && (!admitted["engine.injection_delete"] || (surfaces != nil && len(surfaces) == 0)) {
 			// Each declaration is decoded afresh, so narrowing cannot mutate the catalog.
 			props := parameters.(map[string]any)["properties"].(map[string]any)
-			for _, field := range []string{"pre_actions", "injection_input", "retain_injections"} {
+			for _, field := range []string{"setup", "injection", "retain_injections"} {
 				delete(props, field)
 			}
 		}
 		if name == "attempt_execute" && admitted["engine.injection_delete"] && len(surfaces) > 0 {
-			injection := parameters.(map[string]any)["properties"].(map[string]any)["pre_actions"].(map[string]any)["items"].(map[string]any)["properties"].(map[string]any)["parameters"].(map[string]any)
+			injection := parameters.(map[string]any)["properties"].(map[string]any)["setup"].(map[string]any)["items"].(map[string]any)
 			surfaceValues := []any{}
 			for _, s := range surfaces {
 				surfaceValues = append(surfaceValues, s)
@@ -137,6 +140,27 @@ func (p *Protocol) ValidateToolArguments(name string, raw []byte) (map[string]an
 			return nil, err
 		}
 	}
+	if err := checkModelChoices(name, object); err != nil {
+		return nil, err
+	}
+	if name == "finish" {
+		if _, exists := object["assessment"]; exists {
+			return nil, argumentIssue("obsolete_wrapper", "/assessment", "Put summary, objectives and optional assessment collections beside finish_reason; omit the assessment wrapper.")
+		}
+	}
+	if name == "attempt_execute" || name == "artifact_publish" {
+		if _, err := modelContent(object, ""); err != nil {
+			return nil, err
+		}
+	}
+	if name == "attempt_execute" {
+		if err := p.checkModelContent(object, ""); err != nil {
+			var issue *ArgumentError
+			if errors.As(err, &issue) {
+				return nil, err
+			}
+		}
+	}
 	document, _ := Decode(p.catalog.sources[ModelToolArgumentsSchema], OrdinaryLimit)
 	matched := false
 	for index, value := range document.(map[string]any)["oneOf"].([]any) {
@@ -155,11 +179,19 @@ func (p *Protocol) ValidateToolArguments(name string, raw []byte) (map[string]an
 		return nil, argumentIssue("unsupported_tool", "/name", "Use a tool from the advertised catalog.")
 	}
 	if name == "attempt_execute" {
-		if err := p.checkSimpleAttempt(object); err != nil {
+		if err := p.checkModelContent(object, ""); err != nil {
+			return nil, err
+		}
+	}
+	if name == "artifact_publish" {
+		if err := checkPublishedContent(object); err != nil {
 			return nil, err
 		}
 	}
 	if name == "reference_read" || name == "observation_read" {
+		if _, ok := object["offset"]; !ok {
+			object["offset"] = json.Number("0")
+		}
 		if _, ok := object["max_bytes"]; !ok {
 			object["max_bytes"] = json.Number("4096")
 		}
@@ -178,7 +210,7 @@ func (p *Protocol) ToolGuidance(name string) ([]byte, error) {
 		branch := item.(map[string]any)
 		props := branch["properties"].(map[string]any)
 		if props["name"].(map[string]any)["const"] == name {
-			return canonicalValue(map[string]any{"tool": name, "description": branch["description"], "arguments": props["arguments"], "guidance": "Use the selected resource's details_reference for valid selectors and content. Receipts must come from the corresponding successful tool result; never manufacture them. Runtime rejects invalid values before dispatch."}, OrdinaryLimit)
+			return canonicalValue(map[string]any{"tool": name, "description": branch["description"], "arguments": props["arguments"], "guidance": "Use the selected resource's details_reference for valid selectors and content. Use typed handles from corresponding verified inputs or tool results; never manufacture them. Runtime rejects invalid values before dispatch."}, OrdinaryLimit)
 		}
 	}
 	return nil, ErrProtocol

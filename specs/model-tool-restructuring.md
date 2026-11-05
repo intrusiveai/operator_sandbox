@@ -201,6 +201,12 @@ Separate structural validation from handle resolution and host validation:
 5. Operator independently validates authoritative membership, purpose, visibility,
    integrity, lineage, availability, and budgets. Only then may execution proceed.
 
+The authoritative implementation API is documented in
+[`MODEL_TOOL_NORMALIZATION.md`](../schemas/MODEL_TOOL_NORMALIZATION.md). Reads through
+range handles MUST use offsets within the original entry and remain inside the
+range. Observation selections without canonical item fields MUST be retained in
+bounded batches on the existing diagnostic-report operation before submission.
+
 The shared contract MUST define resource kinds, stable mapping semantics, result
 status meanings, and required inspection checks. Harness owns the bounded
 in-process map. It MUST survive compaction without placing the complete map in

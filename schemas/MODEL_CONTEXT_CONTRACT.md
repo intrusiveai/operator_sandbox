@@ -1,6 +1,6 @@
 # Model context contract
 
-Shared package 0.5.0 requires matching host and Harness package identities through
+Shared package 0.6.0 requires matching host and Harness package identities through
 the existing embedded compatibility record. Earlier packages are incompatible.
 This contract does not add token counting services or change execution authority.
 
@@ -90,5 +90,5 @@ copy request text into diagnostic metadata or treat reservation as consumption.
 
 Shared fixtures `compact-target-context.json` and `selected-model-tools.json`
 bind reference bytes and all five codec projections. Model codec fixtures bind
-budget arithmetic. Matching process tests exercise warning → compaction → follow-up
+budget arithmetic. Matching process tests MUST exercise warning → compaction → follow-up
 attempt → finish over FIFO and spool, including independently generated reports.

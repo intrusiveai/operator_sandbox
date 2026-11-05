@@ -119,15 +119,15 @@ class ControlledModelTest(unittest.TestCase):
             model = ModelFixture.__new__(ModelFixture)
             model.turns, model.observed, model.receipt = 0, False, None
             self.assertEqual(model.reply({'messages': []})['choices'][0]['message']['tool_calls'][0]['function']['name'], 'attempt_execute')
-            execution = {'receipt_id': 'actual-receipt', 'feedback': {'entries': [{'entry_id': 'actual-entry', 'kind': 'target_output'}]}}
+            execution = {'execution': 'actual-execution', 'observations': [{'observation': 'actual-observation', 'kind': 'target_output'}]}
             def reply(call, value):
                 return model.reply({'messages': [{'role': 'tool', 'tool_call_id': call, 'content': json.dumps(value)}]})
             read = reply('invoke', execution)
-            self.assertIn('actual-entry', read['choices'][0]['message']['tool_calls'][0]['function']['arguments'])
+            self.assertIn('actual-observation', read['choices'][0]['message']['tool_calls'][0]['function']['arguments'])
             content = 'QA_CONFIG_OK' if encoding == 'utf8' else base64.b64encode(b'QA_CONFIG_OK').decode()
-            finish = reply('observe', {'availability': 'available', 'encoding': encoding, 'content': content})
+            finish = reply('observe', {'observation': 'inspected-observation', 'availability': 'available', 'encoding': encoding, 'content': content})
             self.assertTrue(model.observed)
-            self.assertIn('actual-receipt', finish['choices'][0]['message']['tool_calls'][0]['function']['arguments'])
+            self.assertIn('inspected-observation', finish['choices'][0]['message']['tool_calls'][0]['function']['arguments'])
             with self.assertRaises(ValueError):
                 model.reply({'messages': []})
 

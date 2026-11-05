@@ -36,12 +36,12 @@ func modelDraft(receipts []string, record string) map[string]any {
 	if record != "" {
 		refs = append(refs, record)
 	}
-	return map[string]any{"status": "completed", "finish_reason": "objectives-addressed", "summary": "Observed bounded application responses; no internal effect is asserted.", "objectives": []any{map[string]any{"objective_id": "objective-marker", "outcome": "inconclusive", "summary": "Variants completed with external response evidence only.", "attempt_receipt_refs": receipts, "record_refs": refs}}, "hypotheses": []any{}, "claims": []any{}, "coverage": []any{map[string]any{"objective_id": "objective-marker", "status": "tested", "reason": "Compared two serial variants.", "attempt_receipt_refs": receipts}}, "uncertainties": []any{}, "record_refs": refs}
+	return map[string]any{"status": "completed", "finish_reason": "objectives-addressed", "summary": "Observed bounded application responses; no internal effect is asserted.", "objectives": []any{map[string]any{"objective_id": "objective-marker", "outcome": "inconclusive", "summary": "Variants completed with external response evidence only.", "attempts": receipts, "records": refs}}, "hypotheses": []any{}, "claims": []any{}, "coverage": []any{map[string]any{"objective_id": "objective-marker", "status": "tested", "reason": "Compared two serial variants.", "attempts": receipts}}, "uncertainties": []any{}, "records": refs}
 }
 func processAttempt(origin, record string, raw []byte, parent string) map[string]any {
 	var value any
 	_ = json.Unmarshal(raw, &value)
-	q := map[string]any{"origin": origin, "operation_id": "invoke", "input": map[string]any{"encoding": "json", "value": value}, "rationale": "Compare a bounded input variant against observed feedback."}
+	q := map[string]any{"origin": origin, "operation_id": "invoke", "json": value, "rationale": "Compare a bounded input variant against observed feedback."}
 	if record != "" {
 		q["strategy_provenance_ref"] = record
 	}
@@ -49,17 +49,14 @@ func processAttempt(origin, record string, raw []byte, parent string) map[string
 		q["scenario_id"] = "scenario-marker"
 	}
 	if parent != "" {
-		q["parent_attempt_receipt_id"] = parent
+		q["parent"] = parent
 	}
 	return q
 }
-func finishDraft(draft map[string]any) map[string]any {
-	reason := draft["finish_reason"]
-	delete(draft, "finish_reason")
-	return map[string]any{"finish_reason": reason, "assessment": draft}
-}
+func finishDraft(draft map[string]any) map[string]any { return draft }
+
 func publishCall(id, query string) any {
-	return modelCall(id, "artifact_publish", map[string]any{"purpose": "payload", "media_type": "application/json", "content": map[string]any{"encoding": "json", "value": map[string]any{"query": query}}})
+	return modelCall(id, "artifact_publish", map[string]any{"purpose": "payload", "media_type": "application/json", "json": map[string]any{"query": query}})
 }
 
 func TestPythonProcessCampaigns(t *testing.T) {
@@ -85,13 +82,17 @@ func TestPythonProcessCampaigns(t *testing.T) {
 						if origin == "scenario" {
 							provenance["scenario_id"] = "scenario-marker"
 						}
-						calls = append(calls, modelCall("hypothesis", "record_append", map[string]any{"record_kind": "hypothesis", "record": map[string]any{"hypothesis_id": "hypothesis-marker", "objective_refs": []string{"objective-marker"}, "provenance": provenance, "statement": "A changed input may affect the response.", "assumptions": []string{}, "predicted_observations": []string{"A permitted response."}, "record_refs": []string{}}}), publishCall("payload-1", "baseline"))
+						provenance["kind"] = "hypothesis"
+						provenance["objective_refs"] = []string{"objective-marker"}
+						provenance["statement"] = "A changed input may affect the response."
+						provenance["predicted_observations"] = []string{"A permitted response."}
+						calls = append(calls, modelCall("hypothesis", "record_append", provenance), publishCall("payload-1", "baseline"))
 						var task map[string]any
 						_ = json.Unmarshal([]byte(q["messages"].([]any)[1].(map[string]any)["content"].(string)), &task)
 						for _, v := range task["reference_handles"].([]any) {
 							e := v.(map[string]any)
 							if e["role"] == "reference" {
-								calls = append(calls, modelCall("reference", "reference_read", map[string]any{"reference_id": e["entry_id"], "offset": 0, "max_bytes": 4096}))
+								calls = append(calls, modelCall("reference", "reference_read", map[string]any{"reference": e["entry_id"], "offset": 0, "max_bytes": 4096}))
 								break
 							}
 						}
@@ -100,7 +101,7 @@ func TestPythonProcessCampaigns(t *testing.T) {
 						if e != nil {
 							return nil, e
 						}
-						record, _ = h["receipt_id"].(string)
+						record, _ = h["record"].(string)
 						if record == "" {
 							return nil, fmt.Errorf("hypothesis rejected: %v", h)
 						}
@@ -122,11 +123,11 @@ func TestPythonProcessCampaigns(t *testing.T) {
 							return nil, fmt.Errorf("attempt failed: %v", a)
 						}
 						attempts = append(attempts, a)
-						entries := a["feedback"].(map[string]any)["entries"].([]any)
+						entries := a["observations"].([]any)
 						if len(entries) != 1 {
 							return nil, fmt.Errorf("feedback missing: %v", a)
 						}
-						calls = append(calls, modelCall("read-"+id, "observation_read", map[string]any{"receipt_id": a["receipt_id"], "entry_id": entries[0].(map[string]any)["entry_id"], "offset": 0, "max_bytes": 4096}))
+						calls = append(calls, modelCall("read-"+id, "observation_read", map[string]any{"observation": entries[0].(map[string]any)["observation"], "offset": 0, "max_bytes": 4096}))
 					case 4, 6:
 						id := "read-attempt-1"
 						if turn == 6 {
@@ -142,9 +143,9 @@ func TestPythonProcessCampaigns(t *testing.T) {
 						}
 						reads++
 						if turn == 4 {
-							calls = append(calls, publishCall("payload-2", "refined"), modelCall("attempt-2", "attempt_execute", processAttempt(origin, record, []byte(`{"query":"refined"}`), attempts[0]["receipt_id"].(string))))
+							calls = append(calls, publishCall("payload-2", "refined"), modelCall("attempt-2", "attempt_execute", processAttempt(origin, record, []byte(`{"query":"refined"}`), attempts[0]["execution"].(string))))
 						} else {
-							calls = append(calls, modelCall("finish", "finish", finishDraft(modelDraft([]string{attempts[0]["receipt_id"].(string), attempts[1]["receipt_id"].(string)}, record))))
+							calls = append(calls, modelCall("finish", "finish", finishDraft(modelDraft([]string{attempts[0]["execution"].(string), attempts[1]["execution"].(string)}, record))))
 						}
 					default:
 						return nil, fmt.Errorf("unexpected model turn %d", turn)

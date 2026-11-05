@@ -189,6 +189,12 @@ host policy, in addition to ordinary envelope validation. `ModelDisposition` /
 [model codec contract](../schemas/MODEL_CODEC_CONTRACT.md) for required runtime
 receipt checks, preserved argument strings and provider qualification limits.
 
+Use `NormalizeToolArguments` / `normalize_tool_arguments` to translate the model's
+flat fields and typed handles into canonical host bodies. The trusted resolution
+context, deterministic IDs, reference derivation, audit output and error-path map
+are specified in [MODEL_TOOL_NORMALIZATION.md](../schemas/MODEL_TOOL_NORMALIZATION.md).
+The decoder/normalizer does not grant authority or replace the runtime call ledger.
+
 ## Runtime validation boundaries
 
 Structural validation is one gate. Receipt lookup, operation identity, digests,

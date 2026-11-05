@@ -12,37 +12,12 @@ def object_schema(properties,required=None):
 
 
 def openai_parameters(name, arguments):
-    """Provider declaration only; arguments remains the authoritative validator.
-
-    Non-strict OpenAI tools still forbid root combinators. Preserve field schemas
-    here and enforce cross-field rules with validate_tool_arguments before dispatch.
-    Only these reviewed projections may differ from the validation schema.
-    """
-    if name in ('attempt_execute', 'finish'):
-        projected = deepcopy(arguments)
-        projected.pop('allOf', None)
-        projected.pop('oneOf', None)
-        projected['description'] = (
-            'Runtime validates cross-field rules. origin is required: scenario requires scenario_id from the submitted bundle; exploratory forbids scenario_id. Attempt setup requires injection_input; '
-            'injection_input and retain_injections require nonempty pre_actions. '
-            'Finish requires exactly one of assessment, artifact_receipt or unavailable. '
-            'Direct input must fit the host size_limits.direct_input_bytes allowance and JSON depth 16.')
-        return projected
-    if name == 'record_append':
-        variants = arguments['oneOf']
-        kinds = [v['properties']['record_kind']['const'] for v in variants]
-        records = []
-        for kind, variant in zip(kinds, variants):
-            record = deepcopy(variant['properties']['record'])
-            record['description'] = 'Record body for record_kind '+kind+'.'
-            records.append(record)
-        projected = object_schema(dict(record_kind=dict(type='string',enum=kinds),record=dict(anyOf=records)))
-        projected['description'] = (
-            'record_kind selects the matching record body: hypothesis, progress, lineage or coverage. '
-            'Runtime rejects a body for a different kind and validates every nested constraint. '
-            'Conclusion records are not accepted by this tool.')
-        return projected
-    return None
+    # All codecs use the same concise object declaration. Cross-field choices
+    # remain in the authoritative runtime schema, not duplicated in the prompt.
+    projected = deepcopy(arguments)
+    for key in ('allOf', 'oneOf', 'anyOf', 'not'):
+        projected.pop(key, None)
+    return projected
 
 
 def build():
@@ -72,35 +47,105 @@ def build():
     identifier=inline(wire['id'],'urn:operator:schema:wire-common:v1alpha1')
     artifact=load('engine-artifact-begin-request')
     media=artifact['properties']['artifact']['properties']['media_type']
-    attempt=load('engine-attempt-request','v1alpha4')
-    finish=load('engine-finish-request')
-    records=load('engine-record-append-request')
-    records['oneOf']=[b for b in records['oneOf'] if b['properties']['record_kind']['const']!='conclusion']
-    records['type']='object'
-    content={'oneOf':[
-        object_schema(dict(encoding={'const':'utf8'},text=dict(type='string',maxLength=1048576))),
-        object_schema(dict(encoding={'const':'base64'},data=dict(type='string',maxLength=1398104))),
-        object_schema(dict(encoding={'const':'json'},value={}))]}
-    reference=object_schema(dict(reference_id=identifier,offset=dict(type='integer',minimum=0,maximum=2**53-1),max_bytes=dict(type='integer',minimum=1,maximum=262144,default=4096)),['reference_id','offset'])
-    publish=object_schema(dict(purpose={'enum':['payload','carrier','supporting-data','conclusion']},media_type=media,content=content))
+    attempt_host=load('engine-attempt-request','v1alpha4')
+    assessment=load('assessment')['properties']
+    records_host=load('engine-record-append-request')['oneOf']
+    finish_host=load('engine-finish-request')['properties']
+    handle=dict(type='string',minLength=1,maxLength=128,pattern='^[A-Za-z0-9][A-Za-z0-9._:-]*$')
+    def handles(limit=32):return dict(type='array',maxItems=limit,uniqueItems=True,items=deepcopy(handle))
+    content=dict(json={},text=dict(type='string',maxLength=1048576),base64=dict(type='string',maxLength=1398104),artifact=handle,media_type=media)
+    def choice(keys):return dict(oneOf=[dict(required=[key]) for key in keys])
+    def content_rules(artifact=True):
+        keys=['json','text','base64']+(['artifact'] if artifact else [])
+        return [choice(keys),
+            {'if':{'required':['json','media_type']},'then':{'properties':{'media_type':{'const':'application/json'}}}},
+            {'if':{'required':['base64']},'then':{'required':['media_type']}},
+            *([{'if':{'required':['artifact']},'then':{'not':{'required':['media_type']}}}] if artifact else [])]
+    def origin_rule():return {'if':{'properties':{'origin':{'const':'scenario'}},'required':['origin']},'then':{'required':['scenario_id']},'else':{'not':{'required':['scenario_id']}}}
+    injection=deepcopy(attempt_host['properties']['pre_actions']['items']['properties']['parameters'])
+    # Database row keys are native JSON objects at the model boundary. The
+    # normalizer validates the selected policy then serializes the host key.
+    def native_keys(v):
+        if isinstance(v,list):
+            for x in v:native_keys(x)
+        elif isinstance(v,dict):
+            props=v.get('properties',{})
+            if {'service','collection','key'} <= props.keys():
+                props['key']=dict(type='object',minProperties=1,maxProperties=16,propertyNames=dict(type='string',minLength=1,maxLength=128),additionalProperties={'type':['string','number','boolean']})
+            for x in v.values():native_keys(x)
+    native_keys(injection)
+    keep=['origin','operation_id','scenario_id','caller_principal_id','rationale','retain_injections','strategy_provenance_ref','technique_refs']
+    props={k:attempt_host['properties'][k] for k in keep}
+    props.update(content)
+    props.update(parent=handle,observations=load('observation-selection')['oneOf'][1]['properties']['kinds'],
+        setup=dict(type='array',maxItems=16,items=injection),injection=object_schema(content,[]))
+    props['injection']['allOf']=content_rules()
+    attempt=object_schema(props,['origin','operation_id'])
+    attempt['allOf']=content_rules()+[origin_rule(),{'if':{'required':['setup'],'properties':{'setup':{'minItems':1}}},'then':{'required':['injection']},'else':{'not':{'anyOf':[{'required':['injection']},{'required':['retain_injections']}]}}}]
+    def item(kind):
+        source=assessment[kind]['items']; props=deepcopy(source['properties'])
+        for key in ('claim_id','gap_id','hypothesis_id','attempt_receipt_refs','record_refs','observation_refs','input_refs','uncertainty_refs','provenance'):props.pop(key,None)
+        props['observations']=handles()
+        if kind!='uncertainties':props['attempts']=handles()
+        if kind in ('objectives','hypotheses','uncertainties'):props['records']=handles()
+        if kind=='hypotheses':props.update(origin=attempt['properties']['origin'],scenario_id=identifier,label=handle,parent=handle)
+        if kind=='coverage':props['hypothesis']=handle
+        if kind=='claims':props['uncertainties']=handles()
+        if kind=='uncertainties':props.update(label=handle,inputs=handles())
+        required={'objectives':['objective_id','outcome','summary'],'hypotheses':['origin','outcome','summary'],'claims':['statement','interpretation','assurance','confidence'],'coverage':['objective_id','status','reason'],'uncertainties':['kind','description']}[kind]
+        result=object_schema(props,required)
+        if kind=='hypotheses':result['allOf']=[origin_rule()]
+        return result
+    inline_props={k:deepcopy(assessment[k]) for k in ('status','summary')}
+    inline_props.update({k:dict(type='array',maxItems=100,items=item(k)) for k in ('objectives','hypotheses','claims','coverage','uncertainties')})
+    inline_props['records']=handles(256)
+    finish=object_schema(dict(finish_reason=finish_host['finish_reason'],**inline_props,artifact=handle,unavailable_reason=finish_host['unavailable']['properties']['reason']),['finish_reason'])
+    finish['oneOf']=[{'required':['summary','objectives'],'not':{'anyOf':[{'required':['artifact']},{'required':['unavailable_reason']}]}},*[
+        {'required':[key],'not':{'anyOf':[{'required':[k]} for k in [*inline_props,*[x for x in ('artifact','unavailable_reason') if x!=key]] ]}} for key in ('artifact','unavailable_reason')]]
+    variants=[]
+    for branch in records_host:
+        kind=branch['properties']['record_kind']['const']; old=branch['properties']['record']['properties']
+        props={}; required={'hypothesis':['origin','statement'],'progress':['summary'],'lineage':['hypothesis','attempt','mutation_summary'],'coverage':['entries']}[kind]
+        keep={'hypothesis':['statement','objective_refs','assumptions','predicted_observations','surface_ref'],'progress':['summary','decision','objective_refs'],'lineage':['mutation_summary'],'coverage':[]}[kind]
+        props.update({k:old[k] for k in keep});props['records']=handles()
+        if kind=='hypothesis':props.update(origin=attempt['properties']['origin'],scenario_id=identifier,parent=handle)
+        if kind=='progress':
+            props.update(hypotheses=handles(),attempts=handles(),observations=handles())
+            props.update({('assessment_summary' if k=='summary' else k):v for k,v in old['assessment']['properties'].items()})
+        if kind=='lineage':props.update(hypothesis=handle,attempt=handle,parent=handle)
+        if kind=='coverage':props['entries']=dict(type='array',maxItems=100,items=item('coverage'))
+        variant=object_schema(dict(kind={'const':kind},**props),['kind',*required])
+        if kind=='hypothesis':variant['allOf']=[origin_rule()]
+        if kind=='progress':
+            fields=['interpretation','confidence','assurance','assessment_summary']
+            variant['allOf']=[{'if':{'anyOf':[{'required':[k]} for k in fields]},'then':{'required':fields},'else':{'not':{'required':['gaps']}}}]
+        variants.append(variant)
+    record_props={'kind':{'enum':['hypothesis','progress','lineage','coverage']}}
+    for variant in variants:
+        for k,v in variant['properties'].items():
+            if k!='kind':record_props[k]=v
+    records=object_schema(record_props,['kind']);records['oneOf']=variants
+    read=dict(offset=dict(type='integer',minimum=0,maximum=2**53-1),max_bytes=dict(type='integer',minimum=1,maximum=262144))
+    reference=object_schema(dict(reference=handle,**read),['reference'])
+    observation=object_schema(dict(observation=handle,**deepcopy(read)),['observation'])
+    observation['properties']['max_bytes']['maximum']=1048576
+    publish=object_schema(dict(purpose={'enum':['payload','carrier','supporting-data','conclusion']},**{k:v for k,v in content.items() if k!='artifact'}),['purpose','media_type']);publish['allOf']=content_rules(False)
     upload=['engine.artifact_begin','engine.artifact_put_part','engine.artifact_commit']
+    snapshot_list=load('engine-snapshot-list-request');snapshot_list['properties']['session']=handle;snapshot_list['properties'].pop('source_session')
+    snapshot=object_schema(dict(snapshot=handle))
     entries=[
-      ('reference_read','Read a bounded range from a verified reference handle in the campaign index. Never accepts a filesystem path. max_bytes defaults to 4096; inspect eof/size and request more ranges if needed.',[],reference),
-      ('artifact_publish','Publish supplied data and return a committed artifact receipt. JSON encoding uses canonical JSON; strings remain JSON strings.',upload,publish),
-      ('attempt_execute','Invoke a permitted target operation. Always specify origin: scenario requires scenario_id from the submitted bundle; exploratory forbids scenario_id. Use direct input normally, or an artifact receipt returned by artifact_publish for large/reusable input. Operator assigns bookkeeping; never invent descriptors or receipts.',['engine.attempt_execute'],attempt),
-      ('injection_delete','Delete a retained injection using its known attempt receipt and action ID.',['engine.injection_delete'],load('engine-injection-delete-request')),
-      ('observation_read','Read permitted feedback bytes using the host attempt receipt and observation entry ID. max_bytes defaults to 4096; inspect availability, eof and truncation before requesting more ranges.',['engine.observation_read'],load('engine-observation-read-request')),
-      ('record_append','Append a typed hypothesis, progress, lineage or coverage assertion. These records do not establish observed effects.',['engine.record_append'],records),
-      ('finish','Finish with a minimal honest assessment: summary and objective outcomes. Cite only returned execution receipts. Empty references are valid for untested objectives. Operator retains the assessment and starts cleanup; acceptance is not cleanup completion.',['engine.finish'],finish),
-      ('restore_request','Restore a known checkpoint while retaining this conversation. Success skips later calls from the current model response.',['engine.restore_request'],load('engine-restore-request')),
-      ('snapshot_request','Create a checkpoint with optional label and description; the host supplies campaign metadata.',['engine.snapshot_request'],load('engine-snapshot-request')),
-      ('snapshot_list','List checkpoints available to this campaign, with bounded pagination.',['engine.snapshot_list'],load('engine-snapshot-list-request')),
-      ('snapshot_inspect','Inspect a checkpoint and its metadata by source-session/checkpoint identity.',['engine.snapshot_inspect'],load('engine-snapshot-inspect-request')),
+      ('reference_read','Read a returned input/reference handle. offset defaults to 0, max_bytes to 4096; follow continuation to load complete guidance.',[],reference),
+      ('artifact_publish','Publish large or reusable content. Supply exactly one of json, text, base64. Returns a committed artifact handle; use direct content for ordinary invocations.',upload,publish),
+      ('attempt_execute','Invoke a permitted operation with exactly one of json, text, base64, artifact. scenario requires scenario_id; exploratory forbids it. JSON media is application/json; text defaults text/plain; base64 requires media_type; artifact forbids it. parent is an execution handle. Nonempty setup requires injection; injection/retention require setup. Omitted observations selects all permitted feedback.',['engine.attempt_execute'],attempt),
+      ('injection_delete','Remove an injection using its returned injection handle; does not reverse committed mutations.',['engine.injection_delete'],object_schema(dict(injection=handle))),
+      ('observation_read','Inspect feedback using a returned observation handle. offset defaults to 0, max_bytes to 4096. Cite returned inspected-range handles; listed evidence is not yet inspected.',['engine.observation_read'],observation),
+      ('record_append','Optional historical assertion: kind selects flattened fields. Progress assessment requires interpretation, confidence, assurance and assessment_summary together; gaps only with assessment. Use returned typed handles.',['engine.record_append'],records),
+      ('finish','Finish once: finish_reason plus inline summary/objectives, or artifact, or unavailable_reason. No assessment wrapper. Cite inspected observations; execution receipts are derived. Optional lists default empty, status partial. Local labels allow forward references. Acceptance starts finalization, not proof of cleanup.',['engine.finish'],finish),
+      ('restore_request','Restore a returned snapshot handle. Success skips later calls in this model response.',['engine.restore_request'],snapshot),
+      ('snapshot_request','Create a checkpoint; label and description optional. Returned handle status distinguishes identity from readiness.',['engine.snapshot_request'],load('engine-snapshot-request')),
+      ('snapshot_list','List campaign checkpoints; optional session handle and pagination.',['engine.snapshot_list'],snapshot_list),
+      ('snapshot_inspect','Inspect a returned snapshot handle under campaign availability checks.',['engine.snapshot_inspect'],snapshot),
     ]
-    for name,_,_,arguments in entries:
-        if name == 'observation_read':
-            arguments['required'].remove('max_bytes')
-            arguments['properties']['max_bytes']['default']=4096
     def compact_schema(value):
         if isinstance(value,list): return [compact_schema(v) for v in value]
         if not isinstance(value,dict):return value
@@ -113,14 +158,16 @@ def build():
     branches=[]
     for name,description,operations,arguments in sorted(entries):
         branch=object_schema(dict(name={'const':name},arguments=arguments))
-        provider=arguments
-        if name=='attempt_execute':
-            provider=inline(documents['urn:operator:schema:engine-attempt-request:v1alpha4'],'urn:operator:schema:engine-attempt-request:v1alpha4',compact=True)
-            branch['x-operator-provider-parameters']=provider
-        provider=compact_schema(provider)
+        provider=compact_schema(arguments)
+        # A JSON value's precise recursive bounds are checked at runtime.
+        def compact_json(v):
+            if isinstance(v,list):return [compact_json(x) for x in v]
+            if not isinstance(v,dict):return v
+            if 'oneOf' in v and any(isinstance(x,dict) and x.get('type')=='null' for x in v['oneOf']):return {'description':'Bounded JSON; runtime validates nesting and size.'}
+            return {k:compact_json(x) for k,x in v.items()}
+        provider=compact_json(provider)
+        provider=openai_parameters(name,provider)
         branch['x-operator-provider-parameters']=provider
-        projected=openai_parameters(name,provider)
-        if projected is not None:branch['x-operator-openai-parameters']=projected
         branch['description']=description+' Runtime enforces identifier and content limits. Advanced guidance: tool-guide:'+name+'.';branch['x-operator-required-operations']=sorted(operations);branches.append(branch)
     return {'$schema':'https://json-schema.org/draft/2020-12/schema','$id':ID,
         '$comment':'Generated by scripts/generate_tool_catalog.py; see MODEL_TOOL_CATALOG.md.','oneOf':branches}

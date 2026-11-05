@@ -19,7 +19,7 @@ func TestPythonProcessToolSchemaRejections(t *testing.T) {
 		t.Run(transport, func(t *testing.T) {
 			var record string
 			var completed bool
-			hypothesis := map[string]any{"hypothesis_id": "hypothesis-marker", "objective_refs": []string{"objective-marker"}, "provenance": map[string]any{"origin": "exploratory"}, "statement": "Compare a bounded response.", "assumptions": []any{}, "predicted_observations": []any{}, "record_refs": []any{}}
+			hypothesis := map[string]any{"kind": "hypothesis", "origin": "exploratory", "objective_refs": []string{"objective-marker"}, "statement": "Compare a bounded response."}
 			r := newProcessRun(t, processCase{transport: transport, prompt: "default", reply: func(turn int, q map[string]any) ([]byte, error) {
 				// Mimic the provider's root-schema restriction on every real request.
 				for _, value := range q["tools"].([]any) {
@@ -37,8 +37,8 @@ func TestPythonProcessToolSchemaRejections(t *testing.T) {
 				switch turn {
 				case 1:
 					attempt := processAttempt("scenario", "", []byte(`{"query":"baseline"}`), "")
-					delete(attempt, "input")
-					return processResponse([]any{modelCall("bad-record", "record_append", map[string]any{"record_kind": "progress", "record": hypothesis}), modelCall("bad-attempt", "attempt_execute", attempt)}), nil
+					delete(attempt, "json")
+					return processResponse([]any{modelCall("bad-record", "record_append", map[string]any{"kind": "progress", "origin": "exploratory", "statement": "Wrong fields for progress."}), modelCall("bad-attempt", "attempt_execute", attempt)}), nil
 				case 2:
 					badRecord, err := modelToolResult(q, "bad-record")
 					if err != nil || badRecord["code"] != "INVALID_ARGUMENTS" || badRecord["effect_state"] != "none" {
@@ -49,13 +49,13 @@ func TestPythonProcessToolSchemaRejections(t *testing.T) {
 						return nil, fmt.Errorf("attempt condition not enforced locally: %v %v", badAttempt, err)
 					}
 
-					return processResponse([]any{modelCall("hypothesis", "record_append", map[string]any{"record_kind": "hypothesis", "record": hypothesis}), publishCall("payload", "baseline")}), nil
+					return processResponse([]any{modelCall("hypothesis", "record_append", hypothesis), publishCall("payload", "baseline")}), nil
 				case 3:
 					h, err := modelToolResult(q, "hypothesis")
 					if err != nil {
 						return nil, err
 					}
-					record, _ = h["receipt_id"].(string)
+					record, _ = h["record"].(string)
 					if record == "" {
 						return nil, fmt.Errorf("valid record rejected: %v", h)
 					}
@@ -66,7 +66,7 @@ func TestPythonProcessToolSchemaRejections(t *testing.T) {
 						return nil, fmt.Errorf("valid attempt rejected: %v %v", a, err)
 					}
 					completed = true
-					return processResponse([]any{modelCall("finish", "finish", finishDraft(modelDraft([]string{a["receipt_id"].(string)}, record)))}), nil
+					return processResponse([]any{modelCall("finish", "finish", finishDraft(modelDraft([]string{a["execution"].(string)}, record)))}), nil
 				default:
 					return nil, fmt.Errorf("unexpected extra model turn %d", turn)
 				}

@@ -4,6 +4,8 @@ This exercises the ordinary process/spool boundary independently of the separate
 Attack Harness implementation. It does not claim production Harness qualification.
 """
 import json
+import base64
+import hashlib
 import os
 from pathlib import Path
 import sys
@@ -15,6 +17,10 @@ from operator_contracts import Protocol, ContractError
 p=Protocol(Path(root)/'schemas')
 spool=Path(spool)
 seq=0
+resolution=dict(campaign_id='campaign-1',call_id='native-call-1',resources={})
+def normalized(tool,args,call_id):
+    resolution['call_id']=call_id
+    return p.normalize_tool_arguments(tool,json.dumps(args).encode(),resolution)
 
 def atomic(path,value):
     tmp=path.with_name('.consumed.tmp')
@@ -57,7 +63,7 @@ if mode=='invalid-limit':
                     execution_occurred='no',resubmission_safe=True)
     call('engine.diagnostic_report',dict(tool_name='attempt_execute',tool_call_id='last-invalid',diagnostic=diagnostic,
                                         stopping=dict(condition='invalid-call-limit',observed_count=5,configured_limit=5)))
-    finish=dict(finish_reason='harness-error',unavailable=dict(reason='invalid-call-limit'))
+    finish=normalized('finish',dict(finish_reason='harness-error',unavailable_reason='invalid-call-limit'),'finish')['arguments']
     attempts=0
 else:
     if mode=='corrected':
@@ -65,16 +71,33 @@ else:
         assert rejected['error']['code']=='INVALID_ARGUMENTS'
         assert rejected['error']['instance_path']=='/input'
         assert 'receipt_id' not in rejected
-    execution=call('engine.attempt_execute',dict(origin='scenario',operation_id='invoke',scenario_id='scenario-marker',
-                    input=dict(encoding='json',value=dict(query='direct input'))))['result']
-    assert execution['status']=='completed'
-    entry=execution['feedback']['entries'][0]
-    read=call('engine.observation_read',dict(receipt_id=execution['receipt_id'],entry_id=entry['entry_id'],offset=0,max_bytes=256))
-    assert 'result' in read, read
-    observed=read['result']
-    assert observed['availability']=='available' and observed['raw_length']>0
-    finish=dict(finish_reason='objectives-addressed',assessment=dict(summary='Observed the local target response.',objectives=[dict(objective_id='objective-marker',outcome='supported',summary='A target response was observed.',attempt_receipt_refs=[execution['receipt_id']])]))
-    attempts=1
+    attempts=4 if mode=='qa-corrected' else 1
+    selected=[]
+    for i in range(attempts):
+        args=dict(origin='scenario',operation_id='invoke',scenario_id='scenario-marker',json=dict(query='direct input'))
+        execution=call('engine.attempt_execute',normalized('attempt_execute',args,f'invoke-{i}')['arguments'])['result']
+        assert execution['status']=='completed'
+        entry=execution['feedback']['entries'][0];handle=f'obs-{i}'
+        resolution['resources'][handle]=dict(kind='observation',campaign_id='campaign-1',available=True,inspected=False,value=dict(attempt_receipt_id=execution['receipt_id'],entry_id=entry['entry_id']))
+        read=call('engine.observation_read',normalized('observation_read',dict(observation=handle,max_bytes=256),f'read-{i}')['arguments'])
+        assert 'result' in read,read
+        observed=read['result'];content=base64.b64decode(observed['content'],validate=True)
+        assert observed['availability']=='available' and observed['eof'] and not observed['truncated']
+        assert len(content)==observed['raw_length']==observed['artifact']['size_bytes']
+        assert 'sha256:'+hashlib.sha256(content).hexdigest()==observed['artifact']['digest']
+        resolution['resources'][handle]['inspected']=True;selected.append(handle)
+    if mode=='qa-corrected':
+        try:p.validate_tool_arguments('finish',b'{"finish_reason":"objectives-addressed","summary":"one","summary":"two","objectives":[]}')
+        except ContractError as error:assert error.reason=='duplicate_json_key' and error.field_path=='/summary'
+        else:raise AssertionError('duplicate summary accepted')
+        try:p.validate_tool_arguments('finish',b'{"finish_reason":"objectives-addressed","assessment":{}}')
+        except ContractError as error:assert error.reason=='obsolete_wrapper' and error.field_path=='/assessment'
+        else:raise AssertionError('obsolete wrapper accepted')
+    args=dict(finish_reason='objectives-addressed',summary='Observed the local target response.',objectives=[dict(objective_id='objective-marker',outcome='supported',summary='A target response was observed.',observations=selected)],claims=[dict(statement='The response was inspected.',interpretation='supported',assurance='Controlled local response.',confidence='high',observations=selected)])
+    expansion=normalized('finish',args,'finish')
+    diagnostic=dict(source='harness-local',stage='references',reason='observation_selection',message='Selected observation evidence.',execution_occurred='no',resubmission_safe=True)
+    call('engine.diagnostic_report',dict(tool_name='finish',tool_call_id='finish',diagnostic=diagnostic,observation_selections=expansion['observation_selections']))
+    finish=expansion['arguments']
 accepted=call('engine.finish',finish,identity='finish-once')['result']
 assert accepted['finalization_status']=='pending' and accepted['execution_admission']=='closed'
 duplicate=call('engine.finish',finish,identity='finish-once')['result']

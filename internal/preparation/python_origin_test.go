@@ -32,7 +32,7 @@ func TestPythonExplicitOriginWorkflow(t *testing.T) {
 							if mode == "corrected-size" {
 								return processResponse([]any{modelCall("invalid-origin", "attempt_execute", processAttempt("scenario", "", encode(map[string]any{"query": strings.Repeat("x", 70000)}), ""))}), nil
 							}
-							return processResponse([]any{modelCall("invalid-origin", "attempt_execute", map[string]any{"operation_id": "invoke", "input": map[string]any{"encoding": "json", "value": map[string]any{"query": "marker"}}})}), nil
+							return processResponse([]any{modelCall("invalid-origin", "attempt_execute", map[string]any{"operation_id": "invoke", "json": map[string]any{"query": "marker"}})}), nil
 						}
 						if turn == 2 {
 							bad, err := modelToolResult(q, "invalid-origin")
@@ -42,7 +42,7 @@ func TestPythonExplicitOriginWorkflow(t *testing.T) {
 							encoded := string(encode(bad))
 							reason, path := "origin_required", "/origin"
 							if mode == "corrected-size" {
-								reason, path = "configured_size_exceeded", "/input"
+								reason, path = "configured_size_exceeded", "/json"
 							}
 							if !strings.Contains(encoded, reason) || !strings.Contains(encoded, path) {
 								return nil, fmt.Errorf("missing origin diagnostic")
@@ -63,12 +63,12 @@ func TestPythonExplicitOriginWorkflow(t *testing.T) {
 						if err != nil {
 							return nil, err
 						}
-						feedback, ok := execution["feedback"].(map[string]any)
+						feedback, ok := execution["observations"].([]any)
 						if !ok {
 							return nil, fmt.Errorf("missing execution feedback")
 						}
-						entry := feedback["entries"].([]any)[0].(map[string]any)
-						return processResponse([]any{modelCall("observe", "observation_read", map[string]any{"receipt_id": execution["receipt_id"], "entry_id": entry["entry_id"], "offset": 0, "max_bytes": 524288})}), nil
+						entry := feedback[0].(map[string]any)
+						return processResponse([]any{modelCall("observe", "observation_read", map[string]any{"observation": entry["observation"], "offset": 0, "max_bytes": 524288})}), nil
 					case 3:
 						observed, err := modelToolResult(q, "observe")
 						if err != nil {
@@ -78,7 +78,7 @@ func TestPythonExplicitOriginWorkflow(t *testing.T) {
 							return nil, fmt.Errorf("missing observation bytes")
 						}
 						readDone = true
-						return processResponse([]any{modelCall("finish", "finish", map[string]any{"finish_reason": "objectives-addressed", "assessment": map[string]any{"summary": "Observed the controlled target output.", "objectives": []any{map[string]any{"objective_id": "objective-marker", "outcome": "supported", "summary": "Target returned a response.", "attempt_receipt_refs": []any{execution["receipt_id"]}}}}})}), nil
+						return processResponse([]any{modelCall("finish", "finish", map[string]any{"finish_reason": "objectives-addressed", "summary": "Observed the controlled target output.", "objectives": []any{map[string]any{"objective_id": "objective-marker", "outcome": "supported", "summary": "Target returned a response.", "observations": []any{observed["observation"]}}}})}), nil
 					}
 					return nil, fmt.Errorf("unexpected model turn; finish should exit")
 				}

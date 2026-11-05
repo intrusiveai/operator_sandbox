@@ -19,9 +19,9 @@ def model_tools(protocol,codec,operations,surfaces=None):
         if codec in ('openai-chat-text-tools-v1','openai-responses-text-tools-v1'):
             parameters=deepcopy(branch.get('x-operator-openai-parameters',parameters))
         if name=='attempt_execute' and ('engine.injection_delete' not in operations or surfaces==[]):
-            for field in ('pre_actions','injection_input','retain_injections'):parameters['properties'].pop(field,None)
+            for field in ('setup','injection','retain_injections'):parameters['properties'].pop(field,None)
         if name=='attempt_execute' and 'engine.injection_delete' in operations and surfaces:
-            injection=parameters['properties']['pre_actions']['items']['properties']['parameters']
+            injection=parameters['properties']['setup']['items']
             injection['properties']['surface']={'enum':surfaces}
             injection['oneOf']=[branch for branch in injection['oneOf'] if branch['properties']['surface']['const'] in surfaces]
         if codec=='openai-chat-text-tools-v1':tools.append(dict(type='function',function=dict(name=name,description=description,parameters=parameters,strict=False)))
@@ -44,13 +44,25 @@ def validate_tool_arguments(protocol,name,raw):
     if name == "attempt_execute":
         from .simple import validate_attempt_origin
         validate_attempt_origin(value)
+    from .tool_normalization import check_model_choices
+    check_model_choices(name,value)
+    if name == 'finish' and 'assessment' in value:
+        from .tool_normalization import check_model_content
+        check_model_content(protocol,name,value)
+    if name in ('attempt_execute','artifact_publish'):
+        from .tool_normalization import content
+        content(value)
+        from .tool_normalization import check_model_content
+        try: check_model_content(protocol,name,value)
+        except ContractError as error:
+            if error.reason in ('input_depth_exceeded','direct_input_too_large','invalid_base64','content_choice','invalid_media_type','media_type_required','artifact_media_override'):raise
     try: validator.evolve(schema=branch['properties']['arguments']).validate(value)
     except ValidationError as error:
         raise ContractError('invalid_structure: Supply the required fields with the documented types and no unknown fields.',reason='invalid_structure',field_path=schema_error_path(error),correction='Supply the required fields with the documented types and no unknown fields.') from None
-    if name == "attempt_execute":
-        from .simple import check_attempt
-        check_attempt(protocol, value)
-    if name in ('reference_read','observation_read'):value.setdefault('max_bytes',4096)
+    from .tool_normalization import check_model_content
+    check_model_content(protocol, name, value)
+    if name in ('reference_read','observation_read'):
+        value.setdefault('max_bytes',4096);value.setdefault('offset',0)
     return value
 
 
@@ -58,5 +70,5 @@ def tool_guidance(protocol,name):
     document=protocol._catalog._validators[MODEL_TOOL_ARGUMENTS_SCHEMA].schema
     for branch in document['oneOf']:
         if branch['properties']['name']['const']==name:
-            return _canonical_value(dict(tool=name,description=branch['description'],arguments=branch['properties']['arguments'],guidance="Use the selected resource's details_reference for valid selectors and content. Receipts must come from the corresponding successful tool result; never manufacture them. Runtime rejects invalid values before dispatch."),ORDINARY_LIMIT)
+            return _canonical_value(dict(tool=name,description=branch['description'],arguments=branch['properties']['arguments'],guidance="Use the selected resource's details_reference for valid selectors and content. Use typed handles from corresponding verified inputs or tool results; never manufacture them. Runtime rejects invalid values before dispatch."),ORDINARY_LIMIT)
     require(False)

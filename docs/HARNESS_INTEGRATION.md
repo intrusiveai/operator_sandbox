@@ -51,7 +51,19 @@ ordinary requests. Sequencing, acknowledgements, deadlines, bounds and terminal
 behavior follow the [transport contract](../schemas/TRANSPORT_CODEC_CONTRACT.md).
 Do not negotiate an alternate contract or resume an interrupted campaign.
 
-## Ordinary campaign workflow
+## Model interface
+
+Use `Protocol.normalize_tool_arguments` with the trusted resolution context in
+[MODEL_TOOL_NORMALIZATION.md](../schemas/MODEL_TOOL_NORMALIZATION.md). The
+[model catalog](../schemas/MODEL_TOOL_CATALOG.md) exposes flat JSON/text/base64 or
+artifact choices, single resource handles and root-level finish fields. It is
+separate from the canonical host messages below. Keep the typed handle map outside
+model context, preserve it across compaction, and revalidate live resources after
+restore. Record returned observation selections through existing diagnostic reports
+before the corresponding submission. Report normalization failures with their
+safe reason/path/correction and translate host paths back for model feedback.
+
+## Ordinary canonical host workflow
 
 1. Submit `engine.attempt_execute` with explicit `origin`, target `operation_id`
    and exactly one direct input or committed artifact receipt. Scenario origin

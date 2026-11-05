@@ -451,9 +451,10 @@ dynamic import, generic HTTP client, file-path-based dispatch, shell, `exec`,
 `eval`, subprocess, package installer or arbitrary MCP server is exposed.
 Generated payload text is data even when it contains source code.
 
-Model-visible tools may include bounded reads of staged references by manifest
-ID and structured payload/artifact construction, alongside the logical engine
-operations below. They have no general host filesystem access. A convenience
+The model-visible catalog is [MODEL_TOOL_CATALOG.md](schemas/MODEL_TOOL_CATALOG.md).
+It uses flat content fields and short typed resource handles; shared Go/Python
+[normalization](schemas/MODEL_TOOL_NORMALIZATION.md) expands them into the canonical
+logical operations below. Models do not assemble descriptors or receipt lists. They have no general host filesystem access. A convenience
 artifact tool can wrap begin/part/commit without exposing file paths. Model
 generation is an internal loop operation, not a model's recursive tool.
 
@@ -466,7 +467,7 @@ generation is an internal loop operation, not a model's recursive tool.
 | `engine.observation_read` | Read bounded, already-filtered feedback bytes by attempt receipt and entry ID; no general artifact-store access. |
 | `engine.record_append` | Optional historical hypotheses, progress, lineage, coverage and evidence references; guest assertions are labeled. |
 | `engine.finish` | Submit one bounded assessment or an explicit unavailable reason; Operator validates, retains, closes execution and starts cleanup. |
-| `engine.diagnostic_report` | Retain bounded Harness-local rejection and stopping facts; runtime-only, not a model tool. |
+| `engine.diagnostic_report` | Retain bounded Harness-local rejection, stopping and observation-selection facts; runtime-only, not a model tool. |
 | `engine.restore_request` | Restore an explicit checkpoint; Operator validates and executes the transition without restarting the harness. |
 | `engine.snapshot_request` | Create a checkpoint with optional `label` and `description`; Operator supplies the campaign ID. |
 | `engine.snapshot_list`, `engine.snapshot_inspect` | Read permitted campaign checkpoint metadata, including campaign ID and description, across retained source sessions. |
