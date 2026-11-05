@@ -2,8 +2,32 @@ package capabilities
 
 import (
 	"bytes"
+	"os"
 	"testing"
 )
+
+func TestHTTPSSeamsPublishedNativeCapture(t *testing.T) {
+	// An actual published Interceptor export, not Operator's own serializer,
+	// fixes the field order used by the native digest calculation.
+	raw, err := os.ReadFile("testdata/https-seams-native.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	c := catalogForTest(t)
+	e, err := FromNative(c, raw, "qualification")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if e.SourceDigest() != "sha256:c1d82dd91365f4b49eaf88497e18c0293ecd7136dfb3cf113a5d7f68e351319e" || len(e.native.Network.HTTPSSeams) != 1 {
+		t.Fatal("native identity or declaration changed")
+	}
+	if _, err := Import(c, e.PublicJSON(), raw, "qualification"); err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(e.PublicJSON(), []byte("qualification-guardrail")) || bytes.Contains(e.PublicJSON(), []byte("https_seams")) {
+		t.Fatal("host-managed seam exposed in public capabilities")
+	}
+}
 
 func seamVariant(t *testing.T, change func(map[string]any, map[string]any)) []byte {
 	t.Helper()
