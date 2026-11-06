@@ -34,7 +34,7 @@ def verify(candidate):
         actual = json.loads(subprocess.check_output([str(installed/'bin/operatorctl'), 'version'], timeout=30))
         expected = {'version':metadata['version'], 'source_commit':metadata['source_commit'],
                     'contract_version':metadata['contract']['package_version'], 'contract_digest':metadata['contract']['package_digest'],
-                    'interceptor_contract_version':metadata['interceptor_contract_version']}
+                    'interceptor_contract_version':metadata['interceptor_contract_version'], 'interceptor_contract_sha256':metadata['interceptor_contract_sha256']}
         if any(actual.get(k) != v for k,v in expected.items()):
             raise ValueError('archived executable contract/source identity differs from metadata')
         return dict(expected, platform=host, archive_sha256=digest(archive), binary_sha256=digest(installed/'bin/operatorctl'), checks=['archive-integrity','native-version'])
@@ -42,7 +42,7 @@ def verify(candidate):
 
 def validate_report(report, host, archive_sha256):
     expected={'platform':host['platform'], 'version':host['version'], 'source_commit':host['source_commit'],
-              'interceptor_contract_version':host['interceptor_contract_version'], 'contract_version':host['contract']['package_version'],
+              'interceptor_contract_version':host['interceptor_contract_version'], 'interceptor_contract_sha256':host['interceptor_contract_sha256'], 'contract_version':host['contract']['package_version'],
               'contract_digest':host['contract']['package_digest'], 'archive_sha256':archive_sha256, 'checks':['archive-integrity','native-version']}
     binary=next(f['digest'] for f in host['files'] if f['path']=='bin/operatorctl')
     if any(report.get(k)!=v for k,v in expected.items()) or report.get('binary_sha256')!=binary:

@@ -146,7 +146,7 @@ func Prepare(ctx context.Context, c Config) (session *Session, err error) {
 	}
 
 	if !c.InterceptorCheckedAt.IsZero() {
-		raw, _ := json.Marshal(map[string]any{"expected": interceptor.SupportedContractVersion, "actual": interceptor.SupportedContractVersion, "checked_at": c.InterceptorCheckedAt.UTC().Format(time.RFC3339Nano)})
+		raw, _ := json.Marshal(map[string]any{"expected": interceptor.SupportedContractVersion, "actual": interceptor.SupportedContractVersion, "expected_sha256": interceptor.SupportedContractSHA256, "actual_sha256": interceptor.SupportedContractSHA256, "checked_at": c.InterceptorCheckedAt.UTC().Format(time.RFC3339Nano)})
 		if _, err = s.writer.Append(campaign.Entry{RunRevision: launch.Manifest.InitialRevision, Kind: "interceptor.compatibility", Metadata: raw}); err != nil {
 			return nil, err
 		}

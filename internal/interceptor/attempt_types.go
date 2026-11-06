@@ -171,6 +171,7 @@ type TurnRequest struct {
 }
 
 type Turn struct {
+	EvidencePartial      bool              `json:"evidence_partial,omitempty"`
 	OutputContractStatus string            `json:"output_contract_status,omitempty"`
 	ID                   string            `json:"id"`
 	Operation            string            `json:"operation,omitempty"`

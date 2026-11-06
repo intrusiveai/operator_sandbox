@@ -1,4 +1,4 @@
-"""Dependency validation and GitHub-backed admission of candidate qualification.
+"""GitHub-backed admission of the candidate OpenAPI comparison.
 
 The JSON report is evidence only when it comes from the successful designated
 job in this repository's candidate workflow at the exact candidate source.
@@ -7,54 +7,33 @@ import hashlib
 import io
 import json
 from pathlib import Path
-import re
 import subprocess
 import tempfile
 import zipfile
 
-CHECKS = ('compatibility', 'attachment', 'invocation', 'observation_read',
-          'finish_accepted', 'exit_zero', 'cleanup', 'export')
+from interceptor_contract import validate_pin, CHECKS, ROOT, PIN, SOURCE, validate_source
 WORKFLOW = '.github/workflows/verify-release.yml'
-ARTIFACT = 'interceptor-qualification'
+ARTIFACT = 'interceptor-contract-comparison'
 
 
 def digest(raw):
     return 'sha256:' + hashlib.sha256(raw).hexdigest()
 
 
-def validate_pin(pin, contract, integration):
-    if not isinstance(pin, dict) or set(pin) != {'source_commit', 'archive_url', 'archive_sha256', 'interceptor_contract_version', 'harness'}:
-        raise ValueError('qualification dependency fields are incomplete')
-    harness = pin['harness']
-    if (pin['interceptor_contract_version'] != integration or
-            not re.fullmatch(r'[a-f0-9]{40}', pin['source_commit']) or
-            not re.fullmatch(r'sha256:[a-f0-9]{64}', pin['archive_sha256']) or
-            not re.fullmatch(r'https://github.com/intrusiveai/interceptor_sandbox/releases/download/v[0-9]+\.[0-9]+\.[0-9]+/interceptor_sandbox-v[0-9]+\.[0-9]+\.[0-9]+-linux_amd64.tar.gz', pin['archive_url']) or
-            set(harness) != {'source_commit', 'image', 'contract'} or
-            not re.fullmatch(r'[a-f0-9]{40}', harness['source_commit']) or
-            not re.fullmatch(r'ghcr.io/intrusiveai/attack_harness@sha256:[a-f0-9]{64}', harness['image']) or
-            harness['contract'] != contract):
-        raise ValueError('qualification dependencies do not match the compiled contracts or immutable artifact formats')
-    return pin
+def read_pin(version):
+    return validate_pin(json.loads((ROOT / PIN).read_text()), version)
 
 
-def read_pin(contract, integration):
-    path = Path(__file__).resolve().parents[1] / 'release/interceptor-qualification.json'
-    return validate_pin(json.loads(path.read_text()), contract, integration)
-
-
-def validate_result(result, inventory, inventory_digest, run):
-    from publish_host_release import asset_stem
-    expected = {'schema_version': 1, 'passed': True, 'platform': 'linux/amd64', 'local_verification': False, 'test_worktree_modified': False,
-                'source_commit': inventory['source_commit'], 'test_revision': inventory['source_commit'],
-                'inventory_digest': inventory_digest, 'dependencies': inventory['qualification_dependencies'],
-                'contract': inventory['contract'], 'interceptor_contract_version': inventory['interceptor_contract_version'],
-                'operator_archive_sha256': inventory['assets'][asset_stem(inventory['version'], 'linux/amd64') + '.tar.gz'],
-                'interceptor_archive_sha256': inventory['qualification_dependencies']['archive_sha256'],
+def validate_result(result, inventory, run):
+    expected = {'schema_version': 2, 'passed': True, 'test_worktree_modified': False,
+                'source_commit': inventory['source_commit'],
+                'interceptor_contract': inventory['interceptor_contract'],
+                'contract_source': inventory['interceptor_contract_source'],
+                'remote_verified': True,
                 'workflow_run_id': run['id'], 'workflow_run_attempt': run['run_attempt'],
-                'checks': {name: True for name in CHECKS}}
+                'checks': CHECKS}
     if any(result.get(key) != value for key, value in expected.items()):
-        raise ValueError('qualification result differs from the candidate, dependencies, or successful workflow run')
+        raise ValueError('contract comparison differs from candidate source, contract or successful workflow run')
 
 
 def trusted_run(run, inventory, repository):
@@ -76,20 +55,22 @@ def unpack_result(raw, artifact):
         return json.loads(archive.read(entries[0]))
 
 
-def require_qualification(github, inventory, inventory_digest):
-    validate_pin(inventory['qualification_dependencies'], inventory['contract'], inventory['interceptor_contract_version'])
-    # Also bind the dependency file committed at the tested source. An edited
-    # uploaded inventory cannot designate a different test dependency.
+def require_qualification(github, inventory):
+    validate_pin(inventory['interceptor_contract'], inventory['interceptor_contract_version'])
+    validate_source(inventory['interceptor_contract_source'])
+    # Bind approval and provenance to the candidate's source. The report verifies
+    # that source's code against its exact contract, not an Interceptor build.
     import base64
-    source = github.api('contents/release/interceptor-qualification.json?ref=' + inventory['source_commit'])
-    if json.loads(base64.b64decode(source['content'], validate=False)) != inventory['qualification_dependencies']:
-        raise ValueError('qualification dependencies differ from candidate source')
+    for path, expected in ((PIN, inventory['interceptor_contract']), (SOURCE, inventory['interceptor_contract_source'])):
+        source = github.api('contents/' + path.as_posix() + '?ref=' + inventory['source_commit'])
+        if json.loads(base64.b64decode(source['content'], validate=False)) != expected:
+            raise ValueError('contract approval differs from candidate source')
     runs = github.api('actions/workflows/verify-release.yml/runs?head_sha=' + inventory['source_commit'] + '&per_page=100')['workflow_runs']
     for run in runs:
         if not trusted_run(run, inventory, github.repository):
             continue
         jobs = github.api(f"actions/runs/{run['id']}/attempts/{run['run_attempt']}/jobs?per_page=100")['jobs']
-        qualified = [job for job in jobs if job['name'] == 'qualify-interceptor']
+        qualified = [job for job in jobs if job['name'] == 'interceptor-contract']
         if len(qualified) != 1 or qualified[0]['conclusion'] != 'success':
             continue
         artifacts = github.api(f"actions/runs/{run['id']}/artifacts?per_page=100")['artifacts']
@@ -109,8 +90,8 @@ def require_qualification(github, inventory, inventory_digest):
                 raise ValueError('qualification artifact exceeds bounds')
             result = unpack_result(path.read_bytes(), artifact)
         try:
-            validate_result(result, inventory, inventory_digest, run)
+            validate_result(result, inventory, run)
         except ValueError:
             continue  # An older attempt can be stale; it is never a pass.
         return {'run_id': run['id'], 'run_attempt': run['run_attempt'], 'artifact_digest': artifact['digest']}
-    raise ValueError('stable promotion requires successful matching Interceptor qualification; rerun the candidate qualification job')
+    raise ValueError('stable promotion requires successful matching OpenAPI comparison; rerun the candidate contract job')

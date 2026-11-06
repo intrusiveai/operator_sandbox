@@ -1645,6 +1645,16 @@ from an external interpretation of a report.
 
 ## 13. Distribution, configuration and contract versioning
 
+Operator's Interceptor integration MUST be compared against an explicitly selected
+OpenAPI contract before release. The approved version and SHA-256 of the complete
+contract bytes MUST be committed in `internal/interceptor/contract.json` and
+embedded in the executable. Candidate CI MUST verify this approval against its
+selected immutable source and the integration implementation. A campaign run or
+an Interceptor executable/archive hash MUST NOT establish compatibility. Runtime
+admission MUST compare both values returned by `/v1/contract-version` before
+attachment. See [Interceptor integration](specs/interceptor-contract-integration.md)
+for adoption, comparison coverage, diagnostics and promotion requirements.
+
 Publish Linux and macOS host distributions for amd64 and arm64, with reproducible toolchain pins,
 release checksums/SBOMs and offline installation with a complete compatible artifact
 inventory. Executable release publication MUST remain separate from local instruction-only skill installation.

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Qualify downloaded release archives using Docker and three local model replies.
+"""Optional campaign regression using supplied archives and three local model replies.
 
 Run on an otherwise idle host. The runner never publishes or calls cloud models.
-The --local option labels development evidence, which promotion cannot accept.
+This does not establish OpenAPI compatibility and is not a release gate.
 """
 import argparse
 from contextlib import closing
@@ -20,9 +20,8 @@ import tempfile
 import time
 import uuid
 
-from integration_qualification import digest, validate_pin
+from integration_qualification import digest
 from qualification_model import ModelFixture
-from publish_host_release import GitHub, asset_stem, verify_inventory, verify_uploaded, MARKER
 
 
 def run(*args, env=None, timeout=300):
@@ -35,12 +34,6 @@ def run(*args, env=None, timeout=300):
 def save(path, value):
     path.write_text(json.dumps(value, indent=2) + '\n')
     path.chmod(0o600)
-
-
-def download(url, path, expected):
-    run('curl', '--fail', '--location', '--proto', '=https', '--proto-redir', '=https', '--max-time', '300', '--output', path, url)
-    if digest(path.read_bytes()) != expected:
-        raise ValueError('downloaded archive checksum differs')
 
 
 def docker_runtime(output):
@@ -270,53 +263,32 @@ HTTPServer(("127.0.0.1",8080),Handler).serve_forever()
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--version')
-    parser.add_argument('--source')
-    parser.add_argument('--local', action='store_true')
-    parser.add_argument('--operator-archive', type=Path)
-    parser.add_argument('--interceptor-archive', type=Path)
-    parser.add_argument('--interceptor-sha256')
+    parser.add_argument('--dependencies', type=Path, required=True,
+                        help='private test configuration with Interceptor source/version and Harness image/source/contract')
+    parser.add_argument('--operator-archive', type=Path, required=True)
+    parser.add_argument('--interceptor-archive', type=Path, required=True)
+    parser.add_argument('--interceptor-sha256', required=True)
     args = parser.parse_args()
     args.output = args.output.resolve(); args.output.mkdir(mode=0o700, parents=True, exist_ok=False)
     runtime = docker_runtime(args.output)
-    pin = json.loads((Path(__file__).resolve().parents[1] / 'release/interceptor-qualification.json').read_text())
-    with tempfile.TemporaryDirectory(prefix='operator-qualification-download-') as temp:
-        work = Path(temp)
-        if args.local:
-            if not args.operator_archive or not args.interceptor_archive or digest(args.interceptor_archive.read_bytes()) != args.interceptor_sha256:
-                parser.error('local verification requires both archives and the independently verified Interceptor checksum')
-            operator, native = args.operator_archive.resolve(), args.interceptor_archive.resolve()
-        else:
-            if platform.system() != 'Linux' or platform.machine() != 'x86_64' or not args.version or not args.source:
-                parser.error('published qualification requires native Linux AMD64, version and source')
-            github = GitHub('intrusiveai/operator_sandbox')
-            release = github.release('v' + args.version)
-            if not release or release['draft'] or not release['body'].startswith(MARKER + '\n'):
-                raise ValueError('expected published managed release bytes')
-            record = json.loads(release['body'].removeprefix(MARKER + '\n'))
-            raw = github.download_inventory('v' + args.version)
-            inventory = verify_inventory(raw, record); verify_uploaded(github, release, record['assets'])
-            if inventory['source_commit'] != args.source or inventory['qualification_dependencies'] != pin:
-                raise ValueError('published candidate differs from checkout or dependency pin')
-            validate_pin(pin, inventory['contract'], inventory['interceptor_contract_version'])
-            operator, native = work / 'operator.tar.gz', work / 'interceptor.tar.gz'
-            name = asset_stem(args.version, 'linux/amd64') + '.tar.gz'
-            download(f'https://github.com/{github.repository}/releases/download/v{args.version}/{name}', operator, inventory['assets'][name])
-            download(pin['archive_url'], native, pin['archive_sha256'])
-        run('docker', 'pull', '--platform', 'linux/' + {'x86_64': 'amd64', 'arm64': 'arm64', 'aarch64': 'arm64'}[platform.machine()], pin['harness']['image'], timeout=600)
-        image_platform = 'linux/' + {'x86_64': 'amd64', 'arm64': 'arm64', 'aarch64': 'arm64'}[platform.machine()]
-        # Exercise the actual required feature before creating a target session.
-        run(runtime['executable'], '--host', runtime['endpoint'], 'image', 'inspect', '--platform', image_platform,
-            '--format', '{{.Id}}', pin['harness']['image'])
-        checks, metadata = campaign(operator, native, pin, args.output, runtime)
-        result = {'schema_version': 1, 'passed': True, 'platform': platform.system().lower() + '/' + {'x86_64': 'amd64', 'arm64': 'arm64', 'aarch64': 'arm64'}[platform.machine()],
-            'source_commit': metadata['source_commit'], 'test_revision': run('git', 'rev-parse', 'HEAD'), 'dependencies': pin,
-            'contract': pin['harness']['contract'], 'interceptor_contract_version': pin['interceptor_contract_version'],
-            'operator_archive_sha256': digest(operator.read_bytes()), 'interceptor_archive_sha256': digest(native.read_bytes()), 'checks': checks,
-            'test_worktree_modified': bool(run('git', 'status', '--porcelain')),
-            'workflow_run_id': int(os.environ.get('GITHUB_RUN_ID', '0')), 'workflow_run_attempt': int(os.environ.get('GITHUB_RUN_ATTEMPT', '0')),
-            'inventory_digest': digest(raw) if not args.local else None, 'local_verification': args.local}
-        save(args.output / 'result.json', result)
+    pin = json.loads(args.dependencies.read_text())
+    if digest(args.interceptor_archive.read_bytes()) != args.interceptor_sha256:
+        parser.error('supplied Interceptor archive differs from its transfer digest')
+    operator, native = args.operator_archive.resolve(), args.interceptor_archive.resolve()
+    run('docker', 'pull', '--platform', 'linux/' + {'x86_64': 'amd64', 'arm64': 'arm64', 'aarch64': 'arm64'}[platform.machine()], pin['harness']['image'], timeout=600)
+    image_platform = 'linux/' + {'x86_64': 'amd64', 'arm64': 'arm64', 'aarch64': 'arm64'}[platform.machine()]
+    # Exercise the actual required feature before creating a target session.
+    run(runtime['executable'], '--host', runtime['endpoint'], 'image', 'inspect', '--platform', image_platform,
+        '--format', '{{.Id}}', pin['harness']['image'])
+    checks, metadata = campaign(operator, native, pin, args.output, runtime)
+    result = {'schema_version': 1, 'passed': True, 'platform': platform.system().lower() + '/' + {'x86_64': 'amd64', 'arm64': 'arm64', 'aarch64': 'arm64'}[platform.machine()],
+        'source_commit': metadata['source_commit'], 'test_revision': run('git', 'rev-parse', 'HEAD'), 'dependencies': pin,
+        'contract': pin['harness']['contract'], 'interceptor_contract_version': pin['interceptor_contract_version'],
+        'operator_archive_sha256': digest(operator.read_bytes()), 'interceptor_archive_sha256': digest(native.read_bytes()), 'checks': checks,
+        'test_worktree_modified': bool(run('git', 'status', '--porcelain')),
+        'workflow_run_id': int(os.environ.get('GITHUB_RUN_ID', '0')), 'workflow_run_attempt': int(os.environ.get('GITHUB_RUN_ATTEMPT', '0')),
+        'local_verification': True, 'establishes_contract_compatibility': False}
+    save(args.output / 'result.json', result)
 
 
 if __name__ == '__main__':

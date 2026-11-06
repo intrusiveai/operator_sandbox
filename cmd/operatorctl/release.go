@@ -53,7 +53,7 @@ func releaseCommand(ctx context.Context, action string, args []string, stdout, s
 	case "manifest":
 		files, e := hostrelease.Inventory(ctx, dir)
 		err = e
-		m := hostrelease.Manifest{APIVersion: hostrelease.ManifestVersion, Version: *version, Platform: *platform, SourceCommit: *commit, GoToolchain: "go1.26.5", Contract: contracts.PackageIdentity{Version: *contractVersion, Digest: *contractDigest}, Files: files, InterceptorContractVersion: interceptor.SupportedContractVersion}
+		m := hostrelease.Manifest{APIVersion: hostrelease.ManifestVersion, Version: *version, Platform: *platform, SourceCommit: *commit, GoToolchain: "go1.26.5", Contract: contracts.PackageIdentity{Version: *contractVersion, Digest: *contractDigest}, Files: files, InterceptorContractVersion: interceptor.SupportedContractVersion, InterceptorContractSHA256: interceptor.SupportedContractSHA256}
 		if err == nil {
 			err = hostrelease.CheckContents(ctx, dir, m)
 		}

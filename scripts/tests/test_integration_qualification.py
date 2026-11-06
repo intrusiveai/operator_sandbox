@@ -18,33 +18,35 @@ import test_candidate_workflow as workflow
 
 class QualificationTest(unittest.TestCase):
     def setUp(self):
-        self.pin = json.loads((ROOT / 'release/interceptor-qualification.json').read_text())
-        self.inventory = {'version': '0.1.4', 'source_commit': 'a' * 40, 'qualification_dependencies': self.pin,
-                          'contract': self.pin['harness']['contract'], 'interceptor_contract_version': '0.1.0',
+        self.pin = json.loads((ROOT / 'internal/interceptor/contract.json').read_text())
+        self.source = json.loads((ROOT / 'release/interceptor-contract-source.json').read_text())
+        self.inventory = {'version': '0.1.4', 'source_commit': 'a' * 40, 'interceptor_contract': self.pin,
+                          'interceptor_contract_source': self.source,
+                          'contract': {'package_version':'0.6.1','package_digest':'sha256:'+'a'*64},
+                          'interceptor_contract_version': self.pin['interceptor_contract_version'],
                           'assets': {'operator_sandbox-v0.1.4-linux_amd64.tar.gz': 'sha256:' + 'b' * 64}}
         self.run = {'id': 123, 'run_attempt': 1, 'head_sha': 'a' * 40, 'head_branch': 'candidate-v0.1.4',
                     'event': 'push', 'path': q.WORKFLOW, 'status': 'completed', 'conclusion': 'success',
                     'head_repository': {'full_name': 'intrusiveai/operator_sandbox'}}
-        self.result = {'schema_version': 1, 'passed': True, 'platform': 'linux/amd64', 'source_commit': 'a' * 40,
-                       'test_revision': 'a' * 40, 'test_worktree_modified': False, 'local_verification': False, 'inventory_digest': 'sha256:' + 'c' * 64, 'dependencies': self.pin,
-                       'contract': self.inventory['contract'], 'interceptor_contract_version': '0.1.0',
-                       'interceptor_archive_sha256': self.pin['archive_sha256'], 'operator_archive_sha256': 'sha256:' + 'b' * 64, 'workflow_run_id': 123, 'workflow_run_attempt': 1,
-                       'checks': {name: True for name in q.CHECKS}}
+        self.result = {'schema_version': 2, 'passed': True, 'source_commit': 'a' * 40,
+                       'test_worktree_modified': False, 'remote_verified': True,
+                       'interceptor_contract': self.pin, 'contract_source': self.source,
+                       'workflow_run_id': 123, 'workflow_run_attempt': 1, 'checks': q.CHECKS}
 
     def test_exact_results_and_dependency_binding(self):
-        q.validate_pin(self.pin, self.inventory['contract'], '0.1.0')
-        q.validate_result(self.result, self.inventory, 'sha256:' + 'c' * 64, self.run)
+        q.validate_pin(self.pin, self.pin['interceptor_contract_version'])
+        q.validate_result(self.result, self.inventory, self.run)
         for key in self.result:
             bad = copy.deepcopy(self.result); bad[key] = None
             with self.subTest(key=key), self.assertRaises(ValueError):
-                q.validate_result(bad, self.inventory, 'sha256:' + 'c' * 64, self.run)
-        changed = copy.deepcopy(self.inventory); changed['qualification_dependencies']['archive_sha256'] = 'sha256:' + 'd' * 64
+                q.validate_result(bad, self.inventory, self.run)
+        changed = copy.deepcopy(self.inventory); changed['interceptor_contract']['interceptor_contract_sha256'] = 'd' * 64
         with self.assertRaises(ValueError):
-            q.validate_result(self.result, changed, 'sha256:' + 'c' * 64, self.run)
-        for key, value in [('archive_url', 'https://untrusted.example/archive'), ('archive_sha256', 'unknown'), ('interceptor_contract_version', '0.2.0')]:
+            q.validate_result(self.result, changed, self.run)
+        for key, value in [('archive_url', 'https://untrusted.example/archive'), ('interceptor_contract_sha256', 'unknown'), ('interceptor_contract_version', 'v0.2.0')]:
             bad = dict(self.pin, **{key: value})
             with self.assertRaises(ValueError):
-                q.validate_pin(bad, self.inventory['contract'], '0.1.0')
+                q.validate_pin(bad)
 
     def test_trust_and_bounded_archive(self):
         self.assertTrue(q.trusted_run(self.run, self.inventory, 'intrusiveai/operator_sandbox'))
@@ -65,11 +67,11 @@ class QualificationTest(unittest.TestCase):
         class GitHub:
             repository = 'intrusiveai/operator_sandbox'
             prefix = 'repos/' + repository + '/'
-            jobs = [{'name': 'qualify-interceptor', 'conclusion': 'success'}]
+            jobs = [{'name': 'interceptor-contract', 'conclusion': 'success'}]
             artifacts = []
             def api(self, path):
                 if path.startswith('contents/'):
-                    return {'content': base64.b64encode(json.dumps(owner.pin).encode()).decode()}
+                    return {'content': base64.b64encode(json.dumps(owner.source if 'interceptor-contract-source' in path else owner.pin).encode()).decode()}
                 if '/jobs?' in path:
                     return {'jobs': self.jobs}
                 if '/artifacts?' in path:
@@ -77,33 +79,33 @@ class QualificationTest(unittest.TestCase):
                 return {'workflow_runs': [owner.run]}
         github = GitHub()
         with self.assertRaises(ValueError):
-            q.require_qualification(github, self.inventory, self.result['inventory_digest'])
+            q.require_qualification(github, self.inventory)
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, 'w') as archive:
             archive.writestr('result.json', json.dumps(self.result))
         raw = buffer.getvalue()
         github.artifacts = [{'id': 456, 'name': q.ARTIFACT, 'expired': False, 'digest': q.digest(raw), 'workflow_run': {'head_sha': 'a' * 40}}]
         with patch('integration_qualification.subprocess.run', side_effect=lambda *a, **kw: kw['stdout'].write(raw)):
-            accepted = q.require_qualification(github, self.inventory, self.result['inventory_digest'])
+            accepted = q.require_qualification(github, self.inventory)
             self.assertEqual(accepted['run_id'], 123)
             for field, value in [('expired', True), ('workflow_run', {'head_sha': 'b' * 40})]:
                 prior = github.artifacts[0][field]; github.artifacts[0][field] = value
                 with self.assertRaises(ValueError):
-                    q.require_qualification(github, self.inventory, self.result['inventory_digest'])
+                    q.require_qualification(github, self.inventory)
                 github.artifacts[0][field] = prior
             github.jobs[0]['conclusion'] = 'skipped'
             with self.assertRaises(ValueError):
-                q.require_qualification(github, self.inventory, self.result['inventory_digest'])
+                q.require_qualification(github, self.inventory)
 
     def test_archived_identity_mismatch_and_platform_pins(self):
         host = {'platform': 'linux/amd64', 'version': '0.1.4', 'source_commit': 'a' * 40,
-                'interceptor_contract_version': '0.1.0', 'contract': self.inventory['contract'], 'files': [{'path': 'bin/operatorctl', 'digest': 'sha256:' + 'e' * 64}]}
+                'interceptor_contract_version': '0.1.0', 'interceptor_contract_sha256': 'a'*64, 'contract': self.inventory['contract'], 'files': [{'path': 'bin/operatorctl', 'digest': 'sha256:' + 'e' * 64}]}
         hosts = [dict(host, platform=p) for p in PLATFORMS]
         self.assertEqual(check_candidates(hosts), '0.1.4')
         for value in (None, '0.2.0', 'v0.1.0', '01.0.0', ''):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 check_candidates([dict(h, interceptor_contract_version=value) if i == 0 else h for i, h in enumerate(hosts)])
-        report = {'platform': host['platform'], 'version': host['version'], 'source_commit': host['source_commit'], 'interceptor_contract_version': '0.1.0',
+        report = {'platform': host['platform'], 'version': host['version'], 'source_commit': host['source_commit'], 'interceptor_contract_version': '0.1.0', 'interceptor_contract_sha256': 'a'*64,
                   'contract_version': host['contract']['package_version'], 'contract_digest': host['contract']['package_digest'],
                   'archive_sha256': 'sha256:' + 'b' * 64, 'binary_sha256': 'sha256:' + 'e' * 64, 'checks': ['archive-integrity', 'native-version']}
         validate_report(report, host, report['archive_sha256'])

@@ -124,12 +124,19 @@ def build(root, output, version, platforms, python, *, validate_contract=True):
         raise ValueError("release builds require " + TOOLCHAIN)
     run(["go", "mod", "verify"], root, env, capture=False)
     expected = json.loads((root / "release/contract-lock.json").read_text())["package"]
+    from interceptor_contract import identity, validate_pin, PIN, DOCUMENT
+    integration_pin = validate_pin(json.loads((root / PIN).read_text()))
+    if identity((root / DOCUMENT).read_bytes()) != integration_pin:
+        raise ValueError("Interceptor OpenAPI bytes differ from the approved source pin")
     output.mkdir(mode=0o700, parents=True)
     with tempfile.TemporaryDirectory(prefix="operator-release-build-") as temp:
         temp = Path(temp)
         helper = temp / "operatorctl"
         run(["go", "build", "-mod=readonly", "-trimpath", "-buildvcs=false", "-o", str(helper), "./cmd/operatorctl"], root, env, timeout=BUILD_TIMEOUT, capture=False)
-        interceptor_contract = json.loads(run([str(helper), "version"], root, env))["interceptor_contract_version"]
+        interceptor_identity = json.loads(run([str(helper), "version"], root, env))
+        interceptor_contract = interceptor_identity["interceptor_contract_version"]
+        if any(interceptor_identity.get(k) != v for k, v in integration_pin.items()):
+            raise ValueError("compiled Interceptor identity differs from source approval")
         contract = temp / "contract"
         report = json.loads(run([str(helper), "contract", "build", "--source", str(root),
                                 "--output", str(contract), "--package-version", expected["package_version"]], root, env))
@@ -166,7 +173,7 @@ def build(root, output, version, platforms, python, *, validate_contract=True):
                 "subject": [{"name": "bin/operatorctl", "digest": {"sha256": binary_digest}}],
                 "predicateType": "https://slsa.dev/provenance/v1",
                 "predicate": {"buildDefinition": {"buildType": "https://intrusive.ai/build/operator-host/v1",
-                    "externalParameters": {"version": version, "platform": platform, "contract": expected, "interceptor_contract_version": interceptor_contract},
+                    "externalParameters": {"version": version, "platform": platform, "contract": expected, "interceptor_contract_version": interceptor_contract, "interceptor_contract_sha256": interceptor_identity["interceptor_contract_sha256"]},
                     "internalParameters": {"toolchain": TOOLCHAIN, **native, **inspect_binary(dest / "bin/operatorctl", platform)},
                     "resolvedDependencies": [{"uri": "git+https://github.com/intrusiveai/operator_sandbox",
                         "digest": {"gitCommit": commit}}]},

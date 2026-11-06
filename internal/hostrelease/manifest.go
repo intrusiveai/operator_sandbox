@@ -50,6 +50,7 @@ type Manifest struct {
 	GoToolchain                string                    `json:"go_toolchain"`
 	Contract                   contracts.PackageIdentity `json:"contract"`
 	Files                      []File                    `json:"files"`
+	InterceptorContractSHA256  string                    `json:"interceptor_contract_sha256,omitempty"`
 	InterceptorContractVersion string                    `json:"interceptor_contract_version,omitempty"`
 }
 
@@ -68,6 +69,9 @@ func validPlatform(p string) bool {
 	return p == "linux/amd64" || p == "linux/arm64" || p == "darwin/amd64" || p == "darwin/arm64"
 }
 func (m Manifest) Validate() error {
+	if m.InterceptorContractSHA256 != "" && (!interceptor.ValidContractSHA256(m.InterceptorContractSHA256) || m.InterceptorContractVersion == "") {
+		return ErrRelease
+	}
 	if m.InterceptorContractVersion != "" && !interceptor.ValidContractVersion(m.InterceptorContractVersion) {
 		return ErrRelease
 	}

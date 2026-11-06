@@ -237,6 +237,10 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 					for _, key := range []string{"expected", "actual", "checked_at"} {
 						keep[key] = metadata[key]
 					}
+					var wantHash, gotHash string
+					if json.Unmarshal(metadata["expected_sha256"], &wantHash) == nil && json.Unmarshal(metadata["actual_sha256"], &gotHash) == nil && interceptor.ValidContractSHA256(wantHash) && gotHash == wantHash {
+						keep["expected_sha256"], keep["actual_sha256"] = metadata["expected_sha256"], metadata["actual_sha256"]
+					}
 				}
 			}
 		}

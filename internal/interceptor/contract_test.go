@@ -2,6 +2,7 @@ package interceptor
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -12,12 +13,22 @@ import (
 )
 
 func TestContractDiscovery(t *testing.T) {
+	identity := func(version, hash string) string {
+		b, _ := json.Marshal(ContractIdentity{version, hash})
+		return string(b)
+	}
+
 	for _, tc := range []struct {
 		name, body, reason string
 		status             int
 	}{
-		{"match", `{"interceptor_contract_version":"0.1.0"}`, "", 200},
-		{"mismatch", `{"interceptor_contract_version":"0.2.0"}`, "version_mismatch", 200},
+		{"match", identity(SupportedContractVersion, SupportedContractSHA256), "", 200},
+		{"mismatch", identity("9.0.0", SupportedContractSHA256), "version_mismatch", 200},
+		{"hash-mismatch", identity(SupportedContractVersion, strings.Repeat("a", 64)), "hash_mismatch", 200},
+		{"hash-missing", `{"interceptor_contract_version":"0.2.0"}`, "invalid_hash", 200},
+		{"hash-malformed", identity(SupportedContractVersion, "SECRET"), "invalid_hash", 200},
+		{"hash-prefix", identity(SupportedContractVersion, "sha256:"+SupportedContractSHA256), "invalid_hash", 200},
+		{"hash-case", identity(SupportedContractVersion, strings.ToUpper(SupportedContractSHA256)), "invalid_hash", 200},
 		{"missing", `{}`, "invalid_version", 200},
 		{"null", `{"interceptor_contract_version":null}`, "invalid_version", 200},
 		{"number", `{"interceptor_contract_version":1}`, "invalid_version", 200},
@@ -48,7 +59,7 @@ func TestContractDiscovery(t *testing.T) {
 			if !errors.As(err, &failure) || failure.Reason != tc.reason || failure.Expected != SupportedContractVersion || calls != 1 || strings.Contains(err.Error(), "SECRET") {
 				t.Fatalf("%+v calls=%d", err, calls)
 			}
-			if tc.reason == "version_mismatch" && failure.Actual != "0.2.0" {
+			if tc.reason == "version_mismatch" && failure.Actual != "9.0.0" {
 				t.Fatal(failure)
 			}
 		})
@@ -73,7 +84,7 @@ func TestContractTransportFailures(t *testing.T) {
 					<-r.Context().Done()
 					return nil, r.Context().Err()
 				}
-				rpl := wireResponse(t, 200, map[string]string{"interceptor_contract_version": "0.1.0"})
+				rpl := wireResponse(t, 200, ContractIdentity{SupportedContractVersion, SupportedContractSHA256})
 				switch mode {
 				case "non-json":
 					rpl.Header.Set("Content-Type", "text/html")
