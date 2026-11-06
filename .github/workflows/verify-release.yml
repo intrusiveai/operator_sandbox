@@ -54,7 +54,7 @@ jobs:
           go vet ./...
           go test -race ./internal/hostrelease ./internal/contractstore ./internal/supervisor
   candidates:
-    needs: [context, verify]
+    needs: [context, verify, interceptor-contract]
     # Build artifacts only for a candidate update, after the complete test gate.
     if: needs.context.outputs.mode == 'publish'
     runs-on: ${{ matrix.runner }}
@@ -204,46 +204,32 @@ jobs:
           RELEASE_TAG: v${{ needs.context.outputs.version }}
           RELEASE_SOURCE: ${{ needs.context.outputs.source }}
         run: python3 scripts/publish_host_release.py catalog-sync --tag "$RELEASE_TAG" --source "$RELEASE_SOURCE"
-  qualify-interceptor:
-    needs: [context, publish]
-    if: needs.publish.outputs.published == 'true'
+  interceptor-contract:
+    needs: context
+    if: needs.context.outputs.mode == 'verify' || needs.context.outputs.mode == 'publish'
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 10
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Install the qualification Docker CLI and daemon
-        uses: docker/setup-docker-action@2bf61fb9464cc67f0cbdeabed6aa0380accd1c70 # v5.5.0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          version: v29.0.1
-          set-host: true
-          daemon-config: |
-            {"features":{"containerd-snapshotter":true}}
-      - name: Qualify the published archive against pinned Interceptor and Harness
+          go-version: '1.26.5'
+          cache: true
+          cache-dependency-path: go.sum
+      - name: Compare selected Interceptor OpenAPI against Operator integration
         env:
           GH_TOKEN: ${{ github.token }}
-          QUALIFICATION_DOCKER_VERSION: '29.0.1'
-          RELEASE_VERSION: ${{ needs.context.outputs.version }}
-          RELEASE_SOURCE: ${{ needs.context.outputs.source }}
-        run: python3 scripts/qualify_interceptor_release.py --version "$RELEASE_VERSION" --source "$RELEASE_SOURCE" --output dist/qualification
-      - name: Retain qualification result
+        run: python3 scripts/interceptor_contract.py verify --fetch --output dist/interceptor-contract/result.json
+      - name: Retain source-bound contract comparison
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: interceptor-qualification
-          path: dist/qualification/result.json
+          name: interceptor-contract-comparison
+          path: dist/interceptor-contract/result.json
           if-no-files-found: error
-          overwrite: true
-          retention-days: 90
-      - name: Retain controlled campaign evidence, including failures
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: interceptor-qualification-evidence
-          path: dist/qualification
-          if-no-files-found: warn
           overwrite: true
           retention-days: 90
   promote:

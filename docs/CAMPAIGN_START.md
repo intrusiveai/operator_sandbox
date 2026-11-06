@@ -76,15 +76,17 @@ local records without sending another application request. See [HTTPS targets](H
 ## Automatic integration compatibility
 
 Before recording attachment intent, Operator sends `POST /v1/contract-version`
-with `{}` to the same local Interceptor API. Its compiled integration pin is
-`0.1.0`; exact equality is required. Product versions need not match. No manual
+with `{}` to the same local Interceptor API. Its compiled integration pin comes from
+`internal/interceptor/contract.json`. Both `interceptor_contract_version` and
+`interceptor_contract_sha256` must match exactly. The hash identifies the complete
+OpenAPI file bytes, including formatting. Product versions need not match. No manual
 contract export, configured expected version, CLI fallback or Internet lookup is
 used. The environment capability manifest and policy checks still apply.
 
 A mismatch or unavailable/malformed response fails preparation with stage
 `Interceptor compatibility check`. Inspect the saved run with `operatorctl inspect
 --run RUN` or `operatorctl campaign status --run RUN` to retrieve the same bounded
-cause, expected/observed versions and available HTTP status. Install compatible
+cause, expected/observed versions and hashes, and available HTTP status. Install compatible
 product releases, then submit a new campaign; failed campaigns do not resume.
 Foreground and service execution use the same checks and retained diagnostics.
 
@@ -93,7 +95,7 @@ compatibility before claiming new native work. A failed check leaves that work
 unconfirmed without consuming its dispatch claim. Retained local evidence remains
 readable, and owned Docker termination remains independent of Interceptor.
 Completed recovery/collection records can be read without the API. Successful
-campaigns record `interceptor.compatibility` with the checked versions and time.
+campaigns record `interceptor.compatibility` with the checked versions, hashes and time.
 
 
 ## Troubleshooting preparation failures

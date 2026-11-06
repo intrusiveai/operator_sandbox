@@ -55,11 +55,13 @@ def event_context(event, name, ref, sha, repository):
 def check_candidates(hosts):
     if len(hosts) != 4 or {h["platform"] for h in hosts} != PLATFORMS:
         raise ValueError("four distinct host platforms are required")
-    identity = [(h["version"], h["source_commit"], h["contract"], h.get("interceptor_contract_version")) for h in hosts]
+    identity = [(h["version"], h["source_commit"], h["contract"], h.get("interceptor_contract_version"), h.get("interceptor_contract_sha256")) for h in hosts]
     if any(item != identity[0] for item in identity):
         raise ValueError("host source/version/contract identities differ")
     contract_version(identity[0][2])
     integration_version(identity[0][3])
+    from interceptor_contract import validate_pin
+    validate_pin({"interceptor_contract_version": identity[0][3], "interceptor_contract_sha256": identity[0][4]})
     return identity[0][0]
 
 
@@ -140,13 +142,17 @@ def assemble(directory, output, operatorctl=None):
     directories = [directory / p.replace("/", "-") for p in sorted(PLATFORMS)]
     hosts = [json.loads((d / "release.json").read_text()) for d in directories]
     version = check_candidates(hosts)
+    from integration_qualification import read_pin
+    for host in hosts:
+        pin = read_pin(host["interceptor_contract_version"])
+        if host.get("interceptor_contract_sha256") != pin["interceptor_contract_sha256"]:
+            raise ValueError("candidate Interceptor contract hash differs from source approval")
     if any(h["platform"].replace("/", "-") != d.name for h, d in zip(hosts, directories)):
         raise ValueError("candidate platform differs from its directory")
     operator = str((operatorctl or directory / "linux-amd64/bin/operatorctl").resolve())
     output.mkdir(mode=0o700)
     reports = []
     from verify_host_contract import validate_report
-    from integration_qualification import read_pin
     for host, d in zip(hosts, directories):
         stem = asset_stem(version, host["platform"])
         archive = output / (stem + ".tar.gz")
@@ -159,7 +165,8 @@ def assemble(directory, output, operatorctl=None):
             checksum(archive).removeprefix("sha256:") + "  " + archive.name + "\n")
     files = sorted(output.iterdir())
     inventory = {"version": version, "source_commit": hosts[0]["source_commit"],
-                 "qualification_dependencies": read_pin(hosts[0]["contract"], hosts[0]["interceptor_contract_version"]),
+                 "interceptor_contract": read_pin(hosts[0]["interceptor_contract_version"]),
+                 "interceptor_contract_source": json.loads((Path(__file__).resolve().parents[1] / "release/interceptor-contract-source.json").read_text()),
                  "contract_verification": reports, "contract": hosts[0]["contract"], "interceptor_contract_version": hosts[0]["interceptor_contract_version"], "assets": {f.name: checksum(f) for f in files}}
     record = output / "candidate.json"
     record.write_text(json.dumps(inventory, sort_keys=True, indent=2) + "\n")
@@ -196,7 +203,9 @@ def verify_inventory(raw, record):
     contract_version(inventory.get("contract"))
     integration_version(inventory.get("interceptor_contract_version"))
     from integration_qualification import validate_pin
-    validate_pin(inventory.get("qualification_dependencies"), inventory["contract"], inventory["interceptor_contract_version"])
+    validate_pin(inventory.get("interceptor_contract"), inventory["interceptor_contract_version"])
+    from interceptor_contract import validate_source
+    validate_source(inventory.get("interceptor_contract_source"))
     return inventory
 
 
@@ -350,7 +359,7 @@ def promote(github, number):
     verify_uploaded(github, release, record["assets"])
     inventory = verify_inventory(github.download_inventory("v" + version), record)
     from integration_qualification import require_qualification
-    qualification = require_qualification(github, inventory, record["assets"][INVENTORY_ASSET])
+    qualification = require_qualification(github, inventory)
     promoted_record = dict(record, promotion_pr=number, qualification=qualification)
     body = MARKER + "\n" + json.dumps(promoted_record, sort_keys=True)
     if not release["prerelease"]:

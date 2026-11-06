@@ -12,7 +12,7 @@ host manifest. The shared contract version remains in package and catalog metada
 it MUST NOT be added to the filename.
 
 `operatorctl release manifest` MUST bind the host version, platform, source commit,
-Go toolchain, exact shared-contract pin, compiled `interceptor_contract_version`, and every payload file's name, size, mode
+Go toolchain, exact shared-contract pin, compiled `interceptor_contract_version` and `interceptor_contract_sha256`, and every payload file's name, size, mode
 and SHA-256 digest. The four platforms are `linux/amd64`, `linux/arm64`,
 `darwin/amd64` and `darwin/arm64`. Host release versions MUST be three numeric
 components. Candidate builds MUST NOT imply native qualification.
@@ -37,11 +37,11 @@ files, 128 MiB per file and 256 MiB total, with separately bounded metadata.
 Every archived native executable MUST report both contract identities through
 `operatorctl version`; package verification MUST compare them with its manifest
 and candidate inventory on each matching host. Historical manifests without the
-Interceptor field remain readable as unknown; new candidates MUST include it.
+Interceptor identity fields remain readable as unknown; new candidates MUST include both.
 Catalog publication MUST include `contract_package_version` and
-`interceptor_contract_version`. Stable promotion MUST require a passing controlled
-campaign against the exact published Linux AMD64 archive and pinned Interceptor
-and Harness dependencies. See the [release guide](../.github/maintainers/CANDIDATE_RELEASES.md#integration-qualification-before-stable-promotion).
+`interceptor_contract_version`. Stable promotion MUST require a successful source-bound OpenAPI comparison
+against the approved Interceptor contract version and exact document hash.
+Campaign tests MUST NOT establish integration compatibility. See the [release guide](../.github/maintainers/CANDIDATE_RELEASES.md#integration-qualification-before-stable-promotion).
 
 ## Installation and updates
 

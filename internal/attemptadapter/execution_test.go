@@ -7,6 +7,7 @@ import (
 	"errors"
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/contractcheck"
 	"github.com/intrusiveai/operator_sandbox/internal/feedback"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/nativeexec"
@@ -22,6 +23,7 @@ type runtimeStub struct{}
 func (runtimeStub) CheckRunning(context.Context, campaign.DockerBinding) error { return nil }
 
 type nativePeer struct {
+	contract     *contractcheck.Document
 	t            *testing.T
 	plan         *Plan
 	calls        []string
@@ -146,11 +148,21 @@ func (p *nativePeer) Execute(_ context.Context, q interceptor.PreparedOperation)
 	if p.after != nil {
 		p.after(op)
 	}
-	return response(p.t, status, p.revision, body), nil
+	result := response(p.t, status, p.revision, body)
+	if p.contract != nil {
+		raw, err := json.Marshal(result)
+		if err != nil {
+			p.t.Fatal(err)
+		}
+		if err = p.contract.NativeExchange(q.Bytes(), raw); err != nil {
+			p.t.Fatalf("%s: %v", op, err)
+		}
+	}
+	return result, nil
 }
 func response(t *testing.T, status int, revision uint64, body any) interceptor.Response {
 	t.Helper()
-	m := map[string]any{"status": status, "session_revision": revision}
+	m := map[string]any{"status": status, "session_revision": revision, "body": body}
 	if body != nil {
 		m["body"] = body
 	}
@@ -394,5 +406,29 @@ func TestCompiledRequestCannotBorrowAnotherAdmission(t *testing.T) {
 	p.rawRequest = mutate(raw, func(m map[string]any) { m["rationale"] = "different submitted request" })
 	if _, err = p.NewExecution(a, nil); !errors.Is(err, ErrAttempt) {
 		t.Fatal("request mismatch not rejected before executor construction", err)
+	}
+}
+
+// Exercise actual planning, encoding, response interpretation and feedback byte
+// retention against the OpenAPI schemas. No Docker or campaign completion is
+// used as compatibility evidence.
+func TestInterceptorContractAdapterExchanges(t *testing.T) {
+	d, err := contractcheck.Load("../interceptor/openapi.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, raw, in := fixture(t)
+	p, err := Compile(c, raw, in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	e, _, _, peer := executionSetup(t, raw, p)
+	peer.contract = d
+	result, err := e.Run(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Receipt == nil || len(peer.calls) < 8 {
+		t.Fatal("missing adapter exchanges or retained feedback")
 	}
 }

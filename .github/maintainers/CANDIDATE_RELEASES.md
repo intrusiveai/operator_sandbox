@@ -71,8 +71,6 @@ role and environment; step 6 configures the required GitHub identity format.
    `actions/checkout`, `actions/setup-go`, and `actions/upload-artifact` actions
    (or enable **Allow actions created by GitHub**). Also allow
    `aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd`.
-   Integration qualification also uses
-   `docker/setup-docker-action@2bf61fb9464cc67f0cbdeabed6aa0380accd1c70`.
    Use the exact pins in both workflow files if your policy permits individual
    SHAs rather than GitHub-owned actions generally. Remove the obsolete
    `intrusiveai-engineering/releases/.github/workflows/publish-catalog.yml` exception;
@@ -320,7 +318,7 @@ Running campaigns retain their previously installed binaries and frozen inputs.
    candidate's file tree.
 2. Open a same-repository PR with **base: main** and **compare: candidate-v1.2.3**.
    Review it and merge only after the latest candidate publish and
-   `qualify-interceptor` jobs succeed.
+   `interceptor-contract` jobs succeed.
 3. Open the merged PR's **verify-host-candidates** run and follow its **promote**
    job. Approve the resulting catalog deployment if required; wait for both jobs
    to finish successfully.
@@ -379,64 +377,54 @@ Operator's exact contract-digest compatibility checks.
 
 ## Integration qualification before stable promotion
 
-1. Before creating a candidate, review `release/interceptor-qualification.json`.
-   Pin a published Interceptor Linux AMD64 archive URL, its verified SHA-256,
-   source commit and contract version. Pin the matching Harness image by repository
-   digest, source commit and exact shared package identity. Use actual published
-   artifacts, not `latest`. Commit dependency changes with the candidate source.
-   A rolling Interceptor prerelease can replace the bytes at the same URL. If
-   qualification reports a checksum mismatch, review the new source and contract,
-   verify the published archive checksum, and commit the complete updated pin.
-   Do not accept new bytes by changing only the checksum or bypassing verification.
-2. Push the candidate through the ordinary workflow. The `packaged-contract` jobs
-   execute each of the four archived binaries on its matching native runner and
-   compare version output with package metadata. `candidate.json` retains these
-   results and archive hashes. No Interceptor or Docker is needed for these checks.
-3. Wait for candidate publication and the `qualify-interceptor` job. This job
-   downloads the published Operator archive, verifies the pinned Interceptor
-   archive and pulls the pinned Harness image. It runs one deterministic local
-   campaign using Docker, a marker-returning target and three controlled model
-   replies. It checks discovery, attachment, invocation, observation reading,
-   accepted finish, exit zero, cleanup and exported evidence. It uses no paid
-   model API or cloud credential. This qualifies Linux AMD64 only.
-   The job installs Docker CLI and Engine 29.0.1 with the containerd image store,
-   using the same pinned setup action as Attack Harness. It verifies both versions
-   and records them, the daemon identity, and its local Unix socket in
-   `docker-runtime.json`. The fixture commands, Interceptor and Operator all use
-   that socket; Operator's private configuration names it explicitly because
-   Operator does not use ambient Docker environment variables. Platform-specific
-   [image inspection requires Docker API 1.49 or later](https://docs.docker.com/reference/cli/docker/image/inspect/).
-   The runner tests that operation on the pulled Harness image before starting
-   Interceptor. This is a CI runtime pin, not a new product version allowlist.
-4. In the same Actions run, download `interceptor-qualification` for `result.json`
-   and `interceptor-qualification-evidence` for the campaign export and logs.
-   Both are retained for 90 days. A failed campaign leaves diagnostic evidence;
-   the absence of a passing result blocks stable promotion, not initial prerelease
-   publication.
-   For preparation failures, read `operator.log` and `start-inspection.json` first.
-   `start-records/` and `start-link.json` preserve the original start records even
-   when no campaign journal exists. Export or inspection failures are secondary
-   entries in `secondary-failures.log`; cleanup errors have their own log and do
-   not replace the original failure. These failed tests produce no passing result.
-5. Resolve failures and rerun the failed qualification job from that candidate's
-   workflow run. Rerunning it downloads the same published bytes; it does not
-   rebuild Operator. A replaced candidate or changed dependency requires a new
-   matching qualification. If evidence expired, rerun qualification before
-   promotion. Do not upload a replacement result manually.
-6. Merge the candidate PR into `main` only after qualification passes. Promotion
-   requires a successful candidate push/manual workflow at the exact source,
-   its successful qualification job, and an unexpired result artifact whose digest,
-   source, run attempt, dependency pins and inventory match. Missing, stale,
-   skipped, failed or untrusted evidence blocks both stable GitHub promotion and
-   the stable catalog. Existing package hashes and both contract versions remain
-   unchanged; nothing is rebuilt during promotion.
+1. Select the Interceptor release tag or source commit whose OpenAPI contract
+   Operator should support. Product versions do not need to match. Authenticate
+   `gh` for read access to `intrusiveai/interceptor_sandbox`.
+2. On the Operator feature branch, run:
 
-For development, `scripts/qualify_interceptor_release.py --local` accepts a local
-Operator archive and a published native Interceptor archive with its independently
-verified checksum. Its result is explicitly local evidence and cannot pass the
-stable-promotion gate. See the script's `--help` for arguments. Run on an otherwise
-idle Docker host with port 8080 free; the fixture builds a small Python target and
-cleans up its owned containers. It never runs Interceptor's full test suite.
+   ```sh
+   python3 scripts/interceptor_contract.py adopt --ref <interceptor-tag-or-commit>
+   ```
+
+   This retrieves `internal/integrationcontract/contract.json` at the resolved
+   immutable commit and compares it with Operator's integration implementation.
+   It saves files only after comparison passes. A failure identifies the request,
+   response, field or operation needing attention. If Interceptor's schema
+   contradicts its implementation, correct the upstream contract before adopting
+   it; do not weaken Operator's checks to force approval.
+3. Review and commit these files together with any integration changes:
+
+   - `internal/interceptor/openapi.json`: the exact upstream file.
+   - `internal/interceptor/contract.json`: version and SHA-256 of those bytes.
+   - `release/interceptor-contract-source.json`: selection and retrieval provenance.
+
+   Run `python3 scripts/interceptor_contract.py verify --fetch` before requesting
+   merge. Use `verify` without `--fetch` to compare the committed copy offline.
+   Neither command updates an existing approval. A contract formatting change
+   changes its hash; an executable rebuild with unchanged contract bytes does not.
+4. Merge the reviewed feature PR into the candidate branch. The
+   `interceptor-contract` job retrieves the approved contract source and runs
+   comparison before the candidate can be packaged/published. It does not download
+   Interceptor binaries or run Docker campaigns. Download
+   `interceptor-contract-comparison` from that Actions run to inspect `result.json`.
+5. Wait for all candidate checks and publication to succeed. Stable promotion
+   requires the successful candidate workflow at the exact Operator source and
+   its matching, unexpired comparison artifact. A stale or failed result cannot
+   be replaced with a hand-authored pass. If the artifact expires, rerun the
+   candidate workflow. Promotion preserves existing package bytes.
+6. Merge the candidate PR into `main` through the normal promotion procedure.
+   At campaign startup, Operator compares `/v1/contract-version` against its
+   embedded version and hash. It does not require the Interceptor executable to
+   come from the source commit used to obtain the contract.
+
+The optional `scripts/qualify_interceptor_release.py` campaign regression accepts
+local archives and an explicit private `--dependencies` JSON file; see `--help`.
+The test configuration contains Interceptor `source_commit` and
+`interceptor_contract_version`, plus `harness` with `image`, `source_commit` and
+`contract` (`package_version`, `package_digest`). These identify the tested builds,
+not Operator's compatibility policy. Run on an idle Docker host with port 8080
+free. Its result cannot establish compatibility or satisfy promotion's OpenAPI
+gate; the script uses controlled local model replies without paid model calls.
 
 Operator catalog entries MUST contain `interceptor_contract_version` from every
 verified package, alongside `contract_package_version`. The first identifies the
@@ -559,8 +547,8 @@ and deployment target 15.0. No Apple SDK URL or checksum repository setting is
 needed. Keep the pinned Go version in the workflow and build script aligned.
 
 Each job builds twice and compares bytes, verifies native library requirements,
-and checks SDK initialization offline without credentials. Existing archived
-contract checks and runtime qualification remain publication gates. Linux uses
+and checks SDK initialization offline without credentials. Packaged identity
+checks and the OpenAPI comparison remain publication gates. Linux uses
 the Ubuntu 24.04 libc baseline; macOS links system libraries. The 1Password app
 supplies its desktop IPC library at runtime and is not included in the archive.
 

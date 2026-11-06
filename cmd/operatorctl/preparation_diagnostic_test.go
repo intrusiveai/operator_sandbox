@@ -28,6 +28,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
 	"github.com/intrusiveai/operator_sandbox/internal/hostrun"
 	"github.com/intrusiveai/operator_sandbox/internal/imagerelease"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/startrequest"
 	"github.com/intrusiveai/operator_sandbox/internal/workerjob"
@@ -240,10 +241,10 @@ func diagnosticFixture(t *testing.T) (hostconfig.Paths, string) {
 }
 
 func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
-	for _, fault := range []string{"image", "image-missing", "image-timeout", "attach", "contract"} {
+	for _, fault := range []string{"image", "image-missing", "image-timeout", "attach", "contract", "contract-hash"} {
 		t.Run(fault, func(t *testing.T) {
 			var requests atomic.Int64
-			if fault == "attach" || fault == "contract" {
+			if fault == "attach" || strings.HasPrefix(fault, "contract") {
 				listener, e := net.Listen("tcp4", "127.0.0.1:8080")
 				if e != nil {
 					t.Skip("controlled attachment test requires unused localhost port 8080:", e)
@@ -252,12 +253,17 @@ func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
 
 					if r.URL.Path == "/v1/contract-version" {
 						w.Header().Set("Content-Type", "application/json")
-						version := "0.1.0"
-						if fault == "contract" {
-							version = "0.2.0"
+						version := interceptor.SupportedContractVersion
+						hash := interceptor.SupportedContractSHA256
+						if fault == "contract-hash" {
+							hash = strings.Repeat("a", 64)
 							requests.Add(1)
 						}
-						fmt.Fprintf(w, `{"status":200,"session_revision":0,"body":{"interceptor_contract_version":%q}}`, version)
+						if fault == "contract" {
+							version = "9.0.0"
+							requests.Add(1)
+						}
+						fmt.Fprintf(w, `{"status":200,"session_revision":0,"body":{"interceptor_contract_version":%q,"interceptor_contract_sha256":%q}}`, version, hash)
 						return
 					}
 					requests.Add(1)
@@ -312,8 +318,12 @@ func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
 						if d.Stage != "local Harness image inspection" || !strings.Contains(d.Message, expected) {
 							t.Fatal(d)
 						}
-					} else if fault == "contract" {
-						if d.Stage != "Interceptor compatibility check" || d.Interceptor.Reason != "version_mismatch" || !strings.Contains(d.Message, "0.2.0") {
+					} else if strings.HasPrefix(fault, "contract") {
+						reason := "version_mismatch"
+						if fault == "contract-hash" {
+							reason = "hash_mismatch"
+						}
+						if d.Stage != "Interceptor compatibility check" || d.Interceptor.Reason != reason || !strings.Contains(d.Message, interceptor.SupportedContractVersion) || d.Interceptor.ExpectedSHA256 != interceptor.SupportedContractSHA256 {
 							t.Fatal(d)
 						}
 					} else if d.Stage != "Interceptor attachment" || !strings.Contains(d.Message, "HTTP 409") {
@@ -365,7 +375,7 @@ func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
 					}
 				})
 			}
-			if (fault == "attach" || fault == "contract") && requests.Load() != 2 {
+			if (fault == "attach" || strings.HasPrefix(fault, "contract")) && requests.Load() != 2 {
 				t.Fatal("attachment replayed or skipped", requests.Load())
 			}
 		})

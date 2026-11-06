@@ -111,9 +111,10 @@ class CandidateWorkflowTest(unittest.TestCase):
         inventory = {"version": context["version"], "source_commit": source,
                      "interceptor_contract_version": "0.1.0", "contract": {"package_version": contract_version, "package_digest": "sha256:" + "a" * 64},
                      "assets": {f.name: release.checksum(f) for f in files}}
-        pin = json.loads((ROOT / "release/interceptor-qualification.json").read_text())
-        pin["harness"]["contract"] = inventory["contract"]
-        inventory["qualification_dependencies"] = pin
+        pin = json.loads((ROOT / "internal/interceptor/contract.json").read_text())
+        inventory["interceptor_contract_version"] = pin["interceptor_contract_version"]
+        inventory["interceptor_contract"] = pin
+        inventory["interceptor_contract_source"] = json.loads((ROOT / "release/interceptor-contract-source.json").read_text())
         path = self.root / release.INVENTORY_ASSET
         path.write_text(json.dumps(inventory))
         files.append(path)
