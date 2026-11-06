@@ -13,6 +13,7 @@ class ToolNormalizationTest(unittest.TestCase):
                 if 'reason' in case:
                     with self.assertRaises(ContractError) as caught:p.normalize_tool_arguments(case['tool'],raw,case['context'])
                     self.assertEqual((caught.exception.reason,caught.exception.field_path),(case['reason'],case['path']))
+                    if 'correction' in case:self.assertEqual(caught.exception.correction,case['correction'])
                 else:
                     result=p.normalize_tool_arguments(case['tool'],raw,case['context'])
                     self.assertEqual(result,case['expected'])

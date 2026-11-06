@@ -1,6 +1,6 @@
 # Model tool normalization
 
-Shared package 0.6.1 defines the model interface separately from canonical host
+Shared package 0.6.2 defines the model interface separately from canonical host
 operations. Both products MUST pin its exact identity using the existing package
 and image compatibility mechanisms. Model arguments from earlier packages MUST
 NOT be accepted as a fallback. Host receipt schemas remain authoritative.
@@ -141,9 +141,18 @@ These names are shared integration conventions, not a replacement host response:
   entries carry `observation`, `kind`, `availability` and source/visibility facts.
   Retained injections carry `injection` in `injections`. Rejection does not create
   an execution handle. A receipt for unknown effects still reports unknown effects.
-- Observation reads return `observation` for exactly the verified entry/range,
-  plus availability, content/encoding, original-entry offset, raw_length, EOF,
-  truncation and continuation facts. A failed read MUST NOT mark bytes inspected.
+- Observation reads MUST return `readable_observation` for the original readable
+  handle and `citation` for exactly the verified inspected entry/range. These are
+  distinct roles, even when a complete read allows both to name the same handle.
+  Keep availability, content/encoding, original-entry offset, raw_length, EOF and
+  truncation. A failed read MUST NOT create a citation or mark bytes inspected.
+  When more bytes are available in the readable extent, return `continuation` as
+  `{"tool":"observation_read","arguments":{"observation":"<original readable handle>","offset":<next offset>,"max_bytes":<permitted chunk size>}}`.
+  The arguments MUST be directly executable in current verified state; omit
+  continuation at EOF, unavailability, or the end of the selected readable extent.
+  Do not advertise a next offset outside a range-limited handle. The model MUST
+  cite `citation`, not the unread whole-entry handle. Host wire results remain
+  unchanged; this is the shared model presentation convention.
 - Artifact publication returns `artifact`, purpose, media_type and size_bytes only
   after a successful commit. Historical append returns `record` and, for a
   hypothesis, `hypothesis` after acceptance.
@@ -158,3 +167,22 @@ These names are shared integration conventions, not a replacement host response:
 The product MUST form these presentations from verified host results and retained
 resource state. Preserve host results in evidence; remove repeated descriptors
 from ordinary model results. Model result text is not a new source of authority.
+
+
+## Correctable finalization and token admission
+
+Tool guidance MUST include the generated minimal inline finish example, optional
+structured uncertainties, allowed enum values, and the execution/observation/record
+handle distinctions. Schema failures MUST return a bounded field path and
+schema-authored expected type, missing field or enum values when available, never
+submitted values. Reference errors MUST use verified runtime categories. They
+SHOULD suggest up to three same-entry inspected handles or the required next read.
+A corrected finish uses a new call identity and MUST NOT replay completed attempts.
+
+Harness SHOULD begin finalization while the remaining token budget can fund an
+assessment request and one bounded correction opportunity, using its existing
+conversation and admission accounting. This is best effort, not a guarantee of a
+valid assessment. If the next request cannot be funded, Harness MUST use the
+structured model-token stopping report in SHARED_CONTRACT.md and an unavailable
+finish. Previous correctable errors remain separate history; no evidence-read
+counter may stand in for a model-token admission failure.

@@ -366,3 +366,20 @@ exit status, finish acceptance, causal diagnostic, forced termination and cleanu
 outcome. A recovered assessment rejection remains history; it does not explain a
 later nonzero exit. Records from older releases may lack the exit observation and
 cannot establish a zero exit.
+
+### Insufficient tokens to request the next model response
+
+A campaign can stop with tokens remaining when it cannot reserve the configured
+prompt plus completion allowance for its next model request. For example:
+
+```text
+Harness could not request another model response. Model-token allowance: 524288; consumed: 493460; remaining: 30828; required reservation: 36864. No final assessment was committed.
+```
+
+Inspect the retained `workflow_diagnostic.budget` and exported report for these
+facts. They describe local model admission, not provider throttling. Earlier
+correctable tool errors are retained separately. An accepted unavailable finish
+and successful cleanup do not establish a successful assessment. Do not replay
+completed target operations to correct a finish submission. Older archives lacking
+these facts remain readable, but their missing budget reason cannot be recovered
+from an unrelated observed/limit counter.

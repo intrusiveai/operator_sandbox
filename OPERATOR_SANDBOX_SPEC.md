@@ -1806,3 +1806,19 @@ configuration and behavior actually exercised.
 [Host profiles](HOST_RUNTIME_PROFILES.md) define supported versions, Docker/seccomp
 controls and spool rules. Runtime capability checks enforce required behavior
 without an OS/Docker version certification allowlist.
+
+### Evidence pagination, assessment correction and model-token stopping facts
+
+Operator's shared Go/Python contract MUST expose the pagination/citation conventions
+and minimal finish guidance in `schemas/MODEL_TOOL_NORMALIZATION.md` and
+`schemas/MODEL_TOOL_CATALOG.md`. Partial reads MUST NOT authorize unread citations.
+Malformed finish inputs MUST produce bounded field-specific expected-type,
+required-field or enum corrections; correcting a finish MUST NOT replay attempts.
+
+The `engine.diagnostic_report` model-token stopping form defined in
+`schemas/SHARED_CONTRACT.md` MUST survive native journaling, completion records,
+inspection, evidence export, and the CLI/Markdown failure summary. A failed next
+reservation MUST identify allowance, consumed, remaining and required reservation;
+it MUST NOT reuse evidence-byte counters or an earlier recoverable tool error as
+the terminal cause. Unavailable assessment acceptance does not establish campaign
+success, regardless of a zero Harness exit. Owned cleanup remains mandatory.

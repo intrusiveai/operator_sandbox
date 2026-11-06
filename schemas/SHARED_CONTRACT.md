@@ -7,7 +7,7 @@ reference these rules rather than define competing contracts. The
 source and package digest consumed by both products.
 
 JSON Schemas, Go/Python bindings, semantic validators and shared fixtures define
-package `0.6.1`. Section 12 defines its conformance requirements.
+package `0.6.2`. Section 12 defines its conformance requirements.
 In every attempt, `generator.release_digest` MUST equal the frozen
 `EngineContext.release.release_record_digest`. It identifies the validated
 embedded compatibility file. `release.image_digest` separately pins the harness image
@@ -49,7 +49,7 @@ GenerateContent. Their schemas, bindings and stateful checks are implemented.
 
 ## 1. One owner and one pinned package
 
-Operator owns `operator-contracts`, package version `0.6.1`, with package
+Operator owns `operator-contracts`, package version `0.6.2`, with package
 manifest schema `operator.dev/contract-package/v1alpha1`. The package contains
 closed JSON Schemas, the offline URI catalog, operation registry, semantic rules,
 Go/Python bindings and validators, and shared golden test vectors. Engine builds
@@ -674,6 +674,34 @@ Deadlines, unknown effects and loss of transport always retain independent clean
 facts, attributed to Harness. Host evidence separately establishes dispatch and
 cleanup. Operation errors may carry the shared workflow-diagnostic structure.
 Primary failures MUST survive generic worker shutdown and cleanup errors.
+
+For a failed next-model-request reservation, `stopping` MUST contain exactly:
+
+```json
+{"condition":"budget-limit","budget":{"kind":"model-tokens","total_allowance":524288,"consumed":493460,"remaining":30828,"next_request_reservation":36864}}
+```
+
+The accompanying diagnostic MUST use source `harness-local`, stage `termination`,
+reason `model_reservation_unavailable`, execution_occurred `no`, and
+resubmission_safe `false`, plus the required bounded message. Do not attach
+previous tool_name/tool_call_id, field_path, identifier or correction. Earlier
+recoverable tool rejections MUST be retained as separate diagnostic events.
+`observed_count`/`configured_limit` MUST be absent for this budget form; they remain
+required for other stopping forms. No unrelated counter fallback is permitted.
+All numeric facts MUST be JSON-safe integers. Total allowance and next reservation
+MUST be positive; consumed and remaining MUST be nonnegative, sum to the allowance,
+and remaining MUST be smaller than the next reservation. Both validators enforce
+these rules. These are Harness-attributed accounting facts, not an upstream cloud
+quota rejection or a claim of independently verified consumption.
+
+Operator MUST retain the complete structured budget in the native journal,
+completion diagnostics and projected evidence. CLI and report summaries MUST use
+these numeric facts rather than Harness prose or prior recoverable errors.
+Accepted unavailable finish, zero process exit, and completed cleanup MUST NOT
+turn token-admission failure into a successful assessed campaign. Older retained
+records without budget facts remain readable; missing facts MUST NOT be invented.
+Matching package version and digest are required through existing startup checks.
+
 
 ## 12. Go/Python conformance is part of publication
 

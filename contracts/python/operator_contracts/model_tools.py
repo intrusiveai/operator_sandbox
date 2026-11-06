@@ -58,7 +58,7 @@ def validate_tool_arguments(protocol,name,raw):
             if error.reason in ('input_depth_exceeded','direct_input_too_large','invalid_base64','content_choice','invalid_media_type','media_type_required','artifact_media_override'):raise
     try: validator.evolve(schema=branch['properties']['arguments']).validate(value)
     except ValidationError as error:
-        raise ContractError('invalid_structure: Supply the required fields with the documented types and no unknown fields.',reason='invalid_structure',field_path=schema_error_path(error),correction='Supply the required fields with the documented types and no unknown fields.') from None
+        raise schema_argument_issue(error) from None
     from .tool_normalization import check_model_content
     check_model_content(protocol, name, value)
     if name in ('reference_read','observation_read'):
@@ -70,5 +70,32 @@ def tool_guidance(protocol,name):
     document=protocol._catalog._validators[MODEL_TOOL_ARGUMENTS_SCHEMA].schema
     for branch in document['oneOf']:
         if branch['properties']['name']['const']==name:
-            return _canonical_value(dict(tool=name,description=branch['description'],arguments=branch['properties']['arguments'],guidance="Use the selected resource's details_reference for valid selectors and content. Use typed handles from corresponding verified inputs or tool results; never manufacture them. Runtime rejects invalid values before dispatch."),ORDINARY_LIMIT)
+            guide = dict(tool=name,description=branch['description'],arguments=branch['properties']['arguments'],guidance="Use the selected resource's details_reference for valid selectors and content. Use typed handles from corresponding verified inputs or tool results; never manufacture them. Runtime rejects invalid values before dispatch.")
+            if 'x-operator-guidance' in branch: guide['examples'] = deepcopy(branch['x-operator-guidance'])
+            return _canonical_value(guide,ORDINARY_LIMIT)
     require(False)
+
+
+def schema_argument_issue(error):
+    """Only schema expectations and allowlisted paths; no submitted values."""
+    import json
+    from .validation import ContractError, schema_error_path
+    while error.context: error = error.context[0]
+    path = schema_error_path(error)
+    correction = 'Correct the indicated field to match its tool schema.'
+    if error.validator == 'type':
+        kinds = error.validator_value
+        kinds = [kinds] if isinstance(kinds, str) else kinds
+        correction = 'Expected ' + ' or '.join(kinds) + '.'
+        if kinds == ['object'] and path.startswith('/uncertainties/') and path.count('/') == 2:
+            correction += ' Supply an uncertainty object with required kind and description; a plain string is not valid.'
+    elif error.validator == 'required':
+        correction = 'Supply the required field identified by field_path.'
+    elif error.validator == 'additionalProperties':
+        correction = 'Remove this unsupported field.'
+        if path == '/observations':
+            correction += ' Put inspected observation handles in objectives[i].observations or another supported assessment item, not at the top level.'
+    elif error.validator == 'enum':
+        values = json.dumps(error.validator_value, separators=(',', ':'), ensure_ascii=False)
+        if len(values.encode()) <= 384: correction = 'Allowed values: ' + values + '.'
+    return ContractError('invalid_structure: ' + correction, reason='invalid_structure', field_path=path, correction=correction)

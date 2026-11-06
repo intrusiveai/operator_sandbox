@@ -1,6 +1,6 @@
 # Ordinary campaign contract
 
-This is the ordinary campaign contract for shared package **0.6.1**.
+This is the ordinary campaign contract for shared package **0.6.2**.
 The [release contract lock](../release/contract-lock.json) identifies its exact
 source revision and package digest. Operator and Harness MUST require that
 matching identity. Transport envelopes, sequencing, deadlines, restore bindings

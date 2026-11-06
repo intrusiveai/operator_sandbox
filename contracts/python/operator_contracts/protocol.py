@@ -252,7 +252,11 @@ class Protocol:
             validate_attempt_origin(body)
         self._check_registered(operation, "request_schema", body)
         name = operation["name"]
-        if name == "engine.model_generate":
+        if name == "engine.diagnostic_report":
+            budget = body.get('stopping', {}).get('budget')
+            if budget is not None and not (budget['consumed'] <= budget['total_allowance'] and budget['remaining'] == budget['total_allowance'] - budget['consumed'] and budget['remaining'] < budget['next_request_reservation']):
+                raise ContractError('Invalid model-token accounting.', reason='invalid_budget_accounting', field_path='/stopping/budget', correction='Model tokens require consumed + remaining = total_allowance and remaining < next_request_reservation; use actual token accounting, not another budget counter.')
+        elif name == "engine.model_generate":
             model.native_request(body)
         elif name == "engine.record_append":
             check_record(body)

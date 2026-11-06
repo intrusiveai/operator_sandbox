@@ -170,8 +170,7 @@ func (p *Protocol) ValidateToolArguments(name string, raw []byte) (map[string]an
 		}
 		matched = true
 		if err := p.catalog.schemas[ModelToolArgumentsSchema].OneOf[index].Properties["arguments"].Validate(object); err != nil {
-			path, _ := SafeArgumentPath(conclusionSchemaPath(err))
-			return nil, &ArgumentError{Reason: "invalid_structure", FieldPath: path, Correction: "Supply the required fields with the documented types and no unknown fields.", Cause: ErrSchema}
+			return nil, schemaArgumentIssue(err)
 		}
 		break
 	}
@@ -210,7 +209,11 @@ func (p *Protocol) ToolGuidance(name string) ([]byte, error) {
 		branch := item.(map[string]any)
 		props := branch["properties"].(map[string]any)
 		if props["name"].(map[string]any)["const"] == name {
-			return canonicalValue(map[string]any{"tool": name, "description": branch["description"], "arguments": props["arguments"], "guidance": "Use the selected resource's details_reference for valid selectors and content. Use typed handles from corresponding verified inputs or tool results; never manufacture them. Runtime rejects invalid values before dispatch."}, OrdinaryLimit)
+			guide := map[string]any{"tool": name, "description": branch["description"], "arguments": props["arguments"], "guidance": "Use the selected resource's details_reference for valid selectors and content. Use typed handles from corresponding verified inputs or tool results; never manufacture them. Runtime rejects invalid values before dispatch."}
+			if examples, ok := branch["x-operator-guidance"]; ok {
+				guide["examples"] = examples
+			}
+			return canonicalValue(guide, OrdinaryLimit)
 		}
 	}
 	return nil, ErrProtocol

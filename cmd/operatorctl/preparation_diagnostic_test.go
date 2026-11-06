@@ -688,3 +688,31 @@ func TestModelValidationFailureForegroundAndWorkerOutput(t *testing.T) {
 	}
 	t.Log(stderr)
 }
+
+func TestTokenBudgetFailureForegroundAndWorkerOutput(t *testing.T) {
+	dir, paths, deps, _ := startFixture(t)
+	detail := campaign.NewWorkflowDiagnostic("local-report", "harness-local", "termination", "model_reservation_unavailable", "", "", "")
+	detail.Stopping = "budget-limit"
+	detail.Budget = &contracts.ModelTokenBudget{Kind: "model-tokens", TotalAllowance: 524288, Consumed: 493460, Remaining: 30828, NextRequestReservation: 36864}
+	detail.HostFinalized = true
+	detail.CleanupCompleted = true
+	d := &hostrun.PreparationDiagnostic{Stage: "Harness termination", Message: detail.Message(), Workflow: detail}
+	deps.run = func(context.Context, string, string, string) (workerjob.Result, error) {
+		return workerjob.Result{Code: "execution_failed", Diagnostic: d, CompletionRecording: "recorded"}, detail
+	}
+	code, _, stderr := invokeStart(t, context.Background(), "start", []string{"--run", dir}, paths, deps)
+	if code != 1 {
+		t.Fatal(code, stderr)
+	}
+	for _, want := range []string{"Campaign execution failed", "Model-token allowance: 524288; consumed: 493460; remaining: 30828; required reservation: 36864.", "No final assessment was committed.", "No target attempt was dispatched.", "Assessment accepted: false", "Cleanup completed: true", "Execution will not resume."} {
+		if !strings.Contains(stderr, want) {
+			t.Fatalf("missing %q: %s", want, stderr)
+		}
+	}
+	var supervised bytes.Buffer
+	printWorkerFailure(&supervised, "execution_failed", d, "recorded")
+	if supervised.String() != stderr {
+		t.Fatal("foreground/supervised mismatch")
+	}
+	t.Log(stderr)
+}

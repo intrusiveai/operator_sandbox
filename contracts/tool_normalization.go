@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -159,7 +160,7 @@ func (n *toolNormalizer) resource(h any, kind, path string, observed, live bool)
 		n.fail("stale_handle", path, "Refresh the resource in the current target binding; do not replay prior effects.")
 	}
 	if observed && (!r.Available || !r.Inspected) {
-		n.fail("evidence_not_inspected", path, "Read the available observation completely or cite its verified inspected range; unread/unavailable evidence may only describe a gap.")
+		n.fail("evidence_not_inspected", path, n.inspectionCorrection(r))
 	}
 	if kind == "artifact" && !r.Available {
 		n.fail("unavailable_artifact", path, "Use an available committed artifact handle.")
@@ -585,7 +586,7 @@ func (n *toolNormalizer) normalize(name string, a map[string]any) map[string]any
 			}
 			remaining := number(extent["offset"]) + number(extent["length"]) - number(out["offset"])
 			if number(out["offset"]) < number(extent["offset"]) || remaining <= 0 {
-				n.fail("range_exceeded", "/offset", "Read within this handle range or select the whole-entry handle.")
+				n.fail("range_exceeded", "/offset", fmt.Sprintf("This handle permits offsets [%d,%d). Read within that range; for further pages use continuation.arguments with the original readable handle.", number(extent["offset"]), number(extent["offset"])+number(extent["length"])))
 			}
 			if number(out["max_bytes"]) > remaining {
 				out["max_bytes"] = json.Number(fmt.Sprint(remaining))
@@ -764,4 +765,23 @@ func checkPublishedContent(a map[string]any) error {
 		}
 	}
 	return nil
+}
+
+// Suggest only verified same-entry inspected resources, never identifier prefixes.
+func (n *toolNormalizer) inspectionCorrection(r ToolResource) string {
+	candidates := []string{}
+	for h, v := range n.ctx.Resources {
+		if len(h) <= 64 && validModelIdentity(h) && v.Kind == "observation" && v.CampaignID == n.ctx.CampaignID && v.Available && v.Inspected && textField(v.Value, "entry_id") != "" && textField(v.Value, "entry_id") == textField(r.Value, "entry_id") && textField(v.Value, "attempt_receipt_id") == textField(r.Value, "attempt_receipt_id") {
+			candidates = append(candidates, h)
+		}
+	}
+	sort.Strings(candidates)
+	if len(candidates) > 3 {
+		candidates = candidates[:3]
+	}
+	if len(candidates) > 0 {
+		raw, _ := json.Marshal(candidates)
+		return "Cite inspected ranges from this entry: " + string(raw) + ". These do not establish inspection of unread bytes."
+	}
+	return "No inspected citation for this entry is available. Call observation_read with the original readable handle, then cite the returned citation handle; follow continuation.arguments for additional pages."
 }

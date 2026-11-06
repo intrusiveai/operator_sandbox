@@ -110,8 +110,7 @@ func (c *Catalog) Validate(id string, raw []byte, maximum int) (any, error) {
 		case NativeModelResultSchema, EngineModelGenerateResultSchema:
 			return nil, modelSchemaError(err, "")
 		}
-		path, _ := SafeArgumentPath(conclusionSchemaPath(err))
-		return nil, &ArgumentError{Reason: "invalid_structure", FieldPath: path, Correction: "Supply the required fields with the documented types and no unknown fields.", Cause: ErrSchema}
+		return nil, schemaArgumentIssue(err)
 	}
 	return value, nil
 }

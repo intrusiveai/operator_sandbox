@@ -138,9 +138,9 @@ def build():
       ('artifact_publish','Publish large or reusable content. Supply exactly one of json, text, base64. Returns a committed artifact handle; use direct content for ordinary invocations.',upload,publish),
       ('attempt_execute','Invoke a permitted operation with exactly one of json, text, base64, artifact. scenario requires scenario_id; exploratory forbids it. JSON media is application/json; text defaults text/plain; base64 requires media_type; artifact forbids it. parent is an execution handle. Nonempty setup requires injection; injection/retention require setup. Omitted observations selects all permitted feedback.',['engine.attempt_execute'],attempt),
       ('injection_delete','Remove an injection using its returned injection handle; does not reverse committed mutations.',['engine.injection_delete'],object_schema(dict(injection=handle))),
-      ('observation_read','Inspect feedback using a returned observation handle. offset defaults to 0, max_bytes to 4096. Cite returned inspected-range handles; listed evidence is not yet inspected.',['engine.observation_read'],observation),
+      ('observation_read','Read feedback with the readable handle. Page with continuation.arguments; cite citation for inspected bytes only. offset defaults to 0, max_bytes to 4096.',['engine.observation_read'],observation),
       ('record_append','Optional historical assertion: kind selects flattened fields. Progress assessment requires interpretation, confidence, assurance and assessment_summary together; gaps only with assessment. Use returned typed handles.',['engine.record_append'],records),
-      ('finish','Finish once: finish_reason plus inline summary/objectives, or artifact, or unavailable_reason. No assessment wrapper. Cite inspected observations; execution receipts are derived. Optional lists default empty, status partial. Local labels allow forward references. Acceptance starts finalization, not proof of cleanup.',['engine.finish'],finish),
+      ('finish','Finish; acceptance starts cleanup. Minimal: {"finish_reason":"no-useful-next-experiment","summary":"No tests ran.","objectives":[]}. attempts=execution handles; records=historical records only. uncertainties=[{"kind":"evidence-gap","description":"..."}]. No top-level observations. Correct without replay. artifact or unavailable_reason replaces inline fields.',['engine.finish'],finish),
       ('restore_request','Restore a returned snapshot handle. Success skips later calls in this model response.',['engine.restore_request'],snapshot),
       ('snapshot_request','Create a checkpoint; label and description optional. Returned handle status distinguishes identity from readiness.',['engine.snapshot_request'],load('engine-snapshot-request')),
       ('snapshot_list','List campaign checkpoints; optional session handle and pagination.',['engine.snapshot_list'],snapshot_list),
@@ -167,6 +167,21 @@ def build():
             return {k:compact_json(x) for k,x in v.items()}
         provider=compact_json(provider)
         provider=openai_parameters(name,provider)
+        if name == 'finish':
+            branch['x-operator-guidance'] = {
+                'minimal_inline_example': {'finish_reason':'no-useful-next-experiment','summary':'Not tested.','objectives':[{'objective_id':'objective-id','outcome':'not-tested','summary':'No attempt ran.'}]},
+                'example_identity_note': 'Replace objective-id with a submitted objective ID and choose outcomes from observed facts. Handles in examples illustrate returned handles; never invent them.',
+                'optional_uncertainty_example': {'uncertainties':[{'kind':'evidence-gap','description':'Only part of the response was inspected.'}]},
+                'uncertainty_kinds': item('uncertainties')['properties']['kind']['enum'],
+                'objective_outcomes': item('objectives')['properties']['outcome']['enum'],
+                'finish_reasons': finish_host['finish_reason']['enum'],
+                'assessment_statuses': assessment['status']['enum'],
+                'handles': {'attempts':'Execution handles returned after dispatch; rejected submissions have none.', 'observations':'Inspected citation handles returned by observation_read, inside supported assessment items; no top-level observations.', 'records':'Historical record handles from accepted record_append only, never executions or artifacts.'},
+                'correction': 'Correct a rejected finish with a new call; do not replay completed target operations. Omit optional reporting collections when unnecessary.'}
+        if name == 'observation_read':
+            branch['x-operator-guidance'] = {
+                'pagination_example': {'request': {'observation':'observation-7','offset':0,'max_bytes':4096}, 'result_handles': {'readable_observation':'observation-7','citation':'observation-7-range-0-4096','continuation':{'tool':'observation_read','arguments':{'observation':'observation-7','offset':4096,'max_bytes':4096}}}, 'next_request':{'observation':'observation-7','offset':4096,'max_bytes':4096}, 'finish_objective_citation':{'observations':['observation-7-range-0-4096']}},
+                'rules': 'Use the returned continuation verbatim. readable_observation remains readable, citation represents only verified inspected bytes. continuation is absent at EOF or when no readable bytes remain. A partial read never makes a whole-observation citation valid. Example handles must be replaced with actual returned handles.'}
         branch['x-operator-provider-parameters']=provider
         branch['description']=description+' Runtime enforces identifier and content limits. Advanced guidance: tool-guide:'+name+'.';branch['x-operator-required-operations']=sorted(operations);branches.append(branch)
     return {'$schema':'https://json-schema.org/draft/2020-12/schema','$id':ID,

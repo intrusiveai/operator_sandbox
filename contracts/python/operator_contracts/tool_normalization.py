@@ -3,6 +3,7 @@ Harness, never decoded from model arguments; host authorization remains separate
 """
 from copy import deepcopy
 import hashlib
+import json
 from .canonical import _canonical_value
 from .validation import ContractError, ORDINARY_LIMIT
 from .simple import resolve_direct_input, validate_attempt_origin
@@ -82,6 +83,19 @@ class _Normalizer:
         if not isinstance(ctx,dict) or any(not isinstance(ctx.get(k),str) or not re.fullmatch('[A-Za-z0-9][A-Za-z0-9._:-]{0,127}',ctx[k]) for k in ('campaign_id','call_id')):
             issue('invalid_resolution_context','','Supply the verified campaign and stable native call identity.')
         if not isinstance(ctx.get('resources',{}),dict) or len(ctx.get('resources',{}))>4096:issue('invalid_resolution_context','','Supply a bounded verified resource map.')
+    def inspection_correction(self, resource):
+        import re
+        value = resource.get('value', {})
+        candidates = sorted(h for h, r in self.ctx.get('resources', {}).items()
+            if re.fullmatch('[A-Za-z0-9][A-Za-z0-9._:-]{0,63}', h)
+            and r.get('kind') == 'observation' and r.get('campaign_id') == self.ctx['campaign_id']
+            and r.get('available') and r.get('inspected') and r.get('value', {}).get('entry_id')
+            and r['value'].get('entry_id') == value.get('entry_id')
+            and r['value'].get('attempt_receipt_id') == value.get('attempt_receipt_id'))[:3]
+        if candidates:
+            return 'Cite inspected ranges from this entry: ' + json.dumps(candidates, separators=(',', ':')) + '. These do not establish inspection of unread bytes.'
+        return 'No inspected citation for this entry is available. Call observation_read with the original readable handle, then cite the returned citation handle; follow continuation.arguments for additional pages.'
+
     def identity(self,path):
         return 'generated-'+hashlib.sha256((self.ctx['campaign_id']+'\n'+self.ctx['call_id']+'\n'+path).encode()).hexdigest()[:32]
     def resource(self,h,kind,path,observed=False,live=False):
@@ -90,7 +104,7 @@ class _Normalizer:
         if r.get('kind')!=kind:issue('wrong_handle_kind',path,'Use a returned '+kind+' handle; other resource categories cannot substitute for it.')
         if r.get('campaign_id')!=self.ctx['campaign_id']:issue('foreign_handle',path,'Select a resource from this campaign.')
         if live and r.get('live') is not True:issue('stale_handle',path,'Refresh the resource in the current target binding; do not replay prior effects.')
-        if observed and (r.get('available') is not True or r.get('inspected') is not True):issue('evidence_not_inspected',path,'Read the available observation completely or cite its verified inspected range; unread/unavailable evidence may only describe a gap.')
+        if observed and (r.get('available') is not True or r.get('inspected') is not True):issue('evidence_not_inspected',path,self.inspection_correction(r))
         if kind=='artifact' and r.get('available') is not True:issue('unavailable_artifact',path,'Use an available committed artifact handle.')
         if not isinstance(r.get('value'),dict):issue('invalid_resolution_context',path,'Supply the verified canonical resource fields.')
         import re
@@ -253,7 +267,7 @@ class _Normalizer:
             else:out['reference_id']=r.get('reference_id');self.paths['/reference_id']='/reference'
             if 'range' in r:
                 extent=r['range'];remaining=extent['offset']+extent['length']-out['offset']
-                if out['offset']<extent['offset'] or remaining<=0:issue('range_exceeded','/offset','Read within this handle range or select the whole-entry handle.')
+                if out['offset']<extent['offset'] or remaining<=0:issue('range_exceeded','/offset',f"This handle permits offsets [{extent['offset']},{extent['offset']+extent['length']}). Read within that range; for further pages use continuation.arguments with the original readable handle.")
                 out['max_bytes']=min(out['max_bytes'],remaining)
             return out
         if name=='injection_delete':
