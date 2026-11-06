@@ -944,8 +944,11 @@ original target binding and do not charge or execute again.
 
 For model calls, also retain the exact engine-visible and canonical provider-bound
 request bodies, bounded validated successful provider response and exact normalized
-successful guest response, codec/profile/model, usage and timing. Failed or invalid
-provider bodies MUST be replaced by a bounded selected diagnostic, as defined in
+successful guest response, codec/profile/model, usage and timing. A complete bounded
+HTTP-200 response rejected by validation MUST be retained as credential-redacted,
+private administrator evidence marked rejected and untrusted. It MUST NOT become
+usable model output. Retain the stable validation rule, stage and safe field path,
+and explicit reasons for unavailable evidence or omitted paths, as defined in
 [model failure diagnostics](docs/MODEL_SERVICE.md#model-failure-diagnostics).
 Foreground output, failed start completion, inspection and report/export MUST
 expose the same selected failure facts. HTTP rejections MUST include bounded,

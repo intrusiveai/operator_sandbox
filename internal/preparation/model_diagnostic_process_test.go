@@ -165,8 +165,11 @@ func TestPythonProcessModelDiagnosticInspectionAndExport(t *testing.T) {
 				_, e = campaign.Inspect(r.root, "campaign-1", func(event campaign.Event) error {
 					if event.Kind == "model.exchange" {
 						count++
-						if len(event.Content) != 0 {
-							t.Fatal("failed provider body retained")
+						if status == 400 && len(event.Content) != 0 {
+							t.Fatal("HTTP error body retained")
+						}
+						if status == 200 && (len(event.Content) != 1 || event.Content[0].Role != "provider-response-rejected-untrusted") {
+							t.Fatal("rejected response evidence missing")
 						}
 					}
 					return nil
@@ -249,7 +252,7 @@ func TestPythonProcessModelDiagnosticInspectionAndExport(t *testing.T) {
 									t.Fatal("export removed numeric diagnostic", path)
 								}
 							}
-							for _, secret := range []string{"synthetic-provider-key", "synthetic-private-header", "synthetic-private-body"} {
+							for _, secret := range []string{"synthetic-provider-key", "synthetic-private-header"} {
 								if bytes.Contains(b, []byte(secret)) {
 									t.Fatal("export leaked secret", path)
 								}
@@ -272,7 +275,7 @@ func TestPythonProcessModelDiagnosticInspectionAndExport(t *testing.T) {
 					if err != nil {
 						return err
 					}
-					for _, secret := range []string{"synthetic-provider-key", "synthetic-private-header", "synthetic-private-body"} {
+					for _, secret := range []string{"synthetic-provider-key", "synthetic-private-header"} {
 						if bytes.Contains(b, []byte(secret)) {
 							t.Fatal("retained secret", path)
 						}

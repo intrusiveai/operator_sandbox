@@ -1,6 +1,9 @@
 package contracts
 
-import "unicode/utf8"
+import (
+	"strconv"
+	"unicode/utf8"
+)
 
 const responsesCodec = "openai-responses-text-tools-v1"
 
@@ -25,30 +28,33 @@ func responsesToolsOK(tools []any) bool {
 	return true
 }
 func responsesItemsOK(items []any, complete bool) bool {
+	return responsesItemsError(items, complete) == nil
+}
+func responsesItemsError(items []any, complete bool) error {
 	ids, calls := map[string]bool{}, map[string]bool{}
-	for _, v := range items {
+	for i, v := range items {
 		item := v.(map[string]any)
 		if id, ok := item["id"].(string); ok {
 			if ids[id] {
-				return false
+				return modelValidation("semantics", "duplicate_output_identity", "/response/output/"+strconv.Itoa(i)+"/id")
 			}
 			ids[id] = true
 		}
 		if complete && item["status"] != nil && item["status"] != "completed" {
-			return false
+			return modelValidation("semantics", "inconsistent_stop_reason", "/response/output/"+strconv.Itoa(i)+"/status")
 		}
 		if complete && item["type"] == "reasoning" && item["encrypted_content"] == nil {
-			return false
+			return modelValidation("semantics", "invalid_reasoning_content", "/response/output/"+strconv.Itoa(i)+"/encrypted_content")
 		}
 		if item["type"] == "function_call" {
 			id := item["call_id"].(string)
 			if calls[id] {
-				return false
+				return modelValidation("semantics", "duplicate_tool_call_identity", "/response/output/"+strconv.Itoa(i)+"/call_id")
 			}
 			calls[id] = true
 		}
 	}
-	return true
+	return nil
 }
 func responsesRefusal(items []any) bool {
 	for _, v := range items {
@@ -110,45 +116,48 @@ func responsesMetrics(response map[string]any) ModelMetrics {
 	return m
 }
 func responsesResponseOK(response map[string]any) bool {
+	return responsesResponseError(response) == nil
+}
+func responsesResponseError(response map[string]any) error {
 	if responsesRefusal(response["output"].([]any)) && len(responsesCalls(response["output"].([]any))) > 0 {
-		return false
+		return modelValidation("semantics", "inconsistent_stop_reason", "/response/output")
 	}
 	complete := response["status"] == "completed"
-	if !responsesItemsOK(response["output"].([]any), complete) {
-		return false
+	if err := responsesItemsError(response["output"].([]any), complete); err != nil {
+		return err
 	}
 	if complete && (response["error"] != nil || response["incomplete_details"] != nil) {
-		return false
+		return modelValidation("semantics", "inconsistent_stop_reason", "/response/status")
 	}
 	if response["status"] == "failed" && response["error"] == nil {
-		return false
+		return modelValidation("semantics", "inconsistent_stop_reason", "/response/error")
 	}
 	if response["status"] != "failed" && response["error"] != nil {
-		return false
+		return modelValidation("semantics", "inconsistent_stop_reason", "/response/error")
 	}
 	if response["status"] == "incomplete" && response["incomplete_details"] == nil {
-		return false
+		return modelValidation("semantics", "inconsistent_stop_reason", "/response/incomplete_details")
 	}
 	if response["status"] != "incomplete" && response["incomplete_details"] != nil {
-		return false
+		return modelValidation("semantics", "inconsistent_stop_reason", "/response/incomplete_details")
 	}
 	if usage, ok := response["usage"].(map[string]any); ok {
 		m := responsesMetrics(response)
 		if m.InputTokens+m.OutputTokens != m.TotalTokens {
-			return false
+			return modelValidation("semantics", "usage_invalid", "/response/usage/total_tokens")
 		}
 		if detail, ok := usage["input_tokens_details"].(map[string]any); ok {
 			if optionalModelNumber(detail, "cached_tokens") > m.InputTokens || optionalModelNumber(detail, "cache_write_tokens") > m.InputTokens {
-				return false
+				return modelValidation("semantics", "usage_invalid", "/response/usage/input_tokens_details")
 			}
 		}
 		if detail, ok := usage["output_tokens_details"].(map[string]any); ok {
 			if optionalModelNumber(detail, "reasoning_tokens") > m.OutputTokens {
-				return false
+				return modelValidation("semantics", "usage_invalid", "/response/usage/output_tokens_details")
 			}
 		}
 	}
-	return true
+	return nil
 }
 func responsesPolicyOK(policy, request map[string]any) bool {
 	return responsesRequestOK(request) && responsesToolsOK(policy["tools"].([]any)) && len(policy["prompt"].(string)) <= 128<<10 &&
@@ -156,19 +165,25 @@ func responsesPolicyOK(policy, request map[string]any) bool {
 		modelToolsEqual(request["reasoning"], policy["reasoning"]) && modelToolsEqual(request["tools"], policy["tools"])
 }
 func responsesCorrelationOK(request, response map[string]any) bool {
-	if !responsesRequestOK(request) || !responsesResponseOK(response) {
-		return false
+	return responsesCorrelationError(request, response) == nil
+}
+func responsesCorrelationError(request, response map[string]any) error {
+	if !responsesRequestOK(request) {
+		return modelValidation("correlation", "request_response_mismatch", "/request")
+	}
+	if err := responsesResponseError(response); err != nil {
+		return err
 	}
 	m := responsesMetrics(response)
 	if m.Known && m.OutputTokens > number(request["max_output_tokens"]) {
-		return false
+		return modelValidation("correlation", "completion_allowance_exceeded", "/response/usage/output_tokens")
 	}
 	if request["tool_choice"] == "none" && m.ToolCalls > 0 {
-		return false
+		return modelValidation("correlation", "tools_not_requested", "/response/output")
 	}
 	for _, key := range []string{"instructions", "max_output_tokens", "tool_choice"} {
 		if value, ok := response[key]; ok && value != nil && !modelToolsEqual(value, request[key]) {
-			return false
+			return modelValidation("correlation", "request_response_mismatch", "/response/"+key)
 		}
 	}
 	if tools, ok := response["tools"].([]any); ok {
@@ -185,14 +200,14 @@ func responsesCorrelationOK(request, response map[string]any) bool {
 			echo[i] = tool
 		}
 		if !modelToolsEqual(echo, request["tools"]) {
-			return false
+			return modelValidation("correlation", "request_response_mismatch", "/response/tools")
 		}
 	}
 	if selected, ok := request["reasoning"].(map[string]any); ok {
 		if actual, ok := response["reasoning"].(map[string]any); ok {
 			for key, value := range selected {
 				if value != nil && !modelToolsEqual(value, actual[key]) {
-					return false
+					return modelValidation("correlation", "request_response_mismatch", "/response/reasoning")
 				}
 			}
 		}
@@ -210,13 +225,13 @@ func responsesCorrelationOK(request, response map[string]any) bool {
 	for _, v := range response["output"].([]any) {
 		item := v.(map[string]any)
 		if id, ok := item["id"].(string); ok && ids[id] {
-			return false
+			return modelValidation("correlation", "historical_tool_call_identity", "/response/output")
 		}
 		if item["type"] == "function_call" && calls[item["call_id"].(string)] {
-			return false
+			return modelValidation("correlation", "historical_tool_call_identity", "/response/output")
 		}
 	}
-	return true
+	return nil
 }
 func responsesDisposition(response map[string]any) string {
 	if response["usage"] == nil {

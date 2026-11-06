@@ -105,37 +105,38 @@ func bedrockMetrics(response map[string]any) ModelMetrics {
 	m.TotalTokens = m.InputTokens + m.OutputTokens
 	return m
 }
-func bedrockResponseOK(response map[string]any) bool {
+func bedrockResponseOK(response map[string]any) bool { return bedrockResponseError(response) == nil }
+func bedrockResponseError(response map[string]any) error {
 	content := bedrockMessage(response)["content"].([]any)
 	if !bedrockContentOK(content) {
-		return false
+		return modelValidation("semantics", "invalid_reasoning_content", "/response/output/message/content")
 	}
 	calls := bedrockCalls(content)
 	seen := map[string]bool{}
 	for _, v := range calls {
 		id := v.(map[string]any)["toolUseId"].(string)
 		if seen[id] {
-			return false
+			return modelValidation("semantics", "duplicate_tool_call_identity", "/response/output/message/content")
 		}
 		seen[id] = true
 	}
 	finish := response["stopReason"]
 	if finish == "tool_use" && len(calls) == 0 {
-		return false
+		return modelValidation("semantics", "inconsistent_stop_reason", "/response/stopReason")
 	}
 	if (finish == "end_turn" || finish == "stop_sequence") && len(calls) > 0 {
-		return false
+		return modelValidation("semantics", "inconsistent_stop_reason", "/response/stopReason")
 	}
 	m := bedrockMetrics(response)
 	if m.TotalTokens > MaxSafeInteger {
-		return false
+		return modelValidation("semantics", "usage_invalid", "/response/usage")
 	}
 	if usage, ok := response["usage"].(map[string]any); ok {
 		// Cache-inclusive accounting is authoritative even when native totalTokens
 		// summarizes only uncached input plus output. Never charge both totals.
 		total := number(usage["totalTokens"])
 		if total != m.TotalTokens && total != number(usage["inputTokens"])+m.OutputTokens {
-			return false
+			return modelValidation("semantics", "usage_invalid", "/response/usage/totalTokens")
 		}
 		if details, ok := usage["cacheDetails"].([]any); ok {
 			var sum int64
@@ -144,7 +145,7 @@ func bedrockResponseOK(response map[string]any) bool {
 				detail := v.(map[string]any)
 				ttl := detail["ttl"].(string)
 				if ttl <= last {
-					return false
+					return modelValidation("semantics", "usage_invalid", "/response/usage/cacheDetails")
 				}
 				last = ttl
 				sum += number(detail["inputTokens"])
@@ -154,11 +155,11 @@ func bedrockResponseOK(response map[string]any) bool {
 				write = number(v)
 			}
 			if sum != write {
-				return false
+				return modelValidation("semantics", "usage_invalid", "/response/usage/cacheDetails")
 			}
 		}
 	}
-	return true
+	return nil
 }
 func bedrockPolicyOK(policy, request map[string]any) bool {
 	if !bedrockRequestOK(request) || !bedrockToolsOK(policy["tools"].([]any)) || len(policy["prompt"].(string)) > 128<<10 ||
@@ -171,15 +172,21 @@ func bedrockPolicyOK(policy, request map[string]any) bool {
 	return true
 }
 func bedrockCorrelationOK(request, response map[string]any) bool {
-	if !bedrockRequestOK(request) || !bedrockResponseOK(response) {
-		return false
+	return bedrockCorrelationError(request, response) == nil
+}
+func bedrockCorrelationError(request, response map[string]any) error {
+	if !bedrockRequestOK(request) {
+		return modelValidation("correlation", "request_response_mismatch", "/request")
+	}
+	if err := bedrockResponseError(response); err != nil {
+		return err
 	}
 	m := bedrockMetrics(response)
 	if m.Known && m.OutputTokens > number(request["inferenceConfig"].(map[string]any)["maxTokens"]) {
-		return false
+		return modelValidation("correlation", "completion_allowance_exceeded", "/response/usage/outputTokens")
 	}
 	if request["toolConfig"] == nil && m.ToolCalls > 0 {
-		return false
+		return modelValidation("correlation", "tools_not_requested", "/response")
 	}
 	seen := map[string]bool{}
 	for _, v := range request["messages"].([]any) {
@@ -189,10 +196,10 @@ func bedrockCorrelationOK(request, response map[string]any) bool {
 	}
 	for _, c := range bedrockCalls(bedrockMessage(response)["content"].([]any)) {
 		if seen[c.(map[string]any)["toolUseId"].(string)] {
-			return false
+			return modelValidation("correlation", "historical_tool_call_identity", "/response")
 		}
 	}
-	return true
+	return nil
 }
 func bedrockDisposition(response map[string]any) string {
 	if response["usage"] == nil {

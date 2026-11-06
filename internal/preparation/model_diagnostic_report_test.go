@@ -107,28 +107,38 @@ func (f diagnosticProviderFunc) Generate(ctx context.Context, raw []byte) ([]byt
 }
 
 func TestModelFailureSurvivesJournalWriteFailure(t *testing.T) {
-	policy, request, _ := modelFixture(t)
-	var writer *campaign.Writer
-	calls := 0
-	d := modelprovider.Diagnostic{Provider: "openai-chat", Model: "test-model", HTTPStatus: 503}.WithFailure("http_rejection", "http_rejected")
-	provider := diagnosticProviderFunc(func(context.Context, []byte) ([]byte, error) {
-		calls++
-		if e := writer.Close(); e != nil {
-			t.Fatal(e)
-		}
-		return nil, modelprovider.FailureError(d)
-	})
-	s, _, _, w, launch := serviceWithSettings(t, 0, []string{"engine.model_generate"}, func(c *campaignservice.Config) {
-		c.Model = &campaignservice.ModelConfig{Provider: provider, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
-	})
-	writer = w
-	if e := s.Admit(context.Background(), launch); e != nil {
-		t.Fatal(e)
-	}
-	request["request"].(map[string]any)["messages"].([]any)[0].(map[string]any)["content"] = string(launch.Prompt)
-	_, err := s.Handle(context.Background(), stateWire("engine.model_generate", "model-1", 1, request), 0)
-	d.OperationID = "model-1"
-	if modelprovider.Details(err) == nil || *modelprovider.Details(err) != d || s.ModelFailure() == nil || *s.ModelFailure() != d || calls != 1 {
-		t.Fatal("primary diagnostic lost", err, s.ModelFailure())
+	for _, category := range []string{"http_rejection", "response_validation"} {
+		t.Run(category, func(t *testing.T) {
+			policy, request, _ := modelFixture(t)
+			var writer *campaign.Writer
+			calls := 0
+			d := modelprovider.Diagnostic{Provider: "openai-chat", Model: "test-model", HTTPStatus: 503}.WithFailure("http_rejection", "http_rejected")
+			if category == "response_validation" {
+				d.HTTPStatus = 200
+				d = d.WithFailure("response_validation", "inconsistent_stop_reason")
+				d.ValidationStage, d.FieldPath = "semantics", "/response/choices/0/finish_reason"
+			}
+			provider := diagnosticProviderFunc(func(context.Context, []byte) ([]byte, error) {
+				calls++
+				if e := writer.Close(); e != nil {
+					t.Fatal(e)
+				}
+				return nil, modelprovider.FailureError(d)
+			})
+			s, _, _, w, launch := serviceWithSettings(t, 0, []string{"engine.model_generate"}, func(c *campaignservice.Config) {
+				c.Model = &campaignservice.ModelConfig{Provider: provider, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
+			})
+			writer = w
+			if e := s.Admit(context.Background(), launch); e != nil {
+				t.Fatal(e)
+			}
+			request["request"].(map[string]any)["messages"].([]any)[0].(map[string]any)["content"] = string(launch.Prompt)
+			_, err := s.Handle(context.Background(), stateWire("engine.model_generate", "model-1", 1, request), 0)
+			d.OperationID = "model-1"
+			d.RejectedResponse = modelprovider.RejectedResponse{State: "unconfirmed", Omission: "retention_failed"}
+			if modelprovider.Details(err) == nil || *modelprovider.Details(err) != d || s.ModelFailure() == nil || *s.ModelFailure() != d || calls != 1 {
+				t.Fatal("primary diagnostic lost", err, s.ModelFailure())
+			}
+		})
 	}
 }

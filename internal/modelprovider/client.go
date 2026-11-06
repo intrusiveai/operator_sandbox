@@ -127,7 +127,15 @@ func (c *Client) Generate(ctx context.Context, raw []byte) ([]byte, error) {
 
 // GenerateWithMetadata returns only selected response facts, including on HTTP
 // success so subsequent contract-validation failures can retain their provenance.
-func (c *Client) GenerateWithMetadata(ctx context.Context, raw []byte) (body []byte, observed Diagnostic, callErr error) {
+func (c *Client) GenerateWithMetadata(ctx context.Context, raw []byte) ([]byte, Diagnostic, error) {
+	body, observed, _, err := c.GenerateWithEvidence(ctx, raw)
+	return body, observed, err
+}
+
+// GenerateWithEvidence keeps a separate private audit copy for subsequent host
+// rejection. Even when that copy exists, errors return no usable response body.
+func (c *Client) GenerateWithEvidence(ctx context.Context, raw []byte) (body []byte, observed Diagnostic, evidence ResponseEvidence, callErr error) {
+	evidence.Omission = "no_complete_response"
 	ctx, cancel := context.WithTimeout(ctx, 120*time.Second)
 	// Defer order matters: classify the observed failure before our own cleanup
 	// cancels the context, so cleanup cannot turn a rejection into cancellation.
@@ -158,15 +166,15 @@ func (c *Client) GenerateWithMetadata(ctx context.Context, raw []byte) (body []b
 		}
 	}()
 	if c == nil || ctx.Err() != nil {
-		return nil, observed, ErrRequest
+		return nil, observed, evidence, ErrRequest
 	}
 	value, err := contracts.Decode(raw, contracts.OrdinaryLimit)
 	native, ok := value.(map[string]any)
 	if err != nil || !ok {
-		return nil, observed, ErrRequest
+		return nil, observed, evidence, ErrRequest
 	}
 	if err = c.checkNative(native); err != nil {
-		return nil, observed, err
+		return nil, observed, evidence, err
 	}
 
 	category, reason = "credential_preparation", "credential_unavailable"
@@ -178,7 +186,7 @@ func (c *Client) GenerateWithMetadata(ctx context.Context, raw []byte) (body []b
 		} else {
 			resolved, err := c.resolver.Resolve(ctx, c.profile.CredentialID)
 			if err != nil {
-				return nil, observed, err
+				return nil, observed, evidence, err
 			}
 			token = resolved.Value
 		}
@@ -195,22 +203,22 @@ func (c *Client) GenerateWithMetadata(ctx context.Context, raw []byte) (body []b
 	} else if c.googleBearer != nil {
 		token, quota, err = c.googleBearer(ctx)
 		if err != nil {
-			return nil, observed, err
+			return nil, observed, evidence, err
 		}
 	} else if c.bearer != nil {
 		token, err = c.bearer(ctx)
 		if err != nil {
-			return nil, observed, err
+			return nil, observed, evidence, err
 		}
 	}
 	if (c.sign == nil && c.profile.Authentication != "none" && token == "") || len(token) > 1<<20 || strings.ContainsAny(token, "\x00\r\n") || ctx.Err() != nil {
-		return nil, observed, ErrProvider
+		return nil, observed, evidence, ErrProvider
 	}
 	// A non-rewindable reader plus disabled keepalive/redirects prevents net/http
 	// from replaying a possibly sent request. No caller-supplied header is accepted.
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.profile.Endpoint, io.NopCloser(bytes.NewReader(raw)))
 	if err != nil {
-		return nil, observed, ErrRequest
+		return nil, observed, evidence, ErrRequest
 	}
 	req.ContentLength = int64(len(raw))
 	req.Header.Set("Content-Type", "application/json")
@@ -220,7 +228,7 @@ func (c *Client) GenerateWithMetadata(ctx context.Context, raw []byte) (body []b
 	if c.sign != nil {
 		signedSecrets, err = c.sign(ctx, req, raw)
 		if err != nil {
-			return nil, observed, ErrProvider
+			return nil, observed, evidence, ErrProvider
 		}
 	} else if token != "" {
 		req.Header.Set(header, prefix+token)
@@ -234,48 +242,69 @@ func (c *Client) GenerateWithMetadata(ctx context.Context, raw []byte) (body []b
 	category, reason = "connection", "no_response"
 	response, err := c.http.Do(req)
 	if err != nil {
-		return nil, observed, err
+		return nil, observed, evidence, err
 	}
 	defer response.Body.Close()
 	secrets := diagnosticSecrets(req, token, signedSecrets)
 	observed = responseMetadata(c.profile.Provider, c.profile.Model, response, secrets)
 	if response.StatusCode != http.StatusOK {
+		evidence.Omission = "http_rejection"
 		category, reason = "http_rejection", "http_rejected"
 		observed.readErrorDetails(response, c.profile.MaximumResponseBytes, secrets)
 		// The observed rejection remains primary even if reading its optional error
 		// body times out or fails. Do not recategorize it as a no-response failure.
 		observed = observed.WithFailure(category, reason)
-		return nil, observed, FailureError(observed)
+		return nil, observed, evidence, FailureError(observed)
 	}
 	category, reason = "response_validation", "response_too_large"
 	if response.ContentLength > c.profile.MaximumResponseBytes {
-		return nil, observed, ErrProvider
+		evidence.Omission = "response_too_large"
+		return nil, observed, evidence, ErrProvider
 	}
-	category, reason = "response_validation", "invalid_media_type"
-	media, _, err := mime.ParseMediaType(response.Header.Get("Content-Type"))
+	media, _, mediaErr := mime.ParseMediaType(response.Header.Get("Content-Type"))
 	encoding := response.Header.Get("Content-Encoding")
-	if err != nil || media != "application/json" || (encoding != "" && encoding != "identity") {
-		return nil, observed, ErrProvider
+	if encoding != "" && encoding != "identity" {
+		category, reason = "response_validation", "invalid_media_type"
+		evidence.Omission = "unsupported_encoding"
+		return nil, observed, evidence, ErrProvider
 	}
 	category, reason = "response_read", "read_failed"
 	result, err := io.ReadAll(io.LimitReader(response.Body, c.profile.MaximumResponseBytes+1))
 	if err != nil {
-		return nil, observed, err
+		return nil, observed, evidence, err
 	}
 	if ctx.Err() != nil {
-		return nil, observed, ctx.Err()
+		return nil, observed, evidence, ctx.Err()
 	}
 	category, reason = "response_validation", "response_too_large"
 	if int64(len(result)) > c.profile.MaximumResponseBytes {
-		return nil, observed, ErrProvider
+		evidence.Omission = "response_too_large"
+		return nil, observed, evidence, ErrProvider
+	}
+	evidence = privateResponse(result, secrets)
+	if mediaErr != nil || media != "application/json" {
+		category, reason = "response_validation", "invalid_media_type"
+		return nil, observed, evidence, ErrProvider
 	}
 	category, reason = "response_validation", "invalid_json"
 	if resultValue, err := contracts.Decode(result, contracts.OrdinaryLimit); err != nil {
-		return nil, observed, ErrProvider
+		observed.ValidationStage = "decoding"
+		var argument *contracts.ArgumentError
+		if errors.As(err, &argument) {
+			observed = observed.WithValidation(err)
+			reason = observed.Reason
+		}
+		if errors.Is(err, contracts.ErrLimit) {
+			reason = "response_encoding_limit"
+		}
+		return nil, observed, evidence, ErrProvider
 	} else if _, ok := resultValue.(map[string]any); !ok {
-		return nil, observed, ErrProvider
+		reason = "unsupported_response_structure"
+		observed.ValidationStage = "schema"
+		observed.FieldPath = "/response"
+		return nil, observed, evidence, ErrProvider
 	}
-	return result, observed, nil
+	return result, observed, evidence, nil
 }
 
 func (c *Client) checkNative(m map[string]any) error {
