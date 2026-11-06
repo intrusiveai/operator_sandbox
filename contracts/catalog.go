@@ -104,6 +104,12 @@ func (c *Catalog) Validate(id string, raw []byte, maximum int) (any, error) {
 		return nil, err
 	}
 	if err = schema.Validate(value); err != nil {
+		switch id {
+		case OpenaiChatResponseSchema, OpenaiResponsesResponseSchema, AnthropicMessagesResponseSchema, BedrockConverseResponseSchema, GeminiResponseSchema:
+			return nil, modelSchemaError(err, "/response")
+		case NativeModelResultSchema, EngineModelGenerateResultSchema:
+			return nil, modelSchemaError(err, "")
+		}
 		path, _ := SafeArgumentPath(conclusionSchemaPath(err))
 		return nil, &ArgumentError{Reason: "invalid_structure", FieldPath: path, Correction: "Supply the required fields with the documented types and no unknown fields.", Cause: ErrSchema}
 	}

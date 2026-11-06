@@ -118,7 +118,7 @@ func (p *Protocol) ValidateModelExchange(policyRaw, requestRaw, resultRaw []byte
 	raw, _ := json.Marshal(expected)
 	v, _ := Decode(raw, OrdinaryLimit)
 	if !wireEqual(b, v) {
-		return nil, ErrProtocol
+		return nil, modelValidation("context_budget", "context_budget_mismatch", "/context_budget")
 	}
 	return result, nil
 }

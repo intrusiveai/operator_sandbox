@@ -120,38 +120,39 @@ func geminiMetrics(response map[string]any) ModelMetrics {
 	}
 	return m
 }
-func geminiResponseOK(response map[string]any) bool {
+func geminiResponseOK(response map[string]any) bool { return geminiResponseError(response) == nil }
+func geminiResponseError(response map[string]any) error {
 	candidate := geminiCandidate(response)
 	if geminiBlocked(response) {
 		if candidate != nil {
-			return false
+			return modelValidation("semantics", "inconsistent_stop_reason", "/response/promptFeedback")
 		}
 	} else if candidate == nil || response["modelVersion"] == nil {
-		return false
+		return modelValidation("semantics", "unsupported_response_structure", "/response/candidates")
 	}
 	parts := geminiParts(response)
 	if !geminiPartsOK(parts) {
-		return false
+		return modelValidation("semantics", "invalid_reasoning_content", "/response/candidates/0/content/parts")
 	}
 	if candidate != nil && candidate["finishReason"] == "STOP" && candidate["content"] == nil {
-		return false
+		return modelValidation("semantics", "inconsistent_stop_reason", "/response/candidates/0/finishReason")
 	}
 	seen := map[string]bool{}
 	for _, v := range geminiCalls(parts) {
 		if id, ok := v.(map[string]any)["id"].(string); ok {
 			if seen[id] {
-				return false
+				return modelValidation("semantics", "duplicate_tool_call_identity", "/response/candidates/0/content/parts")
 			}
 			seen[id] = true
 		}
 	}
 	m := geminiMetrics(response)
 	if m.TotalTokens > MaxSafeInteger {
-		return false
+		return modelValidation("semantics", "usage_invalid", "/response/usageMetadata")
 	}
 	if usage, ok := response["usageMetadata"].(map[string]any); ok {
 		if number(usage["totalTokenCount"]) != m.TotalTokens || optionalModelNumber(usage, "cachedContentTokenCount") > m.InputTokens {
-			return false
+			return modelValidation("semantics", "usage_invalid", "/response/usageMetadata")
 		}
 		for _, pair := range [][2]string{{"promptTokensDetails", "promptTokenCount"}, {"cacheTokensDetails", "cachedContentTokenCount"}, {"candidatesTokensDetails", "candidatesTokenCount"}} {
 			if details, ok := usage[pair[0]].([]any); ok {
@@ -160,12 +161,12 @@ func geminiResponseOK(response map[string]any) bool {
 					sum += number(d.(map[string]any)["tokenCount"])
 				}
 				if sum != optionalModelNumber(usage, pair[1]) {
-					return false
+					return modelValidation("semantics", "usage_invalid", "/response/usageMetadata/"+pair[0])
 				}
 			}
 		}
 	}
-	return true
+	return nil
 }
 func geminiPolicyOK(policy, request map[string]any) bool {
 	config := request["generationConfig"].(map[string]any)
@@ -175,15 +176,21 @@ func geminiPolicyOK(policy, request map[string]any) bool {
 		modelToolsEqual(request["tools"], policy["tools"])
 }
 func geminiCorrelationOK(request, response map[string]any) bool {
-	if !geminiRequestOK(request) || !geminiResponseOK(response) {
-		return false
+	return geminiCorrelationError(request, response) == nil
+}
+func geminiCorrelationError(request, response map[string]any) error {
+	if !geminiRequestOK(request) {
+		return modelValidation("correlation", "request_response_mismatch", "/request")
+	}
+	if err := geminiResponseError(response); err != nil {
+		return err
 	}
 	m := geminiMetrics(response)
 	if m.Known && m.OutputTokens > number(request["generationConfig"].(map[string]any)["maxOutputTokens"]) {
-		return false
+		return modelValidation("correlation", "completion_allowance_exceeded", "/response/usageMetadata")
 	}
 	if (geminiMode(request) == "NONE" || len(request["tools"].([]any)) == 0) && m.ToolCalls > 0 {
-		return false
+		return modelValidation("correlation", "tools_not_requested", "/response")
 	}
 	seen := map[string]bool{}
 	for _, v := range request["contents"].([]any) {
@@ -195,10 +202,10 @@ func geminiCorrelationOK(request, response map[string]any) bool {
 	}
 	for _, c := range geminiCalls(geminiParts(response)) {
 		if id, ok := c.(map[string]any)["id"].(string); ok && seen[id] {
-			return false
+			return modelValidation("correlation", "historical_tool_call_identity", "/response")
 		}
 	}
-	return true
+	return nil
 }
 func geminiDisposition(response map[string]any) string {
 	if response["usageMetadata"] == nil {

@@ -156,7 +156,8 @@ func chatRequestOK(request map[string]any) bool {
 	}
 	return len(pending) == 0
 }
-func chatResponseOK(response map[string]any) bool {
+func chatResponseOK(response map[string]any) bool { return chatResponseError(response) == nil }
+func chatResponseError(response map[string]any) error {
 	choice := response["choices"].([]any)[0].(map[string]any)
 	message := choice["message"].(map[string]any)
 	calls := chatCalls(message)
@@ -164,21 +165,21 @@ func chatResponseOK(response map[string]any) bool {
 	for _, value := range calls {
 		id := value.(map[string]any)["id"].(string)
 		if seen[id] {
-			return false
+			return modelValidation("semantics", "duplicate_tool_call_identity", "/response/choices/0/message/tool_calls")
 		}
 		seen[id] = true
 	}
 	finish := choice["finish_reason"].(string)
 	if finish == "tool_calls" && (len(calls) == 0 || message["refusal"] != nil) {
-		return false
+		return modelValidation("semantics", "inconsistent_stop_reason", "/response/choices/0/finish_reason")
 	}
 	if finish == "stop" && len(calls) > 0 {
-		return false
+		return modelValidation("semantics", "inconsistent_stop_reason", "/response/choices/0/finish_reason")
 	}
 	if usage, ok := response["usage"].(map[string]any); ok {
 		prompt, completion := number(usage["prompt_tokens"]), number(usage["completion_tokens"])
 		if prompt+completion != number(usage["total_tokens"]) {
-			return false
+			return modelValidation("semantics", "usage_invalid", "/response/usage/total_tokens")
 		}
 		for _, field := range []struct {
 			group, name string
@@ -188,37 +189,43 @@ func chatResponseOK(response map[string]any) bool {
 		} {
 			if detail, ok := usage[field.group].(map[string]any); ok {
 				if n, present := detail[field.name]; present && number(n) > field.maximum {
-					return false
+					return modelValidation("semantics", "usage_invalid", "/response/usage/"+field.group+"/"+field.name)
 				}
 			}
 		}
 	}
-	return true
+	return nil
 }
 func modelCorrelationOK(body, result map[string]any) bool {
+	return modelCorrelationError(body, result) == nil
+}
+func modelCorrelationError(body, result map[string]any) error {
 	for _, key := range []string{"codec_id", "profile_id", "profile_digest"} {
 		if body[key] != result[key] {
-			return false
+			return modelValidation("correlation", "request_response_mismatch", "/"+key)
 		}
 	}
 	request, response := body["request"].(map[string]any), result["response"].(map[string]any)
 	if body["codec_id"] == anthropicCodec {
-		return anthropicCorrelationOK(request, response)
+		return anthropicCorrelationError(request, response)
 	}
 	if body["codec_id"] == bedrockCodec {
-		return bedrockCorrelationOK(request, response)
+		return bedrockCorrelationError(request, response)
 	}
 	if body["codec_id"] == geminiCodec {
-		return geminiCorrelationOK(request, response)
+		return geminiCorrelationError(request, response)
 	}
 	if body["codec_id"] == responsesCodec {
-		return responsesCorrelationOK(request, response)
+		return responsesCorrelationError(request, response)
 	}
-	if !chatRequestOK(request) || !chatResponseOK(response) {
-		return false
+	if !chatRequestOK(request) {
+		return modelValidation("correlation", "request_response_mismatch", "/request")
+	}
+	if err := chatResponseError(response); err != nil {
+		return err
 	}
 	if usage, ok := response["usage"].(map[string]any); ok && number(usage["completion_tokens"]) > number(request["max_completion_tokens"]) {
-		return false
+		return modelValidation("correlation", "completion_allowance_exceeded", "/response/usage/completion_tokens")
 	}
 	seen := map[string]bool{}
 	for _, value := range request["messages"].([]any) {
@@ -228,14 +235,14 @@ func modelCorrelationOK(body, result map[string]any) bool {
 	}
 	calls := chatCalls(response["choices"].([]any)[0].(map[string]any)["message"].(map[string]any))
 	if request["tool_choice"] == "none" && len(calls) > 0 {
-		return false
+		return modelValidation("correlation", "tools_not_requested", "/response/choices/0/message/tool_calls")
 	}
 	for _, call := range calls {
 		if seen[call.(map[string]any)["id"].(string)] {
-			return false
+			return modelValidation("correlation", "historical_tool_call_identity", "/response/choices/0/message/tool_calls")
 		}
 	}
-	return true
+	return nil
 }
 
 // ValidateModelRequest binds a request BODY to trusted installed policy. Policy
@@ -299,11 +306,16 @@ func (p *Protocol) ValidateNativeModelExchange(policyRaw, requestRaw, resultRaw 
 	}
 	value, err := p.catalog.Validate(NativeModelResultSchema, resultRaw, OrdinaryLimit)
 	if err != nil {
+		// Resolve the selected codec's schema path only on failure; successful
+		// responses need no second structural validation pass.
+		if detail := p.validateNativeResponseShape(body["codec_id"].(string), resultRaw); detail != nil {
+			return nil, detail
+		}
 		return nil, err
 	}
 	result := value.(map[string]any)
-	if !modelCorrelationOK(body, result) {
-		return nil, ErrProtocol
+	if err = modelCorrelationError(body, result); err != nil {
+		return nil, err
 	}
 	if body["codec_id"] == bedrockCodec {
 		return result, nil
@@ -322,7 +334,10 @@ func (p *Protocol) ValidateNativeModelExchange(policyRaw, requestRaw, resultRaw 
 			return result, nil
 		}
 	}
-	return nil, ErrProtocol
+	if body["codec_id"] == geminiCodec {
+		return nil, modelValidation("correlation", "response_model_mismatch", "/response/modelVersion")
+	}
+	return nil, modelValidation("correlation", "response_model_mismatch", "/response/model")
 }
 
 // ModelDisposition does not authorize dispatch. Validate the bound exchange and
@@ -334,31 +349,31 @@ func (p *Protocol) ModelDisposition(resultRaw []byte) (string, error) {
 	}
 	response := value.(map[string]any)["response"].(map[string]any)
 	if value.(map[string]any)["codec_id"] == responsesCodec {
-		if !responsesResponseOK(response) {
-			return "", ErrProtocol
+		if err := responsesResponseError(response); err != nil {
+			return "", err
 		}
 		return responsesDisposition(response), nil
 	}
 	if value.(map[string]any)["codec_id"] == geminiCodec {
-		if !geminiResponseOK(response) {
-			return "", ErrProtocol
+		if err := geminiResponseError(response); err != nil {
+			return "", err
 		}
 		return geminiDisposition(response), nil
 	}
 	if value.(map[string]any)["codec_id"] == bedrockCodec {
-		if !bedrockResponseOK(response) {
-			return "", ErrProtocol
+		if err := bedrockResponseError(response); err != nil {
+			return "", err
 		}
 		return bedrockDisposition(response), nil
 	}
 	if value.(map[string]any)["codec_id"] == anthropicCodec {
-		if !anthropicResponseOK(response) {
-			return "", ErrProtocol
+		if err := anthropicResponseError(response); err != nil {
+			return "", err
 		}
 		return anthropicDisposition(response), nil
 	}
-	if !chatResponseOK(response) {
-		return "", ErrProtocol
+	if err := chatResponseError(response); err != nil {
+		return "", err
 	}
 	return chatDisposition(response), nil
 }

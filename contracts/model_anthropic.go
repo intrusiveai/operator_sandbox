@@ -102,49 +102,58 @@ func anthropicMetrics(response map[string]any) ModelMetrics {
 	return m
 }
 func anthropicResponseOK(response map[string]any) bool {
+	return anthropicResponseError(response) == nil
+}
+func anthropicResponseError(response map[string]any) error {
 	seen := map[string]bool{}
 	calls := anthropicCalls(response["content"])
 	for _, v := range calls {
 		id := v.(map[string]any)["id"].(string)
 		if seen[id] {
-			return false
+			return modelValidation("semantics", "duplicate_tool_call_identity", "/response/content")
 		}
 		seen[id] = true
 	}
 	finish := response["stop_reason"]
 	refused := response["stop_details"] != nil || finish == "refusal"
 	if finish == "tool_use" && (len(calls) == 0 || refused) {
-		return false
+		return modelValidation("semantics", "inconsistent_stop_reason", "/response/stop_reason")
 	}
 	if (finish == "end_turn" || refused) && len(calls) > 0 {
-		return false
+		return modelValidation("semantics", "inconsistent_stop_reason", "/response/stop_reason")
 	}
 	m := anthropicMetrics(response)
 	if m.TotalTokens > MaxSafeInteger {
-		return false
+		return modelValidation("semantics", "usage_invalid", "/response/usage")
 	}
 	if usage, ok := response["usage"].(map[string]any); ok {
 		if detail, ok := usage["cache_creation"].(map[string]any); ok {
 			if usage["cache_creation_input_tokens"] == nil || number(detail["ephemeral_1h_input_tokens"])+number(detail["ephemeral_5m_input_tokens"]) != number(usage["cache_creation_input_tokens"]) {
-				return false
+				return modelValidation("semantics", "usage_invalid", "/response/usage/cache_creation")
 			}
 		}
 		if detail, ok := usage["output_tokens_details"].(map[string]any); ok && number(detail["thinking_tokens"]) > m.OutputTokens {
-			return false
+			return modelValidation("semantics", "usage_invalid", "/response/usage/output_tokens_details/thinking_tokens")
 		}
 	}
-	return true
+	return nil
 }
 func anthropicCorrelationOK(request, response map[string]any) bool {
-	if !anthropicRequestOK(request) || !anthropicResponseOK(response) {
-		return false
+	return anthropicCorrelationError(request, response) == nil
+}
+func anthropicCorrelationError(request, response map[string]any) error {
+	if !anthropicRequestOK(request) {
+		return modelValidation("correlation", "request_response_mismatch", "/request")
+	}
+	if err := anthropicResponseError(response); err != nil {
+		return err
 	}
 	m := anthropicMetrics(response)
 	if m.Known && m.OutputTokens > number(request["max_tokens"]) {
-		return false
+		return modelValidation("correlation", "completion_allowance_exceeded", "/response/usage/output_tokens")
 	}
 	if request["tool_choice"].(map[string]any)["type"] == "none" && m.ToolCalls > 0 {
-		return false
+		return modelValidation("correlation", "tools_not_requested", "/response")
 	}
 	seen := map[string]bool{}
 	for _, v := range request["messages"].([]any) {
@@ -154,10 +163,10 @@ func anthropicCorrelationOK(request, response map[string]any) bool {
 	}
 	for _, c := range anthropicCalls(response["content"]) {
 		if seen[c.(map[string]any)["id"].(string)] {
-			return false
+			return modelValidation("correlation", "historical_tool_call_identity", "/response")
 		}
 	}
-	return true
+	return nil
 }
 func anthropicPolicyOK(policy, request map[string]any) bool {
 	return anthropicRequestOK(request) && anthropicToolsOK(policy["tools"].([]any)) && request["model"] == policy["request_model"] &&

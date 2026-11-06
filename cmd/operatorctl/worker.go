@@ -65,6 +65,9 @@ func printWorkerFailure(w io.Writer, code string, d *hostrun.PreparationDiagnost
 			fmt.Fprintln(w, "Details:", d.HarnessExit.Details)
 		}
 		if d.Model.Valid() {
+			if detail := d.Model.ValidationDetailsText(); detail != "" {
+				fmt.Fprintln(w, detail)
+			}
 			if details := d.Model.UsageDetailsText(); details != "" {
 				fmt.Fprintln(w, details)
 			}

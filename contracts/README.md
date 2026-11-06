@@ -206,3 +206,9 @@ validation alone cannot admit campaign execution.
 Runtime callers MUST also enforce durable admission, receipt identity, accounting,
 deadlines and cleanup. Component validation alone does not authorize a target
 effect or establish container confinement.
+
+Go model validation returns `ModelValidationError` for native response schema,
+semantic and correlation failures. Its stable reason/stage and bounded field path
+are administrator diagnostic facts; raw provider values are excluded. Error detail
+is additive: Go/Python acceptance rules and the model-operation wire envelopes
+remain unchanged. Both products still require the exact released package identity.

@@ -74,8 +74,8 @@ func (p *Protocol) ModelUsage(raw []byte) (ModelMetrics, error) {
 		return ModelMetrics{}, err
 	}
 	body := v.(map[string]any)
-	if !nativeResponseOK(body) {
-		return ModelMetrics{}, ErrProtocol
+	if err := nativeResponseError(body); err != nil {
+		return ModelMetrics{}, err
 	}
 	response := body["response"].(map[string]any)
 	if body["codec_id"] == anthropicCodec {

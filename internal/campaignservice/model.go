@@ -107,7 +107,12 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 	var response []byte
 	var observed modelprovider.Diagnostic
 	var callErr error
+	evidence := modelprovider.ResponseEvidence{Omission: "provider_evidence_unavailable"}
 	if provider, ok := s.config.Model.Provider.(interface {
+		GenerateWithEvidence(context.Context, []byte) ([]byte, modelprovider.Diagnostic, modelprovider.ResponseEvidence, error)
+	}); ok {
+		response, observed, evidence, callErr = provider.GenerateWithEvidence(ctx, request)
+	} else if provider, ok := s.config.Model.Provider.(interface {
 		GenerateWithMetadata(context.Context, []byte) ([]byte, modelprovider.Diagnostic, error)
 	}); ok {
 		response, observed, callErr = provider.GenerateWithMetadata(ctx, request)
@@ -133,6 +138,8 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 		}
 		if observed.Category == "http_rejection" {
 			outcome = "http-rejected"
+		} else if observed.Category == "response_validation" {
+			outcome = "invalid-response"
 		}
 	} else if len(response) > campaign.MaxContentBytes {
 		outcome = "invalid-response"
@@ -154,10 +161,12 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 	var toolCalls int64
 	if failureCode == "" {
 		if _, err = s.target().Protocol().ValidateNativeModelExchange(s.model.policy, q.Body, body); err != nil {
-			reason = "contract_invalid"
+			observed = observed.WithValidation(err)
+			reason = observed.Reason
 			failureCode, effect = "INTERNAL_ERROR", "known"
 		} else if usage, usageErr := s.target().Protocol().ModelUsage(body); usageErr != nil {
-			reason = "usage_invalid"
+			observed = observed.WithValidation(usageErr)
+			reason = observed.Reason
 			failureCode, effect = "INTERNAL_ERROR", "known"
 		} else if !usage.Known {
 			reason = "usage_unknown"
@@ -175,7 +184,8 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 				_, err = s.target().Protocol().ValidateModelExchange(s.model.policy, q.Body, body)
 			}
 			if err != nil {
-				reason = "contract_invalid"
+				observed = observed.WithValidation(err)
+				reason = observed.Reason
 				failureCode, effect = "INTERNAL_ERROR", "known"
 			}
 		}
@@ -193,17 +203,41 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 		if !observed.Valid() {
 			observed = modelprovider.Diagnostic{OperationID: q.ID}.WithFailure("unknown", "provider_failed")
 		}
+		// Rejected bytes use a separate content role and can never enter the
+		// successful result or be delivered to Harness. Headers are excluded.
+		response = nil
+		if len(evidence.Body) > 0 && len(evidence.Body) <= campaign.MaxContentBytes {
+			response = evidence.Body
+			observed.RejectedResponse = modelprovider.RejectedResponse{State: "retained", Digest: contracts.RawDigest(response), SizeBytes: int64(len(response)), Redacted: evidence.Redacted}
+		} else {
+			omission := evidence.Omission
+			if len(evidence.Body) > campaign.MaxContentBytes {
+				omission = "response_too_large"
+			}
+			if omission == "" {
+				omission = "provider_evidence_unavailable"
+			}
+			observed.RejectedResponse = modelprovider.RejectedResponse{State: "omitted", Omission: omission}
+		}
 		s.modelDiagnostic.CompareAndSwap(nil, &observed)
 		metadata["diagnostic"] = observed
 		primary = modelprovider.FailureError(observed)
-		// Never store unvalidated or failed provider bodies, including echoed secrets.
-		response = nil
 	}
 	entry := campaign.Entry{RunRevision: q.Revision, Kind: "model.exchange", Metadata: marshal(metadata)}
 	if len(response) > 0 {
-		entry.Content = []campaign.Content{{Role: "provider-response", MediaType: "application/json", Bytes: response}}
+		role := "provider-response"
+		if failureCode != "" {
+			role = "provider-response-rejected-untrusted"
+		}
+		entry.Content = []campaign.Content{{Role: role, MediaType: "application/json", Bytes: response}}
 	}
 	if _, err = s.writer.AppendStored(entry, reservation, true); err != nil {
+		if primary != nil {
+			failed := observed
+			failed.RejectedResponse = modelprovider.RejectedResponse{State: "unconfirmed", Omission: "retention_failed"}
+			s.modelDiagnostic.CompareAndSwap(&observed, &failed)
+			primary = modelprovider.FailureError(failed)
+		}
 		return stateReply{}, errors.Join(primary, err)
 	}
 	if failureCode != "" {

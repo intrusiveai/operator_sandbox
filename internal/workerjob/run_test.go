@@ -405,3 +405,38 @@ func TestAttemptTimeoutCompletionPreservesPrimaryCause(t *testing.T) {
 		t.Fatal(disk, err)
 	}
 }
+
+func TestValidationDiagnosticSurvivesCompletionAndForcedExit(t *testing.T) {
+	for _, failWrite := range []bool{false, true} {
+		saved, inputs := jobFixture(t)
+		r := saved.Request
+		d := modelprovider.Diagnostic{Provider: "bedrock-converse", Model: "mistral-fixture", OperationID: "model-1", HTTPStatus: 200}.WithValidation(&contracts.ModelValidationError{Stage: "semantics", Reason: "inconsistent_stop_reason", FieldPath: "/response/stopReason"})
+		d.RequestID = "5ff57339-db46-44e9-83b1-ac71d7bcce27"
+		d.RejectedResponse = modelprovider.RejectedResponse{State: "retained", Digest: contracts.RawDigest([]byte("private evidence")), SizeBytes: 16, Redacted: true}
+		inputs.run.modelDiagnostic = &d
+		inputs.run.harnessExit = &campaign.HarnessExit{Outcome: "failed", ExitObserved: true, ExitCode: 137, Forced: true, WorkerCause: "model_failure", Cause: d.Summary(), StderrState: "empty", CleanupComplete: true, Details: "campaign journal event launch.exit"}
+		secondary := errors.New("subsequent forced exit")
+		inputs.run.runError = errors.Join(modelprovider.FailureError(d), secondary)
+		inputs.run.check = func() {
+			if failWrite {
+				if err := os.WriteFile(filepath.Join(r.StateRoot, "starts", r.Selection.StartRequestID, "completion.json.pending"), []byte("interrupted"), 0600); err != nil {
+					t.Fatal(err)
+				}
+			}
+		}
+		load := func(context.Context, startrequest.Request) (verifiedInputs, error) { return inputs, nil }
+		result, err := run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", load)
+		if result.Code != "execution_failed" || result.Diagnostic == nil || result.Diagnostic.Model != d || result.Diagnostic.Message != d.Summary() || result.Diagnostic.HarnessExit.ExitCode != 137 || !errors.Is(err, secondary) || modelprovider.Details(err) == nil || inputs.run.runs != 1 {
+			t.Fatal(result, err)
+		}
+		if (result.CompletionRecording == "unconfirmed") != failWrite {
+			t.Fatal(result)
+		}
+		if !failWrite {
+			disk, err := startrequest.Read(r.StateRoot, r.Selection.StartRequestID)
+			if err != nil || disk.Completion == nil || disk.Completion.Diagnostic == nil || *disk.Completion.Diagnostic != *result.Diagnostic {
+				t.Fatal("durable usage lost", disk, err)
+			}
+		}
+	}
+}
