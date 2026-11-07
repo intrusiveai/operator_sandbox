@@ -4,10 +4,12 @@ This is the authoritative Operator-owned contract for shared wire semantics,
 identity, startup, manifest delivery and completion. Component specifications MUST
 reference these rules rather than define competing contracts. The
 [release contract lock](../release/contract-lock.json) identifies the exact
-source and package digest consumed by both products.
+contract version and exact AsyncAPI document hash consumed by both products.
 
-JSON Schemas, Go/Python bindings, semantic validators and shared fixtures define
-package `0.6.1`. Section 12 defines its conformance requirements.
+The self-contained [AsyncAPI document](asyncapi.json) defines interface `0.7.0`.
+JSON Schema 2020-12 payloads and explicit semantic extensions describe its messages
+and stateful obligations. Go/Python bindings and shared fixtures verify conformance;
+their source bytes are not compatibility identity. See [conformance](../docs/CONTRACT_CONFORMANCE.md).
 In every attempt, `generator.release_digest` MUST equal the frozen
 `EngineContext.release.release_record_digest`. It identifies the validated
 embedded compatibility file. `release.image_digest` separately pins the harness image
@@ -49,12 +51,12 @@ GenerateContent. Their schemas, bindings and stateful checks are implemented.
 
 ## 1. One owner and one pinned package
 
-Operator owns `operator-contracts`, package version `0.6.1`, with package
-manifest schema `operator.dev/contract-package/v1alpha1`. The package contains
+Operator owns interface version `0.7.0`, distributed in `operator-contracts` with
+package manifest format `operator.dev/contract-package/v2`. The package contains
 closed JSON Schemas, the offline URI catalog, operation registry, semantic rules,
-Go/Python bindings and validators, and shared golden test vectors. Engine builds
-pin the exact package version and content digest; the installed Operator broker
-must support that exact digest. No runtime negotiation, network schema fetching,
+Go/Python bindings and validators, and shared golden test vectors. Both products pin `info.version` and SHA-256 of the exact `asyncapi.json` bytes.
+Existing `package_version` / `package_digest` fields carry that pair. Operator
+source revisions and implementation-package hashes are not counterpart restrictions. No runtime negotiation, network schema fetching,
 unknown-field tolerance or silent fallback is needed in this MVP.
 
 Package version and individual message versions are separate. Keep the current
@@ -66,10 +68,11 @@ a running campaign never changes its contract package.
 The package manifest contains `api_version`, `package_version`, sorted file
 inventory (relative path, byte length, raw digest), schema catalog identity,
 operation-registry identity and semantic-profile identities. Exclude the package
-manifest and signatures from the inventory they bind. The package content digest
-is the canonical digest of that manifest payload. The host-only
+manifest and signatures from the inventory they bind. The manifest independently checks installation integrity. The compatibility hash
+is SHA-256 of exact `asyncapi.json` bytes, including whitespace; it is not a
+canonicalized object or package manifest hash. The host-only
 [embedded compatibility record](ENGINE_RELEASE_CONTRACT.md) binds this package
-digest and required Operator/runtime/platform compatibility. The independently
+digest and required runtime/platform compatibility. The independently
 resolved local Docker image ID binds the embedded record bytes.
 Operator and the engine consume their installed package copies.
 
@@ -79,6 +82,7 @@ filenames compatible with the offline catalog loader:
 ```text
 operator-contracts/
   package.json
+  asyncapi.json
   catalog.json
   operations.json
   *.schema.json
@@ -675,6 +679,34 @@ facts, attributed to Harness. Host evidence separately establishes dispatch and
 cleanup. Operation errors may carry the shared workflow-diagnostic structure.
 Primary failures MUST survive generic worker shutdown and cleanup errors.
 
+For a failed next-model-request reservation, `stopping` MUST contain exactly:
+
+```json
+{"condition":"budget-limit","budget":{"kind":"model-tokens","total_allowance":524288,"consumed":493460,"remaining":30828,"next_request_reservation":36864}}
+```
+
+The accompanying diagnostic MUST use source `harness-local`, stage `termination`,
+reason `model_reservation_unavailable`, execution_occurred `no`, and
+resubmission_safe `false`, plus the required bounded message. Do not attach
+previous tool_name/tool_call_id, field_path, identifier or correction. Earlier
+recoverable tool rejections MUST be retained as separate diagnostic events.
+`observed_count`/`configured_limit` MUST be absent for this budget form; they remain
+required for other stopping forms. No unrelated counter fallback is permitted.
+All numeric facts MUST be JSON-safe integers. Total allowance and next reservation
+MUST be positive; consumed and remaining MUST be nonnegative, sum to the allowance,
+and remaining MUST be smaller than the next reservation. Both validators enforce
+these rules. These are Harness-attributed accounting facts, not an upstream cloud
+quota rejection or a claim of independently verified consumption.
+
+Operator MUST retain the complete structured budget in the native journal,
+completion diagnostics and projected evidence. CLI and report summaries MUST use
+these numeric facts rather than Harness prose or prior recoverable errors.
+Accepted unavailable finish, zero process exit, and completed cleanup MUST NOT
+turn token-admission failure into a successful assessed campaign. Older retained
+records without budget facts remain readable; missing facts MUST NOT be invented.
+Matching package version and digest are required through existing startup checks.
+
+
 ## 12. Go/Python conformance is part of publication
 
 The release is not 'locked' merely because JSON files exist. Check in one set of
@@ -725,12 +757,16 @@ containment, real-provider behavior or Operator runtime implementation.
 
 ## 13. Package distribution
 
-The [release contract lock](../release/contract-lock.json) pins the shared package
-source, version, catalog, registry and complete content identity. The package
-contains these semantic documents as well as schemas, Go/Python validators and
-shared fixtures. Documentation changes therefore also change its digest.
-Both products MUST consume the same exact package. Distribution MUST run the
-Section 12 conformance checks and package verification before admitting a build.
+The [release contract lock](../release/contract-lock.json) pins only the AsyncAPI
+interface version and SHA-256 of its exact bytes. The distribution contains the
+document, schema projections, Go/Python validators, explanatory documentation and
+shared fixtures. Those distribution files have independent inventory hashes;
+implementation, test and documentation edits do not change compatibility identity.
+Both products MUST conform to the same approved interface, without requiring equal
+source revisions or implementation trees. Distribution MUST run the Section 12
+conformance checks and package verification before admitting a build. Interface
+changes require reviewed generation and a coordinated new identity as described
+in [contract conformance](../docs/CONTRACT_CONFORMANCE.md).
 
 [Harness execution rules](HARNESS_EXECUTION_RULES.md),
 [attempt bookkeeping](ATTEMPT_BOOKKEEPING_CONTRACT.md) and

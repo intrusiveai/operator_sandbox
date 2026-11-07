@@ -36,8 +36,9 @@ func TestSimplePythonSpoolAndSeparateCLI(t *testing.T) {
 	if out, e := build.CombinedOutput(); e != nil {
 		t.Fatal(e, string(out))
 	}
-	for _, mode := range []string{"direct", "corrected", "qa-corrected", "invalid-limit"} {
+	for _, mode := range []string{"direct", "corrected", "qa-corrected", "invalid-limit", "pagination-corrected", "budget-001", "budget-002"} {
 		t.Run(mode, func(t *testing.T) {
+			budgetMode := strings.HasPrefix(mode, "budget-")
 			var root string
 			operations := append(append([]string{}, completionRoutes...), "engine.attempt_execute", "engine.observation_read", "engine.diagnostic_report")
 			s, p, _, w, launch := serviceWithTemplate(t, 0, operations, func(c *campaignservice.Config) { root = c.StateRoot }, func(v map[string]any) {
@@ -145,6 +146,10 @@ func TestSimplePythonSpoolAndSeparateCLI(t *testing.T) {
 						if len(result.WorkflowDiagnostics) != 1 || result.WorkflowDiagnostics[0].Stopping != "invalid-call-limit" || len(result.Attempts) != 0 {
 							t.Fatal(result)
 						}
+					} else if budgetMode {
+						if len(result.WorkflowDiagnostics) != 2 || result.WorkflowDiagnostics[1].Budget == nil || result.HarnessClaims != 0 {
+							t.Fatal("missing token budget facts", result)
+						}
 					} else if result.HarnessClaims != 1 {
 						t.Fatal("accepted assessment missing from report", result)
 					}
@@ -153,7 +158,7 @@ func TestSimplePythonSpoolAndSeparateCLI(t *testing.T) {
 						if e != nil {
 							t.Fatal(e)
 						}
-						if mode != "invalid-limit" {
+						if mode != "invalid-limit" && !budgetMode {
 							files, err := filepath.Glob(filepath.Join(destination, "events", "*.jsonl"))
 							if err != nil {
 								t.Fatal(err)
@@ -182,13 +187,46 @@ func TestSimplePythonSpoolAndSeparateCLI(t *testing.T) {
 									}
 								}
 							}
-							if selections != expected {
+							if selections != expected && mode != "pagination-corrected" {
 								t.Fatalf("exported %d observation selections; want %d", selections, expected)
 							}
 						}
 						if mode == "invalid-limit" && !bytes.Contains(data, []byte("invalid-call-limit")) {
 							t.Fatal("export lost stopping cause")
 						}
+					}
+				}
+				if budgetMode {
+					consumed, remaining := "493460", "30828"
+					if mode == "budget-002" {
+						consumed, remaining = "502198", "22090"
+					}
+					if verb == "inspect" {
+						for _, fact := range []string{`"kind":"model-tokens"`, consumed, remaining, "36864", "524288"} {
+							compact := bytes.ReplaceAll(raw, []byte(" "), nil)
+							if !bytes.Contains(compact, []byte(fact)) {
+								t.Fatalf("inspection lost %s: %s", fact, raw)
+							}
+						}
+					}
+					if verb == "export" {
+						markdown, err := os.ReadFile(filepath.Join(destination, "report.md"))
+						if err != nil {
+							t.Fatal(err)
+						}
+						events, err := os.ReadFile(filepath.Join(destination, "events", "000001.jsonl"))
+						if err != nil {
+							t.Fatal(err)
+						}
+						for _, fact := range []string{consumed, remaining, "36864", "524288"} {
+							if !bytes.Contains(markdown, []byte(fact)) || !bytes.Contains(events, []byte(fact)) {
+								t.Fatalf("export lost %s", fact)
+							}
+						}
+						if !bytes.Contains(markdown, []byte("Harness could not request another model response")) || !bytes.Contains(events, []byte("invalid_structure")) {
+							t.Fatal("lost separate causes")
+						}
+						t.Log("budget summary retained in report and event export")
 					}
 				}
 				if mode == "invalid-limit" && verb == "inspect" {

@@ -213,7 +213,7 @@ func diagnosticFixture(t *testing.T) (hostconfig.Paths, string) {
 	for name, raw := range files {
 		put(name, raw)
 	}
-	compatibility := marshal(imagerelease.Record{APIVersion: imagerelease.CompatibilityVersion, MinimumOperatorVersion: "0.1.0", ContractPackageVersion: pin.Version, ContractPackageDigest: pin.Digest, RuntimeProfile: "operator-container/v1", Platform: "linux/" + runtime.GOARCH})
+	compatibility := marshal(imagerelease.Record{APIVersion: imagerelease.CompatibilityVersion, ContractPackageVersion: pin.Version, ContractPackageDigest: pin.Digest, RuntimeProfile: "operator-container/v1", Platform: "linux/" + runtime.GOARCH})
 	put("compatibility.json", compatibility)
 	// An unauthenticated local model profile initializes without resolving credentials
 	// or contacting a provider. Execution must never be reached in these tests.
@@ -410,7 +410,7 @@ func TestLocalCompatibilityWithoutReleaseService(t *testing.T) {
 	t.Setenv("https_proxy", proxy.URL)
 	t.Setenv("NO_PROXY", "")
 	t.Setenv("no_proxy", "")
-	for _, fault := range []string{"missing", "malformed", "minimum version", "contract", "platform", "resource digest"} {
+	for _, fault := range []string{"missing", "malformed", "legacy format", "contract", "platform", "resource digest"} {
 		t.Run(fault, func(t *testing.T) {
 			t.Setenv("OPERATOR_DIAGNOSTIC_FAULT", fault)
 			paths, dir := diagnosticFixture(t)
@@ -431,8 +431,9 @@ func TestLocalCompatibilityWithoutReleaseService(t *testing.T) {
 			case "malformed":
 				e = os.WriteFile(file, []byte(`{"unexpected":"`+diagnosticSecret+`"}`), 0600)
 				want = "invalid embedded Harness compatibility record"
-			case "minimum version":
-				record.MinimumOperatorVersion = "999.0.0"
+			case "legacy format":
+				record.APIVersion = "operator.dev/harness-compatibility/v1alpha1"
+				want = "invalid embedded Harness compatibility record"
 			case "contract":
 				record.ContractPackageDigest = contracts.RawDigest([]byte("wrong package"))
 			case "platform":
@@ -448,7 +449,7 @@ func TestLocalCompatibilityWithoutReleaseService(t *testing.T) {
 			if e != nil {
 				t.Fatal(e)
 			}
-			if fault == "minimum version" || fault == "contract" || fault == "platform" {
+			if fault == "legacy format" || fault == "contract" || fault == "platform" {
 				raw, _ = json.Marshal(record)
 				if e = os.WriteFile(file, raw, 0600); e != nil {
 					t.Fatal(e)
@@ -680,6 +681,34 @@ func TestModelValidationFailureForegroundAndWorkerOutput(t *testing.T) {
 	}
 	if strings.Index(stderr, model.Summary()) > strings.Index(stderr, "137") {
 		t.Fatal("exit replaced original cause", stderr)
+	}
+	var supervised bytes.Buffer
+	printWorkerFailure(&supervised, "execution_failed", d, "recorded")
+	if supervised.String() != stderr {
+		t.Fatal("foreground/supervised mismatch")
+	}
+	t.Log(stderr)
+}
+
+func TestTokenBudgetFailureForegroundAndWorkerOutput(t *testing.T) {
+	dir, paths, deps, _ := startFixture(t)
+	detail := campaign.NewWorkflowDiagnostic("local-report", "harness-local", "termination", "model_reservation_unavailable", "", "", "")
+	detail.Stopping = "budget-limit"
+	detail.Budget = &contracts.ModelTokenBudget{Kind: "model-tokens", TotalAllowance: 524288, Consumed: 493460, Remaining: 30828, NextRequestReservation: 36864}
+	detail.HostFinalized = true
+	detail.CleanupCompleted = true
+	d := &hostrun.PreparationDiagnostic{Stage: "Harness termination", Message: detail.Message(), Workflow: detail}
+	deps.run = func(context.Context, string, string, string) (workerjob.Result, error) {
+		return workerjob.Result{Code: "execution_failed", Diagnostic: d, CompletionRecording: "recorded"}, detail
+	}
+	code, _, stderr := invokeStart(t, context.Background(), "start", []string{"--run", dir}, paths, deps)
+	if code != 1 {
+		t.Fatal(code, stderr)
+	}
+	for _, want := range []string{"Campaign execution failed", "Model-token allowance: 524288; consumed: 493460; remaining: 30828; required reservation: 36864.", "No final assessment was committed.", "No target attempt was dispatched.", "Assessment accepted: false", "Cleanup completed: true", "Execution will not resume."} {
+		if !strings.Contains(stderr, want) {
+			t.Fatalf("missing %q: %s", want, stderr)
+		}
 	}
 	var supervised bytes.Buffer
 	printWorkerFailure(&supervised, "execution_failed", d, "recorded")

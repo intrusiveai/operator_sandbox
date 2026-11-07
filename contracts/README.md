@@ -212,3 +212,13 @@ semantic and correlation failures. Its stable reason/stage and bounded field pat
 are administrator diagnostic facts; raw provider values are excluded. Error detail
 is additive: Go/Python acceptance rules and the model-operation wire envelopes
 remain unchanged. Both products still require the exact released package identity.
+
+## Standalone interface
+
+The compatibility identity is the version and exact SHA-256 of
+[`asyncapi.json`](../schemas/asyncapi.json). Package file inventories are independent
+integrity checks. `LoadInterfaceProtocol` (Go) and `Protocol.from_interface`
+(Python) compile an independently approved document without requiring an Operator
+source revision. Both retain the existing schema, semantic and correlation checks.
+See [contract conformance](../docs/CONTRACT_CONFORMANCE.md) for authoring, approval,
+controlled functional tests and consumer migration.

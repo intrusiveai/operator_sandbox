@@ -39,7 +39,7 @@ func protocol(t *testing.T) *contracts.Protocol {
 	for _, name := range profiles {
 		files[name] = []byte("Fixture only, not a release.")
 	}
-	m, pin, err := p.BuildPackageManifest("0.0.0", files, profiles)
+	m, pin, err := p.BuildPackageManifest("0.7.0", files, profiles)
 	if err != nil {
 		t.Fatal(err)
 	}

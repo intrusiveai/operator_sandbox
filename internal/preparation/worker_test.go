@@ -90,7 +90,7 @@ func (d *workerDocker) WatchEvents(ctx context.Context, _ campaign.DockerBinding
 	case <-ctx.Done():
 		return ctx.Err()
 	case <-d.stop:
-		if d.mode == "requested stop" || d.mode == "poll cancellation" || d.mode == "harness limit" {
+		if d.mode == "requested stop" || d.mode == "poll cancellation" || strings.HasPrefix(d.mode, "harness ") {
 			return dockercontrol.ErrExited
 		}
 		return dockercontrol.ErrEvents
@@ -142,7 +142,7 @@ func localCompatibility(t *testing.T, p *contracts.Protocol, hostPlatform ...str
 	}
 	h := imagerelease.Requirements{OperatorVersion: "0.1.0", Contract: pin, HostPlatform: platform, RuntimeProfile: "operator-container/v1"}
 	image := dockercontrol.ImagePin{Selector: "harness:latest", Endpoint: "unix:///fixture/docker.sock", DaemonID: "daemon-1", ImageID: contracts.RawDigest([]byte("approved test image")), HostPlatform: platform, ImagePlatform: "linux/" + goruntime.GOARCH}
-	record := imagerelease.Record{APIVersion: imagerelease.CompatibilityVersion, MinimumOperatorVersion: "0.1.0", ContractPackageVersion: pin.Version, ContractPackageDigest: pin.Digest, RuntimeProfile: h.RuntimeProfile, Platform: image.ImagePlatform}
+	record := imagerelease.Record{APIVersion: imagerelease.CompatibilityVersion, ContractPackageVersion: pin.Version, ContractPackageDigest: pin.Digest, RuntimeProfile: h.RuntimeProfile, Platform: image.ImagePlatform}
 	approval, err := imagerelease.Validate(encode(record), image.ImageID, h)
 	if err != nil {
 		t.Fatal(err)
@@ -153,7 +153,7 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 	if goruntime.GOOS != "darwin" {
 		t.Skip("full worker integration uses the macOS spool profile; FIFO mechanics have separate transport coverage")
 	}
-	for _, mode := range []string{"event loss", "requested stop", "poll cancellation", "bad bootstrap", "create lost", "start lost", "kill unknown", "model failure", "model cleanup failure", "harness limit"} {
+	for _, mode := range []string{"event loss", "requested stop", "poll cancellation", "bad bootstrap", "create lost", "start lost", "kill unknown", "model failure", "model cleanup failure", "harness limit", "harness budget"} {
 		t.Run(mode, func(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
@@ -177,7 +177,7 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 			if modelConfig != nil {
 				operations = []string{"engine.model_generate"}
 			}
-			if mode == "requested stop" || mode == "poll cancellation" || mode == "harness limit" {
+			if mode == "requested stop" || mode == "poll cancellation" || strings.HasPrefix(mode, "harness ") {
 				operations = []string{"engine.diagnostic_report", "engine.finish"}
 			}
 			writer, launch, root := preparedLaunchConfigured(t, target, func(m map[string]any) {
@@ -217,7 +217,7 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 			var result hostworker.Result
 			var runErr error
 			go func() { result, runErr = worker.Run(ctx); close(finished) }()
-			if mode == "event loss" || mode == "kill unknown" || mode == "requested stop" || mode == "poll cancellation" || mode == "harness limit" || modelConfig != nil {
+			if mode == "event loss" || mode == "kill unknown" || mode == "requested stop" || mode == "poll cancellation" || strings.HasPrefix(mode, "harness ") || modelConfig != nil {
 				select {
 				case <-docker.ready:
 					if modelConfig != nil {
@@ -242,10 +242,13 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 							t.Fatal(e)
 						}
 					}
-					if mode == "requested stop" || mode == "poll cancellation" || mode == "harness limit" {
+					if mode == "requested stop" || mode == "poll cancellation" || strings.HasPrefix(mode, "harness ") {
 						seq := int64(0)
-						if mode == "harness limit" {
+						if strings.HasPrefix(mode, "harness ") {
 							body := map[string]any{"tool_name": "attempt_execute", "tool_call_id": "call-5", "diagnostic": map[string]any{"source": "harness-local", "stage": "arguments", "reason": "invalid_structure", "field_path": "/input", "message": "Required input is absent.", "execution_occurred": "no", "resubmission_safe": true}, "stopping": map[string]any{"condition": "invalid-call-limit", "observed_count": 5, "configured_limit": 5}}
+							if mode == "harness budget" {
+								body = map[string]any{"diagnostic": map[string]any{"source": "harness-local", "stage": "termination", "reason": "model_reservation_unavailable", "message": "Cannot reserve next model request.", "execution_occurred": "no", "resubmission_safe": false}, "stopping": map[string]any{"condition": "budget-limit", "budget": map[string]any{"kind": "model-tokens", "total_allowance": 524288, "consumed": 493460, "remaining": 30828, "next_request_reservation": 36864}}}
+							}
 							if e := spoolPut(dir, "ordinary-out", 0, stateWire("engine.diagnostic_report", "local-report", 1, body)); e != nil {
 								t.Fatal(e)
 							}
@@ -321,13 +324,16 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 					t.Fatal("cleanup outcome", result)
 				}
 			}
-			if result.StopAccepted != (mode == "requested stop" || mode == "poll cancellation" || mode == "harness limit") {
+			if result.StopAccepted != (mode == "requested stop" || mode == "poll cancellation" || strings.HasPrefix(mode, "harness ")) {
 				t.Fatal("lost stop disposition", result)
 			}
-			if mode == "harness limit" {
+			if strings.HasPrefix(mode, "harness ") {
 				d := result.WorkflowDiagnostic
-				if d == nil || !d.Valid() || !d.HostFinalized || d.Dispatched != 0 || !d.CleanupCompleted || d.AssessmentAccepted || d.Stopping != "invalid-call-limit" || !errors.Is(runErr, *d) {
+				if d == nil || !d.Valid() || !d.HostFinalized || d.Dispatched != 0 || !d.CleanupCompleted || d.AssessmentAccepted || (mode == "harness limit" && d.Stopping != "invalid-call-limit") || !errors.Is(runErr, *d) {
 					t.Fatal("lost Harness stopping cause", result, runErr)
+				}
+				if mode == "harness budget" && (d.Budget == nil || d.Stopping != "budget-limit" || result.HarnessExit.Outcome == "succeeded" || !strings.Contains(runErr.Error(), "No final assessment was committed")) {
+					t.Fatal("unavailable finish became success", result, runErr)
 				}
 			}
 			retained := mode == "create lost" || mode == "start lost" || mode == "kill unknown"

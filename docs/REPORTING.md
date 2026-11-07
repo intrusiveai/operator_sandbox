@@ -209,3 +209,12 @@ accepted assessment summary as Harness interpretation. Event references identify
 sequence numbers in the digest-bound source parts listed in execution-bundle.json.
 Missing assessment content MUST NOT prevent reporting execution facts. No report
 MUST claim that an external QA recipe passed.
+
+Model-token reservation failures retain a `budget` object in workflow diagnostics:
+`kind`, `total_allowance`, `consumed`, `remaining`, `next_request_reservation`.
+The report MUST put this stopping cause in the opening summary and preserve all
+five fields in exported events and completion diagnostics. Values are validated
+Harness-reported accounting, not a claim that the cloud provider rejected a quota.
+Remaining tokens may be positive but less than the reservation needed for another
+request. Prior tool rejections remain separate history and MUST NOT replace this
+cause. No final assessment, exit outcome, and cleanup outcome remain separate facts.

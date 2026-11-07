@@ -42,9 +42,8 @@ It MUST be strict UTF-8 JSON, at most 64 KiB and depth 32, with exactly these fi
 
 ```json
 {
-  "api_version": "operator.dev/harness-compatibility/v1alpha1",
-  "minimum_operator_version": "0.1.0",
-  "contract_package_version": "0.2.1",
+  "api_version": "operator.dev/harness-compatibility/v1alpha2",
+  "contract_package_version": "0.7.0",
   "contract_package_digest": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
   "runtime_profile": "operator-container/v1",
   "platform": "linux/amd64"
@@ -59,7 +58,6 @@ image identity independently binds the file's bytes and the other image contents
 
 Operator MUST enforce:
 
-- Stable SemVer minimum Operator version, compared by semantic precedence.
 - Exact installed shared-contract package version and full lowercase SHA-256 digest.
 - `operator-container/v1` runtime profile and the supported native image platform.
 - `linux/amd64` for Linux/macOS x86_64 hosts, or `linux/arm64` for Linux/macOS ARM64

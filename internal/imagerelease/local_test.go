@@ -41,7 +41,7 @@ func TestLocalCompatibilityAdmission(t *testing.T) {
 			defer cancel()
 			switch mode {
 			case "bad version":
-				r.MinimumOperatorVersion = "99.0.0"
+				r.APIVersion = "operator.dev/harness-compatibility/v1alpha1"
 			case "contract mismatch":
 				r.ContractPackageDigest = contracts.RawDigest([]byte("other"))
 			case "platform mismatch":

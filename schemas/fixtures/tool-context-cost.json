@@ -13,9 +13,9 @@
       ],
       "surfaces": [],
       "baseline_bytes": 12426,
-      "revised_bytes": 8701,
+      "revised_bytes": 8745,
       "baseline_tokens_estimated": 3107,
-      "revised_tokens_estimated": 2176,
+      "revised_tokens_estimated": 2187,
       "baseline_tools": {
         "attempt_execute": {
           "declaration_bytes": 3556,
@@ -61,15 +61,15 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5405,
-          "description_bytes": 403,
+          "declaration_bytes": 5466,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
         },
         "observation_read": {
-          "declaration_bytes": 618,
-          "description_bytes": 267,
+          "declaration_bytes": 601,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -104,9 +104,9 @@
       ],
       "surfaces": [],
       "baseline_bytes": 22062,
-      "revised_bytes": 14844,
+      "revised_bytes": 14888,
       "baseline_tokens_estimated": 5516,
-      "revised_tokens_estimated": 3711,
+      "revised_tokens_estimated": 3722,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1024,
@@ -211,8 +211,8 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5405,
-          "description_bytes": 403,
+          "declaration_bytes": 5466,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
@@ -225,8 +225,8 @@
           ]
         },
         "observation_read": {
-          "declaration_bytes": 618,
-          "description_bytes": 267,
+          "declaration_bytes": 601,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -294,9 +294,9 @@
         "mcp_tool_result"
       ],
       "baseline_bytes": 26118,
-      "revised_bytes": 19970,
+      "revised_bytes": 20014,
       "baseline_tokens_estimated": 6530,
-      "revised_tokens_estimated": 4993,
+      "revised_tokens_estimated": 5004,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1024,
@@ -401,8 +401,8 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5405,
-          "description_bytes": 403,
+          "declaration_bytes": 5466,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
@@ -415,8 +415,8 @@
           ]
         },
         "observation_read": {
-          "declaration_bytes": 618,
-          "description_bytes": 267,
+          "declaration_bytes": 601,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -485,9 +485,9 @@
         "environment_state"
       ],
       "baseline_bytes": 26832,
-      "revised_bytes": 20817,
+      "revised_bytes": 20861,
       "baseline_tokens_estimated": 6708,
-      "revised_tokens_estimated": 5205,
+      "revised_tokens_estimated": 5216,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1024,
@@ -592,8 +592,8 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5405,
-          "description_bytes": 403,
+          "declaration_bytes": 5466,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
@@ -606,8 +606,8 @@
           ]
         },
         "observation_read": {
-          "declaration_bytes": 618,
-          "description_bytes": 267,
+          "declaration_bytes": 601,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -679,9 +679,9 @@
         "service_response"
       ],
       "baseline_bytes": 30124,
-      "revised_bytes": 29764,
+      "revised_bytes": 29808,
       "baseline_tokens_estimated": 7531,
-      "revised_tokens_estimated": 7441,
+      "revised_tokens_estimated": 7452,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1024,
@@ -786,8 +786,8 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5405,
-          "description_bytes": 403,
+          "declaration_bytes": 5466,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
@@ -800,8 +800,8 @@
           ]
         },
         "observation_read": {
-          "declaration_bytes": 618,
-          "description_bytes": 267,
+          "declaration_bytes": 601,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -856,9 +856,9 @@
       ],
       "surfaces": [],
       "baseline_bytes": 12374,
-      "revised_bytes": 8649,
+      "revised_bytes": 8693,
       "baseline_tokens_estimated": 3094,
-      "revised_tokens_estimated": 2163,
+      "revised_tokens_estimated": 2174,
       "baseline_tools": {
         "attempt_execute": {
           "declaration_bytes": 3574,
@@ -904,15 +904,15 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5423,
-          "description_bytes": 403,
+          "declaration_bytes": 5484,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
         },
         "observation_read": {
-          "declaration_bytes": 636,
-          "description_bytes": 267,
+          "declaration_bytes": 619,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -947,9 +947,9 @@
       ],
       "surfaces": [],
       "baseline_bytes": 21919,
-      "revised_bytes": 14701,
+      "revised_bytes": 14745,
       "baseline_tokens_estimated": 5480,
-      "revised_tokens_estimated": 3676,
+      "revised_tokens_estimated": 3687,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1042,
@@ -1054,8 +1054,8 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5423,
-          "description_bytes": 403,
+          "declaration_bytes": 5484,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
@@ -1068,8 +1068,8 @@
           ]
         },
         "observation_read": {
-          "declaration_bytes": 636,
-          "description_bytes": 267,
+          "declaration_bytes": 619,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -1137,9 +1137,9 @@
         "mcp_tool_result"
       ],
       "baseline_bytes": 25975,
-      "revised_bytes": 19827,
+      "revised_bytes": 19871,
       "baseline_tokens_estimated": 6494,
-      "revised_tokens_estimated": 4957,
+      "revised_tokens_estimated": 4968,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1042,
@@ -1244,8 +1244,8 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5423,
-          "description_bytes": 403,
+          "declaration_bytes": 5484,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
@@ -1258,8 +1258,8 @@
           ]
         },
         "observation_read": {
-          "declaration_bytes": 636,
-          "description_bytes": 267,
+          "declaration_bytes": 619,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -1328,9 +1328,9 @@
         "environment_state"
       ],
       "baseline_bytes": 26689,
-      "revised_bytes": 20674,
+      "revised_bytes": 20718,
       "baseline_tokens_estimated": 6673,
-      "revised_tokens_estimated": 5169,
+      "revised_tokens_estimated": 5180,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1042,
@@ -1435,8 +1435,8 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5423,
-          "description_bytes": 403,
+          "declaration_bytes": 5484,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
@@ -1449,8 +1449,8 @@
           ]
         },
         "observation_read": {
-          "declaration_bytes": 636,
-          "description_bytes": 267,
+          "declaration_bytes": 619,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -1522,9 +1522,9 @@
         "service_response"
       ],
       "baseline_bytes": 29981,
-      "revised_bytes": 29621,
+      "revised_bytes": 29665,
       "baseline_tokens_estimated": 7496,
-      "revised_tokens_estimated": 7406,
+      "revised_tokens_estimated": 7417,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1042,
@@ -1629,8 +1629,8 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5423,
-          "description_bytes": 403,
+          "declaration_bytes": 5484,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
@@ -1643,8 +1643,8 @@
           ]
         },
         "observation_read": {
-          "declaration_bytes": 636,
-          "description_bytes": 267,
+          "declaration_bytes": 619,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -1699,9 +1699,9 @@
       ],
       "surfaces": [],
       "baseline_bytes": 12010,
-      "revised_bytes": 8525,
+      "revised_bytes": 8569,
       "baseline_tokens_estimated": 3003,
-      "revised_tokens_estimated": 2132,
+      "revised_tokens_estimated": 2143,
       "baseline_tools": {
         "attempt_execute": {
           "declaration_bytes": 3640,
@@ -1747,15 +1747,15 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5392,
-          "description_bytes": 403,
+          "declaration_bytes": 5453,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
         },
         "observation_read": {
-          "declaration_bytes": 605,
-          "description_bytes": 267,
+          "declaration_bytes": 588,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -1790,9 +1790,9 @@
       ],
       "surfaces": [],
       "baseline_bytes": 21275,
-      "revised_bytes": 14360,
+      "revised_bytes": 14404,
       "baseline_tokens_estimated": 5319,
-      "revised_tokens_estimated": 3590,
+      "revised_tokens_estimated": 3601,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1011,
@@ -1894,8 +1894,8 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5392,
-          "description_bytes": 403,
+          "declaration_bytes": 5453,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
@@ -1908,8 +1908,8 @@
           ]
         },
         "observation_read": {
-          "declaration_bytes": 605,
-          "description_bytes": 267,
+          "declaration_bytes": 588,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -1977,9 +1977,9 @@
         "mcp_tool_result"
       ],
       "baseline_bytes": 25331,
-      "revised_bytes": 19486,
+      "revised_bytes": 19530,
       "baseline_tokens_estimated": 6333,
-      "revised_tokens_estimated": 4872,
+      "revised_tokens_estimated": 4883,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1011,
@@ -2081,8 +2081,8 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5392,
-          "description_bytes": 403,
+          "declaration_bytes": 5453,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
@@ -2095,8 +2095,8 @@
           ]
         },
         "observation_read": {
-          "declaration_bytes": 605,
-          "description_bytes": 267,
+          "declaration_bytes": 588,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -2165,9 +2165,9 @@
         "environment_state"
       ],
       "baseline_bytes": 26045,
-      "revised_bytes": 20333,
+      "revised_bytes": 20377,
       "baseline_tokens_estimated": 6512,
-      "revised_tokens_estimated": 5084,
+      "revised_tokens_estimated": 5095,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1011,
@@ -2269,8 +2269,8 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5392,
-          "description_bytes": 403,
+          "declaration_bytes": 5453,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
@@ -2283,8 +2283,8 @@
           ]
         },
         "observation_read": {
-          "declaration_bytes": 605,
-          "description_bytes": 267,
+          "declaration_bytes": 588,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -2356,9 +2356,9 @@
         "service_response"
       ],
       "baseline_bytes": 29337,
-      "revised_bytes": 29280,
+      "revised_bytes": 29324,
       "baseline_tokens_estimated": 7335,
-      "revised_tokens_estimated": 7320,
+      "revised_tokens_estimated": 7331,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1011,
@@ -2460,8 +2460,8 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5392,
-          "description_bytes": 403,
+          "declaration_bytes": 5453,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
@@ -2474,8 +2474,8 @@
           ]
         },
         "observation_read": {
-          "declaration_bytes": 605,
-          "description_bytes": 267,
+          "declaration_bytes": 588,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -2530,9 +2530,9 @@
       ],
       "surfaces": [],
       "baseline_bytes": 12094,
-      "revised_bytes": 8609,
+      "revised_bytes": 8653,
       "baseline_tokens_estimated": 3024,
-      "revised_tokens_estimated": 2153,
+      "revised_tokens_estimated": 2164,
       "baseline_tools": {
         "attempt_execute": {
           "declaration_bytes": 3648,
@@ -2578,15 +2578,15 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5400,
-          "description_bytes": 403,
+          "declaration_bytes": 5461,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
         },
         "observation_read": {
-          "declaration_bytes": 613,
-          "description_bytes": 267,
+          "declaration_bytes": 596,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -2621,9 +2621,9 @@
       ],
       "surfaces": [],
       "baseline_bytes": 21506,
-      "revised_bytes": 14591,
+      "revised_bytes": 14635,
       "baseline_tokens_estimated": 5377,
-      "revised_tokens_estimated": 3648,
+      "revised_tokens_estimated": 3659,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1019,
@@ -2725,8 +2725,8 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5400,
-          "description_bytes": 403,
+          "declaration_bytes": 5461,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
@@ -2739,8 +2739,8 @@
           ]
         },
         "observation_read": {
-          "declaration_bytes": 613,
-          "description_bytes": 267,
+          "declaration_bytes": 596,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -2808,9 +2808,9 @@
         "mcp_tool_result"
       ],
       "baseline_bytes": 25562,
-      "revised_bytes": 19717,
+      "revised_bytes": 19761,
       "baseline_tokens_estimated": 6391,
-      "revised_tokens_estimated": 4930,
+      "revised_tokens_estimated": 4941,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1019,
@@ -2912,8 +2912,8 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5400,
-          "description_bytes": 403,
+          "declaration_bytes": 5461,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
@@ -2926,8 +2926,8 @@
           ]
         },
         "observation_read": {
-          "declaration_bytes": 613,
-          "description_bytes": 267,
+          "declaration_bytes": 596,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -2996,9 +2996,9 @@
         "environment_state"
       ],
       "baseline_bytes": 26276,
-      "revised_bytes": 20564,
+      "revised_bytes": 20608,
       "baseline_tokens_estimated": 6569,
-      "revised_tokens_estimated": 5141,
+      "revised_tokens_estimated": 5152,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1019,
@@ -3100,8 +3100,8 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5400,
-          "description_bytes": 403,
+          "declaration_bytes": 5461,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
@@ -3114,8 +3114,8 @@
           ]
         },
         "observation_read": {
-          "declaration_bytes": 613,
-          "description_bytes": 267,
+          "declaration_bytes": 596,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -3187,9 +3187,9 @@
         "service_response"
       ],
       "baseline_bytes": 29568,
-      "revised_bytes": 29511,
+      "revised_bytes": 29555,
       "baseline_tokens_estimated": 7392,
-      "revised_tokens_estimated": 7378,
+      "revised_tokens_estimated": 7389,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1019,
@@ -3291,8 +3291,8 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5400,
-          "description_bytes": 403,
+          "declaration_bytes": 5461,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
@@ -3305,8 +3305,8 @@
           ]
         },
         "observation_read": {
-          "declaration_bytes": 613,
-          "description_bytes": 267,
+          "declaration_bytes": 596,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -3361,9 +3361,9 @@
       ],
       "surfaces": [],
       "baseline_bytes": 12069,
-      "revised_bytes": 8584,
+      "revised_bytes": 8628,
       "baseline_tokens_estimated": 3018,
-      "revised_tokens_estimated": 2146,
+      "revised_tokens_estimated": 2157,
       "baseline_tools": {
         "attempt_execute": {
           "declaration_bytes": 3648,
@@ -3409,15 +3409,15 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5400,
-          "description_bytes": 403,
+          "declaration_bytes": 5461,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
         },
         "observation_read": {
-          "declaration_bytes": 613,
-          "description_bytes": 267,
+          "declaration_bytes": 596,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -3452,9 +3452,9 @@
       ],
       "surfaces": [],
       "baseline_bytes": 21390,
-      "revised_bytes": 14475,
+      "revised_bytes": 14519,
       "baseline_tokens_estimated": 5348,
-      "revised_tokens_estimated": 3619,
+      "revised_tokens_estimated": 3630,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1019,
@@ -3556,8 +3556,8 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5400,
-          "description_bytes": 403,
+          "declaration_bytes": 5461,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
@@ -3570,8 +3570,8 @@
           ]
         },
         "observation_read": {
-          "declaration_bytes": 613,
-          "description_bytes": 267,
+          "declaration_bytes": 596,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -3639,9 +3639,9 @@
         "mcp_tool_result"
       ],
       "baseline_bytes": 25446,
-      "revised_bytes": 19601,
+      "revised_bytes": 19645,
       "baseline_tokens_estimated": 6362,
-      "revised_tokens_estimated": 4901,
+      "revised_tokens_estimated": 4912,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1019,
@@ -3743,8 +3743,8 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5400,
-          "description_bytes": 403,
+          "declaration_bytes": 5461,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
@@ -3757,8 +3757,8 @@
           ]
         },
         "observation_read": {
-          "declaration_bytes": 613,
-          "description_bytes": 267,
+          "declaration_bytes": 596,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -3827,9 +3827,9 @@
         "environment_state"
       ],
       "baseline_bytes": 26160,
-      "revised_bytes": 20448,
+      "revised_bytes": 20492,
       "baseline_tokens_estimated": 6540,
-      "revised_tokens_estimated": 5112,
+      "revised_tokens_estimated": 5123,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1019,
@@ -3931,8 +3931,8 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5400,
-          "description_bytes": 403,
+          "declaration_bytes": 5461,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
@@ -3945,8 +3945,8 @@
           ]
         },
         "observation_read": {
-          "declaration_bytes": 613,
-          "description_bytes": 267,
+          "declaration_bytes": 596,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]
@@ -4018,9 +4018,9 @@
         "service_response"
       ],
       "baseline_bytes": 29452,
-      "revised_bytes": 29395,
+      "revised_bytes": 29439,
       "baseline_tokens_estimated": 7363,
-      "revised_tokens_estimated": 7349,
+      "revised_tokens_estimated": 7360,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1019,
@@ -4122,8 +4122,8 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5400,
-          "description_bytes": 403,
+          "declaration_bytes": 5461,
+          "description_bytes": 446,
           "required_fields": [
             "finish_reason"
           ]
@@ -4136,8 +4136,8 @@
           ]
         },
         "observation_read": {
-          "declaration_bytes": 613,
-          "description_bytes": 267,
+          "declaration_bytes": 596,
+          "description_bytes": 250,
           "required_fields": [
             "observation"
           ]

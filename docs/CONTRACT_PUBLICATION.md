@@ -7,17 +7,17 @@ its embedded schemas MUST match the selected source schemas.
 
 ```sh
 operatorctl contract build --source /absolute/operator_sandbox \
-  --output /absolute/new-contract-package --package-version 0.6.1
+  --output /absolute/new-contract-package --package-version 0.7.0
 ```
 
 The output MUST be a new directory. The receipt contains the exact package version
-and canonical SHA-256 identity. Existing output MUST NOT be overwritten. Files and
+and SHA-256 of exact `asyncapi.json` bytes. Existing output MUST NOT be overwritten. Files and
 directories MUST be synchronized before `package.json` is published last; incomplete
 output MUST fail the installed loader's validation.
 
 The package MUST contain:
 
-- Root catalog, operation registry and their complete offline schema resources.
+- Root `asyncapi.json`, catalog, operation registry and complete offline schemas.
 - `source/schemas/`: schemas, normative contract documents and common fixtures.
 - `source/contracts/`: matching Go validator sources/tests and the Python package,
   tests and dependency lockfile under `python/`.
@@ -56,21 +56,23 @@ running the check:
 
 ```sh
 operatorctl contract check --package-dir /absolute/new-contract-package \
-  --package-version 0.6.1 --package-digest "$CONTRACT_DIGEST"
+  --package-version 0.7.0 --package-digest "$CONTRACT_DIGEST"
 ```
 
 Operator's private `contract.directory`, `contract.version` and `contract.digest`
 configuration MUST pin the installed package. The Attack Harness image MUST use
-the same package identity and matching Python validator implementation.
+the same interface identity and conforming Python validator implementation.
 
-The [release contract lock](../release/contract-lock.json) binds the supported
-package version, source revision and exact digests. Build from that immutable
-source revision. Building or checking a package verifies its content integrity;
+The [release contract lock](../release/contract-lock.json) binds only the supported
+interface version and exact document hash. Product source revisions belong in
+build provenance. Implementation-only changes do not require another product to
+update its contract approval. Building or checking a package verifies its content integrity;
 it does not by itself establish provider or container runtime behavior.
 
 The [host distribution builder](HOST_DISTRIBUTION.md) reproduces the independently
 pinned `release/contract-lock.json`, tests both languages in the generated source
 layout and embeds the exact package in each host candidate. The binary and
-release manifest carry the same version/digest. Publication preflight MUST require
-matching pins in both architecture Attack Harness image-build reports. These tools
+release manifest carry the same version/digest. Publication preflight MUST verify its own packaged interface identity on each
+platform; it MUST NOT require a particular Harness build or Operator source pin.
+Both products run their [conformance checks](CONTRACT_CONFORMANCE.md). These tools
 distribute matching candidates; they do not grant production qualification.

@@ -40,8 +40,9 @@ func (s *Service) handleDiagnostic(ctx context.Context, raw []byte, seq int64) (
 		} `json:"diagnostic"`
 		Stopping *struct {
 			Condition string
-			Observed  int64 `json:"observed_count"`
-			Limit     int64 `json:"configured_limit"`
+			Budget    *contracts.ModelTokenBudget `json:"budget"`
+			Observed  int64                       `json:"observed_count"`
+			Limit     int64                       `json:"configured_limit"`
 		} `json:"stopping"`
 	}
 	_ = json.Unmarshal(q.Body, &body)
@@ -50,6 +51,7 @@ func (s *Service) handleDiagnostic(ctx context.Context, raw []byte, seq int64) (
 	// Their potentially sensitive prose is omitted from structured diagnostics.
 	d.Omitted = true
 	if body.Stopping != nil {
+		d.Budget = body.Stopping.Budget
 		d.Stopping = body.Stopping.Condition
 		d.Observed = body.Stopping.Observed
 		d.Limit = body.Stopping.Limit

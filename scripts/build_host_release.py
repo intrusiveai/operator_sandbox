@@ -124,6 +124,8 @@ def build(root, output, version, platforms, python, *, validate_contract=True):
         raise ValueError("release builds require " + TOOLCHAIN)
     run(["go", "mod", "verify"], root, env, capture=False)
     expected = json.loads((root / "release/contract-lock.json").read_text())["package"]
+    # Validate the approved interface independently of product source identity.
+    run([str(python), "scripts/check_harness_contract.py", "--document-only"], root, env)
     from interceptor_contract import identity, validate_pin, PIN, DOCUMENT
     integration_pin = validate_pin(json.loads((root / PIN).read_text()))
     if identity((root / DOCUMENT).read_bytes()) != integration_pin:

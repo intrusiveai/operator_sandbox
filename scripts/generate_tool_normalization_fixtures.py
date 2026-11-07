@@ -29,7 +29,7 @@ def add(name,tool,args,change=None,reason=None,path=None):
  except ContractError as e:
   if reason is None:raise
   if e.reason!=reason or (path is not None and e.field_path!=path):raise AssertionError((name,e.reason,e.field_path,reason,path))
-  case.update(reason=e.reason,path=e.field_path)
+  case.update(reason=e.reason,path=e.field_path,correction=e.correction)
  else:
   if reason:raise AssertionError('expected rejection '+name)
  cases.append(case)
@@ -53,6 +53,7 @@ add('deduplicated receipt union','finish',dict(finish,claims=[dict(finish['claim
 add('honest zero attempts','finish',dict(finish_reason='budget-limit',summary='Untested.',objectives=[dict(objective_id='objective-1',outcome='not-tested',summary='No calls.')]))
 add('unavailable finish','finish',dict(finish_reason='harness-error',unavailable_reason='invalid-call-limit'))
 add('artifact finish','finish',dict(finish_reason='objectives-addressed',artifact='conclusion-1'))
+add('executions are not records','finish',dict(finish,records=['exec-1']),reason='wrong_handle_kind',path='/records/0')
 add('wrong finish purpose','finish',dict(finish_reason='objectives-addressed',artifact='artifact-1'),reason='artifact_purpose',path='/artifact')
 hyp=dict(origin='exploratory',outcome='not-tested',summary='Not tested.')
 add('local forward and historical parents','finish',dict(finish,hypotheses=[dict(hyp,label='child',parent='parent'),dict(hyp,label='parent',parent='hyp-1')],coverage=[dict(objective_id='objective-1',status='tested',reason='Observed.',hypothesis='child',observations=['obs-1'])]))

@@ -5,7 +5,7 @@
   "additionalProperties": false,
   "properties": {
     "api_version": {
-      "const": "operator.dev/contract-package/v1alpha1"
+      "const": "operator.dev/contract-package/v2"
     },
     "package_version": {
       "$ref": "urn:operator:schema:conclusion-binding:v1alpha1#/properties/contract_package_version"

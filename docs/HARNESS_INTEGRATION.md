@@ -2,16 +2,17 @@
 
 Operator owns the shared contract. A Harness image must use the same package
 version and digest as its Operator installation. The source release's
-[contract lock](../release/contract-lock.json) identifies the exact package and
-source revision; `operatorctl version` exposes the installed supported identity.
+[contract lock](../release/contract-lock.json) identifies the interface version and
+exact document hash; `operatorctl version` exposes the installed supported identity.
 The [shared contract](../schemas/SHARED_CONTRACT.md) defines the wire protocol,
 semantic rules and common Go/Python fixtures.
 
 ## Package and image compatibility
 
-Build the package from the immutable source revision in the release lock using
-the [package build and check commands](CONTRACT_PUBLICATION.md). Verify its version,
-digest, catalog, registry and complete inventory against that lock. Harness uses
+Obtain the approved `asyncapi.json` and a conforming validator distribution.
+Use the [package build/check commands](CONTRACT_PUBLICATION.md) for installation
+integrity and [conformance checks](CONTRACT_CONFORMANCE.md) for implementation
+behavior. Compare only the interface version/hash for product compatibility. Harness uses
 the matching Python validators and provider tool projections from this package.
 Do not independently reimplement their rules or select validators from guest data.
 
@@ -21,10 +22,9 @@ file of at most 64 KiB. Its fields are:
 
 | Field | Value |
 |---|---|
-| `api_version` | `operator.dev/harness-compatibility/v1alpha1` |
-| `minimum_operator_version` | Stable SemVer required by the image |
+| `api_version` | `operator.dev/harness-compatibility/v1alpha2` |
 | `contract_package_version` | Exact package version from the release lock |
-| `contract_package_digest` | Exact package digest from the release lock |
+| `contract_package_digest` | SHA-256 of exact AsyncAPI bytes from the release lock |
 | `runtime_profile` | `operator-container/v1` |
 | `platform` | `linux/amd64` or `linux/arm64`, matching the image |
 

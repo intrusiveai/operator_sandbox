@@ -578,3 +578,25 @@ and other builder commands at two minutes. A timeout kills the command and its
 children and fails the job. Native compiler/binary inspections retain their
 30-second bounds. The overall job limit remains 40 minutes. Inspect the named
 command before changing a timeout; a failed validation never triggers a rebuild.
+
+## Shared Harness interface approval
+
+1. Review `schemas/asyncapi.json` and the version/hash in
+   `release/contract-lock.json`. The hash covers exact document bytes; it does not
+   cover the Operator source commit or validator package inventory.
+2. For an interface change, update schema/registry/semantic inputs, generate the
+   document, review it and run
+   `.venv/bin/python scripts/generate_asyncapi.py --approve`. Commit the inputs,
+   generated document and approval together. Do not refresh the identity for an
+   implementation-only change.
+3. Run the [conformance checks](../../docs/CONTRACT_CONFORMANCE.md) and affected
+   product tests. Candidate CI checks the approved document and production behavior.
+   The native builder verifies it again and packages the exact document alongside
+   the shared validators. Package inventories and build provenance remain separate.
+4. Coordinate interface changes with Attack Harness. Its local compatibility file
+   and startup identities must match the same version/hash; a particular Operator
+   source revision is not required. Optional end-to-end qualification records tested
+   builds without making them compatibility pins.
+5. Publish using the normal candidate workflow. `contract_package_version` in the
+   catalog is derived from the verified interface identity. Promotion preserves
+   that identity with the qualified artifact bytes.

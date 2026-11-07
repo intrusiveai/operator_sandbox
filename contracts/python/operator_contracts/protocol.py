@@ -51,6 +51,14 @@ def _metadata(snapshot, campaign):
 class Protocol:
     """Not an admission controller: sequencing, durable effects and policy remain host work."""
 
+    @classmethod
+    def from_interface(cls, raw, expected):
+        """Load approved interface bytes independently of a producer source commit."""
+        from .interface import interface_resources
+        loaded = cls._from_resources(interface_resources(raw, expected))
+        loaded._package_identity = dict(expected)
+        return loaded
+
     def __init__(self, directory: Path):
         self._catalog = Catalog(directory)
         try:
@@ -252,7 +260,11 @@ class Protocol:
             validate_attempt_origin(body)
         self._check_registered(operation, "request_schema", body)
         name = operation["name"]
-        if name == "engine.model_generate":
+        if name == "engine.diagnostic_report":
+            budget = body.get('stopping', {}).get('budget')
+            if budget is not None and not (budget['consumed'] <= budget['total_allowance'] and budget['remaining'] == budget['total_allowance'] - budget['consumed'] and budget['remaining'] < budget['next_request_reservation']):
+                raise ContractError('Invalid model-token accounting.', reason='invalid_budget_accounting', field_path='/stopping/budget', correction='Model tokens require consumed + remaining = total_allowance and remaining < next_request_reservation; use actual token accounting, not another budget counter.')
+        elif name == "engine.model_generate":
             model.native_request(body)
         elif name == "engine.record_append":
             check_record(body)

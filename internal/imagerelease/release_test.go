@@ -14,24 +14,10 @@ func requirements() Requirements {
 }
 func release() Record {
 	h := requirements()
-	return Record{CompatibilityVersion, "1.9.0", h.Contract.Version, h.Contract.Digest, h.RuntimeProfile, "linux/arm64"}
+	return Record{CompatibilityVersion, h.Contract.Version, h.Contract.Digest, h.RuntimeProfile, "linux/arm64"}
 }
 func wire(r Record) []byte { raw, _ := json.Marshal(r); return raw }
-func TestStableSemVerPrecedence(t *testing.T) {
-	for _, v := range []struct {
-		actual, minimum string
-		ok              bool
-	}{
-		{"1.10.0", "1.9.0", true}, {"1.9.0", "1.10.0", false}, {"2.0.0", "1.999.999", true},
-		{"1.0.0+host.01", "1.0.0+release.02", true}, {"1.0.0-rc.1", "0.1.0", false},
-		{"2.0.0", "1.0.0-rc.1", false}, {"01.0.0", "1.0.0", false}, {"1.0", "1.0.0", false},
-		{"9999999999999999999999.0.0", "9999999999999999999998.0.0", true},
-		{"1.0.0+", "1.0.0", false}, {"1.0.0+bad+meta", "1.0.0", false},
-	} {
-		if got := atLeast(v.actual, v.minimum); got != v.ok {
-			t.Fatal(v, got)
-		}
-	}
+func TestVersionSyntax(t *testing.T) {
 	for _, s := range []string{"0.1.0-alpha.1+build.01", "0.1.0+001", "0.1.0-x-y-z.--"} {
 		if _, _, ok := version(s); !ok {
 			t.Fatal(s)
@@ -57,7 +43,7 @@ func TestStrictRecordAndCompatibility(t *testing.T) {
 		}
 	}
 	for _, alter := range []func(*Record){
-		func(r *Record) { r.MinimumOperatorVersion = "2.0.0" }, func(r *Record) { r.ContractPackageDigest = contracts.RawDigest([]byte("other")) },
+		func(r *Record) { r.ContractPackageDigest = contracts.RawDigest([]byte("other")) },
 		func(r *Record) { r.ContractPackageVersion = "0.1.1" }, func(r *Record) { r.Platform = "linux/amd64" },
 		func(r *Record) { r.RuntimeProfile = "other" },
 	} {
@@ -67,7 +53,7 @@ func TestStrictRecordAndCompatibility(t *testing.T) {
 			t.Fatal(r)
 		}
 	}
-	for _, alter := range []func(*Record){func(r *Record) { r.MinimumOperatorVersion = "1.0.0-rc.1" }, func(r *Record) { r.Platform = "darwin/arm64" }, func(r *Record) { r.ContractPackageVersion = "0.1.0-01" }} {
+	for _, alter := range []func(*Record){func(r *Record) { r.Platform = "darwin/arm64" }, func(r *Record) { r.ContractPackageVersion = "0.1.0-01" }} {
 		r := release()
 		alter(&r)
 		if _, err := Parse(wire(r)); err == nil {
@@ -84,7 +70,7 @@ func TestExplicitOriginPackageRejectsImplicitOriginImage(t *testing.T) {
 	host.OperatorVersion = "0.1.0"
 	host.Contract = current
 	record := release()
-	record.MinimumOperatorVersion = "0.1.0"
+
 	record.ContractPackageVersion = current.Version
 	record.ContractPackageDigest = current.Digest
 	if err := record.Compatible(host); err != nil {
@@ -104,5 +90,20 @@ func TestExplicitOriginPackageRejectsImplicitOriginImage(t *testing.T) {
 	record.ContractPackageDigest = current.Digest
 	if err := record.Compatible(host); err == nil {
 		t.Fatal("new image accepted by implicit-origin host")
+	}
+}
+
+func TestCompatibleAcrossProductBuilds(t *testing.T) {
+	record := release()
+	for _, product := range []string{"0.1.0", "99.0.0", "development"} {
+		host := requirements()
+		host.OperatorVersion = product
+		if err := record.Compatible(host); err != nil {
+			t.Fatalf("product revision restricted matching interface: %s %v", product, err)
+		}
+	}
+	record.APIVersion = "operator.dev/harness-compatibility/v1alpha1"
+	if _, err := Parse(wire(record)); err == nil {
+		t.Fatal("legacy compatibility format admitted")
 	}
 }

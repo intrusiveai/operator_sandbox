@@ -50,7 +50,7 @@ var loadProcessContract = sync.OnceValues(func() (*contractstore.Loaded, error) 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 	pkg := filepath.Join(root, "contracts")
-	report, err := contractpublish.Build(ctx, source, pkg, "0.5.0")
+	report, err := contractpublish.Build(ctx, source, pkg, "0.7.0")
 	if err != nil {
 		return nil, err
 	}

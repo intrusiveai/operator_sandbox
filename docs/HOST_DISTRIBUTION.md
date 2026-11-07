@@ -261,3 +261,13 @@ selected version, usability of the old binary and explicit downgrade enforcement
 Linux account/service provisioning MUST use command fixtures in ordinary tests;
 actual native Linux provisioning and all four production runtime tuples still
 require external qualification.
+
+## Shared interface identity
+
+The native builder checks `schemas/asyncapi.json` against the approved version and
+exact byte hash in `release/contract-lock.json`, then verifies the installed
+schemas/registry against that document. It includes `contract/asyncapi.json` in
+every release. `contract_package_version` remains the catalog field name for that
+interface version. Product source, implementation package inventories and SBOMs
+remain build provenance and integrity data, not counterpart compatibility gates.
+See [contract conformance](CONTRACT_CONFORMANCE.md).

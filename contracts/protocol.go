@@ -152,12 +152,15 @@ func (p *Protocol) ValidateRequest(raw []byte) (map[string]any, error) {
 	}
 	// Validate against the installed registry as well as the generated envelope.
 	if err = p.catalog.schemas[op.RequestSchema].Validate(message["body"]); err != nil {
-		path, _ := SafeArgumentPath(conclusionSchemaPath(err))
-		return nil, &ArgumentError{Reason: "invalid_structure", FieldPath: path, Correction: "Supply the required fields with the documented types and no unknown fields.", Cause: ErrSchema}
+		return nil, schemaArgumentIssue(err)
 	}
 	body := message["body"].(map[string]any)
 	valid := true
 	switch op.Name {
+	case "engine.diagnostic_report":
+		if err := validateDiagnosticBudget(body); err != nil {
+			return nil, err
+		}
 	case "engine.model_generate":
 		valid = nativeRequestOK(body)
 	case "engine.record_append":
@@ -210,6 +213,10 @@ func (p *Protocol) ValidateResponse(request, response []byte) (map[string]any, e
 	body := req["body"].(map[string]any)
 	valid := true
 	switch op.Name {
+	case "engine.diagnostic_report":
+		if err := validateDiagnosticBudget(body); err != nil {
+			return nil, err
+		}
 	case "engine.model_generate":
 		valid = modelCorrelationOK(body, result)
 	case "engine.record_append":

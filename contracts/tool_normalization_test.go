@@ -21,9 +21,9 @@ func TestSharedToolNormalization(t *testing.T) {
 		t.Fatal(err)
 	}
 	var cases []struct {
-		Name, Tool, Reason, Path string
-		Arguments, Expected      json.RawMessage
-		Context                  ToolResolution
+		Name, Tool, Reason, Path, Correction string
+		Arguments, Expected                  json.RawMessage
+		Context                              ToolResolution
 	}
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.UseNumber()
@@ -35,7 +35,7 @@ func TestSharedToolNormalization(t *testing.T) {
 			got, err := p.NormalizeToolArguments(c.Tool, c.Arguments, c.Context)
 			if c.Reason != "" {
 				var issue *ArgumentError
-				if !errors.As(err, &issue) || issue.Reason != c.Reason || issue.FieldPath != c.Path {
+				if !errors.As(err, &issue) || issue.Reason != c.Reason || issue.FieldPath != c.Path || (c.Correction != "" && issue.Correction != c.Correction) {
 					t.Fatalf("%v; want %s %s", err, c.Reason, c.Path)
 				}
 				return

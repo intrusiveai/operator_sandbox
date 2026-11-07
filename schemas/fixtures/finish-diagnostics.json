@@ -1,0 +1,76 @@
+[
+  {
+    "name": "string uncertainty",
+    "arguments": {
+      "finish_reason": "objectives-addressed",
+      "summary": "Observed.",
+      "objectives": [],
+      "uncertainties": [
+        "SYNTHETIC_SECRET"
+      ]
+    },
+    "path": "/uncertainties/0",
+    "correction": "Expected object. Supply an uncertainty object with required kind and description; a plain string is not valid."
+  },
+  {
+    "name": "missing kind",
+    "arguments": {
+      "finish_reason": "objectives-addressed",
+      "summary": "Observed.",
+      "objectives": [],
+      "uncertainties": [
+        {
+          "description": "Missing kind."
+        }
+      ]
+    },
+    "path": "/uncertainties/0/kind",
+    "correction": "Supply the required field identified by field_path."
+  },
+  {
+    "name": "invalid uncertainty enum",
+    "arguments": {
+      "finish_reason": "objectives-addressed",
+      "summary": "Observed.",
+      "objectives": [],
+      "uncertainties": [
+        {
+          "kind": "SYNTHETIC_SECRET",
+          "description": "Unknown."
+        }
+      ]
+    },
+    "path": "/uncertainties/0/kind",
+    "correction": "Allowed values: [\"unresolved-effects\",\"unavailable-feedback\",\"truncated-feedback\",\"unread-input\",\"summarized-input\",\"omitted-range\",\"coverage-limit\",\"evidence-gap\"]."
+  },
+  {
+    "name": "unsupported top observations",
+    "arguments": {
+      "finish_reason": "objectives-addressed",
+      "summary": "Observed.",
+      "objectives": [],
+      "observations": [
+        "SYNTHETIC_SECRET"
+      ]
+    },
+    "path": "/observations",
+    "correction": "Remove this unsupported field. Put inspected observation handles in objectives[i].observations or another supported assessment item, not at the top level."
+  },
+  {
+    "name": "missing claim statement",
+    "arguments": {
+      "finish_reason": "objectives-addressed",
+      "summary": "Observed.",
+      "objectives": [],
+      "claims": [
+        {
+          "interpretation": "inconclusive",
+          "assurance": "Partial.",
+          "confidence": "low"
+        }
+      ]
+    },
+    "path": "/claims/0/statement",
+    "correction": "Supply the required field identified by field_path."
+  }
+]

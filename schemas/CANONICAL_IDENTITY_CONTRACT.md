@@ -35,6 +35,7 @@ All digests are lowercase `sha256:<hex>`. Raw and canonical identities are disti
 
 | Identity | Exact preimage |
 |---|---|
+| Contract `package_digest` | Exact `asyncapi.json` bytes, without canonicalization. |
 | File/artifact descriptor `digest` | Original file bytes. |
 | Manifest descriptor `object_digest` | Canonical complete parsed manifest. |
 | `engine_context_object_digest` | Canonical complete EngineContext. |

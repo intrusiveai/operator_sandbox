@@ -150,6 +150,11 @@ func writeEvidenceSummary(b *strings.Builder, r Result) {
 	b.WriteString("## Summary\n\n")
 	for i := len(r.WorkflowDiagnostics) - 1; i >= 0; i-- {
 		d := r.WorkflowDiagnostics[i]
+		if d.Budget != nil {
+			dataBlock(b, d.Message())
+			b.WriteString("Harness-reported token accounting; see [workflow diagnostics](execution-bundle.json).\n\n")
+			break
+		}
 		if d.Timeout != nil {
 			dataBlock(b, d.Message())
 			fmt.Fprintf(b, "Request: %s; attempt: %s; result delivery: %s. See retained workflow diagnostics in [execution-bundle.json](execution-bundle.json).\n\n", d.OperationID, d.AttemptID, d.ResultDelivery)

@@ -330,7 +330,8 @@
       }
     },
     "reason": "artifact_purpose",
-    "path": "/artifact"
+    "path": "/artifact",
+    "correction": "Select an artifact with the required input purpose: payload, carrier."
   },
   {
     "name": "null JSON by presence",
@@ -2357,7 +2358,8 @@
       "database_keys": {}
     },
     "reason": "invalid_database_key",
-    "path": "/setup/0/selector/key"
+    "path": "/setup/0/selector/key",
+    "correction": "Supply exactly the selected database policy key columns with non-null scalar values."
   },
   {
     "name": "wrong key column",
@@ -2538,7 +2540,8 @@
       }
     },
     "reason": "invalid_database_key",
-    "path": "/setup/0/selector/key"
+    "path": "/setup/0/selector/key",
+    "correction": "Supply exactly the selected database policy key columns with non-null scalar values."
   },
   {
     "name": "derived claim receipts",
@@ -3597,6 +3600,187 @@
     }
   },
   {
+    "name": "executions are not records",
+    "tool": "finish",
+    "arguments": {
+      "finish_reason": "objectives-addressed",
+      "summary": "The observed marker was returned.",
+      "objectives": [
+        {
+          "objective_id": "objective-1",
+          "outcome": "supported",
+          "summary": "Marker observed.",
+          "observations": [
+            "obs-1"
+          ]
+        }
+      ],
+      "claims": [
+        {
+          "statement": "The target returned the marker.",
+          "interpretation": "supported",
+          "assurance": "Observed in the complete response.",
+          "confidence": "high",
+          "observations": [
+            "obs-1"
+          ],
+          "attempts": [
+            "exec-1"
+          ]
+        }
+      ],
+      "records": [
+        "exec-1"
+      ]
+    },
+    "context": {
+      "campaign_id": "campaign-1",
+      "call_id": "native-call-1",
+      "resources": {
+        "exec-1": {
+          "kind": "execution",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "obs-1": {
+          "kind": "observation",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123",
+            "entry_id": "entry-456"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "obs-range": {
+          "kind": "observation",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123",
+            "entry_id": "entry-456",
+            "range": {
+              "offset": 5,
+              "length": 9
+            }
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "obs-2": {
+          "kind": "observation",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-456",
+            "entry_id": "entry-789"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "artifact-1": {
+          "kind": "artifact",
+          "campaign_id": "campaign-1",
+          "value": {
+            "artifact_receipt": "published-1",
+            "purpose": "payload"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "conclusion-1": {
+          "kind": "artifact",
+          "campaign_id": "campaign-1",
+          "value": {
+            "artifact_receipt": "published-2",
+            "purpose": "conclusion"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "record-1": {
+          "kind": "record",
+          "campaign_id": "campaign-1",
+          "value": {
+            "record_receipt_id": "record-receipt"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "hyp-1": {
+          "kind": "hypothesis",
+          "campaign_id": "campaign-1",
+          "value": {
+            "hypothesis_id": "historical-hypothesis"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "input-1": {
+          "kind": "reference",
+          "campaign_id": "campaign-1",
+          "value": {
+            "reference_id": "input-reference",
+            "entry_id": "input-entry"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "inj-1": {
+          "kind": "injection",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123",
+            "action_id": "setup-1"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "snap-1": {
+          "kind": "checkpoint",
+          "campaign_id": "campaign-1",
+          "value": {
+            "source_session": "session-1",
+            "checkpoint_id": "checkpoint-1"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "session-1": {
+          "kind": "session",
+          "campaign_id": "campaign-1",
+          "value": {
+            "source_session": "session-1"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        }
+      },
+      "database_keys": {
+        "db/accounts": [
+          "id"
+        ]
+      }
+    },
+    "reason": "wrong_handle_kind",
+    "path": "/records/0",
+    "correction": "Use a returned record handle; other resource categories cannot substitute for it."
+  },
+  {
     "name": "wrong finish purpose",
     "tool": "finish",
     "arguments": {
@@ -3747,7 +3931,8 @@
       }
     },
     "reason": "artifact_purpose",
-    "path": "/artifact"
+    "path": "/artifact",
+    "correction": "Select a committed conclusion artifact."
   },
   {
     "name": "local forward and historical parents",
@@ -4602,7 +4787,8 @@
       }
     },
     "reason": "ambiguous_label",
-    "path": "/hypotheses/1/label"
+    "path": "/hypotheses/1/label",
+    "correction": "Use a unique local label distinct from all existing resource handles."
   },
   {
     "name": "self parent",
@@ -4788,7 +4974,8 @@
       }
     },
     "reason": "hypothesis_cycle",
-    "path": "/hypotheses/0/parent"
+    "path": "/hypotheses/0/parent",
+    "correction": "Remove self-parenting or the hypothesis parent cycle."
   },
   {
     "name": "parent cycle",
@@ -4981,7 +5168,8 @@
       }
     },
     "reason": "hypothesis_cycle",
-    "path": "/hypotheses/0/parent"
+    "path": "/hypotheses/0/parent",
+    "correction": "Remove self-parenting or the hypothesis parent cycle."
   },
   {
     "name": "missing parent",
@@ -5166,7 +5354,8 @@
       }
     },
     "reason": "unknown_handle",
-    "path": "/hypotheses/0/parent"
+    "path": "/hypotheses/0/parent",
+    "correction": "Use a handle returned by a successful tool or verified campaign input; never invent one."
   },
   {
     "name": "ambiguous historical label",
@@ -5351,7 +5540,8 @@
       }
     },
     "reason": "ambiguous_label",
-    "path": "/hypotheses/0/label"
+    "path": "/hypotheses/0/label",
+    "correction": "Use a unique local label distinct from all existing resource handles."
   },
   {
     "name": "unknown observation",
@@ -5519,7 +5709,8 @@
       }
     },
     "reason": "unknown_handle",
-    "path": "/claims/0/observations/0"
+    "path": "/claims/0/observations/0",
+    "correction": "Use a handle returned by a successful tool or verified campaign input; never invent one."
   },
   {
     "name": "wrong category",
@@ -5687,7 +5878,8 @@
       }
     },
     "reason": "wrong_handle_kind",
-    "path": "/claims/0/observations/0"
+    "path": "/claims/0/observations/0",
+    "correction": "Use a returned observation handle; other resource categories cannot substitute for it."
   },
   {
     "name": "uninspected",
@@ -5855,7 +6047,8 @@
       }
     },
     "reason": "evidence_not_inspected",
-    "path": "/claims/0/observations/0"
+    "path": "/claims/0/observations/0",
+    "correction": "Cite inspected ranges from this entry: [\"obs-range\"]. These do not establish inspection of unread bytes."
   },
   {
     "name": "unavailable",
@@ -6023,7 +6216,8 @@
       }
     },
     "reason": "evidence_not_inspected",
-    "path": "/claims/0/observations/0"
+    "path": "/claims/0/observations/0",
+    "correction": "Cite inspected ranges from this entry: [\"obs-range\"]. These do not establish inspection of unread bytes."
   },
   {
     "name": "foreign",
@@ -6191,7 +6385,8 @@
       }
     },
     "reason": "foreign_handle",
-    "path": "/claims/0/observations/0"
+    "path": "/claims/0/observations/0",
+    "correction": "Select a resource from this campaign."
   },
   {
     "name": "unread gap",
@@ -8011,7 +8206,8 @@
       }
     },
     "reason": "range_exceeded",
-    "path": "/offset"
+    "path": "/offset",
+    "correction": "This handle permits offsets [5,14). Read within that range; for further pages use continuation.arguments with the original readable handle."
   },
   {
     "name": "stale injection",
@@ -8163,7 +8359,8 @@
       }
     },
     "reason": "stale_handle",
-    "path": "/injection"
+    "path": "/injection",
+    "correction": "Refresh the resource in the current target binding; do not replay prior effects."
   },
   {
     "name": "record hypothesis",

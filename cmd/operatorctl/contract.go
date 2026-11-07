@@ -52,7 +52,7 @@ func checkContract(ctx context.Context, args []string, stdout, stderr io.Writer)
 	flags.SetOutput(stderr)
 	directory := flags.String("package-dir", "", "absolute installed content-only package directory")
 	version := flags.String("package-version", "", "expected version from trusted installation metadata")
-	digest := flags.String("package-digest", "", "expected SHA-256 package digest from trusted installation metadata")
+	digest := flags.String("package-digest", "", "expected SHA-256 of exact AsyncAPI bytes from trusted installation metadata")
 	if err := flags.Parse(args); err != nil {
 		return 2
 	}

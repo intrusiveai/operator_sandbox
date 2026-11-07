@@ -75,3 +75,34 @@ On successful restore, adopt the binding and skip remaining calls in that model
 response. On accepted finish, no later tool may execute. Do not replay unknown
 operations. Finish acceptance, assessment retention, verified Harness exit and
 completed cleanup are distinct results.
+
+
+## Pagination and finish corrections
+
+For a partial read, use the returned `continuation.arguments` verbatim to fetch
+another page, and use `citation` to cite the bytes already inspected. For example:
+
+```json
+{"readable_observation":"observation-7","citation":"observation-7-range-0-4096","continuation":{"tool":"observation_read","arguments":{"observation":"observation-7","offset":4096,"max_bytes":4096}}}
+```
+
+The next call reads `observation-7` at offset 4096. An objective may cite
+`observation-7-range-0-4096`; it may not cite unread whole-observation bytes.
+These example names represent returned handles, never invented ones.
+
+Required inline finish fields are `finish_reason`, `summary`, `objectives`.
+Objective items require `objective_id`, `outcome`, `summary`. Optional structures
+can be omitted. If needed, uncertainties are objects, for example:
+
+```json
+{"uncertainties":[{"kind":"evidence-gap","description":"Only part of the response was inspected."}]}
+```
+
+Uncertainty kind is one of `unresolved-effects`, `unavailable-feedback`,
+`truncated-feedback`, `unread-input`, `summarized-input`, `omitted-range`,
+`coverage-limit`, `evidence-gap`. Objective outcomes are `supported`, `inconclusive`,
+`not-observed`, `not-tested`. `attempts` accepts execution handles, `observations`
+accepts inspected citation handles inside assessment items, and `records` accepts
+only accepted historical record handles. There is no top-level `observations`.
+`tool-guide:finish` exposes the complete enum lists and working examples.
+Correct an invalid finish with a new call without invoking the target again.
