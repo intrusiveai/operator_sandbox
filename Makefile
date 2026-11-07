@@ -53,7 +53,7 @@ test-pr: check-generated
 test-release-publisher:
 	cd tools/release-publisher && GOWORK=off GOPROXY=off GOTOOLCHAIN=local go test -race ./...
 	cd tools/release-publisher && GOWORK=off GOPROXY=off GOTOOLCHAIN=local go vet ./...
-	cd tools/release-publisher && GOWORK=off GOPROXY=off GOTOOLCHAIN=local $(PYTHON) -m unittest discover -s scripts/tests
+	cd tools/release-publisher && GOWORK=off GOPROXY=off GOTOOLCHAIN=local $(abspath $(PYTHON)) -m unittest discover -s scripts/tests
 
 # Build-only candidates; publication and qualification are separate.
 release-candidate:
