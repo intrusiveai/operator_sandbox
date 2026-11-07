@@ -119,6 +119,9 @@ type toolNormalizer struct {
 
 func (n *toolNormalizer) fail(reason, path, correction string) {
 	if n.err == nil {
+		if reason == "invalid_resolution_context" {
+			correction = "Internal resource resolution failed. Stop this operation and report the product error; do not supply internal identities or replay completed actions."
+		}
 		n.err = argumentIssue(reason, path, correction)
 	}
 }
@@ -206,7 +209,7 @@ func (n *toolNormalizer) ref(h any, kind, path string) string {
 		return local[1]
 	}
 	if kind == "uncertainty" {
-		n.fail("unknown_handle", path, "Select an uncertainty label declared in this assessment.")
+		n.fail("unknown_uncertainty_label", path, "Reference a label declared in top-level uncertainties. Put explanatory prose in that entry's description; do not replay completed attempts.")
 		return ""
 	}
 	r := n.resource(h, kind, path, false, false)
@@ -624,11 +627,11 @@ func (p *Protocol) NormalizeToolArguments(name string, raw []byte, ctx ToolResol
 	}
 	for _, id := range []string{ctx.CampaignID, ctx.CallID} {
 		if len(id) == 0 || len(id) > 128 || !validModelIdentity(id) {
-			return ToolNormalization{}, argumentIssue("invalid_resolution_context", "", "Supply the verified campaign and stable native call identity.")
+			return ToolNormalization{}, argumentIssue("invalid_resolution_context", "", "Internal resource resolution failed. Stop this operation and report the product error; do not supply internal identities or replay completed actions.")
 		}
 	}
 	if len(ctx.Resources) > 4096 {
-		return ToolNormalization{}, argumentIssue("invalid_resolution_context", "", "Supply a bounded verified resource map.")
+		return ToolNormalization{}, argumentIssue("invalid_resolution_context", "", "Internal resource resolution failed. Stop this operation and report the product error; do not supply internal identities or replay completed actions.")
 	}
 	// Canonical copying accepts ordinary Go integer values and prevents mutating
 	// the caller's verified state while normalizing database keys.
@@ -674,8 +677,13 @@ func (p *Protocol) NormalizeToolArguments(name string, raw []byte, ctx ToolResol
 		}
 		schema := operation.RequestSchema
 		if _, err = p.catalog.Validate(schema, raw, OrdinaryLimit); err != nil {
-			path := RemapToolPath(n.paths, conclusionSchemaPath(err))
-			return ToolNormalization{}, argumentIssue("expanded_request_invalid", path, "The expanded request exceeds a host constraint; reduce references/content or correct the selected resource.")
+			issue := p.catalog.schemaArgumentIssue(err)
+			path := RemapToolPath(n.paths, issue.FieldPath)
+			if path == issue.FieldPath && (strings.Contains(path, "receipt") || strings.Contains(path, "binding") || strings.Contains(path, "_id") && !strings.Contains(path, "objective_id") && !strings.Contains(path, "scenario_id") && !strings.Contains(path, "operation_id")) {
+				return ToolNormalization{}, argumentIssue("invalid_resolution_context", "", "Internal resource resolution failed. Stop this operation and report the product error; do not supply internal identities or replay completed actions.")
+			}
+			issue.FieldPath = path
+			return ToolNormalization{}, issue
 		}
 	}
 	return ToolNormalization{result, n.paths, n.selections}, nil

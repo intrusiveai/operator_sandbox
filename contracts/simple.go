@@ -15,6 +15,7 @@ const DirectInputDepth = 16
 type ArgumentError struct {
 	Reason, FieldPath, Correction string
 	Cause                         error
+	Constraint                    *SchemaConstraint
 }
 
 func (e *ArgumentError) Error() string { return e.Reason + ": " + e.Correction }

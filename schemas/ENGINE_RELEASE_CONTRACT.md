@@ -43,7 +43,7 @@ It MUST be strict UTF-8 JSON, at most 64 KiB and depth 32, with exactly these fi
 ```json
 {
   "api_version": "operator.dev/harness-compatibility/v1alpha2",
-  "contract_package_version": "0.7.0",
+  "contract_package_version": "0.7.1",
   "contract_package_digest": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
   "runtime_profile": "operator-container/v1",
   "platform": "linux/amd64"

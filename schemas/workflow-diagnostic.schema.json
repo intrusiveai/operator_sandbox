@@ -78,6 +78,53 @@
     },
     "resubmission_safe": {
       "type": "boolean"
+    },
+    "constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "path",
+        "keyword"
+      ],
+      "properties": {
+        "schema": {
+          "type": "string",
+          "maxLength": 160,
+          "pattern": "^urn:operator:schema:[a-z0-9-]+:v[0-9a-z]+$"
+        },
+        "path": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "keyword": {
+          "enum": [
+            "required",
+            "type",
+            "additionalProperties",
+            "unevaluatedProperties",
+            "enum",
+            "const",
+            "minLength",
+            "maxLength",
+            "pattern",
+            "minimum",
+            "maximum",
+            "exclusiveMinimum",
+            "exclusiveMaximum",
+            "multipleOf",
+            "minItems",
+            "maxItems",
+            "uniqueItems",
+            "minProperties",
+            "maxProperties",
+            "oneOf",
+            "anyOf",
+            "not",
+            "propertyNames"
+          ]
+        }
+      }
     }
   },
   "required": [

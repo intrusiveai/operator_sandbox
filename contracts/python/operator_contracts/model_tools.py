@@ -35,8 +35,14 @@ def model_tools(protocol,codec,operations,surfaces=None):
 
 
 def validate_tool_arguments(protocol,name,raw):
-    value=decode(raw,ORDINARY_LIMIT);require(type(value) is dict)
     from .validation import ContractError, schema_error_path
+    try: value=decode(raw,ORDINARY_LIMIT)
+    except ContractError as error:
+        if error.correction:raise
+        correction='Supply one valid UTF-8 JSON object with unique keys, finite JSON-safe numbers and bounded nesting; do not replay completed actions.'
+        raise ContractError('invalid_json: '+correction,reason='invalid_json',correction=correction) from None
+    if type(value) is not dict:
+        raise ContractError('invalid_structure: Expected object.',reason='invalid_structure',correction='Expected object. Supply named tool arguments in one JSON object.')
     from jsonschema import ValidationError
     validator=protocol._catalog._validators[MODEL_TOOL_ARGUMENTS_SCHEMA]
     branch=next((b for b in validator.schema['oneOf'] if b['properties']['name']['const']==name),None)
@@ -58,9 +64,12 @@ def validate_tool_arguments(protocol,name,raw):
             if error.reason in ('input_depth_exceeded','direct_input_too_large','invalid_base64','content_choice','invalid_media_type','media_type_required','artifact_media_override'):raise
     try: validator.evolve(schema=branch['properties']['arguments']).validate(value)
     except ValidationError as error:
-        raise schema_argument_issue(error) from None
+        raise schema_argument_issue(error, protocol._catalog) from None
     from .tool_normalization import check_model_content
     check_model_content(protocol, name, value)
+    if name == 'snapshot_request':
+        from .protocol import _description
+        _description(value)
     if name in ('reference_read','observation_read'):
         value.setdefault('max_bytes',4096);value.setdefault('offset',0)
     return value
@@ -76,26 +85,4 @@ def tool_guidance(protocol,name):
     require(False)
 
 
-def schema_argument_issue(error):
-    """Only schema expectations and allowlisted paths; no submitted values."""
-    import json
-    from .validation import ContractError, schema_error_path
-    while error.context: error = error.context[0]
-    path = schema_error_path(error)
-    correction = 'Correct the indicated field to match its tool schema.'
-    if error.validator == 'type':
-        kinds = error.validator_value
-        kinds = [kinds] if isinstance(kinds, str) else kinds
-        correction = 'Expected ' + ' or '.join(kinds) + '.'
-        if kinds == ['object'] and path.startswith('/uncertainties/') and path.count('/') == 2:
-            correction += ' Supply an uncertainty object with required kind and description; a plain string is not valid.'
-    elif error.validator == 'required':
-        correction = 'Supply the required field identified by field_path.'
-    elif error.validator == 'additionalProperties':
-        correction = 'Remove this unsupported field.'
-        if path == '/observations':
-            correction += ' Put inspected observation handles in objectives[i].observations or another supported assessment item, not at the top level.'
-    elif error.validator == 'enum':
-        values = json.dumps(error.validator_value, separators=(',', ':'), ensure_ascii=False)
-        if len(values.encode()) <= 384: correction = 'Allowed values: ' + values + '.'
-    return ContractError('invalid_structure: ' + correction, reason='invalid_structure', field_path=path, correction=correction)
+from .schema_diagnostic import schema_argument_issue

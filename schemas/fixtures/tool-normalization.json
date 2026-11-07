@@ -4599,6 +4599,187 @@
     }
   },
   {
+    "name": "unknown uncertainty label",
+    "tool": "finish",
+    "arguments": {
+      "finish_reason": "objectives-addressed",
+      "summary": "The observed marker was returned.",
+      "objectives": [
+        {
+          "objective_id": "objective-1",
+          "outcome": "supported",
+          "summary": "Marker observed.",
+          "observations": [
+            "obs-1"
+          ]
+        }
+      ],
+      "claims": [
+        {
+          "statement": "The target returned the marker.",
+          "interpretation": "supported",
+          "assurance": "Observed in the complete response.",
+          "confidence": "high",
+          "observations": [
+            "obs-1"
+          ],
+          "attempts": [
+            "exec-1"
+          ],
+          "uncertainties": [
+            "missing"
+          ]
+        }
+      ]
+    },
+    "context": {
+      "campaign_id": "campaign-1",
+      "call_id": "native-call-1",
+      "resources": {
+        "exec-1": {
+          "kind": "execution",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "obs-1": {
+          "kind": "observation",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123",
+            "entry_id": "entry-456"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "obs-range": {
+          "kind": "observation",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123",
+            "entry_id": "entry-456",
+            "range": {
+              "offset": 5,
+              "length": 9
+            }
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "obs-2": {
+          "kind": "observation",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-456",
+            "entry_id": "entry-789"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "artifact-1": {
+          "kind": "artifact",
+          "campaign_id": "campaign-1",
+          "value": {
+            "artifact_receipt": "published-1",
+            "purpose": "payload"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "conclusion-1": {
+          "kind": "artifact",
+          "campaign_id": "campaign-1",
+          "value": {
+            "artifact_receipt": "published-2",
+            "purpose": "conclusion"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "record-1": {
+          "kind": "record",
+          "campaign_id": "campaign-1",
+          "value": {
+            "record_receipt_id": "record-receipt"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "hyp-1": {
+          "kind": "hypothesis",
+          "campaign_id": "campaign-1",
+          "value": {
+            "hypothesis_id": "historical-hypothesis"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "input-1": {
+          "kind": "reference",
+          "campaign_id": "campaign-1",
+          "value": {
+            "reference_id": "input-reference",
+            "entry_id": "input-entry"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "inj-1": {
+          "kind": "injection",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123",
+            "action_id": "setup-1"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "snap-1": {
+          "kind": "checkpoint",
+          "campaign_id": "campaign-1",
+          "value": {
+            "source_session": "session-1",
+            "checkpoint_id": "checkpoint-1"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "session-1": {
+          "kind": "session",
+          "campaign_id": "campaign-1",
+          "value": {
+            "source_session": "session-1"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        }
+      },
+      "database_keys": {
+        "db/accounts": [
+          "id"
+        ]
+      }
+    },
+    "reason": "unknown_uncertainty_label",
+    "path": "/claims/0/uncertainties/0",
+    "correction": "Reference a label declared in top-level uncertainties. Put explanatory prose in that entry's description; do not replay completed attempts."
+  },
+  {
     "name": "duplicate labels",
     "tool": "finish",
     "arguments": {

@@ -146,6 +146,18 @@ func TestServiceSnapshotsRestoreAndCumulativeLimits(t *testing.T) {
 		}
 		return stateResult(t, raw, err)
 	}
+	for _, test := range []struct {
+		op, id, field, next string
+		body                any
+	}{
+		{"engine.snapshot_request", "description-bytes", "/description", "UTF-8 bytes", map[string]any{"description": strings.Repeat("😀", 3000)}},
+		{"engine.snapshot_list", "inventory-offset", "/offset", "offset 0", map[string]any{"offset": interceptor.MaxSnapshotInventory + 1}},
+	} {
+		raw, err := s.Handle(context.Background(), stateWire(test.op, test.id, 1, test.body), 0)
+		if err != nil || !strings.Contains(string(raw), test.field) || !strings.Contains(string(raw), test.next) || !strings.Contains(string(raw), `"effect_state":"none"`) {
+			t.Fatal("missing native-bound correction", string(raw), err)
+		}
+	}
 	created := call("engine.snapshot_request", "snapshot-1", 1, map[string]any{"label": "baseline", "description": "Before branch one"})
 	cp := created["snapshot"].(map[string]any)
 	if cp["description"] != "Before branch one" || cp["campaign_id"] != "campaign-1" {
@@ -173,14 +185,28 @@ func TestServiceSnapshotsRestoreAndCumulativeLimits(t *testing.T) {
 		revision int
 		body     any
 		code     string
+		next     string
+		safe     bool
 	}{
-		{"stale-restore", 1, handle, "STATE_CHANGED"},
-		{"restore-1", 2, map[string]any{"source_session": "session-1", "checkpoint_id": "cp-missing"}, "IDEMPOTENCY_CONFLICT"},
-		{"missing-restore", 2, map[string]any{"source_session": "session-1", "checkpoint_id": "cp-missing"}, "SNAPSHOT_NOT_FOUND"},
+		{"stale-restore", 1, handle, "STATE_CHANGED", "Inspect the current state", false},
+		{"restore-1", 2, map[string]any{"source_session": "session-1", "checkpoint_id": "cp-missing"}, "IDEMPOTENCY_CONFLICT", "new call identity", true},
+		{"missing-restore", 2, map[string]any{"source_session": "session-1", "checkpoint_id": "cp-missing"}, "SNAPSHOT_NOT_FOUND", "snapshot_list", true},
 	} {
 		raw, err := s.Handle(context.Background(), stateWire("engine.restore_request", test.id, test.revision, test.body), 0)
 		if err != nil || !strings.Contains(string(raw), test.code) {
 			t.Fatal(string(raw), err)
+		}
+		var reply struct {
+			Error struct {
+				Diagnostic struct {
+					Correction string `json:"correction"`
+					Execution  string `json:"execution_occurred"`
+					Safe       bool   `json:"resubmission_safe"`
+				} `json:"diagnostic"`
+			} `json:"error"`
+		}
+		if json.Unmarshal(raw, &reply) != nil || !strings.Contains(reply.Error.Diagnostic.Correction, test.next) || reply.Error.Diagnostic.Execution != "no" || reply.Error.Diagnostic.Safe != test.safe {
+			t.Fatal("admission correction lost", string(raw))
 		}
 	}
 	second := call("engine.snapshot_request", "snapshot-2", 2, map[string]any{})
@@ -191,6 +217,9 @@ func TestServiceSnapshotsRestoreAndCumulativeLimits(t *testing.T) {
 	raw, err := s.Handle(context.Background(), stateWire("engine.snapshot_request", "snapshot-3", 2, map[string]any{}), 0)
 	if err != nil || !strings.Contains(string(raw), "SNAPSHOT_BUDGET_EXCEEDED") {
 		t.Fatal(string(raw), err)
+	}
+	if !strings.Contains(string(raw), "Do not repeat") || !strings.Contains(string(raw), `"resubmission_safe":false`) {
+		t.Fatal("exhaustion invited a retry", string(raw))
 	}
 	raw, err = s.Handle(context.Background(), attemptWire(p, 2, 1, w.Manifest().ReleaseRecordDigest), 0)
 	stateResult(t, raw, err)

@@ -10,6 +10,7 @@ from .simple import resolve_direct_input, validate_attempt_origin
 
 
 def issue(reason, path, correction):
+    if reason=='invalid_resolution_context':correction='Internal resource resolution failed. Stop this operation and report the product error; do not supply internal identities or replay completed actions.'
     raise ContractError(reason+': '+correction, reason=reason, field_path=path, correction=correction)
 
 
@@ -71,7 +72,11 @@ def normalize_tool_arguments(protocol,name,raw,context):
     if schema:
         if len(_canonical_value(result,ORDINARY_LIMIT))>protocol._operations['engine.'+name]['max_request_bytes']:issue('request_too_large','','Expanded request exceeds its operation limit; reduce content/references or use a committed artifact.')
         try:protocol._catalog.validate_value(schema,result)
-        except ContractError as e:issue('expanded_request_invalid',remap_tool_path(n.paths,e.field_path or ''),'The expanded request exceeds a host constraint; reduce references/content or correct the selected resource.')
+        except ContractError as e:
+            path=remap_tool_path(n.paths,e.field_path)
+            if path==e.field_path and ('receipt' in path or 'binding' in path or '_id' in path and not any(k in path for k in ('objective_id','scenario_id','operation_id'))):
+                issue('invalid_resolution_context','','Internal resource resolution failed.')
+            raise ContractError(str(e),reason=e.reason,field_path=path,correction=e.correction,constraint=e.constraint) from None
     _canonical_value(result,ORDINARY_LIMIT)
     return dict(arguments=result,paths=n.paths,observation_selections=n.selections)
 
@@ -121,7 +126,7 @@ class _Normalizer:
             k,v=self.locals[h]
             if k!=kind:issue('wrong_handle_kind',path,'Select a '+kind+' label.')
             return v
-        if kind=='uncertainty':issue('unknown_handle',path,'Select an uncertainty label declared in this assessment.')
+        if kind=='uncertainty':issue('unknown_uncertainty_label',path,"Reference a label declared in top-level uncertainties. Put explanatory prose in that entry's description; do not replay completed attempts.")
         r=self.resource(h,kind,path)
         key={'execution':'attempt_receipt_id','record':'record_receipt_id','hypothesis':'hypothesis_id','uncertainty':'gap_id'}[kind]
         if not isinstance(r.get(key),str):issue('invalid_resolution_context',path,'Supply the canonical resource identifier.')

@@ -15,6 +15,8 @@ var ErrProtocol = errors.New("contract message consistency check failed")
 
 const SpoolAckLimit = 1024
 
+const snapshotDescriptionLimit = 4096
+
 // Operation is installed dispatch metadata, not authority supplied by the guest.
 type Operation struct {
 	Name             string   `json:"name"`
@@ -152,7 +154,7 @@ func (p *Protocol) ValidateRequest(raw []byte) (map[string]any, error) {
 	}
 	// Validate against the installed registry as well as the generated envelope.
 	if err = p.catalog.schemas[op.RequestSchema].Validate(message["body"]); err != nil {
-		return nil, schemaArgumentIssue(err)
+		return nil, p.catalog.schemaArgumentIssue(err)
 	}
 	body := message["body"].(map[string]any)
 	valid := true
@@ -178,7 +180,9 @@ func (p *Protocol) ValidateRequest(raw []byte) (map[string]any, error) {
 		data, ok := part(body["content"])
 		valid = ok && len(data) > 0 && number(body["offset"])+int64(len(data)) <= 16<<20
 	case "engine.snapshot_request":
-		valid = descriptionOK(body)
+		if err := checkSnapshotDescription(body); err != nil {
+			return nil, err
+		}
 	}
 	if !valid {
 		return nil, ErrProtocol
@@ -293,8 +297,15 @@ func optionalText(object map[string]any, key string) string {
 	return ""
 }
 func descriptionOK(object map[string]any) bool {
-	return len(optionalText(object, "description")) <= 4096
+	return len(optionalText(object, "description")) <= snapshotDescriptionLimit
 }
+func checkSnapshotDescription(object map[string]any) error {
+	if !descriptionOK(object) {
+		return argumentIssue("snapshot_description_size", "/description", "Snapshot description must be at most "+strconv.Itoa(snapshotDescriptionLimit)+" UTF-8 bytes. Shorten description and resubmit; no snapshot was created.")
+	}
+	return nil
+}
+
 func part(value any) ([]byte, bool) {
 	encoded := value.(string)
 	decoded, err := base64.StdEncoding.Strict().DecodeString(encoded)

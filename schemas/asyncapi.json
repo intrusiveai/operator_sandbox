@@ -6195,6 +6195,77 @@
                   "stopping"
                 ]
               }
+            },
+            {
+              "if": {
+                "properties": {
+                  "stopping": {
+                    "properties": {
+                      "condition": {
+                        "const": "no-progress-limit"
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "stopping"
+                ]
+              },
+              "then": {
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "tool_name"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "tool_call_id"
+                      ]
+                    }
+                  ]
+                },
+                "properties": {
+                  "diagnostic": {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "field_path"
+                          ]
+                        },
+                        {
+                          "required": [
+                            "identifier"
+                          ]
+                        },
+                        {
+                          "required": [
+                            "correction"
+                          ]
+                        },
+                        {
+                          "required": [
+                            "constraint"
+                          ]
+                        }
+                      ]
+                    },
+                    "properties": {
+                      "reason": {
+                        "const": "no_progress_limit"
+                      },
+                      "resubmission_safe": {
+                        "const": false
+                      },
+                      "stage": {
+                        "const": "termination"
+                      }
+                    }
+                  }
+                }
+              }
             }
           ],
           "properties": {
@@ -6319,7 +6390,8 @@
                     "wall-time-limit",
                     "context-limit",
                     "budget-limit",
-                    "local-error"
+                    "local-error",
+                    "no-progress-limit"
                   ]
                 },
                 "configured_limit": {
@@ -6459,7 +6531,8 @@
                     "invalid-call-limit",
                     "deadline",
                     "provider-failure",
-                    "target-failure"
+                    "target-failure",
+                    "no-progress-limit"
                   ]
                 }
               },
@@ -12742,6 +12815,7 @@
                                             "boolean"
                                           ]
                                         },
+                                        "description": "Use exactly the key columns from this database policy details_reference, with non-null scalar values.",
                                         "maxProperties": 16,
                                         "minProperties": 1,
                                         "propertyNames": {
@@ -14788,6 +14862,7 @@
                                             "boolean"
                                           ]
                                         },
+                                        "description": "Use exactly the key columns from this database policy details_reference, with non-null scalar values.",
                                         "maxProperties": 16,
                                         "minProperties": 1,
                                         "propertyNames": {
@@ -15543,30 +15618,30 @@
                                 "arguments_equal": {
                                   "oneOf": [
                                     {
-                                      "description": "Bounded JSON; runtime validates nesting and size."
+                                      "description": "JSON; runtime checks nesting and size."
                                     },
                                     {
                                       "items": {
                                         "oneOf": [
                                           {
-                                            "description": "Bounded JSON; runtime validates nesting and size."
+                                            "description": "JSON; runtime checks nesting and size."
                                           },
                                           {
                                             "items": {
                                               "oneOf": [
                                                 {
-                                                  "description": "Bounded JSON; runtime validates nesting and size."
+                                                  "description": "JSON; runtime checks nesting and size."
                                                 },
                                                 {
                                                   "items": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxItems": 16,
                                                   "type": "array"
                                                 },
                                                 {
                                                   "additionalProperties": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxProperties": 16,
                                                   "propertyNames": {
@@ -15583,18 +15658,18 @@
                                             "additionalProperties": {
                                               "oneOf": [
                                                 {
-                                                  "description": "Bounded JSON; runtime validates nesting and size."
+                                                  "description": "JSON; runtime checks nesting and size."
                                                 },
                                                 {
                                                   "items": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxItems": 16,
                                                   "type": "array"
                                                 },
                                                 {
                                                   "additionalProperties": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxProperties": 16,
                                                   "propertyNames": {
@@ -15619,24 +15694,24 @@
                                       "additionalProperties": {
                                         "oneOf": [
                                           {
-                                            "description": "Bounded JSON; runtime validates nesting and size."
+                                            "description": "JSON; runtime checks nesting and size."
                                           },
                                           {
                                             "items": {
                                               "oneOf": [
                                                 {
-                                                  "description": "Bounded JSON; runtime validates nesting and size."
+                                                  "description": "JSON; runtime checks nesting and size."
                                                 },
                                                 {
                                                   "items": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxItems": 16,
                                                   "type": "array"
                                                 },
                                                 {
                                                   "additionalProperties": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxProperties": 16,
                                                   "propertyNames": {
@@ -15653,18 +15728,18 @@
                                             "additionalProperties": {
                                               "oneOf": [
                                                 {
-                                                  "description": "Bounded JSON; runtime validates nesting and size."
+                                                  "description": "JSON; runtime checks nesting and size."
                                                 },
                                                 {
                                                   "items": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxItems": 16,
                                                   "type": "array"
                                                 },
                                                 {
                                                   "additionalProperties": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxProperties": 16,
                                                   "propertyNames": {
@@ -15805,30 +15880,30 @@
                                 "request_body_equal": {
                                   "oneOf": [
                                     {
-                                      "description": "Bounded JSON; runtime validates nesting and size."
+                                      "description": "JSON; runtime checks nesting and size."
                                     },
                                     {
                                       "items": {
                                         "oneOf": [
                                           {
-                                            "description": "Bounded JSON; runtime validates nesting and size."
+                                            "description": "JSON; runtime checks nesting and size."
                                           },
                                           {
                                             "items": {
                                               "oneOf": [
                                                 {
-                                                  "description": "Bounded JSON; runtime validates nesting and size."
+                                                  "description": "JSON; runtime checks nesting and size."
                                                 },
                                                 {
                                                   "items": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxItems": 16,
                                                   "type": "array"
                                                 },
                                                 {
                                                   "additionalProperties": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxProperties": 16,
                                                   "propertyNames": {
@@ -15845,18 +15920,18 @@
                                             "additionalProperties": {
                                               "oneOf": [
                                                 {
-                                                  "description": "Bounded JSON; runtime validates nesting and size."
+                                                  "description": "JSON; runtime checks nesting and size."
                                                 },
                                                 {
                                                   "items": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxItems": 16,
                                                   "type": "array"
                                                 },
                                                 {
                                                   "additionalProperties": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxProperties": 16,
                                                   "propertyNames": {
@@ -15881,24 +15956,24 @@
                                       "additionalProperties": {
                                         "oneOf": [
                                           {
-                                            "description": "Bounded JSON; runtime validates nesting and size."
+                                            "description": "JSON; runtime checks nesting and size."
                                           },
                                           {
                                             "items": {
                                               "oneOf": [
                                                 {
-                                                  "description": "Bounded JSON; runtime validates nesting and size."
+                                                  "description": "JSON; runtime checks nesting and size."
                                                 },
                                                 {
                                                   "items": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxItems": 16,
                                                   "type": "array"
                                                 },
                                                 {
                                                   "additionalProperties": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxProperties": 16,
                                                   "propertyNames": {
@@ -15915,18 +15990,18 @@
                                             "additionalProperties": {
                                               "oneOf": [
                                                 {
-                                                  "description": "Bounded JSON; runtime validates nesting and size."
+                                                  "description": "JSON; runtime checks nesting and size."
                                                 },
                                                 {
                                                   "items": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxItems": 16,
                                                   "type": "array"
                                                 },
                                                 {
                                                   "additionalProperties": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxProperties": 16,
                                                   "propertyNames": {
@@ -16008,30 +16083,30 @@
                                 "arguments_equal": {
                                   "oneOf": [
                                     {
-                                      "description": "Bounded JSON; runtime validates nesting and size."
+                                      "description": "JSON; runtime checks nesting and size."
                                     },
                                     {
                                       "items": {
                                         "oneOf": [
                                           {
-                                            "description": "Bounded JSON; runtime validates nesting and size."
+                                            "description": "JSON; runtime checks nesting and size."
                                           },
                                           {
                                             "items": {
                                               "oneOf": [
                                                 {
-                                                  "description": "Bounded JSON; runtime validates nesting and size."
+                                                  "description": "JSON; runtime checks nesting and size."
                                                 },
                                                 {
                                                   "items": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxItems": 16,
                                                   "type": "array"
                                                 },
                                                 {
                                                   "additionalProperties": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxProperties": 16,
                                                   "propertyNames": {
@@ -16048,18 +16123,18 @@
                                             "additionalProperties": {
                                               "oneOf": [
                                                 {
-                                                  "description": "Bounded JSON; runtime validates nesting and size."
+                                                  "description": "JSON; runtime checks nesting and size."
                                                 },
                                                 {
                                                   "items": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxItems": 16,
                                                   "type": "array"
                                                 },
                                                 {
                                                   "additionalProperties": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxProperties": 16,
                                                   "propertyNames": {
@@ -16084,24 +16159,24 @@
                                       "additionalProperties": {
                                         "oneOf": [
                                           {
-                                            "description": "Bounded JSON; runtime validates nesting and size."
+                                            "description": "JSON; runtime checks nesting and size."
                                           },
                                           {
                                             "items": {
                                               "oneOf": [
                                                 {
-                                                  "description": "Bounded JSON; runtime validates nesting and size."
+                                                  "description": "JSON; runtime checks nesting and size."
                                                 },
                                                 {
                                                   "items": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxItems": 16,
                                                   "type": "array"
                                                 },
                                                 {
                                                   "additionalProperties": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxProperties": 16,
                                                   "propertyNames": {
@@ -16118,18 +16193,18 @@
                                             "additionalProperties": {
                                               "oneOf": [
                                                 {
-                                                  "description": "Bounded JSON; runtime validates nesting and size."
+                                                  "description": "JSON; runtime checks nesting and size."
                                                 },
                                                 {
                                                   "items": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxItems": 16,
                                                   "type": "array"
                                                 },
                                                 {
                                                   "additionalProperties": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxProperties": 16,
                                                   "propertyNames": {
@@ -16298,30 +16373,30 @@
                                 "request_body_equal": {
                                   "oneOf": [
                                     {
-                                      "description": "Bounded JSON; runtime validates nesting and size."
+                                      "description": "JSON; runtime checks nesting and size."
                                     },
                                     {
                                       "items": {
                                         "oneOf": [
                                           {
-                                            "description": "Bounded JSON; runtime validates nesting and size."
+                                            "description": "JSON; runtime checks nesting and size."
                                           },
                                           {
                                             "items": {
                                               "oneOf": [
                                                 {
-                                                  "description": "Bounded JSON; runtime validates nesting and size."
+                                                  "description": "JSON; runtime checks nesting and size."
                                                 },
                                                 {
                                                   "items": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxItems": 16,
                                                   "type": "array"
                                                 },
                                                 {
                                                   "additionalProperties": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxProperties": 16,
                                                   "propertyNames": {
@@ -16338,18 +16413,18 @@
                                             "additionalProperties": {
                                               "oneOf": [
                                                 {
-                                                  "description": "Bounded JSON; runtime validates nesting and size."
+                                                  "description": "JSON; runtime checks nesting and size."
                                                 },
                                                 {
                                                   "items": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxItems": 16,
                                                   "type": "array"
                                                 },
                                                 {
                                                   "additionalProperties": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxProperties": 16,
                                                   "propertyNames": {
@@ -16374,24 +16449,24 @@
                                       "additionalProperties": {
                                         "oneOf": [
                                           {
-                                            "description": "Bounded JSON; runtime validates nesting and size."
+                                            "description": "JSON; runtime checks nesting and size."
                                           },
                                           {
                                             "items": {
                                               "oneOf": [
                                                 {
-                                                  "description": "Bounded JSON; runtime validates nesting and size."
+                                                  "description": "JSON; runtime checks nesting and size."
                                                 },
                                                 {
                                                   "items": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxItems": 16,
                                                   "type": "array"
                                                 },
                                                 {
                                                   "additionalProperties": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxProperties": 16,
                                                   "propertyNames": {
@@ -16408,18 +16483,18 @@
                                             "additionalProperties": {
                                               "oneOf": [
                                                 {
-                                                  "description": "Bounded JSON; runtime validates nesting and size."
+                                                  "description": "JSON; runtime checks nesting and size."
                                                 },
                                                 {
                                                   "items": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxItems": 16,
                                                   "type": "array"
                                                 },
                                                 {
                                                   "additionalProperties": {
-                                                    "description": "Bounded JSON; runtime validates nesting and size."
+                                                    "description": "JSON; runtime checks nesting and size."
                                                   },
                                                   "maxProperties": 16,
                                                   "propertyNames": {
@@ -16770,11 +16845,14 @@
                             "type": "string"
                           },
                           "attempts": {
+                            "description": "Use execution handles returned by executed attempts; rejected submissions have no execution handle.",
                             "items": {
+                              "description": "Use execution handles returned by executed attempts; rejected submissions have no execution handle.",
                               "maxLength": 128,
                               "minLength": 1,
                               "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                              "type": "string"
+                              "type": "string",
+                              "x-operator-correction": "Use execution handles returned by executed attempts; rejected submissions have no execution handle."
                             },
                             "maxItems": 32,
                             "type": "array",
@@ -16795,11 +16873,14 @@
                             ]
                           },
                           "observations": {
+                            "description": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection.",
                             "items": {
+                              "description": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection.",
                               "maxLength": 128,
                               "minLength": 1,
                               "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                              "type": "string"
+                              "type": "string",
+                              "x-operator-correction": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection."
                             },
                             "maxItems": 32,
                             "type": "array",
@@ -16811,11 +16892,14 @@
                             "type": "string"
                           },
                           "uncertainties": {
+                            "description": "Reference a label declared in top-level uncertainties. Put explanatory prose in that entry's description.",
                             "items": {
+                              "description": "Reference a label declared in top-level uncertainties. Put explanatory prose in that entry's description.",
                               "maxLength": 128,
                               "minLength": 1,
                               "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                              "type": "string"
+                              "type": "string",
+                              "x-operator-correction": "Reference a label declared in top-level uncertainties. Put explanatory prose in that entry's description."
                             },
                             "maxItems": 32,
                             "type": "array",
@@ -16843,11 +16927,14 @@
                             "type": "string"
                           },
                           "attempts": {
+                            "description": "Use execution handles returned by executed attempts; rejected submissions have no execution handle.",
                             "items": {
+                              "description": "Use execution handles returned by executed attempts; rejected submissions have no execution handle.",
                               "maxLength": 128,
                               "minLength": 1,
                               "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                              "type": "string"
+                              "type": "string",
+                              "x-operator-correction": "Use execution handles returned by executed attempts; rejected submissions have no execution handle."
                             },
                             "maxItems": 32,
                             "type": "array",
@@ -16869,11 +16956,14 @@
                             "type": "string"
                           },
                           "observations": {
+                            "description": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection.",
                             "items": {
+                              "description": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection.",
                               "maxLength": 128,
                               "minLength": 1,
                               "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                              "type": "string"
+                              "type": "string",
+                              "x-operator-correction": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection."
                             },
                             "maxItems": 32,
                             "type": "array",
@@ -16943,17 +17033,21 @@
                         ],
                         "properties": {
                           "attempts": {
+                            "description": "Use execution handles returned by executed attempts; rejected submissions have no execution handle.",
                             "items": {
+                              "description": "Use execution handles returned by executed attempts; rejected submissions have no execution handle.",
                               "maxLength": 128,
                               "minLength": 1,
                               "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                              "type": "string"
+                              "type": "string",
+                              "x-operator-correction": "Use execution handles returned by executed attempts; rejected submissions have no execution handle."
                             },
                             "maxItems": 32,
                             "type": "array",
                             "uniqueItems": true
                           },
                           "label": {
+                            "description": "Optional local hypothesis label; no earlier registration required.",
                             "maxLength": 128,
                             "minLength": 1,
                             "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
@@ -16974,11 +17068,14 @@
                             "uniqueItems": true
                           },
                           "observations": {
+                            "description": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection.",
                             "items": {
+                              "description": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection.",
                               "maxLength": 128,
                               "minLength": 1,
                               "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                              "type": "string"
+                              "type": "string",
+                              "x-operator-correction": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection."
                             },
                             "maxItems": 32,
                             "type": "array",
@@ -17001,17 +17098,21 @@
                             ]
                           },
                           "parent": {
+                            "description": "Local hypothesis label or returned historical hypothesis handle. Forward references are valid; self-parenting and cycles are invalid.",
                             "maxLength": 128,
                             "minLength": 1,
                             "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                             "type": "string"
                           },
                           "records": {
+                            "description": "Use historical record handles returned by record_append, never execution or artifact handles.",
                             "items": {
+                              "description": "Use historical record handles returned by record_append, never execution or artifact handles.",
                               "maxLength": 128,
                               "minLength": 1,
                               "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                              "type": "string"
+                              "type": "string",
+                              "x-operator-correction": "Use historical record handles returned by record_append, never execution or artifact handles."
                             },
                             "maxItems": 32,
                             "type": "array",
@@ -17047,11 +17148,14 @@
                         "additionalProperties": false,
                         "properties": {
                           "attempts": {
+                            "description": "Use execution handles returned by executed attempts; rejected submissions have no execution handle.",
                             "items": {
+                              "description": "Use execution handles returned by executed attempts; rejected submissions have no execution handle.",
                               "maxLength": 128,
                               "minLength": 1,
                               "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                              "type": "string"
+                              "type": "string",
+                              "x-operator-correction": "Use execution handles returned by executed attempts; rejected submissions have no execution handle."
                             },
                             "maxItems": 32,
                             "type": "array",
@@ -17067,11 +17171,14 @@
                             "type": "string"
                           },
                           "observations": {
+                            "description": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection.",
                             "items": {
+                              "description": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection.",
                               "maxLength": 128,
                               "minLength": 1,
                               "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                              "type": "string"
+                              "type": "string",
+                              "x-operator-correction": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection."
                             },
                             "maxItems": 32,
                             "type": "array",
@@ -17086,11 +17193,14 @@
                             ]
                           },
                           "records": {
+                            "description": "Use historical record handles returned by record_append, never execution or artifact handles.",
                             "items": {
+                              "description": "Use historical record handles returned by record_append, never execution or artifact handles.",
                               "maxLength": 128,
                               "minLength": 1,
                               "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                              "type": "string"
+                              "type": "string",
+                              "x-operator-correction": "Use historical record handles returned by record_append, never execution or artifact handles."
                             },
                             "maxItems": 32,
                             "type": "array",
@@ -17113,11 +17223,14 @@
                       "type": "array"
                     },
                     "records": {
+                      "description": "Use exact returned handles of this field's resource category.",
                       "items": {
+                        "description": "Use exact returned handles of this field's resource category.",
                         "maxLength": 128,
                         "minLength": 1,
                         "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                        "type": "string"
+                        "type": "string",
+                        "x-operator-correction": "Use exact returned handles of this field's resource category."
                       },
                       "maxItems": 256,
                       "type": "array",
@@ -17144,7 +17257,8 @@
                         "invalid-call-limit",
                         "deadline",
                         "provider-failure",
-                        "target-failure"
+                        "target-failure",
+                        "no-progress-limit"
                       ]
                     },
                     "uncertainties": {
@@ -17157,11 +17271,14 @@
                             "type": "string"
                           },
                           "inputs": {
+                            "description": "Use exact returned handles of this field's resource category.",
                             "items": {
+                              "description": "Use exact returned handles of this field's resource category.",
                               "maxLength": 128,
                               "minLength": 1,
                               "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                              "type": "string"
+                              "type": "string",
+                              "x-operator-correction": "Use exact returned handles of this field's resource category."
                             },
                             "maxItems": 32,
                             "type": "array",
@@ -17180,28 +17297,35 @@
                             ]
                           },
                           "label": {
+                            "description": "Local label referenced by claims[].uncertainties; declare once.",
                             "maxLength": 128,
                             "minLength": 1,
                             "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                             "type": "string"
                           },
                           "observations": {
+                            "description": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection.",
                             "items": {
+                              "description": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection.",
                               "maxLength": 128,
                               "minLength": 1,
                               "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                              "type": "string"
+                              "type": "string",
+                              "x-operator-correction": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection."
                             },
                             "maxItems": 32,
                             "type": "array",
                             "uniqueItems": true
                           },
                           "records": {
+                            "description": "Use historical record handles returned by record_append, never execution or artifact handles.",
                             "items": {
+                              "description": "Use historical record handles returned by record_append, never execution or artifact handles.",
                               "maxLength": 128,
                               "minLength": 1,
                               "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                              "type": "string"
+                              "type": "string",
+                              "x-operator-correction": "Use historical record handles returned by record_append, never execution or artifact handles."
                             },
                             "maxItems": 32,
                             "type": "array",
@@ -17212,7 +17336,8 @@
                           "kind",
                           "description"
                         ],
-                        "type": "object"
+                        "type": "object",
+                        "x-operator-correction": "Supply an uncertainty object with required kind and description; put explanatory prose in description."
                       },
                       "maxItems": 100,
                       "type": "array"
@@ -17240,6 +17365,7 @@
                 ],
                 "correction": "Correct a rejected finish with a new call; do not replay completed target operations. Omit optional reporting collections when unnecessary.",
                 "example_identity_note": "Replace objective-id with a submitted objective ID and choose outcomes from observed facts. Handles in examples illustrate returned handles; never invent them.",
+                "example_scope": "The uncertainty-reference example is an assessment fragment, not a complete finish request.",
                 "finish_reasons": [
                   "objectives-addressed",
                   "no-useful-next-experiment",
@@ -17287,7 +17413,27 @@
                   "omitted-range",
                   "coverage-limit",
                   "evidence-gap"
-                ]
+                ],
+                "uncertainty_reference_example": {
+                  "claims": [
+                    {
+                      "assurance": "refund-behavior",
+                      "confidence": "low",
+                      "interpretation": "inconclusive",
+                      "statement": "The inspected evidence supports a limited conclusion.",
+                      "uncertainties": [
+                        "limited-feedback"
+                      ]
+                    }
+                  ],
+                  "uncertainties": [
+                    {
+                      "description": "Internal operation-error feedback was unavailable.",
+                      "kind": "unavailable-feedback",
+                      "label": "limited-feedback"
+                    }
+                  ]
+                }
               },
               "x-operator-provider-parameters": {
                 "additionalProperties": false,
@@ -17346,6 +17492,7 @@
                           "type": "string"
                         },
                         "uncertainties": {
+                          "description": "Declared top-level uncertainty labels; explanations belong in description.",
                           "items": {
                             "maxLength": 128,
                             "minLength": 1,
@@ -17644,7 +17791,8 @@
                       "invalid-call-limit",
                       "deadline",
                       "provider-failure",
-                      "target-failure"
+                      "target-failure",
+                      "no-progress-limit"
                     ]
                   },
                   "uncertainties": {
@@ -17953,11 +18101,14 @@
                           "type": "array"
                         },
                         "records": {
+                          "description": "Use historical record handles returned by record_append, never execution or artifact handles.",
                           "items": {
+                            "description": "Use historical record handles returned by record_append, never execution or artifact handles.",
                             "maxLength": 128,
                             "minLength": 1,
                             "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                            "type": "string"
+                            "type": "string",
+                            "x-operator-correction": "Use historical record handles returned by record_append, never execution or artifact handles."
                           },
                           "maxItems": 32,
                           "type": "array",
@@ -18051,11 +18202,14 @@
                           "type": "string"
                         },
                         "attempts": {
+                          "description": "Use exact returned handles of this field's resource category.",
                           "items": {
+                            "description": "Use exact returned handles of this field's resource category.",
                             "maxLength": 128,
                             "minLength": 1,
                             "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                            "type": "string"
+                            "type": "string",
+                            "x-operator-correction": "Use exact returned handles of this field's resource category."
                           },
                           "maxItems": 32,
                           "type": "array",
@@ -18083,11 +18237,14 @@
                           "type": "array"
                         },
                         "hypotheses": {
+                          "description": "Use exact returned handles of this field's resource category.",
                           "items": {
+                            "description": "Use exact returned handles of this field's resource category.",
                             "maxLength": 128,
                             "minLength": 1,
                             "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                            "type": "string"
+                            "type": "string",
+                            "x-operator-correction": "Use exact returned handles of this field's resource category."
                           },
                           "maxItems": 32,
                           "type": "array",
@@ -18118,22 +18275,28 @@
                           "uniqueItems": true
                         },
                         "observations": {
+                          "description": "Use exact returned handles of this field's resource category.",
                           "items": {
+                            "description": "Use exact returned handles of this field's resource category.",
                             "maxLength": 128,
                             "minLength": 1,
                             "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                            "type": "string"
+                            "type": "string",
+                            "x-operator-correction": "Use exact returned handles of this field's resource category."
                           },
                           "maxItems": 32,
                           "type": "array",
                           "uniqueItems": true
                         },
                         "records": {
+                          "description": "Use historical record handles returned by record_append, never execution or artifact handles.",
                           "items": {
+                            "description": "Use historical record handles returned by record_append, never execution or artifact handles.",
                             "maxLength": 128,
                             "minLength": 1,
                             "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                            "type": "string"
+                            "type": "string",
+                            "x-operator-correction": "Use historical record handles returned by record_append, never execution or artifact handles."
                           },
                           "maxItems": 32,
                           "type": "array",
@@ -18181,11 +18344,14 @@
                           "type": "string"
                         },
                         "records": {
+                          "description": "Use historical record handles returned by record_append, never execution or artifact handles.",
                           "items": {
+                            "description": "Use historical record handles returned by record_append, never execution or artifact handles.",
                             "maxLength": 128,
                             "minLength": 1,
                             "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                            "type": "string"
+                            "type": "string",
+                            "x-operator-correction": "Use historical record handles returned by record_append, never execution or artifact handles."
                           },
                           "maxItems": 32,
                           "type": "array",
@@ -18213,11 +18379,14 @@
                                 "type": "string"
                               },
                               "attempts": {
+                                "description": "Use execution handles returned by executed attempts; rejected submissions have no execution handle.",
                                 "items": {
+                                  "description": "Use execution handles returned by executed attempts; rejected submissions have no execution handle.",
                                   "maxLength": 128,
                                   "minLength": 1,
                                   "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                                  "type": "string"
+                                  "type": "string",
+                                  "x-operator-correction": "Use execution handles returned by executed attempts; rejected submissions have no execution handle."
                                 },
                                 "maxItems": 32,
                                 "type": "array",
@@ -18239,11 +18408,14 @@
                                 "type": "string"
                               },
                               "observations": {
+                                "description": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection.",
                                 "items": {
+                                  "description": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection.",
                                   "maxLength": 128,
                                   "minLength": 1,
                                   "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                                  "type": "string"
+                                  "type": "string",
+                                  "x-operator-correction": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection."
                                 },
                                 "maxItems": 32,
                                 "type": "array",
@@ -18276,11 +18448,14 @@
                           "const": "coverage"
                         },
                         "records": {
+                          "description": "Use historical record handles returned by record_append, never execution or artifact handles.",
                           "items": {
+                            "description": "Use historical record handles returned by record_append, never execution or artifact handles.",
                             "maxLength": 128,
                             "minLength": 1,
                             "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                            "type": "string"
+                            "type": "string",
+                            "x-operator-correction": "Use historical record handles returned by record_append, never execution or artifact handles."
                           },
                           "maxItems": 32,
                           "type": "array",
@@ -18321,11 +18496,14 @@
                       "type": "string"
                     },
                     "attempts": {
+                      "description": "Use exact returned handles of this field's resource category.",
                       "items": {
+                        "description": "Use exact returned handles of this field's resource category.",
                         "maxLength": 128,
                         "minLength": 1,
                         "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                        "type": "string"
+                        "type": "string",
+                        "x-operator-correction": "Use exact returned handles of this field's resource category."
                       },
                       "maxItems": 32,
                       "type": "array",
@@ -18353,11 +18531,14 @@
                             "type": "string"
                           },
                           "attempts": {
+                            "description": "Use execution handles returned by executed attempts; rejected submissions have no execution handle.",
                             "items": {
+                              "description": "Use execution handles returned by executed attempts; rejected submissions have no execution handle.",
                               "maxLength": 128,
                               "minLength": 1,
                               "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                              "type": "string"
+                              "type": "string",
+                              "x-operator-correction": "Use execution handles returned by executed attempts; rejected submissions have no execution handle."
                             },
                             "maxItems": 32,
                             "type": "array",
@@ -18379,11 +18560,14 @@
                             "type": "string"
                           },
                           "observations": {
+                            "description": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection.",
                             "items": {
+                              "description": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection.",
                               "maxLength": 128,
                               "minLength": 1,
                               "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                              "type": "string"
+                              "type": "string",
+                              "x-operator-correction": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection."
                             },
                             "maxItems": 32,
                             "type": "array",
@@ -18422,11 +18606,14 @@
                       "type": "array"
                     },
                     "hypotheses": {
+                      "description": "Use exact returned handles of this field's resource category.",
                       "items": {
+                        "description": "Use exact returned handles of this field's resource category.",
                         "maxLength": 128,
                         "minLength": 1,
                         "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                        "type": "string"
+                        "type": "string",
+                        "x-operator-correction": "Use exact returned handles of this field's resource category."
                       },
                       "maxItems": 32,
                       "type": "array",
@@ -18473,11 +18660,14 @@
                       "uniqueItems": true
                     },
                     "observations": {
+                      "description": "Use exact returned handles of this field's resource category.",
                       "items": {
+                        "description": "Use exact returned handles of this field's resource category.",
                         "maxLength": 128,
                         "minLength": 1,
                         "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                        "type": "string"
+                        "type": "string",
+                        "x-operator-correction": "Use exact returned handles of this field's resource category."
                       },
                       "maxItems": 32,
                       "type": "array",
@@ -18507,11 +18697,14 @@
                       "type": "array"
                     },
                     "records": {
+                      "description": "Use historical record handles returned by record_append, never execution or artifact handles.",
                       "items": {
+                        "description": "Use historical record handles returned by record_append, never execution or artifact handles.",
                         "maxLength": 128,
                         "minLength": 1,
                         "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                        "type": "string"
+                        "type": "string",
+                        "x-operator-correction": "Use historical record handles returned by record_append, never execution or artifact handles."
                       },
                       "maxItems": 32,
                       "type": "array",
@@ -18869,6 +19062,7 @@
                   "additionalProperties": false,
                   "properties": {
                     "snapshot": {
+                      "description": "Snapshot identity returned by snapshot_list/request/inspect. Inspect readiness before restore; identity alone does not imply readiness.",
                       "maxLength": 128,
                       "minLength": 1,
                       "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
@@ -18915,6 +19109,7 @@
                   "additionalProperties": false,
                   "properties": {
                     "snapshot": {
+                      "description": "Snapshot identity returned by snapshot_list/request/inspect. Inspect readiness before restore; identity alone does not imply readiness.",
                       "maxLength": 128,
                       "minLength": 1,
                       "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
@@ -23957,6 +24152,53 @@
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "additionalProperties": false,
           "properties": {
+            "constraint": {
+              "additionalProperties": false,
+              "properties": {
+                "keyword": {
+                  "enum": [
+                    "required",
+                    "type",
+                    "additionalProperties",
+                    "unevaluatedProperties",
+                    "enum",
+                    "const",
+                    "minLength",
+                    "maxLength",
+                    "pattern",
+                    "minimum",
+                    "maximum",
+                    "exclusiveMinimum",
+                    "exclusiveMaximum",
+                    "multipleOf",
+                    "minItems",
+                    "maxItems",
+                    "uniqueItems",
+                    "minProperties",
+                    "maxProperties",
+                    "oneOf",
+                    "anyOf",
+                    "not",
+                    "propertyNames"
+                  ]
+                },
+                "path": {
+                  "maxLength": 2048,
+                  "type": "string"
+                },
+                "schema": {
+                  "maxLength": 160,
+                  "pattern": "^urn:operator:schema:[a-z0-9-]+:v[0-9a-z]+$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "schema",
+                "path",
+                "keyword"
+              ],
+              "type": "object"
+            },
             "correction": {
               "maxLength": 512,
               "type": "string"
@@ -24050,7 +24292,7 @@
   "defaultContentType": "application/json",
   "info": {
     "title": "Operator–Attack Harness interface",
-    "version": "0.7.0"
+    "version": "0.7.1"
   },
   "operations": {
     "control-in": {
@@ -24838,6 +25080,7 @@
   "x-operator-semantics": {
     "admission": "Validate typed request, lifecycle, configured limits, capability and campaign identity before effects. Product code assigns attempt bookkeeping. Origin is explicit: scenario requires a submitted scenario_id; exploratory forbids scenario_id. Persist effective input before target dispatch. Rejected submissions have no execution receipt.",
     "budgets": "Host supplies configured operation timeouts and operational size limits at startup, within wire safety ceilings. Shorter request/campaign deadlines prevail. No target replay after timeout. Reservations are not confirmed usage. Insufficient model-token reservation reports allowance, consumed, remaining and next reservation, never unrelated evidence counters.",
+    "corrections": "Every correctable rejection identifies the model-facing field, schema or semantic rule, concrete correction, execution effect and resubmission safety. Schema constraint references identify installed schema nodes; reconstruct expectations from approved bytes, never trust submitted prose or values. Select alternatives by discriminators; ambiguous choices describe required fields. Unknown keys retain the nearest safe parent. Internal resolution failures are product errors, not requests for model-authored canonical identities. Preserve corrections across normalization and compaction. No-progress-limit reports consecutive turns without recognized progress and the observed/configured counts; preceding rejections remain distinct history.",
     "correlation": "Replies match campaign_id, launch_id, run_revision, call_id, operation_id and operation of the admitted request. Sequence is monotonically increasing per lane. Restores advance target revision and preserve Harness context; skip remaining calls in the accepted restore model batch.",
     "duplicates": "One durable operation identity cannot execute twice. Same identity and same command returns the saved result; changed command conflicts. Uncertain effects terminate without automatic retry or replay. Interrupted campaigns never resume.",
     "evidence": "Receipts are authoritative and category-specific. Validate campaign ownership, committed artifact purpose, digest, size, availability, visibility and byte ranges. Only inspected evidence may support claims. Readable handles and inspected-range citation handles are distinct; continuations preserve the readable handle and next offset. Never mark unread bytes inspected.",

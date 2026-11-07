@@ -150,9 +150,22 @@ func writeEvidenceSummary(b *strings.Builder, r Result) {
 	b.WriteString("## Summary\n\n")
 	for i := len(r.WorkflowDiagnostics) - 1; i >= 0; i-- {
 		d := r.WorkflowDiagnostics[i]
-		if d.Budget != nil {
+		if d.Budget != nil || d.Stopping == "no-progress-limit" {
 			dataBlock(b, d.Message())
-			b.WriteString("Harness-reported token accounting; see [workflow diagnostics](execution-bundle.json).\n\n")
+			if d.Stopping == "no-progress-limit" {
+				if r.HarnessClaims == 0 && r.JournalIntact {
+					b.WriteString("No final assessment was committed.\n\n")
+				}
+				for j := i - 1; j >= 0; j-- {
+					previous := r.WorkflowDiagnostics[j]
+					if previous.Stopping == "" && previous.Reason != "observation_selection" {
+						b.WriteString("Preceding tool rejection (separate from the stopping cause):\n\n")
+						dataBlock(b, previous.Message())
+						break
+					}
+				}
+			}
+			b.WriteString("Harness-reported stopping facts; see [workflow diagnostics](execution-bundle.json).\n\n")
 			break
 		}
 		if d.Timeout != nil {

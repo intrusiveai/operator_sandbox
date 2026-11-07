@@ -38,7 +38,8 @@
             "wall-time-limit",
             "context-limit",
             "budget-limit",
-            "local-error"
+            "local-error",
+            "no-progress-limit"
           ]
         },
         "observed_count": {
@@ -269,6 +270,77 @@
               "budget"
             ]
           }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "stopping"
+        ],
+        "properties": {
+          "stopping": {
+            "properties": {
+              "condition": {
+                "const": "no-progress-limit"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "diagnostic": {
+            "properties": {
+              "reason": {
+                "const": "no_progress_limit"
+              },
+              "stage": {
+                "const": "termination"
+              },
+              "resubmission_safe": {
+                "const": false
+              }
+            },
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "field_path"
+                  ]
+                },
+                {
+                  "required": [
+                    "identifier"
+                  ]
+                },
+                {
+                  "required": [
+                    "correction"
+                  ]
+                },
+                {
+                  "required": [
+                    "constraint"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "tool_name"
+              ]
+            },
+            {
+              "required": [
+                "tool_call_id"
+              ]
+            }
+          ]
         }
       }
     }

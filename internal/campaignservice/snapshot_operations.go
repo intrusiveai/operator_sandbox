@@ -5,6 +5,7 @@ package campaignservice
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"slices"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
@@ -24,6 +25,7 @@ func (s *Service) stateOperation(ctx context.Context, q stateRequest, reservatio
 	}
 	_ = json.Unmarshal(q.Body, &body)
 	if q.Operation == "engine.snapshot_request" {
+
 		var public struct {
 			Capabilities struct {
 				Features []string `json:"features"`
@@ -45,7 +47,7 @@ func (s *Service) stateOperation(ctx context.Context, q stateRequest, reservatio
 		deadline, _ := ctx.Deadline()
 		p, err := interceptor.PrepareSnapshotCreate(interceptor.OperationRequest{RequestID: "snapshot-" + contracts.RawDigest([]byte(q.ID))[7:39], OperationID: "snapshot-" + contracts.RawDigest([]byte(q.ID))[7:39], CampaignID: q.Campaign, SessionID: binding.SessionID, WorkerInstanceID: binding.WorkerInstanceID, RunRevision: binding.RunRevision, ExpectedSessionRevision: view.Session.Revision, Deadline: deadline}, interceptor.SnapshotCreate{Label: body.Label, Description: body.Description, MaximumCommittedBytes: limits["snapshot_bytes"]})
 		if err != nil {
-			return stateDenied("INVALID_ARGUMENTS"), nil, nil
+			return stateDenied("INVALID_ARGUMENTS", contracts.ArgumentError{Reason: "invalid_resolution_context"}), nil, nil
 		}
 		if err = s.config.Runtime.CheckRunning(ctx, s.config.Docker); err != nil {
 			return stateReply{}, nil, err
@@ -79,7 +81,7 @@ func (s *Service) stateOperation(ctx context.Context, q stateRequest, reservatio
 	}
 	if q.Operation == "engine.snapshot_list" {
 		if body.Offset > interceptor.MaxSnapshotInventory {
-			return stateDenied("INVALID_ARGUMENTS"), nil, nil
+			return stateDenied("INVALID_ARGUMENTS", contracts.ArgumentError{Reason: "snapshot_offset_exceeded", FieldPath: "/offset", Correction: fmt.Sprintf("Offset must be at most %d. Use snapshot_list from offset 0 and follow its returned next_offset.", interceptor.MaxSnapshotInventory)}), nil, nil
 		}
 		if body.Limit == 0 {
 			body.Limit = int(s.sizes.SnapshotPage)

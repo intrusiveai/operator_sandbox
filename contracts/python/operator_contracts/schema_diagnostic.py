@@ -1,0 +1,93 @@
+"""Bounded corrections from installed schema facts, never submitted values."""
+import json
+from .validation import ContractError, safe_argument_path
+
+
+def nearest_path(path):
+    while path and not safe_argument_path(path):
+        path = path.rsplit('/', 1)[0]
+    return path
+
+
+def select_error(error):
+    if error.validator in ('oneOf', 'anyOf') and error.context:
+        groups = {}
+        for child in error.context:
+            index = next(iter(child.schema_path), None)
+            groups.setdefault(index, []).append(child)
+        def mismatch(child):
+            return ((child.validator == 'type' and len(child.absolute_path) == len(error.absolute_path))
+                    or (child.validator == 'const' and len(child.absolute_path) == len(error.absolute_path)+1)
+                    or any(mismatch(c) for c in child.context))
+        candidates = [children for children in groups.values() if not any(mismatch(c) for c in children)]
+        if len(candidates) != 1:
+            return error
+        return select_error(sorted(candidates[0], key=lambda e: (list(map(str,e.absolute_path)), str(e.validator)))[0])
+    if error.context:
+        return select_error(sorted(error.context, key=lambda e: (list(map(str,e.absolute_path)), str(e.validator)))[0])
+    return error
+
+
+def correction(node, keyword):
+    """node is exclusively installed schema content."""
+    v = node.get(keyword)
+    compact = lambda x: json.dumps(x, separators=(',', ':'), ensure_ascii=False, sort_keys=True)
+    if keyword == 'type': text = 'Expected ' + ' or '.join([v] if isinstance(v,str) else v) + '.'
+    elif keyword == 'required': text = 'Supply required fields: ' + compact(v) + '.'
+    elif keyword in ('additionalProperties','unevaluatedProperties'): text = 'Remove unsupported fields. Allowed fields: ' + compact(sorted(node.get('properties',{}))) + '.'
+    elif keyword == 'enum': text = 'Allowed values: ' + compact(v) + '.'
+    elif keyword == 'const': text = 'Use the required value: ' + compact(v) + '.'
+    elif keyword in ('minLength','maxLength'): text = 'String must contain ' + ('at least ' if keyword=='minLength' else 'at most ') + str(v) + ' characters.'
+    elif keyword == 'pattern': text = 'Use a string matching pattern ' + compact(v) + '.'
+    elif keyword in ('minimum','maximum','exclusiveMinimum','exclusiveMaximum'):
+        text = 'Use a number ' + {'minimum':'greater than or equal to ','maximum':'less than or equal to ','exclusiveMinimum':'greater than ','exclusiveMaximum':'less than '}[keyword] + str(v) + '.'
+    elif keyword == 'multipleOf': text = 'Use a number that is a multiple of ' + str(v) + '.'
+    elif keyword in ('minItems','maxItems'): text = 'Array must contain ' + ('at least ' if keyword=='minItems' else 'at most ') + str(v) + ' items.'
+    elif keyword == 'uniqueItems': text = 'Array must contain unique entries. Remove duplicate entries.'
+    elif keyword in ('minProperties','maxProperties'): text = 'Object must contain ' + ('at least ' if keyword=='minProperties' else 'at most ') + str(v) + ' properties.'
+    elif keyword in ('oneOf','anyOf'):
+        choices=[]
+        for branch in v:
+            fields={k:s['const'] for k,s in branch.get('properties',{}).items() if isinstance(s,dict) and 'const' in s}
+            choice=dict(values=fields,required=branch.get('required',[]))
+            if 'type' in branch:choice['type']=branch['type']
+            choices.append(choice)
+        text = ('Choose exactly one alternative: ' if keyword=='oneOf' else 'Choose a matching alternative: ') + compact(choices) + '.'
+    elif keyword == 'not': text = 'Do not combine these fields: ' + compact(v.get('required',[])) + '. Follow the mutually exclusive choices in tool guidance.'
+    else: text = 'Follow the ' + keyword + " constraint in this field's tool guidance."
+    semantic = node.get('x-operator-correction','')
+    if semantic: text = semantic + ' ' + text
+    if len(text)>512:
+        text = 'Read tool guidance for this field. Rule ' + keyword + ' requires the documented alternatives or fields; the complete expectation exceeds the diagnostic limit.'
+    return text
+
+
+def schema_argument_issue(error, catalog=None):
+    error=select_error(error)
+    parts=[str(x) for x in error.absolute_path]
+    if error.validator=='required':
+        missing=sorted(set(error.validator_value)-set(error.instance))
+        if missing: parts.append(missing[0])
+    elif error.validator=='additionalProperties' and isinstance(error.instance,dict):
+        import re
+        extras=sorted(k for k in error.instance if k not in error.schema.get('properties',{}) and not any(re.search(p,k) for p in error.schema.get('patternProperties',{})))
+        if extras: parts.append(extras[0])
+    path=nearest_path('/'+'/'.join(p.replace('~','~0').replace('/','~1') for p in parts) if parts else '')
+    text=correction(error.schema,error.validator)
+    ref=None
+    if catalog is not None:
+        def find(node,path):
+            if node is error.schema: return path
+            if isinstance(node,dict):
+                for k,v in node.items():
+                    found=find(v,path+'/'+k.replace('~','~0').replace('/','~1'))
+                    if found is not None:return found
+            elif isinstance(node,list):
+                for i,v in enumerate(node):
+                    found=find(v,path+'/'+str(i))
+                    if found is not None:return found
+        for uri,validator in catalog._validators.items():
+            pointer=find(validator.schema,'')
+            if pointer is not None:
+                ref=dict(schema=uri,path=pointer,keyword=error.validator);break
+    return ContractError('invalid_structure: '+text,reason='invalid_structure',field_path=path,correction=text,constraint=ref)
