@@ -6,9 +6,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/attemptadapter"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/termination"
 )
@@ -229,7 +231,7 @@ func (s *Service) appendRecord(q stateRequest, raw []byte, seq int64) (stateRepl
 	}
 	_ = json.Unmarshal(q.Body, &body)
 	if body.Kind == "progress" && !s.completion.progressAt.IsZero() && time.Since(s.completion.progressAt) < time.Second {
-		return stateDenied("LIMIT_EXCEEDED"), nil
+		return stateDenied("LIMIT_EXCEEDED", contracts.ArgumentError{Reason: "progress_rate_limit", Correction: "Progress records are rate limited. Continue other permitted work and submit a later update after the interval; do not replay completed target actions."}), nil
 	}
 	newHyp := ""
 	if body.Kind == "hypothesis" {
@@ -238,12 +240,12 @@ func (s *Service) appendRecord(q stateRequest, raw []byte, seq int64) (stateRepl
 		parent, _ := provenance["parent_hypothesis_id"].(string)
 		for id := parent; id != ""; id = s.completion.parents[id] {
 			if id == newHyp {
-				return stateDenied("RECORD_REFERENCE_INVALID"), nil
+				return stateDenied("RECORD_REFERENCE_INVALID", contracts.ArgumentError{Reason: "hypothesis_cycle", FieldPath: "/record/provenance/parent_hypothesis_id", Correction: "Parent must not introduce a hypothesis cycle. Omit parent or select a historical hypothesis outside this parent chain."}), nil
 			}
 		}
 	}
 	if err := s.checkReferences(body.Record, newHyp, false); err != nil {
-		return s.referenceError(err, "RECORD_REFERENCE_INVALID")
+		return s.referenceError(q, err, "RECORD_REFERENCE_INVALID")
 	}
 	receipt := "record-" + termination.NewRequestID()
 	result := stateReply{Result: map[string]any{"receipt_id": receipt, "record_kind": body.Kind, "assertion_origin": "harness", "attribution": map[string]any{"campaign_id": q.Campaign, "launch_id": q.Launch, "run_revision": q.Revision}}}
@@ -270,7 +272,23 @@ func (s *Service) appendRecord(q stateRequest, raw []byte, seq int64) (stateRepl
 
 var errReference = errors.New("invalid campaign assessment reference")
 
-func (s *Service) referenceError(err error, code string) (stateReply, error) {
+func (s *Service) referenceError(q stateRequest, err error, code string) (stateReply, error) {
+	var issue *contracts.ConclusionError
+	if errors.As(err, &issue) && errors.Is(err, errReference) {
+		detail := campaign.NewConclusionDiagnostic(q.ID, issue)
+		if detail.FieldPath != "" {
+			detail.FieldPath = "/record" + detail.FieldPath
+		}
+		correction := strings.Replace(detail.Message(), "Conclusion validation failed:", "Reference validation failed:", 1)
+		if len(correction) > 512 {
+			correction = "Select a verified reference of the required kind for this field. Inspect existing evidence; do not replay completed target actions."
+		}
+		diagnostic, message, path, saveErr := s.recordArgumentRejection(q.ID, &contracts.ArgumentError{Reason: "invalid_reference", FieldPath: detail.FieldPath, Correction: correction})
+		if saveErr != nil {
+			return stateReply{}, errors.Join(err, saveErr)
+		}
+		return stateReply{Error: &attemptadapter.Fault{Code: code, Message: message, InstancePath: path, Diagnostic: diagnostic, Effect: "none", Disposition: "correct-and-resubmit"}}, nil
+	}
 	if errors.Is(err, errReference) || errors.Is(err, campaign.ErrInvalid) {
 		return stateDenied(code), nil
 	}

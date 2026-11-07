@@ -122,11 +122,11 @@ func (s *Service) artifactOperation(q stateRequest, raw []byte) (stateReply, err
 			return stateReply{}, err
 		}
 		if a, ok := initial.Artifacts[declaration.Artifact.Digest]; ok && a.Descriptor != declaration.Artifact {
-			return stateDenied("INVALID_ARGUMENTS"), nil
+			return stateDenied("INVALID_ARGUMENTS", contracts.ArgumentError{Reason: "invalid_resolution_context"}), nil
 		}
 		for _, u := range s.artifacts.uploads {
 			if u.Artifact.Digest == declaration.Artifact.Digest && u.Artifact != declaration.Artifact {
-				return stateDenied("INVALID_ARGUMENTS"), nil
+				return stateDenied("INVALID_ARGUMENTS", contracts.ArgumentError{Reason: "invalid_resolution_context"}), nil
 			}
 		}
 		canonical, err := contracts.Canonicalize(raw, contracts.OrdinaryLimit)

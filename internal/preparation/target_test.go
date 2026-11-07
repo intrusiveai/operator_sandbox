@@ -47,7 +47,7 @@ func protocol(t *testing.T) *contracts.Protocol {
 	for _, name := range profiles {
 		files[name] = []byte("test fixture only")
 	}
-	manifest, pin, e := p.BuildPackageManifest("0.7.0", files, profiles)
+	manifest, pin, e := p.BuildPackageManifest("0.7.1", files, profiles)
 	if e != nil {
 		t.Fatal(e)
 	}

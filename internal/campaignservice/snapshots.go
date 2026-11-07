@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
@@ -37,8 +38,47 @@ type stateReply struct {
 	Error  *attemptadapter.Fault `json:"error,omitempty"`
 }
 
-func stateDenied(code string) stateReply {
-	return stateReply{Error: &attemptadapter.Fault{Code: code, Message: "The operation was not admitted.", Effect: "none", Disposition: "correct-and-resubmit"}}
+func stateDenied(code string, issues ...contracts.ArgumentError) stateReply {
+	message, disposition := "The operation was rejected before execution. Read the selected tool guidance and correct its arguments.", "correct-and-resubmit"
+	switch code {
+	case "POLICY_DENIED":
+		message = "This operation is outside the campaign policy. Select a permitted capability from the target reference; repeating this request cannot grant permission."
+		disposition = "gap-and-continue"
+	case "UNSUPPORTED_CAPABILITY":
+		message = "The target does not support this capability. Use the advertised target capabilities or report the limitation."
+		disposition = "gap-and-continue"
+	case "LIMIT_EXCEEDED", "ARTIFACT_BUDGET_EXCEEDED", "SNAPSHOT_BUDGET_EXCEEDED":
+		message = "This operation cannot fit the remaining allowance. Do not repeat it or increase request values; use retained evidence and finish with an honest assessment or unavailable reason."
+		disposition = "gap-and-continue"
+	case "STATE_CHANGED":
+		message = "The target state changed. Inspect the current state before choosing a new action; do not replay completed operations."
+		disposition = "gap-and-continue"
+	case "SNAPSHOT_NOT_FOUND":
+		message = "Snapshot is unavailable. Use snapshot_list for available identities, then snapshot_inspect to check readiness."
+	case "SNAPSHOT_INCOMPATIBLE":
+		message = "Snapshot cannot be restored in this target binding. Use snapshot_list and snapshot_inspect to select a compatible ready snapshot."
+		disposition = "gap-and-continue"
+	case "RECORD_REFERENCE_INVALID":
+		message = "Use a historical record handle returned by successful record_append; execution and artifact handles are not records."
+	case "IDEMPOTENCY_CONFLICT":
+		message = "This call identity is already bound to different arguments. Do not replay completed actions. A corrected rejected request requires a new call identity."
+	case "UPLOAD_NOT_FOUND":
+		message = "Upload is unavailable. Use a committed artifact handle or start a new bounded artifact publication."
+	case "UPLOAD_RANGE_INVALID":
+		message = "Upload range is invalid. Continue only within the upload's declared byte range."
+	case "UPLOAD_INCOMPLETE":
+		message = "Upload has missing parts. Complete the declared upload before committing it."
+	}
+	reason, field := strings.ToLower(code), ""
+	if len(issues) == 1 {
+		reason, field, message = issues[0].Reason, issues[0].FieldPath, issues[0].Correction
+		if reason == "invalid_resolution_context" {
+			code, disposition = "INTERNAL_ERROR", "terminate"
+			message = "Operator could not construct a valid native request from verified state. Stop and report the product error; do not supply internal identities or replay completed actions."
+		}
+	}
+	diagnostic := marshal(map[string]any{"source": "operator", "stage": "admission", "reason": reason, "field_path": field, "message": message, "correction": message, "execution_occurred": "no", "resubmission_safe": disposition == "correct-and-resubmit"})
+	return stateReply{Error: &attemptadapter.Fault{Code: code, Message: message, InstancePath: field, Diagnostic: diagnostic, Effect: "none", Disposition: disposition}}
 }
 func marshal(v any) []byte { raw, _ := json.Marshal(v); return raw }
 func (s *Service) stateEnvelope(raw []byte, seq int64, result stateReply) ([]byte, error) {
@@ -232,7 +272,7 @@ func (s *Service) compatibleSnapshot(cp interceptor.Checkpoint) bool {
 func readError(err error) (stateReply, error) {
 	var remote *interceptor.RemoteError
 	if errors.Is(err, interceptor.ErrRequest) {
-		return stateDenied("INVALID_ARGUMENTS"), nil
+		return stateDenied("INVALID_ARGUMENTS", contracts.ArgumentError{Reason: "invalid_resolution_context"}), nil
 	}
 	if errors.As(err, &remote) && remote.Response.Status == 403 && remote.Response.Code() == "session_not_in_campaign" {
 		return stateDenied("POLICY_DENIED"), nil

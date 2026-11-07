@@ -36,7 +36,8 @@ func (s *Service) handleDiagnostic(ctx context.Context, raw []byte, seq int64) (
 		Call       string          `json:"tool_call_id"`
 		Diagnostic struct {
 			Source, Stage, Reason string
-			Path                  string `json:"field_path"`
+			Constraint            *contracts.SchemaConstraint `json:"constraint"`
+			Path                  string                      `json:"field_path"`
 		} `json:"diagnostic"`
 		Stopping *struct {
 			Condition string
@@ -47,9 +48,17 @@ func (s *Service) handleDiagnostic(ctx context.Context, raw []byte, seq int64) (
 	}
 	_ = json.Unmarshal(q.Body, &body)
 	d := campaign.NewWorkflowDiagnostic(q.ID, "harness-local", body.Diagnostic.Stage, body.Diagnostic.Reason, body.Diagnostic.Path, body.Tool, body.Call)
+	if body.Diagnostic.Constraint != nil {
+		correction, ok := s.target().Protocol().ConstraintCorrection(body.Diagnostic.Constraint)
+		if !ok {
+			return s.stateEnvelope(raw, seq, stateDenied("INVALID_ARGUMENTS"))
+		}
+		d.Constraint = body.Diagnostic.Constraint
+		d.Correction = correction
+	}
 	// Never copy Harness-supplied message/identifier/correction into host summaries.
 	// Their potentially sensitive prose is omitted from structured diagnostics.
-	d.Omitted = true
+	d.Omitted = d.Constraint == nil
 	if body.Stopping != nil {
 		d.Budget = body.Stopping.Budget
 		d.Stopping = body.Stopping.Condition
@@ -97,13 +106,19 @@ func (s *Service) rejectArguments(raw []byte, seq int64, cause error) ([]byte, e
 		issue = &contracts.ArgumentError{Reason: "invalid_structure", Correction: "Supply the required fields with the documented types and no unknown fields."}
 	}
 	var reply stateReply
-	if q.Operation == "engine.finish" {
+	if q.Operation == "engine.finish" && issue.Constraint == nil {
 		reply, err = s.rejectConclusion(q, &contracts.ConclusionError{Reason: "invalid_structure", FieldPath: issue.FieldPath, Cause: cause})
 	} else {
 		d := campaign.NewWorkflowDiagnostic(q.ID, "operator", "arguments", issue.Reason, issue.FieldPath, "", "")
+		d.Constraint = issue.Constraint
+		d.Correction = issue.Correction
+		message := d.Message()
+		if d.Correction != "" {
+			message = d.Correction // The field is separate; keep the wire message bounded.
+		}
 		s.workflowDiagnostic.Store(&d)
 		_, err = s.writer.AppendStored(campaign.Entry{RunRevision: q.Revision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d})}, "", false)
-		reply = stateReply{Error: &attemptadapter.Fault{Code: "INVALID_ARGUMENTS", Message: d.Message(), InstancePath: d.FieldPath, Diagnostic: d.Wire(), Effect: "none", Disposition: "correct-and-resubmit"}}
+		reply = stateReply{Error: &attemptadapter.Fault{Code: "INVALID_ARGUMENTS", Message: message, InstancePath: d.FieldPath, Diagnostic: d.Wire(), Effect: "none", Disposition: "correct-and-resubmit"}}
 	}
 	if err != nil {
 		return nil, errors.Join(cause, err)
@@ -124,9 +139,17 @@ func (s *Service) recordArgumentRejection(id string, cause error) (json.RawMessa
 		reason = "policy_denied"
 	}
 	d := campaign.NewWorkflowDiagnostic(id, "operator", "arguments", reason, path, "", "")
+	if issue != nil {
+		d.Constraint = issue.Constraint
+		d.Correction = issue.Correction
+	}
 	s.workflowDiagnostic.Store(&d)
 	_, err := s.writer.AppendStored(campaign.Entry{RunRevision: s.attempts.Status().RunRevision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d})}, "", false)
-	return d.Wire(), d.Message(), d.FieldPath, err
+	message := d.Message()
+	if d.Correction != "" {
+		message = d.Correction
+	}
+	return d.Wire(), message, d.FieldPath, err
 }
 
 // Preserve a safe primary cause even when a poisoned journal cannot retain it;

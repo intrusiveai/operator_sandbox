@@ -106,3 +106,12 @@ accepts inspected citation handles inside assessment items, and `records` accept
 only accepted historical record handles. There is no top-level `observations`.
 `tool-guide:finish` exposes the complete enum lists and working examples.
 Correct an invalid finish with a new call without invoking the target again.
+
+## Actionable corrections
+
+Follow [the correction rules](../docs/TOOL_CORRECTIONS.md). Field descriptions and
+`tool-guide:<name>` distinguish resource categories and local assessment labels.
+A schema rejection carries the exact installed constraint reference so Operator
+can retain safe, specific corrections without trusting submitted prose. Preserve
+that reference and the model-facing path through normalization and wrapping.
+Never repair assertions automatically or replay completed effects during recovery.

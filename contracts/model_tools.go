@@ -129,11 +129,15 @@ func (p *Protocol) modelTools(codec string, operations, surfaces []string) ([]by
 func (p *Protocol) ValidateToolArguments(name string, raw []byte) (map[string]any, error) {
 	value, err := Decode(raw, OrdinaryLimit)
 	if err != nil {
-		return nil, err
+		var issue *ArgumentError
+		if errors.As(err, &issue) {
+			return nil, err
+		}
+		return nil, argumentIssue("invalid_json", "", "Supply one valid UTF-8 JSON object with unique keys, finite JSON-safe numbers and bounded nesting; do not replay completed actions.")
 	}
 	object, ok := value.(map[string]any)
 	if !ok {
-		return nil, ErrProtocol
+		return nil, argumentIssue("invalid_structure", "", "Expected object. Supply named tool arguments in one JSON object.")
 	}
 	if name == "attempt_execute" {
 		if err := ValidateAttemptOrigin(object, nil); err != nil {
@@ -170,7 +174,7 @@ func (p *Protocol) ValidateToolArguments(name string, raw []byte) (map[string]an
 		}
 		matched = true
 		if err := p.catalog.schemas[ModelToolArgumentsSchema].OneOf[index].Properties["arguments"].Validate(object); err != nil {
-			return nil, schemaArgumentIssue(err)
+			return nil, p.catalog.schemaArgumentIssue(err)
 		}
 		break
 	}
@@ -179,6 +183,11 @@ func (p *Protocol) ValidateToolArguments(name string, raw []byte) (map[string]an
 	}
 	if name == "attempt_execute" {
 		if err := p.checkModelContent(object, ""); err != nil {
+			return nil, err
+		}
+	}
+	if name == "snapshot_request" {
+		if err := checkSnapshotDescription(object); err != nil {
 			return nil, err
 		}
 	}

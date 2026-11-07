@@ -12,6 +12,8 @@ import (
 // WorkflowDiagnostic is a bounded selection of facts, not submitted diagnostic prose.
 // Harness reports are attributed as such; dispatch/cleanup remain host evidence.
 type WorkflowDiagnostic struct {
+	Constraint         *contracts.SchemaConstraint `json:"constraint,omitempty"`
+	Correction         string                      `json:"correction,omitempty"`
 	Budget             *contracts.ModelTokenBudget `json:"budget,omitempty"`
 	Timeout            *AttemptTimeout             `json:"timeout,omitempty"`
 	AttemptID          string                      `json:"attempt_id,omitempty"`
@@ -35,6 +37,11 @@ type WorkflowDiagnostic struct {
 }
 
 var workflowReasons = map[string]string{
+	"snapshot_description_size":     "Shorten the snapshot description to its UTF-8 byte allowance; no snapshot was created.",
+	"unknown_uncertainty_label":     "Reference a label declared in top-level uncertainties. Put explanatory prose in that entry's description; do not replay completed attempts.",
+	"invalid_progress_accounting":   "No-progress exhaustion requires observed_count to reach configured_limit; report the actual counter.",
+	"invalid_json":                  "Supply a valid JSON object with unique keys, safe numbers and bounded nesting.",
+	"no_progress_limit":             "Harness reached its consecutive turns without recognized progress limit.",
 	"model_reservation_unavailable": "Harness could not reserve tokens for another model response.",
 	"invalid_budget_accounting":     "Model-token accounting must balance and identify the next-request reservation.",
 	"finish_choice":                 "Supply inline summary and objectives, or artifact, or unavailable_reason; do not combine them.",
@@ -134,6 +141,12 @@ func NewWorkflowDiagnostic(operation, source, stage, reason, path, tool, call st
 	return d
 }
 func (d WorkflowDiagnostic) Valid() bool {
+	if len(d.Correction) > 512 {
+		return false
+	}
+	if d.Stopping == "no-progress-limit" && (d.Reason != "no_progress_limit" || d.Stage != "termination" || d.Observed < d.Limit || d.Limit < 1 || d.Tool != "" || d.CallID != "" || d.FieldPath != "" || d.Constraint != nil || d.Correction != "") {
+		return false
+	}
 	if d.Reason == "model_reservation_unavailable" && d.Budget == nil {
 		return false
 	}
@@ -153,20 +166,28 @@ func (d WorkflowDiagnostic) Valid() bool {
 		return false
 	}
 	switch d.Stopping {
-	case "", "invalid-call-limit", "tool-call-limit", "model-turn-limit", "wall-time-limit", "context-limit", "budget-limit", "local-error":
+	case "", "no-progress-limit", "invalid-call-limit", "tool-call-limit", "model-turn-limit", "wall-time-limit", "context-limit", "budget-limit", "local-error":
 	default:
 		return false
 	}
-	return d.Dispatched >= 0 && d.Dispatched <= contracts.MaxSafeInteger && (d.HostFinalized || d.Dispatched == 0 && !d.AssessmentAccepted && !d.CleanupCompleted) && (d.OperationID != "" || d.Omitted) && len(d.Message()) <= 512 && d.Observed >= 0 && d.Observed <= contracts.MaxSafeInteger && d.Limit >= 0 && d.Limit <= contracts.MaxSafeInteger && (d.Stopping == "" || d.Limit > 0 || d.Budget != nil)
+	return d.Dispatched >= 0 && d.Dispatched <= contracts.MaxSafeInteger && (d.HostFinalized || d.Dispatched == 0 && !d.AssessmentAccepted && !d.CleanupCompleted) && (d.OperationID != "" || d.Omitted) && len(d.Message()) <= 1024 && d.Observed >= 0 && d.Observed <= contracts.MaxSafeInteger && d.Limit >= 0 && d.Limit <= contracts.MaxSafeInteger && (d.Stopping == "" || d.Limit > 0 || d.Budget != nil)
 }
 func (d WorkflowDiagnostic) Message() string {
 	text := workflowReasons[d.Reason]
+	if d.Correction != "" {
+		text = d.Correction
+	}
 	if d.Timeout != nil {
 		text = d.Timeout.Message(d.Invocation)
 	}
 	if d.Budget != nil {
 		b := d.Budget
 		text = fmt.Sprintf("Harness could not request another model response. Model-token allowance: %d; consumed: %d; remaining: %d; required reservation: %d.", b.TotalAllowance, b.Consumed, b.Remaining, b.NextRequestReservation)
+		if d.HostFinalized && !d.AssessmentAccepted {
+			text += " No final assessment was committed."
+		}
+	} else if d.Stopping == "no-progress-limit" {
+		text = fmt.Sprintf("Harness stopped after %d consecutive turns without recognized progress (configured limit %d).", d.Observed, d.Limit)
 		if d.HostFinalized && !d.AssessmentAccepted {
 			text += " No final assessment was committed."
 		}
@@ -196,6 +217,13 @@ func DecodeWorkflowDiagnostic(raw []byte) *WorkflowDiagnostic {
 // Wire fields describe definite predispatch rejection, not an execution receipt.
 func (d WorkflowDiagnostic) Wire() json.RawMessage {
 	v := map[string]any{"source": d.Source, "stage": d.Stage, "reason": d.Reason, "message": d.Message(), "execution_occurred": "no", "resubmission_safe": true}
+	if d.Constraint != nil {
+		v["constraint"] = d.Constraint
+	}
+	if d.Correction != "" {
+		v["correction"] = d.Correction
+		v["message"] = "The operation was rejected before execution; follow the correction."
+	}
 	if d.FieldPath != "" {
 		v["field_path"] = d.FieldPath
 	}

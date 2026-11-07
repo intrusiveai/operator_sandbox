@@ -13,15 +13,16 @@ CONTROL_LIMIT = 64 << 10
 MAX_DEPTH = 32
 MAX_SAFE_INTEGER = (1 << 53) - 1
 
-SAFE_PATH_FIELDS = ' name arguments input injection_input value encoding text data media_type artifact_receipt operation_id scenario_id parent_attempt_receipt_id caller_principal_id pre_actions action_id action_type parameters surface mode scope selector placement operation pointer retain_injections observation_selection rationale strategy_provenance_ref technique_refs finish_reason assessment unavailable reason status summary objectives objective_id outcome hypotheses hypothesis_id objective_refs provenance origin parent_hypothesis_id claims claim_id interpretation assurance confidence attempt_receipt_refs attempt_receipt_id observation_refs entry_id range offset length uncertainty_refs coverage alternative uncertainties gap_id description input_refs record_refs record_kind record payload carrier digest generation thread_id request_id attempt_id attempt_index binding api_version kind artifact record_receipt tool_name call_ordinal method path predicates equals contains max_bytes receipt_id reference_id source_session checkpoint_id label continuation limit content size_bytes json base64 parent observations attempts setup injection reference observation snapshot session unavailable_reason records inputs assessment_summary gaps collection key stopping budget total_allowance consumed remaining next_request_reservation statement assumptions predicted_observations surface_ref entries mutation_summary '
+SAFE_PATH_FIELDS = ' name arguments input injection_input value encoding text data media_type artifact_receipt operation_id scenario_id parent_attempt_receipt_id caller_principal_id pre_actions action_id action_type parameters surface mode scope selector placement operation pointer retain_injections observation_selection rationale strategy_provenance_ref technique_refs finish_reason assessment unavailable reason status summary objectives objective_id outcome hypotheses hypothesis_id objective_refs provenance origin parent_hypothesis_id claims claim_id interpretation assurance confidence attempt_receipt_refs attempt_receipt_id observation_refs entry_id range offset length uncertainty_refs coverage alternative uncertainties gap_id description input_refs record_refs record_kind record payload carrier digest generation thread_id request_id attempt_id attempt_index binding api_version kind artifact record_receipt tool_name call_ordinal method path predicates equals contains max_bytes receipt_id reference_id source_session checkpoint_id label continuation limit content size_bytes json base64 parent observations attempts setup injection reference observation snapshot session unavailable_reason records inputs assessment_summary gaps collection key stopping observed_count configured_limit budget total_allowance consumed remaining next_request_reservation statement assumptions predicted_observations surface_ref entries mutation_summary purpose service attempt hypothesis decision filename namespace path_prefix max_records '
 
 class ContractError(ValueError):
     """Bounded rule details; never copies validator messages or submitted values."""
-    def __init__(self, message, *, reason="invalid_arguments", field_path="", correction=""):
+    def __init__(self, message, *, reason="invalid_arguments", field_path="", correction="", constraint=None):
         super().__init__(message)
         self.reason = reason
         self.field_path = safe_argument_path(field_path)
         self.correction = correction
+        self.constraint = constraint
 
 
 def safe_argument_path(path):
@@ -181,7 +182,7 @@ class Catalog:
             self._validators[schema_id].validate(value)
         except ValidationError as error:
             from .model_tools import schema_argument_issue
-            raise schema_argument_issue(error) from None
+            raise schema_argument_issue(error, self) from None
         except Unresolvable:
             raise ContractError("invalid installed contract catalog") from None
         return value

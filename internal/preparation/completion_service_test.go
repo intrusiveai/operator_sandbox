@@ -165,6 +165,16 @@ func TestServiceAssessmentReferencesAttributionAndRateLimit(t *testing.T) {
 		if err != nil || !strings.Contains(string(raw), code) {
 			t.Fatal(string(raw), err)
 		}
+		if code == "RECORD_REFERENCE_INVALID" {
+			var response map[string]any
+			if json.Unmarshal(raw, &response) != nil {
+				t.Fatal("invalid rejection")
+			}
+			diagnostic := response["error"].(map[string]any)["diagnostic"].(map[string]any)
+			if diagnostic["field_path"] == "" || !strings.Contains(diagnostic["correction"].(string), "Reference validation failed") || diagnostic["execution_occurred"] != "no" {
+				t.Fatal(diagnostic)
+			}
+		}
 	}
 	hypothesis := map[string]any{"record_kind": "hypothesis", "record": map[string]any{"hypothesis_id": "hyp-1", "objective_refs": []string{"objective-marker"}, "provenance": map[string]any{"origin": "scenario", "scenario_id": "scenario-marker"}, "statement": "A marker might appear.", "assumptions": []any{}, "predicted_observations": []any{}, "record_refs": []any{}}}
 	first := call("engine.record_append", "hypothesis", 1, hypothesis)

@@ -110,7 +110,7 @@ func (c *Catalog) Validate(id string, raw []byte, maximum int) (any, error) {
 		case NativeModelResultSchema, EngineModelGenerateResultSchema:
 			return nil, modelSchemaError(err, "")
 		}
-		return nil, schemaArgumentIssue(err)
+		return nil, c.schemaArgumentIssue(err)
 	}
 	return value, nil
 }

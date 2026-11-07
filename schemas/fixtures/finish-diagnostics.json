@@ -10,7 +10,7 @@
       ]
     },
     "path": "/uncertainties/0",
-    "correction": "Expected object. Supply an uncertainty object with required kind and description; a plain string is not valid."
+    "correction": "Supply an uncertainty object with required kind and description; put explanatory prose in description. Expected object."
   },
   {
     "name": "missing kind",
@@ -25,7 +25,7 @@
       ]
     },
     "path": "/uncertainties/0/kind",
-    "correction": "Supply the required field identified by field_path."
+    "correction": "Supply an uncertainty object with required kind and description; put explanatory prose in description. Supply required fields: [\"kind\",\"description\"]."
   },
   {
     "name": "invalid uncertainty enum",
@@ -54,7 +54,7 @@
       ]
     },
     "path": "/observations",
-    "correction": "Remove this unsupported field. Put inspected observation handles in objectives[i].observations or another supported assessment item, not at the top level."
+    "correction": "Remove unsupported fields. Allowed fields: [\"artifact\",\"claims\",\"coverage\",\"finish_reason\",\"hypotheses\",\"objectives\",\"records\",\"status\",\"summary\",\"unavailable_reason\",\"uncertainties\"]."
   },
   {
     "name": "missing claim statement",
@@ -71,6 +71,6 @@
       ]
     },
     "path": "/claims/0/statement",
-    "correction": "Supply the required field identified by field_path."
+    "correction": "Supply required fields: [\"statement\",\"interpretation\",\"assurance\",\"confidence\"]."
   }
 ]

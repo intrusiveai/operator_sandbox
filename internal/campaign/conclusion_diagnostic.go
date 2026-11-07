@@ -5,6 +5,7 @@ package campaign
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -16,6 +17,7 @@ import (
 // prose. Value-only fields keep saved completion records comparable and immutable.
 // FieldPath is a JSON Pointer into the conclusion (or the identified request).
 type ConclusionDiagnostic struct {
+	Correction        string `json:"correction,omitempty"`
 	OperationID       string `json:"operation_id,omitempty"`
 	Stage             string `json:"stage"`
 	Reason            string `json:"reason"`
@@ -31,12 +33,12 @@ var conclusionReasons = map[string][2]string{
 	"evidence_required":            {"evidence", "A supported outcome requires an execution receipt. Use an honest untested or inconclusive outcome when no evidence exists."},
 	"invalid_structure":            {"structure", "The conclusion does not match its required structure."},
 	"duplicate_entry":              {"structure", "Entry identifiers must be unique within their array."},
-	"duplicate_hypothesis":         {"hypotheses", "A local hypothesis ID is defined more than once."},
-	"self_parent":                  {"hypotheses", "A hypothesis cannot name itself as its parent."},
-	"hypothesis_cycle":             {"hypotheses", "The hypothesis parent chain contains a cycle."},
+	"duplicate_hypothesis":         {"hypotheses", "Local hypothesis labels must be unique. Rename or remove the duplicate definition and update its references."},
+	"self_parent":                  {"hypotheses", "A hypothesis cannot name itself as its parent. Omit parent or choose a different declared or historical hypothesis."},
+	"hypothesis_cycle":             {"hypotheses", "The hypothesis parent chain contains a cycle. Remove a cyclic parent link; no hypothesis preregistration is required."},
 	"coverage_status":              {"structure", "A completed conclusion cannot declare a coverage-limit gap."},
 	"observation_attempt_mismatch": {"references", "The observation's attempt must appear in the associated attempt references."},
-	"unresolved_uncertainty":       {"references", "The uncertainty reference is absent from the conclusion."},
+	"unresolved_uncertainty":       {"references", "Reference a label declared in top-level uncertainties. Put explanatory prose in that entry's description."},
 	"binding_mismatch":             {"binding", "The conclusion binding does not match the campaign's current launch and revision."},
 	"finish_reason_mismatch":       {"binding", "The finish reason does not match the committed conclusion."},
 	"artifact_receipt_invalid":     {"artifact", "The receipt does not identify a conclusion artifact in this campaign."},
@@ -45,7 +47,7 @@ var conclusionReasons = map[string][2]string{
 	"record_receipt_invalid":       {"receipts", "The receipt does not identify a retained conclusion record in this campaign."},
 	"completion_chain_invalid":     {"receipts", "The retained artifact, conclusion record and stop request do not form a matching completion chain."},
 	"unresolved_hypothesis":        {"references", "The hypothesis reference is absent from both this conclusion and this campaign's hypothesis records."},
-	"unresolved_record":            {"references", "The record reference is absent from this campaign's retained records."},
+	"unresolved_record":            {"references", "Use a historical record handle returned by successful record_append in this campaign; execution and artifact handles are not records."},
 	"invalid_attempt":              {"references", "The reference does not identify a published attempt in this campaign."},
 	"invalid_observation":          {"references", "The observation entry does not belong to the referenced attempt."},
 	"observation_not_visible":      {"references", "The observation is not visible under the campaign's feedback policy."},
@@ -97,7 +99,11 @@ func NewConclusionDiagnostic(operation string, issue *contracts.ConclusionError)
 		reason = "invalid_structure"
 		fact = conclusionReasons[reason]
 	}
-	d := ConclusionDiagnostic{Stage: fact[0], Reason: reason}
+	d := ConclusionDiagnostic{Stage: fact[0], Reason: reason, Correction: fact[1]}
+	var argument *contracts.ArgumentError
+	if errors.As(issue.Cause, &argument) {
+		d.Correction = argument.Correction
+	}
 	d.OperationID, d.OperationOmitted = diagnosticID(operation)
 	if conclusionSafePath(issue.FieldPath) {
 		d.FieldPath = issue.FieldPath
@@ -127,10 +133,13 @@ func (d ConclusionDiagnostic) Valid() bool {
 			return false
 		}
 	}
-	return (d.OperationID != "" || d.OperationOmitted != "") && (d.PathOmitted == "" || d.PathOmitted == "unsafe_or_oversized" && d.FieldPath == "") && len(d.Message()) <= 512
+	return (d.OperationID != "" || d.OperationOmitted != "") && (d.PathOmitted == "" || d.PathOmitted == "unsafe_or_oversized" && d.FieldPath == "") && len(d.Correction) <= 512 && len(d.Message()) <= 1024
 }
 func (d ConclusionDiagnostic) Message() string {
 	text := "Conclusion validation failed: " + conclusionReasons[d.Reason][1]
+	if d.Correction != "" {
+		text = "Conclusion validation failed: " + d.Correction
+	}
 	if d.FieldPath != "" {
 		text += " Field: " + d.FieldPath + "."
 	} else if d.PathOmitted != "" {

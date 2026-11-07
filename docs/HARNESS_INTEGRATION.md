@@ -138,3 +138,5 @@ duplicate dispatch, direct/artifact inputs, observation reads, local hypotheses,
 accepted finish, exit 0, fatal exits and cleanup. Verify separate inspection and
 export after container removal. Controlled process tests establish protocol
 behavior; actual-image containment and live-provider checks test different facts.
+
+For constraint references, model-facing path recovery and no-progress stopping, follow [tool corrections](TOOL_CORRECTIONS.md). Matching builds use the exact 0.7.1 identity in the contract lock.

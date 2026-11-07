@@ -6,7 +6,7 @@ reference these rules rather than define competing contracts. The
 [release contract lock](../release/contract-lock.json) identifies the exact
 contract version and exact AsyncAPI document hash consumed by both products.
 
-The self-contained [AsyncAPI document](asyncapi.json) defines interface `0.7.0`.
+The self-contained [AsyncAPI document](asyncapi.json) defines interface `0.7.1`.
 JSON Schema 2020-12 payloads and explicit semantic extensions describe its messages
 and stateful obligations. Go/Python bindings and shared fixtures verify conformance;
 their source bytes are not compatibility identity. See [conformance](../docs/CONTRACT_CONFORMANCE.md).
@@ -51,7 +51,7 @@ GenerateContent. Their schemas, bindings and stateful checks are implemented.
 
 ## 1. One owner and one pinned package
 
-Operator owns interface version `0.7.0`, distributed in `operator-contracts` with
+Operator owns interface version `0.7.1`, distributed in `operator-contracts` with
 package manifest format `operator.dev/contract-package/v2`. The package contains
 closed JSON Schemas, the offline URI catalog, operation registry, semantic rules,
 Go/Python bindings and validators, and shared golden test vectors. Both products pin `info.version` and SHA-256 of the exact `asyncapi.json` bytes.
@@ -784,3 +784,23 @@ MUST follow [Attempt deadlines](ATTEMPT_TIMEOUT_CONTRACT.md).
 Ordinary-operation durations and operating sizes are supplied by Operator at startup
 as specified in [Operating limits](OPERATING_LIMITS_CONTRACT.md). Numeric registry
 timeouts are not part of this contract.
+
+### Actionable tool corrections and no-progress exhaustion
+
+Correctable rejections MUST carry the model-facing path, known rule/expectation,
+concrete next action, execution effect and resubmission safety. Go and Python MUST
+use the installed schema's constraint values. `diagnostic.constraint` identifies
+`schema`, `path` and `keyword`; Operator MUST resolve these against its own approved
+catalog before retaining an expectation. Harness prose MUST NOT become trusted host
+summary text. Unknown field names MUST retain only their safe parent path.
+Discriminated alternatives MUST select the relevant branch; ambiguous alternatives
+MUST explain their distinguishing fields. Normalization MUST preserve rule detail
+and remap the field path. Internal resolution defects MUST NOT invite the model to
+supply canonical bookkeeping. See [correction behavior](../docs/TOOL_CORRECTIONS.md).
+
+`stopping.condition = no-progress-limit` MUST carry observed_count and
+configured_limit for consecutive turns without recognized progress. The diagnostic
+reason is `no_progress_limit`, stage `termination`, and resubmission_safe is false.
+The terminal diagnostic MUST NOT reuse earlier tool/call identities or field errors.
+Earlier rejections remain separate history. Unavailable finish MAY use
+`no-progress-limit`; this is not a committed assessment or a successful campaign.

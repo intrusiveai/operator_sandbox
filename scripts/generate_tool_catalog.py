@@ -52,7 +52,9 @@ def build():
     records_host=load('engine-record-append-request')['oneOf']
     finish_host=load('engine-finish-request')['properties']
     handle=dict(type='string',minLength=1,maxLength=128,pattern='^[A-Za-z0-9][A-Za-z0-9._:-]*$')
-    def handles(limit=32):return dict(type='array',maxItems=limit,uniqueItems=True,items=deepcopy(handle))
+    def handles(limit=32,meaning="Use exact returned handles of this field's resource category."):
+        item=dict(deepcopy(handle),description=meaning,**{'x-operator-correction':meaning})
+        return dict(type='array',maxItems=limit,uniqueItems=True,items=item,description=meaning)
     content=dict(json={},text=dict(type='string',maxLength=1048576),base64=dict(type='string',maxLength=1398104),artifact=handle,media_type=media)
     def choice(keys):return dict(oneOf=[dict(required=[key]) for key in keys])
     def content_rules(artifact=True):
@@ -71,7 +73,7 @@ def build():
         elif isinstance(v,dict):
             props=v.get('properties',{})
             if {'service','collection','key'} <= props.keys():
-                props['key']=dict(type='object',minProperties=1,maxProperties=16,propertyNames=dict(type='string',minLength=1,maxLength=128),additionalProperties={'type':['string','number','boolean']})
+                props['key']=dict(description='Use exactly the key columns from this database policy details_reference, with non-null scalar values.',type='object',minProperties=1,maxProperties=16,propertyNames=dict(type='string',minLength=1,maxLength=128),additionalProperties={'type':['string','number','boolean']})
             for x in v.values():native_keys(x)
     native_keys(injection)
     keep=['origin','operation_id','scenario_id','caller_principal_id','rationale','retain_injections','strategy_provenance_ref','technique_refs']
@@ -85,16 +87,17 @@ def build():
     def item(kind):
         source=assessment[kind]['items']; props=deepcopy(source['properties'])
         for key in ('claim_id','gap_id','hypothesis_id','attempt_receipt_refs','record_refs','observation_refs','input_refs','uncertainty_refs','provenance'):props.pop(key,None)
-        props['observations']=handles()
-        if kind!='uncertainties':props['attempts']=handles()
-        if kind in ('objectives','hypotheses','uncertainties'):props['records']=handles()
-        if kind=='hypotheses':props.update(origin=attempt['properties']['origin'],scenario_id=identifier,label=handle,parent=handle)
+        props['observations']=handles(meaning='Use inspected citation handles returned by observation_read; readable handles do not establish inspection.')
+        if kind!='uncertainties':props['attempts']=handles(meaning='Use execution handles returned by executed attempts; rejected submissions have no execution handle.')
+        if kind in ('objectives','hypotheses','uncertainties'):props['records']=handles(meaning='Use historical record handles returned by record_append, never execution or artifact handles.')
+        if kind=='hypotheses':props.update(origin=attempt['properties']['origin'],scenario_id=identifier,label=dict(handle,description='Optional local hypothesis label; no earlier registration required.'),parent=dict(handle,description='Local hypothesis label or returned historical hypothesis handle. Forward references are valid; self-parenting and cycles are invalid.'))
         if kind=='coverage':props['hypothesis']=handle
-        if kind=='claims':props['uncertainties']=handles()
-        if kind=='uncertainties':props.update(label=handle,inputs=handles())
+        if kind=='claims':props['uncertainties']=handles(meaning="Reference a label declared in top-level uncertainties. Put explanatory prose in that entry's description.")
+        if kind=='uncertainties':props.update(label=dict(handle,description='Local label referenced by claims[].uncertainties; declare once.'),inputs=handles())
         required={'objectives':['objective_id','outcome','summary'],'hypotheses':['origin','outcome','summary'],'claims':['statement','interpretation','assurance','confidence'],'coverage':['objective_id','status','reason'],'uncertainties':['kind','description']}[kind]
         result=object_schema(props,required)
         if kind=='hypotheses':result['allOf']=[origin_rule()]
+        if kind=='uncertainties':result['x-operator-correction']='Supply an uncertainty object with required kind and description; put explanatory prose in description.'
         return result
     inline_props={k:deepcopy(assessment[k]) for k in ('status','summary')}
     inline_props.update({k:dict(type='array',maxItems=100,items=item(k)) for k in ('objectives','hypotheses','claims','coverage','uncertainties')})
@@ -107,7 +110,7 @@ def build():
         kind=branch['properties']['record_kind']['const']; old=branch['properties']['record']['properties']
         props={}; required={'hypothesis':['origin','statement'],'progress':['summary'],'lineage':['hypothesis','attempt','mutation_summary'],'coverage':['entries']}[kind]
         keep={'hypothesis':['statement','objective_refs','assumptions','predicted_observations','surface_ref'],'progress':['summary','decision','objective_refs'],'lineage':['mutation_summary'],'coverage':[]}[kind]
-        props.update({k:old[k] for k in keep});props['records']=handles()
+        props.update({k:old[k] for k in keep});props['records']=handles(meaning='Use historical record handles returned by record_append, never execution or artifact handles.')
         if kind=='hypothesis':props.update(origin=attempt['properties']['origin'],scenario_id=identifier,parent=handle)
         if kind=='progress':
             props.update(hypotheses=handles(),attempts=handles(),observations=handles())
@@ -132,7 +135,7 @@ def build():
     publish=object_schema(dict(purpose={'enum':['payload','carrier','supporting-data','conclusion']},**{k:v for k,v in content.items() if k!='artifact'}),['purpose','media_type']);publish['allOf']=content_rules(False)
     upload=['engine.artifact_begin','engine.artifact_put_part','engine.artifact_commit']
     snapshot_list=load('engine-snapshot-list-request');snapshot_list['properties']['session']=handle;snapshot_list['properties'].pop('source_session')
-    snapshot=object_schema(dict(snapshot=handle))
+    snapshot=object_schema(dict(snapshot=dict(handle,description='Snapshot identity returned by snapshot_list/request/inspect. Inspect readiness before restore; identity alone does not imply readiness.')))
     entries=[
       ('reference_read','Read a returned input/reference handle. offset defaults to 0, max_bytes to 4096; follow continuation to load complete guidance.',[],reference),
       ('artifact_publish','Publish large or reusable content. Supply exactly one of json, text, base64. Returns a committed artifact handle; use direct content for ordinary invocations.',upload,publish),
@@ -163,8 +166,17 @@ def build():
         def compact_json(v):
             if isinstance(v,list):return [compact_json(x) for x in v]
             if not isinstance(v,dict):return v
-            if 'oneOf' in v and any(isinstance(x,dict) and x.get('type')=='null' for x in v['oneOf']):return {'description':'Bounded JSON; runtime validates nesting and size.'}
-            return {k:compact_json(x) for k,x in v.items()}
+            if 'oneOf' in v and any(isinstance(x,dict) and x.get('type')=='null' for x in v['oneOf']):return {'description':'JSON; runtime checks nesting and size.'}
+            out={k:compact_json(x) for k,x in v.items() if k!='x-operator-correction'}
+            if isinstance(out.get('description'),str) and out['description'].startswith(('Use exactly the key columns','Optional local hypothesis','Local hypothesis label','Snapshot identity','Local label referenced')):
+                out.pop('description')
+            if out.get('type')=='array' and out.get('items',{}).get('type')=='string':
+                out.pop('description',None)
+                out['items'].pop('description',None)
+            props=out.get('properties',{})
+            for key,meaning in {'uncertainties':'Declared top-level uncertainty labels; explanations belong in description.'}.items():
+                if key in props and props[key].get('items',{}).get('type')=='string':props[key]['description']=meaning
+            return out
         provider=compact_json(provider)
         provider=openai_parameters(name,provider)
         if name == 'finish':
@@ -177,6 +189,8 @@ def build():
                 'finish_reasons': finish_host['finish_reason']['enum'],
                 'assessment_statuses': assessment['status']['enum'],
                 'handles': {'attempts':'Execution handles returned after dispatch; rejected submissions have none.', 'observations':'Inspected citation handles returned by observation_read, inside supported assessment items; no top-level observations.', 'records':'Historical record handles from accepted record_append only, never executions or artifacts.'},
+                'uncertainty_reference_example': {'uncertainties':[{'label':'limited-feedback','kind':'unavailable-feedback','description':'Internal operation-error feedback was unavailable.'}],'claims':[{'statement':'The inspected evidence supports a limited conclusion.','interpretation':'inconclusive','assurance':'refund-behavior','confidence':'low','uncertainties':['limited-feedback']}]},
+                'example_scope': 'The uncertainty-reference example is an assessment fragment, not a complete finish request.',
                 'correction': 'Correct a rejected finish with a new call; do not replay completed target operations. Omit optional reporting collections when unnecessary.'}
         if name == 'observation_read':
             branch['x-operator-guidance'] = {

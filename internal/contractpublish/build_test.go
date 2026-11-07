@@ -19,11 +19,11 @@ func TestPublicationIsReproducibleAndExact(t *testing.T) {
 	}
 	base := t.TempDir()
 	a, b := filepath.Join(base, "a"), filepath.Join(base, "b")
-	first, err := Build(context.Background(), source, a, "0.7.0")
+	first, err := Build(context.Background(), source, a, "0.7.1")
 	if err != nil {
 		t.Fatal(err)
 	}
-	second, err := Build(context.Background(), source, b, "0.7.0")
+	second, err := Build(context.Background(), source, b, "0.7.1")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +38,7 @@ func TestPublicationIsReproducibleAndExact(t *testing.T) {
 	if err != nil || !bytes.Equal(left, right) {
 		t.Fatal("different manifests", err)
 	}
-	if _, err := Build(context.Background(), source, a, "0.7.0"); err == nil {
+	if _, err := Build(context.Background(), source, a, "0.7.1"); err == nil {
 		t.Fatal("overwrote published package")
 	}
 	for _, name := range []string{"source/contracts/python/operator_contracts/protocol.py", "source/contracts/model_test.go", "source/schemas/fixtures/model-codec.json", "source/go.mod"} {
@@ -55,7 +55,7 @@ func TestPublicationIsReproducibleAndExact(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	c := filepath.Join(base, "c")
-	if _, err := Build(ctx, source, c, "0.7.0"); err == nil {
+	if _, err := Build(ctx, source, c, "0.7.1"); err == nil {
 		t.Fatal("cancelled build succeeded")
 	}
 	if _, err := os.Stat(c); !os.IsNotExist(err) {

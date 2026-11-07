@@ -17,6 +17,9 @@ func (b ModelTokenBudget) Valid() bool {
 }
 func validateDiagnosticBudget(body map[string]any) error {
 	stopping, _ := body["stopping"].(map[string]any)
+	if stopping["condition"] == "no-progress-limit" && number(stopping["observed_count"]) < number(stopping["configured_limit"]) {
+		return argumentIssue("invalid_progress_accounting", "/stopping/observed_count", "No-progress exhaustion requires observed_count to reach configured_limit; report the actual counter.")
+	}
 	if value, ok := stopping["budget"]; ok {
 		raw, _ := json.Marshal(value)
 		var budget ModelTokenBudget

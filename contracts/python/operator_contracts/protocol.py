@@ -28,8 +28,12 @@ def _part(encoded):
     return value
 
 
+SNAPSHOT_DESCRIPTION_LIMIT = 4096
+
 def _description(body):
-    _require(len(body.get("description", "").encode("utf-8")) <= 4096)
+    if len(body.get("description", "").encode("utf-8")) > SNAPSHOT_DESCRIPTION_LIMIT:
+        correction = f"Snapshot description must be at most {SNAPSHOT_DESCRIPTION_LIMIT} UTF-8 bytes. Shorten description and resubmit; no snapshot was created."
+        raise ContractError(correction, reason="snapshot_description_size", field_path="/description", correction=correction)
 
 
 def _conclusion_artifact(body):
@@ -261,7 +265,10 @@ class Protocol:
         self._check_registered(operation, "request_schema", body)
         name = operation["name"]
         if name == "engine.diagnostic_report":
-            budget = body.get('stopping', {}).get('budget')
+            stopping=body.get('stopping',{})
+            if stopping.get('condition')=='no-progress-limit' and stopping['observed_count']<stopping['configured_limit']:
+                raise ContractError('Invalid no-progress accounting.',reason='invalid_progress_accounting',field_path='/stopping/observed_count',correction='No-progress exhaustion requires observed_count to reach configured_limit; report the actual counter.')
+            budget = stopping.get('budget')
             if budget is not None and not (budget['consumed'] <= budget['total_allowance'] and budget['remaining'] == budget['total_allowance'] - budget['consumed'] and budget['remaining'] < budget['next_request_reservation']):
                 raise ContractError('Invalid model-token accounting.', reason='invalid_budget_accounting', field_path='/stopping/budget', correction='Model tokens require consumed + remaining = total_allowance and remaining < next_request_reservation; use actual token accounting, not another budget counter.')
         elif name == "engine.model_generate":

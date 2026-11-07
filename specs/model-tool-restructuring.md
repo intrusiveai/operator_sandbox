@@ -398,3 +398,14 @@ context/formatting measurements, and unverified boundaries. Controlled fixtures
 demonstrate plumbing and invariants, not live-model reliability or native-container
 containment. Live provider/cloud campaigns and release publication require
 separate authorization.
+
+## Correction behavior
+
+Implementation MUST follow the [shared correction contract](../docs/TOOL_CORRECTIONS.md).
+The Go/Python schema formatters MUST cover the constraint families in the tool
+catalog without copying submitted values or validator prose. Shared malformed and
+corrected fixtures MUST cover each advertised tool and normalization/reference
+rules. Production Harness dispatch and a controlled Operator process exchange MUST
+verify pagination, assessment repair without target replay, retained schema facts,
+no-progress termination, and separate report/export. Compaction MUST preserve
+bounded recent unresolved corrections alongside exact returned handles.
