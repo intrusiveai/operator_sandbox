@@ -16,6 +16,7 @@ The installed runtime directory contains exactly:
 
 ```text
 package.json
+asyncapi.json
 catalog.json
 operations.json
 <every inventoried payload file, at its declared relative path>
@@ -42,14 +43,15 @@ in place during loading.
 1. Opens and pins the selected directory; checks its type, permissions and owner.
 2. Reads `package.json` as a regular file, bounded to 8 MiB. Validates it using
    Operator's embedded manifest schema, before accepting any incoming schema.
-3. Checks its canonical digest and package version against the independent expected
-   pin. A mismatch fails before any payload file is read.
+3. Reads the bounded `asyncapi.json`, compares its exact byte hash and version
+   with the independent expected pin and manifest version. A mismatch fails
+   before reading other payload files.
 4. Walks exactly the declared inventory. Each child directory is independently
    pinned; directory reads use batches of at most 128 names. Files require exact
    declared sizes and SHA-256 digests. Before/after metadata checks reject observed
    file replacement or modification during a read.
 5. Calls `LoadVerifiedProtocol` with those captured bytes to verify the entire
-   payload and compile its catalog/registry offline. External schema references
+   payload, compare schemas/registry against the approved interface, and compile offline. External schema references
    fail. Inventoried Go/Python code is data and is never imported or executed.
 6. Returns a frozen manifest, a protocol carrying the verified package pin, and a
    verification report. No package files or directory handles remain open.
@@ -60,7 +62,7 @@ Missing/extra files, declared size violations and inventory collisions fail;
 links are not used to satisfy declared paths. An actual read is bounded even if
 a file grows after its initial size check. The report's file count/content bytes
 exclude `package.json`; `manifest_digest` hashes its exact bytes, while the package
-pin hashes its canonical object.
+pin hashes exact `asyncapi.json` bytes.
 
 Cancellation is checked between reads, directory entries and validation phases.
 The loader checks cancellation again before returning a successful result. Local

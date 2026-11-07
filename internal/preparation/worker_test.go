@@ -142,7 +142,7 @@ func localCompatibility(t *testing.T, p *contracts.Protocol, hostPlatform ...str
 	}
 	h := imagerelease.Requirements{OperatorVersion: "0.1.0", Contract: pin, HostPlatform: platform, RuntimeProfile: "operator-container/v1"}
 	image := dockercontrol.ImagePin{Selector: "harness:latest", Endpoint: "unix:///fixture/docker.sock", DaemonID: "daemon-1", ImageID: contracts.RawDigest([]byte("approved test image")), HostPlatform: platform, ImagePlatform: "linux/" + goruntime.GOARCH}
-	record := imagerelease.Record{APIVersion: imagerelease.CompatibilityVersion, MinimumOperatorVersion: "0.1.0", ContractPackageVersion: pin.Version, ContractPackageDigest: pin.Digest, RuntimeProfile: h.RuntimeProfile, Platform: image.ImagePlatform}
+	record := imagerelease.Record{APIVersion: imagerelease.CompatibilityVersion, ContractPackageVersion: pin.Version, ContractPackageDigest: pin.Digest, RuntimeProfile: h.RuntimeProfile, Platform: image.ImagePlatform}
 	approval, err := imagerelease.Validate(encode(record), image.ImageID, h)
 	if err != nil {
 		t.Fatal(err)

@@ -86,7 +86,7 @@ func inventory(m map[string]any, manifest []byte) *entry {
 }
 
 // Load reads a content-only installation: package.json and exactly its inventoried
-// payloads/parent directories. It authenticates the manifest against expected
+// payloads/parent directories. It verifies the interface identity against expected
 // before reading any payload, then verifies and compiles the frozen bytes offline.
 // No package-derived code is executed. A valid expected pin is not inferred from
 // the incoming package. Directory ancestors are trusted installation paths.
@@ -122,8 +122,9 @@ func Load(ctx context.Context, directory string, expected contracts.PackageIdent
 	if err != nil {
 		return nil, ErrManifest
 	}
-	digest, err := contracts.CanonicalDigest(manifest, contracts.PackageManifestLimit)
-	if err != nil || m["package_version"] != expected.Version || digest != expected.Digest {
+	document, err := readFile(ctx, root, contracts.InterfaceDocument, contracts.PackageFileLimit, -1)
+	identity, identityErr := contracts.InterfaceIdentity(document)
+	if err != nil || identityErr != nil || m["package_version"] != expected.Version || identity != expected {
 		return nil, ErrPin
 	}
 	if err := ctx.Err(); err != nil {

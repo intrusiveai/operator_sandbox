@@ -81,7 +81,7 @@ launch records and final revision:
 | `skill_set_digest` | Raw bytes of SkillSetManifest, including the empty set. |
 | `image_digest` | Full Docker image ID pinned for this launch. |
 | `release_record_digest` | Raw bytes of the validated embedded compatibility file. |
-| `contract_package_version`, `contract_package_digest` | Installed stable major.minor.patch version and canonical package-manifest digest. |
+| `contract_package_version`, `contract_package_digest` | Installed stable major.minor.patch version and exact AsyncAPI document hash. |
 
 These copies grant no authority. Raw-file digests do not replace separately recorded
 canonical object digests. Restores keep initial input identities and change the

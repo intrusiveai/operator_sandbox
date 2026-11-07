@@ -134,7 +134,7 @@ func New(ctx context.Context, c Config) (*Service, error) {
 	}
 	operations := map[string]bool{}
 	for _, name := range parsed["operations"].([]any) {
-		if !slices.Contains([]string{"engine.attempt_execute", "engine.injection_delete", "engine.observation_read", "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request", "engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit", "engine.model_generate", "engine.record_append", "engine.finish", "engine.diagnostic_report"}, name.(string)) {
+		if (&Service{}).operationHandler(name.(string)) == nil {
 			return nil, attemptadapter.ErrOperation
 		}
 		operations[name.(string)] = true
@@ -548,22 +548,17 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 	var result []byte
 	if !s.phaseAllows(request["operation"].(string), request["body"].(map[string]any)) {
 		result, err = s.stateEnvelope(raw, sequence, stateDenied("STATE_CHANGED"))
-	} else if request["operation"] == "engine.record_append" || request["operation"] == "engine.finish" {
-		result, err = s.handleCompletion(ctx, raw, sequence)
-	} else if request["operation"] == "engine.diagnostic_report" {
-		result, err = s.handleDiagnostic(ctx, raw, sequence)
-	} else if isSnapshot(request["operation"].(string)) {
-		result, err = s.handleSnapshot(ctx, raw, sequence)
-	} else if request["operation"] == "engine.model_generate" {
-		result, err = s.handleModel(ctx, raw, sequence)
-	} else if isArtifact(request["operation"].(string)) {
-		result, err = s.handleArtifact(ctx, raw, sequence)
 	} else {
-		result, err = s.broker.Handle(ctx, raw, sequence)
+		handler := s.operationHandler(request["operation"].(string))
+		if handler == nil {
+			return nil, attemptadapter.ErrOperation
+		}
+		result, err = handler(ctx, raw, sequence)
 		if err == nil && request["operation"] == "engine.attempt_execute" {
 			err = s.rememberAttempt(raw, result)
 		}
 	}
+
 	entry.Kind = "service.response"
 	entry.RunRevision = s.attempts.Status().RunRevision
 	entry.Content = nil
@@ -750,3 +745,26 @@ func (s *Service) ExitDeadline() time.Time {
 }
 
 func (s *Service) AssessmentCommitted() bool { return s.assessmentCommitted.Load() }
+
+// operationHandler is the executable dispatch inventory. Conformance checks use
+// this same lookup, rather than maintaining a second list of claimed capabilities.
+func (s *Service) operationHandler(name string) func(context.Context, []byte, int64) ([]byte, error) {
+	switch name {
+	case "engine.record_append", "engine.finish":
+		return s.handleCompletion
+	case "engine.diagnostic_report":
+		return s.handleDiagnostic
+	case "engine.model_generate":
+		return s.handleModel
+	case "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request":
+		return s.handleSnapshot
+	case "engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit":
+		return s.handleArtifact
+	case "engine.attempt_execute", "engine.observation_read", "engine.injection_delete":
+		return func(ctx context.Context, raw []byte, sequence int64) ([]byte, error) {
+			return s.broker.Handle(ctx, raw, sequence)
+		}
+	default:
+		return nil
+	}
+}

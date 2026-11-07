@@ -67,7 +67,7 @@ cleanup cannot be confirmed.
 
 The image MUST include `/opt/operator/engine/share/compatibility.json`, following
 [the local compatibility contract](../schemas/ENGINE_RELEASE_CONTRACT.md). Its
-minimum Operator version, exact contract package version/digest, runtime profile,
+exact AsyncAPI contract version/hash, runtime profile,
 and native Linux image platform MUST match the installed host. The compatibility
 record MUST omit its own image digest. The image pin binds it independently.
 The manifest, prompt, loader and complete native tool catalog MUST still satisfy
@@ -88,7 +88,7 @@ configuration is accepted but unused and can be removed.
 
 ## Validation
 
-Tests cover strict metadata, minimum-version and exact contract/platform/runtime
+Tests cover strict metadata, legacy-format rejection and exact contract/platform/runtime
 checks, image and daemon pinning, metadata consistency, resource digests, stopped
 inspection cleanup, missing/oversized files, and fail-closed admission. CLI tests
 exercise local preparation followed by independent retained-record inspection.

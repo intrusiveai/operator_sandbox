@@ -33,3 +33,20 @@ The release process does not require an Interceptor executable/archive or Harnes
 image for its OpenAPI comparison. Follow the releases skill and
 [candidate release guide](.github/maintainers/CANDIDATE_RELEASES.md). This procedure
 does not authorize changes or publication in another repository.
+
+## Operator–Attack Harness contract adoption
+
+`schemas/asyncapi.json` is the self-contained interface. `release/contract-lock.json`
+approves its `info.version` and SHA-256 of exact bytes. Existing package version/digest
+fields carry this pair, not an implementation-package or source-revision identity.
+
+For interface changes, update authoring schemas/registry/semantic rules, generate
+and review the document, then explicitly approve it with
+`.venv/bin/python scripts/generate_asyncapi.py --approve`. Commit the document and
+lock together. `make check-generated` never refreshes approvals. Run the shared
+and affected stateful tests; `make test-contract` provides a focused controlled
+conformance workflow. Follow [contract conformance](docs/CONTRACT_CONFORMANCE.md).
+Implementation-only changes MUST NOT force a new counterpart source pin. Package
+integrity, build provenance and optional integration-test revisions are separate.
+Do not claim document validation alone proves functional conformance, or publish
+another product's releases as part of this procedure.

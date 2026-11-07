@@ -26,8 +26,11 @@ single authority for the pipe envelope, identities, startup/manifest exchange,
 deadlines, errors, restore results and completion. Operator owns its versioned
 `operator-contracts` package; both ends pin its version and content digest.
 The [release contract lock](release/contract-lock.json) identifies the exact
-package source, version and content digest. The schemas, Go/Python validators and
-shared fixtures define the integration contract.
+AsyncAPI interface version and exact document hash. The self-contained
+[AsyncAPI contract](schemas/asyncapi.json), Go/Python validators and shared
+[conformance checks](docs/CONTRACT_CONFORMANCE.md) define the integration.
+Implementation source, package inventory and ordinary documentation are excluded
+from compatibility identity.
 
 The [host transport implementation](docs/HOST_TRANSPORT.md) supplies FIFO/spool
 I/O, bounded queues, deadlines and confirmed-exit transport cleanup, coordinated
@@ -325,7 +328,7 @@ Before accepting a new campaign, Operator MUST resolve the selected native-platf
 image locally and pin its platform-specific Docker `Id` separately from its verified immutable lookup reference. It MUST inspect
 `/opt/operator/engine/share/compatibility.json` from that exact image under the
 [local compatibility contract](schemas/ENGINE_RELEASE_CONTRACT.md). It MUST check
-minimum Operator version, exact installed shared-contract version/digest, native
+exact installed AsyncAPI contract version/hash, native
 platform and runtime profile, and verify the embedded manifest and resources.
 Compatibility admission MUST use local image bytes without publisher verification,
 release-service requests or an approval cache. Missing or incompatible metadata

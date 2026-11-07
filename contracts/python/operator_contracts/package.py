@@ -3,6 +3,7 @@ import json
 from .validation import ContractError, ORDINARY_LIMIT, decode
 from .schema_ids import CONTRACT_PACKAGE_SCHEMA
 from .startup import require, inventory_paths, folded
+from .interface import document_identity, verify_interface
 from .canonical import canonicalize, canonical_digest, raw_digest
 
 PACKAGE_MANIFEST_LIMIT = 8 << 20
@@ -33,7 +34,8 @@ def validate_package_manifest(protocol, raw):
 
 def verify_package(protocol, manifest, files, expected):
     m = validate_package_manifest(protocol, manifest)
-    require(expected == {'package_version': m['package_version'], 'package_digest': canonical_digest(manifest, PACKAGE_MANIFEST_LIMIT)})
+    require(expected['package_version'] == m['package_version'])
+    verify_interface(files, expected)
     require(len(files) == len(m['files']))
     for entry in m['files']:
         raw = files.get(entry['path'])
@@ -69,7 +71,7 @@ def build_package_manifest(protocol, version, files, profiles):
     require(all(type(k) is str and len(k) <= 128 and k.isascii() and type(v) is str for k, v in profiles.items()))
     require('catalog.json' in files and 'operations.json' in files)
     require(all(path in files for path in profiles.values()))
-    m = {'api_version': 'operator.dev/contract-package/v1alpha1', 'package_version': version,
+    m = {'api_version': 'operator.dev/contract-package/v2', 'package_version': version,
          'files': [{'path': path, 'size_bytes': len(files[path]), 'digest': raw_digest(files[path])} for path in sorted(files)],
          'catalog': {'path': 'catalog.json', 'object_digest': canonical_digest(files['catalog.json'])},
          'operations': {'path': 'operations.json', 'object_digest': canonical_digest(files['operations.json'])},
@@ -77,7 +79,8 @@ def build_package_manifest(protocol, version, files, profiles):
     raw = json.dumps(m, ensure_ascii=False, separators=(',', ':')).encode('utf-8')
     validate_package_manifest(protocol, raw)
     raw = canonicalize(raw, PACKAGE_MANIFEST_LIMIT)
-    pin = {'package_version': version, 'package_digest': raw_digest(raw)}
+    pin = document_identity(files.get('asyncapi.json', b''))
+    require(pin['package_version'] == version)
     verify_package(protocol, raw, files, pin)
     return raw, pin
 

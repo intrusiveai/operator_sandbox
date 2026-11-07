@@ -15,7 +15,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 )
 
-const CompatibilityVersion = "operator.dev/harness-compatibility/v1alpha1"
+const CompatibilityVersion = "operator.dev/harness-compatibility/v1alpha2"
 const CompatibilityPath = "/opt/operator/engine/share/compatibility.json"
 const ResponseLimit = 64 << 10
 
@@ -31,7 +31,6 @@ var digits = regexp.MustCompile(`^[0-9]+$`)
 
 type Record struct {
 	APIVersion             string `json:"api_version"`
-	MinimumOperatorVersion string `json:"minimum_operator_version"`
 	ContractPackageVersion string `json:"contract_package_version"`
 	ContractPackageDigest  string `json:"contract_package_digest"`
 	RuntimeProfile         string `json:"runtime_profile"`
@@ -41,7 +40,7 @@ type Record struct {
 // Requirements are trusted installed host facts, not campaign-selected claims.
 // RuntimeProfile identifies installed policy; actual confinement probes are separate.
 type Requirements struct {
-	OperatorVersion string
+	OperatorVersion string // Build provenance only; not a compatibility gate.
 	Contract        contracts.PackageIdentity
 	HostPlatform    string
 	RuntimeProfile  string
@@ -79,30 +78,6 @@ func version(s string) (core []string, prerelease string, ok bool) {
 	return core, pre, true
 }
 
-func stable(s string) bool { _, pre, ok := version(s); return ok && pre == "" }
-
-// Stable SemVer precedence ignores build metadata and compares unbounded numeric
-// components by length/digits, avoiding lexicographic version or integer overflow.
-func atLeast(actual, minimum string) bool {
-	a, ap, ok := version(actual)
-	if !ok || ap != "" {
-		return false
-	}
-	m, mp, ok := version(minimum)
-	if !ok || mp != "" {
-		return false
-	}
-	for i := range a {
-		if len(a[i]) != len(m[i]) {
-			return len(a[i]) > len(m[i])
-		}
-		if a[i] != m[i] {
-			return a[i] > m[i]
-		}
-	}
-	return true
-}
-
 func strict(raw []byte, dst any, limit int) error {
 	canonical, err := contracts.Canonicalize(raw, limit)
 	if err != nil {
@@ -138,7 +113,7 @@ func Parse(raw []byte) (Record, error) {
 func (r Record) validate() error {
 	_, _, validContract := version(r.ContractPackageVersion)
 	if r.APIVersion != CompatibilityVersion ||
-		!digestPattern.MatchString(r.ContractPackageDigest) || !stable(r.MinimumOperatorVersion) || !validContract ||
+		!digestPattern.MatchString(r.ContractPackageDigest) || !validContract ||
 		r.RuntimeProfile != "operator-container/v1" || (r.Platform != "linux/amd64" && r.Platform != "linux/arm64") {
 		return ErrRecord
 	}
@@ -148,7 +123,7 @@ func (r Record) validate() error {
 func (h Requirements) validate() error {
 	_, err := dockercontrol.ImagePlatform(h.HostPlatform)
 	_, _, contractOK := version(h.Contract.Version)
-	if err != nil || !stable(h.OperatorVersion) || !contractOK || !digestPattern.MatchString(h.Contract.Digest) || h.RuntimeProfile != "operator-container/v1" {
+	if err != nil || !contractOK || !digestPattern.MatchString(h.Contract.Digest) || h.RuntimeProfile != "operator-container/v1" {
 		return ErrCompatibility
 	}
 	return nil
@@ -162,7 +137,7 @@ func (r Record) Compatible(h Requirements) error {
 		return ErrCompatibility
 	}
 	platform, _ := dockercontrol.ImagePlatform(h.HostPlatform)
-	if !atLeast(h.OperatorVersion, r.MinimumOperatorVersion) || r.ContractPackageVersion != h.Contract.Version ||
+	if r.ContractPackageVersion != h.Contract.Version ||
 		r.ContractPackageDigest != h.Contract.Digest || r.RuntimeProfile != h.RuntimeProfile || r.Platform != platform {
 		return ErrCompatibility
 	}

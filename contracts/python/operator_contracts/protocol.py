@@ -51,6 +51,14 @@ def _metadata(snapshot, campaign):
 class Protocol:
     """Not an admission controller: sequencing, durable effects and policy remain host work."""
 
+    @classmethod
+    def from_interface(cls, raw, expected):
+        """Load approved interface bytes independently of a producer source commit."""
+        from .interface import interface_resources
+        loaded = cls._from_resources(interface_resources(raw, expected))
+        loaded._package_identity = dict(expected)
+        return loaded
+
     def __init__(self, directory: Path):
         self._catalog = Catalog(directory)
         try:

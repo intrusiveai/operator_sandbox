@@ -125,7 +125,7 @@ func TestNativeDockerFinishExit(t *testing.T) {
 				t.Fatal(e)
 			}
 			approved, req := localCompatibility(t, input.Protocol)
-			record := imagerelease.Record{APIVersion: imagerelease.CompatibilityVersion, MinimumOperatorVersion: "0.1.0", ContractPackageVersion: req.Contract.Version, ContractPackageDigest: req.Contract.Digest, RuntimeProfile: req.RuntimeProfile, Platform: image.ImagePlatform}
+			record := imagerelease.Record{APIVersion: imagerelease.CompatibilityVersion, ContractPackageVersion: req.Contract.Version, ContractPackageDigest: req.Contract.Digest, RuntimeProfile: req.RuntimeProfile, Platform: image.ImagePlatform}
 			approved.Image = image
 			approved.Release, e = imagerelease.Validate(encode(record), image.ImageID, req)
 			if e != nil {

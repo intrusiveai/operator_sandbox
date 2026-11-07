@@ -147,7 +147,7 @@ are validated against ScenarioBundle without rewriting or canonicalizing them.
 
 These functions accept bytes supplied by the caller; they do not open files or
 decide which local source is trusted. They do not verify actual reference/skill
-contents, canonical object/projection/package digests, signatures, source-bound
+contents, canonical object/projection identities, exact AsyncAPI document hashes, source-bound
 capability admission or actual model support. Immutable staging, bounded no-follow
 reads, provenance verification against release assets and all live host gates remain
 required runtime work. Structural validity alone does not admit a campaign.

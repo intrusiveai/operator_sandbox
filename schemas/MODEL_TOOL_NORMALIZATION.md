@@ -1,6 +1,6 @@
 # Model tool normalization
 
-Shared package 0.6.2 defines the model interface separately from canonical host
+Shared package 0.7.0 defines the model interface separately from canonical host
 operations. Both products MUST pin its exact identity using the existing package
 and image compatibility mechanisms. Model arguments from earlier packages MUST
 NOT be accepted as a fallback. Host receipt schemas remain authoritative.

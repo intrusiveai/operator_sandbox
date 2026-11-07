@@ -103,3 +103,14 @@ exit suite retains corrected finish and fatal-exit checks on both transports.
 Startup/prompt/large-input, compaction, restore, disconnect, cancellation and
 transport-specific failure coverage remain unchanged. Host-only validation,
 recovery and reporting cases remain in Operator's ordinary suite.
+
+## Compatibility versus tested revisions
+
+A selected Operator/Harness revision pair identifies a test run; it is not a
+runtime compatibility restriction. Compatibility uses the version and exact hash
+of `schemas/asyncapi.json`. Source changes outside that interface do not require
+counterpart updates. The controlled Python peer in `simple_peer.py` compiles the
+approved standalone document, rather than loading an Operator schema checkout.
+It exercises direct input, inspected evidence, corrected finish and separate
+CLI inspection/export. It does not claim qualification of the production Harness.
+See [conformance](CONTRACT_CONFORMANCE.md) for the source-independent consumer API.

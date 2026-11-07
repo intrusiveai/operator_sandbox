@@ -22,7 +22,7 @@ func candidate(t *testing.T) (string, Manifest) {
 	t.Helper()
 	root := t.TempDir()
 	source, _ := filepath.Abs("../..")
-	report, err := contractpublish.Build(context.Background(), source, filepath.Join(root, "contract"), "0.0.0")
+	report, err := contractpublish.Build(context.Background(), source, filepath.Join(root, "contract"), "0.7.0")
 	if err != nil {
 		t.Fatal(err)
 	}

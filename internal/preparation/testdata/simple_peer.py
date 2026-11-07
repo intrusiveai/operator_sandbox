@@ -15,7 +15,9 @@ from copy import deepcopy
 root, spool, mode = map(str, sys.argv[1:])
 sys.path.insert(0, str(Path(root)/'contracts/python'))
 from operator_contracts import Protocol, ContractError
-p=Protocol(Path(root)/'schemas')
+contract_bytes=(Path(root)/'schemas/asyncapi.json').read_bytes()
+contract_pin=json.loads((Path(root)/'release/contract-lock.json').read_bytes())['package']
+p=Protocol.from_interface(contract_bytes,contract_pin)
 spool=Path(spool)
 seq=0
 resolution=dict(campaign_id='campaign-1',call_id='native-call-1',resources={})

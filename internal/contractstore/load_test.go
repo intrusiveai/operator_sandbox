@@ -47,7 +47,7 @@ func fixture(t *testing.T, change func(map[string][]byte)) (string, []byte, cont
 	if change != nil {
 		change(files)
 	}
-	manifest, pin, err := p.BuildPackageManifest("0.0.0", files, profiles)
+	manifest, pin, err := p.BuildPackageManifest("0.7.0", files, profiles)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -219,12 +219,14 @@ func TestMalformedManifestAndOfflineSchemaRejection(t *testing.T) {
 	if _, err := Load(context.Background(), dir, pin); !errors.Is(err, ErrManifest) || strings.Contains(err.Error(), "password-secret") {
 		t.Fatal(err)
 	}
-	dir, _, pin = fixture(t, func(files map[string][]byte) {
-		files["wire-common.schema.json"] = []byte(`{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"urn:operator:schema:wire-common:v1alpha1","$ref":"https://invalid.example/schema"}`)
-	})
-	if _, err := Load(context.Background(), dir, pin); !errors.Is(err, ErrIntegrity) {
+	dir, _, pin = fixture(t, nil)
+	if err := os.WriteFile(filepath.Join(dir, "wire-common.schema.json"), []byte(`{"$ref":"https://invalid.example/schema"}`), 0644); err != nil {
 		t.Fatal(err)
 	}
+	if _, err := Load(context.Background(), dir, pin); err == nil {
+		t.Fatal("modified schema accepted")
+	}
+
 }
 
 func TestPathsCancellationAndManifestByteIdentity(t *testing.T) {

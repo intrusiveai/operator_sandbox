@@ -1,5 +1,10 @@
 # Ordinary wire protocol
 
+The machine-readable interface is [asyncapi.json](asyncapi.json). Compatibility
+uses its version and exact byte hash; the existing lanes and message envelopes
+remain unchanged. See [conformance](../docs/CONTRACT_CONFORMANCE.md).
+
+
 This document fixes the wire field choices for the ordinary operations implemented
 in the shared validation library. It supplements [SHARED_CONTRACT.md](SHARED_CONTRACT.md).
 
