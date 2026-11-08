@@ -150,9 +150,9 @@ func writeEvidenceSummary(b *strings.Builder, r Result) {
 	b.WriteString("## Summary\n\n")
 	for i := len(r.WorkflowDiagnostics) - 1; i >= 0; i-- {
 		d := r.WorkflowDiagnostics[i]
-		if d.Budget != nil || d.Stopping == "no-progress-limit" {
+		if d.Budget != nil || d.Stopping == "no-progress-limit" || d.Stopping == "invalid-call-limit" {
 			dataBlock(b, d.Message())
-			if d.Stopping == "no-progress-limit" {
+			if d.Stopping == "no-progress-limit" || d.Stopping == "invalid-call-limit" {
 				if r.HarnessClaims == 0 && r.JournalIntact {
 					b.WriteString("No final assessment was committed.\n\n")
 				}

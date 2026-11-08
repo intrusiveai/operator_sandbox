@@ -59,3 +59,10 @@ Contract 0.7.1 adds schema-rule references and no-progress reporting. Deploy a
 matching Harness pinned to the version and exact document hash in
 `release/contract-lock.json`; no source-commit equality is required. Existing
 campaign evidence is not rewritten and failed campaigns never resume.
+
+Invalid-call exhaustion uses the existing `invalid-call-limit` condition and
+`invalid_call_limit` reason. Harness reports stage `termination`, actual observed
+and configured counts, and `resubmission_safe: false`. Operator displays the limit
+as the terminal cause and earlier field corrections as separate history. It never
+promotes an unavailable assessment to success because Harness exited zero. These
+implementation rules use the existing contract 0.7.1 fields and identity.

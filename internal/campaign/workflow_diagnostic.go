@@ -37,6 +37,7 @@ type WorkflowDiagnostic struct {
 }
 
 var workflowReasons = map[string]string{
+	"invalid_call_limit":            "Harness reached its invalid tool-call limit; execution cannot continue.",
 	"snapshot_description_size":     "Shorten the snapshot description to its UTF-8 byte allowance; no snapshot was created.",
 	"unknown_uncertainty_label":     "Reference a label declared in top-level uncertainties. Put explanatory prose in that entry's description; do not replay completed attempts.",
 	"invalid_progress_accounting":   "No-progress exhaustion requires observed_count to reach configured_limit; report the actual counter.",
@@ -188,6 +189,11 @@ func (d WorkflowDiagnostic) Message() string {
 		}
 	} else if d.Stopping == "no-progress-limit" {
 		text = fmt.Sprintf("Harness stopped after %d consecutive turns without recognized progress (configured limit %d).", d.Observed, d.Limit)
+		if d.HostFinalized && !d.AssessmentAccepted {
+			text += " No final assessment was committed."
+		}
+	} else if d.Stopping == "invalid-call-limit" {
+		text = fmt.Sprintf("Harness stopped after %d invalid tool calls (configured limit %d).", d.Observed, d.Limit)
 		if d.HostFinalized && !d.AssessmentAccepted {
 			text += " No final assessment was committed."
 		}
