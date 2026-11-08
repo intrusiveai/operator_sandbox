@@ -41,3 +41,23 @@ func TestRetainedBudgetDiagnosticValidation(t *testing.T) {
 		t.Fatal("old records unreadable or inferred token facts")
 	}
 }
+
+func TestInvalidCallLimitDiagnosticRetention(t *testing.T) {
+	d := NewWorkflowDiagnostic("stopping-1", "harness-local", "termination", "invalid_call_limit", "", "", "")
+	d.Stopping, d.Observed, d.Limit = "invalid-call-limit", 5, 5
+	d.HostFinalized, d.CleanupCompleted = true, true
+	raw, err := json.Marshal(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	saved := DecodeWorkflowDiagnostic(raw)
+	if saved == nil || saved.Reason != "invalid_call_limit" || saved.Stage != "termination" || saved.Tool != "" || saved.FieldPath != "" || !strings.Contains(saved.Message(), "5 invalid tool calls (configured limit 5)") || !strings.Contains(saved.Message(), "No final assessment was committed") {
+		t.Fatal(saved)
+	}
+	// Existing records remain readable; no contract or evidence migration.
+	d.Reason, d.Stage = "local_error", "arguments"
+	raw, _ = json.Marshal(d)
+	if DecodeWorkflowDiagnostic(raw) == nil {
+		t.Fatal("legacy stopping record rejected")
+	}
+}
