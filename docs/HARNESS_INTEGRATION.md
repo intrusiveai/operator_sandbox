@@ -140,3 +140,21 @@ export after container removal. Controlled process tests establish protocol
 behavior; actual-image containment and live-provider checks test different facts.
 
 For constraint references, model-facing path recovery and no-progress stopping, follow [tool corrections](TOOL_CORRECTIONS.md). Matching builds use the exact 0.7.1 identity in the contract lock.
+
+
+### Protected Harness finalization diagnostics
+
+Harness may end exploration to preserve its assessment and correction capacity.
+The existing `engine.diagnostic_report` operation retains reason
+`finalization_capacity_protected` at stage `dispatch` as informational evidence,
+without a stopping condition. This transition does not replace an earlier
+failure or imply that execution admission has closed, an assessment was accepted,
+or cleanup completed. Report and export retain the reason independently of
+untrusted diagnostic prose.
+
+`finalization_action_blocked` and `assessment_repair_active` identify locally
+withheld exploration actions. `finish_repair_unresolved` preserves an outstanding
+finish correction separately from a terminal `context_limit`, `model_call_limit`,
+or structured `model_reservation_unavailable` diagnostic. These are diagnostic
+implementation additions within the existing interface; they do not change the
+shared contract identity.

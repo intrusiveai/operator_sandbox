@@ -158,7 +158,7 @@ func writeEvidenceSummary(b *strings.Builder, r Result) {
 				}
 				for j := i - 1; j >= 0; j-- {
 					previous := r.WorkflowDiagnostics[j]
-					if previous.Stopping == "" && previous.Reason != "observation_selection" {
+					if previous.Stopping == "" && !previous.Informational() {
 						b.WriteString("Preceding tool rejection (separate from the stopping cause):\n\n")
 						dataBlock(b, previous.Message())
 						break

@@ -61,3 +61,31 @@ func TestInvalidCallLimitDiagnosticRetention(t *testing.T) {
 		t.Fatal("legacy stopping record rejected")
 	}
 }
+
+func TestProtectedFinalizationDiagnosticRetention(t *testing.T) {
+	d := NewWorkflowDiagnostic("protected-1", "harness-local", "dispatch", "finalization_capacity_protected", "", "", "")
+	raw, _ := json.Marshal(d)
+	saved := DecodeWorkflowDiagnostic(raw)
+	if saved == nil || !saved.Informational() || saved.Omitted || !strings.Contains(saved.Message(), "not an execution failure") {
+		t.Fatal(saved)
+	}
+	for _, mutate := range []func(*WorkflowDiagnostic){
+		func(d *WorkflowDiagnostic) { d.Stopping = "budget-limit" },
+		func(d *WorkflowDiagnostic) { d.Stage = "termination" },
+		func(d *WorkflowDiagnostic) { d.Tool = "finish" },
+	} {
+		changed := d
+		mutate(&changed)
+		if changed.Valid() {
+			t.Fatal("transition admitted as failure", changed)
+		}
+	}
+	for _, reason := range []string{"finalization_action_blocked", "assessment_repair_active", "finish_repair_unresolved", "context_limit", "model_call_limit"} {
+		value := NewWorkflowDiagnostic("reason-1", "harness-local", "termination", reason, "", "", "")
+		raw, _ := json.Marshal(value)
+		saved := DecodeWorkflowDiagnostic(raw)
+		if saved == nil || saved.Reason != reason || saved.Informational() {
+			t.Fatal(reason, saved)
+		}
+	}
+}
