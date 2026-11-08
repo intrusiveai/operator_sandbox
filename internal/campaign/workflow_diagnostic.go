@@ -37,70 +37,76 @@ type WorkflowDiagnostic struct {
 }
 
 var workflowReasons = map[string]string{
-	"invalid_call_limit":            "Harness reached its invalid tool-call limit; execution cannot continue.",
-	"snapshot_description_size":     "Shorten the snapshot description to its UTF-8 byte allowance; no snapshot was created.",
-	"unknown_uncertainty_label":     "Reference a label declared in top-level uncertainties. Put explanatory prose in that entry's description; do not replay completed attempts.",
-	"invalid_progress_accounting":   "No-progress exhaustion requires observed_count to reach configured_limit; report the actual counter.",
-	"invalid_json":                  "Supply a valid JSON object with unique keys, safe numbers and bounded nesting.",
-	"no_progress_limit":             "Harness reached its consecutive turns without recognized progress limit.",
-	"model_reservation_unavailable": "Harness could not reserve tokens for another model response.",
-	"invalid_budget_accounting":     "Model-token accounting must balance and identify the next-request reservation.",
-	"finish_choice":                 "Supply inline summary and objectives, or artifact, or unavailable_reason; do not combine them.",
-	"finish_field_required":         "Inline finish requires both summary and objectives.",
-	"injection_required":            "Nonempty setup requires injection content.",
-	"setup_required":                "Injection content and retention require nonempty setup.",
-	"assessment_fields_required":    "Supply interpretation, confidence, assurance and assessment_summary together; gaps requires that complete group.",
-	"content_choice":                "Supply exactly one of json, text, base64 or a returned artifact handle.",
-	"artifact_media_override":       "Artifact media comes from its committed descriptor; omit media_type.",
-	"invalid_media_type":            "JSON requires application/json. Correct or omit media_type.",
-	"media_type_required":           "Supply the media type of decoded base64 bytes.",
-	"obsolete_wrapper":              "Place summary and objectives beside finish_reason; omit the assessment wrapper.",
-	"unknown_handle":                "Use a handle returned by a successful tool or verified campaign input.",
-	"wrong_handle_kind":             "Select a returned handle of the required resource category.",
-	"foreign_handle":                "Select a resource belonging to this campaign.",
-	"stale_handle":                  "Refresh the resource in the current target binding without replaying prior effects.",
-	"evidence_not_inspected":        "Read available evidence completely or cite an inspected range; unread evidence may only describe a gap.",
-	"unavailable_artifact":          "Use an available committed artifact handle.",
-	"invalid_resolution_context":    "Harness could not resolve verified canonical resource fields.",
-	"reference_limit":               "Select at most 32 distinct observations and execution receipts per item.",
-	"artifact_purpose":              "Select a committed artifact with the required purpose.",
-	"evidence_required":             "Select inspected evidence and real execution handles or report an untested/inconclusive outcome.",
-	"invalid_database_key":          "Supply the exact database policy key columns with non-null scalar values.",
-	"injection_json_required":       "Supply canonical JSON injection content or a committed JSON artifact.",
-	"ambiguous_label":               "Choose a unique local label distinct from existing handles.",
-	"hypothesis_cycle":              "Remove self-parenting or the hypothesis parent cycle.",
-	"range_exceeded":                "Read within the selected handle range or select the whole-entry handle.",
-	"expanded_request_invalid":      "The expanded request violates a host constraint; reduce references/content or correct the selected resource.",
-	"observation_selection":         "Harness selected verified observation references for an assessment item.",
-	"attempt_timeout":               "Attempt execution exceeded its deadline; execution is closed without replay.",
-	"database_setup_denied":         "Use a permitted database service/table, exact key and writable placement. Creation requires explicit permission and matching payload keys. Execution did not occur; correct and resubmit with a new operation ID.",
-	"origin_required":               "Set origin to scenario with a submitted scenario_id, or exploratory without scenario_id. Execution did not occur; correct and resubmit with a new operation ID.",
-	"scenario_required":             "Scenario origin requires a scenario_id from the submitted bundle. Execution did not occur; correction is safe with a new operation ID.",
-	"scenario_forbidden":            "Exploratory origin forbids scenario_id. Remove it or select scenario origin. Execution did not occur; correction is safe with a new operation ID.",
-	"unknown_scenario":              "Select a scenario_id from the submitted bundle, or exploratory origin without scenario_id. Execution did not occur; correction is safe with a new operation ID.",
-	"assessment_retention_failed":   "The assessment could not be retained. Finish was not accepted; execution closes for owned cleanup.",
-	"target_failed":                 "The target operation failed. Inspect the retained attempt errors and permitted observations.",
-	"target_outcome_unknown":        "The target operation outcome is uncertain. Execution is closed and the operation will not be replayed.",
-	"cleanup_failed":                "Owned cleanup did not complete; retained state identifies the unconfirmed resources.",
-	"request_too_large":             "Request exceeds its byte limit. Publish large input or assessment content as an artifact and use its receipt.",
-	"policy_denied":                 "The selected operation or setup is not permitted by this campaign target policy.",
-	"parent_not_completed":          "Select a parent with verified completed lineage.",
-	"invalid_injection_input":       "Injection setup requires canonical application/json input.",
-	"ARTIFACT_BUDGET_EXCEEDED":      "Input cannot be retained within the remaining campaign artifact allowance.",
-	"invalid_arguments":             "Tool arguments were rejected before execution; supply the required fields and documented types.",
-	"invalid_structure":             "Tool arguments do not match the required structure; check the indicated field.",
-	"duplicate_json_key":            "A JSON key occurs more than once. Supply each key once.",
-	"unsupported_tool":              "The requested tool is not advertised for this campaign.",
-	"direct_input_too_large":        "Direct input exceeds the wire safety ceiling. Publish an artifact and use its returned receipt.",
-	"configured_size_exceeded":      "The indicated field exceeds its host-configured size allowance in size_limits. Reduce it or use an artifact receipt for direct input. Execution did not occur; correction is safe.",
-	"input_depth_exceeded":          "Direct JSON input exceeds 16 nested containers. Reduce nesting or publish an artifact.",
-	"invalid_base64":                "Input is not canonical padded base64. Correct the encoding or use JSON/UTF-8 input.",
-	"invalid_artifact_receipt":      "Use direct input or a committed payload/carrier artifact receipt returned in this campaign.",
-	"invalid_parent_receipt":        "Use an execution receipt from a completed attempt; a rejected submission has no execution receipt.",
-	"invalid_reference":             "A reference does not identify the required retained object. Use returned handles of the documented category.",
-	"invalid_range":                 "A range requires offset and length. Omit the optional range to reference the whole entry.",
-	"local_error":                   "Harness reported a local failure; unrestricted error text was omitted.",
-	"retention_failed":              "Required input retention failed; the target was not dispatched.",
+	"finalization_capacity_protected": "Harness ended exploration to protect capacity for an assessment request and one correction opportunity; this is not an execution failure.",
+	"finalization_action_blocked":     "Protected finalization is active. The action was not executed; finish using retained evidence.",
+	"assessment_repair_active":        "Assessment repair is active. The action was not executed; correct the rejected finish using retained evidence.",
+	"finish_repair_unresolved":        "Harness terminated with a finish correction unresolved; no corrected assessment was accepted.",
+	"context_limit":                   "Mandatory campaign and finalization context could not fit safely after local trimming.",
+	"model_call_limit":                "No model-call allowance remains for another assessment or correction request.",
+	"invalid_call_limit":              "Harness reached its invalid tool-call limit; execution cannot continue.",
+	"snapshot_description_size":       "Shorten the snapshot description to its UTF-8 byte allowance; no snapshot was created.",
+	"unknown_uncertainty_label":       "Reference a label declared in top-level uncertainties. Put explanatory prose in that entry's description; do not replay completed attempts.",
+	"invalid_progress_accounting":     "No-progress exhaustion requires observed_count to reach configured_limit; report the actual counter.",
+	"invalid_json":                    "Supply a valid JSON object with unique keys, safe numbers and bounded nesting.",
+	"no_progress_limit":               "Harness reached its consecutive turns without recognized progress limit.",
+	"model_reservation_unavailable":   "Harness could not reserve tokens for another model response.",
+	"invalid_budget_accounting":       "Model-token accounting must balance and identify the next-request reservation.",
+	"finish_choice":                   "Supply inline summary and objectives, or artifact, or unavailable_reason; do not combine them.",
+	"finish_field_required":           "Inline finish requires both summary and objectives.",
+	"injection_required":              "Nonempty setup requires injection content.",
+	"setup_required":                  "Injection content and retention require nonempty setup.",
+	"assessment_fields_required":      "Supply interpretation, confidence, assurance and assessment_summary together; gaps requires that complete group.",
+	"content_choice":                  "Supply exactly one of json, text, base64 or a returned artifact handle.",
+	"artifact_media_override":         "Artifact media comes from its committed descriptor; omit media_type.",
+	"invalid_media_type":              "JSON requires application/json. Correct or omit media_type.",
+	"media_type_required":             "Supply the media type of decoded base64 bytes.",
+	"obsolete_wrapper":                "Place summary and objectives beside finish_reason; omit the assessment wrapper.",
+	"unknown_handle":                  "Use a handle returned by a successful tool or verified campaign input.",
+	"wrong_handle_kind":               "Select a returned handle of the required resource category.",
+	"foreign_handle":                  "Select a resource belonging to this campaign.",
+	"stale_handle":                    "Refresh the resource in the current target binding without replaying prior effects.",
+	"evidence_not_inspected":          "Read available evidence completely or cite an inspected range; unread evidence may only describe a gap.",
+	"unavailable_artifact":            "Use an available committed artifact handle.",
+	"invalid_resolution_context":      "Harness could not resolve verified canonical resource fields.",
+	"reference_limit":                 "Select at most 32 distinct observations and execution receipts per item.",
+	"artifact_purpose":                "Select a committed artifact with the required purpose.",
+	"evidence_required":               "Select inspected evidence and real execution handles or report an untested/inconclusive outcome.",
+	"invalid_database_key":            "Supply the exact database policy key columns with non-null scalar values.",
+	"injection_json_required":         "Supply canonical JSON injection content or a committed JSON artifact.",
+	"ambiguous_label":                 "Choose a unique local label distinct from existing handles.",
+	"hypothesis_cycle":                "Remove self-parenting or the hypothesis parent cycle.",
+	"range_exceeded":                  "Read within the selected handle range or select the whole-entry handle.",
+	"expanded_request_invalid":        "The expanded request violates a host constraint; reduce references/content or correct the selected resource.",
+	"observation_selection":           "Harness selected verified observation references for an assessment item.",
+	"attempt_timeout":                 "Attempt execution exceeded its deadline; execution is closed without replay.",
+	"database_setup_denied":           "Use a permitted database service/table, exact key and writable placement. Creation requires explicit permission and matching payload keys. Execution did not occur; correct and resubmit with a new operation ID.",
+	"origin_required":                 "Set origin to scenario with a submitted scenario_id, or exploratory without scenario_id. Execution did not occur; correct and resubmit with a new operation ID.",
+	"scenario_required":               "Scenario origin requires a scenario_id from the submitted bundle. Execution did not occur; correction is safe with a new operation ID.",
+	"scenario_forbidden":              "Exploratory origin forbids scenario_id. Remove it or select scenario origin. Execution did not occur; correction is safe with a new operation ID.",
+	"unknown_scenario":                "Select a scenario_id from the submitted bundle, or exploratory origin without scenario_id. Execution did not occur; correction is safe with a new operation ID.",
+	"assessment_retention_failed":     "The assessment could not be retained. Finish was not accepted; execution closes for owned cleanup.",
+	"target_failed":                   "The target operation failed. Inspect the retained attempt errors and permitted observations.",
+	"target_outcome_unknown":          "The target operation outcome is uncertain. Execution is closed and the operation will not be replayed.",
+	"cleanup_failed":                  "Owned cleanup did not complete; retained state identifies the unconfirmed resources.",
+	"request_too_large":               "Request exceeds its byte limit. Publish large input or assessment content as an artifact and use its receipt.",
+	"policy_denied":                   "The selected operation or setup is not permitted by this campaign target policy.",
+	"parent_not_completed":            "Select a parent with verified completed lineage.",
+	"invalid_injection_input":         "Injection setup requires canonical application/json input.",
+	"ARTIFACT_BUDGET_EXCEEDED":        "Input cannot be retained within the remaining campaign artifact allowance.",
+	"invalid_arguments":               "Tool arguments were rejected before execution; supply the required fields and documented types.",
+	"invalid_structure":               "Tool arguments do not match the required structure; check the indicated field.",
+	"duplicate_json_key":              "A JSON key occurs more than once. Supply each key once.",
+	"unsupported_tool":                "The requested tool is not advertised for this campaign.",
+	"direct_input_too_large":          "Direct input exceeds the wire safety ceiling. Publish an artifact and use its returned receipt.",
+	"configured_size_exceeded":        "The indicated field exceeds its host-configured size allowance in size_limits. Reduce it or use an artifact receipt for direct input. Execution did not occur; correction is safe.",
+	"input_depth_exceeded":            "Direct JSON input exceeds 16 nested containers. Reduce nesting or publish an artifact.",
+	"invalid_base64":                  "Input is not canonical padded base64. Correct the encoding or use JSON/UTF-8 input.",
+	"invalid_artifact_receipt":        "Use direct input or a committed payload/carrier artifact receipt returned in this campaign.",
+	"invalid_parent_receipt":          "Use an execution receipt from a completed attempt; a rejected submission has no execution receipt.",
+	"invalid_reference":               "A reference does not identify the required retained object. Use returned handles of the documented category.",
+	"invalid_range":                   "A range requires offset and length. Omit the optional range to reference the whole entry.",
+	"local_error":                     "Harness reported a local failure; unrestricted error text was omitted.",
+	"retention_failed":                "Required input retention failed; the target was not dispatched.",
 }
 
 func NewWorkflowDiagnostic(operation, source, stage, reason, path, tool, call string) WorkflowDiagnostic {
@@ -141,7 +147,16 @@ func NewWorkflowDiagnostic(operation, source, stage, reason, path, tool, call st
 	}
 	return d
 }
+
+// Informational reports remain evidence without replacing an actual failure.
+func (d WorkflowDiagnostic) Informational() bool {
+	return d.Reason == "observation_selection" || d.Reason == "finalization_capacity_protected"
+}
+
 func (d WorkflowDiagnostic) Valid() bool {
+	if d.Reason == "finalization_capacity_protected" && (d.Source != "harness-local" || d.Stage != "dispatch" || d.Stopping != "" || d.Budget != nil || d.Observed != 0 || d.Limit != 0 || d.Tool != "" || d.CallID != "" || d.FieldPath != "" || d.Constraint != nil || d.Correction != "") {
+		return false
+	}
 	if len(d.Correction) > 512 {
 		return false
 	}
@@ -197,8 +212,11 @@ func (d WorkflowDiagnostic) Message() string {
 		if d.HostFinalized && !d.AssessmentAccepted {
 			text += " No final assessment was committed."
 		}
-	} else if d.Stopping != "" {
+	} else if d.Stopping != "" && d.Limit > 0 {
 		text = fmt.Sprintf("Harness stopped: %s (observed %d; configured limit %d). %s", d.Stopping, d.Observed, d.Limit, text)
+	}
+	if d.Stopping != "" && d.Limit == 0 && d.Budget == nil {
+		text = "Harness stopped: " + d.Stopping + ". " + text
 	}
 	if d.FieldPath != "" {
 		text += " Field: " + d.FieldPath + "."

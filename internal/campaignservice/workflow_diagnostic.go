@@ -81,7 +81,7 @@ func (s *Service) handleDiagnostic(ctx context.Context, raw []byte, seq int64) (
 	if _, err = s.writer.AppendStored(campaign.Entry{RunRevision: q.Revision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d, "receipt_id": receipt, "assertion_origin": "harness", "observation_selections": selections})}, "", false); err != nil {
 		return nil, err
 	}
-	if d.Reason != "observation_selection" {
+	if !d.Informational() {
 		s.workflowDiagnostic.Store(&d)
 	}
 	reply := stateReply{Result: map[string]any{"status": "retained", "receipt_id": receipt}}
