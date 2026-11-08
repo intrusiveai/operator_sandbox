@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -143,8 +144,17 @@ func TestSimplePythonSpoolAndSeparateCLI(t *testing.T) {
 					}
 					result := reportResult(t, root, receipt)
 					if mode == "invalid-limit" {
-						if len(result.WorkflowDiagnostics) != 1 || result.WorkflowDiagnostics[0].Stopping != "invalid-call-limit" || len(result.Attempts) != 0 {
+						if len(result.WorkflowDiagnostics) != 6 || len(result.Attempts) != 0 || result.HarnessClaims != 0 {
 							t.Fatal(result)
+						}
+						for i, d := range result.WorkflowDiagnostics[:5] {
+							if d.Reason != "content_choice" || d.Stage != "arguments" || d.Stopping != "" || d.Tool != "attempt_execute" || d.CallID != fmt.Sprintf("bad-%d", i+1) {
+								t.Fatal("lost separate rejection history", d)
+							}
+						}
+						d := result.WorkflowDiagnostics[5]
+						if d.Reason != "invalid_call_limit" || d.Stage != "termination" || d.Stopping != "invalid-call-limit" || d.Observed != 5 || d.Limit != 5 || d.Tool != "" || d.CallID != "" || d.FieldPath != "" {
+							t.Fatal("lost terminal cause", d)
 						}
 					} else if budgetMode {
 						if len(result.WorkflowDiagnostics) != 2 || result.WorkflowDiagnostics[1].Budget == nil || result.HarnessClaims != 0 {
@@ -191,8 +201,47 @@ func TestSimplePythonSpoolAndSeparateCLI(t *testing.T) {
 								t.Fatalf("exported %d observation selections; want %d", selections, expected)
 							}
 						}
-						if mode == "invalid-limit" && !bytes.Contains(data, []byte("invalid-call-limit")) {
-							t.Fatal("export lost stopping cause")
+						if mode == "invalid-limit" {
+							if !bytes.Contains(data, []byte("invalid-call-limit")) {
+								t.Fatal("export lost stopping cause")
+							}
+							markdown, err := os.ReadFile(filepath.Join(destination, "report.md"))
+							if err != nil {
+								t.Fatal(err)
+							}
+							for _, fact := range []string{"Harness stopped after 5 invalid tool calls (configured limit 5)", "No final assessment was committed", "Preceding tool rejection (separate from the stopping cause)"} {
+								if !bytes.Contains(markdown, []byte(fact)) {
+									t.Fatalf("exported report lost %q: %s", fact, markdown)
+								}
+							}
+							files, err := filepath.Glob(filepath.Join(destination, "events", "*.jsonl"))
+							if err != nil {
+								t.Fatal(err)
+							}
+							var diagnostics []campaign.WorkflowDiagnostic
+							for _, file := range files {
+								events, err := os.ReadFile(file)
+								if err != nil {
+									t.Fatal(err)
+								}
+								for _, line := range bytes.Split(bytes.TrimSpace(events), []byte("\n")) {
+									var event struct {
+										Kind     string
+										Metadata struct{ Diagnostic campaign.WorkflowDiagnostic }
+									}
+									if err := json.Unmarshal(line, &event); err != nil {
+										t.Fatal(err)
+									}
+									if event.Kind == "workflow.diagnostic" {
+										diagnostics = append(diagnostics, event.Metadata.Diagnostic)
+									}
+								}
+							}
+							actual, _ := json.Marshal(diagnostics)
+							want, _ := json.Marshal(result.WorkflowDiagnostics)
+							if !bytes.Equal(actual, want) {
+								t.Fatalf("exported events differ from retained diagnostics: %s; want %s", actual, want)
+							}
 						}
 					}
 				}
@@ -233,7 +282,7 @@ func TestSimplePythonSpoolAndSeparateCLI(t *testing.T) {
 					var inspect struct {
 						Diagnostic *campaign.WorkflowDiagnostic `json:"workflow_diagnostic"`
 					}
-					if json.Unmarshal(raw, &inspect) != nil || inspect.Diagnostic == nil || inspect.Diagnostic.Stopping != "invalid-call-limit" || inspect.Diagnostic.Observed != 5 || inspect.Diagnostic.Limit != 5 || inspect.Diagnostic.FieldPath != "" {
+					if json.Unmarshal(raw, &inspect) != nil || inspect.Diagnostic == nil || inspect.Diagnostic.Stopping != "invalid-call-limit" || inspect.Diagnostic.Observed != 5 || inspect.Diagnostic.Limit != 5 || inspect.Diagnostic.Reason != "invalid_call_limit" || inspect.Diagnostic.Stage != "termination" || inspect.Diagnostic.Tool != "" || inspect.Diagnostic.CallID != "" || inspect.Diagnostic.FieldPath != "" {
 						t.Fatal(string(raw))
 					}
 					t.Log("separate inspection:", inspect.Diagnostic.Message())

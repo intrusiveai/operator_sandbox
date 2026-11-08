@@ -81,10 +81,10 @@ func TestRuntimeDiagnosticDropsSubmittedProse(t *testing.T) {
 		t.Fatal(e)
 	}
 	secret := "synthetic-credential-never-retain-XYZ"
-	body := map[string]any{"tool_name": "attempt_execute", "diagnostic": map[string]any{"source": "harness-local", "stage": "arguments", "reason": "invalid_structure", "message": secret, "identifier": secret, "correction": secret, "field_path": "/input", "execution_occurred": "no", "resubmission_safe": true}, "stopping": map[string]any{"condition": "invalid-call-limit", "observed_count": 5, "configured_limit": 5}}
+	body := map[string]any{"diagnostic": map[string]any{"source": "harness-local", "stage": "termination", "reason": "invalid_call_limit", "message": secret, "identifier": secret, "correction": secret, "execution_occurred": "no", "resubmission_safe": false}, "stopping": map[string]any{"condition": "invalid-call-limit", "observed_count": 5, "configured_limit": 5}}
 	raw, e := s.Handle(context.Background(), stateWire("engine.diagnostic_report", "runtime-diagnostic", 1, body), 0)
 	stateResult(t, raw, e)
-	if d := s.WorkflowFailure(); d == nil || d.Reason != "invalid_structure" || !d.Omitted {
+	if d := s.WorkflowFailure(); d == nil || d.Reason != "invalid_call_limit" || d.Stage != "termination" || d.Stopping != "invalid-call-limit" || d.Observed != 5 || d.Limit != 5 || d.Tool != "" || d.CallID != "" || d.FieldPath != "" || !d.Omitted {
 		t.Fatal(d)
 	}
 	_, e = s.Shutdown(context.Background())

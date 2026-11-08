@@ -578,13 +578,13 @@ func TestConclusionFailureForegroundAndWorkerOutput(t *testing.T) {
 
 func TestWorkflowFailureForegroundAndWorkerOutput(t *testing.T) {
 	dir, paths, deps, _ := startFixture(t)
-	detail := campaign.NewWorkflowDiagnostic("local-report", "harness-local", "arguments", "invalid_structure", "/input", "attempt_execute", "call-5")
+	detail := campaign.NewWorkflowDiagnostic("local-report", "harness-local", "termination", "invalid_call_limit", "", "", "")
 	detail.Stopping = "invalid-call-limit"
 	detail.Observed = 5
 	detail.Limit = 5
 	detail.HostFinalized = true
 	detail.CleanupCompleted = true
-	d := &hostrun.PreparationDiagnostic{Stage: "Harness arguments", Message: detail.Message(), Workflow: detail}
+	d := &hostrun.PreparationDiagnostic{Stage: "Harness termination", Message: detail.Message(), Workflow: detail}
 	deps.run = func(context.Context, string, string, string) (workerjob.Result, error) {
 		return workerjob.Result{Code: "execution_failed", Diagnostic: d, CompletionRecording: "recorded"}, detail
 	}
@@ -592,9 +592,14 @@ func TestWorkflowFailureForegroundAndWorkerOutput(t *testing.T) {
 	if code != 1 {
 		t.Fatal(code, stderr)
 	}
-	for _, want := range []string{"Campaign execution failed", "invalid-call-limit (observed 5; configured limit 5)", "Field: /input.", "No target attempt was dispatched.", "Assessment accepted: false", "Cleanup completed: true", "Tool: attempt_execute", "Call: call-5", "Execution will not resume."} {
+	for _, want := range []string{"Campaign execution failed during Harness termination", "Harness stopped after 5 invalid tool calls (configured limit 5)", "No final assessment was committed.", "No target attempt was dispatched.", "Assessment accepted: false", "Cleanup completed: true", "Execution will not resume."} {
 		if !strings.Contains(stderr, want) {
 			t.Fatalf("missing %q: %s", want, stderr)
+		}
+	}
+	for _, unwanted := range []string{"Field:", "Tool:", "Call:", "invalid_structure", "Harness arguments"} {
+		if strings.Contains(stderr, unwanted) {
+			t.Fatalf("rejection details leaked into terminal cause: %s", stderr)
 		}
 	}
 	var supervised bytes.Buffer
