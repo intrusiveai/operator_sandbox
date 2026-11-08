@@ -329,7 +329,7 @@ func TestWorkflowDiagnosticCompletionAndPersistenceFailure(t *testing.T) {
 	for _, failWrite := range []bool{false, true} {
 		saved, inputs := jobFixture(t)
 		r := saved.Request
-		d := campaign.NewWorkflowDiagnostic("local-report", "harness-local", "arguments", "invalid_structure", "/input", "attempt_execute", "call-5")
+		d := campaign.NewWorkflowDiagnostic("local-report", "harness-local", "termination", "invalid_call_limit", "", "", "")
 		d.Stopping = "invalid-call-limit"
 		d.Observed = 5
 		d.Limit = 5

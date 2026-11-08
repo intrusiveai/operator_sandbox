@@ -55,16 +55,18 @@ def call(operation,body,identity=None,invalid=False):
     return value
 
 if mode=='invalid-limit':
-    errors=[]
     for i in range(5):
         try:p.validate_tool_arguments('attempt_execute',b'{"origin":"exploratory","operation_id":"invoke"}')
-        except ContractError as e:errors.append(e)
+        except ContractError as e:
+            diagnostic=dict(source='harness-local',stage='arguments',reason=e.reason,
+                            field_path=e.field_path,message='Required input is absent.',
+                            execution_occurred='no',resubmission_safe=True)
+            call('engine.diagnostic_report',dict(tool_name='attempt_execute',tool_call_id=f'bad-{i+1}',diagnostic=diagnostic))
         else:raise AssertionError('invalid arguments accepted')
-    error=errors[-1]
-    diagnostic=dict(source='harness-local',stage='arguments',reason=error.reason,
-                    field_path=error.field_path,message='Required input is absent.',
-                    execution_occurred='no',resubmission_safe=True)
-    call('engine.diagnostic_report',dict(tool_name='attempt_execute',tool_call_id='last-invalid',diagnostic=diagnostic,
+    diagnostic=dict(source='harness-local',stage='termination',reason='invalid_call_limit',
+                    message='Invalid tool calls reached the configured limit.',
+                    execution_occurred='no',resubmission_safe=False)
+    call('engine.diagnostic_report',dict(diagnostic=diagnostic,
                                         stopping=dict(condition='invalid-call-limit',observed_count=5,configured_limit=5)))
     finish=normalized('finish',dict(finish_reason='harness-error',unavailable_reason='invalid-call-limit'),'finish')['arguments']
     attempts=0

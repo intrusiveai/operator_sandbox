@@ -245,7 +245,7 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 					if mode == "requested stop" || mode == "poll cancellation" || strings.HasPrefix(mode, "harness ") {
 						seq := int64(0)
 						if strings.HasPrefix(mode, "harness ") {
-							body := map[string]any{"tool_name": "attempt_execute", "tool_call_id": "call-5", "diagnostic": map[string]any{"source": "harness-local", "stage": "arguments", "reason": "invalid_structure", "field_path": "/input", "message": "Required input is absent.", "execution_occurred": "no", "resubmission_safe": true}, "stopping": map[string]any{"condition": "invalid-call-limit", "observed_count": 5, "configured_limit": 5}}
+							body := map[string]any{"diagnostic": map[string]any{"source": "harness-local", "stage": "termination", "reason": "invalid_call_limit", "message": "Invalid tool calls reached the configured limit.", "execution_occurred": "no", "resubmission_safe": false}, "stopping": map[string]any{"condition": "invalid-call-limit", "observed_count": 5, "configured_limit": 5}}
 							if mode == "harness budget" {
 								body = map[string]any{"diagnostic": map[string]any{"source": "harness-local", "stage": "termination", "reason": "model_reservation_unavailable", "message": "Cannot reserve next model request.", "execution_occurred": "no", "resubmission_safe": false}, "stopping": map[string]any{"condition": "budget-limit", "budget": map[string]any{"kind": "model-tokens", "total_allowance": 524288, "consumed": 493460, "remaining": 30828, "next_request_reservation": 36864}}}
 							}
@@ -331,6 +331,9 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 				d := result.WorkflowDiagnostic
 				if d == nil || !d.Valid() || !d.HostFinalized || d.Dispatched != 0 || !d.CleanupCompleted || d.AssessmentAccepted || (mode == "harness limit" && d.Stopping != "invalid-call-limit") || !errors.Is(runErr, *d) {
 					t.Fatal("lost Harness stopping cause", result, runErr)
+				}
+				if mode == "harness limit" && (d.Reason != "invalid_call_limit" || d.Stage != "termination" || d.Observed != 5 || d.Limit != 5 || d.Tool != "" || d.CallID != "" || d.FieldPath != "" || result.HarnessExit.Outcome == "succeeded" || !strings.Contains(runErr.Error(), "No final assessment was committed")) {
+					t.Fatal("invalid-call exhaustion lost or replaced by rejection", result, runErr)
 				}
 				if mode == "harness budget" && (d.Budget == nil || d.Stopping != "budget-limit" || result.HarnessExit.Outcome == "succeeded" || !strings.Contains(runErr.Error(), "No final assessment was committed")) {
 					t.Fatal("unavailable finish became success", result, runErr)
