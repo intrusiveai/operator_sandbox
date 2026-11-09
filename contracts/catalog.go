@@ -104,12 +104,6 @@ func (c *Catalog) Validate(id string, raw []byte, maximum int) (any, error) {
 		return nil, err
 	}
 	if err = schema.Validate(value); err != nil {
-		switch id {
-		case OpenaiChatResponseSchema, OpenaiResponsesResponseSchema, AnthropicMessagesResponseSchema, BedrockConverseResponseSchema, GeminiResponseSchema:
-			return nil, modelSchemaError(err, "/response")
-		case NativeModelResultSchema, EngineModelGenerateResultSchema:
-			return nil, modelSchemaError(err, "")
-		}
 		return nil, c.schemaArgumentIssue(err)
 	}
 	return value, nil

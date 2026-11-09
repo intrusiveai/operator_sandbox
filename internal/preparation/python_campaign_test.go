@@ -183,7 +183,11 @@ func TestPythonProcessCampaigns(t *testing.T) {
 				if e := r.writer.Close(); e != nil {
 					t.Fatal(e)
 				}
-				receipt, e := reporting.Generate(ctx, r.root, "campaign-1", "")
+				// Reporting is a separate administrator operation, not part of the
+				// cleanup deadline already consumed above.
+				reportCtx, reportCancel := context.WithTimeout(context.Background(), 15*time.Second)
+				defer reportCancel()
+				receipt, e := reporting.Generate(reportCtx, r.root, "campaign-1", "")
 				if e != nil {
 					t.Fatal(e)
 				}

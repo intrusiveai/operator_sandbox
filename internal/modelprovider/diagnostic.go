@@ -79,7 +79,7 @@ func (d Diagnostic) Valid() bool {
 	}
 	if d.ValidationStage != "" {
 		switch d.ValidationStage {
-		case "decoding", "schema", "semantics", "correlation", "context_budget":
+		case "decoding", "schema", "semantics", "correlation", "context_budget", "adapter":
 		default:
 			return false
 		}

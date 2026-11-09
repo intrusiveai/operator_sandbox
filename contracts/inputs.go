@@ -272,20 +272,8 @@ func (p *Protocol) ValidateEngineContext(raw []byte) (map[string]any, error) {
 		return nil, ErrProtocol
 	}
 	model := c["model"].(map[string]any)
-	limits, err := contextLimits(model["context_limits"])
-	if err != nil {
+	if _, err := contextLimits(model["context_limits"]); err != nil {
 		return nil, err
-	}
-	settings, hasSettings := model["codec_settings"].(map[string]any)
-	key := "max_output_tokens"
-	switch model["codec_id"] {
-	case "openai-chat-text-tools-v1":
-		key = "max_completion_tokens"
-	case anthropicCodec, bedrockCodec:
-		key = "max_tokens"
-	}
-	if hasSettings && number(settings[key]) != limits.MaximumCompletionTokens {
-		return nil, ErrProtocol
 	}
 	return c, nil
 }

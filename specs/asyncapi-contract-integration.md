@@ -6,7 +6,8 @@ Operator MUST publish `schemas/asyncapi.json`, a self-contained AsyncAPI 3.0.0
 JSON document with explicitly declared JSON Schema 2020-12 payloads. The exact
 file bytes, including whitespace and its final newline, MUST determine the
 SHA-256 contract hash. Its `info.version` MUST determine the contract version.
-The coordinated migration uses version 0.7.0. Older manifest-hash identities MUST
+The approved version MUST be recorded in the
+[release contract lock](../release/contract-lock.json). Older manifest-hash identities MUST
 NOT be accepted as this identity.
 
 `release/contract-lock.json` MUST contain the approved version and hash. Product

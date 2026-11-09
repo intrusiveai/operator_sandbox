@@ -47,7 +47,7 @@ func fixture(t *testing.T, change func(map[string][]byte)) (string, []byte, cont
 	if change != nil {
 		change(files)
 	}
-	manifest, pin, err := p.BuildPackageManifest("0.7.1", files, profiles)
+	manifest, pin, err := p.BuildPackageManifest("0.8.0", files, profiles)
 	if err != nil {
 		t.Fatal(err)
 	}

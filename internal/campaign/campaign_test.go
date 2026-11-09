@@ -531,7 +531,7 @@ func TestSharedLaunchPins(t *testing.T) {
 	target := ctx["target"].(map[string]any)
 	m.Target.CapabilityProjectionDigest = target["capability_projection_digest"].(string)
 	m.Target.CapabilitySourceDigest = target["source"].(map[string]any)["capability_source_digest"].(string)
-	m.ModelProfileDigest = ctx["model"].(map[string]any)["profile_digest"].(string)
+	m.ModelProfileDigest = contracts.RawDigest([]byte("private host model profile"))
 	m.RemainingLimits, _ = json.Marshal(ctx["remaining_limits"])
 	m.HarnessLimits, _ = json.Marshal(ctx["limits"].(map[string]any)["harness"])
 	setManifestDigest := func(m RunManifest) {

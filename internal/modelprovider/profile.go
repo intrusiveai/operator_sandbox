@@ -193,7 +193,7 @@ func Parse(raw []byte) (*Profile, error) {
 	} else if s.APIVersionHeader != "" {
 		return nil, ErrProfile
 	}
-	if _, err := publicPolicy(s, "sha256:"+strings.Repeat("0", 64), []byte("[]")); err != nil {
+	if _, err := privatePolicy(s, "sha256:"+strings.Repeat("0", 64), []byte("[]")); err != nil {
 		return nil, ErrProfile
 	}
 	fields["context_warning_percent"], _ = json.Marshal(s.ContextWarningPercent)

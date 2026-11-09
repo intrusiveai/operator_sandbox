@@ -6,7 +6,7 @@ reference these rules rather than define competing contracts. The
 [release contract lock](../release/contract-lock.json) identifies the exact
 contract version and exact AsyncAPI document hash consumed by both products.
 
-The self-contained [AsyncAPI document](asyncapi.json) defines interface `0.7.1`.
+The self-contained [AsyncAPI document](asyncapi.json) defines the interface approved in the [release contract lock](../release/contract-lock.json).
 JSON Schema 2020-12 payloads and explicit semantic extensions describe its messages
 and stateful obligations. Go/Python bindings and shared fixtures verify conformance;
 their source bytes are not compatibility identity. See [conformance](../docs/CONTRACT_CONFORMANCE.md).
@@ -44,14 +44,13 @@ The [loop accounting stage](HARNESS_LOOP_ACCOUNTING_CONTRACT.md) implements
 finite-loop limits, read/progress accounting, batch skipping and bounded finalization.
 Durable history, dispatch, verified event sources and timers are integrated into
 the host service and harness runtime.
-The [model codec stage](MODEL_CODEC_CONTRACT.md) supplies typed model relay,
-trusted policy binding and correlated native continuation segments for Chat
-Completions, OpenAI Responses, Anthropic Messages, Bedrock Converse and Gemini
-GenerateContent. Their schemas, bindings and stateful checks are implemented.
+The [model relay](MODEL_CODEC_CONTRACT.md) defines purpose/conversation requests,
+opaque provider responses and host accounting. Native provider interpretation is
+implemented by product adapters rather than shared API schemas.
 
 ## 1. One owner and one pinned package
 
-Operator owns interface version `0.7.1`, distributed in `operator-contracts` with
+Operator owns the interface approved in the [release contract lock](../release/contract-lock.json), distributed in `operator-contracts` with
 package manifest format `operator.dev/contract-package/v2`. The package contains
 closed JSON Schemas, the offline URI catalog, operation registry, semantic rules,
 Go/Python bindings and validators, and shared golden test vectors. Both products pin `info.version` and SHA-256 of the exact `asyncapi.json` bytes.
@@ -517,7 +516,7 @@ Arbitrary strings, unknown fields and generic forwarding are not dispatch paths.
 
 | Family | Operations and important constraints |
 |---|---|
-| Model | engine.model_generate; pinned provider-native codec/profile, no guest endpoint selection or silent translation. Codec-specific schemas/vectors are package members. |
+| Model | engine.model_generate; purpose/conversation request; opaque provider response and host accounting. Operator owns endpoint, model, credentials, prompt, tools and all provider options. |
 | Artifacts | engine.artifact_begin / put_part / commit; begin fixes purpose/media/raw size/digest, parts identify upload/offset/base64 bytes, commit verifies complete content and returns immutable receipt. Parts obey the frozen artifact_part_bytes allowance (wire ceiling 1 MiB); objects obey artifact_bytes (integrity-verification ceiling 16 MiB). |
 | Attempts | engine.attempt_execute; compact v1alpha4 request with explicit origin and direct/artifact input, v1alpha2 result, permitted observation selection and native delivery semantics. |
 | Cleanup | engine.injection_delete; [closed schemas and semantics](INJECTION_CLEANUP_CONTRACT.md), one attempt-receipt/action handle, current-target deletion, confirmed absence succeeds, restore-aware duplicate behavior. |

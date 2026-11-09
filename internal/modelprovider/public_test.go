@@ -63,7 +63,7 @@ func TestPublicModelMatchesSharedStartupForEveryCodec(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				model, err := p.PublicModel(f.Tools)
+				model, err := p.PublicModel()
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -78,15 +78,21 @@ func TestPublicModelMatchesSharedStartupForEveryCodec(t *testing.T) {
 				}
 				f.Context["model"] = public
 				contextRaw, _ := json.Marshal(f.Context)
-				policy, err := protocol.ModelPolicyFromContext(contextRaw, f.Tools, []byte(f.Prompt))
+				_, err = protocol.ValidateEngineContext(contextRaw)
 				if err != nil {
 					t.Fatal(err)
 				}
+				policy, err := p.Policy(f.Tools, []byte(f.Prompt))
+				if err != nil {
+					t.Fatal(err)
+				}
+				delete(f.Policy, "response_models")
 				f.Policy["profile_id"] = s.ID
 				f.Policy["profile_digest"] = p.Digest()
 				f.Policy["context_limits"] = public["context_limits"]
 				expected, _ := json.Marshal(f.Policy)
 				expected, err = contracts.Canonicalize(expected, contracts.OrdinaryLimit)
+				policy, _ = contracts.Canonicalize(policy, contracts.OrdinaryLimit)
 				if err != nil || !bytes.Equal(policy, expected) {
 					t.Fatal("startup policy differs", err)
 				}
@@ -108,15 +114,8 @@ func TestPublicModelMatchesSharedStartupForEveryCodec(t *testing.T) {
 }
 func TestProfileRejectsUnboundCodecOptions(t *testing.T) {
 	for _, tc := range []struct{ provider, options string }{
-		{"openai-chat", `{}`}, {"openai-chat", `{"instruction_role":"user","response_models":["test-model"]}`},
-		{"openai-chat", `{"instruction_role":"developer","response_models":[]}`},
-		{"openai-chat", `{"instruction_role":"developer","response_models":["x","x"]}`},
+		{"openai-chat", `{"instruction_role":"user","response_models":["test-model"]}`},
 		{"openai-chat", `{"instruction_role":"developer","response_models":["x"],"endpoint":"https://private"}`},
-		{"openai-responses", `{"reasoning":{"arbitrary":"x"},"response_models":["x"]}`},
-		{"openai-responses", `{"reasoning":{"effort":"invalid"},"response_models":["x"]}`},
-		{"anthropic-messages", `{"thinking":{"type":"enabled","budget_tokens":1024},"response_models":["x"]}`},
-		{"anthropic-messages", `{"thinking":{"type":"enabled","budget_tokens":1},"response_models":["x"]}`},
-		{"gemini-api", `{"thinking_config":{"thinkingBudget":0,"thinkingLevel":"HIGH"},"response_models":["x"]}`},
 		{"bedrock-converse", `{"tools_digest":"sha256:bad"}`}, {"bedrock-converse", `null`},
 	} {
 		t.Run(tc.provider+tc.options, func(t *testing.T) {

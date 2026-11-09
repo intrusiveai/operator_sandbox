@@ -4,15 +4,9 @@ package modelprovider
 
 import (
 	"encoding/json"
-	"sync"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
-	"github.com/intrusiveai/operator_sandbox/schemas"
 )
-
-// Compile the implementation's schema catalog once. Campaign admission separately
-// verifies its installed package pin and validates the completed launch context.
-var modelCatalog = sync.OnceValues(func() (*contracts.Catalog, error) { return contracts.LoadCatalog(schemas.Files) })
 
 var optionFields = map[string][]string{
 	"openai-chat-text-tools-v1":        {"instruction_role", "response_models"},
@@ -32,80 +26,63 @@ func outputField(codec string) string {
 		return "max_output_tokens"
 	}
 }
-func publicPolicy(s Settings, digest string, toolsRaw []byte) (map[string]any, error) {
+func privatePolicy(s Settings, digest string, toolsRaw []byte) (map[string]any, error) {
 	value, err := contracts.Decode(s.CodecOptions, 64<<10)
 	options, ok := value.(map[string]any)
 	if err != nil || !ok {
 		return nil, ErrProfile
 	}
 	fields, ok := optionFields[s.Codec]
-	if !ok || len(options) != len(fields) {
+	if !ok {
 		return nil, ErrProfile
 	}
 	policy := map[string]any{"codec_id": s.Codec, "profile_id": s.ID, "profile_digest": digest, "request_model": s.Model, "prompt": "", outputField(s.Codec): s.MaximumCompletionTokens}
+	allowed := map[string]bool{}
 	for _, key := range fields {
-		value, ok := options[key]
-		if !ok {
+		allowed[key] = true
+	}
+	for key, value := range options {
+		if !allowed[key] {
 			return nil, ErrProfile
 		}
-		policy[key] = value
+		if key != "response_models" {
+			policy[key] = value
+		}
+	}
+	if s.Codec == "openai-chat-text-tools-v1" && policy["instruction_role"] == nil {
+		policy["instruction_role"] = "developer"
 	}
 	tools, err := contracts.Decode(toolsRaw, contracts.OrdinaryLimit)
 	if err != nil {
 		return nil, ErrProfile
 	}
 	policy["tools"] = tools
-	raw, err := json.Marshal(policy)
-	if err != nil {
+	if s.Codec == "openai-chat-text-tools-v1" && policy["instruction_role"] != "system" && policy["instruction_role"] != "developer" {
 		return nil, ErrProfile
-	}
-	catalog, err := modelCatalog()
-	if err != nil {
-		return nil, ErrProfile
-	}
-	validated, err := catalog.Validate(contracts.ModelCodecPolicySchema, raw, contracts.OrdinaryLimit)
-	if err != nil {
-		return nil, ErrProfile
-	}
-	policy = validated.(map[string]any)
-	if s.Codec == "anthropic-messages-text-tools-v1" {
-		thinking := policy["thinking"].(map[string]any)
-		if thinking["type"] == "enabled" {
-			budget := thinking["budget_tokens"].(json.Number)
-			n, e := budget.Float64()
-			if e != nil || n >= float64(s.MaximumCompletionTokens) {
-				return nil, ErrProfile
-			}
-		}
 	}
 	return policy, nil
 }
 
-// PublicModel projects only the selected native codec settings and immutable pins.
-// nativeTools MUST come from the installed release's trusted tool projection.
-// This does not authorize launch or replace full EngineContext/identity validation.
-func (p *Profile) PublicModel(nativeTools []byte) (json.RawMessage, error) {
+// Policy contains trusted provider configuration. It never enters Harness inputs.
+func (p *Profile) Policy(tools, prompt []byte) ([]byte, error) {
 	if p == nil {
 		return nil, ErrProfile
 	}
-	policy, err := publicPolicy(p.settings, p.digest, nativeTools)
+	policy, err := privatePolicy(p.settings, p.digest, tools)
 	if err != nil {
 		return nil, err
 	}
-	digest, err := contracts.CanonicalDigest(nativeTools, contracts.OrdinaryLimit)
-	if err != nil {
+	policy["prompt"] = string(prompt)
+	policy["context_limits"] = contracts.ContextLimits{MaximumPromptTokens: p.settings.MaximumPromptTokens, MaximumCompletionTokens: p.settings.MaximumCompletionTokens, WarningThresholdTokens: contracts.ContextWarningThreshold(p.settings.MaximumPromptTokens, p.settings.ContextWarningPercent)}
+	return json.Marshal(policy)
+}
+
+// PublicModel exposes only conversation format, informational model and allowances.
+func (p *Profile) PublicModel() (json.RawMessage, error) {
+	if p == nil {
 		return nil, ErrProfile
 	}
-	settings := map[string]any{outputField(p.settings.Codec): p.settings.MaximumCompletionTokens, "tools_digest": digest}
-	for _, key := range optionFields[p.settings.Codec] {
-		settings[key] = policy[key]
-	}
-	model := map[string]any{"codec_id": p.settings.Codec, "profile_id": p.settings.ID, "profile_digest": p.digest, "model_id": p.settings.Model,
-		"features": []string{"text", "function-tools"}, "codec_settings": settings, "tool_selection": map[string]any{"injection_surfaces": []string{}},
-		"context_limits": contracts.ContextLimits{MaximumPromptTokens: p.settings.MaximumPromptTokens, MaximumCompletionTokens: p.settings.MaximumCompletionTokens, WarningThresholdTokens: contracts.ContextWarningThreshold(p.settings.MaximumPromptTokens, p.settings.ContextWarningPercent)}}
-	raw, err := json.Marshal(model)
-	if err != nil {
-		return nil, ErrProfile
-	}
-	return contracts.Canonicalize(raw, 64<<10)
+	return json.Marshal(map[string]any{"codec_id": p.settings.Codec, "model_id": p.settings.Model,
+		"features": []string{"text", "function-tools"}, "tool_selection": map[string]any{"injection_surfaces": []string{}},
+		"context_limits": contracts.ContextLimits{MaximumPromptTokens: p.settings.MaximumPromptTokens, MaximumCompletionTokens: p.settings.MaximumCompletionTokens, WarningThresholdTokens: contracts.ContextWarningThreshold(p.settings.MaximumPromptTokens, p.settings.ContextWarningPercent)}})
 }

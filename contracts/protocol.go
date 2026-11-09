@@ -163,8 +163,6 @@ func (p *Protocol) ValidateRequest(raw []byte) (map[string]any, error) {
 		if err := validateDiagnosticBudget(body); err != nil {
 			return nil, err
 		}
-	case "engine.model_generate":
-		valid = nativeRequestOK(body)
 	case "engine.record_append":
 		valid = recordOK(body)
 	case "engine.attempt_execute":
@@ -221,8 +219,6 @@ func (p *Protocol) ValidateResponse(request, response []byte) (map[string]any, e
 		if err := validateDiagnosticBudget(body); err != nil {
 			return nil, err
 		}
-	case "engine.model_generate":
-		valid = modelCorrelationOK(body, result)
 	case "engine.record_append":
 		attribution := result["attribution"].(map[string]any)
 		valid = same(result["record_kind"], body["record_kind"]) && same(attribution["campaign_id"], req["campaign_id"]) && same(attribution["launch_id"], req["launch_id"])
@@ -387,9 +383,6 @@ func (p *Protocol) validateResponseEnvelope(raw []byte) (map[string]any, error) 
 	}
 	if p.catalog.schemas[op.ResultSchema].Validate(message["result"]) != nil {
 		return nil, ErrSchema
-	}
-	if op.Name == "engine.model_generate" && !nativeResponseOK(message["result"].(map[string]any)) {
-		return nil, ErrProtocol
 	}
 	return message, nil
 }

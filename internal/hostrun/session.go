@@ -173,7 +173,7 @@ func Prepare(ctx context.Context, c Config) (session *Session, err error) {
 	}
 	s.worker, err = hostworker.New(ctx, hostworker.Config{
 		Service: campaignservice.Config{Prepared: stored, Peer: c.Peer, HTTPS: c.HTTPS, StateRoot: c.StateRoot, Deadline: deadline,
-			Model:    &campaignservice.ModelConfig{Provider: c.Provider, ProfileDigest: launch.Manifest.ModelProfileDigest, Tools: launch.ModelTools, MaximumPromptTokens: c.Launch.Model.Settings().MaximumPromptTokens},
+			Model:    &campaignservice.ModelConfig{Policy: launch.ModelPolicy, Provider: c.Provider, ProfileDigest: launch.Manifest.ModelProfileDigest, Tools: launch.ModelTools, MaximumPromptTokens: c.Launch.Model.Settings().MaximumPromptTokens},
 			Evidence: &campaignservice.EvidenceConfig{MaxArchiveBytes: c.EvidenceMaxBytes, Timeout: 2 * time.Minute, TotalTimeout: 5 * time.Minute}},
 		Docker: c.Docker, Image: c.Launch.Image, Requirements: c.Requirements, Tree: s.tree, Channel: s.channel, Inputs: launch.Inputs, PolicyDirectory: filepath.Join(campaignDir, "launch/policies"), StartRequestID: c.StartRequestID, Lifetime: c.Lifetime,
 	})

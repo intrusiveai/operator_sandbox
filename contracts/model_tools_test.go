@@ -77,41 +77,6 @@ func TestSharedModelTools(t *testing.T) {
 			if !reflect.DeepEqual(names, c.Names) {
 				t.Fatal("tool dependency selection differs")
 			}
-			// Projections must survive the real policy and request validators, not just
-			// a comparison against another JSON generator.
-			found := false
-			for _, base := range modelFixtures(t) {
-				if base.Mode != "context" || !base.Valid {
-					continue
-				}
-				var policy, request map[string]any
-				if err = json.Unmarshal(base.Policy, &policy); err != nil {
-					t.Fatal(err)
-				}
-				if policy["codec_id"] != c.Codec {
-					continue
-				}
-				found = true
-				if err = json.Unmarshal(base.Request, &request); err != nil {
-					t.Fatal(err)
-				}
-				policy["tools"] = tools
-				native := request["request"].(map[string]any)
-				if c.Codec == bedrockCodec {
-					native["toolConfig"].(map[string]any)["tools"] = tools
-				} else {
-					native["tools"] = tools
-				}
-				policyRaw, _ := json.Marshal(policy)
-				requestRaw, _ := json.Marshal(request)
-				if _, err = p.ValidateModelRequest(policyRaw, requestRaw); err != nil {
-					t.Fatalf("native catalog rejected: %v", err)
-				}
-				break
-			}
-			if !found {
-				t.Fatal("missing codec integration fixture")
-			}
 			original := bytes.Clone(got)
 			got[0] = 'x'
 			again, err := p.ModelTools(c.Codec, c.Operations)

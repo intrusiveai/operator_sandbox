@@ -463,7 +463,7 @@ generation is an internal loop operation, not a model's recursive tool.
 
 | Logical engine operation | Allowed purpose |
 |---|---|
-| `engine.model_generate` | One bounded provider-native non-streaming request through the selected host profile. |
+| `engine.model_generate` | Opaque conversation with generation/compaction purpose; Operator constructs the non-streaming request from its private profile. |
 | `engine.artifact_begin`, `engine.artifact_put_part`, `engine.artifact_commit` | Upload bytes with size/media/digest declaration; obtain a host-verified committed receipt. |
 | `engine.injection_delete` | Remove one known injection by attempt receipt/action ID in the current target; confirmed absence is successful cleanup. |
 | `engine.attempt_execute` | Submit a permitted target operation with direct bounded input or an artifact receipt; Operator retains input and assigns bookkeeping, then returns outcome, execution receipt and permitted feedback. |
@@ -758,7 +758,7 @@ remote targets or supply arbitrary image names, host paths or commands.
 The [native client](docs/INTERCEPTOR_CLIENT.md) uses fixed-loopback requests,
 exact native operation bytes and typed admission closure. Before attachment intent,
 Operator MUST query `POST /v1/contract-version` and exactly match its compiled
-Interceptor integration pin (`0.1.0`). A mismatch or failed discovery MUST prevent
+Interceptor integration pin in [internal/interceptor/contract.json](internal/interceptor/contract.json). A mismatch or failed discovery MUST prevent
 attachment and retain an actionable preparation diagnostic. Fresh native recovery
 and evidence collection clients MUST check before claiming new work; retained
 inspection and independent Docker termination MUST remain available.
@@ -1747,7 +1747,7 @@ No worker/daemon recovery resumes failed campaign execution.
 
 The [shared contract](schemas/SHARED_CONTRACT.md) contains closed schemas, an
 offline catalog/registry, semantic validators and shared Go/Python vectors.
-The [release lock](release/contract-lock.json) pins package `0.2.1`. Raw byte
+The [release lock](release/contract-lock.json) records the approved package version and exact document hash. Raw byte
 digests, canonical-object digests, OCI digests and native Interceptor digests are
 separate identities and MUST use their specified recipes.
 

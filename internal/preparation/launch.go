@@ -118,7 +118,7 @@ func (t *Target) BuildLaunch(c LaunchConfig) (*Launch, error) {
 	if err != nil {
 		return nil, err
 	}
-	model, err := c.Model.PublicModel(tools)
+	model, err := c.Model.PublicModel()
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +170,7 @@ func (t *Target) BuildLaunch(c LaunchConfig) (*Launch, error) {
 	if err = t.protocol.ValidateManifestSet(tree, set, skillManifests); err != nil {
 		return nil, err
 	}
-	policy, err := t.protocol.ModelPolicyFromContext(context, tools, prompt)
+	policy, err := c.Model.Policy(tools, prompt)
 	if err != nil {
 		return nil, err
 	}

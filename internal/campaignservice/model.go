@@ -11,6 +11,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/attemptadapter"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/modelcodec"
 	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/termination"
 )
@@ -25,6 +26,7 @@ type ModelProvider interface {
 }
 type ModelConfig struct {
 	Provider      ModelProvider
+	Policy        []byte
 	ProfileDigest string
 	Tools         []byte
 	// Qualified upper bound on native input tokens, including tools and message
@@ -32,6 +34,7 @@ type ModelConfig struct {
 	MaximumPromptTokens int64
 }
 type modelState struct {
+	codec         string
 	limits        contracts.ContextLimits
 	policy        []byte
 	turns, tokens int64
@@ -66,15 +69,20 @@ func (s *Service) handleModel(ctx context.Context, raw []byte, seq int64) ([]byt
 	return response, nil
 }
 func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateReply, error) {
-	value, err := s.target().Protocol().ValidateModelRequest(s.model.policy, q.Body)
+	relay, err := s.target().Protocol().ValidateModelRequest(q.Body)
 	if err != nil {
 		return stateDenied("POLICY_DENIED"), nil
 	}
-	native := value["request"].(map[string]any)
-	completion, err := s.target().Protocol().ModelOutputLimit(q.Body)
+	request, err := modelcodec.Build(s.model.policy, q.Body)
 	if err != nil {
-		return stateDenied("POLICY_DENIED"), nil
+		return stateReply{}, err
 	}
+	nativeValue, err := contracts.Decode(request, contracts.OrdinaryLimit)
+	if err != nil {
+		return stateReply{}, err
+	}
+	native := nativeValue.(map[string]any)
+	completion := s.model.limits.MaximumCompletionTokens
 	reserve := s.config.Model.MaximumPromptTokens + completion
 	remaining := s.remaining()
 	var loop struct {
@@ -93,8 +101,7 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 	}
 	started := time.Now()
 	reservation := "model:" + contracts.RawDigest([]byte(q.ID))[7:]
-	request := marshal(native)
-	sizes, err := contracts.MeasureModelRequest(value["codec_id"].(string), request)
+	sizes, err := modelcodec.MeasureModelRequest(s.model.codec, request)
 	if err != nil {
 		return stateReply{}, err
 	}
@@ -154,18 +161,16 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 		}
 		observed = observed.WithFailure(category, "read_failed")
 	}
-	result := map[string]any{"codec_id": value["codec_id"], "profile_id": value["profile_id"], "profile_digest": value["profile_digest"], "receipt_id": "model-" + termination.NewRequestID(), "response": json.RawMessage(response)}
+	result := map[string]any{"receipt_id": "model-" + termination.NewRequestID(), "response": json.RawMessage(response)}
 	body := marshal(result)
 	var budget contracts.ContextBudget
 	var total int64
 	var toolCalls int64
 	if failureCode == "" {
-		if _, err = s.target().Protocol().ValidateNativeModelExchange(s.model.policy, q.Body, body); err != nil {
-			observed = observed.WithValidation(err)
-			reason = observed.Reason
-			failureCode, effect = "INTERNAL_ERROR", "known"
-		} else if usage, usageErr := s.target().Protocol().ModelUsage(body); usageErr != nil {
-			observed = observed.WithValidation(usageErr)
+		parsed, parseErr := modelcodec.Parse(s.model.codec, response)
+		usage := parsed.Metrics
+		if parseErr != nil {
+			observed = observed.WithValidation(parseErr)
 			reason = observed.Reason
 			failureCode, effect = "INTERNAL_ERROR", "known"
 		} else if !usage.Known {
@@ -174,6 +179,14 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 		} else if usage.InputTokens > s.config.Model.MaximumPromptTokens || usage.TotalTokens > reserve {
 			observed = observed.WithUsageRejection(usage, s.config.Model.MaximumPromptTokens, completion, reserve)
 			reason = "usage_exceeds_reservation"
+			failureCode, effect = "INTERNAL_ERROR", "known"
+		} else if usage.OutputTokens > completion {
+			observed = observed.WithValidation(&contracts.ModelValidationError{Stage: "adapter", Reason: "completion_allowance_exceeded", FieldPath: "/response/usage"})
+			reason = observed.Reason
+			failureCode, effect = "INTERNAL_ERROR", "known"
+		} else if relay["purpose"] == "compaction" && usage.ToolCalls > 0 {
+			observed = observed.WithValidation(&contracts.ModelValidationError{Stage: "adapter", Reason: "tools_not_requested", FieldPath: "/response"})
+			reason = observed.Reason
 			failureCode, effect = "INTERNAL_ERROR", "known"
 		} else {
 			total, toolCalls = usage.TotalTokens, usage.ToolCalls

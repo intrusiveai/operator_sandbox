@@ -28,7 +28,7 @@ import (
 // paid model, cloud account or Docker runtime is involved.
 func TestRejectedProviderResponseEvidenceCLI(t *testing.T) {
 	binary := processCLI(t)
-	for _, mode := range []string{"schema", "stop", "duplicate", "usage", "correlation", "sensitive-key", "valid"} {
+	for _, mode := range []string{"schema", "stop", "duplicate", "usage", "model-metadata", "future-metadata", "valid"} {
 		t.Run(mode, func(t *testing.T) {
 			policy, request, result := modelFixture(t)
 			response := result["response"].(map[string]any)
@@ -39,23 +39,21 @@ func TestRejectedProviderResponseEvidenceCLI(t *testing.T) {
 			switch mode {
 			case "schema":
 				response["usage"].(map[string]any)["prompt_tokens"] = "synthetic-provider-key"
-				reason, path, stage = "unsupported_response_structure", "/response/usage/prompt_tokens", "schema"
+				reason, path, stage = "usage_invalid", "/response/usage/prompt_tokens", "adapter"
 			case "stop":
 				choice["finish_reason"] = "tool_calls"
-				reason, path, stage = "inconsistent_stop_reason", "/response/choices/0/finish_reason", "semantics"
+				reason, path, stage = "inconsistent_stop_reason", "/response/choices/0/finish_reason", "adapter"
 			case "duplicate":
 				choice["finish_reason"] = "tool_calls"
 				message["tool_calls"] = []any{modelCall("call-duplicate", "attempt_execute", map[string]any{}), modelCall("call-duplicate", "attempt_execute", map[string]any{})}
-				reason, path, stage = "duplicate_tool_call_identity", "/response/choices/0/message/tool_calls", "semantics"
+				reason, path, stage = "duplicate_tool_call_identity", "/response", "adapter"
 			case "usage":
 				response["usage"].(map[string]any)["total_tokens"] = 999
-				reason, path, stage = "usage_invalid", "/response/usage/total_tokens", "semantics"
-			case "correlation":
+				reason, path, stage = "usage_invalid", "/response/usage/total_tokens", "adapter"
+			case "model-metadata":
 				response["model"] = "not-the-requested-model"
-				reason, path, stage = "response_model_mismatch", "/response/model", "correlation"
-			case "sensitive-key":
-				response["synthetic-provider-key"] = true
-				reason, stage = "unsupported_response_structure", "schema"
+			case "future-metadata":
+				response["new_provider_metadata"] = map[string]any{"extra": true}
 			}
 			responseBytes := encode(response)
 			var calls atomic.Int32
@@ -84,7 +82,7 @@ func TestRejectedProviderResponseEvidenceCLI(t *testing.T) {
 			var root string
 			s, native, runtime, w, launch := serviceWithTemplate(t, 0, []string{"engine.model_generate"}, func(c *campaignservice.Config) {
 				root = c.StateRoot
-				c.Model = &campaignservice.ModelConfig{Provider: client, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
+				c.Model = &campaignservice.ModelConfig{Policy: encode(policy), Provider: client, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
 			}, func(c map[string]any) {
 				digest, e := contracts.CanonicalDigest(encode(policy["tools"]), contracts.OrdinaryLimit)
 				if e != nil {
@@ -101,7 +99,7 @@ func TestRejectedProviderResponseEvidenceCLI(t *testing.T) {
 				t.Fatal(err)
 			}
 			d := s.ModelFailure()
-			if mode == "valid" {
+			if reason == "" {
 				stateResult(t, raw, nil)
 				if d != nil {
 					t.Fatal(d)
@@ -151,7 +149,7 @@ func TestRejectedProviderResponseEvidenceCLI(t *testing.T) {
 					t.Fatalf("missing response evidence: %+v", e)
 				}
 				content = e.Content[0]
-				if mode != "valid" {
+				if reason != "" {
 					if content.Role != "provider-response-rejected-untrusted" {
 						t.Fatal(content)
 					}
@@ -188,7 +186,7 @@ func TestRejectedProviderResponseEvidenceCLI(t *testing.T) {
 			if contracts.RawDigest(exported) != content.Digest {
 				t.Fatal("content integrity lost")
 			}
-			if mode != "valid" {
+			if reason != "" {
 				markdown, _ := os.ReadFile(filepath.Join(output, "report.md"))
 				manifest, _ := os.ReadFile(filepath.Join(output, "result-manifest.json"))
 				for _, v := range [][]byte{inspection, markdown, manifest} {

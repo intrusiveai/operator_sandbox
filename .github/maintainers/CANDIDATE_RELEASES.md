@@ -363,7 +363,9 @@ label changes on promotion while the packages remain unchanged.
 
 Operator entries also contain `contract_package_version`, the exact shared package
 version recorded by all four verified host manifests. It is independent of the
-Operator product version: for example, Operator `v0.1.2` can ship contract `0.2.1`.
+Operator product version. The source approval is recorded in the
+[contract lock](../../release/contract-lock.json); publication uses the built
+artifact identity described below.
 The generator downloads `candidate.json`, verifies its published SHA-256 and its
 source/version/archive digest bindings, and uses its `contract.package_version`.
 Do not supply a version from the current checkout or edit it into the catalog by

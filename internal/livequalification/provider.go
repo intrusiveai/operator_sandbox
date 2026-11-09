@@ -5,6 +5,7 @@ package livequalification
 import (
 	"context"
 	"encoding/json"
+	"github.com/intrusiveai/operator_sandbox/internal/modelcodec"
 )
 
 type generator interface {
@@ -29,7 +30,7 @@ func (e *execution) provider(ctx context.Context, g generator) error {
 	}
 	for i, check := range []string{"text", "tool_call_after_text", "text_after_tool"} {
 		request := jsonBytes(c.body)
-		if _, err = c.protocol.ValidateModelRequest(c.policy, request); err != nil {
+		if _, err = c.protocol.ValidateModelRequest(request); err != nil {
 			return e.failedCheck(check, "invalid_native_request")
 		}
 		if ctx.Err() != nil {
@@ -45,19 +46,20 @@ func (e *execution) provider(ctx context.Context, g generator) error {
 			}
 			return ErrCheck
 		}
-		result := map[string]any{"codec_id": c.body["codec_id"], "profile_id": c.body["profile_id"], "profile_digest": c.body["profile_digest"], "receipt_id": "qualification-receipt", "response": json.RawMessage(raw)}
+		result := map[string]any{"receipt_id": "qualification-receipt", "response": json.RawMessage(raw)}
 		resultRaw := jsonBytes(result)
-		if _, err = c.protocol.ValidateNativeModelExchange(c.policy, request, resultRaw); err != nil {
+		parsed, err := modelcodec.Parse(c.codec, raw)
+		if err != nil {
 			return e.failedCheck(check, "native_exchange_rejected")
 		}
-		usage, err := c.protocol.ModelUsage(resultRaw)
-		if err != nil || !usage.Known {
+		usage := parsed.Metrics
+		if !usage.Known {
 			return e.failedCheck(check, "usage_unavailable")
 		}
 		if usage.InputTokens > e.q.profile.Settings().MaximumPromptTokens {
 			return e.failedCheck(check, "prompt_allowance_exceeded")
 		}
-		disposition, err := c.protocol.ModelDisposition(resultRaw)
+		disposition := parsed.Disposition
 		expected := "text"
 		if i == 1 {
 			expected = "tool-calls"

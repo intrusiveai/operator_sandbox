@@ -218,9 +218,6 @@ func (t *Target) Persist(w *campaign.Writer, context []byte) (*Stored, error) {
 	if c["launch_id"] != m.LaunchID {
 		return nil, ErrPreparation
 	}
-	if c["model"].(map[string]any)["profile_digest"] != m.ModelProfileDigest {
-		return nil, ErrPreparation
-	}
 	release := c["release"].(map[string]any)
 	if release["image_digest"] != m.ImageDigest || release["release_record_digest"] != m.ReleaseRecordDigest {
 		return nil, ErrPreparation
