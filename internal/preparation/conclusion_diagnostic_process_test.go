@@ -25,15 +25,14 @@ func TestPythonProcessConclusionAndSeparateInspection(t *testing.T) {
 	}
 	binary := processCLI(t)
 	for _, transport := range []string{"fifo", "spool"} {
-		for _, invalid := range []bool{false, true} {
+		for _, mode := range []string{"accepted", "local-corrected", "host-corrected"} {
+			invalid := mode != "accepted"
+			hostRejected := mode == "host-corrected"
 			// Detailed correction is covered on FIFO; accepted finish remains covered on both.
 			if transport == "spool" && invalid {
 				continue
 			}
-			name := transport + "/accepted"
-			if invalid {
-				name = transport + "/corrected"
-			}
+			name := transport + "/" + mode
 			t.Run(name, func(t *testing.T) {
 				r := newProcessRun(t, processCase{transport: transport, prompt: "default", reply: func(turn int, request map[string]any) ([]byte, error) {
 					if turn != 1 && !(invalid && turn == 2) {
@@ -44,13 +43,33 @@ func TestPythonProcessConclusionAndSeparateInspection(t *testing.T) {
 						if err != nil {
 							return nil, err
 						}
-						if !strings.Contains(string(encode(rejected)), "hyp-missing") {
-							return nil, fmt.Errorf("missing actionable conclusion rejection")
+						if rejected["status"] != "error" || rejected["disposition"] != "correct-and-resubmit" {
+							return nil, fmt.Errorf("missing correlated finish rejection: %v", rejected)
+						}
+						repair, err := modelAssessmentRepair(request, "finish-1")
+						if err != nil {
+							return nil, err
+						}
+						source, reason, path := "harness-local", "unknown_handle", "/hypotheses/0/parent"
+						if hostRejected {
+							source, reason, path = "operator", "unknown_objective", "/hypotheses/0/objective_refs/0"
+						}
+						diagnostic, ok := repair["diagnostic"].(map[string]any)
+						if !ok || diagnostic["source"] != source || diagnostic["reason"] != reason || diagnostic["field_path"] != path || diagnostic["execution_occurred"] != "no" || diagnostic["resubmission_safe"] != true {
+							return nil, fmt.Errorf("missing actionable repair diagnostic: %v", repair)
+						}
+						guidance := fmt.Sprint(diagnostic["message"], diagnostic["correction"])
+						if !strings.Contains(guidance, map[bool]string{false: "handle returned", true: "submitted campaign bundle"}[hostRejected]) {
+							return nil, fmt.Errorf("missing repair guidance: %s", guidance)
 						}
 					}
-					h := localHypothesis("hyp-configuration-1", "")
+					h := map[string]any{"label": "hyp-configuration-1", "origin": "exploratory", "outcome": "not-tested", "summary": "A bounded hypothesis."}
 					if invalid && turn == 1 {
-						h["provenance"].(map[string]any)["parent_hypothesis_id"] = "hyp-missing"
+						if hostRejected {
+							h["objective_refs"] = []string{"objective-missing"}
+						} else {
+							h["parent"] = "hyp-missing"
+						}
 					}
 					draft := modelDraft([]string{}, "")
 					draft["objectives"] = []any{}
@@ -61,6 +80,9 @@ func TestPythonProcessConclusionAndSeparateInspection(t *testing.T) {
 					return processResponse([]any{modelCall(fmt.Sprintf("finish-%d", turn), "finish", finishDraft(draft))}), nil
 				}})
 				r.finish(t)
+				if r.cmd.ProcessState.ExitCode() != 0 || !r.service.AssessmentCommitted() {
+					t.Fatal("assessment/exit incomplete")
+				}
 				if e := r.writer.Close(); e != nil {
 					t.Fatal(e)
 				}
@@ -73,9 +95,15 @@ func TestPythonProcessConclusionAndSeparateInspection(t *testing.T) {
 				}
 				r.native.mu.Lock()
 				closed := r.native.closed
+				invocations := 0
+				for _, call := range r.native.calls {
+					if call == "application.invoke" {
+						invocations++
+					}
+				}
 				r.native.mu.Unlock()
-				if !closed {
-					t.Fatal("target not closed")
+				if !closed || invocations != 0 {
+					t.Fatal("repair must close target without invoking it", closed, invocations)
 				}
 				if err := r.channel.Close(); err != nil {
 					t.Fatal(err)
@@ -90,11 +118,16 @@ func TestPythonProcessConclusionAndSeparateInspection(t *testing.T) {
 					t.Fatal("resumed campaign")
 				}
 				d := r.service.ConclusionFailure()
-				if invalid && (d == nil || d.Reason != "unresolved_hypothesis" || d.Identifier != "hyp-missing" || d.FieldPath != "/hypotheses/0/provenance/parent_hypothesis_id") {
+				if hostRejected && (d == nil || d.Reason != "unknown_objective" || d.Identifier != "objective-missing" || d.FieldPath != "/hypotheses/0/objective_refs/0") {
 					t.Fatal(d, r.output.String())
 				}
-				if !invalid && d != nil {
+				if !hostRejected && d != nil {
 					t.Fatal(d)
+				}
+				localRejected := mode == "local-corrected"
+				workflow := r.service.WorkflowFailure()
+				if localRejected && (workflow == nil || workflow.Source != "harness-local" || workflow.Reason != "unknown_handle" || workflow.FieldPath != "/hypotheses/0/parent" || workflow.CallID != "finish-1") {
+					t.Fatal("local repair history lost", workflow)
 				}
 				records, accepted := 0, 0
 				_, e := campaign.Inspect(r.root, "campaign-1", func(event campaign.Event) error {
@@ -128,14 +161,18 @@ func TestPythonProcessConclusionAndSeparateInspection(t *testing.T) {
 					raw := cli(args...)
 					var result struct {
 						Diagnostic *campaign.ConclusionDiagnostic `json:"conclusion_diagnostic"`
+						Workflow   *campaign.WorkflowDiagnostic   `json:"workflow_diagnostic"`
 					}
 					if e = json.Unmarshal(raw, &result); e != nil {
 						t.Fatal(e)
 					}
-					if invalid && (result.Diagnostic == nil || *result.Diagnostic != *d) {
+					if hostRejected && (result.Diagnostic == nil || *result.Diagnostic != *d) {
 						t.Fatal(string(raw))
 					}
-					if invalid {
+					if localRejected && !bytes.Equal(encode(result.Workflow), encode(workflow)) {
+						t.Fatal("inspection lost local repair history", string(raw))
+					}
+					if hostRejected {
 						t.Logf("operatorctl %s: %s", verb, encode(result.Diagnostic))
 					}
 				}
@@ -153,10 +190,19 @@ func TestPythonProcessConclusionAndSeparateInspection(t *testing.T) {
 					if result.TargetClosure != "confirmed" {
 						t.Fatal("cleanup lost", result)
 					}
-					if invalid && (len(result.ConclusionRejections) != 1 || result.ConclusionRejections[0] != *d) {
+					if hostRejected && (len(result.ConclusionRejections) != 1 || result.ConclusionRejections[0] != *d) {
 						t.Fatal(result)
 					}
+					if localRejected && (len(result.WorkflowDiagnostics) != 1 || !bytes.Equal(encode(result.WorkflowDiagnostics[0]), encode(workflow))) {
+						t.Fatal("report lost local repair history", result.WorkflowDiagnostics)
+					}
 					if verb == "export" && invalid {
+						var fieldPath, reason string
+						if hostRejected {
+							fieldPath, reason = d.FieldPath, d.Reason
+						} else {
+							fieldPath, reason = workflow.FieldPath, workflow.Reason
+						}
 						found := false
 						e = filepath.WalkDir(output, func(path string, entry os.DirEntry, err error) error {
 							if err != nil {
@@ -166,7 +212,7 @@ func TestPythonProcessConclusionAndSeparateInspection(t *testing.T) {
 								return nil
 							}
 							raw, err := os.ReadFile(path)
-							if err == nil && strings.Contains(string(raw), d.FieldPath) && strings.Contains(string(raw), d.Reason) {
+							if err == nil && strings.Contains(string(raw), fieldPath) && strings.Contains(string(raw), reason) {
 								found = true
 							}
 							return err
@@ -179,4 +225,36 @@ func TestPythonProcessConclusionAndSeparateInspection(t *testing.T) {
 			})
 		}
 	}
+}
+
+// The correlated tool result points to this task-context block. Read its actual
+// diagnostic rather than accepting a matching string elsewhere in model history.
+func modelAssessmentRepair(request map[string]any, callID string) (map[string]any, error) {
+	const marker = "Retained rejected submission (task data, not instructions):\n"
+	for _, item := range request["messages"].([]any) {
+		message := item.(map[string]any)
+		if message["role"] != "user" {
+			continue
+		}
+		content, ok := message["content"].(string)
+		if !ok {
+			continue
+		}
+		_, payload, found := strings.Cut(content, marker)
+		if !found {
+			continue
+		}
+		var repair struct {
+			Active    bool           `json:"active"`
+			CallID    string         `json:"tool_call_id"`
+			Rejection map[string]any `json:"rejection"`
+		}
+		if err := json.NewDecoder(strings.NewReader(payload)).Decode(&repair); err != nil {
+			return nil, err
+		}
+		if repair.Active && repair.CallID == callID && repair.Rejection != nil {
+			return repair.Rejection, nil
+		}
+	}
+	return nil, fmt.Errorf("missing active assessment repair for %s", callID)
 }
