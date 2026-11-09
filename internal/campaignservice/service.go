@@ -196,7 +196,7 @@ func New(ctx context.Context, c Config) (*Service, error) {
 	s.history = map[string]attemptadapter.Parent{}
 	s.checkpointLineage = map[string]nativeLineage{}
 	s.gate <- struct{}{}
-	b, err := attemptadapter.NewBroker(attemptadapter.BrokerConfig{Catalog: c.Prepared.Target().Protocol().Catalog(), Protocol: c.Prepared.Target().Protocol(), Writer: w, Attempts: a, Deadline: deadline, AttemptAllowanceMS: c.Prepared.Target().Profile().Settings().OperationTimeoutMS, OperationTimeouts: s.operationTimeouts, Admitted: s.admitted.Load, Prepare: s.prepare, ResolveAttempt: s.resolveAttempt, Rejection: s.recordArgumentRejection, TimeoutDiagnostic: s.recordAttemptTimeout, Cleanup: s.cleanupTarget, ReadKinds: func() []string { return s.target().ReadKinds() }})
+	b, err := attemptadapter.NewBroker(attemptadapter.BrokerConfig{Catalog: c.Prepared.Target().Protocol().Catalog(), Protocol: c.Prepared.Target().Protocol(), Writer: w, Attempts: a, Deadline: deadline, AttemptAllowanceMS: c.Prepared.Target().Profile().Settings().OperationTimeoutMS, OperationTimeouts: s.operationTimeouts, Admitted: s.admitted.Load, Prepare: s.prepare, ResolveAttempt: s.resolveAttempt, Rejection: s.recordArgumentRejection, TimeoutDiagnostic: s.recordAttemptTimeout, TargetDiagnostic: s.recordTargetFailure, Cleanup: s.cleanupTarget, ReadKinds: func() []string { return s.target().ReadKinds() }})
 	if err != nil {
 		w.Fence().Stop(err)
 		return nil, err
@@ -618,7 +618,7 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 					reason, source = "cleanup_failed", "cleanup"
 				}
 				d := campaign.NewWorkflowDiagnostic(request["operation_id"].(string), source, reply.Result.Stage, reason, "", "attempt_execute", request["call_id"].(string))
-				if known := s.WorkflowFailure(); known != nil && known.Timeout != nil && known.OperationID == d.OperationID {
+				if known := s.WorkflowFailure(); known != nil && (known.Timeout != nil || known.TargetFailure != nil) && known.OperationID == d.OperationID {
 					return result, nil
 				}
 				s.workflowDiagnostic.Store(&d)

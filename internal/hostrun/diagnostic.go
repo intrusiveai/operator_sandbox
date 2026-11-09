@@ -61,7 +61,7 @@ func (d *PreparationDiagnostic) Valid() bool {
 	if d.Model != (modelprovider.Diagnostic{}) && !d.Model.Valid() {
 		return false
 	}
-	return len(d.Stage) > 0 && len(d.Stage) <= 96 && len(d.Message) > 0 && len(d.Message) <= 512 &&
+	return len(d.Stage) > 0 && len(d.Stage) <= 96 && len(d.Message) > 0 && len(d.Message) <= 1024 &&
 		strings.IndexFunc(d.Stage+d.Message, func(r rune) bool { return r < 32 || r == 127 }) < 0
 }
 

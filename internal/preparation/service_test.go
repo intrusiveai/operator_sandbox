@@ -24,6 +24,8 @@ import (
 )
 
 type peer struct {
+	turnError           string
+	invokeTarget        func() string
 	delayOperation      string
 	delay               time.Duration
 	feedbackView        interceptor.ObservationView
@@ -153,8 +155,14 @@ func (p *peer) Execute(ctx context.Context, q interceptor.PreparedOperation) (in
 		p.contexts[body.AttemptID] = body
 		return result(201, body)
 	case "application.invoke":
+		if p.invokeTarget != nil {
+			p.turnError = p.invokeTarget()
+		}
 		var invoke interceptor.TurnRequest
 		_ = json.Unmarshal(envelope.Body, &invoke)
+		if p.turnError != "" {
+			return result(200, interceptor.Turn{ID: fmt.Sprintf("turn-%d", p.revision), Operation: "invoke", Status: "error", AttemptID: r.AttemptID, PayloadDigest: invoke.PayloadDigest, Error: p.turnError, Started: now, Finished: time.Now().UTC()})
+		}
 		return result(200, interceptor.Turn{ID: fmt.Sprintf("turn-%d", p.revision), Operation: "invoke", Status: "complete", AttemptID: r.AttemptID, PayloadDigest: invoke.PayloadDigest, Body: []byte(`{"answer":"test"}`), MediaType: "application/json", OutputDigest: contracts.RawDigest([]byte(`{"answer":"test"}`)), Started: now, Finished: now})
 	case "observation.read":
 		var lookup map[string]string

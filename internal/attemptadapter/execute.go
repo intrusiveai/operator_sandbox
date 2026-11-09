@@ -22,6 +22,7 @@ type InjectionHandle = campaign.InjectionHandle
 type Result struct {
 	// These values must be committed together with receipt contents before any
 	// harness reply. Native steps are already durable; this is not publication.
+	Failure    *campaign.TargetFailure
 	GuestJSON  []byte
 	Receipt    *feedback.Receipt
 	Injections []InjectionHandle
@@ -36,6 +37,7 @@ type Execution struct {
 	adapter  *stepAdapter
 }
 type stepAdapter struct {
+	failure *campaign.TargetFailure
 	plan    *Plan
 	active  interceptor.PreparedOperation
 	command command
@@ -79,6 +81,17 @@ func (a *stepAdapter) Interpret(p interceptor.PreparedOperation, r interceptor.R
 		return nativeexec.Unknown, ErrResult
 	}
 	if r.Status >= 400 && r.Status < 500 {
+		f := a.nativeFailure(p, r, "native_rejection")
+		f.Code = r.Code()
+		var body struct {
+			Error struct {
+				Message string `json:"message"`
+			} `json:"error"`
+		}
+		if json.Unmarshal(r.Body, &body) == nil {
+			f.SetDetail(body.Error.Message)
+		}
+		a.failure = f
 		return nativeexec.Failed, nil
 	}
 	q := p.Request()
@@ -111,6 +124,14 @@ func (a *stepAdapter) Interpret(p interceptor.PreparedOperation, r interceptor.R
 			valid = false
 		}
 		if valid && actual.Status == "error" {
+			f := a.nativeFailure(p, r, "target_turn_failed")
+			f.TurnID = actual.ID
+			f.SetDetail(actual.Error)
+			// Classification requires the native turn's explicit error, never elapsed time.
+			if actual.Error == context.DeadlineExceeded.Error() {
+				f.Category = "target_turn_timeout"
+			}
+			a.failure = f
 			return nativeexec.Failed, nil
 		}
 	case "observation.read":
@@ -189,7 +210,7 @@ func (e *Execution) Run(ctx context.Context) (result Result, runErr error) {
 			stage = "complete"
 		}
 		body := map[string]any{"api_version": "operator.dev/engine-attempt-result/v1alpha2", "kind": "EngineAttemptResult", "request_id": p.request.RequestID, "attempt_id": p.request.AttemptID, "receipt_id": receiptID, "status": status, "stage": stage, "target_contact": contact, "invocation_state": invocation, "cleanup_state": cleanup, "retry_disposition": retry, "errors": []any{}}
-		if runErr != nil && (ctx.Err() == context.DeadlineExceeded || ctx.Err() == nil && !time.Now().Before(p.deadline)) {
+		if runErr != nil && result.Failure == nil && (ctx.Err() == context.DeadlineExceeded || ctx.Err() == nil && !time.Now().Before(p.deadline)) {
 			timing := campaign.AttemptTimeout{NativeOperation: nativeOperation, AllowanceMS: p.allowanceMS, ElapsedMS: time.Since(p.started).Milliseconds(), DeadlineSource: p.deadlineSource, Observation: observationState}
 			if timing.Valid() {
 				body["timeout"] = timing
@@ -230,9 +251,17 @@ func (e *Execution) Run(ctx context.Context) (result Result, runErr error) {
 		if err != nil {
 			return interceptor.Response{}, err
 		}
-		e.adapter.active, e.adapter.command = prepared, c
+		e.adapter.active, e.adapter.command, e.adapter.failure = prepared, c, nil
 		r, err := e.executor.Execute(ctx, p.request.RequestID, prepared)
 		lastOutcome = r.Step.Outcome
+		if e.adapter.failure != nil && lastOutcome == string(nativeexec.Failed) && r.Native != nil {
+			f := *e.adapter.failure
+			f.StepID = r.Step.ID
+			f.ResponseDigest = contracts.RawDigest(r.Native.Bytes())
+			if f.Valid() {
+				result.Failure = &f
+			}
+		}
 		if r.Step.ID != "" {
 			result.StepIDs = append(result.StepIDs, r.Step.ID)
 		}
@@ -358,4 +387,8 @@ func (e *Execution) Run(ctx context.Context) (result Result, runErr error) {
 		cleanup = "completed"
 	}
 	return result, nil
+}
+
+func (a *stepAdapter) nativeFailure(p interceptor.PreparedOperation, r interceptor.Response, category string) *campaign.TargetFailure {
+	return &campaign.TargetFailure{NativeOperation: p.Request().Operation, Operation: a.plan.request.Invocation.OperationID, AttemptID: p.Request().AttemptID, HTTPStatus: r.Status, Category: category, Omission: "not_provided"}
 }

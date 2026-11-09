@@ -84,6 +84,12 @@ func printWorkerFailure(w io.Writer, code string, d *hostrun.PreparationDiagnost
 		}
 		if d.Workflow.Valid() {
 			fmt.Fprintln(w, "Operation:", d.Workflow.OperationID)
+			if f := d.Workflow.TargetFailure; f != nil {
+				fmt.Fprintln(w, "Attempt:", f.AttemptID)
+				fmt.Fprintln(w, "Native operation:", f.NativeOperation)
+				fmt.Fprintln(w, "Native step:", f.StepID)
+				fmt.Fprintln(w, "Native response evidence:", f.ResponseDigest)
+			}
 			if d.Workflow.Timeout != nil {
 				fmt.Fprintln(w, "Attempt:", d.Workflow.AttemptID)
 				fmt.Fprintln(w, "Result delivery:", d.Workflow.ResultDelivery)

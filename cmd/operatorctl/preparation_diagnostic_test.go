@@ -722,3 +722,31 @@ func TestTokenBudgetFailureForegroundAndWorkerOutput(t *testing.T) {
 	}
 	t.Log(stderr)
 }
+
+func TestTargetFailureForegroundAndWorkerOutput(t *testing.T) {
+	dir, paths, deps, _ := startFixture(t)
+	detail := campaign.NewWorkflowDiagnostic("request-1", "target", "delivery", "target_failed", "", "attempt_execute", "call-1")
+	detail.TargetFailure = &campaign.TargetFailure{NativeOperation: "application.invoke", Operation: "support-baseline", AttemptID: "attempt-1", TurnID: "turn-1", StepID: "step-1", ResponseDigest: contracts.RawDigest([]byte("native error")), HTTPStatus: 200, Category: "target_turn_timeout", Detail: "context deadline exceeded"}
+	d := &hostrun.PreparationDiagnostic{Stage: "target delivery", Message: detail.Message(), Workflow: detail, HarnessExit: campaign.HarnessExit{Outcome: "failed", ExitObserved: true, ExitCode: 137, Forced: true, StderrState: "empty", Details: "campaign journal event launch.exit"}}
+	deps.run = func(context.Context, string, string, string) (workerjob.Result, error) {
+		return workerjob.Result{Code: "execution_failed", Diagnostic: d, CompletionRecording: "recorded"}, detail
+	}
+	code, _, stderr := invokeStart(t, context.Background(), "start", []string{"--run", dir}, paths, deps)
+	if code != 1 {
+		t.Fatal(code, stderr)
+	}
+	for _, want := range []string{"Campaign execution failed", "target application turn exceeded its deadline while running support-baseline", `Interceptor reported "context deadline exceeded"`, "Native operation: application.invoke", "Native response evidence: sha256:", "Execution will not resume."} {
+		if !strings.Contains(stderr, want) {
+			t.Fatalf("missing %q: %s", want, stderr)
+		}
+	}
+	if strings.Index(stderr, "context deadline exceeded") > strings.Index(stderr, "code 137") {
+		t.Fatal("secondary exit obscures target failure")
+	}
+	var supervised bytes.Buffer
+	printWorkerFailure(&supervised, "execution_failed", d, "recorded")
+	if supervised.String() != stderr {
+		t.Fatal("foreground/supervised mismatch")
+	}
+	t.Log(stderr)
+}

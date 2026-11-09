@@ -182,3 +182,61 @@ func TestNativeRestoredEvidence(t *testing.T) {
 		t.Fatal("accepted missing restored state")
 	}
 }
+
+func TestNativeStopRequiresAuthoritativeEvent(t *testing.T) {
+	for _, source := range []string{"native", "application", "wrong-layer", "attack-channel"} {
+		t.Run(source, func(t *testing.T) {
+			members := nativeEvidenceMembers(t, "native-evidence.tar")
+			id := nativeEvidenceID(t, members)
+			for i := range members {
+				switch members[i].header.Name {
+				case "events.jsonl":
+					lines := bytes.Split(bytes.TrimSpace(members[i].data), []byte("\n"))
+					var previous evidenceEvent
+					if err := json.Unmarshal(lines[len(lines)-1], &previous); err != nil {
+						t.Fatal(err)
+					}
+					event := evidenceEvent{SchemaVersion: 1, SessionID: id.SessionID, Seq: previous.Seq + 1, ObservedAt: previous.ObservedAt, Channel: "control", Layer: "sandboxd", Kind: "session_stopped", Provenance: "sandbox_control", Semantic: json.RawMessage(`{}`), PreviousHash: previous.Hash}
+					if source == "application" {
+						event.Provenance = "application"
+					}
+					if source == "wrong-layer" {
+						event.Layer = "application_bridge"
+					}
+					if source == "attack-channel" {
+						event.Channel = "attack"
+					}
+					event.Hash = nativeHash(event)
+					raw, _ := json.Marshal(event)
+					members[i].data = append(members[i].data, append(raw, '\n')...)
+				case "evidence-bundle.json":
+					var bundle evidenceEvidenceBundle
+					if err := json.Unmarshal(members[i].data, &bundle); err != nil {
+						t.Fatal(err)
+					}
+					bundle.Completeness.EndSequence++
+					bundle.Digest = ""
+					bundle.Digest = nativeHash(bundle)
+					members[i].data, _ = json.Marshal(bundle)
+				}
+			}
+			verified, err := verifyMembers(t, members, id)
+			if err != nil {
+				t.Fatal(err)
+			}
+			receipt := verified.Receipt()
+			if (receipt.SessionStopped != nil) != (source == "native") {
+				t.Fatalf("unexpected stop: %+v", receipt.SessionStopped)
+			}
+			if receipt.SessionStopped != nil {
+				if receipt.SessionStopped.EventSequence != 3 {
+					t.Fatal(receipt)
+				}
+				receipt.SessionStopped.EventSequence = 99
+				if verified.Receipt().SessionStopped.EventSequence != 3 {
+					t.Fatal("mutable provenance")
+				}
+			}
+		})
+	}
+}

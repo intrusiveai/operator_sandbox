@@ -22,6 +22,7 @@ import (
 // These callbacks never come from a guest or a submitted scenario bundle.
 type BrokerConfig struct {
 	OperationTimeouts  map[string]int64
+	TargetDiagnostic   func(string, string, *campaign.TargetFailure) error
 	TimeoutDiagnostic  func(string, string, []byte) error
 	Catalog            *contracts.Catalog
 	Protocol           *contracts.Protocol
@@ -326,6 +327,11 @@ func (b *Broker) attempt(ctx context.Context, q wireRequest, deadline time.Time)
 			return reply{}, b.stop(e)
 		}
 		result, runErr = execution.Run(ctx)
+	}
+	if result.Failure != nil && b.config.TargetDiagnostic != nil {
+		if err := b.config.TargetDiagnostic(q.ID, q.CallID, result.Failure); err != nil {
+			return reply{}, errors.Join(runErr, err)
+		}
 	}
 	if len(result.GuestJSON) == 0 {
 		return reply{}, b.stop(runErr)

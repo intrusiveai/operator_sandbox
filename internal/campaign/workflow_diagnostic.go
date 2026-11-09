@@ -15,6 +15,7 @@ type WorkflowDiagnostic struct {
 	Constraint         *contracts.SchemaConstraint `json:"constraint,omitempty"`
 	Correction         string                      `json:"correction,omitempty"`
 	Budget             *contracts.ModelTokenBudget `json:"budget,omitempty"`
+	TargetFailure      *TargetFailure              `json:"target_failure,omitempty"`
 	Timeout            *AttemptTimeout             `json:"timeout,omitempty"`
 	AttemptID          string                      `json:"attempt_id,omitempty"`
 	Invocation         string                      `json:"target_invocation,omitempty"`
@@ -169,6 +170,9 @@ func (d WorkflowDiagnostic) Valid() bool {
 	if d.Budget != nil && (!d.Budget.Valid() || d.Stopping != "budget-limit" || d.Reason != "model_reservation_unavailable" || d.Stage != "termination" || d.Source != "harness-local" || d.Observed != 0 || d.Limit != 0 || d.FieldPath != "" || d.Tool != "" || d.CallID != "") {
 		return false
 	}
+	if d.TargetFailure != nil && (!d.TargetFailure.Valid() || !(d.Source == "target" && d.Reason == "target_failed" || d.Source == "cleanup" && d.Reason == "cleanup_failed") || d.Timeout != nil) {
+		return false
+	}
 	if d.Timeout != nil {
 		id, why := diagnosticID(d.AttemptID)
 		if !d.Timeout.Valid() || d.Reason != "attempt_timeout" || d.Source != "operator" || id != d.AttemptID || why != "" || !slices.Contains([]string{"not-dispatched", "succeeded", "failed", "unknown"}, d.Invocation) || !slices.Contains([]string{"unconfirmed", "published", "unavailable"}, d.ResultDelivery) {
@@ -192,6 +196,9 @@ func (d WorkflowDiagnostic) Message() string {
 	text := workflowReasons[d.Reason]
 	if d.Correction != "" {
 		text = d.Correction
+	}
+	if d.TargetFailure != nil {
+		text = d.TargetFailure.Message()
 	}
 	if d.Timeout != nil {
 		text = d.Timeout.Message(d.Invocation)

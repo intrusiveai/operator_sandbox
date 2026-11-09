@@ -847,6 +847,17 @@ status could not be durably saved, not that execution remains available. Planned
 healthy restore remains transitioning until replacement readiness and does not
 produce an independent-failure record.
 
+A validated failed native target response MUST retain the specific native cause,
+failed target/native operation, attempt and native step identities, and the
+original response evidence reference. Administrator diagnostics, completion
+receipts, inspection, terminal output and reports MUST carry the same bounded,
+credential-filtered cause. An explicit target-turn deadline error MUST be
+distinguished from an Operator attempt timeout or a model-provider failure;
+Operator MUST NOT infer a deadline or its configured duration from elapsed time.
+Other target errors MUST retain their specific descriptions through the same
+path. Forced Harness termination MUST remain secondary. Native diagnostic detail
+MUST NOT bypass the effective Harness feedback policy.
+
 The host service owns the API, provider bridge and target lifecycle. There is no
 separate gateway replacement/recovery protocol in this MVP. Service, worker,
 guest or target failure is terminal for execution; preserve uncertainty, stop
@@ -1638,6 +1649,15 @@ local acceptance limit if needed. A CLI override does not alter an existing
 Interceptor service's API ceiling. Retained-evidence import does not start a
 target or replay a campaign; subsequent report generations reference the newly
 verified evidence while preserving earlier generations.
+
+Reports MUST preserve initial cleanup/collection history and separately show
+later verified archive availability and authoritative session-stop evidence.
+Successful later collection MUST resolve evidence-collection status without
+implying ownership closure or injection cleanup. A confirmed session stop MUST
+identify its verified native lifecycle event and source archive. Native export
+rejections MUST retain their bounded HTTP status and safe native reason code;
+missing historical reasons MUST remain explicitly unknown. See
+[report reconciliation](docs/REPORTING.md#target-failures-and-cleanup-reconciliation).
 
 Cleanup finishes independently of model/report availability. Report regeneration
 and later evidence collection use retained records, never another attack. Preserve

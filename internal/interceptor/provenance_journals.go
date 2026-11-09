@@ -12,6 +12,7 @@ import (
 )
 
 type evidenceVerifier struct {
+	stopped                  *SessionStopEvidence
 	database                 *DatabaseEvidence
 	archive                  *EvidenceArchive
 	id                       EvidenceIdentity
@@ -95,6 +96,9 @@ func (v *evidenceVerifier) events(ctx context.Context) error {
 		}
 		v.eventHashes = append(v.eventHashes, h)
 		v.summarizeDatabaseEvent(e, h)
+		if e.Channel == "control" && e.Layer == "sandboxd" && e.Kind == "session_stopped" && e.Provenance == "sandbox_control" {
+			v.stopped = &SessionStopEvidence{e.Seq, h, e.ObservedAt}
+		}
 		if e.RawRef != "" {
 			if err := v.blob(e.RawRef, -1); err != nil {
 				return err
