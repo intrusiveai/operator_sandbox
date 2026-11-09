@@ -171,7 +171,8 @@ func TestServiceAssessmentReferencesAttributionAndRateLimit(t *testing.T) {
 				t.Fatal("invalid rejection")
 			}
 			diagnostic := response["error"].(map[string]any)["diagnostic"].(map[string]any)
-			if diagnostic["field_path"] == "" || !strings.Contains(diagnostic["correction"].(string), "Reference validation failed") || diagnostic["execution_occurred"] != "no" {
+			correction := diagnostic["correction"].(string)
+			if diagnostic["field_path"] == "" || !strings.Contains(correction, "Operator rejected the Harness-submitted historical record during reference validation") || strings.Contains(correction, "conclusion validation") || !strings.Contains(correction, `Reference: "foreign"`) || diagnostic["execution_occurred"] != "no" || diagnostic["resubmission_safe"] != true {
 				t.Fatal(diagnostic)
 			}
 		}
