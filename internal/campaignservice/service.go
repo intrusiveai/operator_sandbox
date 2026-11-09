@@ -150,6 +150,7 @@ func New(ctx context.Context, c Config) (*Service, error) {
 		}
 		copyModel := *c.Model
 		copyModel.Tools = slices.Clone(c.Model.Tools)
+		copyModel.Policy = slices.Clone(c.Model.Policy)
 		c.Model = &copyModel
 	}
 	persisted, err := campaign.ReadDockerBinding(c.StateRoot, m.CampaignID)
@@ -428,13 +429,20 @@ func (s *Service) Admit(ctx context.Context, in campaign.LaunchInputs) error {
 	}
 	s.initializeCompletion(in)
 	if s.operations["engine.model_generate"] {
-		policy, err := s.target().Protocol().ModelPolicyFromContext(s.config.Prepared.Context(), s.config.Model.Tools, in.Prompt)
-		if err != nil {
-			s.Stop(err)
-			return err
+		policy := s.config.Model.Policy
+		var private struct {
+			Codec         string                  `json:"codec_id"`
+			ProfileDigest string                  `json:"profile_digest"`
+			Prompt        string                  `json:"prompt"`
+			ContextLimits contracts.ContextLimits `json:"context_limits"`
+		}
+		if json.Unmarshal(policy, &private) != nil || private.Prompt != string(in.Prompt) || !private.ContextLimits.Valid() {
+			s.Stop(ErrService)
+			return ErrService
 		}
 		var context struct {
 			Model struct {
+				Codec         string                  `json:"codec_id"`
 				ContextLimits contracts.ContextLimits `json:"context_limits"`
 			} `json:"model"`
 		}
@@ -442,6 +450,11 @@ func (s *Service) Admit(ctx context.Context, in campaign.LaunchInputs) error {
 			s.Stop(ErrService)
 			return ErrService
 		}
+		if private.ContextLimits != context.Model.ContextLimits || private.Codec != context.Model.Codec || private.ProfileDigest != s.config.Model.ProfileDigest {
+			s.Stop(ErrService)
+			return ErrService
+		}
+		s.model.codec = private.Codec
 		s.model.limits = context.Model.ContextLimits
 		s.model.policy = policy
 	}

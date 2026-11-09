@@ -267,7 +267,8 @@ func serviceWithTemplate(t *testing.T, budget time.Duration, operations []string
 		if modelConfig.Model != nil {
 			m := c["model"].(map[string]any)
 			m["tool_selection"] = map[string]any{"injection_surfaces": []string{}}
-			settings := m["codec_settings"].(map[string]any)
+			var settings map[string]any
+			_ = json.Unmarshal(modelConfig.Model.Policy, &settings)
 			completion := settings["max_completion_tokens"]
 			if completion == nil {
 				completion = settings["max_tokens"]
@@ -276,6 +277,9 @@ func serviceWithTemplate(t *testing.T, budget time.Duration, operations []string
 				completion = settings["max_output_tokens"]
 			}
 			m["context_limits"] = map[string]any{"maximum_prompt_tokens": modelConfig.Model.MaximumPromptTokens, "maximum_completion_tokens": completion, "warning_threshold_tokens": contracts.ContextWarningThreshold(modelConfig.Model.MaximumPromptTokens, 80)}
+			delete(m, "codec_settings")
+			delete(m, "profile_id")
+			delete(m, "profile_digest")
 		}
 	}
 	w, launch, root := preparedLaunchConfigured(t, target, wrappedTemplate, "", operations...)
@@ -297,6 +301,17 @@ func serviceWithTemplate(t *testing.T, budget time.Duration, operations []string
 	config := campaignservice.Config{Prepared: stored, Peer: native, Runtime: runtime, Docker: docker, StateRoot: root, Deadline: deadline}
 	if settings != nil {
 		settings(&config)
+	}
+	if config.Model != nil {
+		var policy map[string]any
+		_ = json.Unmarshal(config.Model.Policy, &policy)
+		var context map[string]any
+		_ = json.Unmarshal(launch.EngineContext, &context)
+		policy["context_limits"] = context["model"].(map[string]any)["context_limits"]
+		policy["prompt"] = string(launch.Prompt)
+		config.Model.ProfileDigest = w.Manifest().ModelProfileDigest
+		policy["profile_digest"] = config.Model.ProfileDigest
+		config.Model.Policy = encode(policy)
 	}
 	service, err := campaignservice.New(context.Background(), config)
 	if err != nil {

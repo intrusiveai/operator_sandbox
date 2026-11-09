@@ -64,8 +64,7 @@ func (m RunManifest) ValidateLaunchInputs(p *contracts.Protocol, in LaunchInputs
 	source := target["source"].(map[string]any)
 	if contract["version"] != m.Contract.Version || contract["digest"] != m.Contract.Digest || contract["catalog_digest"] != m.Contract.CatalogDigest || contract["operations_digest"] != m.Contract.OperationsDigest ||
 		release["image_digest"] != m.ImageDigest || release["release_record_digest"] != m.ReleaseRecordDigest || source["adapter"] != m.Target.Adapter ||
-		source["capability_source_digest"] != m.Target.CapabilitySourceDigest || target["capability_projection_digest"] != m.Target.CapabilityProjectionDigest ||
-		ctx["model"].(map[string]any)["profile_digest"] != m.ModelProfileDigest {
+		source["capability_source_digest"] != m.Target.CapabilitySourceDigest || target["capability_projection_digest"] != m.Target.CapabilityProjectionDigest {
 		return ErrInvalid
 	}
 	for _, pair := range []struct {

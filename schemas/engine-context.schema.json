@@ -156,13 +156,10 @@
       "additionalProperties": false,
       "properties": {
         "codec_id": {
-          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
-        },
-        "profile_id": {
-          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
-        },
-        "profile_digest": {
-          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Configured provider conversation format; unsupported formats are rejected by the product adapter."
         },
         "model_id": {
           "type": "string",
@@ -184,25 +181,6 @@
           "maxItems": 2,
           "minItems": 2,
           "uniqueItems": true
-        },
-        "codec_settings": {
-          "oneOf": [
-            {
-              "$ref": "urn:operator:schema:openai-chat-common:v1alpha1#/$defs/settings"
-            },
-            {
-              "$ref": "urn:operator:schema:anthropic-messages-common:v1alpha1#/$defs/settings"
-            },
-            {
-              "$ref": "urn:operator:schema:bedrock-converse-common:v1alpha1#/$defs/settings"
-            },
-            {
-              "$ref": "urn:operator:schema:gemini-common:v1alpha1#/$defs/settings"
-            },
-            {
-              "$ref": "urn:operator:schema:openai-responses-common:v1alpha1#/$defs/settings"
-            }
-          ]
         },
         "context_limits": {
           "$ref": "urn:operator:schema:model-context-limits:v1alpha1"
@@ -233,133 +211,10 @@
       },
       "required": [
         "codec_id",
-        "profile_id",
-        "profile_digest",
         "model_id",
         "features",
         "context_limits",
         "tool_selection"
-      ],
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "codec_id": {
-                "const": "openai-chat-text-tools-v1"
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "codec_settings"
-            ],
-            "properties": {
-              "codec_settings": {
-                "$ref": "urn:operator:schema:openai-chat-common:v1alpha1#/$defs/settings"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "codec_id": {
-                "const": "anthropic-messages-text-tools-v1"
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "codec_settings"
-            ],
-            "properties": {
-              "codec_settings": {
-                "$ref": "urn:operator:schema:anthropic-messages-common:v1alpha1#/$defs/settings"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "codec_id": {
-                "const": "bedrock-converse-text-tools-v1"
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "codec_settings"
-            ],
-            "properties": {
-              "codec_settings": {
-                "$ref": "urn:operator:schema:bedrock-converse-common:v1alpha1#/$defs/settings"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "codec_id": {
-                "const": "gemini-text-tools-v1"
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "codec_settings"
-            ],
-            "properties": {
-              "codec_settings": {
-                "$ref": "urn:operator:schema:gemini-common:v1alpha1#/$defs/settings"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "codec_id": {
-                "const": "openai-responses-text-tools-v1"
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "codec_settings"
-            ],
-            "properties": {
-              "codec_settings": {
-                "$ref": "urn:operator:schema:openai-responses-common:v1alpha1#/$defs/settings"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "codec_id": {
-                "not": {
-                  "enum": [
-                    "openai-chat-text-tools-v1",
-                    "anthropic-messages-text-tools-v1",
-                    "bedrock-converse-text-tools-v1",
-                    "gemini-text-tools-v1",
-                    "openai-responses-text-tools-v1"
-                  ]
-                }
-              }
-            }
-          },
-          "then": {
-            "not": {
-              "required": [
-                "codec_settings"
-              ]
-            }
-          }
-        }
       ]
     },
     "operations": {

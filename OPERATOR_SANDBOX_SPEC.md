@@ -463,7 +463,7 @@ generation is an internal loop operation, not a model's recursive tool.
 
 | Logical engine operation | Allowed purpose |
 |---|---|
-| `engine.model_generate` | One bounded provider-native non-streaming request through the selected host profile. |
+| `engine.model_generate` | Opaque conversation with generation/compaction purpose; Operator constructs the non-streaming request from its private profile. |
 | `engine.artifact_begin`, `engine.artifact_put_part`, `engine.artifact_commit` | Upload bytes with size/media/digest declaration; obtain a host-verified committed receipt. |
 | `engine.injection_delete` | Remove one known injection by attempt receipt/action ID in the current target; confirmed absence is successful cleanup. |
 | `engine.attempt_execute` | Submit a permitted target operation with direct bounded input or an artifact receipt; Operator retains input and assigns bookkeeping, then returns outcome, execution receipt and permitted feedback. |

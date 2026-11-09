@@ -39,20 +39,14 @@ objects. Input paths come from the existing fixed root and inventory rules; no
 additional source-path or URL field is introduced. Public capability delivery
 selectors remain data for the reviewed adapter. They do not grant network access.
 
-`model` contains `codec_id`, `profile_id`, `profile_digest`, `model_id` and
-`features`, plus the selected codec's required `codec_settings` where implemented.
-The first two are bounded symbolic IDs; the digest pins the installed
-safe profile. `model_id` is a bounded non-whitespace string supporting native names
-such as names with slashes. MVP features are exactly `text`, `function-tools`, in
-that order. The [initial model codec contract](MODEL_CODEC_CONTRACT.md) requires
-instruction role, output-token ceiling, accepted response model IDs and native
-tool-projection digest for `openai-chat-text-tools-v1`. The matching model schemas
-and policy builder consume those settings directly; the harness does not infer
-them from an opaque profile ID. This projection contains no provider endpoint or
-credential. The runtime must resolve these identities
-against its installed codec registry, selected host route and release compatibility
-record before admission. Unknown/unqualified profiles cannot be made executable
-by putting them in a structurally valid context.
+`model` contains the conversation-format `codec_id`, informational `model_id`,
+`features`, `context_limits`, and logical `tool_selection`. Endpoints, credentials,
+provider options, native tool declarations and private profile bindings stay on
+Operator. Harness submits conversation history and purpose; Operator constructs
+requests using its installed profile, trusted prompt and tool catalog. The
+[model relay contract](MODEL_CODEC_CONTRACT.md) defines that separation. New
+provider metadata does not require a shared-interface revision. Unsupported
+conversation formats still fail before model execution.
 
 Feedback kinds use the order `target_output`, `operation_error`,
 `injection_delivery`, `oracle_outcome`. The allowed list may be empty; otherwise it

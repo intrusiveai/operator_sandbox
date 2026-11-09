@@ -1,6 +1,6 @@
 # Model context contract
 
-Shared package 0.7.1 requires matching host and Harness package identities through
+Shared package 0.8.0 requires matching host and Harness package identities through
 the existing embedded compatibility record. Earlier packages are incompatible.
 This contract does not add token counting services or change execution authority.
 
@@ -11,15 +11,15 @@ This contract does not add token counting services or change execution authority
 allowances, not a claim about the provider's context window. Operator resolves
 `context_warning_percent` (integer 1–99, default 80) before fingerprinting the
 profile. The threshold is `max(1, floor(prompt * percent / 100))`.
-The completion allowance agrees with the installed codec settings.
+Operator uses the configured completion allowance when constructing every provider request.
 
 Every successful `engine.model_generate` result requires `context_budget`:
 validated input/output/total tokens, requested completion tokens, reserved tokens,
 remaining prompt tokens, `near_prompt_limit`, and remaining campaign model tokens
 and turns. The [result schema](engine-model-generate-result.schema.json) defines
-the closed fields. Go/Python exchange validation binds native usage, request,
-policy and budget. Operator derives these fields after native response validation;
-the internal native-result validator alone does not admit a complete wire result.
+the closed fields. Go/Python exchange validation binds host accounting to startup allowances.
+Operator derives usage in its private adapter before returning a result; the shared
+validator does not interpret the opaque provider response.
 Duplicate delivery returns the original accounting snapshot. Restores preserve
 the frozen policy and cumulative campaign budgets.
 
@@ -44,7 +44,7 @@ Reading these references grants no additional authority.
 from permitted target actions. Empty means no injection setup branches. Shared
 Go/Python tool projection filters setup branches by those surfaces and admitted
 operations; it preserves all applicable exploratory options. The resulting tools
-are bound by the existing codec tool digest and do not change after restore.
+are constructed by Operator from its installed catalog and do not change after restore.
 The full catalog remains available for release inventory checks.
 
 Provider projections omit repeated JSON expansion and selected regex constraints.
@@ -63,7 +63,8 @@ availability, EOF and truncation remain authoritative. Full evidence is unchange
 
 Harness completes an admitted tool batch before reacting to a warning. It uses
 the warning, newly added bytes and a local estimate calibrated against the last
-validated usage, alongside independent byte limits. It checks remaining campaign
+validated usage, alongside independent byte limits. Its estimate includes the frozen prompt and
+installed tools even though those bytes are no longer sent in the relay body. It checks remaining campaign
 tokens and turns before a compaction call. Compaction uses the same route and
 allowances, suppresses tool execution and selects whole native call/result groups.
 The immutable task and exact returned identity ledger survive; omitted groups are
@@ -89,6 +90,5 @@ budget snapshots with journal sequence and model operation identity. They do not
 copy request text into diagnostic metadata or treat reservation as consumption.
 
 Shared fixtures `compact-target-context.json` and `selected-model-tools.json`
-bind reference bytes and all five codec projections. Model codec fixtures bind
-budget arithmetic. Matching process tests MUST exercise warning → compaction → follow-up
+bind reference bytes and all five codec projections. Model relay fixtures bind budget arithmetic. Matching process tests MUST exercise warning → compaction → follow-up
 attempt → finish over FIFO and spool, including independently generated reports.

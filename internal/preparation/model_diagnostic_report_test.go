@@ -19,7 +19,7 @@ func TestModelReportSeparatesUsageAndReservation(t *testing.T) {
 			policy, request, result := modelFixture(t)
 			p := &provider{response: encode(result["response"])}
 			s, _, _, w, launch := serviceWithSettings(t, 0, []string{"engine.model_generate"}, func(c *campaignservice.Config) {
-				c.Model = &campaignservice.ModelConfig{Provider: p, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
+				c.Model = &campaignservice.ModelConfig{Policy: encode(policy), Provider: p, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
 			})
 			if e := s.Admit(context.Background(), launch); e != nil {
 				t.Fatal(e)
@@ -126,7 +126,7 @@ func TestModelFailureSurvivesJournalWriteFailure(t *testing.T) {
 				return nil, modelprovider.FailureError(d)
 			})
 			s, _, _, w, launch := serviceWithSettings(t, 0, []string{"engine.model_generate"}, func(c *campaignservice.Config) {
-				c.Model = &campaignservice.ModelConfig{Provider: provider, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
+				c.Model = &campaignservice.ModelConfig{Policy: encode(policy), Provider: provider, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
 			})
 			writer = w
 			if e := s.Admit(context.Background(), launch); e != nil {

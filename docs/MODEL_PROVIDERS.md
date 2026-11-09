@@ -8,7 +8,7 @@ be bound to the private profile digest and MUST NOT enter Harness inputs or publ
 model profiles. Omitting this field preserves the normal system-trust behavior.
 
 The private `model.profile_file` selected by host configuration MUST describe one
-fixed provider route. Its canonical SHA-256 identity binds the public model policy;
+fixed provider route. Its canonical SHA-256 identity binds retained host configuration;
 its endpoint and credential configuration MUST NOT enter guest files or campaign
 journals. Profile loading MUST reject unknown fields, bad identities, unsupported
 provider/codec/authentication combinations and out-of-bounds limits.
@@ -27,8 +27,7 @@ provider/codec/authentication combinations and out-of-bounds limits.
   "maximum_completion_tokens": 4096,
   "maximum_response_bytes": 1048576,
   "codec_options": {
-    "instruction_role": "developer",
-    "response_models": ["administrator-selected-model"]
+    "instruction_role": "developer"
   }
 }
 ```
@@ -43,30 +42,26 @@ value to the harness or retained evidence. `api_key_env` MUST be absent for othe
 modes. See the [shared authentication contract](HOST_AUTHENTICATION.md) for the
 complete mode matrix, including GitHub OIDC, bearer tokens and LiteLLM without auth.
 
-Profiles MUST include a closed `codec_options` object for their native family:
+`codec_options` contains host-owned optional provider settings:
 
-| Codec | Required options |
+| Codec | Options |
 | --- | --- |
-| Chat | `instruction_role` (`system` or `developer`), `response_models` |
-| Responses | `reasoning` (null or supported pinned configuration), `response_models` |
-| Anthropic | `thinking` (disabled, adaptive or enabled configuration), `response_models` |
-| Bedrock | Empty object `{}`; routing fixes the model and Converse has no response-model echo |
-| Gemini | `thinking_config` (supported pinned configuration, including `{}`), `response_models` |
+| Chat | `instruction_role`: `system` or `developer` (default) |
+| Responses | Native `reasoning` configuration |
+| Anthropic | Native `thinking` configuration |
+| Bedrock | Empty object; model routing is fixed by the profile |
+| Gemini | Native `thinking_config` configuration |
 
-`response_models` MUST be a nonempty unique list of explicitly accepted native
-response model/version IDs. An administrator MUST include the concrete model IDs
-returned for a selected alias; the host MUST NOT infer aliases or accept arbitrary
-versions. Reasoning/thinking options MUST satisfy the shared native schemas.
-Enabled Anthropic thinking MUST have a budget below the output ceiling. Unknown
-options and options for another codec MUST be rejected.
+Provider-specific values are passed from this trusted configuration to the
+provider, not constrained by shared native API schemas. `response_models` in an
+existing private profile is accepted but does not restrict provider-reported model
+labels. Changing provider metadata does not change the shared contract.
 
-`Profile.PublicModel` MUST derive the secret-free EngineContext model object from
-the frozen profile and trusted native tool projection. The generation ceiling MUST
-come from `maximum_completion_tokens`; `tools_digest` MUST be calculated from the
-actual ordered projection, never supplied as administrator or guest authority.
-Profile options MUST NOT contain these derived fields. The complete profile's
-canonical digest MUST bind the projection while endpoint, region, authentication
-and credential identifiers remain private. Returned settings/JSON MUST be copies.
+`Profile.PublicModel` MUST expose only conversation format, informational model,
+logical tool selection and context allowances. Private options and native tool
+declarations MUST remain on Operator. The profile's digest is retained in host
+state; endpoints, credentials and routing fields MUST NOT enter Harness inputs.
+
 The launcher MUST still verify the installed package/release and complete context;
 constructing this projection does not authorize a campaign.
 

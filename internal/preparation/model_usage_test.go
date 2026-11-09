@@ -22,7 +22,7 @@ func (p *usageProvider) GenerateWithMetadata(ctx context.Context, raw []byte) ([
 }
 
 func TestModelUsageAllowanceEnforcementAndRetention(t *testing.T) {
-	for _, mode := range []string{"input-only", "both", "exact-limits", "total-only-contract-rejection", "malformed", "unknown"} {
+	for _, mode := range []string{"input-only", "both", "exact-limits", "total-only", "malformed", "unknown"} {
 		t.Run(mode, func(t *testing.T) {
 			policy, request, result := namedModelFixture(t, "bedrock-model-codec.json", "bedrock: native text with separate caches")
 			completion := int64(request["request"].(map[string]any)["inferenceConfig"].(map[string]any)["maxTokens"].(float64))
@@ -32,7 +32,7 @@ func TestModelUsageAllowanceEnforcementAndRetention(t *testing.T) {
 				output = completion
 			case "exact-limits":
 				input, output = 200, completion
-			case "total-only-contract-rejection":
+			case "total-only":
 				input, output = 200, completion+1
 			}
 			response := result["response"].(map[string]any)
@@ -45,7 +45,7 @@ func TestModelUsageAllowanceEnforcementAndRetention(t *testing.T) {
 			}
 			p := &usageProvider{provider{response: encode(response)}}
 			s, _, runtime, w, launch := serviceWithTemplate(t, 0, []string{"engine.model_generate"}, func(c *campaignservice.Config) {
-				c.Model = &campaignservice.ModelConfig{Provider: p, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
+				c.Model = &campaignservice.ModelConfig{Policy: encode(policy), Provider: p, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
 			}, func(c map[string]any) {
 				digest, err := contracts.CanonicalDigest(encode(policy["tools"]), contracts.OrdinaryLimit)
 				if err != nil {
@@ -79,9 +79,9 @@ func TestModelUsageAllowanceEnforcementAndRetention(t *testing.T) {
 				if d == nil || !d.Valid() || d.HTTPStatus != 200 {
 					t.Fatal(d)
 				}
-				if mode == "input-only" || mode == "both" {
+				if mode == "input-only" || mode == "both" || mode == "total-only" {
 					u := d.UsageAllowance
-					if d.Reason != "usage_exceeds_reservation" || u.InputTokens != input || u.OutputTokens != output || u.TotalTokens != input+output || u.MaximumPromptTokens != 200 || u.RequestedCompletionTokens != completion || u.ReservedTokens != 200+completion || !u.PromptAllowanceExceeded || u.TotalReservationExceeded != (mode == "both") {
+					if d.Reason != "usage_exceeds_reservation" || u.InputTokens != input || u.OutputTokens != output || u.TotalTokens != input+output || u.MaximumPromptTokens != 200 || u.RequestedCompletionTokens != completion || u.ReservedTokens != 200+completion || u.PromptAllowanceExceeded != (mode != "total-only") || u.TotalReservationExceeded != (mode != "input-only") {
 						t.Fatal(d)
 					}
 				} else if d.UsageAllowance != (modelprovider.UsageAllowance{}) {

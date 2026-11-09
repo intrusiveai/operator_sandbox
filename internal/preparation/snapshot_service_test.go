@@ -119,6 +119,10 @@ func (p *peer) restoreCheckpoint(q interceptor.PreparedLifecycle) (interceptor.R
 var snapshotRoutes = []string{"engine.attempt_execute", "engine.observation_read", "engine.injection_delete", "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request"}
 
 func stateWire(op, id string, rev int, body any) []byte {
+	if op == "engine.model_generate" {
+		body = relayFixture(body)
+	}
+
 	return encode(map[string]any{"api_version": "operator.dev/engine-pipe/v1alpha1", "kind": "request", "seq": 0, "campaign_id": "campaign-1", "launch_id": "launch-1", "run_revision": rev, "call_id": id, "operation_id": id, "operation": op, "timeout_ms": 30000, "body": body})
 }
 func stateResult(t *testing.T, raw []byte, err error) map[string]any {

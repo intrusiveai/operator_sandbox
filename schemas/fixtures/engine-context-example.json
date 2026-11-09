@@ -382,8 +382,6 @@
   },
   "model": {
     "codec_id": "fixture.codec.v1",
-    "profile_id": "fixture.text-tools.v1",
-    "profile_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
     "model_id": "fixture/model",
     "features": [
       "text",

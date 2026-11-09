@@ -77,7 +77,7 @@ qualification evidence.
 
 ## Runtime and migration
 
-Interface 0.7.1 uses exact document identity; legacy package-manifest identities
+Interface 0.8.0 uses exact document identity; legacy package-manifest identities
 are incompatible. Distribution manifests use `operator.dev/contract-package/v2`.
 The local image compatibility file uses
 `operator.dev/harness-compatibility/v1alpha2`, containing only its API version,
@@ -92,10 +92,14 @@ not re-admitted or resumed. Updating an implementation does not rewrite evidence
 
 ## Tool-correction conformance
 
-Interface 0.7.1 defines bounded schema-rule references in diagnostics and the
+Interface 0.8.0 defines bounded schema-rule references in diagnostics and the
 `no-progress-limit` stopping condition. See [tool corrections](TOOL_CORRECTIONS.md).
 Both validators consume `schemas/fixtures/tool-corrections.json`; constraint-family
 checks exercise corrected values as well as rejection. The production-process
 suite covers partial reads and citations, assessment repair without target replay,
 no-progress exhaustion, token-budget exhaustion, and separate CLI report/export.
 Local controlled responses establish correction behavior, not live model reliability.
+
+Model conformance validates the compact relay and accounting. Provider request
+construction and response interpretation are tested in product adapters; additional
+provider metadata does not change the shared interface identity.

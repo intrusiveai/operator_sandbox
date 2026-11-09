@@ -1,7 +1,6 @@
 package contracts
 
 import (
-	"encoding/json"
 	"errors"
 	"strconv"
 	"strings"
@@ -48,42 +47,6 @@ func SafeModelPath(path string) (string, bool) {
 	return path, true
 }
 
-func nativeResponseError(body map[string]any) error {
-	response := body["response"].(map[string]any)
-	switch body["codec_id"] {
-	case anthropicCodec:
-		return anthropicResponseError(response)
-	case bedrockCodec:
-		return bedrockResponseError(response)
-	case geminiCodec:
-		return geminiResponseError(response)
-	case responsesCodec:
-		return responsesResponseError(response)
-	default:
-		return chatResponseError(response)
-	}
-}
-
-// On envelope validation failure, select the native schema so a failing union
-// branch for a different codec cannot hide the actual response path.
-func (p *Protocol) validateNativeResponseShape(codec string, resultRaw []byte) error {
-	v, err := Decode(resultRaw, OrdinaryLimit)
-	if err != nil {
-		return modelDecodeError(err)
-	}
-	result, ok := v.(map[string]any)
-	if !ok {
-		return modelValidation("schema", "unsupported_response_structure", "")
-	}
-	schemas := map[string]string{"openai-chat-text-tools-v1": OpenaiChatResponseSchema, anthropicCodec: AnthropicMessagesResponseSchema, bedrockCodec: BedrockConverseResponseSchema, geminiCodec: GeminiResponseSchema, responsesCodec: OpenaiResponsesResponseSchema}
-	id, ok := schemas[codec]
-	if !ok {
-		return modelValidation("correlation", "request_response_mismatch", "/codec_id")
-	}
-	raw, _ := json.Marshal(result["response"])
-	_, err = p.catalog.Validate(id, raw, OrdinaryLimit)
-	return err
-}
 func modelDecodeError(err error) error {
 	reason, path := "invalid_json", ""
 	var argument *ArgumentError

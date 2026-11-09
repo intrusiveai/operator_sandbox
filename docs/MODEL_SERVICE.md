@@ -1,8 +1,11 @@
 # Campaign model relay
 
-The campaign service implements `engine.model_generate` with the shared
-`openai-chat-text-tools-v1` and `anthropic-messages-text-tools-v1` codecs. The launcher supplies a trusted `ModelConfig`;
-this service does not discover endpoints or resolve production credentials.
+`engine.model_generate` carries `purpose` (`generation` or `compaction`) and an
+opaque provider-native `conversation` array. Operator constructs the actual request
+from its private model profile, trusted prompt and installed tools. Successful
+results contain a receipt, opaque provider response and host accounting. This works
+with Chat Completions, Responses, Anthropic Messages, Bedrock Converse, and Gemini/
+Vertex. See the [relay contract](../schemas/MODEL_CODEC_CONTRACT.md).
 
 The shared [model-tool catalog](../schemas/MODEL_TOOL_CATALOG.md#openai-object-declarations)
 provides OpenAI-compatible object declarations for Chat Completions and Responses,
@@ -15,14 +18,15 @@ before dispatch. `strict: false` does not permit root schema combinators.
   The provider MUST issue exactly one non-streaming request without retries,
   honor cancellation, bound returned bytes, and exclude private transport headers
   and credentials from returned native response bytes and errors exposed to guests.
-- Admission MUST derive model policy from verified EngineContext, exact prompt
-  bytes and the native tools digest. Requests MUST match that frozen policy.
+- Admission MUST bind private provider configuration to the retained profile digest,
+  exact prompt bytes and startup allowances. Conversation MUST never be merged
+  into configuration. Compaction MUST omit tools.
 - A new generation MUST reserve the profile input-token ceiling plus requested
   maximum completion tokens, and charge one model turn, before provider contact.
   Both campaign and harness model-turn limits MUST apply. Known usage MUST settle
   the reservation; missing usage, cancellation, transport ambiguity or invalid
   native responses MUST retain it and terminate execution without retry.
-  Shared codec accounting MUST derive native token fields; Anthropic input MUST
+  Host adapter accounting MUST derive native token fields; Anthropic input MUST
   include cache-creation and cache-read tokens in addition to uncached input.
 - A response exceeding the configured per-response tool-call limit MUST be
   rejected as a whole after accounting for its generation. It MUST enter bounded
@@ -40,8 +44,8 @@ before dispatch. `strict: false` does not permit root schema combinators.
   MUST cancel a blocked generation and start independent termination immediately.
 
 Tests use a scripted provider with real launch validation and durable journals.
-They cover frozen-policy rejection, usage settlement, duplicate replay across
-restore, turn exhaustion, lost replies, missing usage, response-model mismatch,
+They cover configuration override rejection, usage settlement, duplicate replay across
+restore, turn exhaustion, lost replies, missing usage, additional provider metadata,
 input-token bound violations, oversized responses and independent cancellation.
 The [host provider transports](MODEL_PROVIDERS.md) and [credential resolver](CREDENTIALS.md) now implement private profile loading and native transport dependencies. Installed service startup wires both dependencies.
 
@@ -51,7 +55,7 @@ Provider failures MUST retain a host-only diagnostic in `model.exchange` metadat
 with the operation ID, failure category, provider/model when known, and observed
 HTTP status. A missing HTTP status MUST mean none was observed, not an inferred
 provider rejection. The native HTTP client MUST return selected response facts on
-success too, so later contract-validation failures can retain HTTP status/request ID.
+success too, so later adapter-validation failures can retain HTTP status/request ID.
 
 For HTTP rejections, diagnostics MUST retain `provider_message`, `provider_type`,
 `provider_code` and `provider_parameter` when supplied. The original `message`
@@ -145,9 +149,9 @@ Enforcement and budget charging remain unchanged: rejection terminates execution
 retains the reservation charge and does not retry or settle that call into accepted
 usage totals. The retained diagnostic counts are distinct from that reservation.
 Subsequent Harness termination, including a forced exit 137, MUST remain secondary
-to the original model failure. Output exceeding the requested completion limit
-continues to fail the earlier response-contract check; diagnostic reporting MUST
-NOT bypass that validation to reach the local allowance comparison.
+to the original model failure. Output exceeding the configured completion allowance remains a terminal adapter
+failure. Validated input/total overflow diagnostics retain the actual usage and
+reservation; unknown or malformed usage never becomes confirmed consumption.
 
 ## Context allowances and response accounting
 
@@ -180,8 +184,8 @@ recovery action. Existing post-response overflow diagnostics remain authoritativ
 
 ## Rejected successful-HTTP responses
 
-HTTP 200 establishes that a response arrived; it does not establish contract
-conformance. For decoding, schema, semantic, correlation and context-budget
+HTTP 200 establishes that a response arrived; it does not establish usable
+accounting or safe tool execution. For decoding, adapter and context-budget
 failures, Operator MUST preserve `reason`, `validation_stage`, and `field_path`
 from the existing checks. Paths are relative to the native-result envelope, such
 as `/response/stopReason`. Unknown/private keys MUST be withheld with
@@ -189,12 +193,13 @@ as `/response/stopReason`. Unknown/private keys MUST be withheld with
 raw validator error text, provider values, or unrestricted headers. Older generic
 `contract_invalid` records remain readable and MUST NOT acquire an inferred cause.
 
-Reasons distinguish unsupported response structure, inconsistent stop reason,
-duplicate output/tool-call identity, reuse of historical identities, invalid
-reasoning content, invalid usage, output exceeding the requested completion
-allowance, disallowed tools, response/profile/model mismatch, and context-budget
-mismatch. Schema rejection does not imply that a provider's response is universally
-invalid; it means the response did not satisfy this installed contract.
+Reasons distinguish missing response fields needed for dispatch, inconsistent stop
+reason, duplicate tool-call identity, invalid or unknown usage, output exceeding
+the configured completion allowance, tools returned during compaction, and
+context-budget mismatch. Provider model labels and unrelated metadata are not
+compatibility gates. Adapter rejection identifies the specific accounting or
+dispatch fact that could not be established; it does not imply that every field
+in a provider response is governed by the shared contract.
 
 The HTTP client MUST prepare a separate request-local audit copy while credentials
 are available for redaction. For valid JSON, preserve bytes and duplicate keys

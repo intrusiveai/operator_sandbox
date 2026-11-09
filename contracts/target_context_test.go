@@ -82,21 +82,3 @@ func TestSharedSelectedTools(t *testing.T) {
 		}
 	}
 }
-func TestModelSizePartitions(t *testing.T) {
-	for _, f := range modelFixtures(t) {
-		if f.Mode != "context" || !f.Valid {
-			continue
-		}
-		v, _ := Decode(f.Request, OrdinaryLimit)
-		q := v.(map[string]any)
-		raw, _ := json.Marshal(q["request"])
-		s, err := MeasureModelRequest(q["codec_id"].(string), raw)
-		if err != nil {
-			t.Fatal(err)
-		}
-		encoded, _ := json.Marshal(s)
-		if DecodeModelRequestSizes(encoded) == nil || s.Tools == 0 || s.Instructions == 0 || s.Conversation == 0 {
-			t.Fatal(s)
-		}
-	}
-}

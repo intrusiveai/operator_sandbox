@@ -213,7 +213,7 @@ func newProcessRun(t *testing.T, tc processCase) *processRun {
 		provider.reply = func(int, map[string]any) ([]byte, error) { return processResponse(nil), nil }
 	}
 	rt := &runtime{killed: make(chan struct{})}
-	serviceConfig := campaignservice.Config{Prepared: stored, Peer: native, Runtime: rt, Docker: binding, StateRoot: root, Deadline: time.Now().Add(timeout), Model: &campaignservice.ModelConfig{Provider: provider, ProfileDigest: cfg.Model.Digest(), Tools: launch.ModelTools, MaximumPromptTokens: 10000}}
+	serviceConfig := campaignservice.Config{Prepared: stored, Peer: native, Runtime: rt, Docker: binding, StateRoot: root, Deadline: time.Now().Add(timeout), Model: &campaignservice.ModelConfig{Policy: launch.ModelPolicy, Provider: provider, ProfileDigest: cfg.Model.Digest(), Tools: launch.ModelTools, MaximumPromptTokens: 10000}}
 	if tc.nativePeer != nil {
 		serviceConfig.Peer = tc.nativePeer
 	}

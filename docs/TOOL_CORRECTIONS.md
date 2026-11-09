@@ -55,7 +55,7 @@ and the preceding rejection separately. Accepted finish with an unavailable
 assessment remains unsuccessful even when Harness exits zero. Worker completion,
 inspection, exported evidence and Markdown reports retain these stopping facts.
 
-Contract 0.7.1 adds schema-rule references and no-progress reporting. Deploy a
+The contract includes schema-rule references and no-progress reporting. Deploy a
 matching Harness pinned to the version and exact document hash in
 `release/contract-lock.json`; no source-commit equality is required. Existing
 campaign evidence is not rewritten and failed campaigns never resume.
@@ -65,4 +65,4 @@ Invalid-call exhaustion uses the existing `invalid-call-limit` condition and
 and configured counts, and `resubmission_safe: false`. Operator displays the limit
 as the terminal cause and earlier field corrections as separate history. It never
 promotes an unavailable assessment to success because Harness exited zero. These
-implementation rules use the existing contract 0.7.1 fields and identity.
+implementation rules use the existing diagnostic fields; the current approved identity is in `release/contract-lock.json`.

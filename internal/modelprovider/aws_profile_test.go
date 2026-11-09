@@ -17,7 +17,7 @@ func TestAWSProfileBindingAndPublicProjection(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	public, err := p.PublicModel([]byte("[]"))
+	public, err := p.PublicModel()
 	if err != nil || bytes.Contains(public, []byte(base.AWSProfile)) || bytes.Contains(public, []byte("aws_profile")) {
 		t.Fatal("private AWS profile exposed")
 	}

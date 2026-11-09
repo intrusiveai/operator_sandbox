@@ -47,7 +47,7 @@ func protocol(t *testing.T) *contracts.Protocol {
 	for _, name := range profiles {
 		files[name] = []byte("test fixture only")
 	}
-	manifest, pin, e := p.BuildPackageManifest("0.7.1", files, profiles)
+	manifest, pin, e := p.BuildPackageManifest("0.8.0", files, profiles)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -119,8 +119,8 @@ func preparedLaunchConfigured(t *testing.T, target *preparation.Target, configur
 	for _, op := range operations {
 		if op == "engine.model_generate" {
 			policy, _, _ := modelFixture(t)
-			toolsDigest, _ := contracts.CanonicalDigest(encode(policy["tools"]), contracts.OrdinaryLimit)
-			template["model"] = map[string]any{"codec_id": policy["codec_id"], "profile_id": policy["profile_id"], "profile_digest": policy["profile_digest"], "model_id": policy["request_model"], "features": []string{"text", "function-tools"}, "context_limits": contracts.ContextLimits{MaximumPromptTokens: 200, MaximumCompletionTokens: 1024, WarningThresholdTokens: 160}, "codec_settings": map[string]any{"instruction_role": policy["instruction_role"], "max_completion_tokens": policy["max_completion_tokens"], "response_models": policy["response_models"], "tools_digest": toolsDigest}}
+			template["model"] = map[string]any{"codec_id": policy["codec_id"], "model_id": policy["request_model"], "features": []string{"text", "function-tools"}, "context_limits": contracts.ContextLimits{MaximumPromptTokens: 200, MaximumCompletionTokens: 1024, WarningThresholdTokens: 160}}
+
 			for _, limits := range []map[string]any{template["remaining_limits"].(map[string]any), template["limits"].(map[string]any)["campaign"].(map[string]any)} {
 				limits["model_turns"] = 3
 				limits["model_tokens"] = 10000
@@ -151,7 +151,7 @@ func preparedLaunchConfigured(t *testing.T, target *preparation.Target, configur
 	tree := inputTree(t, target, context, prompt)
 	pin, _ := target.Protocol().PackageIdentity()
 	reg := target.Protocol().RegistryDigests()
-	m := campaign.RunManifest{APIVersion: campaign.ManifestVersion, CampaignID: "campaign-1", LaunchID: "launch-1", ContainerID: strings.Repeat("a", 64), InitialRevision: 1, CreatedAt: "2026-09-25T12:00:00Z", HostPlatform: "darwin/arm64", ImagePlatform: "linux/arm64", Transport: "spool", RuntimeProfile: "operator-container/v1", ImageDigest: release["image_digest"].(string), ReleaseRecordDigest: release["release_record_digest"].(string), Contract: campaign.ContractPin{Version: pin.Version, Digest: pin.Digest, CatalogDigest: reg["catalog_digest"], OperationsDigest: reg["operations_digest"]}, EngineContextDigest: digest(context), InputTreeDigest: digest(tree), SkillSetDigest: digest(setRaw), ScenarioBundleDigest: digest(target.BundleJSON()), HostPolicyDigest: digest(target.HostPolicyJSON()), ModelProfileDigest: c["model"].(map[string]any)["profile_digest"].(string), Target: target.Binding(), RemainingLimits: encode(c["remaining_limits"]), HarnessLimits: encode(c["limits"].(map[string]any)["harness"]), Retention: campaign.Retention{Mode: "manual-purge", MaxJournalBytes: 256 << 20, MaxSegmentBytes: campaign.MaxEventBytes}}
+	m := campaign.RunManifest{APIVersion: campaign.ManifestVersion, CampaignID: "campaign-1", LaunchID: "launch-1", ContainerID: strings.Repeat("a", 64), InitialRevision: 1, CreatedAt: "2026-09-25T12:00:00Z", HostPlatform: "darwin/arm64", ImagePlatform: "linux/arm64", Transport: "spool", RuntimeProfile: "operator-container/v1", ImageDigest: release["image_digest"].(string), ReleaseRecordDigest: release["release_record_digest"].(string), Contract: campaign.ContractPin{Version: pin.Version, Digest: pin.Digest, CatalogDigest: reg["catalog_digest"], OperationsDigest: reg["operations_digest"]}, EngineContextDigest: digest(context), InputTreeDigest: digest(tree), SkillSetDigest: digest(setRaw), ScenarioBundleDigest: digest(target.BundleJSON()), HostPolicyDigest: digest(target.HostPolicyJSON()), ModelProfileDigest: contracts.RawDigest([]byte("fixture-private-model")), Target: target.Binding(), RemainingLimits: encode(c["remaining_limits"]), HarnessLimits: encode(c["limits"].(map[string]any)["harness"]), Retention: campaign.Retention{Mode: "manual-purge", MaxJournalBytes: 256 << 20, MaxSegmentBytes: campaign.MaxEventBytes}}
 	if platform != "" {
 		m.HostPlatform = platform
 		m.ImagePlatform = "linux/" + strings.Split(platform, "/")[1]

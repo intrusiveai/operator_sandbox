@@ -171,7 +171,7 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 				modelRequest = request
 				failure := modelprovider.Diagnostic{Provider: "openai-chat", Model: "test-model", HTTPStatus: 401, ProviderCode: "invalid_api_key"}.WithFailure("http_rejection", "http_rejected")
 				modelCalls = &provider{err: modelprovider.FailureError(failure)}
-				modelConfig = &campaignservice.ModelConfig{Provider: modelCalls, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
+				modelConfig = &campaignservice.ModelConfig{Policy: encode(policy), Provider: modelCalls, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
 			}
 			var operations []string
 			if modelConfig != nil {
@@ -183,6 +183,17 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 			writer, launch, root := preparedLaunchConfigured(t, target, func(m map[string]any) {
 				m["release"] = map[string]any{"image_digest": image.Image.ImageID, "release_record_digest": image.Release.Digest()}
 			}, requirements.HostPlatform, operations...)
+			if modelConfig != nil {
+				var policy map[string]any
+				_ = json.Unmarshal(modelConfig.Policy, &policy)
+				var context map[string]any
+				_ = json.Unmarshal(launch.EngineContext, &context)
+				policy["prompt"] = string(launch.Prompt)
+				policy["context_limits"] = context["model"].(map[string]any)["context_limits"]
+				modelConfig.ProfileDigest = writer.Manifest().ModelProfileDigest
+				policy["profile_digest"] = modelConfig.ProfileDigest
+				modelConfig.Policy = encode(policy)
+			}
 			stored, err := target.Persist(writer, launch.EngineContext)
 			if err != nil {
 				t.Fatal(err)

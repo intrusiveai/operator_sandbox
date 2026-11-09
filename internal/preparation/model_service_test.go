@@ -66,7 +66,7 @@ func TestServiceNativeCacheAccountingAndRestore(t *testing.T) {
 					p := &provider{response: encode(response)}
 					routes := append(append([]string{}, snapshotRoutes...), "engine.model_generate")
 					s, _, runtime, _, launch := serviceWithTemplate(t, 0, routes, func(c *campaignservice.Config) {
-						c.Model = &campaignservice.ModelConfig{Provider: p, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
+						c.Model = &campaignservice.ModelConfig{Policy: encode(policy), Provider: p, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
 					}, func(c map[string]any) {
 						digest, err := contracts.CanonicalDigest(encode(policy["tools"]), contracts.OrdinaryLimit)
 						if err != nil {
@@ -136,14 +136,16 @@ func TestServiceNativeCacheAccountingAndRestore(t *testing.T) {
 }
 
 type provider struct {
-	calls    int
-	response []byte
-	err      error
-	block    bool
-	entered  chan struct{}
+	lastRequest []byte
+	calls       int
+	response    []byte
+	err         error
+	block       bool
+	entered     chan struct{}
 }
 
 func (p *provider) Generate(ctx context.Context, request []byte) ([]byte, error) {
+	p.lastRequest = append([]byte(nil), request...)
 	p.calls++
 	if p.entered != nil {
 		close(p.entered)
@@ -159,7 +161,7 @@ func TestServiceModelReplayPolicyAndRestoreBudgets(t *testing.T) {
 	p := &provider{response: encode(result["response"])}
 	routes := append(append([]string{}, snapshotRoutes...), "engine.model_generate")
 	s, _, _, _, launch := serviceWithSettings(t, 0, routes, func(c *campaignservice.Config) {
-		c.Model = &campaignservice.ModelConfig{Provider: p, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
+		c.Model = &campaignservice.ModelConfig{Policy: encode(policy), Provider: p, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
 	}, snapshotInput(t))
 	if err := s.Admit(context.Background(), launch); err != nil {
 		t.Fatal(err)
@@ -187,21 +189,15 @@ func TestServiceModelReplayPolicyAndRestoreBudgets(t *testing.T) {
 	if p.calls != 1 {
 		t.Fatal("restore replay called provider")
 	}
-	request["request"].(map[string]any)["messages"].([]any)[0].(map[string]any)["content"] = "Changed prompt"
-	raw, err := s.Handle(context.Background(), stateWire("engine.model_generate", "changed", 2, request), 0)
-	if err != nil || !strings.Contains(string(raw), "POLICY_DENIED") || p.calls != 1 {
-		t.Fatal(string(raw), err)
-	}
-	request["request"].(map[string]any)["messages"].([]any)[0].(map[string]any)["content"] = string(launch.Prompt)
 	call("engine.model_generate", "model-2", 2, request)
 	call("engine.model_generate", "model-3", 2, request)
-	raw, err = s.Handle(context.Background(), stateWire("engine.model_generate", "model-4", 2, request), 0)
+	raw, err := s.Handle(context.Background(), stateWire("engine.model_generate", "model-4", 2, request), 0)
 	if err != nil || !strings.Contains(string(raw), "LIMIT_EXCEEDED") || p.calls != 3 {
 		t.Fatal(string(raw), err)
 	}
 }
 func TestServiceModelUncertainAndInvalidResponsesTerminate(t *testing.T) {
-	for _, mode := range []string{"lost-reply", "missing-usage", "bad-model", "excess-input", "oversize"} {
+	for _, mode := range []string{"lost-reply", "missing-usage", "bad-usage", "excess-input", "oversize"} {
 		t.Run(mode, func(t *testing.T) {
 			policy, request, result := modelFixture(t)
 			response := result["response"].(map[string]any)
@@ -211,8 +207,8 @@ func TestServiceModelUncertainAndInvalidResponsesTerminate(t *testing.T) {
 				p.err = errors.New("private provider details")
 			case "missing-usage":
 				delete(response, "usage")
-			case "bad-model":
-				response["model"] = "unapproved"
+			case "bad-usage":
+				response["usage"] = map[string]any{"prompt_tokens": "invalid"}
 			case "excess-input":
 				response["usage"].(map[string]any)["prompt_tokens"] = 300
 				response["usage"].(map[string]any)["total_tokens"] = 320
@@ -222,7 +218,7 @@ func TestServiceModelUncertainAndInvalidResponsesTerminate(t *testing.T) {
 				p.response = make([]byte, (4<<20)+1)
 			}
 			s, _, runtime, _, launch := serviceWithSettings(t, 0, []string{"engine.model_generate"}, func(c *campaignservice.Config) {
-				c.Model = &campaignservice.ModelConfig{Provider: p, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
+				c.Model = &campaignservice.ModelConfig{Policy: encode(policy), Provider: p, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
 			})
 			if err := s.Admit(context.Background(), launch); err != nil {
 				t.Fatal(err)
@@ -248,7 +244,7 @@ func TestServiceModelCancellationDoesNotBlockDockerTermination(t *testing.T) {
 	policy, request, _ := modelFixture(t)
 	p := &provider{block: true, entered: make(chan struct{})}
 	s, _, runtime, _, launch := serviceWithSettings(t, 0, []string{"engine.model_generate"}, func(c *campaignservice.Config) {
-		c.Model = &campaignservice.ModelConfig{Provider: p, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
+		c.Model = &campaignservice.ModelConfig{Policy: encode(policy), Provider: p, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
 	})
 	if err := s.Admit(context.Background(), launch); err != nil {
 		t.Fatal(err)
@@ -289,7 +285,7 @@ func TestServiceModelOversizedBatchClosesExploration(t *testing.T) {
 	choice["message"].(map[string]any)["tool_calls"] = calls
 	p := &provider{response: encode(response)}
 	s, _, _, w, launch := serviceWithSettings(t, 0, []string{"engine.model_generate", "engine.artifact_begin"}, func(c *campaignservice.Config) {
-		c.Model = &campaignservice.ModelConfig{Provider: p, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
+		c.Model = &campaignservice.ModelConfig{Policy: encode(policy), Provider: p, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
 	})
 	if err := s.Admit(context.Background(), launch); err != nil {
 		t.Fatal(err)
@@ -302,5 +298,105 @@ func TestServiceModelOversizedBatchClosesExploration(t *testing.T) {
 	raw, err = s.Handle(context.Background(), stateWire("engine.artifact_begin", "payload", 1, map[string]any{"purpose": "payload", "artifact": descriptor([]byte(`{}`))}), 0)
 	if err != nil || !strings.Contains(string(raw), "STATE_CHANGED") || w.Fence().Err() != nil {
 		t.Fatal("batch prefix could execute or finalization was unavailable", string(raw), err)
+	}
+}
+
+// relayFixture extracts conversation from archived provider test samples. Runtime
+// accepts only the compact relay; this is not a compatibility fallback.
+func relayFixture(body any) any {
+	m, ok := body.(map[string]any)
+	if !ok {
+		return body
+	}
+	q, ok := m["request"].(map[string]any)
+	if !ok {
+		return body
+	}
+	field := "messages"
+	switch m["codec_id"] {
+	case "openai-responses-text-tools-v1":
+		field = "input"
+	case "gemini-text-tools-v1":
+		field = "contents"
+	}
+	history := q[field].([]any)
+	if m["codec_id"] == "openai-chat-text-tools-v1" {
+		history = history[1:]
+	}
+	return map[string]any{"purpose": "generation", "conversation": history}
+}
+
+func TestServiceModelRelayKeepsConfigurationOnHost(t *testing.T) {
+	policy, _, result := modelFixture(t)
+	p := &provider{response: encode(result["response"])}
+	s, _, _, _, launch := serviceWithSettings(t, 0, []string{"engine.model_generate"}, func(c *campaignservice.Config) {
+		c.Model = &campaignservice.ModelConfig{Policy: encode(policy), Provider: p, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
+	})
+	if err := s.Admit(context.Background(), launch); err != nil {
+		t.Fatal(err)
+	}
+	bad := map[string]any{"purpose": "generation", "conversation": []any{}, "model": "guest-selected"}
+	raw, err := s.Handle(context.Background(), stateWire("engine.model_generate", "bad-settings", 1, bad), 0)
+	if err == nil && !strings.Contains(string(raw), "error") {
+		t.Fatal("configuration override accepted")
+	}
+	if p.calls != 0 {
+		t.Fatal("provider called for rejected settings")
+	}
+	good := map[string]any{"purpose": "generation", "conversation": []any{map[string]any{"role": "user", "content": "Continue.", "future_metadata": true}}}
+	raw, err = s.Handle(context.Background(), stateWire("engine.model_generate", "corrected", 1, good), 0)
+	stateResult(t, raw, err)
+	var actual map[string]any
+	if err = json.Unmarshal(p.lastRequest, &actual); err != nil {
+		t.Fatal(err)
+	}
+	messages := actual["messages"].([]any)
+	if p.calls != 1 || actual["model"] != policy["request_model"] || messages[0].(map[string]any)["content"] != string(launch.Prompt) || messages[1].(map[string]any)["future_metadata"] != true {
+		t.Fatal("host construction or opaque history changed")
+	}
+	if string(encode(actual["tools"])) != string(encode(policy["tools"])) {
+		t.Fatal("host tools changed")
+	}
+}
+
+func TestServiceModelRelayCompletionAndCompactionLimits(t *testing.T) {
+	for _, mode := range []string{"completion", "compaction"} {
+		t.Run(mode, func(t *testing.T) {
+			policy, _, result := modelFixture(t)
+			response := result["response"].(map[string]any)
+			purpose, reason := "generation", "completion_allowance_exceeded"
+			if mode == "completion" {
+				response["usage"] = map[string]any{"prompt_tokens": 1, "completion_tokens": 1025, "total_tokens": 1026}
+			} else {
+				purpose, reason = "compaction", "tools_not_requested"
+				choice := response["choices"].([]any)[0].(map[string]any)
+				choice["finish_reason"] = "tool_calls"
+				choice["message"].(map[string]any)["tool_calls"] = []any{map[string]any{"id": "call-1", "type": "function", "function": map[string]any{"name": "snapshot_list", "arguments": "{}"}}}
+			}
+			p := &provider{response: encode(response)}
+			s, _, runtime, _, launch := serviceWithSettings(t, 0, []string{"engine.model_generate"}, func(c *campaignservice.Config) {
+				c.Model = &campaignservice.ModelConfig{Policy: encode(policy), Provider: p, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
+			})
+			if err := s.Admit(context.Background(), launch); err != nil {
+				t.Fatal(err)
+			}
+			request := stateWire("engine.model_generate", "bounded", 1, map[string]any{"purpose": purpose, "conversation": []any{}})
+			raw, err := s.Handle(context.Background(), request, 0)
+			if err != nil || !strings.Contains(string(raw), "terminate") || s.ModelFailure() == nil || s.ModelFailure().Reason != reason {
+				t.Fatal(string(raw), err, s.ModelFailure())
+			}
+			if strings.Contains(string(raw), "tool_calls") {
+				t.Fatal("rejected provider content delivered")
+			}
+			select {
+			case <-runtime.killed:
+			case <-time.After(time.Second):
+				t.Fatal("execution remained open")
+			}
+			_, _ = s.Handle(context.Background(), request, 0)
+			if p.calls != 1 {
+				t.Fatal("replayed rejected response")
+			}
+		})
 	}
 }

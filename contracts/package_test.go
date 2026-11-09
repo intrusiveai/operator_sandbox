@@ -101,7 +101,7 @@ func TestVerifiedPackageLoader(t *testing.T) {
 		t.Fatal("development protocol claims verification")
 	}
 	files, profiles := packageTestFiles(t)
-	manifest, pin, err := p.BuildPackageManifest("0.7.1", files, profiles)
+	manifest, pin, err := p.BuildPackageManifest("0.8.0", files, profiles)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -179,12 +179,12 @@ func TestPackageVerificationPrecedesSchemaLoading(t *testing.T) {
 	files, profiles := packageTestFiles(t)
 	// This exact payload is hash-consistent but references an unavailable schema.
 	files["wire-common.schema.json"] = []byte(`{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"urn:operator:schema:wire-common:v1alpha1","$ref":"https://invalid.example/schema"}`)
-	if _, _, err := p.BuildPackageManifest("0.7.1", files, profiles); err == nil {
+	if _, _, err := p.BuildPackageManifest("0.8.0", files, profiles); err == nil {
 		t.Fatal("schema drift accepted against approved interface")
 	}
 	files, profiles = packageTestFiles(t)
 	files["../escape"] = []byte("x")
-	if _, _, err := p.BuildPackageManifest("0.7.1", files, profiles); err == nil {
+	if _, _, err := p.BuildPackageManifest("0.8.0", files, profiles); err == nil {
 		t.Fatal("unsafe package path accepted")
 	}
 }

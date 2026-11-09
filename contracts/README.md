@@ -38,8 +38,8 @@ source and content digest of the package shipped with Operator.
 - Harness-loop configuration resolution and campaign accounting, read reservation
   and novelty tracking, restore batch skipping and bounded finalization, with 129
   shared cases.
-- Typed model relay, a pinned native Chat Completions text/function codec, trusted
-  profile binding, startup codec settings and complete conversation/tool continuations,
+- Compact purpose/conversation relay, opaque provider results and validated host
+  context accounting,
   with 334 shared cases across Chat, Responses, Anthropic, Bedrock and Gemini.
 - Fixed model-tool declarations and argument validation with 48 common fixtures
   and native request integration. See [Model tools](../schemas/MODEL_TOOL_CATALOG.md).
@@ -179,15 +179,11 @@ model/tool/read/progress accounting and its one-time finalization budget. See th
 [loop accounting contract](../schemas/HARNESS_LOOP_ACCOUNTING_CONTRACT.md) for
 event ordering, trusted progress sources and required runtime timer/admission gates.
 
-Use `ModelPolicyFromContext` / `model_policy_from_context` to derive the same safe
-policy from verified startup codec settings, frozen prompt bytes and a pinned
-native tool projection. Use `ValidateModelRequest` / `validate_model_request` and `ValidateModelExchange` /
-`validate_model_exchange` to bind native model bodies to an independently selected
-host policy, in addition to ordinary envelope validation. `ModelDisposition` /
-`model_disposition` classifies complete native outcomes; `ChatContinuation` /
-`chat_continuation` builds a correlated assistant/tool segment. See the
-[model codec contract](../schemas/MODEL_CODEC_CONTRACT.md) for required runtime
-receipt checks, preserved argument strings and provider qualification limits.
+Use `ValidateModelRequest` / `validate_model_request` to validate the compact
+purpose/conversation body, and `ValidateModelExchange` / `validate_model_exchange`
+to validate its result and host accounting against startup model allowances.
+Native provider APIs are interpreted by product adapters, outside this contract.
+See the [relay contract](../schemas/MODEL_CODEC_CONTRACT.md).
 
 Use `NormalizeToolArguments` / `normalize_tool_arguments` to translate the model's
 flat fields and typed handles into canonical host bodies. The trusted resolution
@@ -207,11 +203,8 @@ Runtime callers MUST also enforce durable admission, receipt identity, accountin
 deadlines and cleanup. Component validation alone does not authorize a target
 effect or establish container confinement.
 
-Go model validation returns `ModelValidationError` for native response schema,
-semantic and correlation failures. Its stable reason/stage and bounded field path
-are administrator diagnostic facts; raw provider values are excluded. Error detail
-is additive: Go/Python acceptance rules and the model-operation wire envelopes
-remain unchanged. Both products still require the exact released package identity.
+Host adapter failures use bounded `ModelValidationError` facts for administrator
+diagnostics. Provider values are never interpolated into trusted terminal messages.
 
 ## Standalone interface
 

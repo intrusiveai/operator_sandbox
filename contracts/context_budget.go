@@ -83,35 +83,32 @@ func DecodeContextBudget(raw []byte) *ContextBudget {
 	return &b
 }
 
-// ValidateModelExchange requires the complete wire result, after native validation.
-// Native provider probes and the host's pre-accounting path use the explicitly
-// separate ValidateNativeModelExchange method; old wire results are not accepted.
-func (p *Protocol) ValidateModelExchange(policyRaw, requestRaw, resultRaw []byte) (map[string]any, error) {
-	result, err := p.ValidateNativeModelExchange(policyRaw, requestRaw, resultRaw)
+// ValidateModelExchange checks host accounting against startup allowances. Native
+// response JSON is deliberately not interpreted by the shared contract.
+func (p *Protocol) ValidateModelExchange(modelRaw, requestRaw, resultRaw []byte) (map[string]any, error) {
+	if _, err := p.ValidateModelRequest(requestRaw); err != nil {
+		return nil, err
+	}
+	value, err := p.catalog.Validate(EngineModelGenerateResultSchema, resultRaw, OrdinaryLimit)
 	if err != nil {
 		return nil, err
 	}
-	if _, err = p.catalog.Validate(EngineModelGenerateResultSchema, resultRaw, OrdinaryLimit); err != nil {
-		return nil, err
-	}
-	policy, err := Decode(policyRaw, OrdinaryLimit)
+	model, err := Decode(modelRaw, OrdinaryLimit)
 	if err != nil {
 		return nil, err
 	}
-	l, err := contextLimits(policy.(map[string]any)["context_limits"])
+	m, ok := model.(map[string]any)
+	if !ok {
+		return nil, ErrProtocol
+	}
+	l, err := contextLimits(m["context_limits"])
 	if err != nil {
 		return nil, err
 	}
-	m, err := p.ModelUsage(resultRaw)
-	if err != nil {
-		return nil, err
-	}
-	completion, err := p.ModelOutputLimit(requestRaw)
-	if err != nil {
-		return nil, err
-	}
+	result := value.(map[string]any)
 	b := result["context_budget"].(map[string]any)
-	expected, err := NewContextBudget(l, m, completion, number(b["remaining_model_tokens"]), number(b["remaining_model_turns"]))
+	metrics := ModelMetrics{Known: true, InputTokens: number(b["input_tokens"]), OutputTokens: number(b["output_tokens"]), TotalTokens: number(b["total_tokens"])}
+	expected, err := NewContextBudget(l, metrics, l.MaximumCompletionTokens, number(b["remaining_model_tokens"]), number(b["remaining_model_turns"]))
 	if err != nil {
 		return nil, err
 	}
