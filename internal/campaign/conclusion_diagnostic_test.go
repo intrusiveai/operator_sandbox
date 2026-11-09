@@ -40,3 +40,21 @@ func TestConclusionDiagnosticBoundsAndOmissions(t *testing.T) {
 		t.Fatal("accepted unbounded extra field")
 	}
 }
+
+func TestConclusionAndHistoricalRecordDiagnosticAttribution(t *testing.T) {
+	d := NewConclusionDiagnostic("record-1", &contracts.ConclusionError{Reason: "invalid_attempt", FieldPath: "/attempt_receipt_id", Identifier: "foreign"})
+	for _, correction := range []string{"", "Use an execution receipt returned by a completed attempt."} {
+		d.Correction = correction
+		assessment, record := d.Message(), d.RecordReferenceMessage()
+		if !strings.Contains(assessment, "Harness-submitted assessment during conclusion validation") || !strings.Contains(record, "Harness-submitted historical record during reference validation") || strings.Contains(record, "conclusion validation") {
+			t.Fatal(assessment, record)
+		}
+		for _, message := range []string{assessment, record} {
+			for _, fact := range []string{"Operator rejected", "/attempt_receipt_id", `Reference: "foreign"`, correction} {
+				if !strings.Contains(message, fact) {
+					t.Fatalf("missing %q in %s", fact, message)
+				}
+			}
+		}
+	}
+}

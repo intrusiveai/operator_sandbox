@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
@@ -279,7 +278,7 @@ func (s *Service) referenceError(q stateRequest, err error, code string) (stateR
 		if detail.FieldPath != "" {
 			detail.FieldPath = "/record" + detail.FieldPath
 		}
-		correction := strings.Replace(detail.Message(), "Conclusion validation failed:", "Reference validation failed:", 1)
+		correction := detail.RecordReferenceMessage()
 		if len(correction) > 512 {
 			correction = "Select a verified reference of the required kind for this field. Inspect existing evidence; do not replay completed target actions."
 		}

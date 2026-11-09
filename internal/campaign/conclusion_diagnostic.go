@@ -136,9 +136,19 @@ func (d ConclusionDiagnostic) Valid() bool {
 	return (d.OperationID != "" || d.OperationOmitted != "") && (d.PathOmitted == "" || d.PathOmitted == "unsafe_or_oversized" && d.FieldPath == "") && len(d.Correction) <= 512 && len(d.Message()) <= 1024
 }
 func (d ConclusionDiagnostic) Message() string {
-	text := "Operator rejected the Harness-submitted assessment during conclusion validation: " + conclusionReasons[d.Reason][1]
+	return d.message("Operator rejected the Harness-submitted assessment during conclusion validation: ")
+}
+
+// RecordReferenceMessage formats the same safe reference facts for historical
+// records without attributing their rejection to final-assessment validation.
+func (d ConclusionDiagnostic) RecordReferenceMessage() string {
+	return d.message("Operator rejected the Harness-submitted historical record during reference validation: ")
+}
+
+func (d ConclusionDiagnostic) message(prefix string) string {
+	text := prefix + conclusionReasons[d.Reason][1]
 	if d.Correction != "" {
-		text = "Operator rejected the Harness-submitted assessment during conclusion validation: " + d.Correction
+		text = prefix + d.Correction
 	}
 	if d.FieldPath != "" {
 		text += " Field: " + d.FieldPath + "."
