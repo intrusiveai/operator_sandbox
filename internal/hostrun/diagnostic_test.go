@@ -29,6 +29,7 @@ func TestPreparationDiagnosticUsesOnlySafeCauses(t *testing.T) {
 		{&interceptor.CallError{Kind: secret, Uncertain: true}, "Interceptor request failed"},
 		{fmt.Errorf("%s: %w", secret, context.DeadlineExceeded), "deadline exceeded"},
 		{errors.New(secret), "no additional safe error detail"},
+		{&os.PathError{Op: "open", Path: "/private/" + secret, Err: os.ErrPermission}, "permission denied"},
 	} {
 		err := PreparationFailure("local Harness image and compatibility validation", tc.err)
 		d := PreparationDetails(err)
@@ -62,7 +63,7 @@ func TestPreparationCleanupPreservesPrimaryAndSecondary(t *testing.T) {
 func TestDockerInitializationCauseIsSafeAndSpecific(t *testing.T) {
 	_, cause := dockercontrol.New("/missing/private-credential/Docker")
 	err := PreparationFailure("Docker client initialization", cause)
-	if !errors.Is(err, dockercontrol.ErrExecutableUnavailable) || PreparationDetails(err).Message != "Docker executable unavailable" || strings.Contains(err.Error(), "private-credential") {
+	if !errors.Is(err, dockercontrol.ErrExecutableUnavailable) || PreparationDetails(err).Message != "Operator preparation (Docker client initialization): Docker executable unavailable" || strings.Contains(err.Error(), "private-credential") {
 		t.Fatal(err)
 	}
 }

@@ -142,3 +142,34 @@ and MUST NOT retry the model request or switch authentication modes.
 
 Administrator login, model access, API-key restrictions and all four secret-store
 read permissions are specified in [cloud authentication setup](CLOUD_AUTHENTICATION.md).
+
+## Request deadlines and failure attribution
+
+`operation_timeouts_ms.engine.model_generate` in Operator configuration controls
+Harness model-operation time. The effective deadline is the earliest of that
+allowance, the Harness request deadline, the caller deadline and the remaining
+campaign lifetime. For example, `300000` permits a five-minute request when those
+other bounds allow it. The provider transport MUST NOT impose another overall
+two-minute limit. It preserves caller cancellation without retries.
+
+The host default is 120000 ms, defined in
+`internal/operationpolicy/settings.go`. Direct host callers that supply no
+context deadline use that same default; a supplied deadline is never shortened
+by the default. Connection establishment and TLS handshakes remain separately
+bounded to five seconds. Secret-store operations retain their configured store
+timeouts; these bound credential retrieval, not a provider response after
+credentials have been obtained.
+
+Model diagnostics describe **Attack Harness model generation through Operator**.
+They do not describe the target application's model calls, even when both use the
+same provider and model. A remote HTTP rejection, Operator's local response
+validation, credential preparation, connection/TLS failure, timeout and
+cancellation remain separate categories. Diagnostics retain the effective absolute
+deadline and its source, and the phase in which a timeout was observed. A transport
+timeout before that deadline is identified separately; Operator does not infer
+provider throttling, target failure or provider-internal timeout.
+
+Stored-credential failures retain only the logical credential/profile identifiers,
+backend and failed step (backend initialization, secret read, value selection or
+audit retention). Backend causes that cannot be safely established are explicitly
+unknown. Secret names/locators, values and unrestricted SDK errors are not exposed.

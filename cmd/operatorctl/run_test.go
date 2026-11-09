@@ -11,6 +11,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
@@ -144,6 +145,9 @@ func TestDoctorRedactsPrivateConfigurationAndDoesNotCreateState(t *testing.T) {
 		t.Fatal(out.String())
 	}
 	for _, check := range result.Checks {
+		if check.Status == "failed" && (check.Detail == nil || !check.Detail.Valid() || !strings.Contains(check.Detail.Message, "Operator preparation (doctor ")) {
+			t.Fatalf("doctor lost known boundary: %+v", check)
+		}
 		if check.Name == "target_profile" && (check.Status != "not_checked" || check.Action != "select_explicit_submission_target") {
 			t.Fatal("explicit submission profile wrongly blocked", check)
 		}

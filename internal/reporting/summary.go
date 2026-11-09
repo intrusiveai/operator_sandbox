@@ -149,39 +149,66 @@ func valueOrUnknown(s string) string {
 
 func writeEvidenceSummary(b *strings.Builder, r Result) {
 	b.WriteString("## Summary\n\n")
-	targetPrimary := false
-	for _, d := range r.WorkflowDiagnostics {
-		if d.TargetFailure != nil {
-			dataBlock(b, d.Message())
-			fmt.Fprintf(b, "Request: %s; attempt: %s; native step: %s. Original response digest: %s (private native journal; see exported event content descriptors). Harness exit is supporting evidence, not the target failure cause.\n\n", d.OperationID, d.TargetFailure.AttemptID, d.TargetFailure.StepID, d.TargetFailure.ResponseDigest)
-			targetPrimary = true
-			break
-		}
-	}
-	for i := len(r.WorkflowDiagnostics) - 1; !targetPrimary && i >= 0; i-- {
-		d := r.WorkflowDiagnostics[i]
-		if d.Budget != nil || d.Stopping == "no-progress-limit" || d.Stopping == "invalid-call-limit" {
-			dataBlock(b, d.Message())
-			if d.Stopping == "no-progress-limit" || d.Stopping == "invalid-call-limit" {
-				if r.HarnessClaims == 0 && r.JournalIntact {
-					b.WriteString("No final assessment was committed.\n\n")
-				}
-				for j := i - 1; j >= 0; j-- {
-					previous := r.WorkflowDiagnostics[j]
-					if previous.Stopping == "" && !previous.Informational() {
-						b.WriteString("Preceding tool rejection (separate from the stopping cause):\n\n")
-						dataBlock(b, previous.Message())
-						break
-					}
+	primaryRendered := false
+	if trigger := r.FailureTrigger; trigger != nil && trigger.Valid() {
+		var text string
+		if trigger.Kind == "model" {
+			for _, d := range r.ModelFailures {
+				if d.OperationID == trigger.OperationID {
+					text = d.Summary()
+					break
 				}
 			}
-			b.WriteString("Harness-reported stopping facts; see [workflow diagnostics](execution-bundle.json).\n\n")
-			break
+		} else {
+			for _, d := range r.WorkflowDiagnostics {
+				if d.OperationID == trigger.OperationID {
+					text = d.Message()
+					break
+				}
+			}
+		}
+		if text != "" {
+			b.WriteString("Initiating operation failure (retained before shutdown consequences):\n\n")
+			dataBlock(b, text)
+			fmt.Fprintf(b, "Operation: %s. See retained diagnostics in [execution-bundle.json](execution-bundle.json).\n\n", trigger.OperationID)
+			primaryRendered = true
+		} else {
+			b.WriteString("The initiating failure reference is retained, but its diagnostic is unavailable.\n\n")
+		}
+	}
+	if !primaryRendered && (len(r.ModelFailures) > 0 || len(r.WorkflowDiagnostics) > 0) {
+		b.WriteString("Observed failures below are separately attributed; causal order was not retained. Recoverable submission rejections remain history.\n\n")
+		for _, d := range r.ModelFailures {
+			dataBlock(b, d.Summary())
+		}
+	}
+	for i, d := range r.WorkflowDiagnostics {
+		terminal := d.TargetFailure != nil || d.Timeout != nil || d.Stopping != ""
+		if !terminal {
+			continue
+		}
+		if !primaryRendered {
+			dataBlock(b, d.Message())
+		}
+		if d.TargetFailure != nil {
+			fmt.Fprintf(b, "Request: %s; attempt: %s; native step: %s. Response digest, when observed: %s (see exported event content descriptors). Harness exit is supporting evidence.\n\n", d.OperationID, d.TargetFailure.AttemptID, d.TargetFailure.StepID, valueOrUnknown(d.TargetFailure.ResponseDigest))
 		}
 		if d.Timeout != nil {
-			dataBlock(b, d.Message())
 			fmt.Fprintf(b, "Request: %s; attempt: %s; result delivery: %s. See retained workflow diagnostics in [execution-bundle.json](execution-bundle.json).\n\n", d.OperationID, d.AttemptID, d.ResultDelivery)
-			break
+		}
+		if d.Stopping != "" {
+			b.WriteString("Harness-reported stopping facts; see [workflow diagnostics](execution-bundle.json).\n\n")
+			if r.HarnessClaims == 0 && r.JournalIntact {
+				b.WriteString("No final assessment was committed.\n\n")
+			}
+			for j := i - 1; j >= 0; j-- {
+				previous := r.WorkflowDiagnostics[j]
+				if previous.Stopping == "" && !previous.Informational() && previous.TargetFailure == nil && previous.Timeout == nil {
+					b.WriteString("Preceding tool rejection (separate from the stopping cause):\n\n")
+					dataBlock(b, previous.Message())
+					break
+				}
+			}
 		}
 	}
 	if h := r.HarnessExit; h != nil {
@@ -193,6 +220,9 @@ func writeEvidenceSummary(b *strings.Builder, r Result) {
 		}
 	} else {
 		b.WriteString("Harness exit and complete cleanup are not confirmed by retained evidence.\n\n")
+	}
+	if r.CleanupActions != (campaign.CleanupDiagnostic{}) && r.CleanupActions.Valid() {
+		dataBlock(b, r.CleanupActions.Summary())
 	}
 	for _, resolution := range r.CleanupResolutions {
 		if resolution.Collection == "complete" || resolution.Stop != nil {
@@ -346,6 +376,9 @@ func writeEvidenceSummary(b *strings.Builder, r Result) {
 			cache = fmt.Sprint(*c.CacheHit)
 		}
 		dataBlock(b, fmt.Sprintf("Credential: %s; profile: %s; backend: %s\nOutcome: %s; code: %s; cache hit: %s\nRecorded: %s; resolved: %s", valueOrUnknown(c.CredentialID), valueOrUnknown(c.ProfileID), valueOrUnknown(c.Backend), valueOrUnknown(c.Outcome), valueOrUnknown(c.Code), cache, c.RecordedAt, valueOrUnknown(c.ResolvedAt)))
+		if c.Step != "" {
+			dataBlock(b, "Operator credential step: "+c.Step)
+		}
 		fmt.Fprintf(b, "Source: %s.\n\n", eventLink(c.Event))
 		if len(c.Omitted) > 0 {
 			dataBlock(b, "Omitted audit fields: "+strings.Join(c.Omitted, ", "))

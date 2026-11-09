@@ -257,7 +257,7 @@ func (r *Resolver) Resolve(ctx context.Context, credentialID string) (Resolution
 		cancel()
 		if err != nil {
 			r.mu.Unlock()
-			return Resolution{}, fmt.Errorf("initialize credential backend %q: %w", profile.ID, redact(err))
+			return Resolution{}, Failure{credentialID, profile.ID, profile.BackendKind, "backend-initialization"}
 		}
 		r.backends[profile.ID] = backend
 	}
@@ -273,7 +273,7 @@ func (r *Resolver) Resolve(ctx context.Context, credentialID string) (Resolution
 			raw[i] = 0
 		}
 		r.Invalidate(credentialID)
-		return Resolution{}, fmt.Errorf("resolve credential %q: %w", credentialID, redact(err))
+		return Resolution{}, Failure{credentialID, profile.ID, profile.BackendKind, "secret-read"}
 	}
 	value, err := selectValue(raw, ref.Value, profile.MaxValueBytes)
 	for index := range raw {
@@ -281,7 +281,7 @@ func (r *Resolver) Resolve(ctx context.Context, credentialID string) (Resolution
 	}
 	if err != nil {
 		r.Invalidate(credentialID)
-		return Resolution{}, fmt.Errorf("resolve credential %q: %w", credentialID, err)
+		return Resolution{}, Failure{credentialID, profile.ID, profile.BackendKind, "value-selection"}
 	}
 	result := Resolution{CredentialID: credentialID, ProfileID: profile.ID, BackendVersion: version, ResolvedAt: r.now().UTC(), Value: value}
 	if ref.CacheTTLSeconds > 0 {

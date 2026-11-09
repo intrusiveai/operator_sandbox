@@ -54,6 +54,7 @@ type Config struct {
 	CheckHost func() error // Installed host lifetime gate; called before admission and every ordinary request.
 }
 type Service struct {
+	failureTrigger       atomic.Pointer[campaign.FailureTrigger]
 	sizes                contracts.SizeLimits
 	operationTimeouts    map[string]int64
 	resolvedAttempts     map[string]resolvedAttempt
@@ -482,14 +483,20 @@ func (s *Service) Admit(ctx context.Context, in campaign.LaunchInputs) error {
 // the transport's original absolute operation deadline, never a refreshed timer.
 func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byte, error) {
 	started := time.Now()
+	deadlineSource := "campaign"
+	if at, ok := ctx.Deadline(); ok && at.Before(s.deadline) {
+		deadlineSource = "caller"
+	}
 	ctx, cancel := context.WithDeadline(ctx, s.deadline)
 	defer cancel()
+	ctx, stopContext := context.WithCancelCause(ctx)
+	defer stopContext(context.Canceled)
 
 	go func(watchCtx context.Context) {
 		select {
 		case <-watchCtx.Done():
 		case <-s.writer.Fence().Done():
-			cancel()
+			stopContext(s.writer.Fence().Err())
 		}
 	}(ctx)
 	if err := s.acquire(ctx); err != nil {
@@ -535,7 +542,15 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 	if requested := started.Add(time.Duration(requestLimit) * time.Millisecond); requested.Before(replyDeadline) {
 		replyDeadline = requested
 	}
-	ctx, operationCancel := context.WithDeadline(ctx, started.Add(time.Duration(min(requestLimit, ceiling))*time.Millisecond))
+	operationDeadline := started.Add(time.Duration(min(requestLimit, ceiling)) * time.Millisecond)
+	if at, ok := ctx.Deadline(); !ok || operationDeadline.Before(at) {
+		deadlineSource = "configured-operation"
+		if int64(milliseconds) < ceiling {
+			deadlineSource = "request"
+		}
+	}
+	ctx, operationCancel := context.WithDeadline(ctx, operationDeadline)
+	ctx = modelprovider.WithDeadlineSource(ctx, deadlineSource)
 	defer operationCancel()
 	if request["operation"] == "engine.attempt_execute" {
 		s.writer.Fence().ArmTimeoutReply(ctx, replyDeadline)
@@ -610,7 +625,7 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 					s.workflowDiagnostic.Store(nil)
 				}
 			} else if reply.Result.Status == "failed" || reply.Result.Status == "unknown" {
-				reason, source := "target_failed", "target"
+				reason, source := "target_failed", "unknown"
 				if reply.Result.Status == "unknown" {
 					reason = "target_outcome_unknown"
 				}
@@ -622,7 +637,8 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 					return result, nil
 				}
 				s.workflowDiagnostic.Store(&d)
-				if _, e := s.writer.AppendStored(campaign.Entry{RunRevision: s.attempts.Status().RunRevision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d})}, "", false); e != nil {
+				s.recordFailureTrigger("workflow", d.OperationID)
+				if _, e := s.writer.AppendStored(campaign.Entry{RunRevision: s.attempts.Status().RunRevision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d, "failure_trigger": s.FailureTrigger()})}, "", false); e != nil {
 					s.Stop(errors.Join(d, e))
 					return nil, errors.Join(d, e)
 				}

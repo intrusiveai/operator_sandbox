@@ -56,6 +56,7 @@ type Worker struct {
 }
 
 type Result struct {
+	FailureTrigger       *campaign.FailureTrigger       `json:"failure_trigger,omitempty"`
 	HarnessExit          *campaign.HarnessExit          `json:"harness_exit,omitempty"`
 	ConclusionDiagnostic *campaign.ConclusionDiagnostic `json:"conclusion_diagnostic,omitempty"`
 	WorkflowDiagnostic   *campaign.WorkflowDiagnostic   `json:"workflow_diagnostic,omitempty"`
@@ -167,10 +168,11 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 			// and before removal makes the exit status unavailable.
 			runErr = errors.Join(runErr, err)
 			result.StopAccepted = service.StopAccepted()
+			result.FailureTrigger = service.FailureTrigger()
 			result.ModelDiagnostic = service.ModelFailure()
 			result.ConclusionDiagnostic = service.ConclusionFailure()
 			result.WorkflowDiagnostic = service.WorkflowFailure()
-			if result.ModelDiagnostic != nil {
+			if result.FailureTrigger != nil && result.FailureTrigger.Kind == "model" && result.ModelDiagnostic != nil {
 				runErr = errors.Join(modelprovider.FailureError(*result.ModelDiagnostic), runErr)
 			}
 		} else if result.Binding.DockerContainerID != "" {
@@ -199,7 +201,7 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 				h.AssessmentCommitted = service.AssessmentCommitted()
 			}
 			h.Forced = result.Termination.Outcome.KillAttempted
-			h.WorkerCause = workerCause(runErr)
+			h.WorkerCause = workerCause(fence.Err())
 			h.Outcome = "failed"
 			if !h.ExitObserved {
 				h.Outcome = "unconfirmed"
@@ -208,16 +210,18 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 				runErr = err // retain any independent finalization failure
 				h.Outcome = "succeeded"
 			}
-			if result.ModelDiagnostic != nil {
+			if result.FailureTrigger != nil && result.FailureTrigger.Kind == "model" && result.ModelDiagnostic != nil {
 				h.Outcome = "failed"
 				h.Cause = result.ModelDiagnostic.Summary()
 			}
-			if result.WorkflowDiagnostic != nil && (result.WorkflowDiagnostic.Stopping != "" || result.WorkflowDiagnostic.Timeout != nil) {
+			if result.FailureTrigger != nil && result.FailureTrigger.Kind == "workflow" && result.WorkflowDiagnostic != nil && result.WorkflowDiagnostic.OperationID == result.FailureTrigger.OperationID {
 				h.Outcome = "failed"
 				h.Cause = result.WorkflowDiagnostic.Message()
 			}
 			if h.Cause == "" && h.ExitObserved && h.ExitCode != 0 {
-				h.Cause, _ = modelprovider.SafeDiagnosticText(h.Stderr, 180)
+				if !h.Forced {
+					h.Cause, _ = modelprovider.SafeDiagnosticText(h.Stderr, 180)
+				}
 			}
 			if len(h.Cause) > 256 {
 				h.Cause, _ = modelprovider.SafeDiagnosticText(h.Cause, 256)
@@ -276,18 +280,20 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 			result.WorkflowDiagnostic.AssessmentAccepted = result.Terminal.AssessmentState == "committed"
 			result.WorkflowDiagnostic.CleanupCompleted = cleanupCompleted(result)
 		}
-		if result.WorkflowDiagnostic != nil && (runErr != nil && !result.StopAccepted || result.WorkflowDiagnostic.Stopping != "") {
+		if result.FailureTrigger != nil && result.FailureTrigger.Kind == "workflow" && result.WorkflowDiagnostic != nil && result.WorkflowDiagnostic.OperationID == result.FailureTrigger.OperationID && (runErr != nil && !result.StopAccepted || result.WorkflowDiagnostic.Stopping != "") {
 			runErr = errors.Join(*result.WorkflowDiagnostic, runErr)
 		}
 		if runErr != nil && result.ConclusionDiagnostic != nil && !result.StopAccepted {
-			runErr = errors.Join(*result.ConclusionDiagnostic, runErr)
+			runErr = errors.Join(runErr, *result.ConclusionDiagnostic)
 		}
 		raw, _ := json.Marshal(result)
 		metadata, _ := json.Marshal(struct {
+			FailureTrigger     *campaign.FailureTrigger       `json:"failure_trigger,omitempty"`
+			Cleanup            campaign.CleanupDiagnostic     `json:"cleanup_actions"`
 			ExecutionAdmission string                         `json:"execution_admission"`
 			Diagnostic         *campaign.ConclusionDiagnostic `json:"diagnostic,omitempty"`
 			HarnessExit        *campaign.HarnessExit          `json:"harness_exit,omitempty"`
-		}{"closed", result.ConclusionDiagnostic, result.HarnessExit})
+		}{result.FailureTrigger, result.CleanupDiagnostic(), "closed", result.ConclusionDiagnostic, result.HarnessExit})
 		entry := campaign.Entry{RunRevision: writer.Revision(), Kind: "launch.terminal", Metadata: metadata, Content: []campaign.Content{{Role: "launch-result", MediaType: "application/json", Bytes: raw}}}
 		var recordErr error
 		if terminalReserved {
@@ -530,4 +536,10 @@ func (w *Worker) Discard() error {
 		return ErrWorker
 	}
 	return w.plan.Discard()
+}
+
+// CleanupDiagnostic is the same bounded projection used by the saved completion
+// and CLI; per-session native evidence outcomes remain in Terminal.Evidence.
+func (r Result) CleanupDiagnostic() campaign.CleanupDiagnostic {
+	return campaign.CleanupDiagnostic{Container: r.ContainerCleanup, Transport: r.TransportCleanup, Inputs: r.InputCleanup, Closure: r.Terminal.Closure, Injections: r.Terminal.CleanupState, TargetStop: r.Terminal.TargetStop}
 }

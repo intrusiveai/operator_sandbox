@@ -284,6 +284,9 @@ func TestTypedFailuresFenceAndPreventLaterEffects(t *testing.T) {
 			if err == nil || w.Fence().Err() == nil {
 				t.Fatal("failure did not close execution")
 			}
+			if tc.name == "lost invocation reply" && (r.Failure == nil || r.Failure.Category != "communication_failure" || !strings.Contains(r.Failure.Message(), "Operator lost communication with Interceptor")) {
+				t.Fatalf("lost boundary: %+v", r.Failure)
+			}
 			if peer.calls[len(peer.calls)-1] != tc.last {
 				t.Fatal(peer.calls)
 			}

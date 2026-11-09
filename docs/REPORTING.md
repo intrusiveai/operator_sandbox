@@ -250,3 +250,23 @@ Exported `evidence.collection-result` metadata MUST preserve the selected native
 HTTP status, safe native rejection code and any omission reason. Older
 `export_rejected` records without these details MUST explicitly say the details
 were not retained, rather than infer a cause from a later successful collection.
+
+## Failure attribution
+
+Reports and exports distinguish the affected interaction from the observed cause.
+`model_failures` are Attack Harness provider requests made by Operator. Target
+application errors, Interceptor rejections, failed Interceptor communication and
+Operator validation failures are reported at their observed boundary. A failed
+target turn does not prove a failure of the target's own model provider.
+
+The `failure_trigger` in diagnostic events and retained launch results references the first known terminal
+operation diagnostic. Reports lead with that diagnostic when available; they do
+not select a cause by ranking model, target and Harness error categories. Older
+records without a trigger still expose observed failures but cannot establish
+causal order. Corrected submission errors remain history. Forced Harness exit and
+cleanup actions are reported separately, with links to retained journal evidence.
+
+Model timeout evidence includes the effective deadline and its source. Credential
+failures expose approved logical identifiers, backend and failed step, not locators
+or values. Unknown diagnostic sources/reasons stay explicitly unknown. CLI,
+inspection, campaign completion and exports use the same selected diagnostic facts.

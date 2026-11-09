@@ -5,6 +5,7 @@ package reporting
 import (
 	"encoding/json"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"strings"
 	"testing"
 )
@@ -74,5 +75,40 @@ func TestCollectionSuccessDoesNotConfirmOtherCleanup(t *testing.T) {
 	}
 	if strings.Contains(text, "Target stop confirmed") {
 		t.Fatal("collection fabricated lifecycle evidence")
+	}
+}
+
+func TestReportUsesRecordedTriggerNotCategoryPrecedence(t *testing.T) {
+	model := modelprovider.Diagnostic{Provider: "openai-chat", Model: "same-model-as-target", OperationID: "model-2"}.WithFailure("timeout", "deadline_exceeded")
+	workflow := campaign.NewWorkflowDiagnostic("target-1", "unknown", "delivery", "target_outcome_unknown", "", "", "")
+	for _, trigger := range []string{"model", "workflow", "missing"} {
+		t.Run(trigger, func(t *testing.T) {
+			r := Result{CampaignID: "campaign-1", ModelFailures: []modelprovider.Diagnostic{model}, WorkflowDiagnostics: []campaign.WorkflowDiagnostic{workflow}, HarnessExit: &campaign.HarnessExit{Outcome: "failed", ExitObserved: true, ExitCode: 137, Forced: true}, CleanupActions: campaign.CleanupDiagnostic{Container: "removed", Transport: "removed", Inputs: "retained", Closure: "unconfirmed", Injections: "unconfirmed", TargetStop: "unconfirmed"}}
+			if trigger != "missing" {
+				op := "model-2"
+				if trigger == "workflow" {
+					op = "target-1"
+				}
+				r.FailureTrigger = &campaign.FailureTrigger{Kind: trigger, OperationID: op}
+			}
+			text := string(markdown(r, "sha256:test"))
+			if !strings.Contains(text, "Attack Harness model request") || !strings.Contains(text, "Operator forced termination") || !strings.Contains(text, "input removal retained") || !strings.Contains(text, "failure origin unknown") {
+				t.Fatal(text)
+			}
+			if trigger == "missing" {
+				if !strings.Contains(text, "causal order was not retained") || strings.Contains(text, "Initiating operation failure") {
+					t.Fatal(text)
+				}
+			} else {
+				summary := text[strings.Index(text, "## Summary"):strings.Index(text, "## Execution outcome")]
+				want := model.Summary()
+				if trigger == "workflow" {
+					want = workflow.Message()
+				}
+				if strings.Index(summary, want) < 0 || strings.Index(summary, want) > strings.Index(summary, "Attack Harness exited") {
+					t.Fatal("exit displaced known cause", summary)
+				}
+			}
+		})
 	}
 }

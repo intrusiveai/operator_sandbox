@@ -16,18 +16,20 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/credentials"
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
+	"github.com/intrusiveai/operator_sandbox/internal/hostrun"
 	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/targetprofile"
 )
 
 type diagnosticCheck struct {
-	Name   string `json:"name"`
-	Status string `json:"status"`
-	Action string `json:"action,omitempty"`
+	Detail *hostrun.PreparationDiagnostic `json:"diagnostic,omitempty"`
+	Name   string                         `json:"name"`
+	Status string                         `json:"status"`
+	Action string                         `json:"action,omitempty"`
 }
 
 // doctor never resolves secrets, attaches a target, starts a service, creates a
-// container or repairs installation state. Results contain fixed codes only.
+// container or repairs installation state. Results retain bounded host-selected explanations; never raw errors.
 func doctor(ctx context.Context, args []string, stdout, stderr io.Writer, defaults hostconfig.Paths) int {
 	f := flag.NewFlagSet("doctor", flag.ContinueOnError)
 	f.SetOutput(stderr)
@@ -44,6 +46,7 @@ func doctor(ctx context.Context, args []string, stdout, stderr io.Writer, defaul
 			failed = true
 			item.Status = "failed"
 			item.Action = action
+			item.Detail = hostrun.PreparationDetails(hostrun.PreparationFailure("doctor "+name, err))
 		}
 		checks = append(checks, item)
 	}

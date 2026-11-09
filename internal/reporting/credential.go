@@ -11,6 +11,7 @@ import (
 // CredentialResolution contains only audit facts, never locators or values.
 // Event is the sequence in the exported, digest-bound source event stream.
 type CredentialResolution struct {
+	Step         string   `json:"step,omitempty"`
 	Event        int64    `json:"event"`
 	RecordedAt   string   `json:"recorded_at"`
 	CredentialID string   `json:"credential_id,omitempty"`
@@ -37,7 +38,11 @@ func projectCredential(sequence int64, at string, metadata map[string]json.RawMe
 		{"backend", &c.Backend, []string{"aws-secrets-manager", "azure-key-vault", "gcp-secret-manager", "hashicorp-vault", "onepassword"}},
 		{"outcome", &c.Outcome, []string{"resolved", "failed"}},
 		{"code", &c.Code, []string{"ok", "resolution_failed", "canceled"}},
+		{"step", &c.Step, []string{"backend-initialization", "secret-read", "value-selection", "audit-retention"}},
 	} {
+		if f.name == "step" && metadata[f.name] == nil {
+			continue
+		}
 		var value string
 		valid := json.Unmarshal(metadata[f.name], &value) == nil && auditID.MatchString(value)
 		if f.allowed != nil {

@@ -72,6 +72,8 @@ type CleanupResolution struct {
 	StopArchive string                           `json:"target_stop_archive,omitempty"`
 }
 type Result struct {
+	CleanupActions        campaign.CleanupDiagnostic      `json:"cleanup_actions,omitempty,omitzero"`
+	FailureTrigger        *campaign.FailureTrigger        `json:"failure_trigger,omitempty"`
 	CleanupResolutions    []CleanupResolution             `json:"cleanup_resolutions,omitempty"`
 	ModelRequests         []ModelRequestMeasurement       `json:"model_request_sizes,omitempty"`
 	ModelContexts         []ModelContextUsage             `json:"model_context_usage,omitempty"`
@@ -263,6 +265,15 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 				}
 			}
 		}
+		if event.Kind == "model.exchange" || event.Kind == "workflow.diagnostic" || event.Kind == "launch.terminal" {
+			var trigger campaign.FailureTrigger
+			if json.Unmarshal(metadata["failure_trigger"], &trigger) == nil && trigger.Valid() {
+				keep["failure_trigger"], _ = json.Marshal(trigger)
+				if result.FailureTrigger == nil {
+					result.FailureTrigger = &trigger
+				}
+			}
+		}
 		if event.Kind == "credential.resolution" {
 			audit, fields := projectCredential(event.Sequence, event.RecordedAt, metadata)
 			result.CredentialResolutions = append(result.CredentialResolutions, audit)
@@ -277,6 +288,11 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 			}
 		}
 		if event.Kind == "launch.terminal" {
+			var cleanup campaign.CleanupDiagnostic
+			if json.Unmarshal(metadata["cleanup_actions"], &cleanup) == nil && cleanup.Valid() {
+				keep["cleanup_actions"], _ = json.Marshal(cleanup)
+				result.CleanupActions = cleanup
+			}
 			var h campaign.HarnessExit
 			if json.Unmarshal(metadata["harness_exit"], &h) == nil && h.Valid() {
 				result.HarnessExit = &h
@@ -551,12 +567,32 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 			}
 			if event.Kind == "launch.terminal" && desc.Role == "launch-result" {
 				var r struct {
-					HarnessExit *campaign.HarnessExit `json:"harness_exit"`
-					Cleanup     string                `json:"container_cleanup"`
-					Workflow    json.RawMessage       `json:"workflow_diagnostic"`
+					FailureTrigger *campaign.FailureTrigger `json:"failure_trigger"`
+					HarnessExit    *campaign.HarnessExit    `json:"harness_exit"`
+					Cleanup        string                   `json:"container_cleanup"`
+					Workflow       json.RawMessage          `json:"workflow_diagnostic"`
+				}
+				var actions struct {
+					Container string `json:"container_cleanup"`
+					Transport string `json:"transport_cleanup"`
+					Inputs    string `json:"input_cleanup"`
+					Terminal  struct {
+						Closure    string
+						Injections string `json:"cleanup_state"`
+						TargetStop string `json:"target_stop"`
+					} `json:"terminal"`
+				}
+				if json.Unmarshal(raw, &actions) == nil {
+					d := campaign.CleanupDiagnostic{Container: actions.Container, Transport: actions.Transport, Inputs: actions.Inputs, Closure: actions.Terminal.Closure, Injections: actions.Terminal.Injections, TargetStop: actions.Terminal.TargetStop}
+					if d.Valid() {
+						result.CleanupActions = d
+					}
 				}
 				if json.Unmarshal(raw, &r) == nil {
 					result.Execution = "closed"
+					if r.FailureTrigger != nil && r.FailureTrigger.Valid() {
+						result.FailureTrigger = r.FailureTrigger
+					}
 					result.ContainerCleanup = r.Cleanup
 					if r.HarnessExit != nil && r.HarnessExit.Valid() {
 						result.HarnessExit = r.HarnessExit

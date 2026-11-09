@@ -38,6 +38,7 @@ type WorkflowDiagnostic struct {
 }
 
 var workflowReasons = map[string]string{
+	"unknown_failure":                 "Failure origin unknown; the diagnostic reason was not recognized.",
 	"finalization_capacity_protected": "Harness ended exploration to protect capacity for an assessment request and one correction opportunity; this is not an execution failure.",
 	"finalization_action_blocked":     "Protected finalization is active. The action was not executed; finish using retained evidence.",
 	"assessment_repair_active":        "Assessment repair is active. The action was not executed; correct the rejected finish using retained evidence.",
@@ -86,8 +87,8 @@ var workflowReasons = map[string]string{
 	"scenario_forbidden":              "Exploratory origin forbids scenario_id. Remove it or select scenario origin. Execution did not occur; correction is safe with a new operation ID.",
 	"unknown_scenario":                "Select a scenario_id from the submitted bundle, or exploratory origin without scenario_id. Execution did not occur; correction is safe with a new operation ID.",
 	"assessment_retention_failed":     "The assessment could not be retained. Finish was not accepted; execution closes for owned cleanup.",
-	"target_failed":                   "The target operation failed. Inspect the retained attempt errors and permitted observations.",
-	"target_outcome_unknown":          "The target operation outcome is uncertain. Execution is closed and the operation will not be replayed.",
+	"target_failed":                   "Operator observed a failed target operation; failure origin unknown. The retained result does not establish an application, Interceptor, or communication failure.",
+	"target_outcome_unknown":          "Operator could not confirm the target operation outcome; failure origin unknown. Execution is closed and the operation will not be replayed.",
 	"cleanup_failed":                  "Owned cleanup did not complete; retained state identifies the unconfirmed resources.",
 	"request_too_large":               "Request exceeds its byte limit. Publish large input or assessment content as an artifact and use its receipt.",
 	"policy_denied":                   "The selected operation or setup is not permitted by this campaign target policy.",
@@ -106,22 +107,22 @@ var workflowReasons = map[string]string{
 	"invalid_parent_receipt":          "Use an execution receipt from a completed attempt; a rejected submission has no execution receipt.",
 	"invalid_reference":               "A reference does not identify the required retained object. Use returned handles of the documented category.",
 	"invalid_range":                   "A range requires offset and length. Omit the optional range to reference the whole entry.",
-	"local_error":                     "Harness reported a local failure; unrestricted error text was omitted.",
+	"local_error":                     "A local failure was reported; its underlying cause is unknown and unrestricted error text was omitted.",
 	"retention_failed":                "Required input retention failed; the target was not dispatched.",
 }
 
 func NewWorkflowDiagnostic(operation, source, stage, reason, path, tool, call string) WorkflowDiagnostic {
 	d := WorkflowDiagnostic{Source: source, Stage: stage, Reason: reason}
-	if source != "harness-local" && source != "operator" && source != "target" && source != "cleanup" {
-		d.Source = "operator"
+	if source != "harness-local" && source != "operator" && source != "target" && source != "cleanup" && source != "interceptor" && source != "unknown" {
+		d.Source = "unknown"
 		d.Omitted = true
 	}
-	if stage != "arguments" && stage != "references" && stage != "dispatch" && stage != "termination" && stage != "retention" && stage != "delivery" && stage != "observation" && stage != "cleanup" && stage != "translation" {
-		d.Stage = "arguments"
+	if stage != "arguments" && stage != "references" && stage != "dispatch" && stage != "termination" && stage != "retention" && stage != "delivery" && stage != "observation" && stage != "cleanup" && stage != "translation" && stage != "unknown" {
+		d.Stage = "unknown"
 		d.Omitted = true
 	}
 	if _, ok := workflowReasons[reason]; !ok {
-		d.Reason = "local_error"
+		d.Reason = "unknown_failure"
 		d.Omitted = true
 	}
 	for _, entry := range []struct {
@@ -170,7 +171,7 @@ func (d WorkflowDiagnostic) Valid() bool {
 	if d.Budget != nil && (!d.Budget.Valid() || d.Stopping != "budget-limit" || d.Reason != "model_reservation_unavailable" || d.Stage != "termination" || d.Source != "harness-local" || d.Observed != 0 || d.Limit != 0 || d.FieldPath != "" || d.Tool != "" || d.CallID != "") {
 		return false
 	}
-	if d.TargetFailure != nil && (!d.TargetFailure.Valid() || !(d.Source == "target" && d.Reason == "target_failed" || d.Source == "cleanup" && d.Reason == "cleanup_failed") || d.Timeout != nil) {
+	if d.TargetFailure != nil && (!d.TargetFailure.Valid() || !((d.Source == "target" || d.Source == "operator" || d.Source == "interceptor" || d.Source == "unknown") && d.Reason == "target_failed" || d.Source == "cleanup" && d.Reason == "cleanup_failed") || d.Timeout != nil) {
 		return false
 	}
 	if d.Timeout != nil {
@@ -224,6 +225,16 @@ func (d WorkflowDiagnostic) Message() string {
 	}
 	if d.Stopping != "" && d.Limit == 0 && d.Budget == nil {
 		text = "Harness stopped: " + d.Stopping + ". " + text
+	}
+	if d.Stopping == "" && d.TargetFailure == nil && d.Timeout == nil && !d.Informational() {
+		switch d.Source {
+		case "harness-local":
+			text = "Attack Harness reported a local operation failure: " + text
+		case "operator":
+			text = "Operator rejected or could not complete the Harness operation: " + text
+		case "unknown":
+			text = "Diagnostic source invalid or unknown. " + text
+		}
 	}
 	if d.FieldPath != "" {
 		text += " Field: " + d.FieldPath + "."

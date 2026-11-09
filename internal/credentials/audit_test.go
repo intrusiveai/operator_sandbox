@@ -76,3 +76,44 @@ func TestAuditInitializationAndMissingSink(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestResolutionFailurePreservesBackendAndStepWithoutSecrets(t *testing.T) {
+	for _, step := range []string{"backend-initialization", "secret-read", "value-selection", "audit-retention"} {
+		t.Run(step, func(t *testing.T) {
+			b := &fakeBackend{value: []byte(`{"api_key":"private-value"}`)}
+			if step == "secret-read" {
+				b.err = errors.New("private-value at private/backend/path")
+			}
+			if step == "value-selection" {
+				b.value = []byte(`{"wrong":"private-value"}`)
+			}
+			r, err := New(validConfig(), map[string]BackendFactory{"gcp-secret-manager": func(context.Context, SecretStoreProfile) (Backend, error) {
+				if step == "backend-initialization" {
+					return nil, errors.New("private/backend/path")
+				}
+				return b, nil
+			}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer r.Close()
+			a := r.WithAudit(func(AuditEvent) error {
+				if step == "audit-retention" {
+					return errors.New("private journal path")
+				}
+				return nil
+			})
+			_, err = a.Resolve(context.Background(), "openai")
+			var f Failure
+			if !errors.As(err, &f) || !f.Valid() || f.Step != step || f.Backend != "gcp-secret-manager" || f.CredentialID != "openai" {
+				t.Fatal(err, f)
+			}
+			raw, _ := json.Marshal(f)
+			for _, value := range []string{"private-value", "private/backend/path", "private journal path"} {
+				if strings.Contains(string(raw)+err.Error(), value) {
+					t.Fatal("secret leaked")
+				}
+			}
+		})
+	}
+}

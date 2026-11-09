@@ -129,6 +129,7 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 			observed = *d
 		}
 	}
+	observed = observed.WithDeadline(ctx)
 	observed.OperationID = q.ID
 	// Missing transport metadata is not invented for injected/legacy providers.
 	if observed.Model == "" {
@@ -233,7 +234,11 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 			observed.RejectedResponse = modelprovider.RejectedResponse{State: "omitted", Omission: omission}
 		}
 		s.modelDiagnostic.CompareAndSwap(nil, &observed)
+		s.recordFailureTrigger("model", q.ID)
 		metadata["diagnostic"] = observed
+		if trigger := s.FailureTrigger(); trigger != nil && trigger.OperationID == q.ID {
+			metadata["failure_trigger"] = trigger
+		}
 		primary = modelprovider.FailureError(observed)
 	}
 	entry := campaign.Entry{RunRevision: q.Revision, Kind: "model.exchange", Metadata: marshal(metadata)}

@@ -22,6 +22,7 @@ import (
 )
 
 type fakeRun struct {
+	failureTrigger       *campaign.FailureTrigger
 	harnessExit          *campaign.HarnessExit
 	stopAccepted         bool
 	workflowDiagnostic   *campaign.WorkflowDiagnostic
@@ -42,7 +43,7 @@ func (f *fakeRun) Run(ctx context.Context) (hostworker.Result, error) {
 	if f.check != nil {
 		f.check()
 	}
-	return hostworker.Result{HarnessExit: f.harnessExit, StopAccepted: f.stopAccepted, ContainerCleanup: "removed", ModelDiagnostic: f.modelDiagnostic, ConclusionDiagnostic: f.conclusionDiagnostic, WorkflowDiagnostic: f.workflowDiagnostic}, f.runError
+	return hostworker.Result{FailureTrigger: f.failureTrigger, HarnessExit: f.harnessExit, StopAccepted: f.stopAccepted, ContainerCleanup: "removed", ModelDiagnostic: f.modelDiagnostic, ConclusionDiagnostic: f.conclusionDiagnostic, WorkflowDiagnostic: f.workflowDiagnostic}, f.runError
 }
 func (f *fakeRun) Cancel() error { f.cancels++; return nil }
 
@@ -226,6 +227,7 @@ func TestModelDiagnosticCompletionAndPersistenceFailure(t *testing.T) {
 		d.ProviderParameter = "temperature"
 		d.Omissions.RequestID = "not_provided"
 		inputs.run.modelDiagnostic = &d
+		inputs.run.failureTrigger = &campaign.FailureTrigger{Kind: "model", OperationID: d.OperationID}
 		secondary := errors.New("cleanup failed")
 		inputs.run.runError = errors.Join(modelprovider.FailureError(d), secondary)
 		inputs.run.check = func() {
@@ -262,6 +264,7 @@ func TestUsageDiagnosticSurvivesCompletionAndForcedExit(t *testing.T) {
 		d := modelprovider.Diagnostic{Provider: "bedrock-converse", Model: "mistral-fixture", OperationID: "model-1", HTTPStatus: 200}.WithUsageRejection(
 			contracts.ModelMetrics{Known: true, InputTokens: 33500, OutputTokens: 300, TotalTokens: 33800}, 32768, 4096, 36864)
 		inputs.run.modelDiagnostic = &d
+		inputs.run.failureTrigger = &campaign.FailureTrigger{Kind: "model", OperationID: d.OperationID}
 		inputs.run.harnessExit = &campaign.HarnessExit{Outcome: "failed", ExitObserved: true, ExitCode: 137, Forced: true, WorkerCause: "model_failure", Cause: d.Summary(), StderrState: "empty", CleanupComplete: true, Details: "campaign journal event launch.exit"}
 		secondary := errors.New("subsequent forced exit")
 		inputs.run.runError = errors.Join(modelprovider.FailureError(d), secondary)
@@ -393,6 +396,7 @@ func TestAttemptTimeoutCompletionPreservesPrimaryCause(t *testing.T) {
 	d.ResultDelivery = "published"
 	d.Timeout = &campaign.AttemptTimeout{NativeOperation: "observation.content.read", AllowanceMS: 90000, ElapsedMS: 90001, DeadlineSource: "attempt", Observation: "incomplete"}
 	inputs.run.workflowDiagnostic = &d
+	inputs.run.failureTrigger = &campaign.FailureTrigger{Kind: "workflow", OperationID: d.OperationID}
 	inputs.run.harnessExit = &campaign.HarnessExit{Outcome: "failed", ExitObserved: true, ExitCode: 137, Forced: true, Cause: "secondary Harness shutdown", StderrState: "empty", CleanupComplete: true, Details: "campaign journal event launch.exit"}
 	inputs.run.runError = d
 	load := func(context.Context, startrequest.Request) (verifiedInputs, error) { return inputs, nil }
@@ -414,6 +418,7 @@ func TestValidationDiagnosticSurvivesCompletionAndForcedExit(t *testing.T) {
 		d.RequestID = "5ff57339-db46-44e9-83b1-ac71d7bcce27"
 		d.RejectedResponse = modelprovider.RejectedResponse{State: "retained", Digest: contracts.RawDigest([]byte("private evidence")), SizeBytes: 16, Redacted: true}
 		inputs.run.modelDiagnostic = &d
+		inputs.run.failureTrigger = &campaign.FailureTrigger{Kind: "model", OperationID: d.OperationID}
 		inputs.run.harnessExit = &campaign.HarnessExit{Outcome: "failed", ExitObserved: true, ExitCode: 137, Forced: true, WorkerCause: "model_failure", Cause: d.Summary(), StderrState: "empty", CleanupComplete: true, Details: "campaign journal event launch.exit"}
 		secondary := errors.New("subsequent forced exit")
 		inputs.run.runError = errors.Join(modelprovider.FailureError(d), secondary)
@@ -447,6 +452,7 @@ func TestTargetFailureCompletionPreservesNativeCause(t *testing.T) {
 	d := campaign.NewWorkflowDiagnostic("request-1", "target", "delivery", "target_failed", "", "attempt_execute", "call-1")
 	d.TargetFailure = &campaign.TargetFailure{NativeOperation: "application.invoke", Operation: "support-baseline", AttemptID: "attempt-1", TurnID: "turn-1", StepID: "step-1", ResponseDigest: contracts.RawDigest([]byte("native error")), HTTPStatus: 200, Category: "target_turn_timeout", Detail: "context deadline exceeded"}
 	inputs.run.workflowDiagnostic = &d
+	inputs.run.failureTrigger = &campaign.FailureTrigger{Kind: "workflow", OperationID: d.OperationID}
 	inputs.run.harnessExit = &campaign.HarnessExit{Outcome: "failed", ExitObserved: true, ExitCode: 137, Forced: true, Cause: "secondary Harness shutdown", StderrState: "empty", CleanupComplete: false, Details: "campaign journal event launch.exit"}
 	inputs.run.runError = d
 	result, err := run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", func(context.Context, startrequest.Request) (verifiedInputs, error) { return inputs, nil })
@@ -456,5 +462,20 @@ func TestTargetFailureCompletionPreservesNativeCause(t *testing.T) {
 	disk, err := startrequest.Read(r.StateRoot, r.Selection.StartRequestID)
 	if err != nil || disk.Completion == nil || disk.Completion.Diagnostic == nil || disk.Completion.Diagnostic.Workflow.TargetFailure == nil || *disk.Completion.Diagnostic.Workflow.TargetFailure != *d.TargetFailure {
 		t.Fatal(disk, err)
+	}
+}
+
+func TestCoexistingDiagnosticsDoNotInventCausalOrder(t *testing.T) {
+	saved, inputs := jobFixture(t)
+	r := saved.Request
+	d := modelprovider.Diagnostic{Provider: "openai-chat", Model: "same-model-as-target", OperationID: "model-1"}.WithFailure("cancellation", "canceled")
+	inputs.run.modelDiagnostic = &d // No recorded initiating failure: cancellation may be secondary.
+	rejection := campaign.NewWorkflowDiagnostic("finish-1", "harness-local", "arguments", "invalid_arguments", "/objectives", "finish", "call-1")
+	inputs.run.workflowDiagnostic = &rejection
+	inputs.run.harnessExit = &campaign.HarnessExit{Outcome: "failed", ExitObserved: true, ExitCode: 137, Forced: true, StderrState: "empty", Details: "campaign journal event launch.exit"}
+	inputs.run.runError = errors.New("independent failure")
+	result, err := run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", func(context.Context, startrequest.Request) (verifiedInputs, error) { return inputs, nil })
+	if err == nil || result.Diagnostic == nil || !strings.Contains(result.Diagnostic.Message, "initiating failure could not be established") || result.Diagnostic.Model != d || result.Diagnostic.Workflow.Reason != "invalid_arguments" {
+		t.Fatal(result, err)
 	}
 }
