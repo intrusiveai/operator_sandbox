@@ -273,3 +273,21 @@ func (r *NativeRecovery) RetainEvidence(ctx context.Context, v *interceptor.Veri
 func (r *NativeRecovery) VerifyRetainedEvidence(ctx context.Context, record NativeEvidence) error {
 	return verifyRetainedEvidence(ctx, r.root, r.manifest.CampaignID, record)
 }
+
+// RetainedProvenance derives current report facts from verified archive bytes,
+// including archives retained before lifecycle summaries were recorded.
+func (r *NativeRecovery) RetainedProvenance(ctx context.Context, record NativeEvidence) (interceptor.ProvenanceReceipt, error) {
+	if err := r.VerifyRetainedEvidence(ctx, record); err != nil {
+		return interceptor.ProvenanceReceipt{}, err
+	}
+	f, err := openRegular(r.root, record.Path, os.O_RDONLY)
+	if err != nil {
+		return interceptor.ProvenanceReceipt{}, err
+	}
+	defer f.Close()
+	v, err := interceptor.VerifyEvidenceFile(ctx, f, record.Provenance.Transfer, record.Provenance.Identity)
+	if err != nil {
+		return interceptor.ProvenanceReceipt{}, err
+	}
+	return v.Receipt(), nil
+}

@@ -36,6 +36,13 @@ func Collect(ctx context.Context, peer Peer, directory string, target Target, ma
 	download, err := peer.DownloadEvidence(ctx, interceptor.EvidenceRequest{CampaignID: target.Identity.CampaignID, SessionID: target.Identity.SessionID, MaxArchiveBytes: out.LocalMaxBytes, InterceptorMaxBytes: target.NativeMaxBytes, Deadline: deadline}, directory)
 	if err != nil {
 		out.Reason = evidenceReason(err)
+		var remote *interceptor.RemoteError
+		if errors.As(err, &remote) {
+			out.NativeStatus, out.NativeCode = remote.Response.Status, remote.Response.Code()
+			if out.NativeCode == "" || !out.ValidDiagnostic() {
+				out.NativeCode, out.NativeOmission = "", "code_unavailable"
+			}
+		}
 		return
 	}
 	if download == nil {

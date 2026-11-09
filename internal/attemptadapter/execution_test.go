@@ -23,6 +23,7 @@ type runtimeStub struct{}
 func (runtimeStub) CheckRunning(context.Context, campaign.DockerBinding) error { return nil }
 
 type nativePeer struct {
+	turnError    string
 	contract     *contractcheck.Document
 	t            *testing.T
 	plan         *Plan
@@ -106,6 +107,9 @@ func (p *nativePeer) Execute(_ context.Context, q interceptor.PreparedOperation)
 		}
 		now := time.Now().UTC()
 		body = interceptor.Turn{ID: "turn-1", Operation: "invoke", Status: "complete", AttemptID: q.Request().AttemptID, PayloadDigest: p.plan.request.Payload.Digest, Body: p.output, MediaType: "text/plain", OutputDigest: contracts.RawDigest(p.output), Started: now, Finished: now}
+		if p.turnError != "" {
+			body = interceptor.Turn{ID: "turn-1", Operation: "invoke", Status: "error", AttemptID: q.Request().AttemptID, PayloadDigest: p.plan.request.Payload.Digest, Started: now, Finished: now, Error: p.turnError}
+		}
 		p.revision++
 	case "observation.read":
 		var lookup map[string]string
@@ -430,5 +434,24 @@ func TestInterceptorContractAdapterExchanges(t *testing.T) {
 	}
 	if result.Receipt == nil || len(peer.calls) < 8 {
 		t.Fatal("missing adapter exchanges or retained feedback")
+	}
+}
+
+func TestNativeFailureRemainsPrimaryWhenAttemptClockExpiresAfterReply(t *testing.T) {
+	c, raw, in := fixture(t)
+	p, err := Compile(c, raw, in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	e, _, _, peer := executionSetup(t, raw, p)
+	peer.turnError = "context deadline exceeded"
+	peer.after = func(op string) {
+		if op == "application.invoke" {
+			p.deadline = time.Now().Add(-time.Millisecond)
+		}
+	}
+	result, err := e.Run(context.Background())
+	if !errors.Is(err, nativeexec.ErrFailed) || result.Failure == nil || result.Failure.Category != "target_turn_timeout" || bytes.Contains(result.GuestJSON, []byte(`"timeout"`)) {
+		t.Fatalf("%s %+v %v", result.GuestJSON, result.Failure, err)
 	}
 }

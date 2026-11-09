@@ -82,7 +82,9 @@ func (s *Service) handleDiagnostic(ctx context.Context, raw []byte, seq int64) (
 		return nil, err
 	}
 	if !d.Informational() {
-		s.workflowDiagnostic.Store(&d)
+		if primary := s.WorkflowFailure(); primary == nil || primary.TargetFailure == nil {
+			s.workflowDiagnostic.Store(&d)
+		}
 	}
 	reply := stateReply{Result: map[string]any{"status": "retained", "receipt_id": receipt}}
 	if err = s.attempts.Tools().Finish(q.ID, marshal(reply), 0); err != nil {
@@ -202,4 +204,26 @@ func (s *Service) recordTimeoutDelivery(delivery string) error {
 	s.workflowDiagnostic.Store(d)
 	_, err := s.writer.AppendStored(campaign.Entry{RunRevision: s.attempts.Status().RunRevision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d})}, "", false)
 	return err
+}
+
+// recordTargetFailure runs before attempt publication and survives terminal shutdown.
+func (s *Service) recordTargetFailure(operationID, callID string, failure *campaign.TargetFailure) error {
+	source, stage, reason := "target", "delivery", "target_failed"
+	switch failure.NativeOperation {
+	case "observation.read", "observation.content.read":
+		stage = "observation"
+	case "injection.delete":
+		source, stage, reason = "cleanup", "cleanup", "cleanup_failed"
+	}
+	d := campaign.NewWorkflowDiagnostic(operationID, source, stage, reason, "", "attempt_execute", callID)
+	d.TargetFailure = failure
+	if !d.Valid() {
+		return ErrService
+	}
+	s.workflowDiagnostic.Store(&d)
+	_, err := s.writer.AppendStored(campaign.Entry{RunRevision: s.attempts.Status().RunRevision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d})}, "", false)
+	if err != nil {
+		return errors.Join(d, err)
+	}
+	return nil
 }

@@ -218,3 +218,35 @@ Harness-reported accounting, not a claim that the cloud provider rejected a quot
 Remaining tokens may be positive but less than the reservation needed for another
 request. Prior tool rejections remain separate history and MUST NOT replace this
 cause. No final assessment, exit outcome, and cleanup outcome remain separate facts.
+
+## Target failures and cleanup reconciliation
+
+Reports MUST retain `workflow_diagnostics[].target_failure` and associate it with
+`attempts[].target_failure`. These host-selected facts identify the target/native
+operation, attempt, turn when available, native step, HTTP status, native code
+when available, bounded error detail and omission reason, and the digest of the
+original native response. A native target-turn error MUST remain primary over a
+subsequent forced Harness exit. Only an explicit native deadline error establishes
+`target_turn_timeout`; elapsed time alone MUST NOT establish it. The shared
+Harness wire format and effective feedback visibility MUST remain unchanged.
+
+`cleanup_resolutions` MUST report per-session currently verified archive
+availability, historical collection outcomes, and independently verified
+`session_stopped` evidence. The report MUST identify the event sequence, timestamp,
+digest and archive for a confirmed native stop. Only a session-bound, hash-verified
+control event from `sandboxd` with `sandbox_control` provenance qualifies. Reports
+MUST reverify retained archive provenance, including older archives whose saved
+receipts lack the lifecycle projection. Missing or invalid evidence MUST NOT
+confirm a stop.
+
+The existing cleanup/closure/stop fields and Harness cleanup flag describe the
+termination/recovery record; they MUST NOT be silently rewritten from later
+collection success. Markdown MUST label that history and separately show resolved
+collection and native-stop facts. Neither a complete archive nor a stopped session
+proves injection deletion or ownership closure. Earlier report generations and
+execution journals MUST remain unchanged.
+
+Exported `evidence.collection-result` metadata MUST preserve the selected native
+HTTP status, safe native rejection code and any omission reason. Older
+`export_rejected` records without these details MUST explicitly say the details
+were not retained, rather than infer a cause from a later successful collection.

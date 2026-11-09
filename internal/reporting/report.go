@@ -34,23 +34,24 @@ type Receipt struct {
 	Complete         bool   `json:"journal_intact"`
 }
 type Attempt struct {
-	RequestID       string             `json:"request_id"`
-	AttemptID       string             `json:"attempt_id"`
-	Index           int64              `json:"attempt_index"`
-	Revision        int64              `json:"run_revision"`
-	State           string             `json:"state"`
-	Dispatched      bool               `json:"dispatched"`
-	Origin          string             `json:"origin,omitempty"`
-	Operation       string             `json:"operation_id,omitempty"`
-	ReceiptID       string             `json:"receipt_id,omitempty"`
-	RequestEvidence string             `json:"request_evidence,omitempty"`
-	ResultEvidence  string             `json:"result_evidence,omitempty"`
-	ScenarioID      string             `json:"scenario_id,omitempty"`
-	ObjectiveIDs    []string           `json:"objective_ids"`
-	TargetContact   string             `json:"target_contact"`
-	Invocation      string             `json:"invocation_state"`
-	Cleanup         string             `json:"cleanup_state"`
-	Feedback        *feedback.Manifest `json:"feedback,omitempty"`
+	TargetFailure   *campaign.TargetFailure `json:"target_failure,omitempty"`
+	RequestID       string                  `json:"request_id"`
+	AttemptID       string                  `json:"attempt_id"`
+	Index           int64                   `json:"attempt_index"`
+	Revision        int64                   `json:"run_revision"`
+	State           string                  `json:"state"`
+	Dispatched      bool                    `json:"dispatched"`
+	Origin          string                  `json:"origin,omitempty"`
+	Operation       string                  `json:"operation_id,omitempty"`
+	ReceiptID       string                  `json:"receipt_id,omitempty"`
+	RequestEvidence string                  `json:"request_evidence,omitempty"`
+	ResultEvidence  string                  `json:"result_evidence,omitempty"`
+	ScenarioID      string                  `json:"scenario_id,omitempty"`
+	ObjectiveIDs    []string                `json:"objective_ids"`
+	TargetContact   string                  `json:"target_contact"`
+	Invocation      string                  `json:"invocation_state"`
+	Cleanup         string                  `json:"cleanup_state"`
+	Feedback        *feedback.Manifest      `json:"feedback,omitempty"`
 }
 type ModelRequestMeasurement struct {
 	Event       int64                       `json:"event"`
@@ -63,7 +64,15 @@ type ModelContextUsage struct {
 	OperationID string                  `json:"operation_id"`
 	Budget      contracts.ContextBudget `json:"context_budget"`
 }
+type CleanupResolution struct {
+	SessionID   string                           `json:"session_id"`
+	Collection  string                           `json:"collection_state"`
+	History     []campaign.EvidenceOutcome       `json:"collection_history"`
+	Stop        *interceptor.SessionStopEvidence `json:"target_stop_evidence,omitempty"`
+	StopArchive string                           `json:"target_stop_archive,omitempty"`
+}
 type Result struct {
+	CleanupResolutions    []CleanupResolution             `json:"cleanup_resolutions,omitempty"`
 	ModelRequests         []ModelRequestMeasurement       `json:"model_request_sizes,omitempty"`
 	ModelContexts         []ModelContextUsage             `json:"model_context_usage,omitempty"`
 	DatabaseEvidence      []DatabaseSummary               `json:"database_evidence,omitempty"`
@@ -228,6 +237,16 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 		for _, key := range []string{"operation_id", "attempt_index_high_watermark", "attempt_admissions", "snapshot_admissions", "snapshot_bytes", "model_turns", "model_tokens", "actual_tokens", "finish_reason", "conclusion_state", "assessment_state", "unavailable", "finalization_status", "assertion_origin", "record_kind", "receipt_id", "part_index", "parts", "digest", "size_bytes"} {
 			if value, ok := metadata[key]; ok {
 				keep[key] = value
+			}
+		}
+		if event.Kind == "evidence.collection-result" {
+			var v campaign.EvidenceOutcome
+			if json.Unmarshal(event.Metadata, &v) == nil && v.ValidDiagnostic() {
+				for _, key := range []string{"session_id", "state", "reason", "native_http_status", "native_code", "native_detail_omission", "archive_digest", "local_max_bytes", "native_max_bytes", "recorded"} {
+					if value, ok := metadata[key]; ok {
+						keep[key] = value
+					}
+				}
 			}
 		}
 		if event.Kind == "interceptor.compatibility" {
@@ -660,11 +679,18 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 	}
 	archives := []campaign.NativeEvidence{}
 	for i := range sessions {
+		resolution := CleanupResolution{SessionID: sessions[i].Identity.SessionID, Collection: "unconfirmed"}
 		complete := false
 		for j := range sessions[i].Archives {
 			archive := &sessions[i].Archives[j]
 			if archive.Verified {
 				archives = append(archives, archive.Record)
+				if resolution.Collection != "complete" {
+					resolution.Collection = archive.Record.Provenance.State
+				}
+				if stop := archive.Record.Provenance.SessionStopped; stop != nil && (resolution.Stop == nil || stop.ObservedAt.After(resolution.Stop.ObservedAt)) {
+					resolution.Stop, resolution.StopArchive = stop, "evidence/"+archive.Record.Provenance.Transfer.SHA256[7:]+".tar"
+				}
 				if d := archive.Record.Provenance.Database; d != nil {
 					result.DatabaseEvidence = append(result.DatabaseEvidence, DatabaseSummary{sessions[i].Identity.SessionID, "evidence/" + archive.Record.Provenance.Transfer.SHA256[7:] + ".tar", *d})
 				}
@@ -681,6 +707,15 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 			v := &sessions[i].Outcomes[j]
 			if v.ArchiveDigest != "" {
 				v.ArchivePath = "evidence/" + v.ArchiveDigest[7:] + ".tar"
+			}
+		}
+		resolution.History = sessions[i].Outcomes
+		result.CleanupResolutions = append(result.CleanupResolutions, resolution)
+	}
+	for i := range result.Attempts {
+		for _, d := range result.WorkflowDiagnostics {
+			if d.TargetFailure != nil && d.OperationID == result.Attempts[i].RequestID {
+				result.Attempts[i].TargetFailure = d.TargetFailure
 			}
 		}
 	}
@@ -788,7 +823,7 @@ func markdown(r Result, digest string) []byte {
 	var b strings.Builder
 	fmt.Fprintf(&b, "# Campaign report\n\nCampaign: `%s`\n\nResult: `%s`\n\n", r.CampaignID, digest)
 	writeEvidenceSummary(&b, r)
-	fmt.Fprintf(&b, "| Recorded fact | Value |\n| --- | --- |\n| Journal intact | %t |\n| Verified events | %d |\n| Execution | %s |\n| Container cleanup | %s |\n| Target closure | %s |\n| Injection cleanup | %s |\n| Target stop | %s |\n| Attempts | %d |\n| Harness claim records | %d |\n", r.JournalIntact, r.VerifiedEvents, r.Execution, r.ContainerCleanup, r.TargetClosure, r.InjectionCleanup, r.TargetStop, len(r.Attempts), r.HarnessClaims)
+	fmt.Fprintf(&b, "| Recorded fact | Value |\n| --- | --- |\n| Journal intact | %t |\n| Verified events | %d |\n| Execution | %s |\n| Container cleanup | %s |\n| Target closure (termination/recovery record) | %s |\n| Injection cleanup (termination/recovery record) | %s |\n| Target stop (termination/recovery record) | %s |\n| Attempts | %d |\n| Harness claim records | %d |\n", r.JournalIntact, r.VerifiedEvents, r.Execution, r.ContainerCleanup, r.TargetClosure, r.InjectionCleanup, r.TargetStop, len(r.Attempts), r.HarnessClaims)
 	b.WriteString("\nAttempt completion is not proof of exploitation. Delivery, target responses and scoped oracle observations remain source evidence. Harness conclusions are claims; missing oracle evidence is unknown. No model interpretation is performed.\n")
 	if len(r.ModelRequests) > 0 {
 		b.WriteString("\n## Model request size\n\nNative JSON bytes before transport adaptation; these are not token counts. Other includes framing and remaining settings.\n\n| Event | Operation | Instructions | Tools | Conversation | Other | Total |\n| --- | --- | --- | --- | --- | --- | --- |\n")
@@ -831,7 +866,7 @@ func markdown(r Result, digest string) []byte {
 	if len(r.WorkflowDiagnostics) > 0 {
 		b.WriteString("\n## Workflow diagnostics\n\n")
 		for _, d := range r.WorkflowDiagnostics {
-			fmt.Fprintf(&b, "- %s (%s; operation %s)\n", d.Message(), d.Source, d.OperationID)
+			dataBlock(&b, fmt.Sprintf("%s (%s; operation %s)", d.Message(), d.Source, d.OperationID))
 		}
 	}
 	if len(r.ConclusionRejections) > 0 {

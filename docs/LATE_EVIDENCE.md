@@ -109,3 +109,19 @@ size rejection, interrupted and failed publication, explicit retries, retained
 archive corruption, lost live collection results, unchanged execution journals,
 and reuse without network contact. Native host/Interceptor qualification remains
 separate from scripted peers and checked native archive fixtures.
+
+## Reading later confirmations
+
+A new report separates the original termination record from later verified
+outcomes. Successful later collection resolves evidence availability; it does not
+change the failed campaign outcome or rewrite the original journal. A verified
+native `session_stopped` event confirms that session's stop and identifies the
+source archive/event. Injection cleanup and ownership closure remain unconfirmed
+unless their own authoritative records establish them.
+
+Native export rejections retain `native_http_status`, `native_code` when safe and
+available, and `native_detail_omission` when needed. For example, HTTP 409 with
+`evidence_unavailable_or_target_not_stopped` records the native refusal without
+claiming which side of that combined condition occurred. Older receipts with only
+`export_rejected` cannot establish the lost native reason. Regenerate/export the
+report after explicit collection to see the new outcomes alongside that history.

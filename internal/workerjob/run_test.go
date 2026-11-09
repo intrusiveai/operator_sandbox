@@ -440,3 +440,21 @@ func TestValidationDiagnosticSurvivesCompletionAndForcedExit(t *testing.T) {
 		}
 	}
 }
+
+func TestTargetFailureCompletionPreservesNativeCause(t *testing.T) {
+	saved, inputs := jobFixture(t)
+	r := saved.Request
+	d := campaign.NewWorkflowDiagnostic("request-1", "target", "delivery", "target_failed", "", "attempt_execute", "call-1")
+	d.TargetFailure = &campaign.TargetFailure{NativeOperation: "application.invoke", Operation: "support-baseline", AttemptID: "attempt-1", TurnID: "turn-1", StepID: "step-1", ResponseDigest: contracts.RawDigest([]byte("native error")), HTTPStatus: 200, Category: "target_turn_timeout", Detail: "context deadline exceeded"}
+	inputs.run.workflowDiagnostic = &d
+	inputs.run.harnessExit = &campaign.HarnessExit{Outcome: "failed", ExitObserved: true, ExitCode: 137, Forced: true, Cause: "secondary Harness shutdown", StderrState: "empty", CleanupComplete: false, Details: "campaign journal event launch.exit"}
+	inputs.run.runError = d
+	result, err := run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", func(context.Context, startrequest.Request) (verifiedInputs, error) { return inputs, nil })
+	if err == nil || result.Diagnostic == nil || result.Diagnostic.Message != d.Message() || result.Diagnostic.HarnessExit.ExitCode != 137 {
+		t.Fatal(result, err)
+	}
+	disk, err := startrequest.Read(r.StateRoot, r.Selection.StartRequestID)
+	if err != nil || disk.Completion == nil || disk.Completion.Diagnostic == nil || disk.Completion.Diagnostic.Workflow.TargetFailure == nil || *disk.Completion.Diagnostic.Workflow.TargetFailure != *d.TargetFailure {
+		t.Fatal(disk, err)
+	}
+}

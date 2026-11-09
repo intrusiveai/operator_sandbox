@@ -246,7 +246,7 @@ func loadEvidenceFacts(ctx context.Context, a *campaign.NativeRecovery, f facts)
 	return out, err
 }
 func validEvidenceOutcome(v campaign.EvidenceOutcome, t nativeevidence.Target, p campaign.EvidencePolicy) bool {
-	if v.SessionID != t.Identity.SessionID || !v.Recorded || v.LocalMaxBytes != p.MaxArchiveBytes || v.NativeMaxBytes != t.NativeMaxBytes {
+	if !v.ValidDiagnostic() || v.SessionID != t.Identity.SessionID || !v.Recorded || v.LocalMaxBytes != p.MaxArchiveBytes || v.NativeMaxBytes != t.NativeMaxBytes {
 		return false
 	}
 	switch v.State {

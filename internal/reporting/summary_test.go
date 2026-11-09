@@ -63,3 +63,16 @@ func TestReportDistinguishesExitCleanupRecoveryAndMissingFacts(t *testing.T) {
 		})
 	}
 }
+
+func TestCollectionSuccessDoesNotConfirmOtherCleanup(t *testing.T) {
+	r := Result{CampaignID: "campaign-1", TargetStop: "unconfirmed", TargetClosure: "unconfirmed", InjectionCleanup: "unconfirmed", CleanupResolutions: []CleanupResolution{{SessionID: "session-1", Collection: "complete", History: []campaign.EvidenceOutcome{{SessionID: "session-1", State: "missing", Reason: "export_rejected"}, {SessionID: "session-1", State: "complete"}}}}}
+	text := string(markdown(r, "sha256:test"))
+	for _, want := range []string{"Currently verified evidence collection: complete", "native rejection details were not retained", "No verified native session_stopped event", "injection cleanup: unconfirmed"} {
+		if !strings.Contains(text, want) {
+			t.Fatal(want, text)
+		}
+	}
+	if strings.Contains(text, "Target stop confirmed") {
+		t.Fatal("collection fabricated lifecycle evidence")
+	}
+}

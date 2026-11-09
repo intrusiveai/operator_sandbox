@@ -383,3 +383,48 @@ and successful cleanup do not establish a successful assessment. Do not replay
 completed target operations to correct a finish submission. Older archives lacking
 these facts remain readable, but their missing budget reason cannot be recovered
 from an unrelated observed/limit counter.
+
+## Target failure diagnostics
+
+A failed native target turn retains its actual error, independently of Operator's
+attempt deadline and the Harness exit status. For example:
+
+```text
+Campaign execution failed during target delivery (execution_failed):
+The target application turn exceeded its deadline while running support-baseline. Interceptor reported "context deadline exceeded". Campaign execution is closed; the operation will not be replayed.
+Operation: attempt-request-1
+Attempt: attempt-1
+Native operation: application.invoke
+Native step: step-1
+Native response evidence: sha256:...
+Execution will not resume.
+```
+
+Other native errors receive the same treatment; a timeout classification requires
+an explicit native deadline error, not a duration inferred from timestamps. The
+native turn response currently does not supply the configured turn deadline, so
+Operator does not infer or print that allowance. An Operator attempt timeout
+instead identifies the Operator allowance and the stage where it expired.
+
+Foreground and supervised execution retain the same `workflow.target_failure`
+in the start completion diagnostic. `inspect`/`status` expose the journal's
+`workflow_diagnostic`; reports associate the failure with the attempt and identify
+the original private native response by step and digest. Text is quoted, bounded, and filtered using the
+existing credential-pattern rules, with omissions reported. Original responses
+remain private administrator evidence. This native diagnostic is administrator-only; Harness observations continue to
+follow the effective feedback policy and observation selection.
+A forced Harness exit remains a secondary consequence, not a replacement cause.
+
+After cleanup, use the following commands to inspect and export the current facts:
+
+```sh
+operatorctl inspect --campaign CAMPAIGN_ID
+operatorctl campaign evidence collect --campaign CAMPAIGN_ID
+operatorctl report --campaign CAMPAIGN_ID
+operatorctl export --campaign CAMPAIGN_ID --output /absolute/new-export-directory
+```
+
+Explicit collection can resolve an earlier missing archive. The new report keeps
+the original termination history and separately identifies confirmed native
+session stops. Collection success alone does not confirm injection cleanup or
+ownership closure. See [late collection](LATE_EVIDENCE.md).

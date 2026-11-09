@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"reflect"
 	"slices"
 	"sort"
@@ -38,17 +39,26 @@ type EvidenceIdentity struct {
 	ParentCheckpointDigest string `json:"parent_checkpoint_digest,omitempty"`
 }
 
+// SessionStopEvidence confirms only the native session stop, not injection deletion
+// or ownership closure. Sequence/hash identify the exact verified lifecycle event.
+type SessionStopEvidence struct {
+	EventSequence uint64    `json:"event_sequence"`
+	EventDigest   string    `json:"event_digest"`
+	ObservedAt    time.Time `json:"observed_at"`
+}
+
 type ProvenanceReceipt struct {
-	Database     *DatabaseEvidence `json:"database,omitempty"`
-	Identity     EvidenceIdentity  `json:"identity"`
-	Transfer     EvidenceReceipt   `json:"transfer"`
-	BundleDigest string            `json:"bundle_digest"`
-	EventHead    string            `json:"event_head"`
-	StateHead    string            `json:"state_head"`
-	EventCount   int               `json:"event_count"`
-	StateCount   int               `json:"state_count"`
-	State        string            `json:"state"` // complete or partial; never an execution-success claim
-	Gaps         []string          `json:"gaps"`
+	SessionStopped *SessionStopEvidence `json:"session_stopped,omitempty"`
+	Database       *DatabaseEvidence    `json:"database,omitempty"`
+	Identity       EvidenceIdentity     `json:"identity"`
+	Transfer       EvidenceReceipt      `json:"transfer"`
+	BundleDigest   string               `json:"bundle_digest"`
+	EventHead      string               `json:"event_head"`
+	StateHead      string               `json:"state_head"`
+	EventCount     int                  `json:"event_count"`
+	StateCount     int                  `json:"state_count"`
+	State          string               `json:"state"` // complete or partial; never an execution-success claim
+	Gaps           []string             `json:"gaps"`
 }
 
 // VerifiedEvidence can only be constructed by semantic verification. It remains
@@ -60,6 +70,10 @@ type VerifiedEvidence struct {
 
 func (v *VerifiedEvidence) Receipt() ProvenanceReceipt {
 	r := v.receipt
+	if r.SessionStopped != nil {
+		copy := *r.SessionStopped
+		r.SessionStopped = &copy
+	}
 	r.Gaps = slices.Clone(r.Gaps)
 	if r.Database != nil {
 		copy := *r.Database
@@ -207,7 +221,7 @@ func (a *EvidenceArchive) VerifyProvenance(ctx context.Context, id EvidenceIdent
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
-	return &VerifiedEvidence{a, ProvenanceReceipt{v.database, id, receipt, wantDigest, v.eventHashes[len(v.eventHashes)-1], v.stateHashes[len(v.stateHashes)-1], len(v.eventHashes) - 1, len(v.stateHashes) - 1, state, gaps}}, nil
+	return &VerifiedEvidence{a, ProvenanceReceipt{v.stopped, v.database, id, receipt, wantDigest, v.eventHashes[len(v.eventHashes)-1], v.stateHashes[len(v.stateHashes)-1], len(v.eventHashes) - 1, len(v.stateHashes) - 1, state, gaps}}, nil
 }
 func nativeHash(v any) string {
 	raw, err := json.Marshal(v)
@@ -315,4 +329,15 @@ func evidenceShape(v any, t reflect.Type) bool {
 		}
 	}
 	return true
+}
+
+// VerifyEvidenceFile rechecks saved archive bytes with the same verifier used on
+// download. The caller owns the read-only file; this does not copy or remove it.
+func VerifyEvidenceFile(ctx context.Context, file *os.File, receipt EvidenceReceipt, id EvidenceIdentity) (*VerifiedEvidence, error) {
+	d := &EvidenceDownload{file: file, receipt: receipt}
+	a, err := d.InspectArchive(ctx, DefaultArchiveLimits(receipt.LocalMaxBytes))
+	if err != nil {
+		return nil, err
+	}
+	return a.VerifyProvenance(ctx, id)
 }
