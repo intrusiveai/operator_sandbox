@@ -136,7 +136,7 @@ func (c *Client) GenerateWithMetadata(ctx context.Context, raw []byte) ([]byte, 
 // rejection. Even when that copy exists, errors return no usable response body.
 func (c *Client) GenerateWithEvidence(ctx context.Context, raw []byte) (body []byte, observed Diagnostic, evidence ResponseEvidence, callErr error) {
 	evidence.Omission = "no_complete_response"
-	ctx, cancel := context.WithTimeout(ctx, 120*time.Second)
+	ctx, cancel := requestContext(ctx)
 	// Defer order matters: classify the observed failure before our own cleanup
 	// cancels the context, so cleanup cannot turn a rejection into cancellation.
 	defer cancel()
@@ -145,12 +145,21 @@ func (c *Client) GenerateWithEvidence(ctx context.Context, raw []byte) (body []b
 		observed.Provider, observed.Model = c.profile.Provider, c.profile.Model
 	}
 	defer func() {
+		observed = observed.WithDeadline(ctx)
 		if callErr != nil {
+			observed.ObservedStage = category
+			var credentialFailure credentials.Failure
+			if errors.As(callErr, &credentialFailure) && credentialFailure.Valid() {
+				observed.Credential = credentialFailure
+			}
 			if category != "http_rejection" {
 				category = failureCategory(ctx, callErr, category)
 				switch category {
 				case "timeout":
 					reason = "deadline_exceeded"
+					if at, ok := ctx.Deadline(); !errors.Is(context.Cause(ctx), context.DeadlineExceeded) && (!ok || time.Now().Before(at)) {
+						reason = "transport_timeout"
+					}
 				case "cancellation":
 					reason = "canceled"
 				}

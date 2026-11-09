@@ -135,6 +135,9 @@ func TestModelFailureSurvivesJournalWriteFailure(t *testing.T) {
 			request["request"].(map[string]any)["messages"].([]any)[0].(map[string]any)["content"] = string(launch.Prompt)
 			_, err := s.Handle(context.Background(), stateWire("engine.model_generate", "model-1", 1, request), 0)
 			d.OperationID = "model-1"
+			if actual := s.ModelFailure(); actual != nil {
+				d.Deadline, d.DeadlineSource = actual.Deadline, actual.DeadlineSource
+			}
 			d.RejectedResponse = modelprovider.RejectedResponse{State: "unconfirmed", Omission: "retention_failed"}
 			if modelprovider.Details(err) == nil || *modelprovider.Details(err) != d || s.ModelFailure() == nil || *s.ModelFailure() != d || calls != 1 {
 				t.Fatal("primary diagnostic lost", err, s.ModelFailure())

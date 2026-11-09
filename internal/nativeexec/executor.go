@@ -52,6 +52,9 @@ func New(steps *campaign.NativeSteps, guard *Guard, adapter Adapter) (*Executor,
 }
 
 type Result struct {
+	// Boundary is a host-selected failure observation, never a remote error string.
+	Boundary string
+
 	Step   campaign.NativeStep
 	Replay bool
 	// Native is host-only. A typed adapter must project permitted fields before
@@ -125,7 +128,9 @@ func (e *Executor) Execute(ctx context.Context, parent string, p interceptor.Pre
 	}
 	proof, err := e.guard.check(ctx, p, false)
 	if err != nil {
-		return e.finish(step.ID, NotDispatched, nil)
+		r, failure := e.finish(step.ID, NotDispatched, nil)
+		r.Boundary = "preflight_failure"
+		return r, failure
 	}
 	if err = e.steps.RecordPreflight(step.ID, proof); err != nil {
 		return Result{}, err
@@ -147,16 +152,33 @@ func (e *Executor) Execute(ctx context.Context, parent string, p interceptor.Pre
 	}
 	r, err := e.guard.peer.Execute(ctx, p)
 	if err != nil {
+		outcome := Unknown
+		boundary := "unknown_boundary_failure"
 		var call *interceptor.CallError
-		if errors.As(err, &call) && !call.Uncertain {
-			return e.finish(step.ID, NotDispatched, nil)
+		if errors.As(err, &call) {
+			if !call.Uncertain {
+				outcome = NotDispatched
+			}
+			switch call.Kind {
+			case "lost_reply", "transport_unavailable":
+				boundary = "communication_failure"
+			case "invalid_response", "response_invalid", "response_too_large":
+				boundary = "native_response_invalid"
+			}
 		}
-		return e.finish(step.ID, Unknown, nil)
+		if ctx.Err() != nil {
+			boundary = ""
+		} // Attempt/campaign cancellation is reported by its owner.
+		result, failure := e.finish(step.ID, outcome, nil)
+		result.Boundary = boundary
+		return result, failure
 	}
 	raw := r.Bytes()
 	verified, err := interceptor.ParseResponse(raw)
 	if err != nil {
-		return e.finish(step.ID, Unknown, nil)
+		result, failure := e.finish(step.ID, Unknown, nil)
+		result.Boundary = "native_response_invalid"
+		return result, failure
 	}
 	// These native responses cannot prove a known effect, regardless of adapter
 	// interpretation. Interceptor marks 5xx as unknown in its durable store.
@@ -165,7 +187,9 @@ func (e *Executor) Execute(ctx context.Context, parent string, p interceptor.Pre
 	}
 	outcome, err := e.adapter.Interpret(p, verified)
 	if err != nil || outcome != Succeeded && outcome != Failed && outcome != Unknown {
-		return e.finish(step.ID, Unknown, raw)
+		result, failure := e.finish(step.ID, Unknown, raw)
+		result.Boundary = "native_response_invalid"
+		return result, failure
 	}
 	absent := p.Request().Operation == "injection.delete" && verified.Status == 404 && verified.Code() == "not_found"
 	if outcome == Succeeded && !absent && (verified.Status != 200 && verified.Status != 201 && verified.Status != 204) {

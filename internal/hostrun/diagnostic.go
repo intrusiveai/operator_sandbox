@@ -32,19 +32,27 @@ import (
 // object directly from an unrestricted error string, URL or response body.
 // It belongs to the host start record, not the shared host/harness contract.
 type PreparationDiagnostic struct {
-	Interceptor   interceptor.CompatibilityError `json:"interceptor,omitempty,omitzero"`
-	HarnessExit   campaign.HarnessExit           `json:"harness_exit,omitempty,omitzero"`
-	Workflow      campaign.WorkflowDiagnostic    `json:"workflow,omitempty,omitzero"`
-	Conclusion    campaign.ConclusionDiagnostic  `json:"conclusion,omitempty,omitzero"`
-	Stage         string                         `json:"stage"`
-	Message       string                         `json:"message"`
-	CleanupFailed bool                           `json:"cleanup_failed,omitempty"`
-	Model         modelprovider.Diagnostic       `json:"model,omitempty,omitzero"`
+	FailureTrigger campaign.FailureTrigger        `json:"failure_trigger,omitempty,omitzero"`
+	Cleanup        campaign.CleanupDiagnostic     `json:"cleanup,omitempty,omitzero"`
+	Interceptor    interceptor.CompatibilityError `json:"interceptor,omitempty,omitzero"`
+	HarnessExit    campaign.HarnessExit           `json:"harness_exit,omitempty,omitzero"`
+	Workflow       campaign.WorkflowDiagnostic    `json:"workflow,omitempty,omitzero"`
+	Conclusion     campaign.ConclusionDiagnostic  `json:"conclusion,omitempty,omitzero"`
+	Stage          string                         `json:"stage"`
+	Message        string                         `json:"message"`
+	CleanupFailed  bool                           `json:"cleanup_failed,omitempty"`
+	Model          modelprovider.Diagnostic       `json:"model,omitempty,omitzero"`
 }
 
 func (d *PreparationDiagnostic) Valid() bool {
 	if d == nil {
 		return true
+	}
+	if d.FailureTrigger != (campaign.FailureTrigger{}) && !d.FailureTrigger.Valid() {
+		return false
+	}
+	if !d.Cleanup.Valid() {
+		return false
 	}
 	if d.Interceptor != (interceptor.CompatibilityError{}) && !d.Interceptor.Valid() {
 		return false
@@ -93,7 +101,7 @@ func PreparationFailure(stage string, err error) error {
 			stage = "local Harness image inspection"
 		}
 	}
-	diagnostic := PreparationDiagnostic{Stage: stage, Message: preparationMessage(err)}
+	diagnostic := PreparationDiagnostic{Stage: stage, Message: "Operator preparation (" + stage + "): " + preparationMessage(err)}
 	var compatibility *interceptor.CompatibilityError
 	if errors.As(err, &compatibility) && compatibility.Valid() {
 		diagnostic.Interceptor = *compatibility
@@ -192,4 +200,16 @@ func preparationMessage(err error) string {
 		}
 	}
 	return "operation failed; no additional safe error detail is available"
+}
+
+// ExecutionDetails reports known host boundaries without ranking coexisting
+// errors as causal proof. It never prints an unrestricted error chain.
+func ExecutionDetails(err error) *PreparationDiagnostic {
+	if errors.Is(err, campaign.ErrStorage) || errors.Is(err, campaign.ErrQuota) || errors.Is(err, syscall.ENOSPC) {
+		return &PreparationDiagnostic{Stage: "Operator campaign evidence retention", Message: "Operator could not retain required campaign evidence: " + preparationMessage(err) + ". Any target effect must be determined from retained execution records; do not replay."}
+	}
+	if detail, ok := dockercontrol.FailureDetail(err); ok {
+		return &PreparationDiagnostic{Stage: "Operator Docker operation", Message: "Operator observed a Docker operation failure: " + detail}
+	}
+	return nil
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
-// TargetFailure contains host-selected facts from a validated native response.
+// TargetFailure contains host-selected native response or boundary failure facts.
 // Detail is untrusted target text, bounded and filtered for credential patterns.
 // ResponseDigest refers to the original, private native step response.
 type TargetFailure struct {
@@ -48,11 +48,24 @@ func (f TargetFailure) Valid() bool {
 			}
 		}
 	}
+	if slices.Contains([]string{"preflight_failure", "communication_failure", "native_response_invalid", "unknown_boundary_failure"}, f.Category) {
+		return (f.HTTPStatus == 0 && f.ResponseDigest == "" || f.Category == "native_response_invalid" && f.HTTPStatus >= 200 && f.HTTPStatus <= 599 && validDigest(f.ResponseDigest)) && f.Detail == "" && f.Code == "" && f.Omission == "not_provided"
+	}
 	text, why := diagnostictext.Safe(f.Detail, 384)
 	return text == f.Detail && why == "" && validDigest(f.ResponseDigest) && f.HTTPStatus >= 200 && f.HTTPStatus <= 599 && slices.Contains([]string{"target_turn_timeout", "target_turn_failed", "native_rejection"}, f.Category) && slices.Contains([]string{"", "not_provided", "redacted", "credential_redacted", "unsafe_control", "truncated"}, f.Omission)
 }
 func (f TargetFailure) Message() string {
-	text := fmt.Sprintf("Target operation %s failed during %s.", f.Operation, f.NativeOperation)
+	text := fmt.Sprintf("Interceptor reported a target application turn failure for %s during %s; a target-model failure is not established.", f.Operation, f.NativeOperation)
+	switch f.Category {
+	case "communication_failure":
+		return fmt.Sprintf("Operator lost communication with Interceptor during %s for target operation %s; that native operation's outcome is unknown. Execution is closed and will not be replayed.", f.NativeOperation, f.Operation)
+	case "preflight_failure":
+		return fmt.Sprintf("Operator could not complete Interceptor preflight for %s (target operation %s). This native step was not dispatched; failure origin unknown.", f.NativeOperation, f.Operation)
+	case "native_response_invalid":
+		return fmt.Sprintf("Operator rejected Interceptor's response during %s for target operation %s; the response could not establish the target outcome. Execution is closed and will not be replayed.", f.NativeOperation, f.Operation)
+	case "unknown_boundary_failure":
+		return fmt.Sprintf("Operator could not confirm Interceptor's response during %s for target operation %s; failure origin unknown. Execution is closed and will not be replayed.", f.NativeOperation, f.Operation)
+	}
 	if f.Category == "native_rejection" {
 		text = fmt.Sprintf("Interceptor rejected %s for target operation %s (HTTP %d).", f.NativeOperation, f.Operation, f.HTTPStatus)
 	}

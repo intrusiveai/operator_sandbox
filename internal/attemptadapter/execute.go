@@ -254,6 +254,16 @@ func (e *Execution) Run(ctx context.Context) (result Result, runErr error) {
 		e.adapter.active, e.adapter.command, e.adapter.failure = prepared, c, nil
 		r, err := e.executor.Execute(ctx, p.request.RequestID, prepared)
 		lastOutcome = r.Step.Outcome
+		if r.Boundary != "" && r.Step.ID != "" && context.Cause(ctx) != context.DeadlineExceeded && time.Now().Before(p.deadline) {
+			f := campaign.TargetFailure{NativeOperation: c.Operation, Operation: p.request.Invocation.OperationID, AttemptID: p.request.AttemptID, StepID: r.Step.ID, Category: r.Boundary, Omission: "not_provided"}
+			if r.Native != nil {
+				f.HTTPStatus = r.Native.Status
+				f.ResponseDigest = contracts.RawDigest(r.Native.Bytes())
+			}
+			if f.Valid() {
+				result.Failure = &f
+			}
+		}
 		if e.adapter.failure != nil && lastOutcome == string(nativeexec.Failed) && r.Native != nil {
 			f := *e.adapter.failure
 			f.StepID = r.Step.ID

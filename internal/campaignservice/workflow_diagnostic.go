@@ -78,7 +78,10 @@ func (s *Service) handleDiagnostic(ctx context.Context, raw []byte, seq int64) (
 		}
 	}
 	receipt := "diagnostic-" + termination.NewRequestID()
-	if _, err = s.writer.AppendStored(campaign.Entry{RunRevision: q.Revision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d, "receipt_id": receipt, "assertion_origin": "harness", "observation_selections": selections})}, "", false); err != nil {
+	if d.Stopping != "" {
+		s.recordFailureTrigger("workflow", d.OperationID)
+	}
+	if _, err = s.writer.AppendStored(campaign.Entry{RunRevision: q.Revision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d, "receipt_id": receipt, "assertion_origin": "harness", "observation_selections": selections, "failure_trigger": s.FailureTrigger()})}, "", false); err != nil {
 		return nil, err
 	}
 	if !d.Informational() {
@@ -189,7 +192,8 @@ func (s *Service) recordAttemptTimeout(operationID, callID string, raw []byte) e
 		return ErrService
 	}
 	s.workflowDiagnostic.Store(&d)
-	_, err := s.writer.AppendStored(campaign.Entry{RunRevision: s.attempts.Status().RunRevision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d})}, "", false)
+	s.recordFailureTrigger("workflow", d.OperationID)
+	_, err := s.writer.AppendStored(campaign.Entry{RunRevision: s.attempts.Status().RunRevision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d, "failure_trigger": s.FailureTrigger()})}, "", false)
 	if err != nil {
 		return errors.Join(d, err)
 	}
@@ -202,13 +206,21 @@ func (s *Service) recordTimeoutDelivery(delivery string) error {
 	}
 	d.ResultDelivery = delivery
 	s.workflowDiagnostic.Store(d)
-	_, err := s.writer.AppendStored(campaign.Entry{RunRevision: s.attempts.Status().RunRevision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d})}, "", false)
+	_, err := s.writer.AppendStored(campaign.Entry{RunRevision: s.attempts.Status().RunRevision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d, "failure_trigger": s.FailureTrigger()})}, "", false)
 	return err
 }
 
 // recordTargetFailure runs before attempt publication and survives terminal shutdown.
 func (s *Service) recordTargetFailure(operationID, callID string, failure *campaign.TargetFailure) error {
 	source, stage, reason := "target", "delivery", "target_failed"
+	switch failure.Category {
+	case "native_rejection":
+		source = "interceptor"
+	case "communication_failure", "preflight_failure", "native_response_invalid":
+		source = "operator"
+	case "unknown_boundary_failure":
+		source = "unknown"
+	}
 	switch failure.NativeOperation {
 	case "observation.read", "observation.content.read":
 		stage = "observation"
@@ -221,9 +233,30 @@ func (s *Service) recordTargetFailure(operationID, callID string, failure *campa
 		return ErrService
 	}
 	s.workflowDiagnostic.Store(&d)
-	_, err := s.writer.AppendStored(campaign.Entry{RunRevision: s.attempts.Status().RunRevision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d})}, "", false)
+	s.recordFailureTrigger("workflow", d.OperationID)
+	_, err := s.writer.AppendStored(campaign.Entry{RunRevision: s.attempts.Status().RunRevision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d, "failure_trigger": s.FailureTrigger()})}, "", false)
 	if err != nil {
 		return errors.Join(d, err)
+	}
+	return nil
+}
+
+// Keep the initiating terminal failure separate from recoverable rejections and
+// later cancellation. Native execution fences before publishing its typed cause.
+func (s *Service) recordFailureTrigger(kind, operation string) {
+	cause := s.writer.Fence().Err()
+	if cause != nil && cause != campaign.ErrExecutionFailure && cause != campaign.ErrUnknownOutcome {
+		return
+	}
+	fact := campaign.FailureTrigger{Kind: kind, OperationID: operation}
+	if fact.Valid() {
+		s.failureTrigger.CompareAndSwap(nil, &fact)
+	}
+}
+func (s *Service) FailureTrigger() *campaign.FailureTrigger {
+	if fact := s.failureTrigger.Load(); fact != nil {
+		copy := *fact
+		return &copy
 	}
 	return nil
 }

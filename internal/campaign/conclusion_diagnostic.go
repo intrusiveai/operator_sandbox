@@ -136,9 +136,9 @@ func (d ConclusionDiagnostic) Valid() bool {
 	return (d.OperationID != "" || d.OperationOmitted != "") && (d.PathOmitted == "" || d.PathOmitted == "unsafe_or_oversized" && d.FieldPath == "") && len(d.Correction) <= 512 && len(d.Message()) <= 1024
 }
 func (d ConclusionDiagnostic) Message() string {
-	text := "Conclusion validation failed: " + conclusionReasons[d.Reason][1]
+	text := "Operator rejected the Harness-submitted assessment during conclusion validation: " + conclusionReasons[d.Reason][1]
 	if d.Correction != "" {
-		text = "Conclusion validation failed: " + d.Correction
+		text = "Operator rejected the Harness-submitted assessment during conclusion validation: " + d.Correction
 	}
 	if d.FieldPath != "" {
 		text += " Field: " + d.FieldPath + "."

@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 
+	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/hostrun"
 	"github.com/intrusiveai/operator_sandbox/internal/workerjob"
 )
@@ -65,6 +66,9 @@ func printWorkerFailure(w io.Writer, code string, d *hostrun.PreparationDiagnost
 			fmt.Fprintln(w, "Details:", d.HarnessExit.Details)
 		}
 		if d.Model.Valid() {
+			if d.Message != d.Model.Summary() {
+				fmt.Fprintln(w, "Observed model interaction:", d.Model.Summary())
+			}
 			if detail := d.Model.ValidationDetailsText(); detail != "" {
 				fmt.Fprintln(w, detail)
 			}
@@ -83,6 +87,9 @@ func printWorkerFailure(w io.Writer, code string, d *hostrun.PreparationDiagnost
 			}
 		}
 		if d.Workflow.Valid() {
+			if d.Message != d.Workflow.Message() {
+				fmt.Fprintln(w, "Observed workflow diagnostic:", d.Workflow.Message())
+			}
 			fmt.Fprintln(w, "Operation:", d.Workflow.OperationID)
 			if f := d.Workflow.TargetFailure; f != nil {
 				fmt.Fprintln(w, "Attempt:", f.AttemptID)
@@ -118,8 +125,11 @@ func printWorkerFailure(w io.Writer, code string, d *hostrun.PreparationDiagnost
 				fmt.Fprintln(w, "Operation omitted:", d.Conclusion.OperationOmitted)
 			}
 		}
+		if d.Cleanup != (campaign.CleanupDiagnostic{}) && d.Cleanup.Valid() {
+			fmt.Fprintln(w, d.Cleanup.Summary())
+		}
 		if d.CleanupFailed {
-			fmt.Fprintf(w, "Secondary failure: %s cleanup did not finish successfully; inspect retained campaign state.\n", phase)
+			fmt.Fprintf(w, "Secondary %s cleanup outcome: one or more owned actions remain unconfirmed; see the action outcomes and retained evidence.\n", phase)
 		}
 	} else {
 		fmt.Fprintln(w, "campaign worker stopped:", code)

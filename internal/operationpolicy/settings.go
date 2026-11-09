@@ -13,6 +13,10 @@ import (
 // MaximumMS is the host's supported campaign lifetime, not a registry timeout.
 const MaximumMS int64 = 1800000
 
+// DefaultModelTimeoutMS is the host configuration default and the fallback for
+// direct callers without a deadline, never an additional provider ceiling.
+const DefaultModelTimeoutMS int64 = 120000
+
 var ErrSettings = errors.New("operation_timeouts_ms must map registered operation names to positive milliseconds within the supported campaign lifetime")
 var protocol = sync.OnceValues(func() (*contracts.Protocol, error) { return contracts.LoadProtocol(schemas.Files) })
 
@@ -25,9 +29,8 @@ func Resolve(overrides map[string]int64) (map[string]int64, error) {
 	for _, op := range p.Operations() {
 		values[op.Name] = 30000
 	}
-	for _, name := range []string{"engine.attempt_execute", "engine.model_generate"} {
-		values[name] = 120000
-	}
+	values["engine.attempt_execute"] = 120000
+	values["engine.model_generate"] = DefaultModelTimeoutMS
 	for _, name := range []string{"engine.snapshot_request", "engine.restore_request"} {
 		values[name] = 300000
 	}

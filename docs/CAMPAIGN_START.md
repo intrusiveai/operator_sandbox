@@ -172,8 +172,8 @@ When preparation succeeds but a model call fails, the worker retains
 output is:
 
 ```text
-Campaign execution failed during model request (http_rejection) (execution_failed):
-openai-chat returned HTTP 401 (invalid_api_key): The provider returned an unsuccessful HTTP status.
+Campaign execution failed during Attack Harness model request (http_rejection) (execution_failed):
+openai-chat rejected an Attack Harness model request (observed HTTP 401) (invalid_api_key): The provider returned an unsuccessful HTTP status.
 Operation: model-generate-0000000000000001
 Model: test-model
 Provider request ID: req_0123456789abcdef0123456789abcdef
@@ -428,3 +428,30 @@ Explicit collection can resolve an earlier missing archive. The new report keeps
 the original termination history and separately identifies confirmed native
 session stops. Collection success alone does not confirm injection cleanup or
 ownership closure. See [late collection](LATE_EVIDENCE.md).
+
+### Reading execution failures
+
+Failure summaries identify the affected interaction and observed boundary. A
+Harness model-request timeout means Operator stopped waiting for the Harness's
+provider call; it does not establish a target-agent failure. Inspect the retained
+`effective_deadline`, `deadline_source`, operation ID, provider request ID and
+credential-resolution evidence. The model request timeout is configured in
+`operation_timeouts_ms.engine.model_generate`; see [model providers](MODEL_PROVIDERS.md).
+
+Operator records an initiating terminal operation failure separately from later
+shutdown consequences. A forced Harness exit (for example 137), cancellation and
+cleanup failures remain supporting observations. An earlier rejected assessment
+is retained as history, not automatically selected as the cause. When causal
+order or a failure's origin is unknown, the summary says so.
+
+Cleanup diagnostics name the action: Harness container, transport and input
+removal; Interceptor ownership closure, injection cleanup and target stop.
+Evidence collection has its own per-session outcome and native rejection details.
+An unconfirmed action is not a claim that it failed remotely. Later verified
+outcomes remain separate from the original termination history.
+
+`operatorctl doctor` includes a bounded diagnostic for failed checks, preserving
+known Docker operation/access errors and configuration or resource failures.
+It does not resolve credentials, create containers, or establish live provider
+or target compatibility. A successful local-image inspection alone is not
+compatibility qualification.

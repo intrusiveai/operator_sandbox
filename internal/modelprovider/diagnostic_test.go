@@ -272,3 +272,33 @@ func TestDiagnosticCredentialFailureReleasesRequestContext(t *testing.T) {
 		t.Fatal("parent context changed")
 	}
 }
+
+func TestModelFailureAttributionAcrossCategories(t *testing.T) {
+	for _, tc := range []struct{ category, reason, expected string }{
+		{"credential_preparation", "credential_unavailable", "Operator could not prepare credentials for an Attack Harness model request"},
+		{"http_rejection", "http_rejected", "openai-chat rejected an Attack Harness model request"},
+		{"response_validation", "contract_invalid", "Operator rejected openai-chat's response to an Attack Harness model request"},
+		{"request_validation", "request_invalid", "Operator rejected an Attack Harness model request before provider dispatch"},
+		{"connection", "no_response", "Operator could not complete the connection"},
+		{"tls", "no_response", "Operator observed a TLS failure"},
+		{"timeout", "deadline_exceeded", "Operator stopped waiting for an Attack Harness model request"},
+		{"cancellation", "canceled", "Operator canceled an Attack Harness model request"},
+		{"response_read", "read_failed", "Operator could not finish reading"},
+		{"unknown", "provider_failed", "failure origin unknown"},
+	} {
+		t.Run(tc.category, func(t *testing.T) {
+			d := Diagnostic{Provider: "openai-chat", Model: "same-model-as-target", OperationID: "model-1"}.WithFailure(tc.category, tc.reason)
+			raw, _ := json.Marshal(d)
+			copy := DecodeDiagnostic(raw)
+			if copy == nil || *copy != d || !strings.Contains(copy.Summary(), tc.expected) || !strings.Contains(copy.Summary(), "Attack Harness model") {
+				t.Fatalf("%s %+v", raw, copy)
+			}
+			// Older records without the additive interaction field remain readable.
+			d.Interaction = ""
+			raw, _ = json.Marshal(d)
+			if DecodeDiagnostic(raw) == nil {
+				t.Fatal("old diagnostic rejected")
+			}
+		})
+	}
+}

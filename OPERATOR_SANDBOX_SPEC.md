@@ -195,7 +195,7 @@ Initial resource ceilings:
 | Cumulative reference/skill/feedback reads / no-progress model turns | 256 MiB / 10; configurable; see shared execution rules |
 | Campaign model tokens | 250,000 input + output tokens |
 | In-flight model requests / target invocations | 1 / 1; initially one ordinary engine request overall |
-| Model request wall time | At most 120 seconds, also bounded by remaining campaign time |
+| Model request wall time | `operation_timeouts_ms.engine.model_generate`, bounded by the request deadline and remaining campaign time; 120 seconds is the host default, not an additional provider ceiling |
 | Individual artifact / cumulative artifacts | 16 MiB / 1 GiB |
 | Campaign snapshot creation admissions / cumulative committed snapshot bytes | 20 / 1 GiB (1,073,741,824 bytes); configurable independently of artifact ceilings |
 | Confinement/readiness / input initialization | 60 seconds each |

@@ -502,7 +502,7 @@ func TestModelFailureForegroundAndWorkerOutput(t *testing.T) {
 	if code != 1 {
 		t.Fatal(code, stderr)
 	}
-	for _, want := range []string{"Campaign execution failed during model request (http_rejection) (execution_failed)", "openai-chat returned HTTP 401 (invalid_api_key)", "Operation: model-generate-0000000000000001", "Model: test-model", `Provider message: "The parameter temperature is unsupported."`, `Provider type: "invalid_request_error"`, `Provider parameter: "temperature"`, "Provider request ID omission: not_provided", "Execution will not resume."} {
+	for _, want := range []string{"Campaign execution failed during model request (http_rejection) (execution_failed)", "openai-chat rejected an Attack Harness model request (observed HTTP 401) (invalid_api_key)", "Operation: model-generate-0000000000000001", "Model: test-model", `Provider message: "The parameter temperature is unsupported."`, `Provider type: "invalid_request_error"`, `Provider parameter: "temperature"`, "Provider request ID omission: not_provided", "Execution will not resume."} {
 		if !strings.Contains(stderr, want) {
 			t.Fatalf("missing %q: %s", want, stderr)
 		}

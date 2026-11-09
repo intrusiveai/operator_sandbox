@@ -136,15 +136,27 @@ func run(ctx context.Context, stateRoot, requestID, requestDigest, operatorVersi
 	result.Execution = &execution
 	if err != nil {
 		result.Code = "execution_failed"
-		if execution.ModelDiagnostic != nil && execution.ModelDiagnostic.Valid() {
+		if execution.FailureTrigger != nil && execution.FailureTrigger.Kind == "model" && execution.ModelDiagnostic != nil && execution.ModelDiagnostic.Valid() && execution.ModelDiagnostic.OperationID == execution.FailureTrigger.OperationID {
 			d := *execution.ModelDiagnostic
-			result.Diagnostic = &hostrun.PreparationDiagnostic{Stage: "model request (" + d.Category + ")", Message: d.Summary(), Model: d, CleanupFailed: execution.ContainerCleanup == "unconfirmed" || execution.TransportCleanup == "retained" || execution.InputCleanup == "retained"}
-		} else if execution.WorkflowDiagnostic != nil && execution.WorkflowDiagnostic.Valid() && (execution.WorkflowDiagnostic.Stopping != "" || !execution.StopAccepted) {
+			result.Diagnostic = &hostrun.PreparationDiagnostic{Stage: "Attack Harness model request (" + d.Category + ")", Message: d.Summary(), Model: d, CleanupFailed: execution.ContainerCleanup == "unconfirmed" || execution.TransportCleanup == "retained" || execution.InputCleanup == "retained"}
+		} else if execution.FailureTrigger != nil && execution.FailureTrigger.Kind == "workflow" && execution.WorkflowDiagnostic != nil && execution.WorkflowDiagnostic.Valid() && execution.WorkflowDiagnostic.OperationID == execution.FailureTrigger.OperationID {
 			d := *execution.WorkflowDiagnostic
-			result.Diagnostic = &hostrun.PreparationDiagnostic{Stage: map[string]string{"harness-local": "Harness", "operator": "Operator", "target": "target", "cleanup": "cleanup"}[d.Source] + " " + d.Stage, Message: d.Message(), Workflow: d, CleanupFailed: execution.ContainerCleanup == "unconfirmed" || execution.TransportCleanup == "retained" || execution.InputCleanup == "retained"}
+			result.Diagnostic = &hostrun.PreparationDiagnostic{Stage: map[string]string{"harness-local": "Harness", "operator": "Operator", "target": "target", "cleanup": "cleanup", "interceptor": "Interceptor", "unknown": "unattributed operation"}[d.Source] + " " + d.Stage, Message: d.Message(), Workflow: d, CleanupFailed: execution.ContainerCleanup == "unconfirmed" || execution.TransportCleanup == "retained" || execution.InputCleanup == "retained"}
 		} else if execution.ConclusionDiagnostic != nil && execution.ConclusionDiagnostic.Valid() && !execution.StopAccepted {
 			d := *execution.ConclusionDiagnostic
-			result.Diagnostic = &hostrun.PreparationDiagnostic{Stage: "conclusion validation (" + d.Stage + ")", Message: d.Message(), Conclusion: d, CleanupFailed: execution.ContainerCleanup == "unconfirmed" || execution.TransportCleanup == "retained" || execution.InputCleanup == "retained"}
+			result.Diagnostic = &hostrun.PreparationDiagnostic{Stage: "assessment not accepted", Message: "No accepted assessment was recorded. A prior rejection is retained separately; it does not establish the terminal cause. " + d.Message(), Conclusion: d, CleanupFailed: execution.ContainerCleanup == "unconfirmed" || execution.TransportCleanup == "retained" || execution.InputCleanup == "retained"}
+		}
+		if result.Diagnostic == nil && (execution.ModelDiagnostic != nil || execution.WorkflowDiagnostic != nil) {
+			result.Diagnostic = &hostrun.PreparationDiagnostic{Stage: "execution", Message: "Operator observed execution failures; the initiating failure could not be established. Inspect the separately retained diagnostics."}
+			if execution.ModelDiagnostic != nil && execution.ModelDiagnostic.Valid() {
+				result.Diagnostic.Model = *execution.ModelDiagnostic
+			}
+			if execution.WorkflowDiagnostic != nil && execution.WorkflowDiagnostic.Valid() {
+				result.Diagnostic.Workflow = *execution.WorkflowDiagnostic
+			}
+		}
+		if result.Diagnostic == nil {
+			result.Diagnostic = hostrun.ExecutionDetails(err)
 		}
 		if execution.HarnessExit != nil && execution.HarnessExit.Valid() {
 			h := *execution.HarnessExit
@@ -153,6 +165,12 @@ func run(ctx context.Context, stateRoot, requestID, requestDigest, operatorVersi
 			}
 			result.Diagnostic.HarnessExit = h
 			result.Diagnostic.CleanupFailed = !h.CleanupComplete
+		}
+		if result.Diagnostic != nil {
+			result.Diagnostic.Cleanup = execution.CleanupDiagnostic()
+			if execution.FailureTrigger != nil && execution.FailureTrigger.Valid() {
+				result.Diagnostic.FailureTrigger = *execution.FailureTrigger
+			}
 		}
 		return result, err
 	}

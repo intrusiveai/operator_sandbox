@@ -15,6 +15,7 @@ var ErrAudit = errors.New("credential resolution audit unavailable")
 // AuditEvent is an allowlist, not a serialization of Resolution or a backend
 // error. Even backend version strings are untrusted and retained only as hashes.
 type AuditEvent struct {
+	Step          string `json:"step,omitempty"`
 	CredentialID  string `json:"credential_id,omitempty"`
 	ProfileID     string `json:"profile_id,omitempty"`
 	Backend       string `json:"backend,omitempty"`
@@ -58,9 +59,13 @@ func (r *AuditedResolver) Resolve(ctx context.Context, id string) (Resolution, e
 	} else if ctx.Err() != nil {
 		e.Code = "canceled"
 	}
+	var failure Failure
+	if errors.As(err, &failure) && failure.Valid() {
+		e.Step = failure.Step
+	}
 	if r.record(e) != nil {
 		r.resolver.Invalidate(id)
-		return Resolution{}, ErrAudit
+		return Resolution{}, errors.Join(Failure{e.CredentialID, e.ProfileID, e.Backend, "audit-retention"}, ErrAudit)
 	}
 	if err != nil {
 		return Resolution{}, err
