@@ -5,9 +5,14 @@ explicit trusted Operator source checkout. It MUST NOT execute packaged code,
 download dependencies or contact a target. Build the CLI from that same checkout;
 its embedded schemas MUST match the selected source schemas.
 
+Read the version from `package.package_version` in the selected checkout's
+[contract lock](../release/contract-lock.json):
+
 ```sh
-operatorctl contract build --source /absolute/operator_sandbox \
-  --output /absolute/new-contract-package --package-version 0.8.0
+OPERATOR_SOURCE=/absolute/operator_sandbox
+CONTRACT_VERSION=$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["package"]["package_version"])' "$OPERATOR_SOURCE/release/contract-lock.json")
+operatorctl contract build --source "$OPERATOR_SOURCE" \
+  --output /absolute/new-contract-package --package-version "$CONTRACT_VERSION"
 ```
 
 The output MUST be a new directory. The receipt contains the exact package version
@@ -51,12 +56,13 @@ The supported release process MUST independently distribute the approved version
 and digest alongside the Operator and Attack Harness builds. Runtime installation
 MUST NOT derive trust merely by reading an incoming `package.json`.
 
-Set `CONTRACT_DIGEST` to `package.package_digest` from the release lock before
-running the check:
+Read `package.package_digest` from that same [contract lock](../release/contract-lock.json)
+before running the check:
 
 ```sh
+CONTRACT_DIGEST=$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["package"]["package_digest"])' "$OPERATOR_SOURCE/release/contract-lock.json")
 operatorctl contract check --package-dir /absolute/new-contract-package \
-  --package-version 0.8.0 --package-digest "$CONTRACT_DIGEST"
+  --package-version "$CONTRACT_VERSION" --package-digest "$CONTRACT_DIGEST"
 ```
 
 Operator's private `contract.directory`, `contract.version` and `contract.digest`

@@ -1,6 +1,7 @@
 # Model context contract
 
-Shared package 0.8.0 requires matching host and Harness package identities through
+The shared package identified in the [release contract lock](../release/contract-lock.json)
+requires matching host and Harness package identities through
 the existing embedded compatibility record. Earlier packages are incompatible.
 This contract does not add token counting services or change execution authority.
 

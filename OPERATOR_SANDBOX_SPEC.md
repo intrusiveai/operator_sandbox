@@ -758,7 +758,7 @@ remote targets or supply arbitrary image names, host paths or commands.
 The [native client](docs/INTERCEPTOR_CLIENT.md) uses fixed-loopback requests,
 exact native operation bytes and typed admission closure. Before attachment intent,
 Operator MUST query `POST /v1/contract-version` and exactly match its compiled
-Interceptor integration pin (`0.1.0`). A mismatch or failed discovery MUST prevent
+Interceptor integration pin in [internal/interceptor/contract.json](internal/interceptor/contract.json). A mismatch or failed discovery MUST prevent
 attachment and retain an actionable preparation diagnostic. Fresh native recovery
 and evidence collection clients MUST check before claiming new work; retained
 inspection and independent Docker termination MUST remain available.
@@ -1747,7 +1747,7 @@ No worker/daemon recovery resumes failed campaign execution.
 
 The [shared contract](schemas/SHARED_CONTRACT.md) contains closed schemas, an
 offline catalog/registry, semantic validators and shared Go/Python vectors.
-The [release lock](release/contract-lock.json) pins package `0.2.1`. Raw byte
+The [release lock](release/contract-lock.json) records the approved package version and exact document hash. Raw byte
 digests, canonical-object digests, OCI digests and native Interceptor digests are
 separate identities and MUST use their specified recipes.
 

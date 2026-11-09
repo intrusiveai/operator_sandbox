@@ -1,6 +1,6 @@
 # Model tool normalization
 
-Shared package 0.8.0 defines the model interface separately from canonical host
+The shared package identified in the [release contract lock](../release/contract-lock.json) defines the model interface separately from canonical host
 operations. Both products MUST pin its exact identity using the existing package
 and image compatibility mechanisms. Model arguments from earlier packages MUST
 NOT be accepted as a fallback. Host receipt schemas remain authoritative.

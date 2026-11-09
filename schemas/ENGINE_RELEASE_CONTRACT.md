@@ -38,19 +38,19 @@ pins. See [image selection](../docs/IMAGE_PREPARATION.md) for resolution bounds.
 The image MUST contain `/opt/operator/engine/share/compatibility.json` as one
 regular immutable file. Operator MUST read it from the exact pinned image using
 the stopped-container inspection below, without executing image code.
-It MUST be strict UTF-8 JSON, at most 64 KiB and depth 32, with exactly these fields:
+It MUST be strict UTF-8 JSON, at most 64 KiB and depth 32, with exactly these fields (the angle-bracket values below are placeholders):
 
 ```json
 {
   "api_version": "operator.dev/harness-compatibility/v1alpha2",
-  "contract_package_version": "0.8.0",
-  "contract_package_digest": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+  "contract_package_version": "<package.package_version>",
+  "contract_package_digest": "<package.package_digest>",
   "runtime_profile": "operator-container/v1",
   "platform": "linux/amd64"
 }
 ```
 
-The example digest is illustrative; builds MUST use the actual package identity
+Builds MUST replace both placeholders with the actual package identity
 from the [release contract lock](../release/contract-lock.json). Required fields, duplicate/unknown keys, invalid types/UTF-8, trailing
 content, unsupported versions and oversized content MUST be checked. The file
 MUST NOT contain its image digest: adding it would change that digest. The Docker

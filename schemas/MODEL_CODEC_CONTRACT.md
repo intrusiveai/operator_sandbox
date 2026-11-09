@@ -1,6 +1,6 @@
 # Model conversation relay
 
-Interface 0.8.0 defines a provider-independent relay over the existing ordinary
+The interface approved in the [release contract lock](../release/contract-lock.json) defines a provider-independent relay over the existing ordinary
 transport. The approved identity is the version and SHA-256 of exact
 [AsyncAPI bytes](asyncapi.json), recorded in [the lock](../release/contract-lock.json).
 Both components MUST match that identity before execution.

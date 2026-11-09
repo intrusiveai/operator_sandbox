@@ -6,7 +6,7 @@ reference these rules rather than define competing contracts. The
 [release contract lock](../release/contract-lock.json) identifies the exact
 contract version and exact AsyncAPI document hash consumed by both products.
 
-The self-contained [AsyncAPI document](asyncapi.json) defines interface `0.8.0`.
+The self-contained [AsyncAPI document](asyncapi.json) defines the interface approved in the [release contract lock](../release/contract-lock.json).
 JSON Schema 2020-12 payloads and explicit semantic extensions describe its messages
 and stateful obligations. Go/Python bindings and shared fixtures verify conformance;
 their source bytes are not compatibility identity. See [conformance](../docs/CONTRACT_CONFORMANCE.md).
@@ -50,7 +50,7 @@ implemented by product adapters rather than shared API schemas.
 
 ## 1. One owner and one pinned package
 
-Operator owns interface version `0.8.0`, distributed in `operator-contracts` with
+Operator owns the interface approved in the [release contract lock](../release/contract-lock.json), distributed in `operator-contracts` with
 package manifest format `operator.dev/contract-package/v2`. The package contains
 closed JSON Schemas, the offline URI catalog, operation registry, semantic rules,
 Go/Python bindings and validators, and shared golden test vectors. Both products pin `info.version` and SHA-256 of the exact `asyncapi.json` bytes.
