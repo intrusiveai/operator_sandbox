@@ -270,3 +270,13 @@ Model timeout evidence includes the effective deadline and its source. Credentia
 failures expose approved logical identifiers, backend and failed step, not locators
 or values. Unknown diagnostic sources/reasons stay explicitly unknown. CLI,
 inspection, campaign completion and exports use the same selected diagnostic facts.
+
+
+Workflow diagnostics retain the producer's bounded, credential-filtered explanation,
+correction and scalar failure facts. Harness reports remain attributed assertions;
+they do not establish host dispatch or cleanup. Unsupported-field corrections quote
+names as data and derive allowed fields, descriptions and required status from the
+installed schema. Inspection, completion receipts and exports preserve these details
+rather than replacing them with a reason-to-message lookup. Missing legacy details
+remain explicitly unavailable. Credential resolution failures include their typed
+backend code, HTTP status and category when observed; raw backend strings are omitted.

@@ -1,29 +1,26 @@
 package contracts
 
 import (
-	"strconv"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
-// SafeArgumentPath permits only contract field names, never arbitrary input keys.
-// A missing path is explicit; error messages must not echo JSON validator text.
+// SafeArgumentPath validates a bounded JSON Pointer without a field-name catalog.
+// Renderers must quote paths as data, never treat their segments as instructions.
 func SafeArgumentPath(path string) (string, bool) {
-	if len(path) > 256 {
+	if len(path) > 256 || !utf8.ValidString(path) || path != "" && !strings.HasPrefix(path, "/") || sensitiveFieldName.MatchString(path) {
 		return "", false
 	}
-	if path == "" {
-		return "", true
-	}
-	if !strings.HasPrefix(path, "/") {
+	if strings.IndexFunc(path, func(r rune) bool { return unicode.IsControl(r) || unicode.In(r, unicode.Cf, unicode.Zl, unicode.Zp) }) >= 0 {
 		return "", false
 	}
-	allowed := " name arguments input injection_input value encoding text data media_type artifact_receipt operation_id scenario_id parent_attempt_receipt_id caller_principal_id pre_actions action_id action_type parameters surface mode scope selector placement operation pointer retain_injections observation_selection rationale strategy_provenance_ref technique_refs finish_reason assessment unavailable reason status summary objectives objective_id outcome hypotheses hypothesis_id objective_refs provenance origin parent_hypothesis_id claims claim_id interpretation assurance confidence attempt_receipt_refs attempt_receipt_id observation_refs entry_id range offset length uncertainty_refs coverage alternative uncertainties gap_id description input_refs record_refs record_kind record payload carrier digest generation thread_id request_id attempt_id attempt_index binding api_version kind artifact record_receipt tool_name call_ordinal method path predicates equals contains max_bytes receipt_id reference_id source_session checkpoint_id label continuation limit content size_bytes json base64 parent observations attempts setup injection reference observation snapshot session unavailable_reason records inputs assessment_summary gaps collection key stopping observed_count configured_limit budget total_allowance consumed remaining next_request_reservation statement assumptions predicted_observations surface_ref entries mutation_summary purpose service attempt hypothesis decision filename namespace path_prefix max_records "
-	for _, part := range strings.Split(path[1:], "/") {
-		if n, err := strconv.Atoi(part); err == nil && n >= 0 && n < 10000 {
-			continue
-		}
-		if !strings.Contains(allowed, " "+part+" ") {
-			return "", false
+	for i := 0; i < len(path); i++ {
+		if path[i] == '~' {
+			i++
+			if i >= len(path) || (path[i] != '0' && path[i] != '1') {
+				return "", false
+			}
 		}
 	}
 	return path, true

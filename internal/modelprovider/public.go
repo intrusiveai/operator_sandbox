@@ -4,6 +4,8 @@ package modelprovider
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 )
@@ -30,11 +32,11 @@ func privatePolicy(s Settings, digest string, toolsRaw []byte) (map[string]any, 
 	value, err := contracts.Decode(s.CodecOptions, 64<<10)
 	options, ok := value.(map[string]any)
 	if err != nil || !ok {
-		return nil, ErrProfile
+		return nil, profileRule("/codec_options", "type", "Supply a JSON object of options for the selected codec.")
 	}
 	fields, ok := optionFields[s.Codec]
 	if !ok {
-		return nil, ErrProfile
+		return nil, profileRule("/codec_id", "unsupported", "Select a supported codec.")
 	}
 	policy := map[string]any{"codec_id": s.Codec, "profile_id": s.ID, "profile_digest": digest, "request_model": s.Model, "prompt": "", outputField(s.Codec): s.MaximumCompletionTokens}
 	allowed := map[string]bool{}
@@ -43,7 +45,7 @@ func privatePolicy(s Settings, digest string, toolsRaw []byte) (map[string]any, 
 	}
 	for key, value := range options {
 		if !allowed[key] {
-			return nil, ErrProfile
+			return nil, profileRule("/codec_options", "unsupported_field", "Unsupported names: "+fmt.Sprintf("%q", contracts.NewUnsupportedFields([]string{key}).Names)+". Supported fields: "+strings.Join(fields, ", ")+".")
 		}
 		if key != "response_models" {
 			policy[key] = value
@@ -54,11 +56,11 @@ func privatePolicy(s Settings, digest string, toolsRaw []byte) (map[string]any, 
 	}
 	tools, err := contracts.Decode(toolsRaw, contracts.OrdinaryLimit)
 	if err != nil {
-		return nil, ErrProfile
+		return nil, profileRule("/tools", "internal_encoding", "Operator could not decode its model tool declarations.")
 	}
 	policy["tools"] = tools
 	if s.Codec == "openai-chat-text-tools-v1" && policy["instruction_role"] != "system" && policy["instruction_role"] != "developer" {
-		return nil, ErrProfile
+		return nil, profileRule("/codec_options/instruction_role", "enum", "Select system or developer.")
 	}
 	return policy, nil
 }

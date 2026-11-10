@@ -539,7 +539,11 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 						seen = seen || rejection.OperationID == response.OperationID
 					}
 					if !seen {
-						result.Rejections = append(result.Rejections, SubmissionRejection{Event: event.Sequence, OperationID: response.OperationID, Code: response.Error.Code, Message: excerpt([]byte(response.Error.Message), 512), Evidence: item.Path})
+						message := excerpt([]byte(response.Error.Message), 512)
+						if d := campaign.WorkflowFromWire(response.OperationID, response.Error.Diagnostic); d != nil {
+							message = d.Message()
+						}
+						result.Rejections = append(result.Rejections, SubmissionRejection{Event: event.Sequence, OperationID: response.OperationID, Code: response.Error.Code, Message: message, Evidence: item.Path})
 					}
 				}
 			}

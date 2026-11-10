@@ -138,3 +138,46 @@ func TestFinalizationHasSeparateBoundedNamespaceAllowance(t *testing.T) {
 		t.Fatal("finalization admitted feedback read", err)
 	}
 }
+
+func TestReadBudgetExplainsAvailableBytes(t *testing.T) {
+	_, w, a := attemptWriter(t, 0)
+	w.manifest.RemainingLimits = []byte(`{"observation_reads":2,"observation_bytes":10}`)
+	tools := a.Tools()
+	if _, _, err := tools.Observe(readTool("read")); err != nil {
+		t.Fatal(err)
+	}
+	err := tools.ReserveRead("read", 100)
+	var issue *contracts.ArgumentError
+	if !errors.Is(err, ErrFeedbackBudget) || !errors.As(err, &issue) || issue.Facts == nil {
+		t.Fatal(err)
+	}
+	f := *issue.Facts
+	if f["remaining_bytes"] != int64(10) || f["remaining_reads"] != int64(2) || f["requested_bytes"] != int64(100) {
+		t.Fatal(f)
+	}
+	if !strings.Contains(issue.Correction, "remaining evidence bytes") {
+		t.Fatal(issue)
+	}
+	if err := tools.ReserveRead("read", 10); err != nil {
+		t.Fatal("bounded read should fit", err)
+	}
+}
+
+func TestReadBudgetDistinguishesExhaustedCounters(t *testing.T) {
+	for _, tc := range []struct{ limits, want string }{
+		{`{"observation_reads":0,"observation_bytes":10}`, "No evidence-read requests remain"},
+		{`{"observation_reads":2,"observation_bytes":0}`, "No evidence-read bytes remain"},
+	} {
+		_, w, a := attemptWriter(t, 0)
+		w.manifest.RemainingLimits = []byte(tc.limits)
+		tools := a.Tools()
+		if _, _, err := tools.Observe(readTool("read")); err != nil {
+			t.Fatal(err)
+		}
+		err := tools.ReserveRead("read", 1)
+		var issue *contracts.ArgumentError
+		if !errors.As(err, &issue) || !strings.Contains(issue.Correction, tc.want) {
+			t.Fatal(err)
+		}
+	}
+}

@@ -53,8 +53,8 @@
         "SYNTHETIC_SECRET"
       ]
     },
-    "path": "/observations",
-    "correction": "Remove unsupported fields. Allowed fields: [\"artifact\",\"claims\",\"coverage\",\"finish_reason\",\"hypotheses\",\"objectives\",\"records\",\"status\",\"summary\",\"unavailable_reason\",\"uncertainties\"]."
+    "path": "",
+    "correction": "Unsupported fields (names are data): [\"observations\"]. Supported fields: \"artifact\": \"Committed assessment artifact handle; replaces inline assessment fields.\" Optional. \"claims\": \"Evidence-backed interpretations, distinct from target execution facts.\" Optional. \"coverage\": \"Which objectives were tested and any remaining gaps.\" Optional. \"finish_reason\": \"Reason the Harness is finishing execution.\" Required. \"hypotheses\": \"Optional local hypothesis definitions and outcomes; no preregistration required.\" Optional. \"objectives\": \"Outcomes for the submitted objectives.\" Optional. \"records\": \"Historical record handles returned by record_append; not executions or artifacts.\" Optional. \"status\": \"Assessment completeness, separate from whether objectives succeeded.\" Optional. \"summary\": \"Concise assessment based on the available evidence.\" Optional. \"unavailable_reason\": \"Why an assessment cannot be supplied; replaces inline assessment fields.\" Optional. \"uncertainties\": \"Declared limitations; claims may refer to their labels.\" Optional. Remove unsupported fields and resubmit using the supported structure."
   },
   {
     "name": "missing claim statement",

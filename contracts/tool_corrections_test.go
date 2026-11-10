@@ -49,7 +49,7 @@ func TestSharedActionableToolCorrections(t *testing.T) {
 				t.Fatal("leak")
 			}
 			if e.Constraint != nil {
-				correction, ok := p.ConstraintCorrection(e.Constraint)
+				correction, ok := p.ConstraintCorrectionWithFields(e.Constraint, e.UnsupportedFields)
 				if !ok || correction != e.Correction {
 					t.Fatal("unreconstructible constraint", e)
 				}

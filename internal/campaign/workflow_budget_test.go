@@ -66,7 +66,7 @@ func TestProtectedFinalizationDiagnosticRetention(t *testing.T) {
 	d := NewWorkflowDiagnostic("protected-1", "harness-local", "dispatch", "finalization_capacity_protected", "", "", "")
 	raw, _ := json.Marshal(d)
 	saved := DecodeWorkflowDiagnostic(raw)
-	if saved == nil || !saved.Informational() || saved.Omitted || !strings.Contains(saved.Message(), "not an execution failure") {
+	if saved == nil || !saved.Informational() || saved.Omitted || !strings.Contains(saved.Message(), "finalization_capacity_protected") {
 		t.Fatal(saved)
 	}
 	for _, mutate := range []func(*WorkflowDiagnostic){

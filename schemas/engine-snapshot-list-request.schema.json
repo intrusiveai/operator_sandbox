@@ -8,12 +8,14 @@
       "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
     },
     "offset": {
-      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer",
+      "description": "Zero-based byte offset at which to start reading."
     },
     "limit": {
       "type": "integer",
       "minimum": 1,
-      "maximum": 100
+      "maximum": 100,
+      "description": "Maximum number of snapshots to return."
     }
   },
   "required": []

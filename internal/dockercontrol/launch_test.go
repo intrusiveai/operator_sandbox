@@ -47,7 +47,7 @@ func launchFixture(t *testing.T, mode string) (*LaunchPlan, string, *campaign.Wr
 	for _, name := range profiles {
 		files[name] = []byte("Test only.")
 	}
-	pkg, pin, err := p.BuildPackageManifest("0.8.0", files, profiles)
+	pkg, pin, err := p.BuildPackageManifest("0.9.0", files, profiles)
 	if err != nil {
 		t.Fatal(err)
 	}

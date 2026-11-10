@@ -96,7 +96,7 @@ func (s *Service) artifactOperation(q stateRequest, raw []byte) (stateReply, err
 			limit = min(limit, s.sizes.Assessment)
 		}
 		if declaration.Artifact.SizeBytes > limit {
-			return stateDenied("LIMIT_EXCEEDED"), nil
+			return artifactCapacityDenied("LIMIT_EXCEEDED", declaration.Artifact.SizeBytes, limit, 1), nil
 		}
 		remaining := s.remaining()
 		availableBytes, availableObjects := remaining["artifact_bytes"], remaining["artifact_objects"]
@@ -114,7 +114,7 @@ func (s *Service) artifactOperation(q stateRequest, raw []byte) (stateReply, err
 			}
 		}
 		if availableObjects < 1 || declaration.Artifact.SizeBytes > availableBytes {
-			return stateDenied("ARTIFACT_BUDGET_EXCEEDED"), nil
+			return artifactCapacityDenied("ARTIFACT_BUDGET_EXCEEDED", declaration.Artifact.SizeBytes, max(int64(0), availableBytes), max(int64(0), availableObjects)), nil
 		}
 		// Same bytes cannot acquire an ambiguous descriptor in the attempt resolver.
 		initial, err := s.config.Prepared.InputsFor(s.target())
@@ -243,4 +243,21 @@ func (s *Service) addArtifacts(raw []byte, in *attemptadapter.Inputs) error {
 		in.Artifacts[desc.Digest] = attemptadapter.Artifact{CampaignID: s.writer.Manifest().CampaignID, Descriptor: u.Artifact, Bytes: content}
 	}
 	return nil
+}
+
+func artifactCapacityDenied(code string, requested, availableBytes, availableObjects int64) stateReply {
+	correction, disposition := "No artifact object or byte allowance remains. Reuse committed artifacts or finish with retained evidence; no artifact was created.", "gap-and-continue"
+	if availableObjects > 0 && availableBytes > 0 {
+		correction, disposition = "Reduce the artifact size to the available byte allowance or reuse a committed artifact. No artifact was created; correction is safe.", "correct-and-resubmit"
+	}
+	facts := contracts.FailureFacts{"requested_bytes": requested, "available_bytes": availableBytes, "available_objects": availableObjects}
+	issue := contracts.ArgumentError{Reason: "artifact_capacity", FieldPath: "/artifact/size_bytes", Correction: correction, Facts: &facts}
+	r := stateDenied(code, issue)
+	r.Error.Disposition = disposition
+	var d map[string]any
+	_ = json.Unmarshal(r.Error.Diagnostic, &d)
+	d["resubmission_safe"] = disposition == "correct-and-resubmit"
+	d["facts"] = facts
+	r.Error.Diagnostic = marshal(d)
+	return r
 }

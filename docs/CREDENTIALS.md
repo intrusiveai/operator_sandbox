@@ -81,7 +81,11 @@ standard envelope supplies campaign, launch, sequence and recording identity.
 
 Metadata MUST contain only the configured opaque credential/profile IDs, backend
 kind, `outcome` (`resolved` or `failed`), fixed `code` (`ok`, `resolution_failed`
-or `canceled`), `cache_hit` and timestamps. A successful event MAY contain the
+or `canceled`), `cache_hit` and timestamps. Failures also retain the failed step,
+a sanitized category, typed backend error code and observed HTTP status when
+available. Backend exception messages, request/response bodies and secret locators
+are not retained. A category of `unknown` means the backend did not expose a
+recognized typed condition; an absent HTTP status means none was observed. A successful event MAY contain the
 SHA-256 digest of a nonempty backend version string. It MUST NOT contain the raw
 version string, locator, value, selected JSON field, endpoint, remote exception,
 HTTP header or token. Unknown requested IDs MUST be omitted from metadata.

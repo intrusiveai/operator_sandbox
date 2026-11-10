@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -75,6 +77,19 @@ type reply struct {
 
 func denied(code string) reply {
 	return reply{Error: &Fault{Code: code, Message: "The operation was not admitted.", Effect: "none", Disposition: "correct-and-resubmit"}}
+}
+
+// rejection carries the facts from the failed check; it never infers a cause
+// from a generic error code.
+func rejection(code, path, correction, disposition string, facts *contracts.FailureFacts) reply {
+	d, _ := json.Marshal(map[string]any{"source": "operator", "stage": "admission", "reason": strings.ToLower(code), "field_path": path, "message": contracts.ShortCorrection(correction), "correction": correction, "facts": facts, "execution_occurred": "no", "resubmission_safe": disposition == "correct-and-resubmit"})
+	if facts == nil {
+		var obj map[string]any
+		_ = json.Unmarshal(d, &obj)
+		delete(obj, "facts")
+		d, _ = json.Marshal(obj)
+	}
+	return reply{Error: &Fault{Code: code, InstancePath: path, Message: contracts.ShortCorrection(correction), Diagnostic: d, Effect: "none", Disposition: disposition}}
 }
 func terminal(code, effect string) reply {
 	return reply{Error: &Fault{Code: code, Message: "Campaign execution is closed.", Effect: effect, Disposition: "terminate"}}
@@ -457,10 +472,10 @@ func (b *Broker) readRecord(q wireRequest) (*feedback.Retained, campaign.Publica
 		if b.config.Writer.Fence().Err() != nil {
 			return nil, index, terminal("OBSERVATION_INTEGRITY_FAILED", "none")
 		}
-		return nil, index, denied("OBSERVATION_NOT_FOUND")
+		return nil, index, rejection("OBSERVATION_NOT_FOUND", "/entry_id", "The requested observation is not retained under this execution receipt. Select an observation returned by a completed attempt; do not replay the target to repair a reference.", "correct-and-resubmit", nil)
 	}
 	if len(index.Feedback) == 0 {
-		return nil, index, denied("OBSERVATION_NOT_FOUND")
+		return nil, index, rejection("OBSERVATION_NOT_FOUND", "/entry_id", "The requested observation is not retained under this execution receipt. Select an observation returned by a completed attempt; do not replay the target to repair a reference.", "correct-and-resubmit", nil)
 	}
 	record, err := feedback.OpenRecord(b.config.Catalog, index.Feedback)
 	if err != nil {
@@ -470,22 +485,33 @@ func (b *Broker) readRecord(q wireRequest) (*feedback.Retained, campaign.Publica
 	for _, entry := range record.Entries() {
 		if entry.ID == read.Entry {
 			if !slices.Contains(b.config.ReadKinds(), entry.Kind) {
-				return nil, index, denied("OBSERVATION_NOT_PERMITTED")
+				return nil, index, rejection("OBSERVATION_NOT_PERMITTED", "/entry_id", "This observation category is forbidden by the campaign feedback policy. Use permitted observations or report the evidence gap; repeating the request cannot grant access.", "gap-and-continue", nil)
 			}
 			if entry.Artifact != nil && read.Offset > entry.Artifact.SizeBytes {
-				return nil, index, denied("OBSERVATION_RANGE_INVALID")
+				return nil, index, rejection("OBSERVATION_RANGE_INVALID", "/offset", fmt.Sprintf("Read with offset between 0 and %d bytes inclusive; use the returned continuation for subsequent reads.", entry.Artifact.SizeBytes), "correct-and-resubmit", &contracts.FailureFacts{"maximum_offset": entry.Artifact.SizeBytes, "requested_offset": read.Offset})
 			}
 			return record, index, reply{}
 		}
 	}
-	return nil, index, denied("OBSERVATION_NOT_FOUND")
+	return nil, index, rejection("OBSERVATION_NOT_FOUND", "/entry_id", "The requested observation is not retained under this execution receipt. Select an observation returned by a completed attempt; do not replay the target to repair a reference.", "correct-and-resubmit", nil)
 }
 func (b *Broker) read(q wireRequest) (reply, int64, error) {
 	var read readQuery
 	_ = json.Unmarshal(q.Body, &read)
 	if err := b.config.Attempts.Tools().ReserveRead(q.ID, int64(read.Maximum)); err != nil {
 		if errors.Is(err, campaign.ErrFeedbackBudget) {
-			return denied("FEEDBACK_BUDGET_EXCEEDED"), 0, nil
+			var issue *contracts.ArgumentError
+			if !errors.As(err, &issue) {
+				return reply{}, 0, err
+			}
+			disposition := "gap-and-continue"
+			if issue.Facts != nil {
+				f := *issue.Facts
+				if f["remaining_reads"].(int64) > 0 && f["remaining_bytes"].(int64) > 0 {
+					disposition = "correct-and-resubmit"
+				}
+			}
+			return rejection("FEEDBACK_BUDGET_EXCEEDED", issue.FieldPath, issue.Correction, disposition, issue.Facts), 0, nil
 		}
 		return reply{}, 0, err
 	}

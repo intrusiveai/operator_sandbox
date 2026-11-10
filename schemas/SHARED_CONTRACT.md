@@ -790,8 +790,16 @@ Correctable rejections MUST carry the model-facing path, known rule/expectation,
 concrete next action, execution effect and resubmission safety. Go and Python MUST
 use the installed schema's constraint values. `diagnostic.constraint` identifies
 `schema`, `path` and `keyword`; Operator MUST resolve these against its own approved
-catalog before retaining an expectation. Harness prose MUST NOT become trusted host
-summary text. Unknown field names MUST retain only their safe parent path.
+catalog before retaining an expectation. Producer message/correction MUST be
+bounded and credential-filtered, with omissions identified and Harness assertions
+attributed separately from host observations. Reports MUST NOT replace known
+failure details using a reason-to-message lookup table. Valid unknown reason
+identifiers MUST survive. Unsupported names MUST be quoted as bounded data beside
+the containing object path, with schema-derived supported purposes and required
+flags. The `unsupported_fields` object carries omitted-name counts and reasons.
+`facts` permits bounded scalar failure details; neither prose nor facts can grant
+capabilities or change execution admission. Full corrections allow 4096 bytes;
+short envelope messages remain bounded separately.
 Discriminated alternatives MUST select the relevant branch; ambiguous alternatives
 MUST explain their distinguishing fields. Normalization MUST preserve rule detail
 and remap the field path. Internal resolution defects MUST NOT invite the model to

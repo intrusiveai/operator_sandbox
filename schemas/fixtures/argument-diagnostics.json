@@ -40,7 +40,7 @@
       "tool": "attempt_execute",
       "raw": "{\"origin\":\"exploratory\",\"operation_id\":\"invoke\",\"generation\":1,\"json\":{}}",
       "reason": "invalid_structure",
-      "path": "/generation"
+      "path": ""
     }
   ]
 }

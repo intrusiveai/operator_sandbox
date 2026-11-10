@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/attemptadapter"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
@@ -36,8 +37,12 @@ func (s *Service) handleDiagnostic(ctx context.Context, raw []byte, seq int64) (
 		Call       string          `json:"tool_call_id"`
 		Diagnostic struct {
 			Source, Stage, Reason string
-			Constraint            *contracts.SchemaConstraint `json:"constraint"`
-			Path                  string                      `json:"field_path"`
+			Message, Correction   string
+			Omissions             *[]campaign.DiagnosticOmission `json:"omissions"`
+			Facts                 *contracts.FailureFacts        `json:"facts"`
+			UnsupportedFields     *contracts.UnsupportedFields   `json:"unsupported_fields"`
+			Constraint            *contracts.SchemaConstraint    `json:"constraint"`
+			Path                  string                         `json:"field_path"`
 		} `json:"diagnostic"`
 		Stopping *struct {
 			Condition string
@@ -48,17 +53,22 @@ func (s *Service) handleDiagnostic(ctx context.Context, raw []byte, seq int64) (
 	}
 	_ = json.Unmarshal(q.Body, &body)
 	d := campaign.NewWorkflowDiagnostic(q.ID, "harness-local", body.Diagnostic.Stage, body.Diagnostic.Reason, body.Diagnostic.Path, body.Tool, body.Call)
+	d.RetainDetails(body.Diagnostic.Message, body.Diagnostic.Correction, body.Diagnostic.Facts)
+	d.ProducerOmissions = body.Diagnostic.Omissions
+	if body.Diagnostic.UnsupportedFields != nil && body.Diagnostic.Constraint == nil {
+		return s.stateEnvelope(raw, seq, stateDenied("INVALID_ARGUMENTS"))
+	}
 	if body.Diagnostic.Constraint != nil {
-		correction, ok := s.target().Protocol().ConstraintCorrection(body.Diagnostic.Constraint)
+		correction, ok := s.target().Protocol().ConstraintCorrectionWithFields(body.Diagnostic.Constraint, body.Diagnostic.UnsupportedFields)
 		if !ok {
 			return s.stateEnvelope(raw, seq, stateDenied("INVALID_ARGUMENTS"))
 		}
+		d.UnsupportedFields = body.Diagnostic.UnsupportedFields
 		d.Constraint = body.Diagnostic.Constraint
 		d.Correction = correction
 	}
-	// Never copy Harness-supplied message/identifier/correction into host summaries.
-	// Their potentially sensitive prose is omitted from structured diagnostics.
-	d.Omitted = d.Constraint == nil
+	// Producer explanations remain explicitly attributed to Harness; host facts remain separate.
+	d.Omitted = d.Omitted || d.DetailOmitted != "" || d.CorrectionOmitted != "" || d.FactsOmitted
 	if body.Stopping != nil {
 		d.Budget = body.Stopping.Budget
 		d.Stopping = body.Stopping.Condition
@@ -115,11 +125,12 @@ func (s *Service) rejectArguments(raw []byte, seq int64, cause error) ([]byte, e
 		reply, err = s.rejectConclusion(q, &contracts.ConclusionError{Reason: "invalid_structure", FieldPath: issue.FieldPath, Cause: cause})
 	} else {
 		d := campaign.NewWorkflowDiagnostic(q.ID, "operator", "arguments", issue.Reason, issue.FieldPath, "", "")
+		d.UnsupportedFields = issue.UnsupportedFields
 		d.Constraint = issue.Constraint
-		d.Correction = issue.Correction
+		d.RetainDetails("", issue.Correction, issue.Facts)
 		message := d.Message()
 		if d.Correction != "" {
-			message = d.Correction // The field is separate; keep the wire message bounded.
+			message = rejectionMessage(d.Correction) // Full guidance is in the diagnostic.
 		}
 		s.workflowDiagnostic.Store(&d)
 		_, err = s.writer.AppendStored(campaign.Entry{RunRevision: q.Revision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d})}, "", false)
@@ -145,14 +156,15 @@ func (s *Service) recordArgumentRejection(id string, cause error) (json.RawMessa
 	}
 	d := campaign.NewWorkflowDiagnostic(id, "operator", "arguments", reason, path, "", "")
 	if issue != nil {
+		d.UnsupportedFields = issue.UnsupportedFields
 		d.Constraint = issue.Constraint
-		d.Correction = issue.Correction
+		d.RetainDetails("", issue.Correction, issue.Facts)
 	}
 	s.workflowDiagnostic.Store(&d)
 	_, err := s.writer.AppendStored(campaign.Entry{RunRevision: s.attempts.Status().RunRevision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d})}, "", false)
 	message := d.Message()
 	if d.Correction != "" {
-		message = d.Correction
+		message = rejectionMessage(d.Correction)
 	}
 	return d.Wire(), message, d.FieldPath, err
 }
@@ -165,6 +177,7 @@ func (s *Service) retentionFailure(id, field string, primary error) error {
 		reason = "assessment_retention_failed"
 	}
 	d := campaign.NewWorkflowDiagnostic(id, "operator", "retention", reason, "/"+field, "", "")
+	d.RetainDetails("Required "+field+" retention failed. The operation was not admitted; execution closes for owned cleanup.", "", nil)
 	s.workflowDiagnostic.Store(&d)
 	_, secondary := s.writer.AppendStored(campaign.Entry{RunRevision: s.attempts.Status().RunRevision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d})}, "", false)
 	failure := errors.Join(d, primary, secondary)
@@ -259,4 +272,8 @@ func (s *Service) FailureTrigger() *campaign.FailureTrigger {
 		return &copy
 	}
 	return nil
+}
+
+func rejectionMessage(correction string) string {
+	return contracts.ShortCorrection(correction)
 }
