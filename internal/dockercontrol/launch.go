@@ -4,14 +4,14 @@ package dockercontrol
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
-var ErrLaunch = errors.New("Docker launch failed or its outcome is unconfirmed")
+var ErrLaunch = diagnostictext.New("Docker launch failed or its outcome is unconfirmed")
 
 // Create creates a stopped container from a frozen host plan. The caller MUST
 // persist its start intent first and save every returned nonzero binding, even

@@ -9,7 +9,6 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -20,11 +19,12 @@ import (
 	"syscall"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
 var (
-	ErrInputs     = errors.New("staging inputs do not match the verified contract and manifest inventories")
-	ErrFilesystem = errors.New("staging filesystem validation or publication failed")
+	ErrInputs     = diagnostictext.New("staging inputs do not match the verified contract and manifest inventories")
+	ErrFilesystem = diagnostictext.New("staging filesystem validation or publication failed")
 )
 
 type Manifests struct {

@@ -21,6 +21,13 @@ type ConclusionError struct {
 }
 
 func (e *ConclusionError) Error() string { return "conclusion validation failed: " + e.Reason }
+func (e *ConclusionError) DiagnosticMessage() string {
+	path, ok := SafeArgumentPath(e.FieldPath)
+	if !ok {
+		return e.Error() + " [field path omitted: unsafe_or_oversized]"
+	}
+	return e.Error() + " at " + strconv.Quote(path)
+}
 func (e *ConclusionError) Unwrap() error {
 	if e.Cause != nil {
 		return e.Cause

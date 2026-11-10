@@ -13,10 +13,11 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	vault "github.com/hashicorp/vault/api"
-	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
 // Failure contains selected configuration identifiers and the failed step, never
@@ -50,6 +51,8 @@ func (f Failure) Error() string {
 	return text
 }
 
+func (f Failure) DiagnosticMessage() string { return f.Error() }
+
 var safeBackendCode = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_.-]{0,63}$`)
 
 // Only typed status/code interfaces are inspected; error messages can contain
@@ -57,6 +60,14 @@ var safeBackendCode = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_.-]{0,63}$`)
 type failureCause struct {
 	Failure
 	cause error
+}
+
+func (e failureCause) DiagnosticMessage() string {
+	message := e.Failure.Error()
+	if detail, ok := diagnostictext.FromError(e.cause); ok {
+		message += "; " + detail
+	}
+	return message
 }
 
 func (e failureCause) Unwrap() []error { return []error{e.Failure, e.cause} }
@@ -150,3 +161,10 @@ type backendContextError struct {
 
 func (e backendContextError) Error() string { return e.operation + " failed" }
 func (e backendContextError) Unwrap() error { return e.cause }
+func (e backendContextError) DiagnosticMessage() string {
+	message := e.Error()
+	if detail, ok := diagnostictext.FromError(e.cause); ok {
+		message += "; " + detail
+	}
+	return message
+}

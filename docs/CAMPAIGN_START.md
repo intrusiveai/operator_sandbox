@@ -140,6 +140,31 @@ attachment/status, target preparation, and launch persistence. An Interceptor
 rejection reports its validated HTTP status; a lost or invalid response identifies
 that uncertainty. An absent attachment record alone does not prove the cause.
 
+Capability admission failures retain the required reference and the failed rule.
+For example, a target may advertise snapshots while the resolved host policy
+does not permit them. Preparation then reports:
+
+```text
+Campaign preparation failed during target preparation (preparation_failed):
+Operator preparation (target preparation): scenario bundle is incompatible with the selected target: feature:snapshots (host_policy)
+Execution will not resume.
+```
+
+The same message is retained in the start completion and returned by the inspection
+and status commands above. `host_policy` identifies a host policy rejection; it
+does not mean the capability was absent from Interceptor's export.
+
+Preparation forwards producer-owned `DiagnosticMessage()` details through the
+existing diagnostic record. Error producers select public failure facts at the
+failing check; preparation does not require a case for each producer's error
+type. Common redaction and length bounds still apply, with explicit omission
+markers. Product errors used by preparation supply their public descriptions at
+the producer, including capability admission, configuration, credentials,
+image validation, staging, storage, and Interceptor communication. Preparation
+has no list of product error types or sentinels whose messages it permits.
+Arbitrary wrapped error strings remain private; operating-system and context
+errors retain their bounded generic descriptions when no producer detail exists.
+
 Use `--run` for failures before acceptance: there may be no campaign journal for
 `--campaign` to inspect. A `cleanup_failed` diagnostic reports a secondary cleanup
 problem without replacing the primary cause. If saving the completion is

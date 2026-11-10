@@ -4,15 +4,15 @@ package campaign
 
 import (
 	"encoding/json"
-	"errors"
 	"slices"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
-var ErrConflict = errors.New("operation identity conflicts with saved command")
-var ErrFeedbackBudget = errors.New("campaign feedback allowance exhausted")
+var ErrConflict = diagnostictext.New("operation identity conflicts with saved command")
+var ErrFeedbackBudget = diagnostictext.New("campaign feedback allowance exhausted")
 
 // Tools shares the attempt ledger's lock, namespace, target binding and limits.
 // It cannot create attempt admissions or resume work from a recovered journal.

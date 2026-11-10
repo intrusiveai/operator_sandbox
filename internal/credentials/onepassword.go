@@ -17,6 +17,8 @@ import (
 	"unicode/utf8"
 
 	op "github.com/1password/onepassword-sdk-go"
+
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
 // OnePasswordChildCommand is an internal, single-read entry point in this binary.
@@ -30,6 +32,8 @@ const (
 )
 
 type onePasswordError string
+
+func (e onePasswordError) DiagnosticMessage() string { return e.Error() }
 
 func (e onePasswordError) Error() string {
 	switch e {
@@ -83,26 +87,26 @@ func validOnePasswordReference(value string, prefix bool) bool {
 func validateOnePasswordProfile(p SecretStoreProfile) error {
 	if p.BackendKind != "onepassword" {
 		if p.OnePasswordAccount != "" {
-			return errors.New("onepassword_account requires the onepassword backend")
+			return diagnostictext.New("onepassword_account requires the onepassword backend")
 		}
 		return nil
 	}
 	if p.Region != "" || p.AWSProfile != "" || p.VaultURL != "" || p.VaultNamespace != "" || p.VaultProxy || p.VaultTokenFile != "" || p.VaultCACertificate != "" {
-		return errors.New("onepassword profile contains fields for another backend")
+		return diagnostictext.New("onepassword profile contains fields for another backend")
 	}
 	if p.Authentication == onePasswordDesktop {
 		if !utf8.ValidString(p.OnePasswordAccount) || strings.TrimSpace(p.OnePasswordAccount) == "" || len(p.OnePasswordAccount) > 256 || strings.ContainsFunc(p.OnePasswordAccount, unicode.IsControl) {
-			return errors.New("onepassword_account must be a bounded desktop account name or UUID")
+			return diagnostictext.New("onepassword_account must be a bounded desktop account name or UUID")
 		}
 	} else if p.Authentication != onePasswordService || p.OnePasswordAccount != "" {
-		return errors.New("onepassword authentication must select desktop with onepassword_account or service-account without it")
+		return diagnostictext.New("onepassword authentication must select desktop with onepassword_account or service-account without it")
 	}
 	if len(p.AllowedLocatorPrefixes) == 0 || len(p.AllowedLocatorPrefixes) > 128 {
-		return errors.New("onepassword requires 1 to 128 allowed_locator_prefixes")
+		return diagnostictext.New("onepassword requires 1 to 128 allowed_locator_prefixes")
 	}
 	for _, prefix := range p.AllowedLocatorPrefixes {
 		if !validOnePasswordReference(prefix, true) {
-			return errors.New("onepassword allowed_locator_prefixes must end at a vault, item or section boundary")
+			return diagnostictext.New("onepassword allowed_locator_prefixes must end at a vault, item or section boundary")
 		}
 	}
 	return nil
@@ -112,7 +116,7 @@ func onePasswordLocator(l Locator) (string, error) {
 	other := l
 	other.BackendKind, other.SecretReference = "", ""
 	if other != (Locator{}) || !validOnePasswordReference(l.SecretReference, false) {
-		return "", errors.New("onepassword locator requires only backend_kind and a valid secret_reference")
+		return "", diagnostictext.New("onepassword locator requires only backend_kind and a valid secret_reference")
 	}
 	return l.SecretReference, nil
 }
@@ -161,7 +165,7 @@ func (b *limitedSecretBuffer) Write(p []byte) (int, error) {
 		if b.stop != nil {
 			b.stop()
 		}
-		return 0, errors.New("credential response exceeds limit")
+		return 0, diagnostictext.New("credential response exceeds limit")
 	}
 	return b.data.Write(p)
 }

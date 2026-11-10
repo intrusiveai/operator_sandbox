@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 	"slices"
 	"strings"
@@ -50,7 +51,7 @@ type Broker struct {
 	manifest campaign.RunManifest
 }
 
-var ErrOperation = errors.New("operation belongs to another host broker route")
+var ErrOperation = diagnostictext.New("operation belongs to another host broker route")
 
 type wireRequest struct {
 	CallID    string          `json:"call_id"`

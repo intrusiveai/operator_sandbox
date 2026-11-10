@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"crypto/x509"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/url"
 	"regexp"
@@ -17,15 +16,16 @@ import (
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/credentials"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
 const Version = "operator.dev/model-provider-profile/v1alpha1"
 
-var ErrProfile = errors.New("invalid host model provider profile")
-var ErrRequest = errors.New("model request does not match the host provider profile")
-var ErrProvider = errors.New("model provider call failed; outcome may be unknown")
+var ErrProfile = diagnostictext.New("invalid host model provider profile")
+var ErrRequest = diagnostictext.New("model request does not match the host provider profile")
+var ErrProvider = diagnostictext.New("model provider call failed; outcome may be unknown")
 var id = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$`)
 
 // Settings never crosses into guest inputs. The full request endpoint, cloud
@@ -247,4 +247,5 @@ func (e *ProfileError) Error() string {
 	return fmt.Sprintf("Model profile %s: %s (%s)", e.Field, e.Correction, e.Rule)
 }
 func (e *ProfileError) Unwrap() error                  { return ErrProfile }
+func (e *ProfileError) DiagnosticMessage() string      { return e.Error() }
 func profileRule(field, rule, correction string) error { return &ProfileError{field, rule, correction} }

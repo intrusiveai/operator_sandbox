@@ -53,6 +53,8 @@ type CompatibilityError struct {
 	ActualSHA256   string `json:"actual_sha256,omitempty"`
 }
 
+func (e *CompatibilityError) DiagnosticMessage() string { return e.Error() }
+
 func (e *CompatibilityError) Error() string {
 	if e.Reason == "hash_mismatch" || e.Reason == "version_mismatch" && e.ExpectedSHA256 != "" {
 		return fmt.Sprintf("Operator requires Interceptor contract %s (SHA-256 %s); running Interceptor reports %s (SHA-256 %s). Install a compatible release; no campaign target operation was dispatched by this check", e.Expected, e.ExpectedSHA256, e.Actual, e.ActualSHA256)

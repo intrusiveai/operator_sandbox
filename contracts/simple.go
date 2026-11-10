@@ -3,6 +3,7 @@ package contracts
 import (
 	"encoding/base64"
 	"encoding/json"
+	"strconv"
 )
 
 // DirectInputLimit bounds eager decoding/canonicalization inside a 4 MiB frame.
@@ -21,6 +22,13 @@ type ArgumentError struct {
 }
 
 func (e *ArgumentError) Error() string { return e.Reason + ": " + e.Correction }
+func (e *ArgumentError) DiagnosticMessage() string {
+	path, ok := SafeArgumentPath(e.FieldPath)
+	if !ok {
+		return e.Error() + " [field path omitted: unsafe_or_oversized]"
+	}
+	return "Contract arguments at " + strconv.Quote(path) + ": " + e.Error()
+}
 func (e *ArgumentError) Unwrap() error {
 	if e.Cause != nil {
 		return e.Cause

@@ -11,6 +11,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/aws/smithy-go"
 	vault "github.com/hashicorp/vault/api"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -38,7 +39,48 @@ func TestCredentialFailureRetainsTypedFactsWithoutBackendText(t *testing.T) {
 			if !errors.Is(err, tc.err) {
 				t.Fatal("cause lost in memory")
 			}
+			message, ok := diagnostictext.FromError(err)
+			if !ok || !strings.Contains(message, "secret-read") || !strings.Contains(message, tc.category) || strings.Contains(message, "SYNTHETIC_SECRET") {
+				t.Fatal(message, ok)
+			}
 		})
+	}
+}
+
+func TestCredentialDiagnosticPreservesOwnedValueRule(t *testing.T) {
+	_, cause := selectValue([]byte(`{"other":"SYNTHETIC_SECRET"}`), ValueSelection{Format: "json-string-field", Field: "api_key"}, 1024)
+	if cause == nil {
+		t.Fatal("expected missing field")
+	}
+	err := failed("key", "profile", "aws-secrets-manager", "value-selection", cause)
+	message, ok := diagnostictext.FromError(err)
+	if !ok || !strings.Contains(message, "selected JSON field is absent") || strings.Contains(message, "SYNTHETIC_SECRET") || !errors.Is(err, cause) {
+		t.Fatal(message, ok)
+	}
+}
+
+func TestCredentialConfigurationDiagnosticsExcludeInvalidValues(t *testing.T) {
+	for _, fault := range []string{"profile-id", "backend", "credential-id", "profile-reference"} {
+		c := validConfig()
+		want := ""
+		switch fault {
+		case "profile-id":
+			c.Profiles[0].ID = "SYNTHETIC_SECRET/invalid"
+			want = "profiles[0].id"
+		case "backend":
+			c.Profiles[0].BackendKind = "SYNTHETIC_SECRET"
+			want = "profiles[0].backend_kind"
+		case "credential-id":
+			c.Credentials[0].CredentialID = "SYNTHETIC_SECRET/invalid"
+			want = "credentials[0].credential_id"
+		case "profile-reference":
+			c.Credentials[0].StoreProfileID = "SYNTHETIC_SECRET"
+			want = "credentials[0].store_profile_id"
+		}
+		message, ok := diagnostictext.FromError(Validate(c))
+		if !ok || !strings.Contains(message, want) || strings.Contains(message, "SYNTHETIC_SECRET") {
+			t.Fatal(fault, message, ok)
+		}
 	}
 }
 

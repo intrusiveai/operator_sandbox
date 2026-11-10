@@ -1,7 +1,6 @@
 package contracts
 
 import (
-	"errors"
 	"io/fs"
 	"path"
 	"sort"
@@ -10,8 +9,8 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v6"
 )
 
-var ErrSchema = errors.New("contract schema validation failed")
-var ErrCatalog = errors.New("invalid installed contract catalog")
+var ErrSchema = newPublicError("contract schema validation failed")
+var ErrCatalog = newPublicError("invalid installed contract catalog")
 
 type offlineLoader struct{}
 

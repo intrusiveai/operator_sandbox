@@ -18,6 +18,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
 	"go.yaml.in/yaml/v3"
 )
@@ -54,43 +55,43 @@ func Load(path string) (Config, error) {
 	}
 	var document yaml.Node
 	if yaml.Unmarshal(data, &document) != nil || !plainYAML(&document) {
-		return Config{}, errors.New("invalid credential configuration")
+		return Config{}, diagnostictext.New("invalid credential configuration")
 	}
 	decoder := yaml.NewDecoder(bytes.NewReader(data))
 	decoder.KnownFields(true)
 	var config Config
 	if err := decoder.Decode(&config); err != nil {
-		return Config{}, errors.New("invalid credential configuration")
+		return Config{}, diagnostictext.New("invalid credential configuration")
 	}
 	var trailing any
 	if err := decoder.Decode(&trailing); err != io.EOF {
-		return Config{}, errors.New("credential configuration must contain exactly one YAML document")
+		return Config{}, diagnostictext.New("credential configuration must contain exactly one YAML document")
 	}
 	if err := Validate(config); err != nil {
-		return Config{}, errors.New("invalid credential configuration")
+		return Config{}, diagnostictext.New("invalid credential configuration")
 	}
 	return config, nil
 }
 
 func Validate(config Config) error {
 	if len(config.Profiles) > 32 || len(config.Credentials) > 128 {
-		return errors.New("credential configuration exceeds entry limits")
+		return diagnostictext.New("credential configuration exceeds entry limits")
 	}
 	profiles := map[string]SecretStoreProfile{}
-	for _, profile := range config.Profiles {
+	for index, profile := range config.Profiles {
 		if (profile.APIVersion != StoreProfileVersion && profile.APIVersion != "interceptor.dev/secret-store-profile/v1alpha1") || profile.Kind != "SecretStoreProfile" || !stableID.MatchString(profile.ID) {
-			return fmt.Errorf("secret-store profile %q has invalid identity or schema", profile.ID)
+			return diagnostictext.New(fmt.Sprintf("Credential configuration profiles[%d].id: invalid identity or schema", index))
 		}
 		switch profile.BackendKind {
 		case "aws-secrets-manager", "azure-key-vault", "gcp-secret-manager", "hashicorp-vault", "onepassword":
 		default:
-			return fmt.Errorf("profile %q has unsupported backend %q", profile.ID, profile.BackendKind)
+			return diagnostictext.New(fmt.Sprintf("Credential configuration profiles[%d].backend_kind: unsupported backend", index))
 		}
 		if _, ok := profiles[profile.ID]; ok {
-			return fmt.Errorf("secret-store profile %q is duplicated", profile.ID)
+			return diagnostictext.New(fmt.Sprintf("Credential configuration profiles[%d].id: duplicate profile identity", index))
 		}
 		if len(profile.AllowedLocatorPrefixes) == 0 {
-			return fmt.Errorf("profile %q requires allowed_locator_prefixes", profile.ID)
+			return diagnostictext.New(fmt.Sprintf("Credential configuration profiles[%d].allowed_locator_prefixes: at least one allowed locator prefix is required", index))
 		}
 		if profile.TimeoutSeconds == 0 {
 			profile.TimeoutSeconds = 10
@@ -102,60 +103,60 @@ func Validate(config Config) error {
 			profile.MaxCacheTTLSeconds = 300
 		}
 		if profile.TimeoutSeconds < 1 || profile.TimeoutSeconds > 60 || profile.MaxValueBytes < 1 || profile.MaxValueBytes > 1<<20 || profile.MaxCacheTTLSeconds < 0 || profile.MaxCacheTTLSeconds > 3600 {
-			return fmt.Errorf("profile %q has an out-of-bounds timeout, value, or cache limit", profile.ID)
+			return diagnostictext.New(fmt.Sprintf("Credential configuration profiles[%d]: timeout, value, or cache limit is out of bounds", index))
 		}
 		if err := validateOnePasswordProfile(profile); err != nil {
 			return fmt.Errorf("profile %q: %w", profile.ID, err)
 		}
 		if profile.AWSProfile != "" && (profile.BackendKind != "aws-secrets-manager" || !ValidAWSProfile(profile.AWSProfile)) {
-			return errors.New("invalid AWS named profile selection")
+			return diagnostictext.New("invalid AWS named profile selection")
 		}
 		if profile.BackendKind == "aws-secrets-manager" && ((profile.Authentication == "aws-profile" && profile.AWSProfile == "") || (profile.AWSProfile != "" && profile.Authentication != "" && profile.Authentication != "aws-profile")) {
-			return errors.New("conflicting AWS authentication selection")
+			return diagnostictext.New("conflicting AWS authentication selection")
 		}
 		if !ValidStoreAuthentication(profile.BackendKind, profile.Authentication) {
-			return errors.New("invalid secret-store authentication selection")
+			return diagnostictext.New("invalid secret-store authentication selection")
 		}
 		if profile.BackendKind == "aws-secrets-manager" && profile.Region == "" {
-			return fmt.Errorf("AWS profile %q requires region", profile.ID)
+			return diagnostictext.New(fmt.Sprintf("Credential configuration profiles[%d].region: AWS requires a region", index))
 		}
 		if profile.BackendKind == "azure-key-vault" && !validHTTPS(profile.VaultURL) {
-			return fmt.Errorf("Azure profile %q requires an HTTPS vault_url", profile.ID)
+			return diagnostictext.New(fmt.Sprintf("Credential configuration profiles[%d].vault_url: Azure requires an HTTPS vault_url", index))
 		}
 		if profile.BackendKind == "hashicorp-vault" && (!validHTTPS(profile.VaultURL) || (profile.VaultProxy && profile.VaultTokenFile != "" || !profile.VaultProxy && profile.VaultTokenFile == "")) {
-			return fmt.Errorf("Vault profile %q requires an HTTPS vault_url and exactly one of vault_proxy or token file", profile.ID)
+			return diagnostictext.New(fmt.Sprintf("Credential configuration profiles[%d]: Vault requires an HTTPS vault_url and exactly one of vault_proxy or token file", index))
 		}
 		if profile.VaultTokenFile != "" && (!filepath.IsAbs(profile.VaultTokenFile) || filepath.Clean(profile.VaultTokenFile) != profile.VaultTokenFile) {
-			return errors.New("Vault token sink must be an absolute clean path")
+			return diagnostictext.New("Vault token sink must be an absolute clean path")
 		}
 		if len(profile.AllowedLocatorPrefixes) > 128 {
-			return errors.New("too many locator prefixes")
+			return diagnostictext.New("too many locator prefixes")
 		}
 		for _, prefix := range profile.AllowedLocatorPrefixes {
 			if prefix == "" || len(prefix) > 2048 || strings.ContainsAny(prefix, "\x00\r\n") {
-				return errors.New("invalid locator prefix")
+				return diagnostictext.New("invalid locator prefix")
 			}
 		}
 		profiles[profile.ID] = profile
 	}
 	seen := map[string]bool{}
-	for _, ref := range config.Credentials {
+	for index, ref := range config.Credentials {
 		if (ref.APIVersion != CredentialRefVersion && ref.APIVersion != "interceptor.dev/host-credential-ref/v1alpha1") || ref.Kind != "HostCredentialRef" || !stableID.MatchString(ref.CredentialID) {
-			return fmt.Errorf("credential %q has invalid identity or schema", ref.CredentialID)
+			return diagnostictext.New(fmt.Sprintf("Credential configuration credentials[%d].credential_id: invalid identity or schema", index))
 		}
 		if seen[ref.CredentialID] {
-			return fmt.Errorf("credential %q is duplicated", ref.CredentialID)
+			return diagnostictext.New(fmt.Sprintf("Credential configuration credentials[%d].credential_id: duplicate credential identity", index))
 		}
 		seen[ref.CredentialID] = true
 		profile, ok := profiles[ref.StoreProfileID]
 		if !ok {
-			return fmt.Errorf("credential %q refers to unknown profile", ref.CredentialID)
+			return diagnostictext.New(fmt.Sprintf("Credential configuration credentials[%d].store_profile_id: unknown profile", index))
 		}
 		if ref.Locator.BackendKind != profile.BackendKind {
-			return fmt.Errorf("credential %q backend does not match its profile", ref.CredentialID)
+			return diagnostictext.New(fmt.Sprintf("Credential configuration credentials[%d].locator.backend_kind: backend does not match its profile", index))
 		}
 		if ref.Locator.BackendKind == "aws-secrets-manager" && ref.Locator.Region != profile.Region || ref.Locator.BackendKind == "azure-key-vault" && strings.TrimSuffix(ref.Locator.VaultURL, "/") != strings.TrimSuffix(profile.VaultURL, "/") {
-			return errors.New("credential locator differs from its profile")
+			return diagnostictext.New("credential locator differs from its profile")
 		}
 		canonical, err := canonicalLocator(ref.Locator)
 		if err != nil {
@@ -168,22 +169,22 @@ func Validate(config Config) error {
 			}
 		}
 		if !allowed {
-			return fmt.Errorf("credential %q locator is outside the profile allowlist", ref.CredentialID)
+			return diagnostictext.New(fmt.Sprintf("Credential configuration credentials[%d].locator: locator is outside the profile allowlist", index))
 		}
 		if ref.Value.Format != "utf8" && ref.Value.Format != "json-string-field" {
-			return fmt.Errorf("credential %q has unsupported value format", ref.CredentialID)
+			return diagnostictext.New(fmt.Sprintf("Credential configuration credentials[%d].value_format: unsupported value format", index))
 		}
 		if ref.Value.Format == "json-string-field" && !stableID.MatchString(ref.Value.Field) {
-			return fmt.Errorf("credential %q requires a simple JSON field", ref.CredentialID)
+			return diagnostictext.New(fmt.Sprintf("Credential configuration credentials[%d].json_field: a simple JSON field is required", index))
 		}
 		if ref.Value.Format == "utf8" && ref.Value.Field != "" {
-			return fmt.Errorf("credential %q utf8 selection may not name a field", ref.CredentialID)
+			return diagnostictext.New(fmt.Sprintf("Credential configuration credentials[%d].json_field: utf8 selection may not name a field", index))
 		}
 		if ref.Locator.BackendKind == "hashicorp-vault" && ref.Value.Format != "json-string-field" {
-			return fmt.Errorf("credential %q must select an explicit Vault KV string field", ref.CredentialID)
+			return diagnostictext.New(fmt.Sprintf("Credential configuration credentials[%d].json_field: select an explicit Vault KV string field", index))
 		}
 		if ref.CacheTTLSeconds < 0 || ref.CacheTTLSeconds > profile.MaxCacheTTLSeconds {
-			return fmt.Errorf("credential %q cache TTL exceeds its profile", ref.CredentialID)
+			return diagnostictext.New(fmt.Sprintf("Credential configuration credentials[%d].cache_ttl_seconds: cache TTL exceeds its profile", index))
 		}
 	}
 	return nil
@@ -230,7 +231,7 @@ func (r *Resolver) Resolve(ctx context.Context, credentialID string) (Resolution
 	r.mu.Lock()
 	if r.closed {
 		r.mu.Unlock()
-		return Resolution{}, errors.New("credential resolver is closed")
+		return Resolution{}, diagnostictext.New("credential resolver is closed")
 	}
 	if cached, ok := r.cache[credentialID]; ok && r.now().Before(cached.expires) {
 		result := cached.result
@@ -241,7 +242,7 @@ func (r *Resolver) Resolve(ctx context.Context, credentialID string) (Resolution
 	ref, ok := r.refs[credentialID]
 	if !ok {
 		r.mu.Unlock()
-		return Resolution{}, fmt.Errorf("unknown credential %q", credentialID)
+		return Resolution{}, diagnostictext.New("requested credential_id is not configured")
 	}
 	profile := r.profiles[ref.StoreProfileID]
 	backend := r.backends[profile.ID]
@@ -249,7 +250,7 @@ func (r *Resolver) Resolve(ctx context.Context, credentialID string) (Resolution
 		factory := r.factories[profile.BackendKind]
 		if factory == nil {
 			r.mu.Unlock()
-			return Resolution{}, fmt.Errorf("backend %q is unavailable", profile.BackendKind)
+			return Resolution{}, diagnostictext.New("configured credential backend is unavailable")
 		}
 		var err error
 		setupCtx, cancel := context.WithTimeout(ctx, time.Duration(profile.TimeoutSeconds)*time.Second)
@@ -308,33 +309,33 @@ func (r *Resolver) Invalidate(id string) {
 
 func selectValue(raw []byte, selection ValueSelection, maximum int64) (string, error) {
 	if int64(len(raw)) > maximum {
-		return "", errors.New("secret value exceeds configured limit")
+		return "", diagnostictext.New("secret value exceeds configured limit")
 	}
 	if !utf8.Valid(raw) || bytes.IndexByte(raw, 0) >= 0 {
-		return "", errors.New("secret value must be bounded UTF-8 without NUL")
+		return "", diagnostictext.New("secret value must be bounded UTF-8 without NUL")
 	}
 	if selection.Format == "utf8" {
 		if len(raw) == 0 || bytes.ContainsAny(raw, "\r\n") {
-			return "", errors.New("secret value is empty")
+			return "", diagnostictext.New("secret value is empty")
 		}
 		return string(raw), nil
 	}
 	if _, err := contracts.Decode(raw, int(maximum)); err != nil {
-		return "", errors.New("secret value must be an unambiguous JSON object")
+		return "", diagnostictext.New("secret value must be an unambiguous JSON object")
 	}
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.DisallowUnknownFields()
 	var object map[string]json.RawMessage
 	if err := decoder.Decode(&object); err != nil || decoder.Decode(&struct{}{}) != io.EOF {
-		return "", errors.New("secret value must be exactly one JSON object")
+		return "", diagnostictext.New("secret value must be exactly one JSON object")
 	}
 	field, ok := object[selection.Field]
 	if !ok {
-		return "", errors.New("selected JSON field is absent")
+		return "", diagnostictext.New("selected JSON field is absent")
 	}
 	var value string
 	if json.Unmarshal(field, &value) != nil || value == "" || strings.ContainsAny(value, "\x00\r\n") {
-		return "", errors.New("selected JSON field must be a non-empty string")
+		return "", diagnostictext.New("selected JSON field must be a non-empty string")
 	}
 	return value, nil
 }
@@ -344,37 +345,38 @@ func canonicalLocator(locator Locator) (string, error) {
 		return onePasswordLocator(locator)
 	}
 	if locator.SecretReference != "" {
-		return "", errors.New("secret_reference requires the onepassword backend")
+		return "", diagnostictext.New("secret_reference requires the onepassword backend")
 	}
 	switch locator.BackendKind {
 	case "aws-secrets-manager":
 		if locator.Region == "" || locator.SecretID == "" || (locator.VersionID != "" && locator.VersionStage != "") || locator.VaultURL != "" || locator.SecretName != "" || locator.Version != "" || locator.Project != "" || locator.Mount != "" || locator.Path != "" {
-			return "", errors.New("AWS locator requires region and secret_id and at most one version selector")
+			return "", diagnostictext.New("AWS locator requires region and secret_id and at most one version selector")
 		}
 		return "aws://" + locator.Region + "/" + locator.SecretID, nil
 	case "azure-key-vault":
 		if !validHTTPS(locator.VaultURL) || locator.SecretName == "" || locator.SecretID != "" || locator.Region != "" || locator.VersionID != "" || locator.VersionStage != "" || locator.Project != "" || locator.Mount != "" || locator.Path != "" {
-			return "", errors.New("Azure locator requires HTTPS vault_url and secret_name")
+			return "", diagnostictext.New("Azure locator requires HTTPS vault_url and secret_name")
 		}
 		return strings.TrimSuffix(locator.VaultURL, "/") + "/secrets/" + locator.SecretName, nil
 	case "gcp-secret-manager":
 		if locator.Project == "" || locator.SecretName == "" || locator.Version == "" || locator.SecretID != "" || locator.Region != "" || locator.VersionID != "" || locator.VersionStage != "" || locator.VaultURL != "" || locator.Mount != "" || locator.Path != "" {
-			return "", errors.New("GCP locator requires project, secret_name, and version")
+			return "", diagnostictext.New("GCP locator requires project, secret_name, and version")
 		}
 		return "gcp://projects/" + locator.Project + "/secrets/" + locator.SecretName, nil
 	case "hashicorp-vault":
 		if locator.Mount == "" || locator.Path == "" || strings.Contains(locator.Path, "..") || locator.SecretID != "" || locator.Region != "" || locator.VersionID != "" || locator.VersionStage != "" || locator.VaultURL != "" || locator.SecretName != "" || locator.Project != "" {
-			return "", errors.New("Vault locator requires mount and safe path")
+			return "", diagnostictext.New("Vault locator requires mount and safe path")
 		}
 		return "vault://" + locator.Mount + "/" + strings.TrimPrefix(locator.Path, "/"), nil
 	default:
-		return "", errors.New("unsupported credential backend")
+		return "", diagnostictext.New("unsupported credential backend")
 	}
 }
 
 type redactedError struct{ message string }
 
-func (e redactedError) Error() string { return e.message }
+func (e redactedError) Error() string             { return e.message }
+func (e redactedError) DiagnosticMessage() string { return e.Error() }
 func redact(err error) error {
 	if err == nil {
 		return nil
@@ -427,7 +429,7 @@ func (r *Resolver) Close() error {
 	}
 	clear(r.backends)
 	if failed {
-		return errors.New("credential backend close failed")
+		return diagnostictext.New("credential backend close failed")
 	}
 	return nil
 }

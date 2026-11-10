@@ -5,7 +5,6 @@ package campaign
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"net/url"
 	"path"
 	"regexp"
@@ -14,6 +13,7 @@ import (
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/schemas"
 )
 
@@ -27,12 +27,12 @@ const SelectedImageBindingVersion = "operator.dev/docker-binding/v1alpha2"
 const ManifestLimit = 256 << 10
 
 var (
-	ErrInvalid = errors.New("invalid campaign record")
-	ErrCorrupt = errors.New("campaign evidence is incomplete or corrupt")
-	ErrClosed  = errors.New("campaign writer is closed")
-	ErrActive  = errors.New("campaign writer is active")
-	ErrQuota   = errors.New("campaign journal budget exhausted")
-	ErrStorage = errors.New("campaign persistence failed")
+	ErrInvalid = diagnostictext.New("invalid campaign record")
+	ErrCorrupt = diagnostictext.New("campaign evidence is incomplete or corrupt")
+	ErrClosed  = diagnostictext.New("campaign writer is closed")
+	ErrActive  = diagnostictext.New("campaign writer is active")
+	ErrQuota   = diagnostictext.New("campaign journal budget exhausted")
+	ErrStorage = diagnostictext.New("campaign persistence failed")
 )
 
 var idPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$`)

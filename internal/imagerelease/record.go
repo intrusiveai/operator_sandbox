@@ -7,11 +7,11 @@ package imagerelease
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"regexp"
 	"strings"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 )
 
@@ -20,8 +20,8 @@ const CompatibilityPath = "/opt/operator/engine/share/compatibility.json"
 const ResponseLimit = 64 << 10
 
 var (
-	ErrRecord        = errors.New("invalid embedded Harness compatibility record")
-	ErrCompatibility = errors.New("image release is incompatible with the installed Operator, contract, platform or runtime profile")
+	ErrRecord        = diagnostictext.New("invalid embedded Harness compatibility record")
+	ErrCompatibility = diagnostictext.New("image release is incompatible with the installed Operator, contract, platform or runtime profile")
 )
 
 var digestPattern = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)

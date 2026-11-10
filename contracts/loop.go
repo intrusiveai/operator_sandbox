@@ -2,13 +2,12 @@ package contracts
 
 import (
 	"encoding/json"
-	"errors"
 	"sort"
 	"strconv"
 	"strings"
 )
 
-var ErrLoopStopped = errors.New("contract exploration stopped")
+var ErrLoopStopped = newPublicError("contract exploration stopped")
 
 func harnessDefaults() map[string]int64 {
 	return map[string]int64{"max_model_turns": 300, "max_tool_calls": 2000, "max_tool_calls_per_response": 16,

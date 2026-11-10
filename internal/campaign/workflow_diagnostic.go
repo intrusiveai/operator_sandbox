@@ -225,7 +225,8 @@ func (d WorkflowDiagnostic) Message() string {
 	}
 	return text
 }
-func (d WorkflowDiagnostic) Error() string { return d.Message() }
+func (d WorkflowDiagnostic) Error() string             { return d.Message() }
+func (d WorkflowDiagnostic) DiagnosticMessage() string { return d.Message() }
 func DecodeWorkflowDiagnostic(raw []byte) *WorkflowDiagnostic {
 	if _, err := contracts.Decode(raw, 32768); err != nil {
 		return nil

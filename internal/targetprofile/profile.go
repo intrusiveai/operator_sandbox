@@ -6,13 +6,13 @@ package targetprofile
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"regexp"
 	"slices"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/attemptadapter"
 	"github.com/intrusiveai/operator_sandbox/internal/capabilities"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
 	"github.com/intrusiveai/operator_sandbox/internal/httpstarget"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
@@ -24,7 +24,7 @@ const Limit = 64 << 10
 // MaximumOperationTimeoutMS bounds the complete attempt, never each native step.
 const MaximumOperationTimeoutMS int64 = hostconfig.MaximumOperationTimeoutMS
 
-var ErrProfile = errors.New("invalid administrator target profile")
+var ErrProfile = diagnostictext.New("invalid administrator target profile")
 var identifier = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$`)
 
 type Settings struct {
@@ -158,7 +158,7 @@ func (p *Profile) CheckTimeoutLimit(maximumMS int64) error {
 		maximumMS = hostconfig.DefaultOperationTimeoutMS
 	}
 	if p == nil || maximumMS < 1 || maximumMS > MaximumOperationTimeoutMS || p.settings.OperationTimeoutMS > maximumMS {
-		return errors.New("target operation_timeout_ms exceeds the installation target.max_operation_timeout_ms ceiling")
+		return diagnostictext.New("target operation_timeout_ms exceeds the installation target.max_operation_timeout_ms ceiling")
 	}
 	return nil
 }

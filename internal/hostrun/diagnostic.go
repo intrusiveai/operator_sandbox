@@ -5,24 +5,16 @@ package hostrun
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"strings"
 	"syscall"
 
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
-	"github.com/intrusiveai/operator_sandbox/internal/contractstore"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
-	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
 	"github.com/intrusiveai/operator_sandbox/internal/imagerelease"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
-	"github.com/intrusiveai/operator_sandbox/internal/preparation"
-	"github.com/intrusiveai/operator_sandbox/internal/skills"
-	"github.com/intrusiveai/operator_sandbox/internal/staging"
-	"github.com/intrusiveai/operator_sandbox/internal/startup"
-	"github.com/intrusiveai/operator_sandbox/internal/submission"
-	"github.com/intrusiveai/operator_sandbox/internal/targetprofile"
 )
 
 // PreparationDiagnostic retains its historical name and also carries optional
@@ -138,15 +130,11 @@ func preparationCleanup(stage string, primary, cleanup error) error {
 }
 
 func preparationMessage(err error) string {
-	var profile *modelprovider.ProfileError
-	if errors.As(err, &profile) {
-		return profile.Error()
+	if detail, ok := diagnostictext.FromError(err); ok {
+		return detail
 	}
-	var compatibility *interceptor.CompatibilityError
-	if errors.As(err, &compatibility) {
-		return compatibility.Error()
-	}
-	// Prefer the originating error when a lower-level operation has joined errors.
+	// A joined cleanup failure must never displace the primary failure, even
+	// when only the secondary error has a recognized diagnostic type.
 	if joined, ok := err.(interface{ Unwrap() []error }); ok {
 		for _, cause := range joined.Unwrap() {
 			if cause != nil {
@@ -154,8 +142,8 @@ func preparationMessage(err error) string {
 			}
 		}
 	}
-	if detail, ok := dockercontrol.FailureDetail(err); ok {
-		return detail
+	if wrapped, ok := err.(interface{ Unwrap() error }); ok {
+		return preparationMessage(wrapped.Unwrap())
 	}
 	switch {
 	case errors.Is(err, context.Canceled):
@@ -168,44 +156,6 @@ func preparationMessage(err error) string {
 		return "permission denied while accessing a required resource"
 	case errors.Is(err, syscall.ENOSPC):
 		return "insufficient disk space"
-	}
-	var remote *interceptor.RemoteError
-	if errors.As(err, &remote) && remote.Response.Status >= 100 && remote.Response.Status <= 599 {
-		return fmt.Sprintf("Interceptor returned HTTP %d; the request was not accepted as successful", remote.Response.Status)
-	}
-	var call *interceptor.CallError
-	if errors.As(err, &call) {
-		message := "Interceptor request failed"
-		switch call.Kind {
-		case "invalid_request":
-			message = "Interceptor request failed local validation"
-		case "canceled_before_dispatch":
-			message = "Interceptor request canceled before dispatch"
-		case "transport_unavailable":
-			message = "Interceptor transport failed; no valid response was received from the local API"
-		case "invalid_response":
-			message = "Interceptor returned a response that failed contract validation"
-		}
-		if call.Uncertain {
-			message += "; the target-side outcome is uncertain"
-		}
-		return message
-	}
-	// These sentinels have fixed, host-authored descriptions. Do not return err.Error():
-	// it may wrap one of these with private paths, credentials or server content.
-	for _, safe := range []error{
-		imagerelease.ErrRecord, imagerelease.ErrCompatibility, imagerelease.ErrEmbedded,
-		dockercontrol.ErrCLIUnavailable, dockercontrol.ErrExecutablePath, dockercontrol.ErrExecutableUnavailable,
-		dockercontrol.ErrImage, dockercontrol.ErrImageIdentity, dockercontrol.ErrPlatform, dockercontrol.ErrImageSelector, dockercontrol.ErrReleaseFiles,
-		hostconfig.ErrInvalid, hostconfig.ErrPrivate, hostconfig.ErrImage, hostconfig.ErrPath, hostconfig.ErrSpool, hostconfig.ErrEvidence,
-		contractstore.ErrPath, contractstore.ErrInstallation, contractstore.ErrManifest, contractstore.ErrPin, contractstore.ErrIntegrity,
-		submission.ErrSubmission, targetprofile.ErrProfile, modelprovider.ErrProfile, modelprovider.ErrProvider,
-		skills.ErrSkill, staging.ErrInputs, staging.ErrFilesystem, startup.ErrUnresolved, preparation.ErrPreparation,
-		campaign.ErrInvalid, campaign.ErrCorrupt, campaign.ErrClosed, campaign.ErrActive, campaign.ErrQuota, campaign.ErrStorage, ErrSession,
-	} {
-		if errors.Is(err, safe) {
-			return safe.Error()
-		}
 	}
 	return "operation failed; no additional safe error detail is available"
 }

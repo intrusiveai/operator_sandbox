@@ -20,10 +20,11 @@ import (
 	"golang.org/x/text/unicode/norm"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/staging"
 )
 
-var ErrSkill = errors.New("invalid instruction-only skill: check metadata, inventory and limits")
+var ErrSkill = diagnostictext.New("invalid instruction-only skill: check metadata, inventory and limits")
 var idPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,62}$`)
 var digestPattern = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
 

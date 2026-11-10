@@ -13,6 +13,49 @@ import (
 	"unicode/utf8"
 )
 
+// New marks a public failure description selected by its owner. Never pass an
+// arbitrary underlying error or submitted value. Each error has its own identity,
+// preserving errors.New sentinel comparisons independently of its wording.
+func New(message string) error { return &publicError{message} }
+
+type publicError struct{ message string }
+
+func (e *publicError) Error() string             { return e.message }
+func (e *publicError) DiagnosticMessage() string { return e.message }
+
+// FromError reads a diagnostic explicitly supplied by the failure's owner.
+// Implementations of DiagnosticMessage must select public failure facts, never
+// return arbitrary wrapped errors, request bodies, or credential values. This
+// boundary applies the common redaction and size rules as defense in depth.
+// Unmarked errors remain private. For joined errors only the primary is used;
+// cleanup diagnostics must be reported separately.
+func FromError(err error) (string, bool) {
+	for err != nil {
+		if source, ok := err.(interface{ DiagnosticMessage() string }); ok {
+			message, omission := Safe(source.DiagnosticMessage(), 768)
+			if omission != "" {
+				message += " [diagnostic detail omitted: " + omission + "]"
+			}
+			return message, message != ""
+		}
+		switch wrapped := err.(type) {
+		case interface{ Unwrap() []error }:
+			err = nil
+			for _, primary := range wrapped.Unwrap() {
+				if primary != nil {
+					err = primary
+					break
+				}
+			}
+		case interface{ Unwrap() error }:
+			err = wrapped.Unwrap()
+		default:
+			return "", false
+		}
+	}
+	return "", false
+}
+
 func Valid(value string, limit int) bool {
 	return len(value) <= limit && utf8.ValidString(value) && strings.IndexFunc(value, func(r rune) bool { return unicode.IsControl(r) || unicode.In(r, unicode.Cf, unicode.Zl, unicode.Zp) }) < 0
 }

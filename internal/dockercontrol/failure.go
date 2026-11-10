@@ -69,7 +69,8 @@ func (e *operationFailure) Error() string {
 	}
 	return e.operation + ": " + e.failure.category
 }
-func (e *operationFailure) Unwrap() error { return e.cause }
+func (e *operationFailure) Unwrap() error             { return e.cause }
+func (e *operationFailure) DiagnosticMessage() string { return e.Error() }
 func dockerFailure(ctx context.Context, operation string, sentinel, err error) error {
 	var f *commandFailure
 	if !errors.As(err, &f) {
