@@ -52,9 +52,14 @@ configuration and native provenance stay out of public execution choices.
    allowed references constrain dependencies; action families also need at least
    one selectable route. Missing policy permissions deny access. The resolver
    must evaluate actual scopes/routes; it must not populate decisions simply by
-   copying every exported capability. `attemptadapter.Resolve` now implements
-   concrete operation/injection scope resolution and derives this policy. Its
-   configuration and campaign preparation wiring are implemented by the host service.
+   copying every exported capability. `attemptadapter.Resolve` derives operation
+   permissions from configured operation IDs and action permissions from valid
+   concrete routes. Exported services and file namespaces satisfy availability
+   requirements independently of injection routes; their presence grants no
+   additional read, invocation or mutation permission. The implemented snapshot
+   feature is resolved from the verified projection and checked consistently by
+   bundle admission, tool selection and execution. Creation budgets are checked
+   separately and do not disable access to existing checkpoints.
 5. `Check` compares the unchanged bundle and verified authoring/live exports.
    Required dependencies must be usable. Optional dependencies and suggestions
    yield sorted, explained gaps; unavailable optional objective/scenario routes
@@ -67,8 +72,14 @@ configuration and native provenance stay out of public execution choices.
    copies. This record is not a replacement for durable campaign admission.
 
 The effective profile is the least permissive native, requested and host-ceiling
-profile. `FeedbackKinds == nil` adds no kind restriction; an explicit empty slice
-withholds all kinds. Excluding an evidence reference from `AllowedRefs` also
+profile. The resolver intersects configured evidence kinds with the verified
+export's available evidence classes before admission, so a broader host ceiling
+cannot create unsupported policy references. Unavailable required evidence still
+blocks admission; optional evidence produces an explicit gap. Invalid or duplicate
+configured kinds are rejected rather than silently removed.
+
+For a directly supplied capability policy, `FeedbackKinds == nil` adds no kind
+restriction; an explicit empty slice withholds all kinds. Excluding an evidence reference from `AllowedRefs` also
 withholds that kind. The native profile remains unchanged for native requests.
 The implementation tests the profile/allowed-kind portions of all shared feedback
 translation vectors. The [feedback projection](FEEDBACK_PROJECTION.md) additionally
@@ -79,6 +90,5 @@ Recheck readiness, current policy and compatibility before launch; keep the resu
 and live execution projection with immutable inputs. Later effects still require
 artifact staging, effective limits, typed selector/input checks, durable journal
 admission and terminal fences. A successful library check does not execute a
-request, freeze a running target, mount inputs or launch a harness. CLI capability
-export, full TargetProfile routing and campaign orchestration remain integration
-work.
+request, freeze a running target, mount inputs or launch a harness. The campaign
+preparation and launch paths perform those separate steps.

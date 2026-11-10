@@ -103,7 +103,7 @@ func FromNative(catalog *contracts.Catalog, raw []byte, targetID string) (*Expor
 		}
 	}
 	if n.SnapshotCapable && contains(n.CrossVMOperations, "snapshot.create") {
-		p["features"] = []string{"feature:snapshots"}
+		p["features"] = []string{FeatureSnapshots}
 	}
 	for _, key := range []string{"operations", "actions", "services", "file_namespaces", "evidence_classes"} {
 		items := p[key].([]any)

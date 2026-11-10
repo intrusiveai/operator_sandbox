@@ -1355,7 +1355,12 @@ an adaptive loop. Existing terminal stop/completion rules remain unchanged.
 
 Expose `engine.snapshot_request`, `engine.snapshot_list`,
 `engine.snapshot_inspect` and `engine.restore_request` when both target capability
-and policy permit them. The harness can discover checkpoints and decide whether
+and policy permit them. The policy resolver MUST derive `feature:snapshots` from
+Operator's verified projection of the target's implemented snapshot capability.
+Bundle admission, tool selection and execution MUST use this same resolved
+permission. Creation allowances MUST be enforced separately; zero or exhausted
+creation allowance MUST NOT by itself forbid listing, inspecting or restoring
+existing checkpoints. The harness can discover checkpoints and decide whether
 to revisit a baseline or switch branches without losing its current context.
 
 | Tool | Arguments and result |

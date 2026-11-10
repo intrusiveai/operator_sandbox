@@ -179,8 +179,8 @@ func diagnosticFixture(t *testing.T) (hostconfig.Paths, string) {
 	}
 	p := installed.Protocol()
 	if os.Getenv("OPERATOR_DIAGNOSTIC_FAULT") == "capability-policy" {
-		// Use a real snapshot-capable export and an offline-valid submission.
-		// Live admission must still deny snapshots under the installed policy.
+		// Use a real database-capable export and an offline-valid submission.
+		// Live admission must deny injection without an installed route.
 		native, err := os.ReadFile("../../schemas/fixtures/postgresql-capability-chain/interceptor-export.json")
 		if err != nil {
 			t.Fatal(err)
@@ -208,7 +208,7 @@ func diagnosticFixture(t *testing.T) (hostconfig.Paths, string) {
 		}
 		target := bundle["target_requirements"].(map[string]any)
 		target["capability_source_digest"] = exported.SourceDigest()
-		target["required_capability_refs"] = []string{"feature:snapshots"}
+		target["required_capability_refs"] = []string{"action:injection:database_response"}
 		bundle["scenarios"] = []any{}
 		raw, err = json.Marshal(bundle)
 		if err != nil {
@@ -412,7 +412,7 @@ func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
 							t.Fatal(d)
 						}
 					} else if fault == "capability-policy" {
-						if d.Stage != "target preparation" || d.Message != "Operator preparation (target preparation): scenario bundle is incompatible with the selected target: feature:snapshots (host_policy)" {
+						if d.Stage != "target preparation" || d.Message != "Operator preparation (target preparation): scenario bundle is incompatible with the selected target: action:injection:database_response (host_policy)" {
 							t.Fatal(d)
 						}
 					} else if d.Stage != "Interceptor attachment" || !strings.Contains(d.Message, "HTTP 409") {

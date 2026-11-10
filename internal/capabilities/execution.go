@@ -14,12 +14,23 @@ type ExecutionFacts struct {
 	InjectionProfiles []InjectionProfile
 	Services          []ServiceCapability
 	FileNamespaces    []FileNamespaceCapability
+	Features          []string
+	EvidenceKinds     []string
 }
 
 func (e *Export) ExecutionFacts() ExecutionFacts {
-	source := ExecutionFacts{e.native.Operations, e.native.CrossVMOperations, e.native.InjectionProfiles, e.native.Services, e.native.FileNamespaces}
+	source := ExecutionFacts{
+		Operations: e.native.Operations, NativeOperations: e.native.CrossVMOperations,
+		InjectionProfiles: e.native.InjectionProfiles, Services: e.native.Services,
+		FileNamespaces: e.native.FileNamespaces,
+	}
 	if e.https != nil {
 		source = ExecutionFacts{Operations: e.https.Operations}
+	}
+	// Use the verified projection's availability decisions for both adapters.
+	source.Features = e.projection["features"].([]string)
+	for _, item := range records(e.projection["evidence_classes"]) {
+		source.EvidenceKinds = append(source.EvidenceKinds, item["feedback_kind"].(string))
 	}
 	raw, _ := json.Marshal(source)
 	var copy ExecutionFacts
