@@ -22,6 +22,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/campaignlimits"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 )
@@ -39,12 +40,12 @@ const DefaultSegmentBytes int64 = 16 << 20
 const DefaultMinimumFreeBytes int64 = 256 << 20
 
 var (
-	ErrInvalid  = errors.New("invalid configuration: use only documented sections, fields and scalar types")
-	ErrPrivate  = errors.New("configuration must be a private regular file owned by the service user or root")
-	ErrImage    = errors.New("engine.image must select a local Docker image name, repository digest or full image ID")
-	ErrPath     = errors.New("configuration paths must be absolute and clean, without control characters")
-	ErrSpool    = errors.New("spool.max_bytes must be a positive decimal integer no greater than 9007199254740991")
-	ErrEvidence = errors.New("evidence.max_archive_bytes must be a positive decimal integer no greater than 9007199254740991")
+	ErrInvalid  = diagnostictext.New("invalid configuration: use only documented sections, fields and scalar types")
+	ErrPrivate  = diagnostictext.New("configuration must be a private regular file owned by the service user or root")
+	ErrImage    = diagnostictext.New("engine.image must select a local Docker image name, repository digest or full image ID")
+	ErrPath     = diagnostictext.New("configuration paths must be absolute and clean, without control characters")
+	ErrSpool    = diagnostictext.New("spool.max_bytes must be a positive decimal integer no greater than 9007199254740991")
+	ErrEvidence = diagnostictext.New("evidence.max_archive_bytes must be a positive decimal integer no greater than 9007199254740991")
 )
 
 type Paths struct{ ConfigFile, StateRoot, DockerEndpoint string }
@@ -61,7 +62,7 @@ func Defaults(goos, home string) (Paths, error) {
 		base := filepath.Join(home, "Library", "Application Support", "Operator")
 		return Paths{filepath.Join(base, "config", "config.yaml"), filepath.Join(base, "data"), "unix://" + filepath.Join(home, ".docker", "run", "docker.sock")}, nil
 	default:
-		return Paths{}, errors.New("unsupported Operator host OS")
+		return Paths{}, diagnostictext.New("unsupported Operator host OS")
 	}
 }
 
@@ -284,11 +285,11 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 	}
 	if c.Contract.Directory != "" || c.Contract.Version != "" || c.Contract.Digest != "" {
 		if !absolute(c.Contract.Directory) || !regexp.MustCompile(`^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$`).MatchString(c.Contract.Version) || !regexp.MustCompile(`^sha256:[0-9a-f]{64}$`).MatchString(c.Contract.Digest) {
-			return Config{}, errors.New("contract requires an absolute directory, release version and independently installed SHA-256 digest")
+			return Config{}, diagnostictext.New("contract requires an absolute directory, release version and independently installed SHA-256 digest")
 		}
 	}
 	if campaign.ValidateDockerEndpoint(c.Docker.Endpoint) != nil {
-		return Config{}, errors.New("docker.endpoint must be a canonical local unix:/// socket")
+		return Config{}, diagnostictext.New("docker.endpoint must be a canonical local unix:/// socket")
 	}
 	if !absolute(c.State.Root) || (c.Docker.Executable != "" && !absolute(c.Docker.Executable)) {
 		return Config{}, ErrPath

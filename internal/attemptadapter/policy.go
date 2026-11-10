@@ -4,7 +4,6 @@ package attemptadapter
 
 import (
 	"encoding/json"
-	"errors"
 	"net/textproto"
 	"path"
 	"slices"
@@ -12,12 +11,13 @@ import (
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/capabilities"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
-var ErrPolicy = errors.New("attempt is outside installed target scope")
-var ErrAttempt = errors.New("attempt arguments, artifacts or lineage are invalid")
-var ErrResult = errors.New("native result does not match the authorized attempt step")
+var ErrPolicy = diagnostictext.New("attempt is outside installed target scope")
+var ErrAttempt = diagnostictext.New("attempt arguments, artifacts or lineage are invalid")
+var ErrResult = diagnostictext.New("native result does not match the authorized attempt step")
 
 // Route is one concrete host-reviewed injection target. Empty fields are exact
 // empty values, not wildcards. Request predicates may narrow this route further.

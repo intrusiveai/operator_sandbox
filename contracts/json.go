@@ -4,7 +4,6 @@ package contracts
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"io"
 	"math"
 	"strconv"
@@ -17,8 +16,8 @@ const ControlLimit = 64 << 10
 const MaxDepth = 32
 const MaxSafeInteger = 1<<53 - 1
 
-var ErrJSON = errors.New("invalid contract JSON")
-var ErrLimit = errors.New("contract encoding limit exceeded")
+var ErrJSON = newPublicError("invalid contract JSON")
+var ErrLimit = newPublicError("contract encoding limit exceeded")
 
 // Decode checks the wire representation before schema validation. The caller
 // chooses the channel/message byte ceiling; numbers retain their decimal spelling.

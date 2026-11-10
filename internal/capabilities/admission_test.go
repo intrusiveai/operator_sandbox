@@ -185,6 +185,45 @@ func TestBundleCompatibilityCases(t *testing.T) {
 		})
 	}
 }
+
+func TestCompatibilityFailureRetainsAdmissionFacts(t *testing.T) {
+	c := catalogForTest(t)
+	e := mustExport(t, c, nativeVariant(t, func(n map[string]any) { n["snapshot_capable"] = true }))
+	for _, ref := range []string{"feature:snapshots", "operation:invoke", "service:missing"} {
+		b := object(t, fixture(t, "submitted-bundle.json"))
+		target := b["target_requirements"].(map[string]any)
+		target["capability_source_digest"] = e.SourceDigest()
+		target["required_capability_refs"] = []string{ref}
+		bundle, err := ParseBundle(c, marshal(t, b))
+		if err != nil {
+			t.Fatal(err)
+		}
+		policy := testPolicy(e)
+		policy.AllowedRefs = remove(policy.AllowedRefs, ref)
+		_, err = Check(bundle, e, bind(t, c, e, "black-box"), policy)
+		var detail *CompatibilityError
+		if !errors.Is(err, ErrCompatibility) || !errors.As(err, &detail) {
+			t.Fatalf("lost typed admission cause: %v", err)
+		}
+		reason := "host_policy"
+		if ref == "service:missing" {
+			reason = "absent_from_authoring_export"
+		}
+		if got := detail.DiagnosticMessage(); got != ErrCompatibility.Error()+": "+ref+" ("+reason+")" {
+			t.Fatal(got)
+		}
+	}
+}
+
+func TestCompatibilityDiagnosticBoundsAndRedactsReferences(t *testing.T) {
+	for _, ref := range []string{"feature:sk-private-test-key", "feature:https://user:password@private.invalid", "feature:\x1bunsafe", strings.Repeat("x", 500)} {
+		err := &CompatibilityError{gap: Gap{Ref: ref, Reason: "host_policy"}}
+		message := err.DiagnosticMessage()
+		if len(message) > 512 || strings.Contains(message, ref) || !strings.Contains(message, "host_policy") {
+			t.Fatal(message)
+		}
+	}
+}
 func remove(a []string, s string) []string {
 	out := []string{}
 	for _, v := range a {

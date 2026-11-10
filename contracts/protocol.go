@@ -3,7 +3,6 @@ package contracts
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"io/fs"
 	"sort"
 	"strconv"
@@ -11,7 +10,7 @@ import (
 )
 
 // ErrProtocol reports an inconsistent message without exposing submitted values.
-var ErrProtocol = errors.New("contract message consistency check failed")
+var ErrProtocol = newPublicError("contract message consistency check failed")
 
 const SpoolAckLimit = 1024
 

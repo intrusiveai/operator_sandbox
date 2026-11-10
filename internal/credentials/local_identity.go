@@ -4,12 +4,13 @@ package credentials
 
 import (
 	"encoding/json"
-	"errors"
 	"os"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"golang.org/x/oauth2/google"
+
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
 // An omitted store selector preserves existing workload-only behavior. Local
@@ -44,7 +45,7 @@ func AzureIdentity(authentication string) (azcore.TokenCredential, error) {
 			}
 		}
 	}
-	return nil, errors.New("Azure credential configuration unavailable")
+	return nil, diagnostictext.New("Azure credential configuration unavailable")
 }
 
 // GoogleQuotaProject mirrors the Google client's environment-over-ADC precedence
@@ -56,12 +57,12 @@ func GoogleQuotaProject(identity *google.Credentials) (string, error) {
 			Quota string `json:"quota_project_id"`
 		}
 		if json.Unmarshal(identity.JSON, &fields) != nil {
-			return "", errors.New("invalid Google quota configuration")
+			return "", diagnostictext.New("invalid Google quota configuration")
 		}
 		quota = fields.Quota
 	}
 	if quota != "" && !stableID.MatchString(quota) {
-		return "", errors.New("invalid Google quota configuration")
+		return "", diagnostictext.New("invalid Google quota configuration")
 	}
 	return quota, nil
 }

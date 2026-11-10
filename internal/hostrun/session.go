@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 	"os"
 	"path/filepath"
@@ -29,7 +30,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/transport"
 )
 
-var ErrSession = errors.New("campaign launch session is invalid or already consumed")
+var ErrSession = diagnostictext.New("campaign launch session is invalid or already consumed")
 
 type Config struct {
 	InterceptorCheckedAt time.Time

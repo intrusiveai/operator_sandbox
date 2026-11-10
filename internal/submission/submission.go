@@ -15,6 +15,7 @@ import (
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/capabilities"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/staging"
 	"github.com/intrusiveai/operator_sandbox/internal/targetprofile"
@@ -22,7 +23,7 @@ import (
 
 const Version = "operator.dev/submission/v1alpha1"
 
-var ErrSubmission = errors.New("invalid, incomplete or changed submission")
+var ErrSubmission = diagnostictext.New("invalid, incomplete or changed submission")
 
 type TargetSelection struct {
 	ProfileFile string `json:"profile_file"`

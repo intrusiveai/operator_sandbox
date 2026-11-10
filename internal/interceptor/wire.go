@@ -7,19 +7,20 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"io"
 	"regexp"
 	"strings"
 	"time"
 	"unicode/utf8"
+
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
 const LifecycleVersion = "interceptor.dev/local-lifecycle/v1alpha1"
 const OperationVersion = "interceptor.dev/operation-request/v1alpha2"
 const JSONLimit = 5 << 20
 
-var ErrRequest = errors.New("invalid or oversized Interceptor request")
+var ErrRequest = diagnostictext.New("invalid or oversized Interceptor request")
 var identifier = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$`)
 var digest = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
 

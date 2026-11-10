@@ -8,9 +8,10 @@ import (
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
-var ErrAudit = errors.New("credential resolution audit unavailable")
+var ErrAudit = diagnostictext.New("credential resolution audit unavailable")
 
 // AuditEvent is an allowlist, not a serialization of Resolution or a backend
 // error. Even backend version strings are untrusted and retained only as hashes.

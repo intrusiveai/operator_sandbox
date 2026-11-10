@@ -18,12 +18,14 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/capabilities"
 	"github.com/intrusiveai/operator_sandbox/internal/contractstore"
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
 	"github.com/intrusiveai/operator_sandbox/internal/hostrun"
@@ -176,6 +178,46 @@ func diagnosticFixture(t *testing.T) (hostconfig.Paths, string) {
 		t.Fatal(e)
 	}
 	p := installed.Protocol()
+	if os.Getenv("OPERATOR_DIAGNOSTIC_FAULT") == "capability-policy" {
+		// Use a real snapshot-capable export and an offline-valid submission.
+		// Live admission must still deny snapshots under the installed policy.
+		native, err := os.ReadFile("../../schemas/fixtures/postgresql-capability-chain/interceptor-export.json")
+		if err != nil {
+			t.Fatal(err)
+		}
+		exported, err := capabilities.FromNative(p.Catalog(), native, "delivery-example")
+		if err != nil {
+			t.Fatal(err)
+		}
+		environment := filepath.Dir(args[1])
+		if err := os.WriteFile(filepath.Join(environment, "target-profile.json"), []byte(strings.Replace(adminTarget, `"operation_ids":["invoke"]`, `"operation_ids":["ask"]`, 1)), 0600); err != nil {
+			t.Fatal(err)
+		}
+		for name, data := range map[string][]byte{"capabilities.json": exported.PublicJSON(), exported.CompanionName(): native} {
+			if err := os.WriteFile(filepath.Join(environment, name), data, 0600); err != nil {
+				t.Fatal(err)
+			}
+		}
+		raw, err := os.ReadFile(args[1])
+		if err != nil {
+			t.Fatal(err)
+		}
+		var bundle map[string]any
+		if err := json.Unmarshal(raw, &bundle); err != nil {
+			t.Fatal(err)
+		}
+		target := bundle["target_requirements"].(map[string]any)
+		target["capability_source_digest"] = exported.SourceDigest()
+		target["required_capability_refs"] = []string{"feature:snapshots"}
+		bundle["scenarios"] = []any{}
+		raw, err = json.Marshal(bundle)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(args[1], raw, 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
 	dir := t.TempDir()
 	os.Chmod(dir, 0700)
 	put := func(name string, raw []byte) {
@@ -241,14 +283,16 @@ func diagnosticFixture(t *testing.T) (hostconfig.Paths, string) {
 }
 
 func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
-	for _, fault := range []string{"image", "image-missing", "image-timeout", "attach", "contract", "contract-hash"} {
+	for _, fault := range []string{"image", "image-missing", "image-timeout", "attach", "contract", "contract-hash", "capability-policy"} {
 		t.Run(fault, func(t *testing.T) {
 			var requests atomic.Int64
-			if fault == "attach" || strings.HasPrefix(fault, "contract") {
+			if fault == "attach" || fault == "capability-policy" || strings.HasPrefix(fault, "contract") {
 				listener, e := net.Listen("tcp4", "127.0.0.1:8080")
 				if e != nil {
 					t.Skip("controlled attachment test requires unused localhost port 8080:", e)
 				}
+				var binding interceptor.Binding
+				var bindingMu sync.Mutex
 				server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 					if r.URL.Path == "/v1/contract-version" {
@@ -267,6 +311,47 @@ func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
 						return
 					}
 					requests.Add(1)
+					if fault == "capability-policy" {
+						bindingMu.Lock()
+						defer bindingMu.Unlock()
+						var request struct {
+							CampaignID string `json:"campaign_id"`
+							Worker     string `json:"worker_instance_id"`
+						}
+						if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+							t.Error(err)
+							w.WriteHeader(400)
+							return
+						}
+						var body any
+						switch r.URL.Path {
+						case "/v1/attach":
+							raw, err := os.ReadFile("../../schemas/fixtures/postgresql-capability-chain/interceptor-export.json")
+							if err != nil {
+								t.Error(err)
+								w.WriteHeader(500)
+								return
+							}
+							var native map[string]any
+							if err := json.Unmarshal(raw, &native); err != nil {
+								t.Error(err)
+								w.WriteHeader(500)
+								return
+							}
+							binding = interceptor.Binding{SessionID: "session-1", WorkerInstanceID: request.Worker, RunRevision: 1}
+							session := interceptor.Session{ID: binding.SessionID, CampaignID: request.CampaignID, OperationAPIVersion: interceptor.OperationVersion, Revision: 1, Phase: "running", FeedbackProfile: "black-box", EnvironmentDigest: native["environment_digest"].(string), AppDigest: native["application_digest"].(string), CapabilityManifestDigest: native["digest"].(string)}
+							body = map[string]any{"api_version": interceptor.LifecycleVersion, "campaign_id": request.CampaignID, "binding": binding, "session": session, "capabilities": json.RawMessage(raw), "evidence_max_bytes": 1 << 20}
+						case "/v1/status":
+							body = interceptor.Status{InstanceID: "instance-1", CampaignID: request.CampaignID, Active: binding, Sessions: map[string]interceptor.Binding{binding.SessionID: binding}, Phase: "ready", StoreAvailable: true, EvidenceMaxBytes: 1 << 20}
+						default:
+							t.Errorf("unexpected native request %s %s", r.Method, r.URL.Path)
+							w.WriteHeader(400)
+							return
+						}
+						w.Header().Set("Content-Type", "application/json")
+						json.NewEncoder(w).Encode(map[string]any{"status": 200, "session_revision": 1, "body": body})
+						return
+					}
 					if r.Method != "POST" || r.URL.Path != "/v1/attach" {
 						t.Errorf("unexpected native request %s %s", r.Method, r.URL.Path)
 					}
@@ -326,6 +411,10 @@ func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
 						if d.Stage != "Interceptor compatibility check" || d.Interceptor.Reason != reason || !strings.Contains(d.Message, interceptor.SupportedContractVersion) || d.Interceptor.ExpectedSHA256 != interceptor.SupportedContractSHA256 {
 							t.Fatal(d)
 						}
+					} else if fault == "capability-policy" {
+						if d.Stage != "target preparation" || d.Message != "Operator preparation (target preparation): scenario bundle is incompatible with the selected target: feature:snapshots (host_policy)" {
+							t.Fatal(d)
+						}
 					} else if d.Stage != "Interceptor attachment" || !strings.Contains(d.Message, "HTTP 409") {
 						t.Fatal(d)
 					}
@@ -353,7 +442,7 @@ func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
 					}
 					intent := filepath.Join(paths.StateRoot, "attachments", receipt.CampaignID, "intent.json")
 					_, e = os.Stat(intent)
-					if (e == nil) != (fault == "attach") {
+					if (e == nil) != (fault == "attach" || fault == "capability-policy") {
 						t.Fatal("attachment intent ordering", e)
 					}
 					before, _ := os.ReadFile(filepath.Join(os.Getenv("OPERATOR_DIAGNOSTIC_FILES"), "calls"))
@@ -377,6 +466,9 @@ func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
 			}
 			if (fault == "attach" || strings.HasPrefix(fault, "contract")) && requests.Load() != 2 {
 				t.Fatal("attachment replayed or skipped", requests.Load())
+			}
+			if fault == "capability-policy" && requests.Load() != 4 {
+				t.Fatal("admission dispatched or replayed native work", requests.Load())
 			}
 		})
 	}

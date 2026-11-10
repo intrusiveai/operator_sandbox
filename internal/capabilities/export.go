@@ -5,16 +5,16 @@ package capabilities
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"sort"
 	"strings"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
 var (
-	ErrNative     = errors.New("invalid or unsupported native capability manifest")
-	ErrProjection = errors.New("public capability export does not match verified native source")
+	ErrNative     = diagnostictext.New("invalid or unsupported native capability manifest")
+	ErrProjection = diagnostictext.New("public capability export does not match verified native source")
 )
 
 // Export can only be populated by verification. Its buffers and decoded values

@@ -144,7 +144,8 @@ func (d ConclusionDiagnostic) message(prefix string) string {
 	}
 	return text
 }
-func (d ConclusionDiagnostic) Error() string { return d.Message() }
+func (d ConclusionDiagnostic) Error() string             { return d.Message() }
+func (d ConclusionDiagnostic) DiagnosticMessage() string { return d.Message() }
 func DecodeConclusionDiagnostic(raw []byte) *ConclusionDiagnostic {
 	if _, err := contracts.Decode(raw, 8192); err != nil {
 		return nil

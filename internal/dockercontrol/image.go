@@ -5,20 +5,20 @@ package dockercontrol
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"regexp"
 	"sort"
 	"strings"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
 var (
-	ErrImage         = errors.New("cannot resolve local image; install the selected native-platform image and ensure Docker supports platform-specific image inspection")
-	ErrImageIdentity = errors.New("Docker image or daemon identity changed")
-	ErrPlatform      = errors.New("unsupported or mismatched host/image platform")
-	ErrImageSelector = errors.New("invalid local Docker image selector or endpoint")
+	ErrImage         = diagnostictext.New("cannot resolve local image; install the selected native-platform image and ensure Docker supports platform-specific image inspection")
+	ErrImageIdentity = diagnostictext.New("Docker image or daemon identity changed")
+	ErrPlatform      = diagnostictext.New("unsupported or mismatched host/image platform")
+	ErrImageSelector = diagnostictext.New("invalid local Docker image selector or endpoint")
 )
 
 var imageDigest = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)

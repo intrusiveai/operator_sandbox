@@ -6,7 +6,6 @@ package preparation
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -15,11 +14,12 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/attemptadapter"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/capabilities"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/targetprofile"
 )
 
-var ErrPreparation = errors.New("campaign preparation does not match trusted target inputs")
+var ErrPreparation = diagnostictext.New("campaign preparation does not match trusted target inputs")
 
 type Input struct {
 	CampaignID, WorkerInstanceID string

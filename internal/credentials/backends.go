@@ -6,9 +6,9 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/googleapis/gax-go/v2"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
@@ -60,7 +60,7 @@ func newAWSBackend(ctx context.Context, profile SecretStoreProfile) (Backend, er
 }
 func (b *awsBackend) Read(ctx context.Context, profile SecretStoreProfile, locator Locator) ([]byte, string, error) {
 	if locator.Region != profile.Region {
-		return nil, "", errors.New("AWS locator region differs from profile")
+		return nil, "", diagnostictext.New("AWS locator region differs from profile")
 	}
 	input := &secretsmanager.GetSecretValueInput{SecretId: aws.String(locator.SecretID)}
 	if locator.VersionID != "" {
@@ -74,7 +74,7 @@ func (b *awsBackend) Read(ctx context.Context, profile SecretStoreProfile, locat
 		return nil, "", err
 	}
 	if output == nil || len(output.SecretBinary) > 0 || output.SecretString == nil {
-		return nil, "", errors.New("binary or empty AWS secret is unsupported")
+		return nil, "", diagnostictext.New("binary or empty AWS secret is unsupported")
 	}
 	return []byte(*output.SecretString), aws.ToString(output.VersionId), nil
 }
@@ -100,14 +100,14 @@ func newAzureBackend(_ context.Context, profile SecretStoreProfile) (Backend, er
 }
 func (b *azureBackend) Read(ctx context.Context, _ SecretStoreProfile, locator Locator) ([]byte, string, error) {
 	if strings.TrimSuffix(locator.VaultURL, "/") != b.vaultURL {
-		return nil, "", errors.New("Azure vault differs from profile")
+		return nil, "", diagnostictext.New("Azure vault differs from profile")
 	}
 	response, err := b.client.GetSecret(ctx, locator.SecretName, locator.Version, nil)
 	if err != nil {
 		return nil, "", err
 	}
 	if response.Value == nil {
-		return nil, "", errors.New("Azure secret has no value")
+		return nil, "", diagnostictext.New("Azure secret has no value")
 	}
 	version := locator.Version
 	if version == "" && response.ID != nil {
@@ -130,7 +130,7 @@ type gcpBackend struct {
 
 func newGCPBackend(ctx context.Context, profile SecretStoreProfile) (Backend, error) {
 	if ctx.Err() != nil || !ValidStoreAuthentication("gcp-secret-manager", profile.Authentication) {
-		return nil, errors.New("Google credential configuration unavailable")
+		return nil, diagnostictext.New("Google credential configuration unavailable")
 	}
 	return &gcpBackend{authentication: profile.Authentication}, nil
 }
@@ -164,10 +164,10 @@ func (b *gcpBackend) Read(ctx context.Context, _ SecretStoreProfile, locator Loc
 		return nil, "", err
 	}
 	if response == nil || response.Payload == nil {
-		return nil, "", errors.New("GCP secret has no payload")
+		return nil, "", diagnostictext.New("GCP secret has no payload")
 	}
 	if response.Payload.DataCrc32C != nil && int64(crc32.Checksum(response.Payload.Data, crc32.MakeTable(crc32.Castagnoli))) != *response.Payload.DataCrc32C {
-		return nil, "", errors.New("GCP secret CRC32C verification failed")
+		return nil, "", diagnostictext.New("GCP secret CRC32C verification failed")
 	}
 	parts := strings.Split(response.Name, "/")
 	version := parts[len(parts)-1]
@@ -200,7 +200,7 @@ func (b *vaultBackend) Read(ctx context.Context, profile SecretStoreProfile, loc
 	if locator.Version != "" {
 		version, err = strconv.Atoi(locator.Version)
 		if err != nil || version < 1 {
-			return nil, "", errors.New("Vault version must be a positive integer")
+			return nil, "", diagnostictext.New("Vault version must be a positive integer")
 		}
 	}
 	client, err := b.client.CloneWithHeaders()
@@ -216,7 +216,7 @@ func (b *vaultBackend) Read(ctx context.Context, profile SecretStoreProfile, loc
 		token := strings.TrimSpace(string(tokenBytes))
 		clear(tokenBytes)
 		if token == "" || strings.ContainsAny(token, "\x00\r\n") {
-			return nil, "", errors.New("invalid Vault token sink")
+			return nil, "", diagnostictext.New("invalid Vault token sink")
 		}
 		client.SetToken(token)
 	}
@@ -231,7 +231,7 @@ func (b *vaultBackend) Read(ctx context.Context, profile SecretStoreProfile, loc
 		return nil, "", err
 	}
 	if secret == nil || secret.Data == nil {
-		return nil, "", errors.New("Vault secret is empty or deleted")
+		return nil, "", diagnostictext.New("Vault secret is empty or deleted")
 	}
 	actualVersion := version
 	if secret.VersionMetadata != nil {
@@ -239,7 +239,7 @@ func (b *vaultBackend) Read(ctx context.Context, profile SecretStoreProfile, loc
 	}
 	encoded, err := json.Marshal(secret.Data)
 	if err != nil {
-		return nil, "", errors.New("Vault KV secret is not a JSON object")
+		return nil, "", diagnostictext.New("Vault KV secret is not a JSON object")
 	}
 	return encoded, strconv.Itoa(actualVersion), nil
 }
@@ -280,7 +280,7 @@ func AWSIdentityConfig(ctx context.Context, region, profile, authentication stri
 			authentication = "aws-profile"
 		}
 	}
-	invalid := errors.New("AWS credential configuration unavailable")
+	invalid := diagnostictext.New("AWS credential configuration unavailable")
 	if ctx.Err() != nil {
 		return aws.Config{}, invalid
 	}
@@ -352,7 +352,7 @@ func GoogleWorkloadIdentity(ctx context.Context) (*google.Credentials, error) {
 // GoogleIdentity keeps workload-only admission separate from explicitly selected
 // ADC, which also permits local user, service-account and impersonated credentials.
 func GoogleIdentity(ctx context.Context, authentication string) (*google.Credentials, error) {
-	invalid := errors.New("Google credential configuration unavailable")
+	invalid := diagnostictext.New("Google credential configuration unavailable")
 	if ctx.Err() != nil || !ValidStoreAuthentication("gcp-secret-manager", authentication) {
 		return nil, invalid
 	}

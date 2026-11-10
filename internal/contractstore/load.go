@@ -18,15 +18,16 @@ import (
 	"syscall"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/schemas"
 )
 
 var (
-	ErrPath         = errors.New("contract package directory must be an absolute clean host path")
-	ErrInstallation = errors.New("contract package filesystem must contain exactly the declared regular files and directories, owned by the service user or root and not writable by group or others")
-	ErrManifest     = errors.New("invalid installed contract package manifest")
-	ErrPin          = errors.New("installed contract package does not match the trusted expected version and digest")
-	ErrIntegrity    = errors.New("installed contract payload verification or offline schema loading failed")
+	ErrPath         = diagnostictext.New("contract package directory must be an absolute clean host path")
+	ErrInstallation = diagnostictext.New("contract package filesystem must contain exactly the declared regular files and directories, owned by the service user or root and not writable by group or others")
+	ErrManifest     = diagnostictext.New("invalid installed contract package manifest")
+	ErrPin          = diagnostictext.New("installed contract package does not match the trusted expected version and digest")
+	ErrIntegrity    = diagnostictext.New("installed contract payload verification or offline schema loading failed")
 )
 
 const ReportVersion = "operator.dev/contract-check/v1alpha1"

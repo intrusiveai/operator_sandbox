@@ -218,8 +218,9 @@ type Failure struct {
 	cause      error
 }
 
-func (e *Failure) Error() string { return e.Diagnostic.Summary() }
-func (e *Failure) Unwrap() error { return e.cause }
+func (e *Failure) Error() string             { return e.Diagnostic.Summary() }
+func (e *Failure) DiagnosticMessage() string { return e.Error() }
+func (e *Failure) Unwrap() error             { return e.cause }
 
 // FailureError attaches host-selected diagnostics without retaining a raw error.
 func FailureError(d Diagnostic) error {

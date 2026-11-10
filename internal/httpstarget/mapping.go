@@ -4,7 +4,6 @@ package httpstarget
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"net/netip"
 	"net/url"
 	"path"
@@ -15,6 +14,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
@@ -22,9 +22,9 @@ const Adapter = "https/v1"
 const Version = "operator.dev/https-mapping/v1alpha1"
 const Limit = 64 << 10
 
-var ErrMapping = errors.New("invalid administrator HTTPS mapping")
-var ErrInput = errors.New("HTTPS input does not match the configured operation")
-var ErrResponse = errors.New("HTTPS response does not match the configured selection")
+var ErrMapping = diagnostictext.New("invalid administrator HTTPS mapping")
+var ErrInput = diagnostictext.New("HTTPS input does not match the configured operation")
+var ErrResponse = diagnostictext.New("HTTPS response does not match the configured selection")
 var id = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$`)
 var header = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9-]{0,63}$`)
 

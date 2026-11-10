@@ -1,14 +1,14 @@
 package capabilities
 
 import (
-	"errors"
 	"regexp"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
-var ErrBinding = errors.New("capabilities do not match the ready Interceptor binding")
+var ErrBinding = diagnostictext.New("capabilities do not match the ready Interceptor binding")
 var logicalID = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$`)
 
 // Live is a verified observation of a ready native target. Recheck readiness and

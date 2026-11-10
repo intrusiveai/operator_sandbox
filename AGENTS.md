@@ -1,5 +1,17 @@
 # Repository instructions
 
+## Preparation diagnostics
+
+Error producers MUST expose safe, actionable failure facts through
+`DiagnosticMessage() string` when those facts can be reported. Fixed public
+descriptions use `internal/diagnostictext.New`; shared contract code keeps its
+equivalent self-contained for distribution. Do not pass arbitrary error strings,
+credentials, response bodies, or submitted values to these constructors.
+Preparation forwards these diagnostics with common redaction and bounds. Do not
+add a central list of recognized product errors or replace a known cause with a
+generic recovery message. Keep primary and cleanup failures separate, preserve
+`errors.Is`/`errors.As`, and test saved completion plus independent CLI inspection.
+
 ## Interceptor OpenAPI contract adoption
 
 `internal/interceptor/contract.json` is Operator's approved Interceptor contract

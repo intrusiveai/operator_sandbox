@@ -3,15 +3,32 @@ package capabilities
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
-var ErrCompatibility = errors.New("scenario bundle is incompatible with the selected target")
-var ErrPolicy = errors.New("invalid installed capability policy")
+var ErrCompatibility error = diagnostictext.New("scenario bundle is incompatible with the selected target")
+var ErrPolicy error = diagnostictext.New("invalid installed capability policy")
+
+// CompatibilityError identifies the required reference and the admission rule
+// that rejected it. Only Check constructs these facts; wrappers may contain
+// private context and must not be used as the diagnostic message.
+type CompatibilityError struct {
+	gap Gap
+}
+
+func (e *CompatibilityError) Unwrap() error             { return ErrCompatibility }
+func (e *CompatibilityError) DiagnosticMessage() string { return e.Error() }
+func (e *CompatibilityError) Error() string {
+	ref, omission := diagnostictext.Safe(e.gap.Ref, 256)
+	if omission != "" {
+		ref += " [reference detail omitted: " + omission + "]"
+	}
+	return fmt.Sprintf("%s: %s (%s)", ErrCompatibility, ref, e.gap.Reason)
+}
 
 // Policy is a snapshot supplied by the trusted host TargetProfile/route resolver,
 // never by a bundle or harness. Nil AllowedRefs/SelectableActionRefs deny all.
@@ -132,7 +149,7 @@ func Check(b *Bundle, authoring *Export, live *Live, policy Policy) (*Compatibil
 			return true, nil
 		}
 		if mandatory {
-			return false, fmt.Errorf("%w: %s (%s)", ErrCompatibility, ref, reason)
+			return false, &CompatibilityError{gap: Gap{Ref: ref, Reason: reason}}
 		}
 		gaps[ref] = reason
 		return false, nil

@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -17,9 +16,10 @@ import (
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
-var ErrProvenance = errors.New("native evidence provenance is invalid or unsupported")
+var ErrProvenance = diagnostictext.New("native evidence provenance is invalid or unsupported")
 
 const evidenceJSONLimit = 64 << 20
 const evidenceRecordLimit = 100000

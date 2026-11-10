@@ -20,6 +20,14 @@ type ModelValidationError struct {
 func (e *ModelValidationError) Error() string {
 	return "model validation: " + e.Reason + " at " + e.FieldPath
 }
+func (e *ModelValidationError) DiagnosticMessage() string {
+	path, ok := SafeModelPath(e.FieldPath)
+	message := "model validation (" + e.Stage + "): " + e.Reason + " at " + strconv.Quote(path)
+	if !ok || e.PathOmitted {
+		message += " [field path omitted: unsafe_or_oversized]"
+	}
+	return message
+}
 func (e *ModelValidationError) Unwrap() error { return e.Cause }
 func modelValidation(stage, reason, path string) error {
 	safe, ok := SafeModelPath(path)

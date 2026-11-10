@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io"
 	"mime"
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
 const Address = "http://127.0.0.1:8080"
@@ -26,6 +28,25 @@ type CallError struct {
 
 func (e *CallError) Error() string { return "Interceptor call failed: " + e.Kind }
 
+// DiagnosticMessage selects protocol/transport facts, never a transport's text.
+func (e *CallError) DiagnosticMessage() string {
+	message := "Interceptor request failed"
+	switch e.Kind {
+	case "invalid_request":
+		message = "Interceptor request failed local validation"
+	case "canceled_before_dispatch":
+		message = "Interceptor request canceled before dispatch"
+	case "transport_unavailable":
+		message = "Interceptor transport failed; no valid response was received from the local API"
+	case "invalid_response":
+		message = "Interceptor returned a response that failed contract validation"
+	}
+	if e.Uncertain {
+		message += "; the target-side outcome is uncertain"
+	}
+	return message
+}
+
 type Response struct {
 	raw             []byte
 	Status          int             `json:"status"`
@@ -39,6 +60,13 @@ type Response struct {
 type RemoteError struct{ Response Response }
 
 func (e *RemoteError) Error() string { return "Interceptor returned a non-success response" }
+func (e *RemoteError) DiagnosticMessage() string {
+	message := "Interceptor returned a non-success response"
+	if e.Response.Status >= 100 && e.Response.Status <= 599 {
+		message = fmt.Sprintf("Interceptor returned HTTP %d; the request was not accepted as successful", e.Response.Status)
+	}
+	return message
+}
 func (r Response) Code() string {
 	m, e := object(r.Body)
 	if e != nil {
@@ -73,7 +101,7 @@ func New() *Client {
 	transport := &http.Transport{Proxy: nil, DisableCompression: true, DisableKeepAlives: true, MaxResponseHeaderBytes: 16 << 10,
 		DialContext: func(ctx context.Context, network, address string) (net.Conn, error) {
 			if network != "tcp" || address != "127.0.0.1:8080" {
-				return nil, errors.New("nonlocal Interceptor destination")
+				return nil, diagnostictext.New("nonlocal Interceptor destination")
 			}
 			return dial.DialContext(ctx, "tcp4", address)
 		}}

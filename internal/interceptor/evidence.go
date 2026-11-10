@@ -25,8 +25,9 @@ const maxEvidenceBytes int64 = 9007199254740991
 // replay a target operation. Messages contain no server bodies or host paths.
 type EvidenceError struct{ Kind string }
 
-func (e *EvidenceError) Error() string { return "Interceptor evidence collection failed: " + e.Kind }
-func evidenceError(kind string) error  { return &EvidenceError{Kind: kind} }
+func (e *EvidenceError) Error() string             { return "Interceptor evidence collection failed: " + e.Kind }
+func (e *EvidenceError) DiagnosticMessage() string { return e.Error() }
+func evidenceError(kind string) error              { return &EvidenceError{Kind: kind} }
 
 // EvidenceRequest contains trusted host settings and a persisted session binding.
 // Its limits/deadline are local acceptance policy, not fields sent to Interceptor.
