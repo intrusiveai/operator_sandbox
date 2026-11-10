@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"strings"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 )
@@ -62,24 +61,7 @@ var conclusionID = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$`)
 var conclusionSecret = regexp.MustCompile(`(?i)(sk-|AIza|AKIA|ASIA|eyJ|password|secret|token:|api.key:|credential|bearer)`)
 var conclusionIndex = regexp.MustCompile(`^(0|[1-9][0-9]{0,3})$`)
 
-func conclusionSafePath(path string) bool {
-	if len(path) > 160 {
-		return false
-	}
-	if path == "" {
-		return true
-	}
-	if !strings.HasPrefix(path, "/") {
-		return false
-	}
-	allowed := " api_version kind binding campaign_id launch_id run_revision input_tree_digest engine_context_digest prompt_digest skill_set_digest image_digest release_record_digest contract_package_version contract_package_digest status finish_reason summary objectives objective_id objective_refs hypotheses hypothesis_id hypothesis_refs provenance origin scenario_id parent_hypothesis_id surface_ref outcome claims claim_id statement interpretation confidence assurance attempt_receipt_refs attempt_receipt_id parent_attempt_receipt_id observation_refs entry_id range offset length uncertainty_refs coverage alternative reason uncertainties gap_id description input_refs record_refs record_kind record artifact_receipt record_receipt assessment unavailable conclusion artifact purpose digest size_bytes media_type attribution "
-	for _, part := range strings.Split(path[1:], "/") {
-		if !conclusionIndex.MatchString(part) && !strings.Contains(allowed, " "+part+" ") {
-			return false
-		}
-	}
-	return true
-}
+func conclusionSafePath(path string) bool { _, ok := contracts.SafeArgumentPath(path); return ok }
 func diagnosticID(id string) (string, string) {
 	if len(id) > 128 {
 		return "", "size_limit"
@@ -133,7 +115,7 @@ func (d ConclusionDiagnostic) Valid() bool {
 			return false
 		}
 	}
-	return (d.OperationID != "" || d.OperationOmitted != "") && (d.PathOmitted == "" || d.PathOmitted == "unsafe_or_oversized" && d.FieldPath == "") && len(d.Correction) <= 512 && len(d.Message()) <= 1024
+	return (d.OperationID != "" || d.OperationOmitted != "") && (d.PathOmitted == "" || d.PathOmitted == "unsafe_or_oversized" && d.FieldPath == "") && len(d.Correction) <= contracts.CorrectionLimit && len(d.Message()) <= contracts.CorrectionLimit+1024
 }
 func (d ConclusionDiagnostic) Message() string {
 	return d.message("Operator rejected the Harness-submitted assessment during conclusion validation: ")
@@ -151,7 +133,7 @@ func (d ConclusionDiagnostic) message(prefix string) string {
 		text = prefix + d.Correction
 	}
 	if d.FieldPath != "" {
-		text += " Field: " + d.FieldPath + "."
+		text += " Field: " + contracts.QuotedPath(d.FieldPath) + "."
 	} else if d.PathOmitted != "" {
 		text += " Field omitted (" + d.PathOmitted + ")."
 	}

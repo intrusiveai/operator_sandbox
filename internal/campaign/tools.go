@@ -192,8 +192,15 @@ func (t *Tools) ReserveRead(id string, maximum int64) error {
 	for _, tool := range a.tools {
 		pending += tool.ReadReserved
 	}
-	if a.readRequests >= limits.Reads || maximum > limits.Bytes-a.readBytes-pending {
-		return ErrFeedbackBudget
+	remainingReads, remainingBytes := max(int64(0), limits.Reads-a.readRequests), max(int64(0), limits.Bytes-a.readBytes-pending)
+	if remainingReads == 0 || maximum > remainingBytes {
+		correction := "No evidence-read requests remain. Use already inspected evidence or report the gap; repeating the read cannot succeed."
+		if remainingReads > 0 && remainingBytes == 0 {
+			correction = "No evidence-read bytes remain. Use already inspected evidence or report the gap; repeating the read cannot succeed."
+		} else if remainingReads > 0 && remainingBytes > 0 {
+			correction = "Request no more than the remaining evidence bytes, or use already inspected evidence. No evidence was read."
+		}
+		return (&contracts.ArgumentError{Reason: "evidence_read_budget", FieldPath: "/max_bytes", Correction: correction, Cause: ErrFeedbackBudget}).WithFacts(contracts.FailureFacts{"requested_bytes": maximum, "remaining_bytes": remainingBytes, "remaining_reads": remainingReads})
 	}
 	r.ReadReserved = maximum
 	r.ReadCharged = true

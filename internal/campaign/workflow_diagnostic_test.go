@@ -9,7 +9,7 @@ import (
 
 func TestUnknownAttributionDoesNotBlameHarnessOrOperator(t *testing.T) {
 	d := NewWorkflowDiagnostic("request-1", "invented-source", "invented-stage", "invented-reason", "", "", "")
-	if !d.Valid() || d.Source != "unknown" || d.Stage != "unknown" || d.Reason != "unknown_failure" || !strings.Contains(d.Message(), "failure origin unknown") && !strings.Contains(d.Message(), "Failure origin unknown") || strings.Contains(d.Message(), "Harness reported") {
+	if !d.Valid() || d.Source != "unknown" || d.Stage != "invented-stage" || d.Reason != "invented-reason" || !strings.Contains(d.Message(), "source invalid or unknown") || strings.Contains(d.Message(), "Harness reported") {
 		t.Fatalf("%+v: %s", d, d.Message())
 	}
 	for _, source := range []string{"operator", "harness-local"} {

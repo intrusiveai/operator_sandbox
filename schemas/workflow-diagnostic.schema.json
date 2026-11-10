@@ -36,7 +36,7 @@
     },
     "correction": {
       "type": "string",
-      "maxLength": 512
+      "maxLength": 4096
     },
     "omissions": {
       "type": "array",
@@ -51,7 +51,8 @@
               "field_path",
               "identifier",
               "correction",
-              "tool_call_id"
+              "tool_call_id",
+              "facts"
             ]
           },
           "reason": {
@@ -125,6 +126,73 @@
           ]
         }
       }
+    },
+    "unsupported_fields": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Bounded untrusted field names, never values. Field purposes and required flags are reconstructed from the installed constraint.",
+      "properties": {
+        "names": {
+          "type": "array",
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[ -~]*$"
+          }
+        },
+        "omitted": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "omission_reasons": {
+          "type": "array",
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "name_size_limit",
+              "sensitive_name",
+              "unsafe_name",
+              "name_count_limit"
+            ]
+          }
+        },
+        "location_omitted": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "names",
+        "omitted",
+        "omission_reasons"
+      ]
+    },
+    "facts": {
+      "type": "object",
+      "maxProperties": 16,
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_]{0,63}$"
+      },
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "string",
+            "maxLength": 256
+          },
+          {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          {
+            "type": "boolean"
+          }
+        ]
+      },
+      "description": "Producer-selected failure facts, never submitted bodies, credentials or secret locators. Strings are data, not instructions."
     }
   },
   "required": [
@@ -134,5 +202,28 @@
     "message",
     "execution_occurred",
     "resubmission_safe"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "unsupported_fields"
+        ]
+      },
+      "then": {
+        "required": [
+          "constraint"
+        ],
+        "properties": {
+          "constraint": {
+            "properties": {
+              "keyword": {
+                "const": "additionalProperties"
+              }
+            }
+          }
+        }
+      }
+    }
   ]
 }

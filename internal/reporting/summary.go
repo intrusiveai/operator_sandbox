@@ -377,7 +377,7 @@ func writeEvidenceSummary(b *strings.Builder, r Result) {
 		}
 		dataBlock(b, fmt.Sprintf("Credential: %s; profile: %s; backend: %s\nOutcome: %s; code: %s; cache hit: %s\nRecorded: %s; resolved: %s", valueOrUnknown(c.CredentialID), valueOrUnknown(c.ProfileID), valueOrUnknown(c.Backend), valueOrUnknown(c.Outcome), valueOrUnknown(c.Code), cache, c.RecordedAt, valueOrUnknown(c.ResolvedAt)))
 		if c.Step != "" {
-			dataBlock(b, "Operator credential step: "+c.Step)
+			dataBlock(b, fmt.Sprintf("Operator credential step: %s; category: %s; backend code: %s; HTTP status: %d (0 means not observed)", c.Step, valueOrUnknown(c.Category), valueOrUnknown(c.BackendCode), c.HTTPStatus))
 		}
 		fmt.Fprintf(b, "Source: %s.\n\n", eventLink(c.Event))
 		if len(c.Omitted) > 0 {

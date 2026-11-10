@@ -633,6 +633,7 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 					reason, source = "cleanup_failed", "cleanup"
 				}
 				d := campaign.NewWorkflowDiagnostic(request["operation_id"].(string), source, reply.Result.Stage, reason, "", "attempt_execute", request["call_id"].(string))
+				d.RetainDetails("The target operation result was "+reply.Result.Status+"; failure origin unknown. Inspect its retained execution evidence. The operation will not be replayed.", "", nil)
 				if known := s.WorkflowFailure(); known != nil && (known.Timeout != nil || known.TargetFailure != nil) && known.OperationID == d.OperationID {
 					return result, nil
 				}

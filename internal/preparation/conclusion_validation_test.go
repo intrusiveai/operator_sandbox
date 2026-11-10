@@ -25,8 +25,8 @@ func TestConclusionReferenceResolutionAndDiagnostics(t *testing.T) {
 		{"self", "self_parent", "/hypotheses/0/provenance/parent_hypothesis_id"},
 		{"cycle", "hypothesis_cycle", "/hypotheses/0/provenance/parent_hypothesis_id"},
 		{"structure", "invalid_structure", "/status"},
-		{"binding", "invalid_structure", "/binding"},
-		{"finish", "invalid_structure", "/finish_reason"},
+		{"binding", "invalid_structure", ""},
+		{"finish", "invalid_structure", ""},
 		{"record", "unresolved_record", "/record_refs/0"},
 		{"attempt", "invalid_attempt", "/hypotheses/0/attempt_receipt_refs/0"},
 		{"objective", "unknown_objective", "/hypotheses/0/objective_refs/0"},
@@ -129,8 +129,12 @@ func TestConclusionReferenceResolutionAndDiagnostics(t *testing.T) {
 				var body map[string]any
 				_ = json.Unmarshal(raw, &body)
 				f := body["error"].(map[string]any)
-				if f["message"] != d.Message() || f["instance_path"] != d.FieldPath {
+				diagnostic := f["diagnostic"].(map[string]any)
+				if diagnostic["correction"] != d.Correction || diagnostic["field_path"] != d.FieldPath || len(f["message"].(string)) > 512 {
 					t.Fatal(f, d)
+				}
+				if len(d.Message()) <= 512 && f["message"] != d.Message() {
+					t.Fatal("short explanation changed", f, d)
 				}
 				// Another rejection and generic shutdown must not replace the first diagnostic.
 				_, err = s.Handle(context.Background(), stateWire("engine.finish", "later-rejection", 1, map[string]any{"finish_reason": "budget-limit", "conclusion": map[string]any{"state": "committed", "artifact_receipt": "missing", "record_receipt": "missing"}}), 0)

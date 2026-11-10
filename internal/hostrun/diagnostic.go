@@ -69,7 +69,11 @@ func (d *PreparationDiagnostic) Valid() bool {
 	if d.Model != (modelprovider.Diagnostic{}) && !d.Model.Valid() {
 		return false
 	}
-	return len(d.Stage) > 0 && len(d.Stage) <= 96 && len(d.Message) > 0 && len(d.Message) <= 1024 &&
+	messageLimit := 1024
+	if d.Workflow != (campaign.WorkflowDiagnostic{}) || d.Conclusion != (campaign.ConclusionDiagnostic{}) {
+		messageLimit = 12288
+	}
+	return len(d.Stage) > 0 && len(d.Stage) <= 96 && len(d.Message) > 0 && len(d.Message) <= messageLimit &&
 		strings.IndexFunc(d.Stage+d.Message, func(r rune) bool { return r < 32 || r == 127 }) < 0
 }
 
@@ -134,6 +138,10 @@ func preparationCleanup(stage string, primary, cleanup error) error {
 }
 
 func preparationMessage(err error) string {
+	var profile *modelprovider.ProfileError
+	if errors.As(err, &profile) {
+		return profile.Error()
+	}
 	var compatibility *interceptor.CompatibilityError
 	if errors.As(err, &compatibility) {
 		return compatibility.Error()

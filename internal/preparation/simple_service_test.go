@@ -74,13 +74,13 @@ func TestSimpleInputRejectionAndRetentionBeforeDispatch(t *testing.T) {
 	}
 }
 
-func TestRuntimeDiagnosticDropsSubmittedProse(t *testing.T) {
+func TestRuntimeDiagnosticRedactsCredentialText(t *testing.T) {
 	var root string
 	s, _, _, w, launch := serviceWithSettings(t, 0, []string{"engine.diagnostic_report"}, func(c *campaignservice.Config) { root = c.StateRoot })
 	if e := s.Admit(context.Background(), launch); e != nil {
 		t.Fatal(e)
 	}
-	secret := "synthetic-credential-never-retain-XYZ"
+	secret := "Bearer synthetic-credential-never-retain-XYZ"
 	body := map[string]any{"diagnostic": map[string]any{"source": "harness-local", "stage": "termination", "reason": "invalid_call_limit", "message": secret, "identifier": secret, "correction": secret, "execution_occurred": "no", "resubmission_safe": false}, "stopping": map[string]any{"condition": "invalid-call-limit", "observed_count": 5, "configured_limit": 5}}
 	raw, e := s.Handle(context.Background(), stateWire("engine.diagnostic_report", "runtime-diagnostic", 1, body), 0)
 	stateResult(t, raw, e)

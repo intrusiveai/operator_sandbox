@@ -254,10 +254,13 @@ func (r *Resolver) Resolve(ctx context.Context, credentialID string) (Resolution
 		var err error
 		setupCtx, cancel := context.WithTimeout(ctx, time.Duration(profile.TimeoutSeconds)*time.Second)
 		backend, err = factory(setupCtx, profile)
+		if err == nil {
+			err = setupCtx.Err()
+		}
 		cancel()
 		if err != nil {
 			r.mu.Unlock()
-			return Resolution{}, Failure{credentialID, profile.ID, profile.BackendKind, "backend-initialization"}
+			return Resolution{}, failed(credentialID, profile.ID, profile.BackendKind, "backend-initialization", err)
 		}
 		r.backends[profile.ID] = backend
 	}
@@ -273,7 +276,7 @@ func (r *Resolver) Resolve(ctx context.Context, credentialID string) (Resolution
 			raw[i] = 0
 		}
 		r.Invalidate(credentialID)
-		return Resolution{}, Failure{credentialID, profile.ID, profile.BackendKind, "secret-read"}
+		return Resolution{}, failed(credentialID, profile.ID, profile.BackendKind, "secret-read", err)
 	}
 	value, err := selectValue(raw, ref.Value, profile.MaxValueBytes)
 	for index := range raw {
@@ -281,7 +284,7 @@ func (r *Resolver) Resolve(ctx context.Context, credentialID string) (Resolution
 	}
 	if err != nil {
 		r.Invalidate(credentialID)
-		return Resolution{}, Failure{credentialID, profile.ID, profile.BackendKind, "value-selection"}
+		return Resolution{}, failed(credentialID, profile.ID, profile.BackendKind, "value-selection", err)
 	}
 	result := Resolution{CredentialID: credentialID, ProfileID: profile.ID, BackendVersion: version, ResolvedAt: r.now().UTC(), Value: value}
 	if ref.CacheTTLSeconds > 0 {

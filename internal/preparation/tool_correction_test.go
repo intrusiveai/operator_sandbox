@@ -31,7 +31,7 @@ func TestToolCorrectionRetentionAndNoProgress(t *testing.T) {
 	if !errors.As(err, &issue) || issue.Constraint == nil {
 		t.Fatal(err)
 	}
-	body := map[string]any{"tool_name": "finish", "tool_call_id": "rejected-finish", "diagnostic": map[string]any{"source": "harness-local", "stage": "arguments", "reason": issue.Reason, "field_path": issue.FieldPath, "constraint": issue.Constraint, "message": "SYNTHETIC_SECRET", "correction": "SYNTHETIC_SECRET", "execution_occurred": "no", "resubmission_safe": true}}
+	body := map[string]any{"tool_name": "finish", "tool_call_id": "rejected-finish", "diagnostic": map[string]any{"source": "harness-local", "stage": "arguments", "reason": issue.Reason, "field_path": issue.FieldPath, "constraint": issue.Constraint, "message": "Bearer SYNTHETIC_SECRET", "correction": "Bearer SYNTHETIC_SECRET", "execution_occurred": "no", "resubmission_safe": true}}
 	raw, err := s.Handle(context.Background(), stateWire("engine.diagnostic_report", "rejection", 1, body), 0)
 	stateResult(t, raw, err)
 	if d := s.WorkflowFailure(); d == nil || !strings.Contains(d.Message(), "128") || !strings.Contains(d.Message(), "top-level uncertainties") || strings.Contains(d.Message(), "SYNTHETIC_SECRET") {
@@ -59,7 +59,7 @@ func TestToolCorrectionRetentionAndNoProgress(t *testing.T) {
 	result := reportResult(t, root, receipt)
 	encoded, _ := json.Marshal(result)
 	if strings.Contains(string(encoded), "SYNTHETIC_SECRET") {
-		t.Fatal("prose leak")
+		t.Fatal("credential-pattern leak")
 	}
 	found := false
 	for _, d := range result.WorkflowDiagnostics {

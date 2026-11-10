@@ -13,9 +13,9 @@
       ],
       "surfaces": [],
       "baseline_bytes": 12426,
-      "revised_bytes": 8856,
+      "revised_bytes": 8816,
       "baseline_tokens_estimated": 3107,
-      "revised_tokens_estimated": 2214,
+      "revised_tokens_estimated": 2204,
       "baseline_tools": {
         "attempt_execute": {
           "declaration_bytes": 3556,
@@ -53,7 +53,7 @@
       },
       "revised_tools": {
         "attempt_execute": {
-          "declaration_bytes": 1984,
+          "declaration_bytes": 1799,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -61,7 +61,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5577,
+          "declaration_bytes": 5722,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -104,9 +104,9 @@
       ],
       "surfaces": [],
       "baseline_bytes": 22062,
-      "revised_bytes": 14999,
+      "revised_bytes": 14957,
       "baseline_tokens_estimated": 5516,
-      "revised_tokens_estimated": 3750,
+      "revised_tokens_estimated": 3740,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1024,
@@ -195,7 +195,7 @@
       },
       "revised_tools": {
         "artifact_publish": {
-          "declaration_bytes": 659,
+          "declaration_bytes": 732,
           "description_bytes": 254,
           "required_fields": [
             "purpose",
@@ -203,7 +203,7 @@
           ]
         },
         "attempt_execute": {
-          "declaration_bytes": 1984,
+          "declaration_bytes": 1799,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -211,7 +211,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5577,
+          "declaration_bytes": 5722,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -232,7 +232,7 @@
           ]
         },
         "record_append": {
-          "declaration_bytes": 3113,
+          "declaration_bytes": 3038,
           "description_bytes": 309,
           "required_fields": [
             "kind"
@@ -294,9 +294,9 @@
         "mcp_tool_result"
       ],
       "baseline_bytes": 26118,
-      "revised_bytes": 19960,
+      "revised_bytes": 18708,
       "baseline_tokens_estimated": 6530,
-      "revised_tokens_estimated": 4990,
+      "revised_tokens_estimated": 4677,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1024,
@@ -385,7 +385,7 @@
       },
       "revised_tools": {
         "artifact_publish": {
-          "declaration_bytes": 659,
+          "declaration_bytes": 732,
           "description_bytes": 254,
           "required_fields": [
             "purpose",
@@ -393,7 +393,7 @@
           ]
         },
         "attempt_execute": {
-          "declaration_bytes": 6945,
+          "declaration_bytes": 5550,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -401,7 +401,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5577,
+          "declaration_bytes": 5722,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -422,7 +422,7 @@
           ]
         },
         "record_append": {
-          "declaration_bytes": 3113,
+          "declaration_bytes": 3038,
           "description_bytes": 309,
           "required_fields": [
             "kind"
@@ -485,9 +485,9 @@
         "environment_state"
       ],
       "baseline_bytes": 26832,
-      "revised_bytes": 20807,
+      "revised_bytes": 19435,
       "baseline_tokens_estimated": 6708,
-      "revised_tokens_estimated": 5202,
+      "revised_tokens_estimated": 4859,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1024,
@@ -576,7 +576,7 @@
       },
       "revised_tools": {
         "artifact_publish": {
-          "declaration_bytes": 659,
+          "declaration_bytes": 732,
           "description_bytes": 254,
           "required_fields": [
             "purpose",
@@ -584,7 +584,7 @@
           ]
         },
         "attempt_execute": {
-          "declaration_bytes": 7792,
+          "declaration_bytes": 6277,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -592,7 +592,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5577,
+          "declaration_bytes": 5722,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -613,7 +613,7 @@
           ]
         },
         "record_append": {
-          "declaration_bytes": 3113,
+          "declaration_bytes": 3038,
           "description_bytes": 309,
           "required_fields": [
             "kind"
@@ -679,9 +679,9 @@
         "service_response"
       ],
       "baseline_bytes": 30124,
-      "revised_bytes": 29259,
+      "revised_bytes": 24938,
       "baseline_tokens_estimated": 7531,
-      "revised_tokens_estimated": 7315,
+      "revised_tokens_estimated": 6235,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1024,
@@ -770,7 +770,7 @@
       },
       "revised_tools": {
         "artifact_publish": {
-          "declaration_bytes": 659,
+          "declaration_bytes": 732,
           "description_bytes": 254,
           "required_fields": [
             "purpose",
@@ -778,7 +778,7 @@
           ]
         },
         "attempt_execute": {
-          "declaration_bytes": 16244,
+          "declaration_bytes": 11780,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -786,7 +786,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5577,
+          "declaration_bytes": 5722,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -807,7 +807,7 @@
           ]
         },
         "record_append": {
-          "declaration_bytes": 3113,
+          "declaration_bytes": 3038,
           "description_bytes": 309,
           "required_fields": [
             "kind"
@@ -856,9 +856,9 @@
       ],
       "surfaces": [],
       "baseline_bytes": 12374,
-      "revised_bytes": 8804,
+      "revised_bytes": 8764,
       "baseline_tokens_estimated": 3094,
-      "revised_tokens_estimated": 2201,
+      "revised_tokens_estimated": 2191,
       "baseline_tools": {
         "attempt_execute": {
           "declaration_bytes": 3574,
@@ -896,7 +896,7 @@
       },
       "revised_tools": {
         "attempt_execute": {
-          "declaration_bytes": 2002,
+          "declaration_bytes": 1817,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -904,7 +904,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5595,
+          "declaration_bytes": 5740,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -947,9 +947,9 @@
       ],
       "surfaces": [],
       "baseline_bytes": 21919,
-      "revised_bytes": 14856,
+      "revised_bytes": 14814,
       "baseline_tokens_estimated": 5480,
-      "revised_tokens_estimated": 3714,
+      "revised_tokens_estimated": 3704,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1042,
@@ -1038,7 +1038,7 @@
       },
       "revised_tools": {
         "artifact_publish": {
-          "declaration_bytes": 677,
+          "declaration_bytes": 750,
           "description_bytes": 254,
           "required_fields": [
             "purpose",
@@ -1046,7 +1046,7 @@
           ]
         },
         "attempt_execute": {
-          "declaration_bytes": 2002,
+          "declaration_bytes": 1817,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -1054,7 +1054,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5595,
+          "declaration_bytes": 5740,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -1075,7 +1075,7 @@
           ]
         },
         "record_append": {
-          "declaration_bytes": 3131,
+          "declaration_bytes": 3056,
           "description_bytes": 309,
           "required_fields": [
             "kind"
@@ -1137,9 +1137,9 @@
         "mcp_tool_result"
       ],
       "baseline_bytes": 25975,
-      "revised_bytes": 19817,
+      "revised_bytes": 18565,
       "baseline_tokens_estimated": 6494,
-      "revised_tokens_estimated": 4955,
+      "revised_tokens_estimated": 4642,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1042,
@@ -1228,7 +1228,7 @@
       },
       "revised_tools": {
         "artifact_publish": {
-          "declaration_bytes": 677,
+          "declaration_bytes": 750,
           "description_bytes": 254,
           "required_fields": [
             "purpose",
@@ -1236,7 +1236,7 @@
           ]
         },
         "attempt_execute": {
-          "declaration_bytes": 6963,
+          "declaration_bytes": 5568,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -1244,7 +1244,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5595,
+          "declaration_bytes": 5740,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -1265,7 +1265,7 @@
           ]
         },
         "record_append": {
-          "declaration_bytes": 3131,
+          "declaration_bytes": 3056,
           "description_bytes": 309,
           "required_fields": [
             "kind"
@@ -1328,9 +1328,9 @@
         "environment_state"
       ],
       "baseline_bytes": 26689,
-      "revised_bytes": 20664,
+      "revised_bytes": 19292,
       "baseline_tokens_estimated": 6673,
-      "revised_tokens_estimated": 5166,
+      "revised_tokens_estimated": 4823,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1042,
@@ -1419,7 +1419,7 @@
       },
       "revised_tools": {
         "artifact_publish": {
-          "declaration_bytes": 677,
+          "declaration_bytes": 750,
           "description_bytes": 254,
           "required_fields": [
             "purpose",
@@ -1427,7 +1427,7 @@
           ]
         },
         "attempt_execute": {
-          "declaration_bytes": 7810,
+          "declaration_bytes": 6295,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -1435,7 +1435,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5595,
+          "declaration_bytes": 5740,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -1456,7 +1456,7 @@
           ]
         },
         "record_append": {
-          "declaration_bytes": 3131,
+          "declaration_bytes": 3056,
           "description_bytes": 309,
           "required_fields": [
             "kind"
@@ -1522,9 +1522,9 @@
         "service_response"
       ],
       "baseline_bytes": 29981,
-      "revised_bytes": 29116,
+      "revised_bytes": 24795,
       "baseline_tokens_estimated": 7496,
-      "revised_tokens_estimated": 7279,
+      "revised_tokens_estimated": 6199,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1042,
@@ -1613,7 +1613,7 @@
       },
       "revised_tools": {
         "artifact_publish": {
-          "declaration_bytes": 677,
+          "declaration_bytes": 750,
           "description_bytes": 254,
           "required_fields": [
             "purpose",
@@ -1621,7 +1621,7 @@
           ]
         },
         "attempt_execute": {
-          "declaration_bytes": 16262,
+          "declaration_bytes": 11798,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -1629,7 +1629,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5595,
+          "declaration_bytes": 5740,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -1650,7 +1650,7 @@
           ]
         },
         "record_append": {
-          "declaration_bytes": 3131,
+          "declaration_bytes": 3056,
           "description_bytes": 309,
           "required_fields": [
             "kind"
@@ -1699,9 +1699,9 @@
       ],
       "surfaces": [],
       "baseline_bytes": 12010,
-      "revised_bytes": 8680,
+      "revised_bytes": 8640,
       "baseline_tokens_estimated": 3003,
-      "revised_tokens_estimated": 2170,
+      "revised_tokens_estimated": 2160,
       "baseline_tools": {
         "attempt_execute": {
           "declaration_bytes": 3640,
@@ -1739,7 +1739,7 @@
       },
       "revised_tools": {
         "attempt_execute": {
-          "declaration_bytes": 1971,
+          "declaration_bytes": 1786,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -1747,7 +1747,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5564,
+          "declaration_bytes": 5709,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -1790,9 +1790,9 @@
       ],
       "surfaces": [],
       "baseline_bytes": 21275,
-      "revised_bytes": 14515,
+      "revised_bytes": 14473,
       "baseline_tokens_estimated": 5319,
-      "revised_tokens_estimated": 3629,
+      "revised_tokens_estimated": 3619,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1011,
@@ -1878,7 +1878,7 @@
       },
       "revised_tools": {
         "artifact_publish": {
-          "declaration_bytes": 646,
+          "declaration_bytes": 719,
           "description_bytes": 254,
           "required_fields": [
             "purpose",
@@ -1886,7 +1886,7 @@
           ]
         },
         "attempt_execute": {
-          "declaration_bytes": 1971,
+          "declaration_bytes": 1786,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -1894,7 +1894,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5564,
+          "declaration_bytes": 5709,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -1915,7 +1915,7 @@
           ]
         },
         "record_append": {
-          "declaration_bytes": 3100,
+          "declaration_bytes": 3025,
           "description_bytes": 309,
           "required_fields": [
             "kind"
@@ -1977,9 +1977,9 @@
         "mcp_tool_result"
       ],
       "baseline_bytes": 25331,
-      "revised_bytes": 19476,
+      "revised_bytes": 18224,
       "baseline_tokens_estimated": 6333,
-      "revised_tokens_estimated": 4869,
+      "revised_tokens_estimated": 4556,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1011,
@@ -2065,7 +2065,7 @@
       },
       "revised_tools": {
         "artifact_publish": {
-          "declaration_bytes": 646,
+          "declaration_bytes": 719,
           "description_bytes": 254,
           "required_fields": [
             "purpose",
@@ -2073,7 +2073,7 @@
           ]
         },
         "attempt_execute": {
-          "declaration_bytes": 6932,
+          "declaration_bytes": 5537,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -2081,7 +2081,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5564,
+          "declaration_bytes": 5709,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -2102,7 +2102,7 @@
           ]
         },
         "record_append": {
-          "declaration_bytes": 3100,
+          "declaration_bytes": 3025,
           "description_bytes": 309,
           "required_fields": [
             "kind"
@@ -2165,9 +2165,9 @@
         "environment_state"
       ],
       "baseline_bytes": 26045,
-      "revised_bytes": 20323,
+      "revised_bytes": 18951,
       "baseline_tokens_estimated": 6512,
-      "revised_tokens_estimated": 5081,
+      "revised_tokens_estimated": 4738,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1011,
@@ -2253,7 +2253,7 @@
       },
       "revised_tools": {
         "artifact_publish": {
-          "declaration_bytes": 646,
+          "declaration_bytes": 719,
           "description_bytes": 254,
           "required_fields": [
             "purpose",
@@ -2261,7 +2261,7 @@
           ]
         },
         "attempt_execute": {
-          "declaration_bytes": 7779,
+          "declaration_bytes": 6264,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -2269,7 +2269,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5564,
+          "declaration_bytes": 5709,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -2290,7 +2290,7 @@
           ]
         },
         "record_append": {
-          "declaration_bytes": 3100,
+          "declaration_bytes": 3025,
           "description_bytes": 309,
           "required_fields": [
             "kind"
@@ -2356,9 +2356,9 @@
         "service_response"
       ],
       "baseline_bytes": 29337,
-      "revised_bytes": 28775,
+      "revised_bytes": 24454,
       "baseline_tokens_estimated": 7335,
-      "revised_tokens_estimated": 7194,
+      "revised_tokens_estimated": 6114,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1011,
@@ -2444,7 +2444,7 @@
       },
       "revised_tools": {
         "artifact_publish": {
-          "declaration_bytes": 646,
+          "declaration_bytes": 719,
           "description_bytes": 254,
           "required_fields": [
             "purpose",
@@ -2452,7 +2452,7 @@
           ]
         },
         "attempt_execute": {
-          "declaration_bytes": 16231,
+          "declaration_bytes": 11767,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -2460,7 +2460,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5564,
+          "declaration_bytes": 5709,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -2481,7 +2481,7 @@
           ]
         },
         "record_append": {
-          "declaration_bytes": 3100,
+          "declaration_bytes": 3025,
           "description_bytes": 309,
           "required_fields": [
             "kind"
@@ -2530,9 +2530,9 @@
       ],
       "surfaces": [],
       "baseline_bytes": 12094,
-      "revised_bytes": 8764,
+      "revised_bytes": 8724,
       "baseline_tokens_estimated": 3024,
-      "revised_tokens_estimated": 2191,
+      "revised_tokens_estimated": 2181,
       "baseline_tools": {
         "attempt_execute": {
           "declaration_bytes": 3648,
@@ -2570,7 +2570,7 @@
       },
       "revised_tools": {
         "attempt_execute": {
-          "declaration_bytes": 1979,
+          "declaration_bytes": 1794,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -2578,7 +2578,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5572,
+          "declaration_bytes": 5717,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -2621,9 +2621,9 @@
       ],
       "surfaces": [],
       "baseline_bytes": 21506,
-      "revised_bytes": 14746,
+      "revised_bytes": 14704,
       "baseline_tokens_estimated": 5377,
-      "revised_tokens_estimated": 3687,
+      "revised_tokens_estimated": 3676,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1019,
@@ -2709,7 +2709,7 @@
       },
       "revised_tools": {
         "artifact_publish": {
-          "declaration_bytes": 654,
+          "declaration_bytes": 727,
           "description_bytes": 254,
           "required_fields": [
             "purpose",
@@ -2717,7 +2717,7 @@
           ]
         },
         "attempt_execute": {
-          "declaration_bytes": 1979,
+          "declaration_bytes": 1794,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -2725,7 +2725,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5572,
+          "declaration_bytes": 5717,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -2746,7 +2746,7 @@
           ]
         },
         "record_append": {
-          "declaration_bytes": 3108,
+          "declaration_bytes": 3033,
           "description_bytes": 309,
           "required_fields": [
             "kind"
@@ -2808,9 +2808,9 @@
         "mcp_tool_result"
       ],
       "baseline_bytes": 25562,
-      "revised_bytes": 19707,
+      "revised_bytes": 18455,
       "baseline_tokens_estimated": 6391,
-      "revised_tokens_estimated": 4927,
+      "revised_tokens_estimated": 4614,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1019,
@@ -2896,7 +2896,7 @@
       },
       "revised_tools": {
         "artifact_publish": {
-          "declaration_bytes": 654,
+          "declaration_bytes": 727,
           "description_bytes": 254,
           "required_fields": [
             "purpose",
@@ -2904,7 +2904,7 @@
           ]
         },
         "attempt_execute": {
-          "declaration_bytes": 6940,
+          "declaration_bytes": 5545,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -2912,7 +2912,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5572,
+          "declaration_bytes": 5717,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -2933,7 +2933,7 @@
           ]
         },
         "record_append": {
-          "declaration_bytes": 3108,
+          "declaration_bytes": 3033,
           "description_bytes": 309,
           "required_fields": [
             "kind"
@@ -2996,9 +2996,9 @@
         "environment_state"
       ],
       "baseline_bytes": 26276,
-      "revised_bytes": 20554,
+      "revised_bytes": 19182,
       "baseline_tokens_estimated": 6569,
-      "revised_tokens_estimated": 5139,
+      "revised_tokens_estimated": 4796,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1019,
@@ -3084,7 +3084,7 @@
       },
       "revised_tools": {
         "artifact_publish": {
-          "declaration_bytes": 654,
+          "declaration_bytes": 727,
           "description_bytes": 254,
           "required_fields": [
             "purpose",
@@ -3092,7 +3092,7 @@
           ]
         },
         "attempt_execute": {
-          "declaration_bytes": 7787,
+          "declaration_bytes": 6272,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -3100,7 +3100,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5572,
+          "declaration_bytes": 5717,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -3121,7 +3121,7 @@
           ]
         },
         "record_append": {
-          "declaration_bytes": 3108,
+          "declaration_bytes": 3033,
           "description_bytes": 309,
           "required_fields": [
             "kind"
@@ -3187,9 +3187,9 @@
         "service_response"
       ],
       "baseline_bytes": 29568,
-      "revised_bytes": 29006,
+      "revised_bytes": 24685,
       "baseline_tokens_estimated": 7392,
-      "revised_tokens_estimated": 7252,
+      "revised_tokens_estimated": 6172,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1019,
@@ -3275,7 +3275,7 @@
       },
       "revised_tools": {
         "artifact_publish": {
-          "declaration_bytes": 654,
+          "declaration_bytes": 727,
           "description_bytes": 254,
           "required_fields": [
             "purpose",
@@ -3283,7 +3283,7 @@
           ]
         },
         "attempt_execute": {
-          "declaration_bytes": 16239,
+          "declaration_bytes": 11775,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -3291,7 +3291,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5572,
+          "declaration_bytes": 5717,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -3312,7 +3312,7 @@
           ]
         },
         "record_append": {
-          "declaration_bytes": 3108,
+          "declaration_bytes": 3033,
           "description_bytes": 309,
           "required_fields": [
             "kind"
@@ -3361,9 +3361,9 @@
       ],
       "surfaces": [],
       "baseline_bytes": 12069,
-      "revised_bytes": 8739,
+      "revised_bytes": 8699,
       "baseline_tokens_estimated": 3018,
-      "revised_tokens_estimated": 2185,
+      "revised_tokens_estimated": 2175,
       "baseline_tools": {
         "attempt_execute": {
           "declaration_bytes": 3648,
@@ -3401,7 +3401,7 @@
       },
       "revised_tools": {
         "attempt_execute": {
-          "declaration_bytes": 1979,
+          "declaration_bytes": 1794,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -3409,7 +3409,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5572,
+          "declaration_bytes": 5717,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -3452,9 +3452,9 @@
       ],
       "surfaces": [],
       "baseline_bytes": 21390,
-      "revised_bytes": 14630,
+      "revised_bytes": 14588,
       "baseline_tokens_estimated": 5348,
-      "revised_tokens_estimated": 3658,
+      "revised_tokens_estimated": 3647,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1019,
@@ -3540,7 +3540,7 @@
       },
       "revised_tools": {
         "artifact_publish": {
-          "declaration_bytes": 654,
+          "declaration_bytes": 727,
           "description_bytes": 254,
           "required_fields": [
             "purpose",
@@ -3548,7 +3548,7 @@
           ]
         },
         "attempt_execute": {
-          "declaration_bytes": 1979,
+          "declaration_bytes": 1794,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -3556,7 +3556,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5572,
+          "declaration_bytes": 5717,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -3577,7 +3577,7 @@
           ]
         },
         "record_append": {
-          "declaration_bytes": 3108,
+          "declaration_bytes": 3033,
           "description_bytes": 309,
           "required_fields": [
             "kind"
@@ -3639,9 +3639,9 @@
         "mcp_tool_result"
       ],
       "baseline_bytes": 25446,
-      "revised_bytes": 19591,
+      "revised_bytes": 18339,
       "baseline_tokens_estimated": 6362,
-      "revised_tokens_estimated": 4898,
+      "revised_tokens_estimated": 4585,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1019,
@@ -3727,7 +3727,7 @@
       },
       "revised_tools": {
         "artifact_publish": {
-          "declaration_bytes": 654,
+          "declaration_bytes": 727,
           "description_bytes": 254,
           "required_fields": [
             "purpose",
@@ -3735,7 +3735,7 @@
           ]
         },
         "attempt_execute": {
-          "declaration_bytes": 6940,
+          "declaration_bytes": 5545,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -3743,7 +3743,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5572,
+          "declaration_bytes": 5717,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -3764,7 +3764,7 @@
           ]
         },
         "record_append": {
-          "declaration_bytes": 3108,
+          "declaration_bytes": 3033,
           "description_bytes": 309,
           "required_fields": [
             "kind"
@@ -3827,9 +3827,9 @@
         "environment_state"
       ],
       "baseline_bytes": 26160,
-      "revised_bytes": 20438,
+      "revised_bytes": 19066,
       "baseline_tokens_estimated": 6540,
-      "revised_tokens_estimated": 5110,
+      "revised_tokens_estimated": 4767,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1019,
@@ -3915,7 +3915,7 @@
       },
       "revised_tools": {
         "artifact_publish": {
-          "declaration_bytes": 654,
+          "declaration_bytes": 727,
           "description_bytes": 254,
           "required_fields": [
             "purpose",
@@ -3923,7 +3923,7 @@
           ]
         },
         "attempt_execute": {
-          "declaration_bytes": 7787,
+          "declaration_bytes": 6272,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -3931,7 +3931,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5572,
+          "declaration_bytes": 5717,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -3952,7 +3952,7 @@
           ]
         },
         "record_append": {
-          "declaration_bytes": 3108,
+          "declaration_bytes": 3033,
           "description_bytes": 309,
           "required_fields": [
             "kind"
@@ -4018,9 +4018,9 @@
         "service_response"
       ],
       "baseline_bytes": 29452,
-      "revised_bytes": 28890,
+      "revised_bytes": 24569,
       "baseline_tokens_estimated": 7363,
-      "revised_tokens_estimated": 7223,
+      "revised_tokens_estimated": 6143,
       "baseline_tools": {
         "artifact_publish": {
           "declaration_bytes": 1019,
@@ -4106,7 +4106,7 @@
       },
       "revised_tools": {
         "artifact_publish": {
-          "declaration_bytes": 654,
+          "declaration_bytes": 727,
           "description_bytes": 254,
           "required_fields": [
             "purpose",
@@ -4114,7 +4114,7 @@
           ]
         },
         "attempt_execute": {
-          "declaration_bytes": 16239,
+          "declaration_bytes": 11775,
           "description_bytes": 489,
           "required_fields": [
             "origin",
@@ -4122,7 +4122,7 @@
           ]
         },
         "finish": {
-          "declaration_bytes": 5572,
+          "declaration_bytes": 5717,
           "description_bytes": 446,
           "required_fields": [
             "finish_reason"
@@ -4143,7 +4143,7 @@
           ]
         },
         "record_append": {
-          "declaration_bytes": 3108,
+          "declaration_bytes": 3033,
           "description_bytes": 309,
           "required_fields": [
             "kind"

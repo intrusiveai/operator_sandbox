@@ -22,7 +22,8 @@
               "items": {
                 "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
               },
-              "uniqueItems": true
+              "uniqueItems": true,
+              "description": "Submitted objective identifiers associated with this record."
             },
             "provenance": {
               "$ref": "urn:operator:schema:assessment-common:v1alpha1#/$defs/provenance"
@@ -30,7 +31,8 @@
             "statement": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 4096
+              "maxLength": 4096,
+              "description": "The claim or hypothesis being assessed."
             },
             "assumptions": {
               "type": "array",
@@ -39,10 +41,12 @@
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 1024
-              }
+              },
+              "description": "Assumptions underlying this hypothesis."
             },
             "surface_ref": {
-              "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+              "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id",
+              "description": "Target injection surface associated with this hypothesis."
             },
             "predicted_observations": {
               "type": "array",
@@ -51,7 +55,8 @@
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 1024
-              }
+              },
+              "description": "Observations predicted if this hypothesis holds."
             },
             "record_refs": {
               "type": "array",
@@ -92,12 +97,14 @@
             "summary": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 4096
+              "maxLength": 4096,
+              "description": "Concise assessment based on the available evidence."
             },
             "decision": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 4096
+              "maxLength": 4096,
+              "description": "Decision based on the recorded progress."
             },
             "objective_refs": {
               "type": "array",
@@ -105,7 +112,8 @@
               "items": {
                 "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
               },
-              "uniqueItems": true
+              "uniqueItems": true,
+              "description": "Submitted objective identifiers associated with this record."
             },
             "hypothesis_refs": {
               "type": "array",
@@ -154,24 +162,28 @@
                     "supported",
                     "inconclusive",
                     "not-observed"
-                  ]
+                  ],
+                  "description": "Whether the evidence supports the claim, is inconclusive, or contradicts it."
                 },
                 "confidence": {
                   "enum": [
                     "low",
                     "medium",
                     "high"
-                  ]
+                  ],
+                  "description": "Confidence in the assessment: low, medium, or high."
                 },
                 "assurance": {
                   "type": "string",
                   "minLength": 1,
-                  "maxLength": 128
+                  "maxLength": 128,
+                  "description": "The basis for the assessment assurance."
                 },
                 "summary": {
                   "type": "string",
                   "minLength": 1,
-                  "maxLength": 4096
+                  "maxLength": 4096,
+                  "description": "Concise assessment based on the available evidence."
                 },
                 "gaps": {
                   "type": "array",
@@ -180,7 +192,8 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 1024
-                  }
+                  },
+                  "description": "Known limitations in the assessment evidence."
                 }
               }
             }
@@ -203,7 +216,8 @@
                   "assessment": {
                     "properties": {
                       "interpretation": {
-                        "const": "supported"
+                        "const": "supported",
+                        "description": "Whether the evidence supports the claim, is inconclusive, or contradicts it."
                       }
                     }
                   }
@@ -248,7 +262,8 @@
             "mutation_summary": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 4096
+              "maxLength": 4096,
+              "description": "Explanation of the change relative to the parent experiment."
             },
             "record_refs": {
               "type": "array",

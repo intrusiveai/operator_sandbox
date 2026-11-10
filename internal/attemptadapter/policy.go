@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/capabilities"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
@@ -285,35 +286,69 @@ func validPointer(s string) bool {
 	}
 	return true
 }
+func policyRule(path, rule, correction string) error {
+	return &contracts.ArgumentError{Reason: rule, FieldPath: path, Correction: correction, Cause: ErrPolicy}
+}
 func (p *Policy) authorizeInjection(d interceptor.Definition, knownTurns []string) error {
 	s := d.Selector
 	if s.TurnID != "" && !slices.Contains(knownTurns, s.TurnID) {
-		return ErrPolicy
+		return policyRule("/selector/turn_id", "unknown_turn", "Select a turn recorded in this campaign, or omit the optional turn selector. No injection was armed.")
 	}
-	if s.Path != "" && !cleanAbsolute(s.Path) || s.RelativePath != "" && !cleanRelative(s.RelativePath) {
-		return ErrPolicy
+	if s.Path != "" && !cleanAbsolute(s.Path) {
+		return policyRule("/selector/path", "invalid_path", "Use a normalized absolute path without query, fragment or escape characters.")
+	}
+	if s.RelativePath != "" && !cleanRelative(s.RelativePath) {
+		return policyRule("/selector/relative_path", "invalid_path", "Use a normalized relative path inside the authorized namespace; parent traversal is forbidden.")
 	}
 	seen := map[string]bool{}
 	for k := range s.HeadersEqual {
 		name := textproto.CanonicalMIMEHeaderKey(k)
-		if !headerName(k) || name == "" || seen[name] || slices.Contains([]string{"Authorization", "Proxy-Authorization", "Cookie", "Set-Cookie", "Host", "Connection", "Transfer-Encoding", "Content-Length", "Forwarded", "X-Forwarded-Host", "X-Forwarded-For", "X-Forwarded-Proto"}, name) {
-			return ErrPolicy
+		if !headerName(k) || name == "" || seen[name] {
+			return policyRule("/selector/headers_equal", "invalid_header", "Use valid, case-insensitively unique header names.")
+		}
+		if slices.Contains([]string{"Authorization", "Proxy-Authorization", "Cookie", "Set-Cookie", "Host", "Connection", "Transfer-Encoding", "Content-Length", "Forwarded", "X-Forwarded-Host", "X-Forwarded-For", "X-Forwarded-Proto"}, name) {
+			return policyRule("/selector/headers_equal", "forbidden_header", "Remove credential, connection and routing header selectors; they are not permitted.")
 		}
 		seen[name] = true
 	}
 	t := Target{ToolName: s.ToolName, Service: s.Service, Method: s.Method, Path: s.Path, Collection: s.Collection, Key: s.Key, FileNamespace: s.FileNamespace, RelativePath: s.RelativePath}
+	routes := []Route{}
 	for _, r := range p.scopes.Routes {
-		if r.Surface != d.Surface || !sameTarget(p.facts, r.Target, t) || !slices.Contains(r.Scopes, d.Scope) || !slices.Contains(r.Placements, d.Placement.Operation) || !slices.Contains(r.Pointers, d.Placement.Pointer) {
-			continue
+		if r.Surface == d.Surface && sameTarget(p.facts, r.Target, t) {
+			routes = append(routes, r)
 		}
-		for _, k := range d.Placement.AllowedFields {
-			if !slices.Contains(r.MergeFields, k) {
-				return ErrPolicy
+	}
+	if len(routes) == 0 {
+		return policyRule("/selector", "unauthorized_target", "Select an exact target authorized for this injection surface in the target reference. Repeating this selection cannot grant access.")
+	}
+	for _, check := range []struct {
+		path, rule, correction string
+		accepts                func(Route) bool
+	}{
+		{"/scope", "unauthorized_scope", "Select a scope authorized for this target in the target reference.", func(r Route) bool { return slices.Contains(r.Scopes, d.Scope) }},
+		{"/placement/operation", "unauthorized_placement", "Select a placement authorized for this target and scope.", func(r Route) bool { return slices.Contains(r.Placements, d.Placement.Operation) }},
+		{"/placement/pointer", "unauthorized_pointer", "Select a pointer authorized for this target, scope and placement.", func(r Route) bool { return slices.Contains(r.Pointers, d.Placement.Pointer) }},
+		{"/placement/allowed_fields", "unauthorized_merge_fields", "Use only merge fields authorized for this placement.", func(r Route) bool {
+			for _, k := range d.Placement.AllowedFields {
+				if !slices.Contains(r.MergeFields, k) {
+					return false
+				}
+			}
+			return true
+		}},
+	} {
+		next := []Route{}
+		for _, r := range routes {
+			if check.accepts(r) {
+				next = append(next, r)
 			}
 		}
-		return p.validateDatabaseInjection(d)
+		if len(next) == 0 {
+			return policyRule(check.path, check.rule, check.correction)
+		}
+		routes = next
 	}
-	return ErrPolicy
+	return p.validateDatabaseInjection(d)
 }
 
 func headerName(s string) bool {

@@ -20,16 +20,21 @@
                 "carrier",
                 "supporting-data",
                 "conclusion"
-              ]
+              ],
+              "description": "Intended use of the published artifact."
             },
-            "json": {},
+            "json": {
+              "description": "Direct JSON content for the target operation or artifact."
+            },
             "text": {
               "type": "string",
-              "maxLength": 1048576
+              "maxLength": 1048576,
+              "description": "Direct UTF-8 text content."
             },
             "base64": {
               "type": "string",
-              "maxLength": 1398104
+              "maxLength": 1398104,
+              "description": "Base64-encoded content; supply its media_type."
             },
             "media_type": {
               "type": "string",
@@ -38,7 +43,8 @@
               "pattern": "^[a-z0-9!#$&^_.+-]+/[a-z0-9!#$&^_.+-]+$",
               "not": {
                 "pattern": "[\\r\\n]"
-              }
+              },
+              "description": "Media type of the supplied content."
             }
           },
           "required": [
@@ -111,7 +117,9 @@
               "conclusion"
             ]
           },
-          "json": {},
+          "json": {
+            "description": "Direct JSON content for the target operation or artifact."
+          },
           "text": {
             "type": "string",
             "maxLength": 1048576
@@ -164,23 +172,18 @@
               "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
               "not": {
                 "pattern": "[\\r\\n]"
-              }
+              },
+              "description": "Permitted target operation to invoke."
             },
             "scenario_id": {
-              "allOf": [
-                {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 128,
-                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                  "not": {
-                    "pattern": "[\\r\\n]"
-                  }
-                },
-                {
-                  "description": "Required only for scenario origin; must name a scenario in the submitted bundle. Forbidden for exploratory origin."
-                }
-              ]
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "not": {
+                "pattern": "[\\r\\n]"
+              },
+              "description": "Required only for scenario origin; must name a scenario in the submitted bundle. Forbidden for exploratory origin."
             },
             "caller_principal_id": {
               "type": "string",
@@ -189,7 +192,8 @@
               "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
               "not": {
                 "pattern": "[\\r\\n]"
-              }
+              },
+              "description": "Permitted caller principal for the target invocation."
             },
             "rationale": {
               "type": "string",
@@ -208,7 +212,8 @@
               "pattern": "^[^\\x00-\\x1f\\x7f]+$",
               "not": {
                 "pattern": "[\\r\\n]"
-              }
+              },
+              "description": "Historical record describing the strategy used for this attempt."
             },
             "technique_refs": {
               "type": "array",
@@ -218,22 +223,28 @@
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 256
-              }
+              },
+              "description": "Threat technique identifiers relevant to this attempt."
             },
-            "json": {},
+            "json": {
+              "description": "Direct JSON content for the target operation or artifact."
+            },
             "text": {
               "type": "string",
-              "maxLength": 1048576
+              "maxLength": 1048576,
+              "description": "Direct UTF-8 text content."
             },
             "base64": {
               "type": "string",
-              "maxLength": 1398104
+              "maxLength": 1398104,
+              "description": "Base64-encoded content; supply its media_type."
             },
             "artifact": {
               "type": "string",
               "minLength": 1,
               "maxLength": 128,
-              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "description": "Committed artifact handle returned by artifact_publish."
             },
             "media_type": {
               "type": "string",
@@ -242,13 +253,15 @@
               "pattern": "^[a-z0-9!#$&^_.+-]+/[a-z0-9!#$&^_.+-]+$",
               "not": {
                 "pattern": "[\\r\\n]"
-              }
+              },
+              "description": "Media type of the supplied content."
             },
             "parent": {
               "type": "string",
               "minLength": 1,
               "maxLength": 128,
-              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "description": "Execution handle of the parent experiment; omit for a root attempt."
             },
             "observations": {
               "type": "array",
@@ -262,7 +275,8 @@
                   "injection_delivery",
                   "oracle_outcome"
                 ]
-              }
+              },
+              "description": "Permitted observation kinds to collect; omission selects the configured feedback default."
             },
             "setup": {
               "type": "array",
@@ -285,20 +299,23 @@
                       "mcp_tool_result",
                       "environment_state",
                       "database_response"
-                    ]
+                    ],
+                    "description": "Injection surface selected from the permitted target capabilities."
                   },
                   "mode": {
                     "enum": [
                       "simulation",
                       "fidelity"
-                    ]
+                    ],
+                    "description": "Injection mode supported by the selected surface."
                   },
                   "scope": {
                     "enum": [
                       "once",
                       "next_turn",
                       "standing"
-                    ]
+                    ],
+                    "description": "Lifetime and reach of the injection."
                   },
                   "selector": {
                     "anyOf": [
@@ -317,7 +334,8 @@
                             "pattern": "^[^\\x00-\\x1f\\x7f]+$",
                             "not": {
                               "pattern": "[\\r\\n]"
-                            }
+                            },
+                            "description": "Name of the target tool to match."
                           },
                           "call_ordinal": {
                             "type": "string",
@@ -326,7 +344,8 @@
                             "pattern": "^(first|every|[1-9][0-9]{0,9})$",
                             "not": {
                               "pattern": "[\\r\\n]"
-                            }
+                            },
+                            "description": "Ordinal of the target call to match."
                           },
                           "arguments_pointer": {
                             "type": "string",
@@ -725,12 +744,14 @@
                                   ]
                                 }
                               }
-                            ]
+                            ],
+                            "description": "Target arguments that must match exactly."
                           },
                           "arguments_contain": {
                             "type": "string",
                             "minLength": 1,
-                            "maxLength": 1024
+                            "maxLength": 1024,
+                            "description": "Target argument subset that must be present."
                           },
                           "turn_id": {
                             "type": "string",
@@ -739,7 +760,8 @@
                             "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                             "not": {
                               "pattern": "[\\r\\n]"
-                            }
+                            },
+                            "description": "Target turn to which this selector applies."
                           }
                         }
                       },
@@ -759,7 +781,8 @@
                             "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                             "not": {
                               "pattern": "[\\r\\n]"
-                            }
+                            },
+                            "description": "Logical service identifier from the target capabilities."
                           },
                           "tool_name": {
                             "type": "string",
@@ -768,7 +791,8 @@
                             "pattern": "^[^\\x00-\\x1f\\x7f]+$",
                             "not": {
                               "pattern": "[\\r\\n]"
-                            }
+                            },
+                            "description": "Name of the target tool to match."
                           },
                           "call_ordinal": {
                             "type": "string",
@@ -777,7 +801,8 @@
                             "pattern": "^(first|every|[1-9][0-9]{0,9})$",
                             "not": {
                               "pattern": "[\\r\\n]"
-                            }
+                            },
+                            "description": "Ordinal of the target call to match."
                           },
                           "arguments_pointer": {
                             "type": "string",
@@ -1176,12 +1201,14 @@
                                   ]
                                 }
                               }
-                            ]
+                            ],
+                            "description": "Target arguments that must match exactly."
                           },
                           "arguments_contain": {
                             "type": "string",
                             "minLength": 1,
-                            "maxLength": 1024
+                            "maxLength": 1024,
+                            "description": "Target argument subset that must be present."
                           }
                         }
                       },
@@ -1200,7 +1227,8 @@
                             "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                             "not": {
                               "pattern": "[\\r\\n]"
-                            }
+                            },
+                            "description": "Logical service identifier from the target capabilities."
                           },
                           "call_ordinal": {
                             "type": "string",
@@ -1209,7 +1237,8 @@
                             "pattern": "^(first|every|[1-9][0-9]{0,9})$",
                             "not": {
                               "pattern": "[\\r\\n]"
-                            }
+                            },
+                            "description": "Ordinal of the target call to match."
                           },
                           "method": {
                             "type": "string",
@@ -1218,7 +1247,8 @@
                             "pattern": "^[A-Z]+$",
                             "not": {
                               "pattern": "[\\r\\n]"
-                            }
+                            },
+                            "description": "Target request method to match."
                           },
                           "path": {
                             "type": "string",
@@ -1249,35 +1279,30 @@
                               "not": {
                                 "pattern": "[\\r\\n]"
                               }
-                            }
+                            },
+                            "description": "Query parameters that must match."
                           },
                           "headers_equal": {
-                            "allOf": [
-                              {
-                                "type": "object",
-                                "maxProperties": 16,
-                                "propertyNames": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 128,
-                                  "pattern": "^[^\\x00-\\x1f\\x7f]+$",
-                                  "not": {
-                                    "pattern": "[\\r\\n]"
-                                  }
-                                },
-                                "additionalProperties": {
-                                  "type": "string",
-                                  "maxLength": 1024,
-                                  "pattern": "^[^\\x00-\\x1f\\x7f]*$",
-                                  "not": {
-                                    "pattern": "[\\r\\n]"
-                                  }
-                                }
-                              },
-                              {
-                                "description": "Case-insensitive security/routing-header denylist and duplicate normalization checked in code."
+                            "type": "object",
+                            "maxProperties": 16,
+                            "propertyNames": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 128,
+                              "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+                              "not": {
+                                "pattern": "[\\r\\n]"
                               }
-                            ]
+                            },
+                            "additionalProperties": {
+                              "type": "string",
+                              "maxLength": 1024,
+                              "pattern": "^[^\\x00-\\x1f\\x7f]*$",
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            },
+                            "description": "Case-insensitive security/routing-header denylist and duplicate normalization checked in code."
                           },
                           "request_body_pointer": {
                             "type": "string",
@@ -1676,12 +1701,14 @@
                                   ]
                                 }
                               }
-                            ]
+                            ],
+                            "description": "Target request body that must match exactly."
                           },
                           "request_body_contain": {
                             "type": "string",
                             "minLength": 1,
-                            "maxLength": 1024
+                            "maxLength": 1024,
+                            "description": "Target request body subset that must be present."
                           }
                         }
                       },
@@ -1703,7 +1730,8 @@
                                 "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                                 "not": {
                                   "pattern": "[\\r\\n]"
-                                }
+                                },
+                                "description": "Logical service identifier from the target capabilities."
                               },
                               "collection": {
                                 "type": "string",
@@ -1712,7 +1740,8 @@
                                 "pattern": "^[^\\x00-\\x1f\\x7f]+$",
                                 "not": {
                                   "pattern": "[\\r\\n]"
-                                }
+                                },
+                                "description": "Permitted database collection or table policy."
                               },
                               "key": {
                                 "description": "Use exactly the key columns from this database policy details_reference, with non-null scalar values.",
@@ -1739,7 +1768,8 @@
                                 "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                                 "not": {
                                   "pattern": "[\\r\\n]"
-                                }
+                                },
+                                "description": "Target turn to which this selector applies."
                               }
                             }
                           },
@@ -1758,7 +1788,8 @@
                                 "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                                 "not": {
                                   "pattern": "[\\r\\n]"
-                                }
+                                },
+                                "description": "Permitted logical file namespace."
                               },
                               "relative_path": {
                                 "type": "string",
@@ -1777,7 +1808,8 @@
                                 "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                                 "not": {
                                   "pattern": "[\\r\\n]"
-                                }
+                                },
+                                "description": "Target turn to which this selector applies."
                               }
                             }
                           }
@@ -1798,7 +1830,8 @@
                             "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                             "not": {
                               "pattern": "[\\r\\n]"
-                            }
+                            },
+                            "description": "Logical service identifier from the target capabilities."
                           },
                           "call_ordinal": {
                             "type": "string",
@@ -1807,7 +1840,8 @@
                             "pattern": "^(first|every|[1-9][0-9]{0,9})$",
                             "not": {
                               "pattern": "[\\r\\n]"
-                            }
+                            },
+                            "description": "Ordinal of the target call to match."
                           },
                           "request_body_pointer": {
                             "type": "string",
@@ -2206,16 +2240,19 @@
                                   ]
                                 }
                               }
-                            ]
+                            ],
+                            "description": "Target request body that must match exactly."
                           },
                           "request_body_contain": {
                             "type": "string",
                             "minLength": 1,
-                            "maxLength": 1024
+                            "maxLength": 1024,
+                            "description": "Target request body subset that must be present."
                           }
                         }
                       }
-                    ]
+                    ],
+                    "description": "Criteria selecting the target operation, resource or content."
                   },
                   "placement": {
                     "oneOf": [
@@ -2232,7 +2269,8 @@
                               "replace",
                               "prepend_text",
                               "append_text"
-                            ]
+                            ],
+                            "description": "Mutation operation applied at the selected placement."
                           },
                           "pointer": {
                             "type": "string",
@@ -2255,7 +2293,8 @@
                         ],
                         "properties": {
                           "operation": {
-                            "const": "insert_array"
+                            "const": "insert_array",
+                            "description": "Mutation operation applied at the selected placement."
                           },
                           "pointer": {
                             "type": "string",
@@ -2269,7 +2308,8 @@
                           "index": {
                             "type": "integer",
                             "minimum": 0,
-                            "maximum": 10000
+                            "maximum": 10000,
+                            "description": "Array position at which content is placed."
                           }
                         }
                       },
@@ -2283,7 +2323,8 @@
                         ],
                         "properties": {
                           "operation": {
-                            "const": "merge_object"
+                            "const": "merge_object",
+                            "description": "Mutation operation applied at the selected placement."
                           },
                           "pointer": {
                             "type": "string",
@@ -2307,21 +2348,25 @@
                               "not": {
                                 "pattern": "[\\r\\n]"
                               }
-                            }
+                            },
+                            "description": "Fields that this mutation may change."
                           }
                         }
                       }
-                    ]
+                    ],
+                    "description": "Where and how the injected content is applied."
                   }
                 },
                 "oneOf": [
                   {
                     "properties": {
                       "surface": {
-                        "const": "model_tool_result"
+                        "const": "model_tool_result",
+                        "description": "Injection surface selected from the permitted target capabilities."
                       },
                       "mode": {
-                        "const": "simulation"
+                        "const": "simulation",
+                        "description": "Injection mode supported by the selected surface."
                       },
                       "selector": {
                         "type": "object",
@@ -2338,7 +2383,8 @@
                             "pattern": "^[^\\x00-\\x1f\\x7f]+$",
                             "not": {
                               "pattern": "[\\r\\n]"
-                            }
+                            },
+                            "description": "Name of the target tool to match."
                           },
                           "call_ordinal": {
                             "type": "string",
@@ -2347,7 +2393,8 @@
                             "pattern": "^(first|every|[1-9][0-9]{0,9})$",
                             "not": {
                               "pattern": "[\\r\\n]"
-                            }
+                            },
+                            "description": "Ordinal of the target call to match."
                           },
                           "arguments_pointer": {
                             "type": "string",
@@ -2746,12 +2793,14 @@
                                   ]
                                 }
                               }
-                            ]
+                            ],
+                            "description": "Target arguments that must match exactly."
                           },
                           "arguments_contain": {
                             "type": "string",
                             "minLength": 1,
-                            "maxLength": 1024
+                            "maxLength": 1024,
+                            "description": "Target argument subset that must be present."
                           },
                           "turn_id": {
                             "type": "string",
@@ -2760,25 +2809,30 @@
                             "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                             "not": {
                               "pattern": "[\\r\\n]"
-                            }
+                            },
+                            "description": "Target turn to which this selector applies."
                           }
-                        }
+                        },
+                        "description": "Criteria selecting the target operation, resource or content."
                       }
                     }
                   },
                   {
                     "properties": {
                       "surface": {
-                        "const": "service_response"
+                        "const": "service_response",
+                        "description": "Injection surface selected from the permitted target capabilities."
                       },
                       "mode": {
-                        "const": "simulation"
+                        "const": "simulation",
+                        "description": "Injection mode supported by the selected surface."
                       },
                       "scope": {
                         "enum": [
                           "once",
                           "standing"
-                        ]
+                        ],
+                        "description": "Lifetime and reach of the injection."
                       },
                       "selector": {
                         "type": "object",
@@ -2795,7 +2849,8 @@
                             "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                             "not": {
                               "pattern": "[\\r\\n]"
-                            }
+                            },
+                            "description": "Logical service identifier from the target capabilities."
                           },
                           "call_ordinal": {
                             "type": "string",
@@ -2804,7 +2859,8 @@
                             "pattern": "^(first|every|[1-9][0-9]{0,9})$",
                             "not": {
                               "pattern": "[\\r\\n]"
-                            }
+                            },
+                            "description": "Ordinal of the target call to match."
                           },
                           "method": {
                             "type": "string",
@@ -2813,7 +2869,8 @@
                             "pattern": "^[A-Z]+$",
                             "not": {
                               "pattern": "[\\r\\n]"
-                            }
+                            },
+                            "description": "Target request method to match."
                           },
                           "path": {
                             "type": "string",
@@ -2844,35 +2901,30 @@
                               "not": {
                                 "pattern": "[\\r\\n]"
                               }
-                            }
+                            },
+                            "description": "Query parameters that must match."
                           },
                           "headers_equal": {
-                            "allOf": [
-                              {
-                                "type": "object",
-                                "maxProperties": 16,
-                                "propertyNames": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 128,
-                                  "pattern": "^[^\\x00-\\x1f\\x7f]+$",
-                                  "not": {
-                                    "pattern": "[\\r\\n]"
-                                  }
-                                },
-                                "additionalProperties": {
-                                  "type": "string",
-                                  "maxLength": 1024,
-                                  "pattern": "^[^\\x00-\\x1f\\x7f]*$",
-                                  "not": {
-                                    "pattern": "[\\r\\n]"
-                                  }
-                                }
-                              },
-                              {
-                                "description": "Case-insensitive security/routing-header denylist and duplicate normalization checked in code."
+                            "type": "object",
+                            "maxProperties": 16,
+                            "propertyNames": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 128,
+                              "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+                              "not": {
+                                "pattern": "[\\r\\n]"
                               }
-                            ]
+                            },
+                            "additionalProperties": {
+                              "type": "string",
+                              "maxLength": 1024,
+                              "pattern": "^[^\\x00-\\x1f\\x7f]*$",
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            },
+                            "description": "Case-insensitive security/routing-header denylist and duplicate normalization checked in code."
                           },
                           "request_body_pointer": {
                             "type": "string",
@@ -3271,14 +3323,17 @@
                                   ]
                                 }
                               }
-                            ]
+                            ],
+                            "description": "Target request body that must match exactly."
                           },
                           "request_body_contain": {
                             "type": "string",
                             "minLength": 1,
-                            "maxLength": 1024
+                            "maxLength": 1024,
+                            "description": "Target request body subset that must be present."
                           }
-                        }
+                        },
+                        "description": "Criteria selecting the target operation, resource or content."
                       },
                       "placement": {
                         "properties": {
@@ -3288,25 +3343,30 @@
                               "prepend_text",
                               "append_text",
                               "merge_object"
-                            ]
+                            ],
+                            "description": "Mutation operation applied at the selected placement."
                           }
-                        }
+                        },
+                        "description": "Where and how the injected content is applied."
                       }
                     }
                   },
                   {
                     "properties": {
                       "surface": {
-                        "const": "mcp_tool_result"
+                        "const": "mcp_tool_result",
+                        "description": "Injection surface selected from the permitted target capabilities."
                       },
                       "mode": {
-                        "const": "simulation"
+                        "const": "simulation",
+                        "description": "Injection mode supported by the selected surface."
                       },
                       "scope": {
                         "enum": [
                           "once",
                           "standing"
-                        ]
+                        ],
+                        "description": "Lifetime and reach of the injection."
                       },
                       "selector": {
                         "type": "object",
@@ -3324,7 +3384,8 @@
                             "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                             "not": {
                               "pattern": "[\\r\\n]"
-                            }
+                            },
+                            "description": "Logical service identifier from the target capabilities."
                           },
                           "tool_name": {
                             "type": "string",
@@ -3333,7 +3394,8 @@
                             "pattern": "^[^\\x00-\\x1f\\x7f]+$",
                             "not": {
                               "pattern": "[\\r\\n]"
-                            }
+                            },
+                            "description": "Name of the target tool to match."
                           },
                           "call_ordinal": {
                             "type": "string",
@@ -3342,7 +3404,8 @@
                             "pattern": "^(first|every|[1-9][0-9]{0,9})$",
                             "not": {
                               "pattern": "[\\r\\n]"
-                            }
+                            },
+                            "description": "Ordinal of the target call to match."
                           },
                           "arguments_pointer": {
                             "type": "string",
@@ -3741,14 +3804,17 @@
                                   ]
                                 }
                               }
-                            ]
+                            ],
+                            "description": "Target arguments that must match exactly."
                           },
                           "arguments_contain": {
                             "type": "string",
                             "minLength": 1,
-                            "maxLength": 1024
+                            "maxLength": 1024,
+                            "description": "Target argument subset that must be present."
                           }
-                        }
+                        },
+                        "description": "Criteria selecting the target operation, resource or content."
                       },
                       "placement": {
                         "properties": {
@@ -3758,19 +3824,23 @@
                               "prepend_text",
                               "append_text",
                               "merge_object"
-                            ]
+                            ],
+                            "description": "Mutation operation applied at the selected placement."
                           }
-                        }
+                        },
+                        "description": "Where and how the injected content is applied."
                       }
                     }
                   },
                   {
                     "properties": {
                       "surface": {
-                        "const": "environment_state"
+                        "const": "environment_state",
+                        "description": "Injection surface selected from the permitted target capabilities."
                       },
                       "mode": {
-                        "const": "fidelity"
+                        "const": "fidelity",
+                        "description": "Injection mode supported by the selected surface."
                       },
                       "selector": {
                         "oneOf": [
@@ -3790,7 +3860,8 @@
                                 "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                                 "not": {
                                   "pattern": "[\\r\\n]"
-                                }
+                                },
+                                "description": "Logical service identifier from the target capabilities."
                               },
                               "collection": {
                                 "type": "string",
@@ -3799,7 +3870,8 @@
                                 "pattern": "^[^\\x00-\\x1f\\x7f]+$",
                                 "not": {
                                   "pattern": "[\\r\\n]"
-                                }
+                                },
+                                "description": "Permitted database collection or table policy."
                               },
                               "key": {
                                 "description": "Use exactly the key columns from this database policy details_reference, with non-null scalar values.",
@@ -3826,7 +3898,8 @@
                                 "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                                 "not": {
                                   "pattern": "[\\r\\n]"
-                                }
+                                },
+                                "description": "Target turn to which this selector applies."
                               }
                             }
                           },
@@ -3845,7 +3918,8 @@
                                 "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                                 "not": {
                                   "pattern": "[\\r\\n]"
-                                }
+                                },
+                                "description": "Permitted logical file namespace."
                               },
                               "relative_path": {
                                 "type": "string",
@@ -3864,27 +3938,32 @@
                                 "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                                 "not": {
                                   "pattern": "[\\r\\n]"
-                                }
+                                },
+                                "description": "Target turn to which this selector applies."
                               }
                             }
                           }
-                        ]
+                        ],
+                        "description": "Criteria selecting the target operation, resource or content."
                       }
                     }
                   },
                   {
                     "properties": {
                       "surface": {
-                        "const": "database_response"
+                        "const": "database_response",
+                        "description": "Injection surface selected from the permitted target capabilities."
                       },
                       "mode": {
-                        "const": "simulation"
+                        "const": "simulation",
+                        "description": "Injection mode supported by the selected surface."
                       },
                       "scope": {
                         "enum": [
                           "once",
                           "standing"
-                        ]
+                        ],
+                        "description": "Lifetime and reach of the injection."
                       },
                       "selector": {
                         "type": "object",
@@ -3901,7 +3980,8 @@
                             "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                             "not": {
                               "pattern": "[\\r\\n]"
-                            }
+                            },
+                            "description": "Logical service identifier from the target capabilities."
                           },
                           "call_ordinal": {
                             "type": "string",
@@ -3910,7 +3990,8 @@
                             "pattern": "^(first|every|[1-9][0-9]{0,9})$",
                             "not": {
                               "pattern": "[\\r\\n]"
-                            }
+                            },
+                            "description": "Ordinal of the target call to match."
                           },
                           "request_body_pointer": {
                             "type": "string",
@@ -4309,38 +4390,47 @@
                                   ]
                                 }
                               }
-                            ]
+                            ],
+                            "description": "Target request body that must match exactly."
                           },
                           "request_body_contain": {
                             "type": "string",
                             "minLength": 1,
-                            "maxLength": 1024
+                            "maxLength": 1024,
+                            "description": "Target request body subset that must be present."
                           }
-                        }
+                        },
+                        "description": "Criteria selecting the target operation, resource or content."
                       }
                     }
                   }
                 ]
-              }
+              },
+              "description": "Optional injection setup before invocation."
             },
             "injection": {
               "type": "object",
               "additionalProperties": false,
               "properties": {
-                "json": {},
+                "json": {
+                  "description": "Direct JSON content for the target operation or artifact."
+                },
                 "text": {
                   "type": "string",
-                  "maxLength": 1048576
+                  "maxLength": 1048576,
+                  "description": "Direct UTF-8 text content."
                 },
                 "base64": {
                   "type": "string",
-                  "maxLength": 1398104
+                  "maxLength": 1398104,
+                  "description": "Base64-encoded content; supply its media_type."
                 },
                 "artifact": {
                   "type": "string",
                   "minLength": 1,
                   "maxLength": 128,
-                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                  "description": "Committed artifact handle returned by artifact_publish."
                 },
                 "media_type": {
                   "type": "string",
@@ -4349,10 +4439,12 @@
                   "pattern": "^[a-z0-9!#$&^_.+-]+/[a-z0-9!#$&^_.+-]+$",
                   "not": {
                     "pattern": "[\\r\\n]"
-                  }
+                  },
+                  "description": "Media type of the supplied content."
                 }
               },
               "required": [],
+              "description": "Content used by the selected injection setup.",
               "allOf": [
                 {
                   "oneOf": [
@@ -4565,8 +4657,7 @@
             "enum": [
               "scenario",
               "exploratory"
-            ],
-            "description": "Required explicit intent. Scenario requires a submitted scenario_id; exploratory forbids scenario_id. Never infer origin."
+            ]
           },
           "operation_id": {
             "type": "string",
@@ -4574,16 +4665,9 @@
             "maxLength": 128
           },
           "scenario_id": {
-            "allOf": [
-              {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 128
-              },
-              {
-                "description": "Required only for scenario origin; must name a scenario in the submitted bundle. Forbidden for exploratory origin."
-              }
-            ]
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
           },
           "caller_principal_id": {
             "type": "string",
@@ -4593,12 +4677,10 @@
           "rationale": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 4096,
-            "description": "Guest assertion, never used to select or translate an operation."
+            "maxLength": 4096
           },
           "retain_injections": {
-            "type": "boolean",
-            "description": "Default false. Only valid with nonempty pre_actions; true retains injections for explicit deletion or lifecycle cleanup."
+            "type": "boolean"
           },
           "strategy_provenance_ref": {
             "type": "string",
@@ -4615,7 +4697,9 @@
               "maxLength": 256
             }
           },
-          "json": {},
+          "json": {
+            "description": "Direct JSON content for the target operation or artifact."
+          },
           "text": {
             "type": "string",
             "maxLength": 1048576
@@ -4651,7 +4735,8 @@
                 "injection_delivery",
                 "oracle_outcome"
               ]
-            }
+            },
+            "description": "Permitted observation kinds to collect; omission selects the configured feedback default."
           },
           "setup": {
             "type": "array",
@@ -4711,8 +4796,7 @@
                         },
                         "pointer": {
                           "type": "string",
-                          "maxLength": 2048,
-                          "description": "RFC 6901 JSON Pointer; empty string selects the whole value."
+                          "maxLength": 2048
                         }
                       }
                     },
@@ -4730,8 +4814,7 @@
                         },
                         "pointer": {
                           "type": "string",
-                          "maxLength": 2048,
-                          "description": "RFC 6901 JSON Pointer; empty string selects the whole value."
+                          "maxLength": 2048
                         },
                         "index": {
                           "type": "integer",
@@ -4754,8 +4837,7 @@
                         },
                         "pointer": {
                           "type": "string",
-                          "maxLength": 2048,
-                          "description": "RFC 6901 JSON Pointer; empty string selects the whole value."
+                          "maxLength": 2048
                         },
                         "allowed_fields": {
                           "type": "array",
@@ -4802,36 +4884,27 @@
                         },
                         "arguments_pointer": {
                           "type": "string",
-                          "maxLength": 2048,
-                          "description": "RFC 6901 JSON Pointer; empty string selects the whole value."
+                          "maxLength": 2048
                         },
                         "arguments_equal": {
                           "oneOf": [
-                            {
-                              "description": "JSON; runtime checks nesting and size."
-                            },
+                            {},
                             {
                               "type": "array",
                               "maxItems": 16,
                               "items": {
                                 "oneOf": [
-                                  {
-                                    "description": "JSON; runtime checks nesting and size."
-                                  },
+                                  {},
                                   {
                                     "type": "array",
                                     "maxItems": 16,
                                     "items": {
                                       "oneOf": [
-                                        {
-                                          "description": "JSON; runtime checks nesting and size."
-                                        },
+                                        {},
                                         {
                                           "type": "array",
                                           "maxItems": 16,
-                                          "items": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "items": {}
                                         },
                                         {
                                           "type": "object",
@@ -4839,9 +4912,7 @@
                                           "propertyNames": {
                                             "maxLength": 128
                                           },
-                                          "additionalProperties": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "additionalProperties": {}
                                         }
                                       ]
                                     }
@@ -4854,15 +4925,11 @@
                                     },
                                     "additionalProperties": {
                                       "oneOf": [
-                                        {
-                                          "description": "JSON; runtime checks nesting and size."
-                                        },
+                                        {},
                                         {
                                           "type": "array",
                                           "maxItems": 16,
-                                          "items": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "items": {}
                                         },
                                         {
                                           "type": "object",
@@ -4870,9 +4937,7 @@
                                           "propertyNames": {
                                             "maxLength": 128
                                           },
-                                          "additionalProperties": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "additionalProperties": {}
                                         }
                                       ]
                                     }
@@ -4888,23 +4953,17 @@
                               },
                               "additionalProperties": {
                                 "oneOf": [
-                                  {
-                                    "description": "JSON; runtime checks nesting and size."
-                                  },
+                                  {},
                                   {
                                     "type": "array",
                                     "maxItems": 16,
                                     "items": {
                                       "oneOf": [
-                                        {
-                                          "description": "JSON; runtime checks nesting and size."
-                                        },
+                                        {},
                                         {
                                           "type": "array",
                                           "maxItems": 16,
-                                          "items": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "items": {}
                                         },
                                         {
                                           "type": "object",
@@ -4912,9 +4971,7 @@
                                           "propertyNames": {
                                             "maxLength": 128
                                           },
-                                          "additionalProperties": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "additionalProperties": {}
                                         }
                                       ]
                                     }
@@ -4927,15 +4984,11 @@
                                     },
                                     "additionalProperties": {
                                       "oneOf": [
-                                        {
-                                          "description": "JSON; runtime checks nesting and size."
-                                        },
+                                        {},
                                         {
                                           "type": "array",
                                           "maxItems": 16,
-                                          "items": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "items": {}
                                         },
                                         {
                                           "type": "object",
@@ -4943,9 +4996,7 @@
                                           "propertyNames": {
                                             "maxLength": 128
                                           },
-                                          "additionalProperties": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "additionalProperties": {}
                                         }
                                       ]
                                     }
@@ -5009,8 +5060,7 @@
                         "path": {
                           "type": "string",
                           "minLength": 1,
-                          "maxLength": 2048,
-                          "description": "Logical managed-service request path only, not a host path or dispatch route. Semantic validator enforces clean form and permitted selector scope."
+                          "maxLength": 2048
                         },
                         "query_equal": {
                           "type": "object",
@@ -5026,57 +5076,41 @@
                           }
                         },
                         "headers_equal": {
-                          "allOf": [
-                            {
-                              "type": "object",
-                              "maxProperties": 16,
-                              "propertyNames": {
-                                "type": "string",
-                                "minLength": 1,
-                                "maxLength": 128
-                              },
-                              "additionalProperties": {
-                                "type": "string",
-                                "maxLength": 1024
-                              }
-                            },
-                            {
-                              "description": "Case-insensitive security/routing-header denylist and duplicate normalization checked in code."
-                            }
-                          ]
+                          "type": "object",
+                          "maxProperties": 16,
+                          "propertyNames": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128
+                          },
+                          "additionalProperties": {
+                            "type": "string",
+                            "maxLength": 1024
+                          }
                         },
                         "request_body_pointer": {
                           "type": "string",
-                          "maxLength": 2048,
-                          "description": "RFC 6901 JSON Pointer; empty string selects the whole value."
+                          "maxLength": 2048
                         },
                         "request_body_equal": {
                           "oneOf": [
-                            {
-                              "description": "JSON; runtime checks nesting and size."
-                            },
+                            {},
                             {
                               "type": "array",
                               "maxItems": 16,
                               "items": {
                                 "oneOf": [
-                                  {
-                                    "description": "JSON; runtime checks nesting and size."
-                                  },
+                                  {},
                                   {
                                     "type": "array",
                                     "maxItems": 16,
                                     "items": {
                                       "oneOf": [
-                                        {
-                                          "description": "JSON; runtime checks nesting and size."
-                                        },
+                                        {},
                                         {
                                           "type": "array",
                                           "maxItems": 16,
-                                          "items": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "items": {}
                                         },
                                         {
                                           "type": "object",
@@ -5084,9 +5118,7 @@
                                           "propertyNames": {
                                             "maxLength": 128
                                           },
-                                          "additionalProperties": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "additionalProperties": {}
                                         }
                                       ]
                                     }
@@ -5099,15 +5131,11 @@
                                     },
                                     "additionalProperties": {
                                       "oneOf": [
-                                        {
-                                          "description": "JSON; runtime checks nesting and size."
-                                        },
+                                        {},
                                         {
                                           "type": "array",
                                           "maxItems": 16,
-                                          "items": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "items": {}
                                         },
                                         {
                                           "type": "object",
@@ -5115,9 +5143,7 @@
                                           "propertyNames": {
                                             "maxLength": 128
                                           },
-                                          "additionalProperties": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "additionalProperties": {}
                                         }
                                       ]
                                     }
@@ -5133,23 +5159,17 @@
                               },
                               "additionalProperties": {
                                 "oneOf": [
-                                  {
-                                    "description": "JSON; runtime checks nesting and size."
-                                  },
+                                  {},
                                   {
                                     "type": "array",
                                     "maxItems": 16,
                                     "items": {
                                       "oneOf": [
-                                        {
-                                          "description": "JSON; runtime checks nesting and size."
-                                        },
+                                        {},
                                         {
                                           "type": "array",
                                           "maxItems": 16,
-                                          "items": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "items": {}
                                         },
                                         {
                                           "type": "object",
@@ -5157,9 +5177,7 @@
                                           "propertyNames": {
                                             "maxLength": 128
                                           },
-                                          "additionalProperties": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "additionalProperties": {}
                                         }
                                       ]
                                     }
@@ -5172,15 +5190,11 @@
                                     },
                                     "additionalProperties": {
                                       "oneOf": [
-                                        {
-                                          "description": "JSON; runtime checks nesting and size."
-                                        },
+                                        {},
                                         {
                                           "type": "array",
                                           "maxItems": 16,
-                                          "items": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "items": {}
                                         },
                                         {
                                           "type": "object",
@@ -5188,9 +5202,7 @@
                                           "propertyNames": {
                                             "maxLength": 128
                                           },
-                                          "additionalProperties": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "additionalProperties": {}
                                         }
                                       ]
                                     }
@@ -5261,36 +5273,27 @@
                         },
                         "arguments_pointer": {
                           "type": "string",
-                          "maxLength": 2048,
-                          "description": "RFC 6901 JSON Pointer; empty string selects the whole value."
+                          "maxLength": 2048
                         },
                         "arguments_equal": {
                           "oneOf": [
-                            {
-                              "description": "JSON; runtime checks nesting and size."
-                            },
+                            {},
                             {
                               "type": "array",
                               "maxItems": 16,
                               "items": {
                                 "oneOf": [
-                                  {
-                                    "description": "JSON; runtime checks nesting and size."
-                                  },
+                                  {},
                                   {
                                     "type": "array",
                                     "maxItems": 16,
                                     "items": {
                                       "oneOf": [
-                                        {
-                                          "description": "JSON; runtime checks nesting and size."
-                                        },
+                                        {},
                                         {
                                           "type": "array",
                                           "maxItems": 16,
-                                          "items": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "items": {}
                                         },
                                         {
                                           "type": "object",
@@ -5298,9 +5301,7 @@
                                           "propertyNames": {
                                             "maxLength": 128
                                           },
-                                          "additionalProperties": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "additionalProperties": {}
                                         }
                                       ]
                                     }
@@ -5313,15 +5314,11 @@
                                     },
                                     "additionalProperties": {
                                       "oneOf": [
-                                        {
-                                          "description": "JSON; runtime checks nesting and size."
-                                        },
+                                        {},
                                         {
                                           "type": "array",
                                           "maxItems": 16,
-                                          "items": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "items": {}
                                         },
                                         {
                                           "type": "object",
@@ -5329,9 +5326,7 @@
                                           "propertyNames": {
                                             "maxLength": 128
                                           },
-                                          "additionalProperties": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "additionalProperties": {}
                                         }
                                       ]
                                     }
@@ -5347,23 +5342,17 @@
                               },
                               "additionalProperties": {
                                 "oneOf": [
-                                  {
-                                    "description": "JSON; runtime checks nesting and size."
-                                  },
+                                  {},
                                   {
                                     "type": "array",
                                     "maxItems": 16,
                                     "items": {
                                       "oneOf": [
-                                        {
-                                          "description": "JSON; runtime checks nesting and size."
-                                        },
+                                        {},
                                         {
                                           "type": "array",
                                           "maxItems": 16,
-                                          "items": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "items": {}
                                         },
                                         {
                                           "type": "object",
@@ -5371,9 +5360,7 @@
                                           "propertyNames": {
                                             "maxLength": 128
                                           },
-                                          "additionalProperties": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "additionalProperties": {}
                                         }
                                       ]
                                     }
@@ -5386,15 +5373,11 @@
                                     },
                                     "additionalProperties": {
                                       "oneOf": [
-                                        {
-                                          "description": "JSON; runtime checks nesting and size."
-                                        },
+                                        {},
                                         {
                                           "type": "array",
                                           "maxItems": 16,
-                                          "items": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "items": {}
                                         },
                                         {
                                           "type": "object",
@@ -5402,9 +5385,7 @@
                                           "propertyNames": {
                                             "maxLength": 128
                                           },
-                                          "additionalProperties": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "additionalProperties": {}
                                         }
                                       ]
                                     }
@@ -5504,8 +5485,7 @@
                             "relative_path": {
                               "type": "string",
                               "minLength": 1,
-                              "maxLength": 1024,
-                              "description": "Within one declared file namespace. Reject dot segments, empty segments and noncanonical paths in code."
+                              "maxLength": 1024
                             },
                             "turn_id": {
                               "type": "string",
@@ -5552,36 +5532,27 @@
                         },
                         "request_body_pointer": {
                           "type": "string",
-                          "maxLength": 2048,
-                          "description": "RFC 6901 JSON Pointer; empty string selects the whole value."
+                          "maxLength": 2048
                         },
                         "request_body_equal": {
                           "oneOf": [
-                            {
-                              "description": "JSON; runtime checks nesting and size."
-                            },
+                            {},
                             {
                               "type": "array",
                               "maxItems": 16,
                               "items": {
                                 "oneOf": [
-                                  {
-                                    "description": "JSON; runtime checks nesting and size."
-                                  },
+                                  {},
                                   {
                                     "type": "array",
                                     "maxItems": 16,
                                     "items": {
                                       "oneOf": [
-                                        {
-                                          "description": "JSON; runtime checks nesting and size."
-                                        },
+                                        {},
                                         {
                                           "type": "array",
                                           "maxItems": 16,
-                                          "items": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "items": {}
                                         },
                                         {
                                           "type": "object",
@@ -5589,9 +5560,7 @@
                                           "propertyNames": {
                                             "maxLength": 128
                                           },
-                                          "additionalProperties": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "additionalProperties": {}
                                         }
                                       ]
                                     }
@@ -5604,15 +5573,11 @@
                                     },
                                     "additionalProperties": {
                                       "oneOf": [
-                                        {
-                                          "description": "JSON; runtime checks nesting and size."
-                                        },
+                                        {},
                                         {
                                           "type": "array",
                                           "maxItems": 16,
-                                          "items": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "items": {}
                                         },
                                         {
                                           "type": "object",
@@ -5620,9 +5585,7 @@
                                           "propertyNames": {
                                             "maxLength": 128
                                           },
-                                          "additionalProperties": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "additionalProperties": {}
                                         }
                                       ]
                                     }
@@ -5638,23 +5601,17 @@
                               },
                               "additionalProperties": {
                                 "oneOf": [
-                                  {
-                                    "description": "JSON; runtime checks nesting and size."
-                                  },
+                                  {},
                                   {
                                     "type": "array",
                                     "maxItems": 16,
                                     "items": {
                                       "oneOf": [
-                                        {
-                                          "description": "JSON; runtime checks nesting and size."
-                                        },
+                                        {},
                                         {
                                           "type": "array",
                                           "maxItems": 16,
-                                          "items": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "items": {}
                                         },
                                         {
                                           "type": "object",
@@ -5662,9 +5619,7 @@
                                           "propertyNames": {
                                             "maxLength": 128
                                           },
-                                          "additionalProperties": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "additionalProperties": {}
                                         }
                                       ]
                                     }
@@ -5677,15 +5632,11 @@
                                     },
                                     "additionalProperties": {
                                       "oneOf": [
-                                        {
-                                          "description": "JSON; runtime checks nesting and size."
-                                        },
+                                        {},
                                         {
                                           "type": "array",
                                           "maxItems": 16,
-                                          "items": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "items": {}
                                         },
                                         {
                                           "type": "object",
@@ -5693,9 +5644,7 @@
                                           "propertyNames": {
                                             "maxLength": 128
                                           },
-                                          "additionalProperties": {
-                                            "description": "JSON; runtime checks nesting and size."
-                                          }
+                                          "additionalProperties": {}
                                         }
                                       ]
                                     }
@@ -5714,15 +5663,17 @@
                     }
                   }
                 }
-              ],
-              "description": "Surface selects matching selector, mode and placement. Read the resource contract before setup; runtime rejects invalid combinations."
-            }
+              ]
+            },
+            "description": "Optional injection setup before invocation."
           },
           "injection": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "json": {},
+              "json": {
+                "description": "Direct JSON content for the target operation or artifact."
+              },
               "text": {
                 "type": "string",
                 "maxLength": 1048576
@@ -5743,6 +5694,7 @@
               }
             },
             "required": [],
+            "description": "Content used by the selected injection setup.",
             "allOf": [
               {
                 "oneOf": [
@@ -5835,19 +5787,22 @@
                 "budget-limit",
                 "context-limit",
                 "harness-error"
-              ]
+              ],
+              "description": "Reason the Harness is finishing execution."
             },
             "status": {
               "enum": [
                 "completed",
                 "partial",
                 "failed"
-              ]
+              ],
+              "description": "Assessment completeness, separate from whether objectives succeeded."
             },
             "summary": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 8192
+              "maxLength": 8192,
+              "description": "Concise assessment based on the available evidence."
             },
             "objectives": {
               "type": "array",
@@ -5863,7 +5818,8 @@
                     "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                     "not": {
                       "pattern": "[\\r\\n]"
-                    }
+                    },
+                    "description": "Identifier of the submitted objective being assessed."
                   },
                   "outcome": {
                     "enum": [
@@ -5871,12 +5827,14 @@
                       "inconclusive",
                       "not-observed",
                       "not-tested"
-                    ]
+                    ],
+                    "description": "Whether evidence supports this objective or hypothesis, is inconclusive, or it was not tested."
                   },
                   "summary": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 4096
+                    "maxLength": 4096,
+                    "description": "Concise assessment based on the available evidence."
                   },
                   "observations": {
                     "type": "array",
@@ -5926,7 +5884,8 @@
                   "outcome",
                   "summary"
                 ]
-              }
+              },
+              "description": "Outcomes for the submitted objectives."
             },
             "hypotheses": {
               "type": "array",
@@ -5947,7 +5906,8 @@
                         "pattern": "[\\r\\n]"
                       }
                     },
-                    "uniqueItems": true
+                    "uniqueItems": true,
+                    "description": "Submitted objective identifiers associated with this hypothesis or record."
                   },
                   "outcome": {
                     "enum": [
@@ -5955,12 +5915,14 @@
                       "inconclusive",
                       "not-observed",
                       "not-tested"
-                    ]
+                    ],
+                    "description": "Whether evidence supports this objective or hypothesis, is inconclusive, or it was not tested."
                   },
                   "summary": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 4096
+                    "maxLength": 4096,
+                    "description": "Concise assessment based on the available evidence."
                   },
                   "observations": {
                     "type": "array",
@@ -6019,7 +5981,8 @@
                     "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                     "not": {
                       "pattern": "[\\r\\n]"
-                    }
+                    },
+                    "description": "Submitted scenario associated with scenario-origin work."
                   },
                   "label": {
                     "type": "string",
@@ -6067,7 +6030,8 @@
                     }
                   }
                 ]
-              }
+              },
+              "description": "Optional local hypothesis definitions and outcomes; no preregistration required."
             },
             "claims": {
               "type": "array",
@@ -6079,26 +6043,30 @@
                   "statement": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 4096
+                    "maxLength": 4096,
+                    "description": "The claim being assessed."
                   },
                   "interpretation": {
                     "enum": [
                       "supported",
                       "inconclusive",
                       "not-observed"
-                    ]
+                    ],
+                    "description": "Whether the evidence supports the claim, is inconclusive, or contradicts it."
                   },
                   "assurance": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 128
+                    "maxLength": 128,
+                    "description": "The basis for the assessment assurance."
                   },
                   "confidence": {
                     "enum": [
                       "low",
                       "medium",
                       "high"
-                    ]
+                    ],
+                    "description": "Confidence in the assessment: low, medium, or high."
                   },
                   "observations": {
                     "type": "array",
@@ -6112,7 +6080,7 @@
                       "description": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection.",
                       "x-operator-correction": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection."
                     },
-                    "description": "Use inspected citation handles returned by observation_read; readable handles do not establish inspection."
+                    "description": "Inspected observation citation handles supporting this claim."
                   },
                   "attempts": {
                     "type": "array",
@@ -6126,7 +6094,7 @@
                       "description": "Use execution handles returned by executed attempts; rejected submissions have no execution handle.",
                       "x-operator-correction": "Use execution handles returned by executed attempts; rejected submissions have no execution handle."
                     },
-                    "description": "Use execution handles returned by executed attempts; rejected submissions have no execution handle."
+                    "description": "Execution handles associated with this claim."
                   },
                   "uncertainties": {
                     "type": "array",
@@ -6149,7 +6117,8 @@
                   "assurance",
                   "confidence"
                 ]
-              }
+              },
+              "description": "Evidence-backed interpretations, distinct from target execution facts."
             },
             "coverage": {
               "type": "array",
@@ -6165,24 +6134,28 @@
                     "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                     "not": {
                       "pattern": "[\\r\\n]"
-                    }
+                    },
+                    "description": "Identifier of the submitted objective being assessed."
                   },
                   "alternative": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 1024
+                    "maxLength": 1024,
+                    "description": "Alternative experiment or approach considered."
                   },
                   "status": {
                     "enum": [
                       "tested",
                       "untested",
                       "partial"
-                    ]
+                    ],
+                    "description": "Assessment completeness, separate from whether objectives succeeded."
                   },
                   "reason": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 4096
+                    "maxLength": 4096,
+                    "description": "Explanation of the coverage status."
                   },
                   "observations": {
                     "type": "array",
@@ -6216,7 +6189,8 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 128,
-                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                    "description": "Local hypothesis label or returned historical hypothesis handle covered by this entry."
                   }
                 },
                 "required": [
@@ -6224,7 +6198,8 @@
                   "status",
                   "reason"
                 ]
-              }
+              },
+              "description": "Which objectives were tested and any remaining gaps."
             },
             "uncertainties": {
               "type": "array",
@@ -6243,12 +6218,14 @@
                       "omitted-range",
                       "coverage-limit",
                       "evidence-gap"
-                    ]
+                    ],
+                    "description": "The kind of record or uncertainty represented by this object."
                   },
                   "description": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 4096
+                    "maxLength": 4096,
+                    "description": "Explanation of this uncertainty or retained item."
                   },
                   "observations": {
                     "type": "array",
@@ -6305,7 +6282,8 @@
                   "description"
                 ],
                 "x-operator-correction": "Supply an uncertainty object with required kind and description; put explanatory prose in description."
-              }
+              },
+              "description": "Declared limitations; claims may refer to their labels."
             },
             "records": {
               "type": "array",
@@ -6316,16 +6294,17 @@
                 "minLength": 1,
                 "maxLength": 128,
                 "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                "description": "Use exact returned handles of this field's resource category.",
-                "x-operator-correction": "Use exact returned handles of this field's resource category."
+                "description": "Historical record handles returned by record_append; not executions or artifacts.",
+                "x-operator-correction": "Historical record handles returned by record_append; not executions or artifacts."
               },
-              "description": "Use exact returned handles of this field's resource category."
+              "description": "Historical record handles returned by record_append; not executions or artifacts."
             },
             "artifact": {
               "type": "string",
               "minLength": 1,
               "maxLength": 128,
-              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "description": "Committed assessment artifact handle; replaces inline assessment fields."
             },
             "unavailable_reason": {
               "enum": [
@@ -6338,7 +6317,8 @@
                 "provider-failure",
                 "target-failure",
                 "no-progress-limit"
-              ]
+              ],
+              "description": "Why an assessment cannot be supplied; replaces inline assessment fields."
             }
           },
           "required": [
@@ -6645,7 +6625,8 @@
                 "outcome",
                 "summary"
               ]
-            }
+            },
+            "description": "Outcomes for the submitted objectives."
           },
           "hypotheses": {
             "type": "array",
@@ -6712,8 +6693,7 @@
                   "enum": [
                     "scenario",
                     "exploratory"
-                  ],
-                  "description": "Required explicit intent. Scenario requires a submitted scenario_id; exploratory forbids scenario_id. Never infer origin."
+                  ]
                 },
                 "scenario_id": {
                   "type": "string",
@@ -6827,7 +6807,8 @@
                 "assurance",
                 "confidence"
               ]
-            }
+            },
+            "description": "Evidence-backed interpretations, distinct from target execution facts."
           },
           "coverage": {
             "type": "array",
@@ -6889,7 +6870,8 @@
                 "status",
                 "reason"
               ]
-            }
+            },
+            "description": "Which objectives were tested and any remaining gaps."
           },
           "uncertainties": {
             "type": "array",
@@ -6955,7 +6937,8 @@
                 "kind",
                 "description"
               ]
-            }
+            },
+            "description": "Declared limitations; claims may refer to their labels."
           },
           "records": {
             "type": "array",
@@ -7010,7 +6993,8 @@
               "type": "string",
               "minLength": 1,
               "maxLength": 128,
-              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "description": "Returned injection handle to remove."
             }
           },
           "required": [
@@ -7056,17 +7040,20 @@
               "type": "string",
               "minLength": 1,
               "maxLength": 128,
-              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "description": "Readable observation handle returned by attempt execution or a read continuation."
             },
             "offset": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 9007199254740991
+              "maximum": 9007199254740991,
+              "description": "Zero-based byte offset at which to start reading."
             },
             "max_bytes": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 1048576
+              "maximum": 1048576,
+              "description": "Maximum bytes to return in this read."
             }
           },
           "required": [
@@ -7156,12 +7143,14 @@
                 "progress",
                 "lineage",
                 "coverage"
-              ]
+              ],
+              "description": "Record kind selecting the supported fields."
             },
             "statement": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 4096
+              "maxLength": 4096,
+              "description": "The claim or hypothesis being assessed."
             },
             "objective_refs": {
               "type": "array",
@@ -7175,7 +7164,8 @@
                   "pattern": "[\\r\\n]"
                 }
               },
-              "uniqueItems": true
+              "uniqueItems": true,
+              "description": "Submitted objective identifiers associated with this record."
             },
             "assumptions": {
               "type": "array",
@@ -7184,7 +7174,8 @@
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 1024
-              }
+              },
+              "description": "Assumptions underlying this hypothesis."
             },
             "predicted_observations": {
               "type": "array",
@@ -7193,7 +7184,8 @@
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 1024
-              }
+              },
+              "description": "Observations predicted if this hypothesis holds."
             },
             "surface_ref": {
               "type": "string",
@@ -7202,7 +7194,8 @@
               "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
               "not": {
                 "pattern": "[\\r\\n]"
-              }
+              },
+              "description": "Target injection surface associated with this hypothesis."
             },
             "records": {
               "type": "array",
@@ -7233,23 +7226,27 @@
               "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
               "not": {
                 "pattern": "[\\r\\n]"
-              }
+              },
+              "description": "Submitted scenario associated with scenario-origin work."
             },
             "parent": {
               "type": "string",
               "minLength": 1,
               "maxLength": 128,
-              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "description": "Execution handle for the parent experiment."
             },
             "summary": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 4096
+              "maxLength": 4096,
+              "description": "Concise assessment based on the available evidence."
             },
             "decision": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 4096
+              "maxLength": 4096,
+              "description": "Decision based on the recorded progress."
             },
             "hypotheses": {
               "type": "array",
@@ -7260,10 +7257,10 @@
                 "minLength": 1,
                 "maxLength": 128,
                 "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                "description": "Use exact returned handles of this field's resource category.",
-                "x-operator-correction": "Use exact returned handles of this field's resource category."
+                "description": "Returned historical hypothesis handles.",
+                "x-operator-correction": "Returned historical hypothesis handles."
               },
-              "description": "Use exact returned handles of this field's resource category."
+              "description": "Returned historical hypothesis handles."
             },
             "attempts": {
               "type": "array",
@@ -7274,10 +7271,10 @@
                 "minLength": 1,
                 "maxLength": 128,
                 "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                "description": "Use exact returned handles of this field's resource category.",
-                "x-operator-correction": "Use exact returned handles of this field's resource category."
+                "description": "Execution handles returned after dispatch.",
+                "x-operator-correction": "Execution handles returned after dispatch."
               },
-              "description": "Use exact returned handles of this field's resource category."
+              "description": "Execution handles returned after dispatch."
             },
             "observations": {
               "type": "array",
@@ -7288,34 +7285,38 @@
                 "minLength": 1,
                 "maxLength": 128,
                 "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                "description": "Use exact returned handles of this field's resource category.",
-                "x-operator-correction": "Use exact returned handles of this field's resource category."
+                "description": "Inspected observation citation handles returned by observation_read.",
+                "x-operator-correction": "Inspected observation citation handles returned by observation_read."
               },
-              "description": "Use exact returned handles of this field's resource category."
+              "description": "Inspected observation citation handles returned by observation_read."
             },
             "interpretation": {
               "enum": [
                 "supported",
                 "inconclusive",
                 "not-observed"
-              ]
+              ],
+              "description": "Whether the evidence supports the claim, is inconclusive, or contradicts it."
             },
             "confidence": {
               "enum": [
                 "low",
                 "medium",
                 "high"
-              ]
+              ],
+              "description": "Confidence in the assessment: low, medium, or high."
             },
             "assurance": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 128
+              "maxLength": 128,
+              "description": "The basis for the assessment assurance."
             },
             "assessment_summary": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 4096
+              "maxLength": 4096,
+              "description": "Concise assessment based on the available evidence."
             },
             "gaps": {
               "type": "array",
@@ -7324,24 +7325,28 @@
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 1024
-              }
+              },
+              "description": "Known limitations in the assessment evidence."
             },
             "mutation_summary": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 4096
+              "maxLength": 4096,
+              "description": "Explanation of the change relative to the parent experiment."
             },
             "hypothesis": {
               "type": "string",
               "minLength": 1,
               "maxLength": 128,
-              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "description": "Returned historical hypothesis handle."
             },
             "attempt": {
               "type": "string",
               "minLength": 1,
               "maxLength": 128,
-              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "description": "Execution handle for this experiment."
             },
             "entries": {
               "type": "array",
@@ -7357,24 +7362,28 @@
                     "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                     "not": {
                       "pattern": "[\\r\\n]"
-                    }
+                    },
+                    "description": "Identifier of the submitted objective being assessed."
                   },
                   "alternative": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 1024
+                    "maxLength": 1024,
+                    "description": "Alternative experiment or approach considered."
                   },
                   "status": {
                     "enum": [
                       "tested",
                       "untested",
                       "partial"
-                    ]
+                    ],
+                    "description": "Assessment completeness, separate from whether objectives succeeded."
                   },
                   "reason": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 4096
+                    "maxLength": 4096,
+                    "description": "Explanation of the coverage status."
                   },
                   "observations": {
                     "type": "array",
@@ -7408,7 +7417,8 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 128,
-                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                    "description": "Local hypothesis label or returned historical hypothesis handle covered by this entry."
                   }
                 },
                 "required": [
@@ -7416,7 +7426,8 @@
                   "status",
                   "reason"
                 ]
-              }
+              },
+              "description": "Coverage records for the submitted objectives."
             }
           },
           "required": [
@@ -7428,12 +7439,14 @@
               "additionalProperties": false,
               "properties": {
                 "kind": {
-                  "const": "hypothesis"
+                  "const": "hypothesis",
+                  "description": "Record kind selecting the supported fields."
                 },
                 "statement": {
                   "type": "string",
                   "minLength": 1,
-                  "maxLength": 4096
+                  "maxLength": 4096,
+                  "description": "The claim or hypothesis being assessed."
                 },
                 "objective_refs": {
                   "type": "array",
@@ -7447,7 +7460,8 @@
                       "pattern": "[\\r\\n]"
                     }
                   },
-                  "uniqueItems": true
+                  "uniqueItems": true,
+                  "description": "Submitted objective identifiers associated with this record."
                 },
                 "assumptions": {
                   "type": "array",
@@ -7456,7 +7470,8 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 1024
-                  }
+                  },
+                  "description": "Assumptions underlying this hypothesis."
                 },
                 "predicted_observations": {
                   "type": "array",
@@ -7465,7 +7480,8 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 1024
-                  }
+                  },
+                  "description": "Observations predicted if this hypothesis holds."
                 },
                 "surface_ref": {
                   "type": "string",
@@ -7474,7 +7490,8 @@
                   "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                   "not": {
                     "pattern": "[\\r\\n]"
-                  }
+                  },
+                  "description": "Target injection surface associated with this hypothesis."
                 },
                 "records": {
                   "type": "array",
@@ -7505,13 +7522,15 @@
                   "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                   "not": {
                     "pattern": "[\\r\\n]"
-                  }
+                  },
+                  "description": "Submitted scenario associated with scenario-origin work."
                 },
                 "parent": {
                   "type": "string",
                   "minLength": 1,
                   "maxLength": 128,
-                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                  "description": "Returned historical hypothesis handle for the parent hypothesis."
                 }
               },
               "required": [
@@ -7551,17 +7570,20 @@
               "additionalProperties": false,
               "properties": {
                 "kind": {
-                  "const": "progress"
+                  "const": "progress",
+                  "description": "Record kind selecting the supported fields."
                 },
                 "summary": {
                   "type": "string",
                   "minLength": 1,
-                  "maxLength": 4096
+                  "maxLength": 4096,
+                  "description": "Concise assessment based on the available evidence."
                 },
                 "decision": {
                   "type": "string",
                   "minLength": 1,
-                  "maxLength": 4096
+                  "maxLength": 4096,
+                  "description": "Decision based on the recorded progress."
                 },
                 "objective_refs": {
                   "type": "array",
@@ -7575,7 +7597,8 @@
                       "pattern": "[\\r\\n]"
                     }
                   },
-                  "uniqueItems": true
+                  "uniqueItems": true,
+                  "description": "Submitted objective identifiers associated with this record."
                 },
                 "records": {
                   "type": "array",
@@ -7600,10 +7623,10 @@
                     "minLength": 1,
                     "maxLength": 128,
                     "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                    "description": "Use exact returned handles of this field's resource category.",
-                    "x-operator-correction": "Use exact returned handles of this field's resource category."
+                    "description": "Returned historical hypothesis handles.",
+                    "x-operator-correction": "Returned historical hypothesis handles."
                   },
-                  "description": "Use exact returned handles of this field's resource category."
+                  "description": "Returned historical hypothesis handles."
                 },
                 "attempts": {
                   "type": "array",
@@ -7614,10 +7637,10 @@
                     "minLength": 1,
                     "maxLength": 128,
                     "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                    "description": "Use exact returned handles of this field's resource category.",
-                    "x-operator-correction": "Use exact returned handles of this field's resource category."
+                    "description": "Execution handles returned after dispatch.",
+                    "x-operator-correction": "Execution handles returned after dispatch."
                   },
-                  "description": "Use exact returned handles of this field's resource category."
+                  "description": "Execution handles returned after dispatch."
                 },
                 "observations": {
                   "type": "array",
@@ -7628,34 +7651,38 @@
                     "minLength": 1,
                     "maxLength": 128,
                     "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-                    "description": "Use exact returned handles of this field's resource category.",
-                    "x-operator-correction": "Use exact returned handles of this field's resource category."
+                    "description": "Inspected observation citation handles returned by observation_read.",
+                    "x-operator-correction": "Inspected observation citation handles returned by observation_read."
                   },
-                  "description": "Use exact returned handles of this field's resource category."
+                  "description": "Inspected observation citation handles returned by observation_read."
                 },
                 "interpretation": {
                   "enum": [
                     "supported",
                     "inconclusive",
                     "not-observed"
-                  ]
+                  ],
+                  "description": "Whether the evidence supports the claim, is inconclusive, or contradicts it."
                 },
                 "confidence": {
                   "enum": [
                     "low",
                     "medium",
                     "high"
-                  ]
+                  ],
+                  "description": "Confidence in the assessment: low, medium, or high."
                 },
                 "assurance": {
                   "type": "string",
                   "minLength": 1,
-                  "maxLength": 128
+                  "maxLength": 128,
+                  "description": "The basis for the assessment assurance."
                 },
                 "assessment_summary": {
                   "type": "string",
                   "minLength": 1,
-                  "maxLength": 4096
+                  "maxLength": 4096,
+                  "description": "Concise assessment based on the available evidence."
                 },
                 "gaps": {
                   "type": "array",
@@ -7664,7 +7691,8 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 1024
-                  }
+                  },
+                  "description": "Known limitations in the assessment evidence."
                 }
               },
               "required": [
@@ -7720,12 +7748,14 @@
               "additionalProperties": false,
               "properties": {
                 "kind": {
-                  "const": "lineage"
+                  "const": "lineage",
+                  "description": "Record kind selecting the supported fields."
                 },
                 "mutation_summary": {
                   "type": "string",
                   "minLength": 1,
-                  "maxLength": 4096
+                  "maxLength": 4096,
+                  "description": "Explanation of the change relative to the parent experiment."
                 },
                 "records": {
                   "type": "array",
@@ -7745,19 +7775,22 @@
                   "type": "string",
                   "minLength": 1,
                   "maxLength": 128,
-                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                  "description": "Returned historical hypothesis handle."
                 },
                 "attempt": {
                   "type": "string",
                   "minLength": 1,
                   "maxLength": 128,
-                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                  "description": "Execution handle for this experiment."
                 },
                 "parent": {
                   "type": "string",
                   "minLength": 1,
                   "maxLength": 128,
-                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                  "description": "Execution handle for the parent experiment."
                 }
               },
               "required": [
@@ -7772,7 +7805,8 @@
               "additionalProperties": false,
               "properties": {
                 "kind": {
-                  "const": "coverage"
+                  "const": "coverage",
+                  "description": "Record kind selecting the supported fields."
                 },
                 "records": {
                   "type": "array",
@@ -7802,24 +7836,28 @@
                         "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
                         "not": {
                           "pattern": "[\\r\\n]"
-                        }
+                        },
+                        "description": "Identifier of the submitted objective being assessed."
                       },
                       "alternative": {
                         "type": "string",
                         "minLength": 1,
-                        "maxLength": 1024
+                        "maxLength": 1024,
+                        "description": "Alternative experiment or approach considered."
                       },
                       "status": {
                         "enum": [
                           "tested",
                           "untested",
                           "partial"
-                        ]
+                        ],
+                        "description": "Assessment completeness, separate from whether objectives succeeded."
                       },
                       "reason": {
                         "type": "string",
                         "minLength": 1,
-                        "maxLength": 4096
+                        "maxLength": 4096,
+                        "description": "Explanation of the coverage status."
                       },
                       "observations": {
                         "type": "array",
@@ -7853,7 +7891,8 @@
                         "type": "string",
                         "minLength": 1,
                         "maxLength": 128,
-                        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+                        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                        "description": "Local hypothesis label or returned historical hypothesis handle covered by this entry."
                       }
                     },
                     "required": [
@@ -7861,7 +7900,8 @@
                       "status",
                       "reason"
                     ]
-                  }
+                  },
+                  "description": "Coverage records for the submitted objectives."
                 }
               },
               "required": [
@@ -7941,8 +7981,7 @@
             "enum": [
               "scenario",
               "exploratory"
-            ],
-            "description": "Required explicit intent. Scenario requires a submitted scenario_id; exploratory forbids scenario_id. Never infer origin."
+            ]
           },
           "scenario_id": {
             "type": "string",
@@ -8102,7 +8141,8 @@
                 "status",
                 "reason"
               ]
-            }
+            },
+            "description": "Coverage records for the submitted objectives."
           }
         },
         "required": [
@@ -8129,17 +8169,20 @@
               "type": "string",
               "minLength": 1,
               "maxLength": 128,
-              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "description": "Returned input reference or tool-guide reference to read."
             },
             "offset": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 9007199254740991
+              "maximum": 9007199254740991,
+              "description": "Zero-based byte offset at which to start reading."
             },
             "max_bytes": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 262144
+              "maximum": 262144,
+              "description": "Maximum bytes to return in this read."
             }
           },
           "required": [
@@ -8286,18 +8329,21 @@
             "offset": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 9007199254740991
+              "maximum": 9007199254740991,
+              "description": "Zero-based byte offset at which to start reading."
             },
             "limit": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 100
+              "maximum": 100,
+              "description": "Maximum number of snapshots to return."
             },
             "session": {
               "type": "string",
               "minLength": 1,
               "maxLength": 128,
-              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "description": "Returned source-session handle whose snapshots should be listed."
             }
           },
           "required": []
@@ -8348,12 +8394,14 @@
             "label": {
               "type": "string",
               "minLength": 0,
-              "maxLength": 256
+              "maxLength": 256,
+              "description": "Administrator-readable label for the snapshot."
             },
             "description": {
               "type": "string",
               "minLength": 0,
-              "maxLength": 4096
+              "maxLength": 4096,
+              "description": "Explanation of this uncertainty or retained item."
             }
           },
           "required": []

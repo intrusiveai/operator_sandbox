@@ -9,9 +9,9 @@ from .validation import ContractError, ORDINARY_LIMIT
 from .simple import resolve_direct_input, validate_attempt_origin
 
 
-def issue(reason, path, correction):
+def issue(reason, path, correction, facts=None):
     if reason=='invalid_resolution_context':correction='Internal resource resolution failed. Stop this operation and report the product error; do not supply internal identities or replay completed actions.'
-    raise ContractError(reason+': '+correction, reason=reason, field_path=path, correction=correction)
+    raise ContractError(reason+': '+correction, reason=reason, field_path=path, correction=correction, facts=facts)
 
 
 def content(value, path=''):
@@ -76,7 +76,7 @@ def normalize_tool_arguments(protocol,name,raw,context):
             path=remap_tool_path(n.paths,e.field_path)
             if path==e.field_path and ('receipt' in path or 'binding' in path or '_id' in path and not any(k in path for k in ('objective_id','scenario_id','operation_id'))):
                 issue('invalid_resolution_context','','Internal resource resolution failed.')
-            raise ContractError(str(e),reason=e.reason,field_path=path,correction=e.correction,constraint=e.constraint) from None
+            raise ContractError(str(e),reason=e.reason,field_path=path,correction=e.correction,constraint=e.constraint,unsupported_fields=e.unsupported_fields,facts=e.facts) from None
     _canonical_value(result,ORDINARY_LIMIT)
     return dict(arguments=result,paths=n.paths,observation_selections=n.selections)
 
@@ -106,7 +106,7 @@ class _Normalizer:
     def resource(self,h,kind,path,observed=False,live=False):
         r=self.ctx.get('resources',{}).get(h)
         if not isinstance(r,dict):issue('unknown_handle',path,'Use a handle returned by a successful tool or verified campaign input; never invent one.')
-        if r.get('kind')!=kind:issue('wrong_handle_kind',path,'Use a returned '+kind+' handle; other resource categories cannot substitute for it.')
+        if r.get('kind')!=kind:issue('wrong_handle_kind',path,'Use a returned '+kind+' handle; other resource categories cannot substitute for it.',dict(expected_kind=kind,actual_kind=r.get('kind','unknown')))
         if r.get('campaign_id')!=self.ctx['campaign_id']:issue('foreign_handle',path,'Select a resource from this campaign.')
         if live and r.get('live') is not True:issue('stale_handle',path,'Refresh the resource in the current target binding; do not replay prior effects.')
         if observed and (r.get('available') is not True or r.get('inspected') is not True):issue('evidence_not_inspected',path,self.inspection_correction(r))

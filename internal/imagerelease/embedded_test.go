@@ -37,7 +37,7 @@ func embeddedProtocol(t *testing.T) *contracts.Protocol {
 	for _, name := range profiles {
 		files[name] = []byte("test semantic profile")
 	}
-	manifest, pin, err := p.BuildPackageManifest("0.8.0", files, profiles)
+	manifest, pin, err := p.BuildPackageManifest("0.9.0", files, profiles)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -129,29 +129,29 @@ func (p *Policy) validateDatabaseInjection(d interceptor.Definition) error {
 	}
 	table := databaseTable(*s, d.Selector.Collection)
 	if table == nil {
-		return ErrPolicy
+		return policyRule("/selector/collection", "unknown_table", "Select an exposed database table from the target reference.")
 	}
 	key, ok := databaseKey(d.Selector.Key, *table)
 	if !ok {
-		return ErrPolicy
+		return policyRule("/selector/key", "invalid_database_key", "Supply exactly the table key columns, each with a non-null scalar value.")
 	}
 	if d.Placement.Pointer != "" {
 		parts := pointerParts(d.Placement.Pointer)
 		if len(parts) == 0 || !slices.Contains(table.Fields, parts[0]) {
-			return ErrPolicy
+			return policyRule("/placement/pointer", "unwritable_field", "Select a writable field from this table policy.")
 		}
 		return nil
 	}
 	if !table.AllowCreate || d.Placement.Operation != "replace" {
-		return ErrPolicy
+		return policyRule("/placement", "creation_not_permitted", "Whole-row replacement requires explicit creation permission and replace placement.")
 	}
 	value, err := contracts.Decode(d.Payload, contracts.OrdinaryLimit)
 	if err != nil {
-		return ErrAttempt
+		return policyRule("/payload", "invalid_json", "Supply valid JSON for a created database row.")
 	}
 	row, ok := value.(map[string]any)
 	if !ok {
-		return ErrAttempt
+		return policyRule("/payload", "invalid_row", "A created database row must be a JSON object.")
 	}
 	keys := map[string]any{}
 	for _, name := range table.Keys {
@@ -159,13 +159,13 @@ func (p *Policy) validateDatabaseInjection(d interceptor.Definition) error {
 	}
 	for name := range row {
 		if !slices.Contains(table.Keys, name) && !slices.Contains(table.Fields, name) {
-			return ErrPolicy
+			return policyRule("/payload", "unwritable_field", "Row fields must be declared key or writable columns in this table policy.")
 		}
 	}
 	raw, _ := json.Marshal(keys)
 	createdKey, ok := databaseKey(string(raw), *table)
 	if !ok || !bytes.Equal(key, createdKey) {
-		return ErrPolicy
+		return policyRule("/payload", "key_mismatch", "Created row key values must exactly match the selected database key.")
 	}
 	return nil
 }

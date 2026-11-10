@@ -13,8 +13,10 @@ const DirectInputDepth = 16
 // ArgumentError describes a deterministic rule without including submitted prose.
 // Identifiers and dynamic JSON paths must still be sanitized by the output boundary.
 type ArgumentError struct {
+	Facts                         *FailureFacts
 	Reason, FieldPath, Correction string
 	Cause                         error
+	UnsupportedFields             *UnsupportedFields
 	Constraint                    *SchemaConstraint
 }
 

@@ -5,7 +5,8 @@
   "additionalProperties": false,
   "properties": {
     "operation_id": {
-      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id",
+      "description": "Permitted target operation to invoke."
     },
     "input": {
       "$ref": "urn:operator:schema:execution-input:v1alpha1"
@@ -18,7 +19,8 @@
       "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
     },
     "caller_principal_id": {
-      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id",
+      "description": "Permitted caller principal for the target invocation."
     },
     "pre_actions": {
       "type": "array",
@@ -63,7 +65,8 @@
       "pattern": "^[^\\x00-\\x1f\\x7f]+$",
       "not": {
         "pattern": "[\\r\\n]"
-      }
+      },
+      "description": "Historical record describing the strategy used for this attempt."
     },
     "technique_refs": {
       "type": "array",
@@ -73,7 +76,8 @@
         "type": "string",
         "minLength": 1,
         "maxLength": 256
-      }
+      },
+      "description": "Threat technique identifiers relevant to this attempt."
     },
     "injection_input": {
       "$ref": "urn:operator:schema:execution-input:v1alpha1"
@@ -143,7 +147,8 @@
           "maximum": 16777216
         },
         "media_type": {
-          "$ref": "#/$defs/mediaType"
+          "$ref": "#/$defs/mediaType",
+          "description": "Media type of the supplied content."
         },
         "canonicalization": {
           "enum": [
@@ -167,7 +172,8 @@
           "then": {
             "properties": {
               "media_type": {
-                "const": "application/json"
+                "const": "application/json",
+                "description": "Media type of the supplied content."
               }
             }
           }
@@ -347,22 +353,27 @@
       ],
       "properties": {
         "tool_name": {
-          "$ref": "#/$defs/shortText"
+          "$ref": "#/$defs/shortText",
+          "description": "Name of the target tool to match."
         },
         "call_ordinal": {
-          "$ref": "#/$defs/ordinal"
+          "$ref": "#/$defs/ordinal",
+          "description": "Ordinal of the target call to match."
         },
         "arguments_pointer": {
           "$ref": "#/$defs/pointer"
         },
         "arguments_equal": {
-          "$ref": "#/$defs/json3"
+          "$ref": "#/$defs/json3",
+          "description": "Target arguments that must match exactly."
         },
         "arguments_contain": {
-          "$ref": "#/$defs/contains"
+          "$ref": "#/$defs/contains",
+          "description": "Target argument subset that must be present."
         },
         "turn_id": {
-          "$ref": "#/$defs/id"
+          "$ref": "#/$defs/id",
+          "description": "Target turn to which this selector applies."
         }
       }
     },
@@ -376,22 +387,27 @@
       ],
       "properties": {
         "service": {
-          "$ref": "#/$defs/id"
+          "$ref": "#/$defs/id",
+          "description": "Logical service identifier from the target capabilities."
         },
         "tool_name": {
-          "$ref": "#/$defs/shortText"
+          "$ref": "#/$defs/shortText",
+          "description": "Name of the target tool to match."
         },
         "call_ordinal": {
-          "$ref": "#/$defs/ordinal"
+          "$ref": "#/$defs/ordinal",
+          "description": "Ordinal of the target call to match."
         },
         "arguments_pointer": {
           "$ref": "#/$defs/pointer"
         },
         "arguments_equal": {
-          "$ref": "#/$defs/json3"
+          "$ref": "#/$defs/json3",
+          "description": "Target arguments that must match exactly."
         },
         "arguments_contain": {
-          "$ref": "#/$defs/contains"
+          "$ref": "#/$defs/contains",
+          "description": "Target argument subset that must be present."
         }
       }
     },
@@ -404,10 +420,12 @@
       ],
       "properties": {
         "service": {
-          "$ref": "#/$defs/id"
+          "$ref": "#/$defs/id",
+          "description": "Logical service identifier from the target capabilities."
         },
         "call_ordinal": {
-          "$ref": "#/$defs/ordinal"
+          "$ref": "#/$defs/ordinal",
+          "description": "Ordinal of the target call to match."
         },
         "method": {
           "type": "string",
@@ -416,13 +434,15 @@
           "pattern": "^[A-Z]+$",
           "not": {
             "pattern": "[\\r\\n]"
-          }
+          },
+          "description": "Target request method to match."
         },
         "path": {
           "$ref": "#/$defs/logicalPath"
         },
         "query_equal": {
-          "$ref": "#/$defs/predicates"
+          "$ref": "#/$defs/predicates",
+          "description": "Query parameters that must match."
         },
         "headers_equal": {
           "$ref": "#/$defs/predicates",
@@ -432,10 +452,12 @@
           "$ref": "#/$defs/pointer"
         },
         "request_body_equal": {
-          "$ref": "#/$defs/json3"
+          "$ref": "#/$defs/json3",
+          "description": "Target request body that must match exactly."
         },
         "request_body_contain": {
-          "$ref": "#/$defs/contains"
+          "$ref": "#/$defs/contains",
+          "description": "Target request body subset that must be present."
         }
       }
     },
@@ -451,16 +473,19 @@
           ],
           "properties": {
             "service": {
-              "$ref": "#/$defs/id"
+              "$ref": "#/$defs/id",
+              "description": "Logical service identifier from the target capabilities."
             },
             "collection": {
-              "$ref": "#/$defs/shortText"
+              "$ref": "#/$defs/shortText",
+              "description": "Permitted database collection or table policy."
             },
             "key": {
               "$ref": "#/$defs/shortText"
             },
             "turn_id": {
-              "$ref": "#/$defs/id"
+              "$ref": "#/$defs/id",
+              "description": "Target turn to which this selector applies."
             }
           }
         },
@@ -473,13 +498,15 @@
           ],
           "properties": {
             "file_namespace": {
-              "$ref": "#/$defs/id"
+              "$ref": "#/$defs/id",
+              "description": "Permitted logical file namespace."
             },
             "relative_path": {
               "$ref": "#/$defs/relativePath"
             },
             "turn_id": {
-              "$ref": "#/$defs/id"
+              "$ref": "#/$defs/id",
+              "description": "Target turn to which this selector applies."
             }
           }
         }
@@ -500,7 +527,8 @@
                 "replace",
                 "prepend_text",
                 "append_text"
-              ]
+              ],
+              "description": "Mutation operation applied at the selected placement."
             },
             "pointer": {
               "$ref": "#/$defs/pointer"
@@ -517,7 +545,8 @@
           ],
           "properties": {
             "operation": {
-              "const": "insert_array"
+              "const": "insert_array",
+              "description": "Mutation operation applied at the selected placement."
             },
             "pointer": {
               "$ref": "#/$defs/pointer"
@@ -525,7 +554,8 @@
             "index": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 10000
+              "maximum": 10000,
+              "description": "Array position at which content is placed."
             }
           }
         },
@@ -539,7 +569,8 @@
           ],
           "properties": {
             "operation": {
-              "const": "merge_object"
+              "const": "merge_object",
+              "description": "Mutation operation applied at the selected placement."
             },
             "pointer": {
               "$ref": "#/$defs/pointer"
@@ -551,7 +582,8 @@
               "uniqueItems": true,
               "items": {
                 "$ref": "#/$defs/shortText"
-              }
+              },
+              "description": "Fields that this mutation may change."
             }
           }
         }
@@ -575,20 +607,23 @@
             "mcp_tool_result",
             "environment_state",
             "database_response"
-          ]
+          ],
+          "description": "Injection surface selected from the permitted target capabilities."
         },
         "mode": {
           "enum": [
             "simulation",
             "fidelity"
-          ]
+          ],
+          "description": "Injection mode supported by the selected surface."
         },
         "scope": {
           "enum": [
             "once",
             "next_turn",
             "standing"
-          ]
+          ],
+          "description": "Lifetime and reach of the injection."
         },
         "selector": {
           "anyOf": [
@@ -607,42 +642,51 @@
             {
               "$ref": "#/$defs/databaseSelector"
             }
-          ]
+          ],
+          "description": "Criteria selecting the target operation, resource or content."
         },
         "placement": {
-          "$ref": "#/$defs/placement"
+          "$ref": "#/$defs/placement",
+          "description": "Where and how the injected content is applied."
         }
       },
       "oneOf": [
         {
           "properties": {
             "surface": {
-              "const": "model_tool_result"
+              "const": "model_tool_result",
+              "description": "Injection surface selected from the permitted target capabilities."
             },
             "mode": {
-              "const": "simulation"
+              "const": "simulation",
+              "description": "Injection mode supported by the selected surface."
             },
             "selector": {
-              "$ref": "#/$defs/modelSelector"
+              "$ref": "#/$defs/modelSelector",
+              "description": "Criteria selecting the target operation, resource or content."
             }
           }
         },
         {
           "properties": {
             "surface": {
-              "const": "service_response"
+              "const": "service_response",
+              "description": "Injection surface selected from the permitted target capabilities."
             },
             "mode": {
-              "const": "simulation"
+              "const": "simulation",
+              "description": "Injection mode supported by the selected surface."
             },
             "scope": {
               "enum": [
                 "once",
                 "standing"
-              ]
+              ],
+              "description": "Lifetime and reach of the injection."
             },
             "selector": {
-              "$ref": "#/$defs/httpSelector"
+              "$ref": "#/$defs/httpSelector",
+              "description": "Criteria selecting the target operation, resource or content."
             },
             "placement": {
               "properties": {
@@ -652,28 +696,34 @@
                     "prepend_text",
                     "append_text",
                     "merge_object"
-                  ]
+                  ],
+                  "description": "Mutation operation applied at the selected placement."
                 }
-              }
+              },
+              "description": "Where and how the injected content is applied."
             }
           }
         },
         {
           "properties": {
             "surface": {
-              "const": "mcp_tool_result"
+              "const": "mcp_tool_result",
+              "description": "Injection surface selected from the permitted target capabilities."
             },
             "mode": {
-              "const": "simulation"
+              "const": "simulation",
+              "description": "Injection mode supported by the selected surface."
             },
             "scope": {
               "enum": [
                 "once",
                 "standing"
-              ]
+              ],
+              "description": "Lifetime and reach of the injection."
             },
             "selector": {
-              "$ref": "#/$defs/mcpSelector"
+              "$ref": "#/$defs/mcpSelector",
+              "description": "Criteria selecting the target operation, resource or content."
             },
             "placement": {
               "properties": {
@@ -683,41 +733,50 @@
                     "prepend_text",
                     "append_text",
                     "merge_object"
-                  ]
+                  ],
+                  "description": "Mutation operation applied at the selected placement."
                 }
-              }
+              },
+              "description": "Where and how the injected content is applied."
             }
           }
         },
         {
           "properties": {
             "surface": {
-              "const": "environment_state"
+              "const": "environment_state",
+              "description": "Injection surface selected from the permitted target capabilities."
             },
             "mode": {
-              "const": "fidelity"
+              "const": "fidelity",
+              "description": "Injection mode supported by the selected surface."
             },
             "selector": {
-              "$ref": "#/$defs/stateSelector"
+              "$ref": "#/$defs/stateSelector",
+              "description": "Criteria selecting the target operation, resource or content."
             }
           }
         },
         {
           "properties": {
             "surface": {
-              "const": "database_response"
+              "const": "database_response",
+              "description": "Injection surface selected from the permitted target capabilities."
             },
             "mode": {
-              "const": "simulation"
+              "const": "simulation",
+              "description": "Injection mode supported by the selected surface."
             },
             "scope": {
               "enum": [
                 "once",
                 "standing"
-              ]
+              ],
+              "description": "Lifetime and reach of the injection."
             },
             "selector": {
-              "$ref": "#/$defs/databaseSelector"
+              "$ref": "#/$defs/databaseSelector",
+              "description": "Criteria selecting the target operation, resource or content."
             }
           }
         }
@@ -732,19 +791,23 @@
       ],
       "properties": {
         "service": {
-          "$ref": "#/$defs/id"
+          "$ref": "#/$defs/id",
+          "description": "Logical service identifier from the target capabilities."
         },
         "call_ordinal": {
-          "$ref": "#/$defs/ordinal"
+          "$ref": "#/$defs/ordinal",
+          "description": "Ordinal of the target call to match."
         },
         "request_body_pointer": {
           "$ref": "#/$defs/pointer"
         },
         "request_body_equal": {
-          "$ref": "#/$defs/json3"
+          "$ref": "#/$defs/json3",
+          "description": "Target request body that must match exactly."
         },
         "request_body_contain": {
-          "$ref": "#/$defs/contains"
+          "$ref": "#/$defs/contains",
+          "description": "Target request body subset that must be present."
         }
       }
     }

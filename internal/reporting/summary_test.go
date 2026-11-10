@@ -112,3 +112,21 @@ func TestReportUsesRecordedTriggerNotCategoryPrecedence(t *testing.T) {
 		})
 	}
 }
+
+func TestCredentialFailureProjectionAndReport(t *testing.T) {
+	metadata := map[string]json.RawMessage{}
+	values := map[string]any{"credential_id": "key", "profile_id": "profile", "backend": "azure-key-vault", "outcome": "failed", "code": "resolution_failed", "cache_hit": false, "step": "secret-read", "category": "permission-denied", "backend_code": "Forbidden", "http_status": 403}
+	for k, v := range values {
+		metadata[k], _ = json.Marshal(v)
+	}
+	c, projected := projectCredential(9, "2026-11-09T00:00:00Z", metadata)
+	if c.Category != "permission-denied" || c.BackendCode != "Forbidden" || c.HTTPStatus != 403 || string(projected["http_status"]) != "403" {
+		t.Fatal(c, projected)
+	}
+	report := string(markdown(Result{CampaignID: "campaign-1", CredentialResolutions: []CredentialResolution{c}}, "sha256:test"))
+	for _, part := range []string{"permission-denied", "Forbidden", "403", "secret-read"} {
+		if !strings.Contains(report, part) {
+			t.Fatal("missing", part)
+		}
+	}
+}

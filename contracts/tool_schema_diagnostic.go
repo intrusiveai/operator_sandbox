@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -87,7 +88,7 @@ func (c *Catalog) schemaArgumentIssue(err error) *ArgumentError {
 	case *kind.Required:
 		fields = append(fields, k.Missing...)
 	case *kind.AdditionalProperties:
-		fields = append(fields, k.Properties...)
+		result.UnsupportedFields = NewUnsupportedFields(k.Properties)
 	}
 	if len(fields) > 0 {
 		sort.Strings(fields)
@@ -97,7 +98,11 @@ func (c *Catalog) schemaArgumentIssue(err error) *ArgumentError {
 		for i, part := range parts {
 			parts[i] = strings.ReplaceAll(strings.ReplaceAll(part, "~", "~0"), "/", "~1")
 		}
-		result.FieldPath = nearestArgumentPath("/" + strings.Join(parts, "/"))
+		location := "/" + strings.Join(parts, "/")
+		result.FieldPath = nearestArgumentPath(location)
+		if result.UnsupportedFields != nil {
+			result.UnsupportedFields.LocationOmitted = result.FieldPath != location
+		}
 	}
 	keyword := "not"
 	if keys := e.ErrorKind.KeywordPath(); len(keys) > 0 {
@@ -105,7 +110,7 @@ func (c *Catalog) schemaArgumentIssue(err error) *ArgumentError {
 	}
 	uri, path, _ := strings.Cut(e.SchemaURL, "#")
 	ref := &SchemaConstraint{Schema: uri, Path: path, Keyword: keyword}
-	if correction, ok := c.ConstraintCorrection(ref); ok {
+	if correction, ok := c.ConstraintCorrectionWithFields(ref, result.UnsupportedFields); ok {
 		result.Correction = correction
 		result.Constraint = ref
 	}
@@ -115,7 +120,13 @@ func (c *Catalog) schemaArgumentIssue(err error) *ArgumentError {
 func (p *Protocol) ConstraintCorrection(ref *SchemaConstraint) (string, bool) {
 	return p.catalog.ConstraintCorrection(ref)
 }
+func (p *Protocol) ConstraintCorrectionWithFields(ref *SchemaConstraint, fields *UnsupportedFields) (string, bool) {
+	return p.catalog.ConstraintCorrectionWithFields(ref, fields)
+}
 func (c *Catalog) ConstraintCorrection(ref *SchemaConstraint) (string, bool) {
+	return c.ConstraintCorrectionWithFields(ref, nil)
+}
+func (c *Catalog) ConstraintCorrectionWithFields(ref *SchemaConstraint, fields *UnsupportedFields) (string, bool) {
 	if ref == nil || len(ref.Path) > 2048 {
 		return "", false
 	}
@@ -153,6 +164,26 @@ func (c *Catalog) ConstraintCorrection(ref *SchemaConstraint) (string, bool) {
 	}
 	if _, ok = n[ref.Keyword]; !ok {
 		return "", false
+	}
+	if fields != nil {
+		if !fields.Valid() || ref.Keyword != "additionalProperties" {
+			return "", false
+		}
+		// Reject a claimed unsupported name when the selected schema permits it.
+		props, _ := n["properties"].(map[string]any)
+		patterns, _ := n["patternProperties"].(map[string]any)
+		for _, name := range fields.Names {
+			if _, exists := props[name]; exists {
+				return "", false
+			}
+			for pattern := range patterns {
+				re, err := regexp.Compile(pattern)
+				if err != nil || re.MatchString(name) {
+					return "", false
+				}
+			}
+		}
+		return unsupportedCorrection(n, fields), true
 	}
 	return schemaCorrection(n, ref.Keyword), true
 }

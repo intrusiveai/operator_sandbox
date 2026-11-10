@@ -315,7 +315,7 @@ func AWSIdentityConfig(ctx context.Context, region, profile, authentication stri
 	}
 	cfg, err := awsconfig.LoadDefaultConfig(ctx, options...)
 	if err != nil {
-		return aws.Config{}, invalid
+		return aws.Config{}, backendContextError{operation: "AWS identity configuration", cause: err}
 	}
 	if profile != "" {
 		selected := false
@@ -358,7 +358,7 @@ func GoogleIdentity(ctx context.Context, authentication string) (*google.Credent
 	}
 	identity, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/cloud-platform")
 	if err != nil {
-		return nil, invalid
+		return nil, backendContextError{operation: "Google identity configuration", cause: err}
 	}
 	if authentication != "google-adc" && len(identity.JSON) > 0 {
 		var kind struct {

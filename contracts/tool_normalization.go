@@ -155,6 +155,9 @@ func (n *toolNormalizer) resource(h any, kind, path string, observed, live bool)
 	}
 	if r.Kind != kind {
 		n.fail("wrong_handle_kind", path, "Use a returned "+kind+" handle; other resource categories cannot substitute for it.")
+		if e, ok := n.err.(*ArgumentError); ok && e.Reason == "wrong_handle_kind" {
+			e.WithFacts(FailureFacts{"expected_kind": kind, "actual_kind": r.Kind})
+		}
 	}
 	if r.CampaignID != n.ctx.CampaignID {
 		n.fail("foreign_handle", path, "Select a resource from this campaign.")
