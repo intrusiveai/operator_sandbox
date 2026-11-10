@@ -138,7 +138,7 @@ func stateResult(t *testing.T, raw []byte, err error) map[string]any {
 	return v["result"].(map[string]any)
 }
 func TestServiceSnapshotsRestoreAndCumulativeLimits(t *testing.T) {
-	s, p, r, w, launch := serviceWithOperations(t, 0, snapshotRoutes, snapshotInput(t))
+	s, p, r, w, launch := serviceWithOperations(t, 0, snapshotRoutes, requiredSnapshotResources(t))
 	if err := s.Admit(context.Background(), launch); err != nil {
 		t.Fatal(err)
 	}
@@ -225,7 +225,10 @@ func TestServiceSnapshotsRestoreAndCumulativeLimits(t *testing.T) {
 	if !strings.Contains(string(raw), "Do not repeat") || !strings.Contains(string(raw), `"resubmission_safe":false`) {
 		t.Fatal("exhaustion invited a retry", string(raw))
 	}
-	raw, err = s.Handle(context.Background(), attemptWire(p, 2, 1, w.Manifest().ReleaseRecordDigest), 0)
+	call("engine.snapshot_list", "list-exhausted", 2, map[string]any{})
+	call("engine.snapshot_inspect", "inspect-exhausted", 2, handle)
+	call("engine.restore_request", "restore-exhausted", 2, handle)
+	raw, err = s.Handle(context.Background(), attemptWire(p, 3, 1, w.Manifest().ReleaseRecordDigest), 0)
 	stateResult(t, raw, err)
 	select {
 	case <-r.killed:
@@ -234,7 +237,7 @@ func TestServiceSnapshotsRestoreAndCumulativeLimits(t *testing.T) {
 	}
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if p.restores != 1 || len(p.allowances) != 2 || p.allowances[0] != 4 || p.allowances[1] != 2 {
+	if p.restores != 2 || len(p.allowances) != 2 || p.allowances[0] != 4 || p.allowances[1] != 2 {
 		t.Fatal(p.restores, p.allowances)
 	}
 }

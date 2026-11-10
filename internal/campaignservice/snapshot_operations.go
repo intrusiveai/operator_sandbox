@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"slices"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
@@ -14,6 +13,9 @@ import (
 )
 
 func (s *Service) stateOperation(ctx context.Context, q stateRequest, reservation string) (stateReply, *preparation.Target, error) {
+	if !s.target().AllowsOperationFeatures(q.Operation) {
+		return stateDenied("UNSUPPORTED_CAPABILITY"), nil, nil
+	}
 	peer := s.config.Peer.(SnapshotPeer)
 	var body struct {
 		Label       string `json:"label"`
@@ -25,16 +27,6 @@ func (s *Service) stateOperation(ctx context.Context, q stateRequest, reservatio
 	}
 	_ = json.Unmarshal(q.Body, &body)
 	if q.Operation == "engine.snapshot_request" {
-
-		var public struct {
-			Capabilities struct {
-				Features []string `json:"features"`
-			} `json:"capabilities"`
-		}
-		_ = json.Unmarshal(s.target().Live().Export().PublicJSON(), &public)
-		if !slices.Contains(public.Capabilities.Features, "feature:snapshots") {
-			return stateDenied("UNSUPPORTED_CAPABILITY"), nil, nil
-		}
 		limits := s.remaining()
 		if limits["snapshot_admissions"] == 0 || limits["snapshot_bytes"] == 0 {
 			return stateDenied("SNAPSHOT_BUDGET_EXCEEDED"), nil, nil

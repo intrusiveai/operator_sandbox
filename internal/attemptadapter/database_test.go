@@ -37,6 +37,11 @@ func TestDatabaseRoutesAndKeys(t *testing.T) {
 			t.Fatalf("accepted key %s", key)
 		}
 	}
+	invalidResponse := response
+	invalidResponse.Placements = []string{"insert_array"}
+	if _, err := Resolve(e, Scopes{OperationIDs: []string{"ask"}, Routes: []Route{invalidResponse}}, []string{"oracle_outcome"}, "oracle-assisted"); err == nil {
+		t.Fatal("native-forbidden database array insertion advertised as selectable")
+	}
 	bad := state
 	bad.Pointers = []string{"/id"}
 	if validRoute(e.ExecutionFacts(), bad) {

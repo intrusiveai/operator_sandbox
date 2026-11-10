@@ -69,7 +69,7 @@ func Resolve(e *capabilities.Export, scopes Scopes, evidenceKinds []string, ceil
 	_ = json.Unmarshal(raw, &copy)
 	facts := e.ExecutionFacts()
 	p := &Policy{scopes: copy, facts: facts, sourceDigest: e.SourceDigest()}
-	cp := capabilities.Policy{AllowedRefs: []string{}, SelectableActionRefs: []string{}, FeedbackCeiling: ceiling, FeedbackKinds: append([]string{}, evidenceKinds...)}
+	cp := capabilities.Policy{AllowedRefs: []string{}, SelectableActionRefs: []string{}, FeedbackCeiling: ceiling, FeedbackKinds: []string{}}
 	if ceiling != "" && !slices.Contains([]string{"black-box", "diagnostic", "oracle-assisted"}, ceiling) {
 		return nil, ErrPolicy
 	}
@@ -94,18 +94,28 @@ func Resolve(e *capabilities.Export, scopes Scopes, evidenceKinds []string, ceil
 			cp.AllowedRefs = append(cp.AllowedRefs, ref)
 			cp.SelectableActionRefs = append(cp.SelectableActionRefs, ref)
 		}
-		if r.Target.Service != "" {
-			cp.AllowedRefs = appendUnique(cp.AllowedRefs, "service:"+r.Target.Service)
-		}
-		if r.Target.FileNamespace != "" {
-			cp.AllowedRefs = appendUnique(cp.AllowedRefs, "file_namespace:"+r.Target.FileNamespace)
-		}
 	}
+	// Resource references assert availability, not permission to mutate them.
+	// Concrete injection routes above remain the only source of action grants.
+	for _, service := range facts.Services {
+		cp.AllowedRefs = appendUnique(cp.AllowedRefs, "service:"+service.ID)
+	}
+	for _, namespace := range facts.FileNamespaces {
+		cp.AllowedRefs = appendUnique(cp.AllowedRefs, "file_namespace:"+namespace.ID)
+	}
+	if slices.Contains(facts.Features, capabilities.FeatureSnapshots) {
+		cp.AllowedRefs = appendUnique(cp.AllowedRefs, capabilities.FeatureSnapshots)
+	}
+	seenKinds := map[string]bool{}
 	for _, k := range evidenceKinds {
-		if !slices.Contains([]string{"target_output", "operation_error", "injection_delivery", "oracle_outcome"}, k) || slices.Contains(cp.AllowedRefs, "evidence:"+k) {
+		if !slices.Contains([]string{"target_output", "operation_error", "injection_delivery", "oracle_outcome"}, k) || seenKinds[k] {
 			return nil, ErrPolicy
 		}
-		cp.AllowedRefs = append(cp.AllowedRefs, "evidence:"+k)
+		seenKinds[k] = true
+		if slices.Contains(facts.EvidenceKinds, k) {
+			cp.AllowedRefs = append(cp.AllowedRefs, "evidence:"+k)
+			cp.FeedbackKinds = append(cp.FeedbackKinds, k)
+		}
 	}
 	for _, id := range copy.CallerPrincipalIDs {
 		if !identifier.MatchString(id) {
@@ -160,7 +170,7 @@ func validRoute(f capabilities.ExecutionFacts, r Route) bool {
 		if !slices.Contains(profile.Placements, nativePlacement(s)) {
 			return false
 		}
-		if s == "insert_array" && (r.Surface == "service_response" || r.Surface == "mcp_tool_result") {
+		if s == "insert_array" && (r.Surface == "service_response" || r.Surface == "mcp_tool_result" || r.Surface == "database_response") {
 			return false
 		}
 		if s == "merge_object" && len(r.MergeFields) == 0 {

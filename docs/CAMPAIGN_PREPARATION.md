@@ -159,3 +159,24 @@ report identify the timed-out operation and keep the successful invocation fact.
 The campaign still fails because the required evidence is incomplete. No target
 retry occurs. A result marked `published` was written to the transport; it does
 not prove Harness consumption or completed cleanup.
+
+## Capability availability and permissions
+
+A bundle may require an advertised `service:<id>` or `file_namespace:<id>` even
+when `scopes.routes` is empty. These references establish that the target has the
+resource; they do not authorize Harness to read or modify it. Injection actions
+still require an explicit, valid route with the permitted selector, scope and
+placement. PostgreSQL response routes cannot use `insert_array`, matching
+Interceptor's native response-injection restrictions.
+
+Snapshot-capable Interceptor targets resolve `feature:snapshots` automatically.
+The same resolved feature controls required-bundle admission and the snapshot and
+restore tools. `limits.max_snapshot_admissions` and `limits.max_snapshot_bytes`
+control new creation separately; zero or exhausted creation allowances do not
+remove checkpoint listing, inspection or restoration. Those operations still
+require campaign ownership, compatibility, readiness and their own budgets.
+
+`feedback.allowed_kinds` is a permission ceiling, not a demand that the target
+provide every listed kind. Operator intersects it with the target's available
+evidence and applies the effective feedback profile. A bundle explicitly requiring
+unavailable evidence is rejected; optional requests are recorded as gaps.

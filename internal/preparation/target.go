@@ -138,6 +138,12 @@ func (t *Target) InstanceID() string              { return t.instance }
 func (t *Target) HostPolicyJSON() []byte          { return bytes.Clone(t.hostPolicy) }
 func (t *Target) BundleJSON() []byte              { return t.bundle.JSON() }
 func (t *Target) ReadKinds() []string             { return t.compatibility.AllowedKinds() }
+
+// AllowsOperationFeatures applies the frozen policy's feature prerequisites.
+func (t *Target) AllowsOperationFeatures(operation string) bool {
+	return t.policy.CapabilityPolicy().AllowsOperationFeatures(operation)
+}
+
 func (t *Target) Binding() campaign.TargetBinding {
 	b := t.live.Binding()
 	return campaign.TargetBinding{Adapter: t.live.Export().Adapter(), SessionID: b.SessionID, WorkerInstanceID: b.WorkerInstanceID, NativeFeedbackProfile: t.live.NativeProfile(), CapabilitySourceDigest: t.live.Export().SourceDigest(), CapabilityProjectionDigest: t.live.Export().ProjectionDigest()}
