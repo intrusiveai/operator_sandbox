@@ -183,7 +183,7 @@ func writeEvidenceSummary(b *strings.Builder, r Result) {
 		}
 	}
 	for i, d := range r.WorkflowDiagnostics {
-		terminal := d.TargetFailure != nil || d.Timeout != nil || d.Stopping != ""
+		terminal := d.TargetFailure != nil || d.Timeout != nil || d.Integration != nil && d.IntegrationTerminal || d.Stopping != ""
 		if !terminal {
 			continue
 		}
@@ -385,6 +385,17 @@ func writeEvidenceSummary(b *strings.Builder, r Result) {
 		}
 	}
 	b.WriteString("## Submission errors and recovery\n\n")
+	for _, failure := range r.RecoveryFailures {
+		b.WriteString("Administrative cleanup failure (separate from original execution):\n\n")
+		dataBlock(b, failure.DiagnosticMessage())
+	}
+	for _, d := range r.WorkflowDiagnostics {
+		if d.Integration != nil && !d.IntegrationTerminal {
+			b.WriteString("Native rejection retained as operation history (not a shutdown cause):\n\n")
+			dataBlock(b, d.Message())
+		}
+	}
+
 	if len(r.Rejections) == 0 {
 		b.WriteString("No rejected service response was retained.\n\n")
 	}
@@ -448,6 +459,12 @@ func writeCleanupResolutions(b *strings.Builder, r Result) {
 		dataBlock(b, "Session: "+v.SessionID+"\nCurrently verified evidence collection: "+v.Collection)
 		for i, old := range v.History {
 			text := fmt.Sprintf("Recorded collection outcome %d: %s; reason: %s", i+1, old.State, valueOrUnknown(old.Reason))
+			if old.Failure != nil && old.Failure.Valid() {
+				text += "; " + old.Failure.DiagnosticMessage()
+			}
+			if old.CleanupFailure != nil && old.CleanupFailure.Valid() {
+				text += "; secondary cleanup: " + old.CleanupFailure.DiagnosticMessage()
+			}
 			if old.NativeStatus != 0 {
 				text += fmt.Sprintf("; native HTTP %d; native code: %s", old.NativeStatus, valueOrUnknown(old.NativeCode))
 			}

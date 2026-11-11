@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"io"
 	"mime"
 	"net"
@@ -24,30 +24,17 @@ type CallError struct {
 	Kind       string
 	Uncertain  bool
 	HTTPStatus int
+	Detail     string
 }
 
 func (e *CallError) Error() string { return "Interceptor call failed: " + e.Kind }
 
 // DiagnosticMessage selects protocol/transport facts, never a transport's text.
-func (e *CallError) DiagnosticMessage() string {
-	message := "Interceptor request failed"
-	switch e.Kind {
-	case "invalid_request":
-		message = "Interceptor request failed local validation"
-	case "canceled_before_dispatch":
-		message = "Interceptor request canceled before dispatch"
-	case "transport_unavailable":
-		message = "Interceptor transport failed; no valid response was received from the local API"
-	case "invalid_response":
-		message = "Interceptor returned a response that failed contract validation"
-	}
-	if e.Uncertain {
-		message += "; the target-side outcome is uncertain"
-	}
-	return message
-}
+func (e *CallError) DiagnosticMessage() string { return e.DiagnosticFailure().DiagnosticMessage() }
 
 type Response struct {
+	operation       string
+	requestID       string
 	raw             []byte
 	Status          int             `json:"status"`
 	Body            json.RawMessage `json:"body,omitempty"`
@@ -59,14 +46,8 @@ type Response struct {
 // must interpret the operation/code and reconcile, never assume non-execution.
 type RemoteError struct{ Response Response }
 
-func (e *RemoteError) Error() string { return "Interceptor returned a non-success response" }
-func (e *RemoteError) DiagnosticMessage() string {
-	message := "Interceptor returned a non-success response"
-	if e.Response.Status >= 100 && e.Response.Status <= 599 {
-		message = fmt.Sprintf("Interceptor returned HTTP %d; the request was not accepted as successful", e.Response.Status)
-	}
-	return message
-}
+func (e *RemoteError) Error() string             { return "Interceptor returned a non-success response" }
+func (e *RemoteError) DiagnosticMessage() string { return e.DiagnosticFailure().DiagnosticMessage() }
 func (r Response) Code() string {
 	m, e := object(r.Body)
 	if e != nil {
@@ -117,7 +98,20 @@ func (c *Client) post(ctx context.Context, route string, raw []byte) (Response, 
 	return c.postBounded(ctx, route, raw, JSONLimit)
 }
 
-func (c *Client) postBounded(ctx context.Context, route string, raw []byte, responseLimit int64) (Response, error) {
+func (c *Client) postBounded(ctx context.Context, route string, raw []byte, responseLimit int64) (result Response, callErr error) {
+	var identity struct {
+		Operation string `json:"operation"`
+		RequestID string `json:"request_id"`
+	}
+	_ = json.Unmarshal(raw, &identity)
+	if identity.Operation == "" {
+		identity.Operation = route
+	}
+	defer func() {
+		result.operation = identity.Operation
+		result.requestID = identity.RequestID
+		callErr = diagnostictext.Context(callErr, "Interceptor", identity.Operation, identity.RequestID)
+	}()
 	if len(raw) > JSONLimit || responseLimit <= 0 || responseLimit > JSONLimit || c == nil || c.http == nil {
 		return Response{}, &CallError{Kind: "invalid_request"}
 	}
@@ -135,34 +129,56 @@ func (c *Client) postBounded(ctx context.Context, route string, raw []byte, resp
 	req.Header.Set("Accept-Encoding", "identity")
 	response, err := c.http.Do(req)
 	if err != nil {
-		return Response{}, &CallError{Kind: "transport_unavailable", Uncertain: true}
+		kind := "transport_unavailable"
+		if ctx.Err() == context.DeadlineExceeded {
+			kind = "deadline_exceeded"
+		} else if ctx.Err() != nil {
+			kind = "canceled"
+		}
+		return Response{}, &CallError{Kind: kind, Uncertain: true}
 	}
 	defer response.Body.Close()
 	return readJSONResponse(ctx, response, responseLimit)
 }
 
 func readJSONResponse(ctx context.Context, response *http.Response, responseLimit int64) (Response, error) {
-	fail := func() (Response, error) {
-		return Response{}, &CallError{Kind: "invalid_response", Uncertain: true, HTTPStatus: response.StatusCode}
+	fail := func(detail string) (Response, error) {
+		return Response{}, &CallError{Kind: "invalid_response", Uncertain: true, HTTPStatus: response.StatusCode, Detail: detail}
 	}
 	media, _, err := mime.ParseMediaType(response.Header.Get("Content-Type"))
-	if err != nil || media != "application/json" || (response.Header.Get("Content-Encoding") != "" && response.Header.Get("Content-Encoding") != "identity") || response.ContentLength > responseLimit {
-		return fail()
+	if err != nil || media != "application/json" {
+		return fail("Response Content-Type must be application/json.")
+	}
+	if encoding := response.Header.Get("Content-Encoding"); encoding != "" && encoding != "identity" {
+		return fail("Response Content-Encoding must be absent or identity.")
+	}
+	if response.ContentLength > responseLimit {
+		return fail("Declared response size exceeds the configured byte limit.")
 	}
 	raw, err := io.ReadAll(io.LimitReader(response.Body, responseLimit+1))
-	if err != nil || int64(len(raw)) > responseLimit || ctx.Err() != nil {
-		return fail()
+	if ctx.Err() != nil {
+		kind := "canceled"
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			kind = "deadline_exceeded"
+		}
+		return Response{}, &CallError{Kind: kind, Uncertain: true, HTTPStatus: response.StatusCode, Detail: "Response reading stopped when the request context ended."}
+	}
+	if err != nil {
+		return fail("Response body reading was interrupted; the complete response was not received.")
+	}
+	if int64(len(raw)) > responseLimit {
+		return fail("Received response size exceeds the configured byte limit.")
 	}
 	result, err := decodeResponse(raw)
 	if err != nil {
-		return fail()
+		return fail("Response JSON or native envelope is invalid.")
 	}
 	expected := result.Status
 	if expected == 204 {
 		expected = 200
 	}
 	if response.StatusCode != expected {
-		return fail()
+		return fail("HTTP status does not match the native envelope status.")
 	}
 	return result, nil
 }

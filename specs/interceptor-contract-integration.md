@@ -115,3 +115,9 @@ The release guide MUST describe selection, adoption, review, CI verification and
 promotion. Runtime documentation MUST explain compatibility failures and show how
 to inspect the expected identity. The Operator–Attack Harness contract identity
 MUST remain independent and unchanged unless its own interface changes.
+
+Runtime error propagation MUST follow
+[integration error handling](integration-error-handling.md). A native rejection
+MUST retain its selected error fields through final reporting independently of
+contract admission. Neither a new error code nor a host diagnostic implementation
+change alone requires adopting different Interceptor OpenAPI bytes.

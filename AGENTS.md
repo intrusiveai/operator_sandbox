@@ -62,3 +62,22 @@ Implementation-only changes MUST NOT force a new counterpart source pin. Package
 integrity, build provenance and optional integration-test revisions are separate.
 Do not claim document validation alone proves functional conformance, or publish
 another product's releases as part of this procedure.
+
+## Integration error handling
+
+Native state/lifecycle/recovery calls MUST use `interceptor.Call`; the native-step
+executor owns the other shared dispatch/retention boundary. Do not add per-feature
+extraction, redaction, message tables, or generic error replacements. Producers
+supply bounded `diagnostictext.Failure` facts (and preserve wrapped causes);
+operation handlers only interpret operation-specific outcomes. Retain native
+codes as data, including unfamiliar codes. Successful HTTP transport is not proof
+of operation success or a known effect.
+
+Use the existing workflow diagnostic/failure-trigger path for execution failures.
+Recoverable rejections remain history. Cleanup and persistence failures remain
+secondary and must not replace the original cause. Keep administrator diagnostics
+separate from Harness feedback visibility. Test an independent CLI inspection and
+evidence export, not only formatting. New native call sites must pass
+`TestNativeCallsUseSharedDiagnosticBoundary`. Apply the producer-owned diagnostic
+convention to other integrations too; preserve their existing specialized facts.
+See [integration error handling](specs/integration-error-handling.md).

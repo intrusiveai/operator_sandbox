@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
@@ -52,6 +53,7 @@ func New(steps *campaign.NativeSteps, guard *Guard, adapter Adapter) (*Executor,
 }
 
 type Result struct {
+	Failure *diagnostictext.Failure
 	// Boundary is a host-selected failure observation, never a remote error string.
 	Boundary string
 
@@ -113,7 +115,25 @@ func (e *Executor) executionContext(parent context.Context, p interceptor.Prepar
 
 // Execute dispatches a frozen, authorized native step once. Every possible effect
 // is preceded by a committed marker; every returned result by a committed result.
-func (e *Executor) Execute(ctx context.Context, parent string, p interceptor.PreparedOperation) (Result, error) {
+func (e *Executor) Execute(ctx context.Context, parent string, p interceptor.PreparedOperation) (result Result, executeErr error) {
+	var observed interceptor.Response
+	var primary error
+	defer func() {
+		if executeErr == nil {
+			return
+		}
+		cause := executeErr
+		if primary != nil {
+			cause = errors.Join(primary, executeErr)
+		}
+		if observed.Status >= 400 || observed.Status == 202 || strings.Contains(observed.Code(), "unknown") {
+			cause = diagnostictext.WithFailure(cause, observed.Failure(p.Request().Operation, p.Request().RequestID))
+		} else if primary != nil {
+			cause = interceptor.ResponseError(p.Request().Operation, p.Request().RequestID, observed, cause)
+		}
+		result.Failure = diagnostictext.FailureFromError(cause)
+		executeErr = cause
+	}()
 	step, replay, err := e.steps.Begin(parent, p)
 	if err != nil {
 		return Result{}, err
@@ -128,6 +148,7 @@ func (e *Executor) Execute(ctx context.Context, parent string, p interceptor.Pre
 	}
 	proof, err := e.guard.check(ctx, p, false)
 	if err != nil {
+		primary = err
 		r, failure := e.finish(step.ID, NotDispatched, nil)
 		r.Boundary = "preflight_failure"
 		return r, failure
@@ -151,7 +172,9 @@ func (e *Executor) Execute(ctx context.Context, parent string, p interceptor.Pre
 		return e.finish(step.ID, NotDispatched, nil)
 	}
 	r, err := e.guard.peer.Execute(ctx, p)
+	observed = r
 	if err != nil {
+		primary = err
 		outcome := Unknown
 		boundary := "unknown_boundary_failure"
 		var call *interceptor.CallError
@@ -176,6 +199,7 @@ func (e *Executor) Execute(ctx context.Context, parent string, p interceptor.Pre
 	raw := r.Bytes()
 	verified, err := interceptor.ParseResponse(raw)
 	if err != nil {
+		primary = err
 		result, failure := e.finish(step.ID, Unknown, nil)
 		result.Boundary = "native_response_invalid"
 		return result, failure
@@ -187,6 +211,7 @@ func (e *Executor) Execute(ctx context.Context, parent string, p interceptor.Pre
 	}
 	outcome, err := e.adapter.Interpret(p, verified)
 	if err != nil || outcome != Succeeded && outcome != Failed && outcome != Unknown {
+		primary = err
 		result, failure := e.finish(step.ID, Unknown, raw)
 		result.Boundary = "native_response_invalid"
 		return result, failure
@@ -236,22 +261,20 @@ func (e *Executor) Reconcile(ctx context.Context, id string, query interceptor.P
 	defer cancel()
 	if _, err = e.guard.check(ctx, query, true); err != nil {
 		if save := e.steps.ResolveReconciliation(id, nil); save != nil {
-			return interceptor.OperationRecord{}, save
+			return interceptor.OperationRecord{}, errors.Join(err, save)
 		}
 		return interceptor.OperationRecord{}, err
 	}
-	response, err := e.guard.peer.Execute(ctx, query)
-	raw := response.Bytes()
-	if err != nil {
-		raw = nil
-	} else if response, err = interceptor.ParseResponse(raw); err != nil {
-		raw = nil
-	}
-	if save := e.steps.ResolveReconciliation(id, raw); save != nil {
-		return interceptor.OperationRecord{}, save
-	}
-	if err != nil {
-		return interceptor.OperationRecord{}, ErrUnknown
-	}
-	return interceptor.DecodeOperationRecord(response, original)
+	return interceptor.Call(query.Request().Operation, query.Request().RequestID,
+		func() (interceptor.Response, error) { return e.guard.peer.Execute(ctx, query) },
+		func(r interceptor.Response) error {
+			var raw []byte
+			if _, err := r.Validate(); err == nil {
+				raw = r.Bytes()
+			}
+			return e.steps.ResolveReconciliation(id, raw)
+		},
+		func(r interceptor.Response) (interceptor.OperationRecord, error) {
+			return interceptor.DecodeOperationRecord(r, original)
+		})
 }

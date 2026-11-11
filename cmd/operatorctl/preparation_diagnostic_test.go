@@ -27,6 +27,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/capabilities"
 	"github.com/intrusiveai/operator_sandbox/internal/contractstore"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
 	"github.com/intrusiveai/operator_sandbox/internal/hostrun"
 	"github.com/intrusiveai/operator_sandbox/internal/imagerelease"
@@ -357,7 +358,7 @@ func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
 					}
 					w.Header().Set("Content-Type", "application/json")
 					w.WriteHeader(409)
-					fmt.Fprintf(w, `{"status":409,"session_revision":0,"body":{"code":"conflict","message":%q}}`, diagnosticSecret)
+					fmt.Fprintf(w, `{"status":409,"session_revision":0,"body":{"code":"conflict","message":%q,"private":%q}}`, "permission denied; authorization: Bearer "+diagnosticSecret, diagnosticSecret)
 				}))
 				server.Listener.Close()
 				server.Listener = listener
@@ -415,7 +416,7 @@ func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
 						if d.Stage != "target preparation" || d.Message != "Operator preparation (target preparation): scenario bundle is incompatible with the selected target: action:injection:database_response (host_policy)" {
 							t.Fatal(d)
 						}
-					} else if d.Stage != "Interceptor attachment" || !strings.Contains(d.Message, "HTTP 409") {
+					} else if d.Stage != "Interceptor attachment" || !strings.Contains(d.Message, "HTTP 409") || !strings.Contains(d.Message, "conflict") || !strings.Contains(d.Message, "permission denied") {
 						t.Fatal(d)
 					}
 					if mode == "foreground" {
@@ -841,4 +842,32 @@ func TestTargetFailureForegroundAndWorkerOutput(t *testing.T) {
 		t.Fatal("foreground/supervised mismatch")
 	}
 	t.Log(stderr)
+}
+
+func TestIntegrationFailureForegroundAndWorkerOutput(t *testing.T) {
+	dir, paths, deps, _ := startFixture(t)
+	detail := campaign.NewWorkflowDiagnostic("snapshot-1", "operator", "integration", "remote_rejection", "", "", "")
+	detail.Integration = &diagnostictext.Failure{Component: "Interceptor", Operation: "snapshot.create", RequestID: "request-1", Category: "remote_rejection", HTTPStatus: 409, Code: "snapshot_failed", Message: "scan mutable root /state/app: permission denied", RemoteRequestID: "req-native-1"}
+	detail.IntegrationTerminal = true
+	d := &hostrun.PreparationDiagnostic{Stage: "Operator integration", Message: detail.Message(), Workflow: detail, HarnessExit: campaign.HarnessExit{Outcome: "failed", ExitObserved: true, ExitCode: 137, Forced: true, StderrState: "empty", Details: "campaign journal event launch.exit"}}
+	deps.run = func(context.Context, string, string, string) (workerjob.Result, error) {
+		return workerjob.Result{Code: "execution_failed", Diagnostic: d, CompletionRecording: "recorded"}, detail
+	}
+	code, _, stderr := invokeStart(t, context.Background(), "start", []string{"--run", dir}, paths, deps)
+	if code != 1 {
+		t.Fatal(code, stderr)
+	}
+	for _, want := range []string{"Campaign execution failed", "Interceptor", "snapshot.create", "HTTP 409", "snapshot_failed", "permission denied", "req-native-1", "Execution will not resume."} {
+		if !strings.Contains(stderr, want) {
+			t.Fatalf("missing %q: %s", want, stderr)
+		}
+	}
+	if strings.Index(stderr, "permission denied") > strings.Index(stderr, "code 137") {
+		t.Fatal("shutdown obscured native cause", stderr)
+	}
+	var supervised bytes.Buffer
+	printWorkerFailure(&supervised, "execution_failed", d, "recorded")
+	if supervised.String() != stderr {
+		t.Fatal("foreground and supervised output differ")
+	}
 }

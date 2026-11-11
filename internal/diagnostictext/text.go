@@ -38,20 +38,7 @@ func FromError(err error) (string, bool) {
 			}
 			return message, message != ""
 		}
-		switch wrapped := err.(type) {
-		case interface{ Unwrap() []error }:
-			err = nil
-			for _, primary := range wrapped.Unwrap() {
-				if primary != nil {
-					err = primary
-					break
-				}
-			}
-		case interface{ Unwrap() error }:
-			err = wrapped.Unwrap()
-		default:
-			return "", false
-		}
+		err = unwrapPrimary(err)
 	}
 	return "", false
 }
@@ -125,4 +112,19 @@ func Safe(text string, limit int) (string, string) {
 		return "", ""
 	}
 	return Select(text, limit, Redactor(nil))
+}
+
+// unwrapPrimary follows wrappers without promoting secondary joined failures.
+func unwrapPrimary(err error) error {
+	switch wrapped := err.(type) {
+	case interface{ Unwrap() []error }:
+		for _, primary := range wrapped.Unwrap() {
+			if primary != nil {
+				return primary
+			}
+		}
+	case interface{ Unwrap() error }:
+		return wrapped.Unwrap()
+	}
+	return nil
 }

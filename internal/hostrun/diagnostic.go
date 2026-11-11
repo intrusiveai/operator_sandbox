@@ -163,6 +163,9 @@ func preparationMessage(err error) string {
 // ExecutionDetails reports known host boundaries without ranking coexisting
 // errors as causal proof. It never prints an unrestricted error chain.
 func ExecutionDetails(err error) *PreparationDiagnostic {
+	if detail, ok := diagnostictext.FromError(err); ok {
+		return &PreparationDiagnostic{Stage: "Operator execution", Message: detail}
+	}
 	if errors.Is(err, campaign.ErrStorage) || errors.Is(err, campaign.ErrQuota) || errors.Is(err, syscall.ENOSPC) {
 		return &PreparationDiagnostic{Stage: "Operator campaign evidence retention", Message: "Operator could not retain required campaign evidence: " + preparationMessage(err) + ". Any target effect must be determined from retained execution records; do not replay."}
 	}

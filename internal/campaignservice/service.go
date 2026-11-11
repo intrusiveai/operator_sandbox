@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 	"slices"
 	"sync"
 	"sync/atomic"
@@ -17,10 +16,12 @@ import (
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/attemptadapter"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/httpstarget"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/nativeexec"
+	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 	"github.com/intrusiveai/operator_sandbox/internal/preparation"
 	"github.com/intrusiveai/operator_sandbox/internal/termination"
 	"github.com/intrusiveai/operator_sandbox/internal/transport"
@@ -95,6 +96,7 @@ type Service struct {
 	evidenceMu           sync.Mutex
 }
 type TerminalResult struct {
+	Failures             *[]diagnostictext.Failure      `json:"failures,omitempty"`
 	Dispatched           *int64                         `json:"attempts_dispatched,omitempty"`
 	AssessmentState      string                         `json:"assessment_state,omitempty"`
 	ConclusionDiagnostic *campaign.ConclusionDiagnostic `json:"conclusion_diagnostic,omitempty"`
@@ -197,7 +199,7 @@ func New(ctx context.Context, c Config) (*Service, error) {
 	s.history = map[string]attemptadapter.Parent{}
 	s.checkpointLineage = map[string]nativeLineage{}
 	s.gate <- struct{}{}
-	b, err := attemptadapter.NewBroker(attemptadapter.BrokerConfig{Catalog: c.Prepared.Target().Protocol().Catalog(), Protocol: c.Prepared.Target().Protocol(), Writer: w, Attempts: a, Deadline: deadline, AttemptAllowanceMS: c.Prepared.Target().Profile().Settings().OperationTimeoutMS, OperationTimeouts: s.operationTimeouts, Admitted: s.admitted.Load, Prepare: s.prepare, ResolveAttempt: s.resolveAttempt, Rejection: s.recordArgumentRejection, TimeoutDiagnostic: s.recordAttemptTimeout, TargetDiagnostic: s.recordTargetFailure, Cleanup: s.cleanupTarget, ReadKinds: func() []string { return s.target().ReadKinds() }})
+	b, err := attemptadapter.NewBroker(attemptadapter.BrokerConfig{Catalog: c.Prepared.Target().Protocol().Catalog(), Protocol: c.Prepared.Target().Protocol(), Writer: w, Attempts: a, Deadline: deadline, AttemptAllowanceMS: c.Prepared.Target().Profile().Settings().OperationTimeoutMS, OperationTimeouts: s.operationTimeouts, Admitted: s.admitted.Load, Prepare: s.prepare, ResolveAttempt: s.resolveAttempt, Rejection: s.recordArgumentRejection, TimeoutDiagnostic: s.recordAttemptTimeout, TargetDiagnostic: s.recordTargetFailure, IntegrationDiagnostic: s.recordIntegrationFailure, Cleanup: s.cleanupTarget, ReadKinds: func() []string { return s.target().ReadKinds() }})
 	if err != nil {
 		w.Fence().Stop(err)
 		return nil, err
@@ -254,13 +256,17 @@ func (s *Service) watchTarget() {
 				continue
 			}
 			if err != nil || !status.Ready() || !status.Matches(s.target().InstanceID(), s.target().Live().Binding()) {
-				s.Stop(ErrService)
+				s.Stop(interceptor.StatusError(status, err, "status-watch"))
 				return
 			}
 		}
 	}
 }
-func (s *Service) Stop(err error) { s.admitted.Store(false); s.writer.Fence().Stop(err) }
+func (s *Service) Stop(err error) {
+	s.admitted.Store(false)
+	err = errors.Join(err, s.recordIntegrationFailure(err, ""))
+	s.writer.Fence().Stop(err)
+}
 func (s *Service) acquire(ctx context.Context) error {
 	select {
 	case <-ctx.Done():
@@ -304,7 +310,7 @@ func (s *Service) inspectTarget(ctx context.Context, terminal bool, t *preparati
 	campaignID := t.Live().CampaignID()
 	status, err := s.config.Peer.Status(ctx, campaignID)
 	if err != nil || status.CampaignID != campaignID || !status.Matches(t.InstanceID(), b) || (!terminal && !status.Ready()) {
-		return interceptor.SessionStatus{}, ErrService
+		return interceptor.SessionStatus{}, interceptor.StatusError(status, err, "status-inspect")
 	}
 	deadline, _ := ctx.Deadline()
 	if deadline.IsZero() {
@@ -315,24 +321,24 @@ func (s *Service) inspectTarget(ctx context.Context, terminal bool, t *preparati
 	if err != nil {
 		return interceptor.SessionStatus{}, err
 	}
-	r, err := s.config.Peer.Execute(ctx, p)
-	if logErr := s.log("service.native-status", p.Bytes(), boundedResponse(r), terminal, false); logErr != nil {
-		return interceptor.SessionStatus{}, logErr
-	}
+	view, err := interceptor.Call("session.status", id,
+		func() (interceptor.Response, error) { return s.config.Peer.Execute(ctx, p) },
+		func(r interceptor.Response) error {
+			return s.log("service.native-status", p.Bytes(), boundedResponse(r), terminal, false)
+		},
+		func(r interceptor.Response) (interceptor.SessionStatus, error) {
+			return interceptor.DecodeSessionStatus(r, campaignID, b)
+		})
 	if err != nil {
 		return interceptor.SessionStatus{}, err
 	}
-	if len(boundedResponse(r)) == 0 {
-		return interceptor.SessionStatus{}, ErrService
-	}
-	view, err := interceptor.DecodeSessionStatus(r, campaignID, b)
 	var native struct {
 		Environment string `json:"environment_digest"`
 		Application string `json:"application_digest"`
 	}
 	_ = json.Unmarshal(t.Live().Export().NativeJSON(), &native)
 	if err != nil || view.Session.CapabilityManifestDigest != t.Live().Export().SourceDigest() || view.Session.FeedbackProfile != t.Live().NativeProfile() || view.Session.EnvironmentDigest != native.Environment || view.Session.AppDigest != native.Application || view.Owner.AllowTargetStop != t.Profile().Settings().AllowTargetStop || (!terminal && !view.Available) {
-		return interceptor.SessionStatus{}, ErrService
+		return interceptor.SessionStatus{}, diagnostictext.Context(diagnostictext.New("Session metadata or execution availability does not match the owned target binding."), "Interceptor", "session.status", id)
 	}
 	return view, nil
 }
@@ -587,6 +593,12 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 		}
 	}
 
+	if err != nil && s.ModelFailure() == nil {
+		if _, ok := diagnostictext.FromError(err); ok {
+			err = diagnostictext.Context(err, "Operator", request["operation"].(string), request["operation_id"].(string))
+		}
+		err = errors.Join(err, s.recordIntegrationFailure(err, request["operation_id"].(string)))
+	}
 	entry.Kind = "service.response"
 	entry.RunRevision = s.attempts.Status().RunRevision
 	entry.Content = nil
@@ -634,7 +646,7 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 				}
 				d := campaign.NewWorkflowDiagnostic(request["operation_id"].(string), source, reply.Result.Stage, reason, "", "attempt_execute", request["call_id"].(string))
 				d.RetainDetails("The target operation result was "+reply.Result.Status+"; failure origin unknown. Inspect its retained execution evidence. The operation will not be replayed.", "", nil)
-				if known := s.WorkflowFailure(); known != nil && (known.Timeout != nil || known.TargetFailure != nil) && known.OperationID == d.OperationID {
+				if known := s.WorkflowFailure(); known != nil && (known.Timeout != nil || known.TargetFailure != nil || known.Integration != nil) && known.OperationID == d.OperationID {
 					return result, nil
 				}
 				s.workflowDiagnostic.Store(&d)

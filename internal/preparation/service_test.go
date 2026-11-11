@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 	"os"
 	"path/filepath"
 	"strings"
@@ -18,40 +17,47 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/campaignservice"
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
+	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 	"github.com/intrusiveai/operator_sandbox/internal/preparation"
 	"github.com/intrusiveai/operator_sandbox/internal/targetprofile"
 	"github.com/intrusiveai/operator_sandbox/internal/transport"
 )
 
 type peer struct {
-	turnError           string
-	invokeTarget        func() string
-	delayOperation      string
-	delay               time.Duration
-	feedbackView        interceptor.ObservationView
-	statusSample        *delayedStatus
-	mu                  sync.Mutex
-	input               preparation.Input
-	calls               []string
-	revision            uint64
-	closed              bool
-	unknownClose        bool
-	unknownDelete       bool
-	checkpoints         []interceptor.Checkpoint
-	contexts            map[string]interceptor.AttemptContext
-	checkpointContexts  map[string]map[string]interceptor.AttemptContext
-	allowances          []int64
-	restoreMode         string
-	restores            int
-	block               chan struct{}
-	entered             chan struct{}
-	restoreEntered      chan struct{}
-	restoreRelease      chan struct{}
-	beforeRestoreResult func()
+	nativeResponses       map[string]interceptor.Response
+	turnError             string
+	invokeTarget          func() string
+	delayOperation        string
+	delay                 time.Duration
+	feedbackView          interceptor.ObservationView
+	statusSample          *delayedStatus
+	mu                    sync.Mutex
+	input                 preparation.Input
+	calls                 []string
+	revision              uint64
+	closed                bool
+	unknownClose          bool
+	unknownDelete         bool
+	checkpoints           []interceptor.Checkpoint
+	contexts              map[string]interceptor.AttemptContext
+	checkpointContexts    map[string]map[string]interceptor.AttemptContext
+	allowances            []int64
+	restoreMode           string
+	restores              int
+	block                 chan struct{}
+	entered               chan struct{}
+	restoreEntered        chan struct{}
+	restoreRelease        chan struct{}
+	beforeNativeRejection func()
+	beforeRestoreResult   func()
 }
 
 func (p *peer) Status(ctx context.Context, _ string) (interceptor.Status, error) {
 	p.mu.Lock()
+	if r, ok := p.nativeResponses["status"]; ok {
+		p.mu.Unlock()
+		return interceptor.Status{}, &interceptor.RemoteError{Response: r}
+	}
 	block, entered := p.block, p.entered
 	status := p.input.Status
 	sample := p.statusSample
@@ -95,6 +101,12 @@ func (p *peer) Execute(ctx context.Context, q interceptor.PreparedOperation) (in
 	defer p.mu.Unlock()
 	r := q.Request()
 	p.calls = append(p.calls, r.Operation)
+	if response, ok := p.nativeResponses[r.Operation]; ok {
+		if p.beforeNativeRejection != nil {
+			p.beforeNativeRejection()
+		}
+		return response, nil
+	}
 	var envelope struct {
 		Body json.RawMessage `json:"body"`
 	}

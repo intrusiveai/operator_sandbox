@@ -5,20 +5,33 @@ package campaign
 import (
 	"fmt"
 	"slices"
+
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
 // CleanupDiagnostic projects action outcomes, never unrestricted cleanup errors.
 // Empty older fields mean unconfirmed, not success.
 type CleanupDiagnostic struct {
-	Container  string `json:"harness_container"`
-	Transport  string `json:"harness_transport"`
-	Inputs     string `json:"harness_inputs"`
-	Closure    string `json:"interceptor_ownership_closure"`
-	Injections string `json:"interceptor_injection_cleanup"`
-	TargetStop string `json:"interceptor_target_stop"`
+	Failures   *[]diagnostictext.Failure `json:"failures,omitempty"`
+	Container  string                    `json:"harness_container"`
+	Transport  string                    `json:"harness_transport"`
+	Inputs     string                    `json:"harness_inputs"`
+	Closure    string                    `json:"interceptor_ownership_closure"`
+	Injections string                    `json:"interceptor_injection_cleanup"`
+	TargetStop string                    `json:"interceptor_target_stop"`
 }
 
 func (d CleanupDiagnostic) Valid() bool {
+	if d.Failures != nil {
+		if len(*d.Failures) > 16 {
+			return false
+		}
+		for _, f := range *d.Failures {
+			if !f.Valid() {
+				return false
+			}
+		}
+	}
 	for _, field := range []string{d.Container, d.Transport, d.Inputs} {
 		if !slices.Contains([]string{"", "removed", "retained", "unconfirmed", "not-created"}, field) {
 			return false
@@ -33,5 +46,11 @@ func (d CleanupDiagnostic) Summary() string {
 		}
 		return s
 	}
-	return fmt.Sprintf("Owned cleanup actions: Harness container removal %s; transport removal %s; input removal %s; Interceptor ownership closure %s; injection cleanup %s; target stop %s. See service.terminal-result and launch.terminal evidence.", known(d.Container), known(d.Transport), known(d.Inputs), known(d.Closure), known(d.Injections), known(d.TargetStop))
+	text := fmt.Sprintf("Owned cleanup actions: Harness container removal %s; transport removal %s; input removal %s; Interceptor ownership closure %s; injection cleanup %s; target stop %s. See service.terminal-result and launch.terminal evidence.", known(d.Container), known(d.Transport), known(d.Inputs), known(d.Closure), known(d.Injections), known(d.TargetStop))
+	if d.Failures != nil {
+		for _, f := range *d.Failures {
+			text += " Cleanup failure: " + f.DiagnosticMessage() + "."
+		}
+	}
+	return text
 }

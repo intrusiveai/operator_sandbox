@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/termination"
 )
@@ -22,16 +23,17 @@ type Peer interface {
 	ExecuteLifecycle(context.Context, interceptor.PreparedLifecycle) (interceptor.Response, error)
 }
 type Outcome struct {
-	CampaignID       string `json:"campaign_id"`
-	ManifestDigest   string `json:"run_manifest_digest,omitempty"`
-	AttachmentDigest string `json:"attachment_digest,omitempty"`
-	State            string `json:"state"`
-	Reason           string `json:"reason"`
-	Closure          string `json:"closure"`
-	Cleanup          string `json:"cleanup"`
-	CleanupConfirmed int    `json:"cleanup_confirmed"`
-	CleanupRemaining int    `json:"cleanup_remaining"`
-	TargetStop       string `json:"target_stop"`
+	Failures         []diagnostictext.Failure `json:"failures,omitempty"`
+	CampaignID       string                   `json:"campaign_id"`
+	ManifestDigest   string                   `json:"run_manifest_digest,omitempty"`
+	AttachmentDigest string                   `json:"attachment_digest,omitempty"`
+	State            string                   `json:"state"`
+	Reason           string                   `json:"reason"`
+	Closure          string                   `json:"closure"`
+	Cleanup          string                   `json:"cleanup"`
+	CleanupConfirmed int                      `json:"cleanup_confirmed"`
+	CleanupRemaining int                      `json:"cleanup_remaining"`
+	TargetStop       string                   `json:"target_stop"`
 }
 
 func encoded(v any) []byte { raw, _ := json.Marshal(v); return raw }
@@ -121,6 +123,14 @@ func finalize(ctx context.Context, a *campaign.NativeRecovery, f facts, peer Pee
 	}
 	defer func() { err = errors.Join(err, a.Finish(out)) }()
 	out.Reason = "native_status_unconfirmed"
+	retainFailure := func(operation string, e error) {
+		if e == nil || len(out.Failures) >= 16 {
+			return
+		}
+		if f := diagnostictext.FailureFromError(diagnostictext.Context(e, "Interceptor", operation, "")); f != nil {
+			out.Failures = append(out.Failures, *f)
+		}
+	}
 	query := func() (interceptor.Status, error) {
 		if ctx.Err() != nil {
 			return interceptor.Status{}, ctx.Err()
@@ -130,33 +140,36 @@ func finalize(ctx context.Context, a *campaign.NativeRecovery, f facts, peer Pee
 		}
 		s, e := peer.Status(ctx, id)
 		if e != nil {
-			_ = a.Record("status-failure", encoded(map[string]string{"reason": "unavailable"}))
+			retainFailure("status", e)
+			_ = a.Record("status-failure", encoded(out.Failures))
 			return s, e
 		}
 		if e = a.Record("status-result", encoded(s)); e != nil {
 			return s, e
 		}
 		if s.CampaignID != id || !s.Matches(f.instance, f.binding) || s.Phase == "transitioning" {
-			return s, campaign.ErrInvalid
+			e = interceptor.StatusError(s, nil, "recovery-status")
+			retainFailure("status", e)
+			return s, e
 		}
 		return s, nil
 	}
-	call := func(kind string, p interceptor.PreparedOperation) (interceptor.Response, error) {
+	call := func(kind string, p interceptor.PreparedOperation, decode func(interceptor.Response) (interceptor.Response, error)) (interceptor.Response, error) {
 		if ctx.Err() != nil {
 			return interceptor.Response{}, ctx.Err()
 		}
 		if e := a.Record(kind+"-intent", p.Bytes()); e != nil {
 			return interceptor.Response{}, e
 		}
-		r, e := peer.Execute(ctx, p)
-		if len(r.Bytes()) == 0 {
-			_ = a.Record(kind+"-failure", encoded(map[string]string{"reason": "unconfirmed"}))
-			return r, campaign.ErrInvalid
-		}
-		if recordErr := a.Record(kind+"-result", r.Bytes()); recordErr != nil {
-			return r, recordErr
-		}
-		return r, e
+		return interceptor.Call(p.Request().Operation, p.Request().RequestID,
+			func() (interceptor.Response, error) { return peer.Execute(ctx, p) },
+			func(r interceptor.Response) error {
+				if len(r.Bytes()) == 0 {
+					return nil
+				}
+				return a.Record(kind+"-result", r.Bytes())
+			},
+			decode)
 	}
 	deadline, _ := ctx.Deadline()
 	request := func(operation string, revision uint64) interceptor.OperationRequest {
@@ -168,12 +181,16 @@ func finalize(ctx context.Context, a *campaign.NativeRecovery, f facts, peer Pee
 		if e != nil {
 			return interceptor.SessionStatus{}, e
 		}
-		r, e := call("session-status", p)
+		var v interceptor.SessionStatus
+		_, e = call("session-status", p, func(r interceptor.Response) (interceptor.Response, error) {
+			var err error
+			v, err = interceptor.DecodeSessionStatus(r, id, f.binding)
+			return r, err
+		})
 		if e != nil {
-			return interceptor.SessionStatus{}, e
+			return v, e
 		}
-		v, e := interceptor.DecodeSessionStatus(r, id, f.binding)
-		if e != nil || v.Session.EnvironmentDigest != f.environment || v.Session.AppDigest != f.application || v.Session.CapabilityManifestDigest != f.manifest.Target.CapabilitySourceDigest || v.Session.FeedbackProfile != f.manifest.Target.NativeFeedbackProfile || v.Owner.AllowTargetStop != f.allowStop {
+		if v.Session.EnvironmentDigest != f.environment || v.Session.AppDigest != f.application || v.Session.CapabilityManifestDigest != f.manifest.Target.CapabilitySourceDigest || v.Session.FeedbackProfile != f.manifest.Target.NativeFeedbackProfile || v.Owner.AllowTargetStop != f.allowStop {
 			return v, campaign.ErrInvalid
 		}
 		return v, nil
@@ -191,6 +208,7 @@ func finalize(ctx context.Context, a *campaign.NativeRecovery, f facts, peer Pee
 	}
 	v, e := inspect()
 	if e != nil {
+		retainFailure("session.status", e)
 		return out, nil
 	}
 	if v.Available {
@@ -202,11 +220,12 @@ func finalize(ctx context.Context, a *campaign.NativeRecovery, f facts, peer Pee
 		if e != nil {
 			return out, e
 		}
-		r, e := call("close", p)
-		if e == nil {
-			_, e = interceptor.DecodeClosure(r, id)
-		}
+		_, e = call("close", p, func(r interceptor.Response) (interceptor.Response, error) {
+			_, err := interceptor.DecodeClosure(r, id)
+			return r, err
+		})
 		if e != nil {
+			retainFailure("session.owner", e)
 			out.Reason = "closure_unconfirmed"
 			return out, nil
 		}
@@ -215,6 +234,10 @@ func finalize(ctx context.Context, a *campaign.NativeRecovery, f facts, peer Pee
 		}
 		v, e = inspect()
 		if e != nil || v.Available {
+			if e == nil {
+				e = diagnostictext.New("Execution remains available after closure confirmation.")
+			}
+			retainFailure("session.status", e)
 			out.Reason = "closure_unconfirmed"
 			return out, nil
 		}
@@ -232,10 +255,14 @@ func finalize(ctx context.Context, a *campaign.NativeRecovery, f facts, peer Pee
 			if e != nil {
 				return out, e
 			}
-			r, e := call("delete", p)
-			if e != nil || r.SessionRevision < v.Session.Revision || !(r.Status == 204 && (len(r.Body) == 0 || string(r.Body) == "null") && r.SessionRevision > v.Session.Revision || r.Status == 404 && r.Code() == "not_found") {
+			r, e := call("delete", p, func(r interceptor.Response) (interceptor.Response, error) {
+				return interceptor.DecodeDeletion(r, v.Session.Revision)
+			})
+
+			if e != nil {
 				out.Cleanup = "unconfirmed"
 				out.Reason = "cleanup_unconfirmed"
+				retainFailure("injection.delete", e)
 				break
 			}
 			v.Session.Revision = r.SessionRevision
@@ -252,17 +279,19 @@ func finalize(ctx context.Context, a *campaign.NativeRecovery, f facts, peer Pee
 			e = a.Record("stop-intent", p.Bytes())
 		}
 		if e == nil {
-			r, callErr := peer.ExecuteLifecycle(ctx, p)
-			if len(r.Bytes()) > 0 {
-				e = a.Record("stop-result", r.Bytes())
+			_, e = interceptor.Call("session.stop", p.Request().OperationID,
+				func() (interceptor.Response, error) { return peer.ExecuteLifecycle(ctx, p) },
+				func(r interceptor.Response) error {
+					if len(r.Bytes()) == 0 {
+						return nil
+					}
+					return a.Record("stop-result", r.Bytes())
+				},
+				func(r interceptor.Response) (interceptor.StopResult, error) { return interceptor.DecodeStop(r, p) })
+			if e == nil {
+				out.TargetStop = "confirmed"
 			} else {
-				e = campaign.ErrInvalid
-				_ = a.Record("stop-failure", encoded(map[string]string{"reason": "unconfirmed"}))
-			}
-			if e == nil && callErr == nil {
-				if _, e = interceptor.DecodeStop(r, p); e == nil {
-					out.TargetStop = "confirmed"
-				}
+				retainFailure("session.stop", e)
 			}
 		}
 	}

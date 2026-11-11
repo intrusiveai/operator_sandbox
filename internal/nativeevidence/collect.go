@@ -7,7 +7,9 @@ package nativeevidence
 import (
 	"context"
 	"errors"
+
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
@@ -36,6 +38,7 @@ func Collect(ctx context.Context, peer Peer, directory string, target Target, ma
 	download, err := peer.DownloadEvidence(ctx, interceptor.EvidenceRequest{CampaignID: target.Identity.CampaignID, SessionID: target.Identity.SessionID, MaxArchiveBytes: out.LocalMaxBytes, InterceptorMaxBytes: target.NativeMaxBytes, Deadline: deadline}, directory)
 	if err != nil {
 		out.Reason = evidenceReason(err)
+		out.Failure = diagnostictext.FailureFromError(diagnostictext.Context(err, "Interceptor", "evidence.export", ""))
 		var remote *interceptor.RemoteError
 		if errors.As(err, &remote) {
 			out.NativeStatus, out.NativeCode = remote.Response.Status, remote.Response.Code()
@@ -50,8 +53,11 @@ func Collect(ctx context.Context, peer Peer, directory string, target Target, ma
 		return
 	}
 	defer func() {
-		if download.Close() != nil {
-			out.Reason = "temporary_cleanup_failed"
+		if err := download.Close(); err != nil {
+			if out.Reason == "" {
+				out.Reason = "temporary_cleanup_failed"
+			}
+			out.CleanupFailure = diagnostictext.FailureFromError(diagnostictext.Context(err, "Operator", "evidence.temporary-cleanup", ""))
 		}
 	}()
 	archive, err := download.InspectArchive(ctx, interceptor.DefaultArchiveLimits(min(out.LocalMaxBytes, target.NativeMaxBytes)))
@@ -62,6 +68,7 @@ func Collect(ctx context.Context, peer Peer, directory string, target Target, ma
 			err = ctx.Err()
 		}
 		out.Reason = evidenceReason(err)
+		out.Failure = diagnostictext.FailureFromError(diagnostictext.Context(err, "Interceptor", "evidence.export", ""))
 		return
 	}
 	verified, err := archive.VerifyProvenance(ctx, target.Identity)
@@ -72,11 +79,13 @@ func Collect(ctx context.Context, peer Peer, directory string, target Target, ma
 			err = ctx.Err()
 		}
 		out.Reason = evidenceReason(err)
+		out.Failure = diagnostictext.FailureFromError(diagnostictext.Context(err, "Interceptor", "evidence.export", ""))
 		return
 	}
 	retained, err := retain(ctx, verified)
 	if err != nil {
 		out.Reason = "retention_failed"
+		out.Failure = diagnostictext.FailureFromError(diagnostictext.Context(err, "Operator", "evidence.retain", ""))
 		return
 	}
 	out.State = retained.Provenance.State

@@ -5,14 +5,15 @@ package attemptadapter
 import (
 	"context"
 	"encoding/json"
+	"slices"
+	"time"
+
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/capabilities"
 	"github.com/intrusiveai/operator_sandbox/internal/feedback"
 	"github.com/intrusiveai/operator_sandbox/internal/httpstarget"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
-	"slices"
-	"time"
 )
 
 type httpsExecution struct {
@@ -113,7 +114,7 @@ func (p *Plan) runHTTPS(ctx context.Context, a *campaign.Attempts) (Result, erro
 	if err == nil {
 		_, err = p.catalog.Validate(contracts.EngineAttemptResultSchema, raw, contracts.OrdinaryLimit)
 	}
-	return Result{GuestJSON: raw, Receipt: receipt}, err
+	return Result{Integration: out.Failure, GuestJSON: raw, Receipt: receipt}, err
 }
 
 func (p *Plan) HTTPSParent() Parent {

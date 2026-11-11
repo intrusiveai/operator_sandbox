@@ -92,7 +92,7 @@ func TestTargetTurnFailureAndLaterCleanupEvidence(t *testing.T) {
 		close(modelCanceled)
 	}))
 	defer model.Close()
-	export := &exportPeer{err: &interceptor.RemoteError{Response: interceptor.Response{Status: 409, Body: json.RawMessage(`{"code":"evidence_unavailable_or_target_not_stopped"}`)}}}
+	export := &exportPeer{err: &interceptor.RemoteError{Response: interceptor.Response{Status: 409, Body: json.RawMessage(`{"code":"evidence_unavailable_or_target_not_stopped","message":"session has not finished evidence export","request_id":"native-export-1"}`)}}}
 	s, native, _, w, launch := serviceWithSettings(t, 0, []string{"engine.attempt_execute", "engine.observation_read"}, func(c *campaignservice.Config) {
 		evidenceSettings(export, time.Second)(c)
 		c.Evidence.MaxArchiveBytes = 1 << 20
@@ -218,13 +218,13 @@ func TestTargetTurnFailureAndLaterCleanupEvidence(t *testing.T) {
 			t.Fatal(string(raw))
 		}
 		report := string(read(t, filepath.Join(output, "report.md")))
-		for _, want := range []string{"target application turn exceeded its deadline", "context deadline exceeded", "Currently verified evidence collection: complete", "Recorded collection outcome 1: missing", "native HTTP 409", "evidence_unavailable_or_target_not_stopped", "Target stop confirmed", "injection cleanup: unconfirmed"} {
+		for _, want := range []string{"target application turn exceeded its deadline", "context deadline exceeded", "Currently verified evidence collection: complete", "Recorded collection outcome 1: missing", "native HTTP 409", "evidence_unavailable_or_target_not_stopped", "session has not finished evidence export", "native-export-1", "Target stop confirmed", "injection cleanup: unconfirmed"} {
 			if !strings.Contains(report, want) {
 				t.Fatalf("missing %q in %s", want, report)
 			}
 		}
 		events := read(t, filepath.Join(output, "events/000001.jsonl"))
-		for _, want := range []string{"context deadline exceeded", "native_http_status", "evidence_unavailable_or_target_not_stopped"} {
+		for _, want := range []string{"context deadline exceeded", "native_http_status", "evidence_unavailable_or_target_not_stopped", "session has not finished evidence export", "native-export-1"} {
 			if !bytes.Contains(events, []byte(want)) {
 				t.Fatalf("export lost %s", want)
 			}
