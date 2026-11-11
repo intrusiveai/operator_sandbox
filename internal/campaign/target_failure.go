@@ -13,17 +13,18 @@ import (
 // Detail is untrusted target text, bounded and filtered for credential patterns.
 // ResponseDigest refers to the original, private native step response.
 type TargetFailure struct {
-	NativeOperation string `json:"native_operation"`
-	Operation       string `json:"target_operation"`
-	AttemptID       string `json:"attempt_id"`
-	TurnID          string `json:"turn_id,omitempty"`
-	StepID          string `json:"step_id"`
-	ResponseDigest  string `json:"response_digest"`
-	HTTPStatus      int    `json:"http_status"`
-	Code            string `json:"native_code,omitempty"`
-	Category        string `json:"category"`
-	Detail          string `json:"detail,omitempty"`
-	Omission        string `json:"detail_omission,omitempty"`
+	Integration     *diagnostictext.Failure `json:"integration_failure,omitempty"`
+	NativeOperation string                  `json:"native_operation"`
+	Operation       string                  `json:"target_operation"`
+	AttemptID       string                  `json:"attempt_id"`
+	TurnID          string                  `json:"turn_id,omitempty"`
+	StepID          string                  `json:"step_id"`
+	ResponseDigest  string                  `json:"response_digest"`
+	HTTPStatus      int                     `json:"http_status"`
+	Code            string                  `json:"native_code,omitempty"`
+	Category        string                  `json:"category"`
+	Detail          string                  `json:"detail,omitempty"`
+	Omission        string                  `json:"detail_omission,omitempty"`
 }
 
 func (f *TargetFailure) SetDetail(raw string) {
@@ -36,6 +37,9 @@ func (f *TargetFailure) SetDetail(raw string) {
 	}
 }
 func (f TargetFailure) Valid() bool {
+	if f.Integration != nil && !f.Integration.Valid() {
+		return false
+	}
 	for _, s := range []string{f.NativeOperation, f.Operation, f.AttemptID, f.StepID} {
 		if value, why := diagnosticID(s); s == "" || value != s || why != "" {
 			return false
@@ -55,14 +59,17 @@ func (f TargetFailure) Valid() bool {
 	return text == f.Detail && why == "" && validDigest(f.ResponseDigest) && f.HTTPStatus >= 200 && f.HTTPStatus <= 599 && slices.Contains([]string{"target_turn_timeout", "target_turn_failed", "native_rejection"}, f.Category) && slices.Contains([]string{"", "not_provided", "redacted", "credential_redacted", "unsafe_control", "truncated"}, f.Omission)
 }
 func (f TargetFailure) Message() string {
+	if f.Integration != nil && f.Category != "communication_failure" && f.Category != "preflight_failure" && f.Category != "native_response_invalid" {
+		return f.Integration.DiagnosticMessage() + ". Target operation: " + f.Operation + ". Campaign execution is closed; the outcome and replay restrictions remain those recorded for the attempt."
+	}
 	text := fmt.Sprintf("Interceptor reported a target application turn failure for %s during %s; a target-model failure is not established.", f.Operation, f.NativeOperation)
 	switch f.Category {
 	case "communication_failure":
-		return fmt.Sprintf("Operator lost communication with Interceptor during %s for target operation %s; that native operation's outcome is unknown. Execution is closed and will not be replayed.", f.NativeOperation, f.Operation)
+		return f.integrationDetail() + fmt.Sprintf("Operator lost communication with Interceptor during %s for target operation %s; that native operation's outcome is unknown. Execution is closed and will not be replayed.", f.NativeOperation, f.Operation)
 	case "preflight_failure":
-		return fmt.Sprintf("Operator could not complete Interceptor preflight for %s (target operation %s). This native step was not dispatched; failure origin unknown.", f.NativeOperation, f.Operation)
+		return f.integrationDetail() + fmt.Sprintf("Operator could not complete Interceptor preflight for %s (target operation %s). This native step was not dispatched; failure origin unknown.", f.NativeOperation, f.Operation)
 	case "native_response_invalid":
-		return fmt.Sprintf("Operator rejected Interceptor's response during %s for target operation %s; the response could not establish the target outcome. Execution is closed and will not be replayed.", f.NativeOperation, f.Operation)
+		return f.integrationDetail() + fmt.Sprintf("Operator rejected Interceptor's response during %s for target operation %s; the response could not establish the target outcome. Execution is closed and will not be replayed.", f.NativeOperation, f.Operation)
 	case "unknown_boundary_failure":
 		return fmt.Sprintf("Operator could not confirm Interceptor's response during %s for target operation %s; failure origin unknown. Execution is closed and will not be replayed.", f.NativeOperation, f.Operation)
 	}
@@ -84,4 +91,11 @@ func (f TargetFailure) Message() string {
 		text += " Description omission: " + f.Omission + "."
 	}
 	return text + " Campaign execution is closed; the operation will not be replayed."
+}
+
+func (f TargetFailure) integrationDetail() string {
+	if f.Integration != nil {
+		return f.Integration.DiagnosticMessage() + ". "
+	}
+	return ""
 }

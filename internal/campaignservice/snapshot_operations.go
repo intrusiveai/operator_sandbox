@@ -5,9 +5,11 @@ package campaignservice
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/preparation"
 )
@@ -50,19 +52,32 @@ func (s *Service) stateOperation(ctx context.Context, q stateRequest, reservatio
 			return stateReply{}, nil, err
 		}
 		s.snapshotAdmissions++
-		r, err := s.stateNative(ctx, q, reservation, p)
+		var cp interceptor.Checkpoint
+		r, err := s.stateNative(ctx, q, reservation, p, func(r interceptor.Response) (interceptor.Response, error) {
+			verified, err := r.Validate()
+			if err != nil {
+				return r, err
+			}
+			if verified.Status == 429 && verified.Code() == "snapshot_bytes_exhausted" {
+				return verified, nil
+			}
+			cp, err = interceptor.DecodeSnapshotCreated(verified, p, view.Session)
+			if err == nil && verified.SessionRevision <= view.Session.Revision {
+				err = diagnostictext.New("Snapshot creation did not advance the session revision.")
+			}
+			return verified, err
+		})
 		if err != nil {
 			return stateReply{}, nil, err
 		}
 		if r.Status == 429 && r.Code() == "snapshot_bytes_exhausted" {
+			if save := s.recordNativeRejection(q.ID, &interceptor.RemoteError{Response: r}); save != nil {
+				return stateReply{}, nil, errors.Join(&interceptor.RemoteError{Response: r}, save)
+			}
 			if _, err = s.inspect(ctx, false); err != nil {
 				return stateReply{}, nil, err
 			}
 			return stateDenied("SNAPSHOT_BUDGET_EXCEEDED"), nil, nil
-		}
-		cp, err := interceptor.DecodeSnapshotCreated(r, p, view.Session)
-		if err != nil || r.SessionRevision <= view.Session.Revision {
-			return stateReply{}, nil, ErrService
 		}
 		if err = s.retainCheckpoint(q, reservation, cp); err != nil {
 			return stateReply{}, nil, err
@@ -81,6 +96,9 @@ func (s *Service) stateOperation(ctx context.Context, q stateRequest, reservatio
 		page, err := peer.ListSnapshots(ctx, interceptor.SnapshotListRequest{CampaignID: q.Campaign, SourceSessionID: body.Source, Offset: int(body.Offset), Limit: body.Limit})
 		if err != nil {
 			r, e := readError(err)
+			if save := s.recordNativeRejection(q.ID, err); save != nil {
+				return stateReply{}, nil, errors.Join(err, save)
+			}
 			return r, nil, e
 		}
 		if page.CampaignID != q.Campaign {
@@ -105,6 +123,9 @@ func (s *Service) stateOperation(ctx context.Context, q stateRequest, reservatio
 	cp, err := peer.InspectSnapshot(ctx, q.Campaign, body.Source, body.Checkpoint)
 	if err != nil {
 		r, e := readError(err)
+		if save := s.recordNativeRejection(q.ID, err); save != nil {
+			return stateReply{}, nil, errors.Join(err, save)
+		}
 		return r, nil, e
 	}
 	if cp.SourceSessionID != body.Source || cp.ID != body.Checkpoint {
@@ -149,24 +170,36 @@ func (s *Service) stateOperation(ctx context.Context, q stateRequest, reservatio
 	if err = ctx.Err(); err != nil {
 		return stateReply{}, nil, err
 	}
-	r, err := s.config.Peer.ExecuteLifecycle(ctx, p)
-	if logErr := s.stateAudit(q, reservation, "state.restore-result", nil, boundedResponse(r)); logErr != nil {
-		return stateReply{}, nil, logErr
-	}
-	if err != nil || boundedResponse(r) == nil {
-		return stateReply{}, nil, ErrService
+	var replacement interceptor.RestoreResult
+	r, err := interceptor.Call("snapshot.restore", p.Request().OperationID,
+		func() (interceptor.Response, error) { return s.config.Peer.ExecuteLifecycle(ctx, p) },
+		func(r interceptor.Response) error {
+			return s.stateAudit(q, reservation, "state.restore-result", nil, boundedResponse(r))
+		},
+		func(r interceptor.Response) (interceptor.Response, error) {
+			verified, err := r.Validate()
+			if err != nil {
+				return r, err
+			}
+			if verified.Status == 409 && verified.Code() == "checkpoint_unavailable_or_incompatible" {
+				return verified, nil
+			}
+			replacement, err = interceptor.DecodeRestore(verified, p, binding, view.Session)
+			return verified, err
+		})
+	if err != nil {
+		return stateReply{}, nil, err
 	}
 	if r.Status == 409 && r.Code() == "checkpoint_unavailable_or_incompatible" {
+		if save := s.recordNativeRejection(q.ID, &interceptor.RemoteError{Response: r}); save != nil {
+			return stateReply{}, nil, errors.Join(&interceptor.RemoteError{Response: r}, save)
+		}
 		// A precise preflight response plus a fresh healthy original binding proves
 		// execution can continue. Other errors never reopen the campaign.
 		if _, err = s.inspect(ctx, false); err != nil {
 			return stateReply{}, nil, err
 		}
 		return stateDenied("SNAPSHOT_INCOMPATIBLE"), nil, nil
-	}
-	replacement, err := interceptor.DecodeRestore(r, p, binding, view.Session)
-	if err != nil {
-		return stateReply{}, nil, err
 	}
 	status, err := s.config.Peer.Status(ctx, q.Campaign)
 	if err != nil {

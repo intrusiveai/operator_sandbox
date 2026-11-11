@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"os"
 	"path/filepath"
 	"sort"
@@ -19,7 +18,9 @@ import (
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/feedback"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/nativerecovery"
 )
@@ -72,6 +73,7 @@ type CleanupResolution struct {
 	StopArchive string                           `json:"target_stop_archive,omitempty"`
 }
 type Result struct {
+	RecoveryFailures      []diagnostictext.Failure        `json:"recovery_failures,omitempty"`
 	CleanupActions        campaign.CleanupDiagnostic      `json:"cleanup_actions,omitempty,omitzero"`
 	FailureTrigger        *campaign.FailureTrigger        `json:"failure_trigger,omitempty"`
 	CleanupResolutions    []CleanupResolution             `json:"cleanup_resolutions,omitempty"`
@@ -244,7 +246,7 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 		if event.Kind == "evidence.collection-result" {
 			var v campaign.EvidenceOutcome
 			if json.Unmarshal(event.Metadata, &v) == nil && v.ValidDiagnostic() {
-				for _, key := range []string{"session_id", "state", "reason", "native_http_status", "native_code", "native_detail_omission", "archive_digest", "local_max_bytes", "native_max_bytes", "recorded"} {
+				for _, key := range []string{"session_id", "state", "reason", "native_http_status", "native_code", "native_detail_omission", "failure", "cleanup_failure", "archive_digest", "local_max_bytes", "native_max_bytes", "recorded"} {
 					if value, ok := metadata[key]; ok {
 						keep[key] = value
 					}
@@ -549,14 +551,21 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 			}
 			if event.Kind == "service.terminal-result" && desc.Role == "response" {
 				var r struct {
-					Diagnostic json.RawMessage `json:"conclusion_diagnostic"`
-					Workflow   json.RawMessage `json:"workflow_diagnostic"`
-					Closure    string          `json:"closure"`
-					Cleanup    string          `json:"cleanup_state"`
-					Stop       string          `json:"target_stop"`
+					Failures   *[]diagnostictext.Failure `json:"failures"`
+					Diagnostic json.RawMessage           `json:"conclusion_diagnostic"`
+					Workflow   json.RawMessage           `json:"workflow_diagnostic"`
+					Closure    string                    `json:"closure"`
+					Cleanup    string                    `json:"cleanup_state"`
+					Stop       string                    `json:"target_stop"`
 				}
 				if json.Unmarshal(raw, &r) == nil {
 					result.TargetClosure, result.InjectionCleanup, result.TargetStop = r.Closure, r.Cleanup, r.Stop
+					actions := campaign.CleanupDiagnostic{Closure: r.Closure, Injections: r.Cleanup, TargetStop: r.Stop, Failures: r.Failures}
+					if actions.Valid() {
+						result.CleanupActions = actions
+						keep["cleanup_actions"], _ = json.Marshal(actions)
+						projected.Metadata, _ = json.Marshal(keep)
+					}
 					if len(result.WorkflowDiagnostics) == 0 {
 						if d := campaign.DecodeWorkflowDiagnostic(r.Workflow); d != nil {
 							result.WorkflowDiagnostics = append(result.WorkflowDiagnostics, *d)
@@ -581,13 +590,14 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 					Transport string `json:"transport_cleanup"`
 					Inputs    string `json:"input_cleanup"`
 					Terminal  struct {
+						Failures   *[]diagnostictext.Failure `json:"failures"`
 						Closure    string
 						Injections string `json:"cleanup_state"`
 						TargetStop string `json:"target_stop"`
 					} `json:"terminal"`
 				}
 				if json.Unmarshal(raw, &actions) == nil {
-					d := campaign.CleanupDiagnostic{Container: actions.Container, Transport: actions.Transport, Inputs: actions.Inputs, Closure: actions.Terminal.Closure, Injections: actions.Terminal.Injections, TargetStop: actions.Terminal.TargetStop}
+					d := campaign.CleanupDiagnostic{Failures: actions.Terminal.Failures, Container: actions.Container, Transport: actions.Transport, Inputs: actions.Inputs, Closure: actions.Terminal.Closure, Injections: actions.Terminal.Injections, TargetStop: actions.Terminal.TargetStop}
 					if d.Valid() {
 						result.CleanupActions = d
 					}
@@ -769,6 +779,17 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 			result.Gaps = append(result.Gaps, "cleanup_audit_unverified")
 		} else {
 			result.TargetClosure, result.InjectionCleanup, result.TargetStop = v.Closure, v.Cleanup, v.TargetStop
+			if len(v.Failures) > 16 {
+				result.Gaps = append(result.Gaps, "cleanup_failures_unverified")
+			} else {
+				for _, failure := range v.Failures {
+					if failure.Valid() {
+						result.RecoveryFailures = append(result.RecoveryFailures, failure)
+					} else {
+						result.Gaps = append(result.Gaps, "cleanup_failures_unverified")
+					}
+				}
+			}
 		}
 	}
 	termination, e := campaign.ReadTerminationResult(root, id)

@@ -13,6 +13,7 @@ import (
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/feedback"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/nativeexec"
@@ -20,6 +21,7 @@ import (
 
 type InjectionHandle = campaign.InjectionHandle
 type Result struct {
+	Integration *diagnostictext.Failure
 	// These values must be committed together with receipt contents before any
 	// harness reply. Native steps are already durable; this is not publication.
 	Failure    *campaign.TargetFailure
@@ -83,14 +85,9 @@ func (a *stepAdapter) Interpret(p interceptor.PreparedOperation, r interceptor.R
 	if r.Status >= 400 && r.Status < 500 {
 		f := a.nativeFailure(p, r, "native_rejection")
 		f.Code = r.Code()
-		var body struct {
-			Error struct {
-				Message string `json:"message"`
-			} `json:"error"`
-		}
-		if json.Unmarshal(r.Body, &body) == nil {
-			f.SetDetail(body.Error.Message)
-		}
+		detail := r.Failure(p.Request().Operation, p.Request().RequestID)
+		f.Integration = &detail
+		f.SetDetail(detail.Message)
 		a.failure = f
 		return nativeexec.Failed, nil
 	}
@@ -272,6 +269,13 @@ func (e *Execution) Run(ctx context.Context) (result Result, runErr error) {
 				result.Failure = &f
 			}
 		}
+		if r.Failure != nil && time.Now().Before(p.deadline) {
+			if result.Failure == nil {
+				result.Failure = &campaign.TargetFailure{NativeOperation: c.Operation, Operation: p.request.Invocation.OperationID, AttemptID: p.request.AttemptID, StepID: r.Step.ID, Category: "unknown_boundary_failure", Omission: "not_provided"}
+			}
+			result.Failure.Integration = r.Failure
+		}
+
 		if r.Step.ID != "" {
 			result.StepIDs = append(result.StepIDs, r.Step.ID)
 		}

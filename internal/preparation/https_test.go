@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"slices"
 	"sync/atomic"
 	"testing"
@@ -237,6 +238,21 @@ func TestHTTPSFailuresCloseExecutionAndRetainOutcome(t *testing.T) {
 				t.Fatal(e)
 			}
 			report := reportResult(t, root, receipt)
+			if mode == "status" {
+				d := s.WorkflowFailure()
+				if d == nil || d.Integration == nil || d.Integration.Component != "HTTPS target" || d.Integration.HTTPStatus != 500 || d.Integration.Category != "http_rejection" {
+					t.Fatalf("lost HTTPS cause: %+v", d)
+				}
+				found := false
+				for _, saved := range report.WorkflowDiagnostics {
+					if saved.Integration != nil && *saved.Integration == *d.Integration {
+						found = true
+					}
+				}
+				if !found {
+					t.Fatal("export lost HTTPS failure facts")
+				}
+			}
 			if len(report.Attempts) != 1 {
 				t.Fatal(report)
 			}
@@ -270,7 +286,7 @@ func TestHTTPSInterruptedPreparationRecoveryNeverContactsNative(t *testing.T) {
 		t.Fatal(out, e)
 	}
 	again, e := nativerecovery.Run(context.Background(), root, "campaign-1", true, &peer{})
-	if e != nil || again != out {
+	if e != nil || !reflect.DeepEqual(again, out) {
 		t.Fatal(again, e)
 	}
 }

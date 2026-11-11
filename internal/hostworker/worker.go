@@ -15,6 +15,7 @@ import (
 
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/campaignservice"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 	"github.com/intrusiveai/operator_sandbox/internal/hostlifetime"
 	"github.com/intrusiveai/operator_sandbox/internal/imagerelease"
@@ -242,7 +243,25 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 			exitRetained = saveErr == nil
 			runErr = errors.Join(runErr, saveErr)
 		}
-		_ = c.Channel.Close()
+		retainCleanup := func(operation string, cause error) {
+			if cause == nil {
+				return
+			}
+			var failures []diagnostictext.Failure
+			if result.Terminal.Failures != nil {
+				failures = append(failures, (*result.Terminal.Failures)...)
+			}
+			if len(failures) < 16 {
+				if f := diagnostictext.FailureFromError(diagnostictext.Context(cause, "Operator", operation, "")); f != nil {
+					failures = append(failures, *f)
+				}
+			}
+			result.Terminal.Failures = &failures
+		}
+		if closeErr := c.Channel.Close(); closeErr != nil {
+			retainCleanup("transport.close", closeErr)
+			runErr = errors.Join(runErr, closeErr)
+		}
 		// Unknown create may have left a stopped container retaining these mounts.
 		// Unknown termination may still have live execution. Preserve both explicitly.
 		safe := !created || result.Termination.Outcome.Confirmed
@@ -251,6 +270,7 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 				result.ContainerCleanup = "removed"
 			} else {
 				result.ContainerCleanup = "unconfirmed"
+				retainCleanup("container.remove", err)
 				runErr = errors.Join(runErr, err)
 			}
 		}
@@ -258,15 +278,19 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 			if err = c.Channel.CleanupAfterExit(true); err == nil {
 				result.TransportCleanup = "removed"
 			} else {
+				retainCleanup("transport.remove", err)
 				runErr = errors.Join(runErr, err)
 			}
 			if err = c.Tree.Discard(); err == nil {
 				result.InputCleanup = "removed"
 			} else {
+				retainCleanup("inputs.remove", err)
 				runErr = errors.Join(runErr, err)
 			}
 		}
-		runErr = errors.Join(runErr, w.plan.Discard())
+		planErr := w.plan.Discard()
+		retainCleanup("launch-policy.remove", planErr)
+		runErr = errors.Join(runErr, planErr)
 		runErr = errors.Join(runErr, ctx.Err())
 		if result.HarnessExit != nil {
 			result.HarnessExit.CleanupComplete = cleanupCompleted(result)
@@ -541,5 +565,5 @@ func (w *Worker) Discard() error {
 // CleanupDiagnostic is the same bounded projection used by the saved completion
 // and CLI; per-session native evidence outcomes remain in Terminal.Evidence.
 func (r Result) CleanupDiagnostic() campaign.CleanupDiagnostic {
-	return campaign.CleanupDiagnostic{Container: r.ContainerCleanup, Transport: r.TransportCleanup, Inputs: r.InputCleanup, Closure: r.Terminal.Closure, Injections: r.Terminal.CleanupState, TargetStop: r.Terminal.TargetStop}
+	return campaign.CleanupDiagnostic{Failures: r.Terminal.Failures, Container: r.ContainerCleanup, Transport: r.TransportCleanup, Inputs: r.InputCleanup, Closure: r.Terminal.Closure, Injections: r.Terminal.CleanupState, TargetStop: r.Terminal.TargetStop}
 }

@@ -18,6 +18,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/hostlifetime"
 	"github.com/intrusiveai/operator_sandbox/internal/hostworker"
 	"github.com/intrusiveai/operator_sandbox/internal/imagerelease"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/preparation"
 	"github.com/intrusiveai/operator_sandbox/internal/staging"
@@ -100,7 +101,7 @@ func (d *workerDocker) Terminate(context.Context, campaign.DockerBinding) docker
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.kills++
-	return dockercontrol.Outcome{Confirmed: d.mode != "kill unknown", State: map[bool]string{true: "unknown", false: "exited"}[d.mode == "kill unknown"], Code: map[bool]string{true: "container_unconfirmed", false: "confirmed_stopped"}[d.mode == "kill unknown"]}
+	return dockercontrol.Outcome{KillAttempted: d.mode == "snapshot failure", Confirmed: d.mode != "kill unknown", State: map[bool]string{true: "unknown", false: "exited"}[d.mode == "kill unknown"], Code: map[bool]string{true: "container_unconfirmed", false: "confirmed_stopped"}[d.mode == "kill unknown"]}
 }
 
 func (d *workerDocker) RemoveStopped(context.Context, campaign.DockerBinding) error {
@@ -112,7 +113,11 @@ func (d *workerDocker) RemoveStopped(context.Context, campaign.DockerBinding) er
 func (d *workerDocker) ObserveExit(context.Context, campaign.DockerBinding) campaign.HarnessExit {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	return campaign.HarnessExit{ExitObserved: d.kills > 0, ExitCode: 0, StderrState: "empty"}
+	code := 0
+	if d.mode == "snapshot failure" {
+		code = 137
+	}
+	return campaign.HarnessExit{ExitObserved: d.kills > 0, ExitCode: code, StderrState: "empty"}
 }
 
 type workerPower struct {
@@ -153,11 +158,14 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 	if goruntime.GOOS != "darwin" {
 		t.Skip("full worker integration uses the macOS spool profile; FIFO mechanics have separate transport coverage")
 	}
-	for _, mode := range []string{"event loss", "requested stop", "poll cancellation", "bad bootstrap", "create lost", "start lost", "kill unknown", "model failure", "model cleanup failure", "harness limit", "harness budget"} {
+	for _, mode := range []string{"event loss", "requested stop", "poll cancellation", "bad bootstrap", "create lost", "start lost", "kill unknown", "model failure", "model cleanup failure", "harness limit", "harness budget", "snapshot failure"} {
 		t.Run(mode, func(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 			input := fixture(t)
+			if mode == "snapshot failure" {
+				snapshotInput(t)(&input)
+			}
 			target, err := preparation.Build(input)
 			if err != nil {
 				t.Fatal(err)
@@ -174,6 +182,9 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 				modelConfig = &campaignservice.ModelConfig{Policy: encode(policy), Provider: modelCalls, ProfileDigest: policy["profile_digest"].(string), Tools: encode(policy["tools"]), MaximumPromptTokens: 200}
 			}
 			var operations []string
+			if mode == "snapshot failure" {
+				operations = snapshotRoutes
+			}
 			if modelConfig != nil {
 				operations = []string{"engine.model_generate"}
 			}
@@ -220,7 +231,11 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 					t.Error("power lease released before termination")
 				}
 			}}
-			worker, err := hostworker.New(ctx, hostworker.Config{Service: campaignservice.Config{Prepared: stored, Peer: &peer{input: input, revision: 5}, StateRoot: root, Deadline: deadline, Model: modelConfig}, Docker: docker, Image: image, Requirements: requirements, Tree: tree, Channel: channel, Inputs: launch, PolicyDirectory: parent, StartRequestID: strings.Repeat("a", 32), Lifetime: hostlifetime.NewWithBackend(power, writer.Fence().Stop)})
+			nativePeer := &peer{input: input, revision: 5}
+			if mode == "snapshot failure" {
+				nativePeer.nativeResponses = map[string]interceptor.Response{"snapshot.create": nativeRejection(t, 409, "snapshot_failed", "scan mutable root /state/app: permission denied")}
+			}
+			worker, err := hostworker.New(ctx, hostworker.Config{Service: campaignservice.Config{Prepared: stored, Peer: nativePeer, StateRoot: root, Deadline: deadline, Model: modelConfig}, Docker: docker, Image: image, Requirements: requirements, Tree: tree, Channel: channel, Inputs: launch, PolicyDirectory: parent, StartRequestID: strings.Repeat("a", 32), Lifetime: hostlifetime.NewWithBackend(power, writer.Fence().Stop)})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -228,9 +243,14 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 			var result hostworker.Result
 			var runErr error
 			go func() { result, runErr = worker.Run(ctx); close(finished) }()
-			if mode == "event loss" || mode == "kill unknown" || mode == "requested stop" || mode == "poll cancellation" || strings.HasPrefix(mode, "harness ") || modelConfig != nil {
+			if mode == "event loss" || mode == "kill unknown" || mode == "requested stop" || mode == "poll cancellation" || strings.HasPrefix(mode, "harness ") || modelConfig != nil || mode == "snapshot failure" {
 				select {
 				case <-docker.ready:
+					if mode == "snapshot failure" {
+						if e := spoolPut(dir, "ordinary-out", 0, stateWire("engine.snapshot_request", "snapshot-1", 1, map[string]any{})); e != nil {
+							t.Fatal(e)
+						}
+					}
 					if modelConfig != nil {
 						modelRequest["request"].(map[string]any)["messages"].([]any)[0].(map[string]any)["content"] = string(launch.Prompt)
 						if e := spoolPut(dir, "ordinary-out", 0, stateWire("engine.model_generate", "model-1", 1, modelRequest)); e != nil {
@@ -296,7 +316,7 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 							t.Fatal(e)
 						}
 					}
-					if modelConfig == nil {
+					if modelConfig == nil && mode != "snapshot failure" {
 						if mode == "poll cancellation" {
 							select {
 							case <-docker.checking:
@@ -333,6 +353,11 @@ func TestWorkerOwnsStartupFailureAndCleanup(t *testing.T) {
 				}
 				if result.ContainerCleanup != want {
 					t.Fatal("cleanup outcome", result)
+				}
+			}
+			if mode == "snapshot failure" {
+				if result.FailureTrigger == nil || result.WorkflowDiagnostic == nil || result.WorkflowDiagnostic.Integration == nil || result.WorkflowDiagnostic.Integration.Code != "snapshot_failed" || result.HarnessExit == nil || result.HarnessExit.ExitCode != 137 || !result.HarnessExit.Forced || !strings.Contains(result.WorkflowDiagnostic.Message(), "permission denied") {
+					t.Fatalf("lost originating snapshot failure: %+v %+v", result, result.HarnessExit)
 				}
 			}
 			if result.StopAccepted != (mode == "requested stop" || mode == "poll cancellation" || strings.HasPrefix(mode, "harness ")) {

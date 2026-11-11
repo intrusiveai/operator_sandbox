@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
 // contractPin is the approved Interceptor OpenAPI identity, independent of
@@ -45,17 +47,21 @@ func ValidContractVersion(v string) bool {
 // CompatibilityError contains only selected facts from read-only discovery.
 // It never wraps transport errors or retains unvalidated response content.
 type CompatibilityError struct {
-	Reason         string `json:"reason"`
-	Expected       string `json:"expected"`
-	Actual         string `json:"actual,omitempty"`
-	HTTPStatus     int    `json:"http_status,omitempty"`
-	ExpectedSHA256 string `json:"expected_sha256,omitempty"`
-	ActualSHA256   string `json:"actual_sha256,omitempty"`
+	Failure        *diagnostictext.Failure `json:"failure,omitempty"`
+	Reason         string                  `json:"reason"`
+	Expected       string                  `json:"expected"`
+	Actual         string                  `json:"actual,omitempty"`
+	HTTPStatus     int                     `json:"http_status,omitempty"`
+	ExpectedSHA256 string                  `json:"expected_sha256,omitempty"`
+	ActualSHA256   string                  `json:"actual_sha256,omitempty"`
 }
 
 func (e *CompatibilityError) DiagnosticMessage() string { return e.Error() }
 
 func (e *CompatibilityError) Error() string {
+	if e.Failure != nil {
+		return e.Failure.DiagnosticMessage() + "; no campaign target operation was dispatched by this check"
+	}
 	if e.Reason == "hash_mismatch" || e.Reason == "version_mismatch" && e.ExpectedSHA256 != "" {
 		return fmt.Sprintf("Operator requires Interceptor contract %s (SHA-256 %s); running Interceptor reports %s (SHA-256 %s). Install a compatible release; no campaign target operation was dispatched by this check", e.Expected, e.ExpectedSHA256, e.Actual, e.ActualSHA256)
 	}
@@ -89,6 +95,7 @@ func (c *Client) ContractIdentity(ctx context.Context) (ContractIdentity, error)
 	r, err := c.post(ctx, "/v1/contract-version", []byte(`{}`))
 	failure := &CompatibilityError{Expected: SupportedContractVersion, ExpectedSHA256: SupportedContractSHA256, HTTPStatus: r.Status}
 	if err != nil {
+		failure.Failure = diagnostictext.FailureFromError(err)
 		failure.Reason = "transport_failure"
 		var call *CallError
 		if errors.As(err, &call) {
@@ -108,6 +115,8 @@ func (c *Client) ContractIdentity(ctx context.Context) (ContractIdentity, error)
 		return ContractIdentity{}, failure
 	}
 	if r.Status != 200 {
+		detail := r.Failure("contract-version", "")
+		failure.Failure = &detail
 		failure.Reason = "http_rejection"
 		if r.Status == 404 || r.Status == 405 {
 			failure.Reason = "endpoint_unavailable"
@@ -145,6 +154,9 @@ func (c *Client) CheckContract(ctx context.Context) error {
 
 // Valid permits only bounded diagnostic facts suitable for retained start records.
 func (e CompatibilityError) Valid() bool {
+	if e.Failure != nil && !e.Failure.Valid() {
+		return false
+	}
 	if !ValidContractVersion(e.Expected) || (e.HTTPStatus != 0 && (e.HTTPStatus < 100 || e.HTTPStatus > 599)) {
 		return false
 	}

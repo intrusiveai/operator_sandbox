@@ -67,6 +67,9 @@ func (b *Broker) cleanup(ctx context.Context, q wireRequest, deadline time.Time)
 		return reply{}, b.stop(err)
 	}
 	result, err := executor.Execute(ctx, q.ID, p)
+	if err != nil && b.config.IntegrationDiagnostic != nil {
+		err = errors.Join(err, b.config.IntegrationDiagnostic(err, q.ID))
+	}
 	if err != nil {
 		if errors.Is(err, nativeexec.ErrFailed) {
 			effect := "known"

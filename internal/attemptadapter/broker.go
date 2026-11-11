@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
-	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 	"slices"
 	"strings"
 	"sync"
@@ -14,9 +12,11 @@ import (
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/feedback"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/nativeexec"
+	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 )
 
 // BrokerConfig is installed host wiring. Prepare resolves verified artifacts,
@@ -24,21 +24,22 @@ import (
 // Cleanup must check current native capability/policy before supplying its target.
 // These callbacks never come from a guest or a submitted scenario bundle.
 type BrokerConfig struct {
-	OperationTimeouts  map[string]int64
-	TargetDiagnostic   func(string, string, *campaign.TargetFailure) error
-	TimeoutDiagnostic  func(string, string, []byte) error
-	Catalog            *contracts.Catalog
-	Protocol           *contracts.Protocol
-	Writer             *campaign.Writer
-	Attempts           *campaign.Attempts
-	Deadline           time.Time
-	AttemptAllowanceMS int64
-	Admitted           func() bool
-	ResolveAttempt     func(context.Context, string, []byte) ([]byte, error)
-	Rejection          func(string, error) (json.RawMessage, string, string, error)
-	Prepare            func(context.Context, []byte, time.Time) (*Plan, *nativeexec.Guard, error)
-	Cleanup            func(context.Context, time.Time) (CleanupTarget, error)
-	ReadKinds          func() []string
+	IntegrationDiagnostic func(error, string) error
+	OperationTimeouts     map[string]int64
+	TargetDiagnostic      func(string, string, *campaign.TargetFailure) error
+	TimeoutDiagnostic     func(string, string, []byte) error
+	Catalog               *contracts.Catalog
+	Protocol              *contracts.Protocol
+	Writer                *campaign.Writer
+	Attempts              *campaign.Attempts
+	Deadline              time.Time
+	AttemptAllowanceMS    int64
+	Admitted              func() bool
+	ResolveAttempt        func(context.Context, string, []byte) ([]byte, error)
+	Rejection             func(string, error) (json.RawMessage, string, string, error)
+	Prepare               func(context.Context, []byte, time.Time) (*Plan, *nativeexec.Guard, error)
+	Cleanup               func(context.Context, time.Time) (CleanupTarget, error)
+	ReadKinds             func() []string
 }
 type CleanupTarget struct {
 	Guard           *nativeexec.Guard
@@ -343,6 +344,11 @@ func (b *Broker) attempt(ctx context.Context, q wireRequest, deadline time.Time)
 			return reply{}, b.stop(e)
 		}
 		result, runErr = execution.Run(ctx)
+	}
+	if result.Integration != nil && b.config.IntegrationDiagnostic != nil {
+		if err := b.config.IntegrationDiagnostic(*result.Integration, q.ID); err != nil {
+			return reply{}, errors.Join(runErr, err)
+		}
 	}
 	if result.Failure != nil && b.config.TargetDiagnostic != nil {
 		if err := b.config.TargetDiagnostic(q.ID, q.CallID, result.Failure); err != nil {

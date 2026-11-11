@@ -11,6 +11,7 @@ import (
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/nativeevidence"
@@ -330,6 +331,7 @@ func collectEvidenceSession(ctx context.Context, a *campaign.NativeRecovery, f f
 	status, e := peer.Status(ctx, f.manifest.CampaignID)
 	if e != nil || status.InstanceID != f.instance || status.CampaignID != f.manifest.CampaignID || !status.StoreAvailable {
 		out.Reason = "native_identity_unconfirmed"
+		out.Failure = diagnostictext.FailureFromError(interceptor.StatusError(status, e, "evidence-status"))
 		return out, nil
 	}
 	if b, ok := status.Sessions[out.SessionID]; !ok || b.SessionID != out.SessionID {

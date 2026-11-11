@@ -19,36 +19,38 @@ type DiagnosticOmission struct {
 }
 
 type WorkflowDiagnostic struct {
-	ProducerOmissions  *[]DiagnosticOmission        `json:"producer_omissions,omitempty"`
-	Detail             string                       `json:"detail,omitempty"`
-	DetailOmitted      string                       `json:"detail_omitted,omitempty"`
-	CorrectionOmitted  string                       `json:"correction_omitted,omitempty"`
-	Facts              *contracts.FailureFacts      `json:"facts,omitempty"`
-	FactsOmitted       bool                         `json:"facts_omitted,omitempty"`
-	UnsupportedFields  *contracts.UnsupportedFields `json:"unsupported_fields,omitempty"`
-	Constraint         *contracts.SchemaConstraint  `json:"constraint,omitempty"`
-	Correction         string                       `json:"correction,omitempty"`
-	Budget             *contracts.ModelTokenBudget  `json:"budget,omitempty"`
-	TargetFailure      *TargetFailure               `json:"target_failure,omitempty"`
-	Timeout            *AttemptTimeout              `json:"timeout,omitempty"`
-	AttemptID          string                       `json:"attempt_id,omitempty"`
-	Invocation         string                       `json:"target_invocation,omitempty"`
-	ResultDelivery     string                       `json:"result_delivery,omitempty"`
-	HostFinalized      bool                         `json:"host_finalized,omitempty"`
-	Dispatched         int64                        `json:"attempts_dispatched,omitempty"`
-	AssessmentAccepted bool                         `json:"assessment_accepted,omitempty"`
-	CleanupCompleted   bool                         `json:"cleanup_completed,omitempty"`
-	OperationID        string                       `json:"operation_id,omitempty"`
-	Source             string                       `json:"source"`
-	Stage              string                       `json:"stage"`
-	Reason             string                       `json:"reason"`
-	FieldPath          string                       `json:"field_path,omitempty"`
-	Tool               string                       `json:"tool,omitempty"`
-	CallID             string                       `json:"call_id,omitempty"`
-	Omitted            bool                         `json:"unsafe_fields_omitted,omitempty"`
-	Stopping           string                       `json:"stopping_condition,omitempty"`
-	Observed           int64                        `json:"observed_count,omitempty"`
-	Limit              int64                        `json:"configured_limit,omitempty"`
+	IntegrationTerminal bool                         `json:"integration_terminal,omitempty"`
+	Integration         *diagnostictext.Failure      `json:"integration_failure,omitempty"`
+	ProducerOmissions   *[]DiagnosticOmission        `json:"producer_omissions,omitempty"`
+	Detail              string                       `json:"detail,omitempty"`
+	DetailOmitted       string                       `json:"detail_omitted,omitempty"`
+	CorrectionOmitted   string                       `json:"correction_omitted,omitempty"`
+	Facts               *contracts.FailureFacts      `json:"facts,omitempty"`
+	FactsOmitted        bool                         `json:"facts_omitted,omitempty"`
+	UnsupportedFields   *contracts.UnsupportedFields `json:"unsupported_fields,omitempty"`
+	Constraint          *contracts.SchemaConstraint  `json:"constraint,omitempty"`
+	Correction          string                       `json:"correction,omitempty"`
+	Budget              *contracts.ModelTokenBudget  `json:"budget,omitempty"`
+	TargetFailure       *TargetFailure               `json:"target_failure,omitempty"`
+	Timeout             *AttemptTimeout              `json:"timeout,omitempty"`
+	AttemptID           string                       `json:"attempt_id,omitempty"`
+	Invocation          string                       `json:"target_invocation,omitempty"`
+	ResultDelivery      string                       `json:"result_delivery,omitempty"`
+	HostFinalized       bool                         `json:"host_finalized,omitempty"`
+	Dispatched          int64                        `json:"attempts_dispatched,omitempty"`
+	AssessmentAccepted  bool                         `json:"assessment_accepted,omitempty"`
+	CleanupCompleted    bool                         `json:"cleanup_completed,omitempty"`
+	OperationID         string                       `json:"operation_id,omitempty"`
+	Source              string                       `json:"source"`
+	Stage               string                       `json:"stage"`
+	Reason              string                       `json:"reason"`
+	FieldPath           string                       `json:"field_path,omitempty"`
+	Tool                string                       `json:"tool,omitempty"`
+	CallID              string                       `json:"call_id,omitempty"`
+	Omitted             bool                         `json:"unsafe_fields_omitted,omitempty"`
+	Stopping            string                       `json:"stopping_condition,omitempty"`
+	Observed            int64                        `json:"observed_count,omitempty"`
+	Limit               int64                        `json:"configured_limit,omitempty"`
 }
 
 func NewWorkflowDiagnostic(operation, source, stage, reason, path, tool, call string) WorkflowDiagnostic {
@@ -92,10 +94,16 @@ func NewWorkflowDiagnostic(operation, source, stage, reason, path, tool, call st
 
 // Informational reports remain evidence without replacing an actual failure.
 func (d WorkflowDiagnostic) Informational() bool {
-	return d.Reason == "observation_selection" || d.Reason == "finalization_capacity_protected"
+	return d.Integration != nil && !d.IntegrationTerminal || d.Reason == "observation_selection" || d.Reason == "finalization_capacity_protected"
 }
 
 func (d WorkflowDiagnostic) Valid() bool {
+	if d.IntegrationTerminal && d.Integration == nil {
+		return false
+	}
+	if d.Integration != nil && (!d.Integration.Valid() || d.Source != "operator" || d.Stage != "integration") {
+		return false
+	}
 	if d.ProducerOmissions != nil {
 		if len(*d.ProducerOmissions) > 8 {
 			return false
@@ -167,6 +175,9 @@ func (d WorkflowDiagnostic) Message() string {
 	if d.TargetFailure != nil {
 		text = d.TargetFailure.Message()
 	}
+	if d.Integration != nil {
+		text = d.Integration.DiagnosticMessage()
+	}
 	if d.Timeout != nil {
 		text = d.Timeout.Message(d.Invocation)
 	}
@@ -192,7 +203,7 @@ func (d WorkflowDiagnostic) Message() string {
 	if d.Stopping != "" && d.Limit == 0 && d.Budget == nil {
 		text = "Harness stopped: " + d.Stopping + ". " + text
 	}
-	if d.Stopping == "" && d.TargetFailure == nil && d.Timeout == nil && !d.Informational() {
+	if d.Stopping == "" && d.TargetFailure == nil && d.Timeout == nil && d.Integration == nil && !d.Informational() {
 		switch d.Source {
 		case "harness-local":
 			text = "Attack Harness reported a local operation failure: " + text

@@ -13,8 +13,6 @@ import (
 	"testing"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
-	"github.com/intrusiveai/operator_sandbox/schemas"
-
 	"github.com/intrusiveai/operator_sandbox/internal/attemptadapter"
 	"github.com/intrusiveai/operator_sandbox/internal/capabilities"
 	"github.com/intrusiveai/operator_sandbox/internal/contractstore"
@@ -29,6 +27,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/startup"
 	"github.com/intrusiveai/operator_sandbox/internal/submission"
 	"github.com/intrusiveai/operator_sandbox/internal/targetprofile"
+	"github.com/intrusiveai/operator_sandbox/schemas"
 )
 
 func TestPreparationDiagnosticUsesOnlySafeCauses(t *testing.T) {
@@ -39,9 +38,9 @@ func TestPreparationDiagnosticUsesOnlySafeCauses(t *testing.T) {
 	}{
 		{fmt.Errorf("https://user:%s@private.invalid/?key=%s: %w", secret, secret, imagerelease.ErrCompatibility), "incompatible"},
 		{&os.PathError{Op: "open", Path: "/private/" + secret, Err: os.ErrNotExist}, "does not exist"},
-		{&interceptor.RemoteError{Response: interceptor.Response{Status: 409, Body: json.RawMessage(`{"code":"` + secret + `","message":"` + secret + `"}`)}}, "HTTP 409"},
-		{&interceptor.CallError{Kind: "invalid_response", Uncertain: true}, "contract validation; the target-side outcome is uncertain"},
-		{&interceptor.CallError{Kind: secret, Uncertain: true}, "Interceptor request failed"},
+		{&interceptor.RemoteError{Response: interceptor.Response{Status: 409, Body: json.RawMessage(`{"code":"denied","message":"permission denied; authorization: Bearer ` + secret + `","private":"` + secret + `"}`)}}, "HTTP 409"},
+		{&interceptor.CallError{Kind: "invalid_response", Uncertain: true}, "invalid_response"},
+		{&interceptor.CallError{Kind: secret, Uncertain: true}, "unclassified_failure"},
 		{fmt.Errorf("%s: %w", secret, context.DeadlineExceeded), "deadline exceeded"},
 		{errors.New(secret), "no additional safe error detail"},
 		{fmt.Errorf("private wrapper: %w", errors.Join(errors.New(secret), context.DeadlineExceeded)), "no additional safe error detail"},
@@ -67,7 +66,7 @@ func TestPreparationCleanupPreservesPrimaryAndSecondary(t *testing.T) {
 	secondary := errors.New("private cleanup secret")
 	err := preparationCleanup("Interceptor attachment", primary, secondary)
 	d := PreparationDetails(err)
-	if !errors.Is(err, primary) || !errors.Is(err, secondary) || !d.CleanupFailed || d.Stage != "Interceptor attachment" || !strings.Contains(d.Message, "transport failed") || strings.Contains(err.Error(), "secret") {
+	if !errors.Is(err, primary) || !errors.Is(err, secondary) || !d.CleanupFailed || d.Stage != "Interceptor attachment" || !strings.Contains(d.Message, "transport_unavailable") || strings.Contains(err.Error(), "secret") {
 		t.Fatal(d, err)
 	}
 	outer := preparationCleanup("campaign preparation", err, nil)

@@ -4,12 +4,23 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/termination"
 )
 
 func (s *Service) finish() {
 	defer close(s.terminalDone)
+	var failures []diagnostictext.Failure
+	retainFailure := func(operation string, err error) {
+		if err == nil || len(failures) >= 16 {
+			return
+		}
+		f := diagnostictext.FailureFromError(diagnostictext.Context(err, "Interceptor", operation, ""))
+		if f != nil {
+			failures = append(failures, *f)
+		}
+	}
 	result := TerminalResult{Closure: "unconfirmed", CleanupState: "unconfirmed", TargetStop: "not-permitted"}
 	if s.target().Profile().Settings().AllowTargetStop {
 		result.TargetStop = "unconfirmed"
@@ -17,6 +28,9 @@ func (s *Service) finish() {
 	ctx, cancel := context.WithTimeout(context.Background(), TerminalTimeout)
 	defer cancel()
 	defer func() {
+		if len(failures) > 0 {
+			result.Failures = &failures
+		}
 		result.ConclusionDiagnostic = s.ConclusionFailure()
 		result.WorkflowDiagnostic = s.WorkflowFailure()
 		s.terminal = result
@@ -32,6 +46,9 @@ func (s *Service) finish() {
 	result.Dispatched = &dispatched
 	result.AssessmentState = s.completion.assessmentState
 	defer func() {
+		if len(failures) > 0 {
+			result.Failures = &failures
+		}
 		result.ConclusionDiagnostic = s.ConclusionFailure()
 		result.WorkflowDiagnostic = s.WorkflowFailure()
 		raw, _ := json.Marshal(result)
@@ -46,6 +63,7 @@ func (s *Service) finish() {
 	defer func() { result.Evidence = s.collectEvidence() }()
 	view, err := s.inspect(ctx, true)
 	if err != nil {
+		retainFailure("session.status", err)
 		return
 	}
 	b := s.target().Live().Binding()
@@ -60,16 +78,21 @@ func (s *Service) finish() {
 	if err != nil {
 		return
 	}
-	closed, err := s.terminalCall(ctx, "service.native-close", closeRequest)
-	if err == nil {
-		_, err = interceptor.DecodeClosure(closed, campaignID)
-	}
+	_, err = s.terminalCall(ctx, "service.native-close", closeRequest, func(r interceptor.Response) (interceptor.Response, error) {
+		_, err := interceptor.DecodeClosure(r, campaignID)
+		return r, err
+	})
 	if err != nil {
+		retainFailure("session.owner", err)
 		return
 	}
 	result.Closure = "confirmed"
 	view, err = s.inspect(ctx, true)
 	if err != nil || view.Available {
+		if err == nil {
+			err = diagnostictext.New("Execution remains available after closure confirmation.")
+		}
+		retainFailure("session.status", err)
 		return
 	}
 	ids, total, err := s.attempts.CleanupCandidates(MaxCleanup)
@@ -81,17 +104,23 @@ func (s *Service) finish() {
 	for _, id := range ids {
 		if ctx.Err() != nil {
 			result.CleanupState = "deadline"
+			retainFailure("injection.delete", diagnostictext.Context(ctx.Err(), "Interceptor", "injection.delete", ""))
 			break
 		}
 		body, _ := json.Marshal(map[string]string{"injection_id": id})
 		p, err := query("injection.delete", body)
 		if err != nil {
 			result.CleanupState = "unconfirmed"
+			retainFailure("injection.delete", err)
 			break
 		}
-		r, err := s.terminalCall(ctx, "service.native-cleanup", p)
-		if err != nil || r.SessionRevision < view.Session.Revision || !(r.Status == 204 && (len(r.Body) == 0 || string(r.Body) == "null") && r.SessionRevision > view.Session.Revision || r.Status == 404 && r.Code() == "not_found") {
+		r, err := s.terminalCall(ctx, "service.native-cleanup", p, func(r interceptor.Response) (interceptor.Response, error) {
+			return interceptor.DecodeDeletion(r, view.Session.Revision)
+		})
+
+		if err != nil {
 			result.CleanupState = "unconfirmed"
+			retainFailure("injection.delete", err)
 			break
 		}
 		view.Session.Revision = r.SessionRevision
@@ -105,17 +134,21 @@ func (s *Service) finish() {
 		result.TargetStop = "unconfirmed"
 		p, err := interceptor.PrepareLifecycle(interceptor.LifecycleRequest{CampaignID: campaignID, SessionID: b.SessionID, WorkerInstanceID: b.WorkerInstanceID, RunRevision: b.RunRevision, OperationID: "stop-" + termination.NewRequestID(), Operation: "session.stop"}, deadline)
 		if err == nil && ctx.Err() == nil && s.log("service.target-stop-intent", p.Bytes(), nil, true, false) == nil {
-			r, err := s.config.Peer.ExecuteLifecycle(ctx, p)
-			logErr := s.log("service.target-stop-result", nil, boundedResponse(r), true, false)
-			if err == nil && logErr == nil {
-				if _, err = interceptor.DecodeStop(r, p); err == nil {
-					result.TargetStop = "confirmed"
-				}
+			_, err = interceptor.Call("session.stop", p.Request().OperationID,
+				func() (interceptor.Response, error) { return s.config.Peer.ExecuteLifecycle(ctx, p) },
+				func(r interceptor.Response) error {
+					return s.log("service.target-stop-result", nil, boundedResponse(r), true, false)
+				},
+				func(r interceptor.Response) (interceptor.StopResult, error) { return interceptor.DecodeStop(r, p) })
+			if err == nil {
+				result.TargetStop = "confirmed"
+			} else {
+				retainFailure("session.stop", err)
 			}
 		}
 	}
 }
-func (s *Service) terminalCall(ctx context.Context, kind string, p interceptor.PreparedOperation) (interceptor.Response, error) {
+func (s *Service) terminalCall(ctx context.Context, kind string, p interceptor.PreparedOperation, decode func(interceptor.Response) (interceptor.Response, error)) (interceptor.Response, error) {
 	if ctx.Err() != nil {
 		return interceptor.Response{}, ctx.Err()
 	}
@@ -125,19 +158,10 @@ func (s *Service) terminalCall(ctx context.Context, kind string, p interceptor.P
 	if ctx.Err() != nil {
 		return interceptor.Response{}, ctx.Err()
 	}
-	r, err := s.config.Peer.Execute(ctx, p)
-	raw := boundedResponse(r)
-	if logErr := s.log(kind+"-result", nil, raw, true, false); logErr != nil {
-		return interceptor.Response{}, logErr
-	}
-	if err != nil {
-		return interceptor.Response{}, err
-	}
-	if raw == nil {
-		return interceptor.Response{}, ErrService
-	}
-	verified, err := interceptor.ParseResponse(raw)
-	return verified, err
+	return interceptor.Call(p.Request().Operation, p.Request().RequestID,
+		func() (interceptor.Response, error) { return s.config.Peer.Execute(ctx, p) },
+		func(r interceptor.Response) error { return s.log(kind+"-result", nil, boundedResponse(r), true, false) },
+		decode)
 }
 
 // Shutdown signals termination immediately. The caller can bound how long it

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"testing"
 	"time"
@@ -83,7 +84,7 @@ func TestNativeRecoveryClosesCleansAndHonorsStopPolicy(t *testing.T) {
 			}
 			calls := len(p.calls)
 			again, e := nativerecovery.Run(context.Background(), root, "campaign-1", true, p)
-			if e != nil || again != out || len(p.calls) != calls {
+			if e != nil || !reflect.DeepEqual(again, out) || len(p.calls) != calls {
 				t.Fatal("replayed cleanup", again, e)
 			}
 			after, e := campaign.Inspect(root, "campaign-1", nil)

@@ -95,7 +95,7 @@ func (s *Service) handleDiagnostic(ctx context.Context, raw []byte, seq int64) (
 		return nil, err
 	}
 	if !d.Informational() {
-		if primary := s.WorkflowFailure(); primary == nil || primary.TargetFailure == nil {
+		if primary := s.WorkflowFailure(); primary == nil || primary.TargetFailure == nil && primary.Integration == nil {
 			s.workflowDiagnostic.Store(&d)
 		}
 	}

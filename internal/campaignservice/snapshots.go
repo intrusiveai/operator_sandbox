@@ -235,24 +235,19 @@ func (s *Service) stateAudit(q stateRequest, reservation, kind string, request, 
 	_, err := s.writer.AppendStored(entry, reservation, false)
 	return err
 }
-func (s *Service) stateNative(ctx context.Context, q stateRequest, reservation string, p interceptor.PreparedOperation) (interceptor.Response, error) {
+func (s *Service) stateNative(ctx context.Context, q stateRequest, reservation string, p interceptor.PreparedOperation, decode func(interceptor.Response) (interceptor.Response, error)) (interceptor.Response, error) {
 	if err := s.stateAudit(q, reservation, "state.native-intent", p.Bytes(), nil); err != nil {
 		return interceptor.Response{}, err
 	}
 	if err := ctx.Err(); err != nil {
 		return interceptor.Response{}, err
 	}
-	r, err := s.config.Peer.Execute(ctx, p)
-	if logErr := s.stateAudit(q, reservation, "state.native-result", nil, boundedResponse(r)); logErr != nil {
-		return interceptor.Response{}, logErr
-	}
-	if err != nil {
-		return interceptor.Response{}, err
-	}
-	if boundedResponse(r) == nil {
-		return interceptor.Response{}, ErrService
-	}
-	return interceptor.ParseResponse(r.Bytes())
+	return interceptor.Call(p.Request().Operation, p.Request().RequestID,
+		func() (interceptor.Response, error) { return s.config.Peer.Execute(ctx, p) },
+		func(r interceptor.Response) error {
+			return s.stateAudit(q, reservation, "state.native-result", nil, boundedResponse(r))
+		},
+		decode)
 }
 
 func snapshotMetadata(cp interceptor.Checkpoint, campaignID string) map[string]any {

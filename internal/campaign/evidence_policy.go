@@ -1,8 +1,10 @@
 package campaign
 
 import (
-	"github.com/intrusiveai/operator_sandbox/contracts"
 	"time"
+
+	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
 // EvidencePolicy freezes host-only collection settings in the execution journal.
@@ -18,20 +20,25 @@ func (p EvidencePolicy) Valid() bool {
 }
 
 type EvidenceOutcome struct {
-	NativeStatus   int    `json:"native_http_status,omitempty"`
-	NativeCode     string `json:"native_code,omitempty"`
-	NativeOmission string `json:"native_detail_omission,omitempty"`
-	SessionID      string `json:"session_id"`
-	State          string `json:"state"` // complete, partial, missing or invalid
-	Reason         string `json:"reason,omitempty"`
-	ArchivePath    string `json:"archive_path,omitempty"`
-	ArchiveDigest  string `json:"archive_digest,omitempty"`
-	LocalMaxBytes  int64  `json:"local_max_bytes"`
-	NativeMaxBytes int64  `json:"native_max_bytes"`
-	Recorded       bool   `json:"recorded"`
+	Failure        *diagnostictext.Failure `json:"failure,omitempty"`
+	CleanupFailure *diagnostictext.Failure `json:"cleanup_failure,omitempty"`
+	NativeStatus   int                     `json:"native_http_status,omitempty"`
+	NativeCode     string                  `json:"native_code,omitempty"`
+	NativeOmission string                  `json:"native_detail_omission,omitempty"`
+	SessionID      string                  `json:"session_id"`
+	State          string                  `json:"state"` // complete, partial, missing or invalid
+	Reason         string                  `json:"reason,omitempty"`
+	ArchivePath    string                  `json:"archive_path,omitempty"`
+	ArchiveDigest  string                  `json:"archive_digest,omitempty"`
+	LocalMaxBytes  int64                   `json:"local_max_bytes"`
+	NativeMaxBytes int64                   `json:"native_max_bytes"`
+	Recorded       bool                    `json:"recorded"`
 }
 
 func (v EvidenceOutcome) ValidDiagnostic() bool {
+	if v.Failure != nil && !v.Failure.Valid() || v.CleanupFailure != nil && !v.CleanupFailure.Valid() {
+		return false
+	}
 	if v.NativeStatus == 0 {
 		return v.NativeCode == "" && v.NativeOmission == ""
 	}

@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/internal/credentials"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
 type Resolver interface {
@@ -32,6 +33,7 @@ type Client struct {
 	dial    func(context.Context, string, string) (net.Conn, error)
 }
 type Outcome struct {
+	Failure    *diagnostictext.Failure
 	Status     string
 	Contact    string
 	Code       string
@@ -64,9 +66,26 @@ func (c trackedConn) Write(p []byte) (int, error) { c.sent.Store(true); return c
 
 // Execute sends at most one application request. Errors are fixed codes; the
 // transport's raw errors and response headers never escape this boundary.
-func (c *Client) Execute(ctx context.Context, id string, payload []byte, media string) Outcome {
-	out := Outcome{Status: "failed", Contact: "none", Code: "HTTPS_INPUT_INVALID"}
+func (c *Client) Execute(ctx context.Context, id string, payload []byte, media string) (out Outcome) {
+	out = Outcome{Status: "failed", Contact: "none", Code: "HTTPS_INPUT_INVALID"}
+	var cause error
+	stage := "input_validation"
+	defer func() {
+		if out.Status == "completed" {
+			return
+		}
+		f := diagnostictext.Failure{Component: "HTTPS target", Operation: id, Category: stage, Code: out.Code, HTTPStatus: out.HTTPStatus}
+		if cause != nil {
+			f.Message, _ = diagnostictext.FromError(cause)
+		}
+		if f.Message == "" {
+			f.Omissions = "message:no_safe_producer_detail;"
+		}
+		f = f.Bounded()
+		out.Failure = &f
+	}()
 	op, body, e := c.mapping.Request(id, payload, media)
+	cause = e
 	if e != nil {
 		return out
 	}
@@ -75,7 +94,9 @@ func (c *Client) Execute(ctx context.Context, id string, payload []byte, media s
 	token := ""
 	auth := c.mapping.settings.Authentication
 	if auth.Mode != "none" {
+		stage = "credential_preparation"
 		resolved, e := c.secrets.Resolve(ctx, auth.CredentialID)
+		cause = e
 		if e != nil || len(resolved.Value) == 0 || len(resolved.Value) > 8192 {
 			out.Code = "HTTPS_CREDENTIAL_FAILED"
 			return out
@@ -135,7 +156,9 @@ func (c *Client) Execute(ctx context.Context, id string, payload []byte, media s
 	}
 	defer transport.CloseIdleConnections()
 	client := &http.Client{Transport: transport, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
+	stage = "connection"
 	resp, e := client.Do(req)
+	cause = e
 	if e != nil {
 		out.Code = "HTTPS_TRANSPORT_FAILED"
 		if sent.Load() {
@@ -144,12 +167,17 @@ func (c *Client) Execute(ctx context.Context, id string, payload []byte, media s
 		}
 		if ctx.Err() != nil {
 			out.Code = "HTTPS_CANCELED"
+			stage = "canceled"
+			if ctx.Err() == context.DeadlineExceeded {
+				stage = "deadline_exceeded"
+			}
 		}
 		return out
 	}
 	defer resp.Body.Close()
 	out.Contact = "attempted"
 	out.HTTPStatus = resp.StatusCode
+	stage = "http_rejection"
 	if resp.StatusCode >= 300 && resp.StatusCode <= 399 {
 		out.Code = "HTTPS_REDIRECT_REJECTED"
 		return out
@@ -158,10 +186,12 @@ func (c *Client) Execute(ctx context.Context, id string, payload []byte, media s
 		out.Code = "HTTPS_STATUS_FAILED"
 		return out
 	}
+	stage = "response_validation"
 	if encoding := resp.Header.Get("Content-Encoding"); encoding != "" && !strings.EqualFold(encoding, "identity") {
 		out.Code = "HTTPS_ENCODING_UNSUPPORTED"
 		return out
 	}
+	stage = "response_reading"
 	raw, e := io.ReadAll(io.LimitReader(resp.Body, op.MaximumResponseBytes+1))
 	if e != nil {
 		out.Status = "unknown"
@@ -174,6 +204,7 @@ func (c *Client) Execute(ctx context.Context, id string, payload []byte, media s
 		out.Truncated = true
 		return out
 	}
+	stage = "response_validation"
 	raw, media, e = SelectResponse(op, raw)
 	if e != nil {
 		out.Code = "HTTPS_RESPONSE_INVALID"
