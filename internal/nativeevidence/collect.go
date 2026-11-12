@@ -68,7 +68,7 @@ func Collect(ctx context.Context, peer Peer, directory string, target Target, ma
 			err = ctx.Err()
 		}
 		out.Reason = evidenceReason(err)
-		out.Failure = diagnostictext.FailureFromError(diagnostictext.Context(err, "Interceptor", "evidence.export", ""))
+		out.Failure = diagnostictext.FailureFromError(diagnostictext.Context(err, "Operator", "evidence.archive-inspection", ""))
 		return
 	}
 	verified, err := archive.VerifyProvenance(ctx, target.Identity)
@@ -79,7 +79,7 @@ func Collect(ctx context.Context, peer Peer, directory string, target Target, ma
 			err = ctx.Err()
 		}
 		out.Reason = evidenceReason(err)
-		out.Failure = diagnostictext.FailureFromError(diagnostictext.Context(err, "Interceptor", "evidence.export", ""))
+		out.Failure = diagnostictext.FailureFromError(diagnostictext.Context(err, "Operator", "evidence.provenance-verification", ""))
 		return
 	}
 	retained, err := retain(ctx, verified)

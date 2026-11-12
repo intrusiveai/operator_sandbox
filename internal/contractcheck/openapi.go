@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 	"reflect"
 	"strings"
@@ -135,8 +136,16 @@ func (d *Document) Compare(typ reflect.Type, pointer string, projection bool) er
 		}
 		for _, keyword := range []string{"anyOf", "oneOf"} {
 			if variants, ok := s[keyword].([]any); ok {
+				base := maps.Clone(s)
+				delete(base, "oneOf")
+				delete(base, "anyOf")
+				if base["type"] != nil {
+					if err := visit(t, base, path, project, variant); err != nil {
+						return err
+					}
+				}
 				for _, raw := range variants {
-					variant := d.Expand(raw.(map[string]any))
+					variant := d.inheritShape(base, d.Expand(raw.(map[string]any)))
 					if variant["type"] == "null" {
 						continue
 					}
@@ -232,6 +241,33 @@ func (d *Document) Compare(typ reflect.Type, pointer string, projection bool) er
 		return nil
 	}
 	return visit(typ, d.At(pointer), pointer, projection, false)
+}
+
+// JSON Schema union branches also inherit constraints from their containing
+// schema. Preserve the parent wire shape when a branch only refines a constant
+// or required field. Byte validation still evaluates the original full schema.
+func (d *Document) inheritShape(base, branch map[string]any) map[string]any {
+	out := maps.Clone(branch)
+	if out["type"] == nil {
+		out["type"] = base["type"]
+	}
+	parents, _ := base["properties"].(map[string]any)
+	children, _ := branch["properties"].(map[string]any)
+	if parents != nil {
+		props := map[string]any{}
+		if branch["additionalProperties"] != false {
+			maps.Copy(props, parents)
+		}
+		for name, raw := range children {
+			child := d.Expand(raw.(map[string]any))
+			if parent, ok := parents[name].(map[string]any); ok {
+				child = d.inheritShape(d.Expand(parent), child)
+			}
+			props[name] = child
+		}
+		out["properties"] = props
+	}
+	return out
 }
 
 // NativeExchange validates a production-encoded command and its specific

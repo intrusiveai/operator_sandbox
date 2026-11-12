@@ -6,8 +6,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"reflect"
 	"slices"
@@ -235,45 +237,74 @@ func equalNative(a, b any) bool {
 	y, _ := json.Marshal(b)
 	return bytes.Equal(x, y)
 }
-func (a *EvidenceArchive) readNative(name string, out any) ([]byte, error) {
+func (a *EvidenceArchive) readNative(name string, out any) (data []byte, result error) {
+	defer func() {
+		if result != nil {
+			result = evidenceLocation(name, 0, result)
+		}
+	}()
 	e, ok := a.members[name]
-	if !ok || e.Bytes > evidenceJSONLimit {
-		return nil, ErrProvenance
+	if !ok {
+		return nil, evidenceRule("member", "required archive member is missing")
+	}
+	if e.Bytes > evidenceJSONLimit {
+		return nil, evidenceRule("bytes", fmt.Sprintf("%d exceeds metadata limit %d", e.Bytes, evidenceJSONLimit))
 	}
 	r, err := a.Reader(name)
 	if err != nil {
-		return nil, ErrProvenance
+		return nil, err
 	}
 	raw, err := io.ReadAll(r)
-	if err != nil || rawDigest(raw) != e.SHA256 || strictEvidence(raw, out) != nil {
-		return nil, ErrProvenance
+	if err != nil {
+		return nil, err
+	}
+	if rawDigest(raw) != e.SHA256 {
+		return nil, evidenceRule("sha256", "member bytes differ from the inspected archive")
+	}
+	if err := strictEvidence(raw, out); err != nil {
+		return nil, err
 	}
 	return raw, nil
 }
 func strictEvidence(raw []byte, out any) error {
 	value, err := contracts.Decode(raw, evidenceJSONLimit)
-	if err != nil || !evidenceShape(value, reflect.TypeOf(out).Elem()) {
-		return ErrProvenance
+	if err != nil {
+		return evidenceLocation("JSON", 0, err)
+	}
+	if err := evidenceShape(value, reflect.TypeOf(out).Elem(), ""); err != nil {
+		return err
 	}
 	d := json.NewDecoder(bytes.NewReader(raw))
 	d.DisallowUnknownFields()
-	if d.Decode(out) != nil {
-		return ErrProvenance
+	if err := d.Decode(out); err != nil {
+		// Decoder errors may contain submitted values. Retain type/offset facts,
+		// not the unrestricted error text (e.g. a malformed timestamp string).
+		var mismatch *json.UnmarshalTypeError
+		if errors.As(err, &mismatch) {
+			return &provenanceError{location: evidenceLabel(mismatch.Field), detail: fmt.Sprintf("expected %s at byte %d", mismatch.Type, mismatch.Offset), cause: err}
+		}
+		return &provenanceError{detail: "JSON value cannot be decoded into its declared native type", cause: err}
 	}
 	return nil
 }
-func evidenceShape(v any, t reflect.Type) bool {
+func evidenceShape(v any, t reflect.Type, field string) error {
 	if t == reflect.TypeFor[json.RawMessage]() || t == reflect.TypeFor[time.Time]() {
-		return true
+		return nil
 	}
 	if t.Kind() == reflect.Pointer {
-		return v == nil || evidenceShape(v, t.Elem())
+		if v == nil {
+			if t.Elem().Kind() == reflect.String {
+				return evidenceRule(field, "expected a string; omit optional fields rather than supplying null")
+			}
+			return nil
+		}
+		return evidenceShape(v, t.Elem(), field)
 	}
 	switch t.Kind() {
 	case reflect.Struct:
 		m, ok := v.(map[string]any)
 		if !ok {
-			return false
+			return evidenceRule(field, "expected an object")
 		}
 		known := map[string]bool{}
 		for i := 0; i < t.NumField(); i++ {
@@ -284,51 +315,52 @@ func evidenceShape(v any, t reflect.Type) bool {
 			tag := strings.Split(f.Tag.Get("json"), ",")
 			name := tag[0]
 			known[name] = true
+			child := field + "/" + name
 			x, present := m[name]
 			if !present {
 				if !slices.Contains(tag, "omitempty") {
-					return false
+					return evidenceRule(child, "required field is missing")
 				}
 				continue
 			}
-			if !evidenceShape(x, f.Type) {
-				return false
+			if err := evidenceShape(x, f.Type, child); err != nil {
+				return err
 			}
 		}
-		for name := range m {
+		for _, name := range slices.Sorted(maps.Keys(m)) {
 			if !known[name] {
-				return false
+				return evidenceRule(field+"/"+name, "unknown field; expected fields: "+strings.Join(slices.Sorted(maps.Keys(known)), ", "))
 			}
 		}
 	case reflect.Slice:
 		if v == nil {
-			return true
+			return nil
 		}
 		items, ok := v.([]any)
 		if !ok {
-			return false
+			return evidenceRule(field, "expected an array")
 		}
-		for _, x := range items {
-			if !evidenceShape(x, t.Elem()) {
-				return false
+		for i, x := range items {
+			if err := evidenceShape(x, t.Elem(), fmt.Sprintf("%s/%d", field, i)); err != nil {
+				return err
 			}
 		}
 	case reflect.Map:
 		m, ok := v.(map[string]any)
 		if !ok {
-			return false
+			return evidenceRule(field, "expected an object")
 		}
-		for _, x := range m {
-			if !evidenceShape(x, t.Elem()) {
-				return false
+		for _, key := range slices.Sorted(maps.Keys(m)) {
+			if err := evidenceShape(m[key], t.Elem(), field+"/"+key); err != nil {
+				return err
 			}
 		}
 	default:
 		if v == nil {
-			return false
+			return evidenceRule(field, "null is not permitted")
 		}
 	}
-	return true
+	return nil
 }
 
 // VerifyEvidenceFile rechecks saved archive bytes with the same verifier used on

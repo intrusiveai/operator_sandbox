@@ -399,3 +399,27 @@ Parsing is bounded to 64 MiB per metadata member, 32 MiB per journal line and
 Unsupported or inconsistent evidence is rejected. Valid partial evidence retains
 explicit gaps. Native hashes establish internal integrity and saved-target binding;
 they do not authenticate arbitrary files or establish that oracle assertions are true.
+
+Filesystem evidence follows the approved OpenAPI bytes in
+`internal/interceptor/openapi.json`; the supported contract identity is in
+`internal/interceptor/contract.json`. State transactions retain their native
+schema version and optional logical `owner` (`supervisor` or `application`) on
+file creation/update, directory creation, and symlink operations. Symlink
+operations also support mode bits. Ownership is not a host UID and is never
+inferred when omitted. Other operation kinds cannot carry ownership.
+
+File manifests support historical version 1 without ownership and version 2
+with ownership required on every entry. Field order and omission rules match
+Interceptor's serializers: ownership participates in transaction and manifest
+hashes. Reading historical evidence does not promise that Interceptor can restore
+it. Snapshot checkpoint bindings and restored-session source journals remain
+subject to the same chain, blob, identity, and hash checks.
+
+A rejected download and a rejected local archive are distinct outcomes. Remote
+export failures retain Interceptor's response diagnostic. Local archive inspection
+and provenance verification identify Operator as the rejecting component. The
+verifier forwards its producer-owned failure through collection records, including
+the archive member, journal record number, and failed field or version check when
+available. Names are bounded, quoted data; record values and private error text
+are not copied into diagnostics. The `provenance_invalid` result classification
+remains stable, while its diagnostic describes the actual failed check.
