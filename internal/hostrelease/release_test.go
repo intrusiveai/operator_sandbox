@@ -8,6 +8,7 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
+	"github.com/intrusiveai/operator_sandbox/contracts"
 	"io"
 	"os"
 	"path/filepath"
@@ -22,7 +23,16 @@ func candidate(t *testing.T) (string, Manifest) {
 	t.Helper()
 	root := t.TempDir()
 	source, _ := filepath.Abs("../..")
-	report, err := contractpublish.Build(context.Background(), source, filepath.Join(root, "contract"), "0.9.0")
+	rawInterface, err := os.ReadFile(filepath.Join(source, "schemas", contracts.InterfaceDocument))
+	if err != nil {
+		t.Fatal(err)
+	}
+	identity, err := contracts.InterfaceIdentity(rawInterface)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	report, err := contractpublish.Build(context.Background(), source, filepath.Join(root, "contract"), identity.Version)
 	if err != nil {
 		t.Fatal(err)
 	}

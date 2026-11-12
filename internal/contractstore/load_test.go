@@ -47,7 +47,11 @@ func fixture(t *testing.T, change func(map[string][]byte)) (string, []byte, cont
 	if change != nil {
 		change(files)
 	}
-	manifest, pin, err := p.BuildPackageManifest("0.9.0", files, profiles)
+	identity, identityErr := contracts.InterfaceIdentity(files[contracts.InterfaceDocument])
+	if identityErr != nil {
+		t.Fatal(identityErr)
+	}
+	manifest, pin, err := p.BuildPackageManifest(identity.Version, files, profiles)
 	if err != nil {
 		t.Fatal(err)
 	}

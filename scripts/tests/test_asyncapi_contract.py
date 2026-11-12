@@ -13,7 +13,7 @@ from generate_asyncapi import generate
 class AsyncAPIContractTest(unittest.TestCase):
     def test_approved_offline_document(self):
         identity=check_document()
-        self.assertEqual(identity['package_version'],'0.9.0')
+        self.assertEqual(identity,json.loads((ROOT/'release/contract-lock.json').read_text())['package'])
         self.assertEqual(generate(),(ROOT/'schemas/asyncapi.json').read_bytes())
 
     def test_closed_local_references(self):

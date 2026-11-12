@@ -85,7 +85,8 @@ def build():
     props={k:attempt_host['properties'][k] for k in keep}
     props.update(content)
     props.update(parent=field(handle,'Execution handle of the parent experiment; omit for a root attempt.'),observations=load('observation-selection')['oneOf'][1]['properties']['kinds'],
-        setup=dict(type='array',maxItems=16,items=injection,description='Optional injection setup before invocation.'),injection=field(object_schema(content,[]),'Content used by the selected injection setup.'))
+        setup=dict(type='array',maxItems=16,items=injection,description='Optional injection setup before invocation; nonempty setup requires injection content.'),injection=field(object_schema(content,[]),'Content for nonempty setup; choose exactly one of json, text, base64, artifact.'))
+    props['retain_injections']['description']='Default false. Requires nonempty setup; true retains injections for explicit deletion or lifecycle cleanup.'
     props['observations']['description']='Permitted observation kinds to collect; omission selects the configured feedback default.'
     props['injection']['allOf']=content_rules()
     attempt=object_schema(props,['origin','operation_id'])
@@ -153,13 +154,13 @@ def build():
     snapshot_list=load('engine-snapshot-list-request');snapshot_list['properties']['session']=field(handle,'Returned source-session handle whose snapshots should be listed.');snapshot_list['properties'].pop('source_session')
     snapshot=object_schema(dict(snapshot=dict(handle,description='Snapshot identity returned by snapshot_list/request/inspect. Inspect readiness before restore; identity alone does not imply readiness.')))
     entries=[
-      ('reference_read','Read a returned input/reference handle. offset defaults to 0, max_bytes to 4096; follow continuation to load complete guidance.',[],reference),
+      ('reference_read','Select a scenario reference at offset 0: complete instructions become the active scenario in the current task; the reply is a short confirmation, with no pagination. Other references use byte ranges: offset defaults to 0, max_bytes to 4096; follow returned continuation. Read tool-guide:<tool_name> for detailed arguments and examples.',[],reference),
       ('artifact_publish','Publish large or reusable content. Supply exactly one of json, text, base64. Returns a committed artifact handle; use direct content for ordinary invocations.',upload,publish),
-      ('attempt_execute','Invoke a permitted operation with exactly one of json, text, base64, artifact. scenario requires scenario_id; exploratory forbids it. JSON media is application/json; text defaults text/plain; base64 requires media_type; artifact forbids it. parent is an execution handle. Nonempty setup requires injection; injection/retention require setup. Omitted observations selects all permitted feedback.',['engine.attempt_execute'],attempt),
+      ('attempt_execute','Invoke a permitted target operation. Choose origin explicitly: scenario requires scenario_id; exploratory forbids it. Supply exactly one of json, text, base64, artifact. Omitted observations selects all permitted feedback.',['engine.attempt_execute'],attempt),
       ('injection_delete','Remove an injection using its returned injection handle; does not reverse committed mutations.',['engine.injection_delete'],object_schema(dict(injection=field(handle,'Returned injection handle to remove.')))),
-      ('observation_read','Read feedback with the readable handle. Page with continuation.arguments; cite citation for inspected bytes only. offset defaults to 0, max_bytes to 4096.',['engine.observation_read'],observation),
-      ('record_append','Optional historical assertion: kind selects flattened fields. Progress assessment requires interpretation, confidence, assurance and assessment_summary together; gaps only with assessment. Use returned typed handles.',['engine.record_append'],records),
-      ('finish','Finish; acceptance starts cleanup. Minimal: {"finish_reason":"no-useful-next-experiment","summary":"No tests ran.","objectives":[]}. attempts=execution handles; records=historical records only. uncertainties=[{"kind":"evidence-gap","description":"..."}]. No top-level observations. Correct without replay. artifact or unavailable_reason replaces inline fields.',['engine.finish'],finish),
+      ('observation_read','Read with a readable observation handle; follow continuation.arguments. Cite the returned citation for inspected bytes only, not unread or unavailable evidence. offset defaults to 0, max_bytes to 4096.',['engine.observation_read'],observation),
+      ('record_append','Optional historical recording; ordinary progress does not require it. kind selects the supported fields and relationships.',['engine.record_append'],records),
+      ('finish','Submit the final assessment. Acceptance ends the entire campaign, not one scenario; confirmed cleanup is a separate outcome. Correct rejected assessments without replaying completed target work.',['engine.finish'],finish),
       ('restore_request','Restore a returned snapshot handle. Success skips later calls in this model response.',['engine.restore_request'],snapshot),
       ('snapshot_request','Create a checkpoint; label and description optional. Returned handle status distinguishes identity from readiness.',['engine.snapshot_request'],load('engine-snapshot-request')),
       ('snapshot_list','List campaign checkpoints; optional session handle and pagination.',['engine.snapshot_list'],snapshot_list),
@@ -208,9 +209,26 @@ def build():
                 if isinstance(node, dict): return {k:compact_setup(v) for k,v in node.items() if k!='description'}
                 return node
             provider['properties']['setup']['items']=compact_setup(provider['properties']['setup']['items'])
+            for key in ('setup','injection','retain_injections'):
+                provider['properties'][key]['description']=arguments['properties'][key]['description']
         provider=openai_parameters(name,provider)
+        if name == 'attempt_execute':
+            branch['x-operator-guidance'] = {
+                'content': 'Choose exactly one of json, text, base64, artifact. JSON uses application/json; text defaults to text/plain; base64 requires media_type; artifact forbids a media override. Use a committed payload artifact handle for target input, not an invented descriptor.',
+                'parent': 'Use an existing execution handle to express a follow-up experiment; omit parent for a root attempt.',
+                'setup': 'Only use advertised setup fields and admitted surfaces. Nonempty setup requires injection content; injection and retain_injections require nonempty setup. Omitted setup means none; omitted retention means false. Payload/carrier purpose must match the selected route.',
+                'database_setup': {
+                    'discovery': 'Read the selected database policy details_reference for permitted service/table, exact key columns, writable columns, row-creation permission and limits.',
+                    'query': 'Invoke the application through its permitted operation, not arbitrary SQL or database credentials. database_response uses simulation mode: select the declared service and admitted call ordinals/request-body predicates, not HTTP paths or MCP tool names. Replace eligible text/JSON cells using /rows/<zero-based-row>/<zero-based-column>; do not change row counts, column metadata, NULL semantics, binary cells or unsupported native types.',
+                    'state': 'environment_state uses fidelity mode: collection is the declared table-policy ID; key is a native JSON object with exactly its non-null scalar key columns. Field pointers target authorized writable columns. Creating a row requires explicit permission, root-replace semantics and payload keys matching the selector; this is not an upsert. Never infer permission from a successful query.',
+                    'lifecycle': 'Response replacement changes selected query-result cells delivered to the application, not persistent rows; state mutation changes persistent state. Deleting an injection does not reverse committed mutations. Use an admitted ready snapshot and restore when reverting persistent state is required; successful restore skips remaining calls in that response.'}}
+        if name == 'record_append':
+            branch['x-operator-guidance'] = {'progress': 'Historical progress recording is optional. An assessment requires interpretation, confidence, assurance and assessment_summary together; gaps is valid only with that group. Use returned typed handles for the selected record kind.'}
         if name == 'finish':
             branch['x-operator-guidance'] = {
+                'scope': 'Acceptance ends the entire campaign, not only the active scenario. Report remaining unmet objectives honestly.',
+                'completion': 'Assessment acceptance, Harness exit and confirmed owned cleanup are distinct outcomes.',
+                'alternatives': 'Supply inline summary and objectives, or a committed conclusion-purpose artifact handle, or unavailable_reason when no assessment can be constructed. Artifact and unavailable alternatives replace inline fields; unavailable does not claim successful assessment.',
                 'minimal_inline_example': {'finish_reason':'no-useful-next-experiment','summary':'Not tested.','objectives':[{'objective_id':'objective-id','outcome':'not-tested','summary':'No attempt ran.'}]},
                 'example_identity_note': 'Replace objective-id with a submitted objective ID and choose outcomes from observed facts. Handles in examples illustrate returned handles; never invent them.',
                 'optional_uncertainty_example': {'uncertainties':[{'kind':'evidence-gap','description':'Only part of the response was inspected.'}]},
@@ -225,9 +243,10 @@ def build():
         if name == 'observation_read':
             branch['x-operator-guidance'] = {
                 'pagination_example': {'request': {'observation':'observation-7','offset':0,'max_bytes':4096}, 'result_handles': {'readable_observation':'observation-7','citation':'observation-7-range-0-4096','continuation':{'tool':'observation_read','arguments':{'observation':'observation-7','offset':4096,'max_bytes':4096}}}, 'next_request':{'observation':'observation-7','offset':4096,'max_bytes':4096}, 'finish_objective_citation':{'observations':['observation-7-range-0-4096']}},
-                'rules': 'Use the returned continuation verbatim. readable_observation remains readable, citation represents only verified inspected bytes. continuation is absent at EOF or when no readable bytes remain. A partial read never makes a whole-observation citation valid. Example handles must be replaced with actual returned handles.'}
+                'database_feedback': 'When oracle-assisted feedback is enabled, inspect permitted oracle_outcome observations before the next experiment. A database_query_match positive verdict records an observed condition, not injection causality. Empty means no positive verdict was captured, not proof of attack failure. Unavailable evidence remains unknown; available entries in a partial category can still be read. Receipt bytes remain unchanged after later writes or restore; old verdicts and session-wide reports are not new-attempt results.',
+                'rules': 'Use the returned continuation verbatim. readable_observation remains readable, citation represents only verified inspected bytes. continuation is absent at EOF or when no readable bytes remain. Unavailable or truncated evidence must be reported as a limitation. A partial read never makes a whole-observation citation valid. Example handles must be replaced with actual returned handles.'}
         branch['x-operator-provider-parameters']=provider
-        branch['description']=description+' Runtime enforces identifier and content limits. Advanced guidance: tool-guide:'+name+'.';branch['x-operator-required-operations']=sorted(operations);branches.append(branch)
+        branch['description']=description;branch['x-operator-required-operations']=sorted(operations);branches.append(branch)
     return {'$schema':'https://json-schema.org/draft/2020-12/schema','$id':ID,
         '$comment':'Generated by scripts/generate_tool_catalog.py; see MODEL_TOOL_CATALOG.md.','oneOf':branches}
 

@@ -5,6 +5,7 @@ package contractpublish
 import (
 	"bytes"
 	"context"
+	"github.com/intrusiveai/operator_sandbox/contracts"
 	"os"
 	"path/filepath"
 	"testing"
@@ -18,12 +19,21 @@ func TestPublicationIsReproducibleAndExact(t *testing.T) {
 		t.Fatal(err)
 	}
 	base := t.TempDir()
-	a, b := filepath.Join(base, "a"), filepath.Join(base, "b")
-	first, err := Build(context.Background(), source, a, "0.9.0")
+	rawInterface, err := os.ReadFile(filepath.Join(source, "schemas", contracts.InterfaceDocument))
 	if err != nil {
 		t.Fatal(err)
 	}
-	second, err := Build(context.Background(), source, b, "0.9.0")
+	identity, err := contracts.InterfaceIdentity(rawInterface)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	a, b := filepath.Join(base, "a"), filepath.Join(base, "b")
+	first, err := Build(context.Background(), source, a, identity.Version)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := Build(context.Background(), source, b, identity.Version)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +48,7 @@ func TestPublicationIsReproducibleAndExact(t *testing.T) {
 	if err != nil || !bytes.Equal(left, right) {
 		t.Fatal("different manifests", err)
 	}
-	if _, err := Build(context.Background(), source, a, "0.9.0"); err == nil {
+	if _, err := Build(context.Background(), source, a, identity.Version); err == nil {
 		t.Fatal("overwrote published package")
 	}
 	for _, name := range []string{"source/contracts/python/operator_contracts/protocol.py", "source/contracts/model_test.go", "source/schemas/fixtures/model-codec.json", "source/go.mod"} {
@@ -55,7 +65,7 @@ func TestPublicationIsReproducibleAndExact(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	c := filepath.Join(base, "c")
-	if _, err := Build(ctx, source, c, "0.9.0"); err == nil {
+	if _, err := Build(ctx, source, c, identity.Version); err == nil {
 		t.Fatal("cancelled build succeeded")
 	}
 	if _, err := os.Stat(c); !os.IsNotExist(err) {
