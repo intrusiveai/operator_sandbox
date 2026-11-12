@@ -47,7 +47,11 @@ func launchFixture(t *testing.T, mode string) (*LaunchPlan, string, *campaign.Wr
 	for _, name := range profiles {
 		files[name] = []byte("Test only.")
 	}
-	pkg, pin, err := p.BuildPackageManifest("0.9.0", files, profiles)
+	identity, identityErr := contracts.InterfaceIdentity(files[contracts.InterfaceDocument])
+	if identityErr != nil {
+		t.Fatal(identityErr)
+	}
+	pkg, pin, err := p.BuildPackageManifest(identity.Version, files, profiles)
 	if err != nil {
 		t.Fatal(err)
 	}

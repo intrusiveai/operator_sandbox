@@ -57,7 +57,11 @@ func protocol(t *testing.T) *contracts.Protocol {
 	for _, name := range profiles {
 		files[name] = []byte("Fixture only, not a release.")
 	}
-	m, pin, e := p.BuildPackageManifest("0.9.0", files, profiles)
+	identity, identityErr := contracts.InterfaceIdentity(files[contracts.InterfaceDocument])
+	if identityErr != nil {
+		t.Fatal(identityErr)
+	}
+	m, pin, e := p.BuildPackageManifest(identity.Version, files, profiles)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -163,7 +167,8 @@ func TestMaterializeReadOnlyIndependentTrees(t *testing.T) {
 				}
 			}
 			report := stage.Receipt()
-			if report.Contract.Version != "0.9.0" || report.FileCount != len(stage.files)-1 || report.ContentBytes <= 0 {
+			expected, _ := p.PackageIdentity()
+			if report.Contract != expected || report.FileCount != len(stage.files)-1 || report.ContentBytes <= 0 {
 				t.Fatal(report)
 			}
 			files["input/system-prompt.txt"][0] = '!'

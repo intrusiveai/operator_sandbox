@@ -39,7 +39,11 @@ func installedContract(t *testing.T) (string, contracts.PackageIdentity) {
 	for _, name := range profiles {
 		files[name] = []byte("Test-only semantic resource.")
 	}
-	manifest, pin, err := p.BuildPackageManifest("0.9.0", files, profiles)
+	identity, err := contracts.InterfaceIdentity(files[contracts.InterfaceDocument])
+	if err != nil {
+		t.Fatal(err)
+	}
+	manifest, pin, err := p.BuildPackageManifest(identity.Version, files, profiles)
 	if err != nil {
 		t.Fatal(err)
 	}

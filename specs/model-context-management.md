@@ -202,10 +202,6 @@ fields and relationships; prose alone is not a replacement for validation.
 ### 3.3 Smaller, capability-appropriate schemas
 
 Measure generated declarations for every supported codec before changing them.
-The full Bedrock projection inspected for this design was 41,415 JSON bytes,
-including 20,479 for `attempt_execute`, 8,945 for `finish`, and 6,936 for
-`record_append`. These are byte measurements, not token counts or provider limits.
-
 Implement the following in the existing shared generators and Go/Python projection
 functions, rather than maintaining independent Harness schemas:
 

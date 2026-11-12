@@ -115,3 +115,27 @@ A schema rejection carries the exact installed constraint reference so Operator
 can retain safe, specific corrections without trusting submitted prose. Preserve
 that reference and the model-facing path through normalization and wrapping.
 Never repair assertions automatically or replay completed effects during recovery.
+
+## Tool presentation and scenario selection
+
+Recurring declarations describe the next action concisely. `reference_read`
+explains how to obtain `tool-guide:<tool_name>`; these guides carry the complete
+argument schema and examples. Selecting a scenario reference at offset zero
+activates its complete instructions in the current task and returns a short
+confirmation, without pagination. Ordinary references remain byte-readable.
+
+An accepted `finish` ends the entire campaign, not just the selected scenario.
+Report unmet objectives honestly. Assessment acceptance, Harness exit and cleanup
+remain separate facts. The minimal example and optional reporting structures live
+in `tool-guide:finish`, rather than recurring tool descriptions.
+
+Setup and retention guidance accompanies the corresponding advertised attempt
+properties. When injection is unavailable, those properties and their guidance
+are absent. The deferred attempt guide retains content/media and artifact-purpose
+rules plus database query-cell replacement, state mutation, exact keys, writable
+columns, row creation, removal and restore semantics. It does not grant permissions
+beyond the selected resource policy.
+
+See [shared tool presentation](../specs/tool-context-presentation.md) for generation
+and verification requirements. The current approved interface identity is in
+[the contract lock](../release/contract-lock.json).

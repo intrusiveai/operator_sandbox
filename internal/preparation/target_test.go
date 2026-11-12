@@ -47,7 +47,11 @@ func protocol(t *testing.T) *contracts.Protocol {
 	for _, name := range profiles {
 		files[name] = []byte("test fixture only")
 	}
-	manifest, pin, e := p.BuildPackageManifest("0.9.0", files, profiles)
+	identity, identityErr := contracts.InterfaceIdentity(files[contracts.InterfaceDocument])
+	if identityErr != nil {
+		t.Fatal(identityErr)
+	}
+	manifest, pin, e := p.BuildPackageManifest(identity.Version, files, profiles)
 	if e != nil {
 		t.Fatal(e)
 	}

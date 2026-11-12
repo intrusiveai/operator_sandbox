@@ -50,7 +50,15 @@ var loadProcessContract = sync.OnceValues(func() (*contractstore.Loaded, error) 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 	pkg := filepath.Join(root, "contracts")
-	report, err := contractpublish.Build(ctx, source, pkg, "0.9.0")
+	rawInterface, err := os.ReadFile(filepath.Join(source, "schemas", contracts.InterfaceDocument))
+	if err != nil {
+		return nil, err
+	}
+	identity, err := contracts.InterfaceIdentity(rawInterface)
+	if err != nil {
+		return nil, err
+	}
+	report, err := contractpublish.Build(ctx, source, pkg, identity.Version)
 	if err != nil {
 		return nil, err
 	}

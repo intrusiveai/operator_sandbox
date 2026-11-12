@@ -4,6 +4,7 @@ from pathlib import Path
 import unittest
 from jsonschema import Draft202012Validator
 from operator_contracts import Protocol, ContractError
+from operator_contracts.model_tools import tool_guidance
 
 ROOT=Path(__file__).resolve().parents[3]/'schemas'
 
@@ -62,3 +63,41 @@ class ModelToolsTest(unittest.TestCase):
                             self.protocol.validate_tool_arguments(case['tool'],encoded(case['arguments']))
 
 if __name__=='__main__':unittest.main()
+
+class PresentationTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.protocol = Protocol(ROOT)
+
+    def test_guidance_is_deferred_and_discoverable(self):
+        cases = json.loads((ROOT/'fixtures/model-tools.json').read_text())
+        tools = json.loads(self.protocol.model_tools('openai-chat-text-tools-v1', cases[0]['operations']))
+        declarations = {v['function']['name']: v['function'] for v in tools}
+        reference = declarations['reference_read']['description']
+        for text in ('offset 0', 'active scenario', 'no pagination', 'tool-guide:<tool_name>'):
+            self.assertIn(text, reference)
+        for name, declaration in declarations.items():
+            self.assertNotIn('Runtime enforces identifier', declaration['description'])
+            if name != 'reference_read':
+                self.assertNotIn('tool-guide:', declaration['description'])
+        finish = declarations['finish']['description']
+        self.assertIn('entire campaign', finish)
+        self.assertIn('cleanup', finish)
+        self.assertNotIn('No tests ran', finish)
+        self.assertIn('ordinary progress does not require', declarations['record_append']['description'])
+        self.assertIn('skips later calls', declarations['restore_request']['description'])
+        guide = json.loads(tool_guidance(self.protocol, 'finish'))['examples']
+        self.protocol.validate_tool_arguments('finish', encoded(guide['minimal_inline_example']))
+        for field in ('uncertainty_kinds', 'objective_outcomes', 'handles', 'alternatives', 'correction'):
+            self.assertTrue(guide[field])
+        observation = json.loads(tool_guidance(self.protocol, 'observation_read'))['examples']
+        example = observation['pagination_example']
+        self.assertEqual(example['next_request'], example['result_handles']['continuation']['arguments'])
+        self.assertNotEqual(example['result_handles']['readable_observation'], example['result_handles']['citation'])
+        self.assertIn('truncated', observation['rules'])
+        self.assertIn('partial read', observation['rules'])
+        database = json.loads(tool_guidance(self.protocol, 'attempt_execute'))['examples']['database_setup']
+        for key in ('discovery', 'query', 'state', 'lifecycle'):
+            self.assertTrue(database[key])
+        for fact in ('key columns', 'writable columns', 'row-creation', 'call ordinals', '/rows/', 'fidelity', 'NULL', 'restore'):
+            self.assertIn(fact, json.dumps(database))
