@@ -77,3 +77,28 @@ by independent CLI inspection and report/export. Tests MUST demonstrate no repla
 and no disclosure of private native details to a black-box Harness. Worker tests
 MUST keep forced exit secondary to the retained native failure. No paid model calls
 or live cloud campaign is required for these checks.
+
+## Native evidence verification
+
+Operator MUST verify filesystem ownership using the approved Interceptor OpenAPI
+contract and native JSON serialization. It MUST preserve field order and omission
+rules in hashed structures, verify ownership-aware manifests and state journals
+(including retained restore sources), and continue verifying snapshot, blob and
+session bindings. Historical manifests without ownership MUST remain readable
+under their historical schema; verification MUST NOT invent an owner.
+
+Local archive/provenance rejection MUST identify Operator and the local check;
+it MUST NOT be attributed to Interceptor's export operation. Remote export
+rejections MUST retain their original remote attribution. Validation producers
+MUST supply their actual failed constraint and available member/record/field
+location through the existing safe diagnostic interface. Collection and reporting
+MUST forward those facts without a reason-to-message lookup table. Diagnostic
+bounds/redaction MUST remain effective, and wrapped causes and the existing
+provenance classification MUST be preserved.
+
+Verification MUST cover native exporter fixtures for original, checkpoint and
+restored evidence, invalid owners/versions/hash changes, and collection followed
+by independent CLI journal inspection and report/export. Contract comparison MUST
+check native field ordering and omission rules as well as types and representative
+serialized records. Private supplied exports MUST be verified unchanged and MUST
+NOT be committed as public fixtures.

@@ -33,6 +33,8 @@ func TestInterceptorContractModels(t *testing.T) {
 		"injection.Definition": Definition{}, "sandboxd.TurnRequest": TurnRequest{}, "sandboxd.Turn": Turn{},
 		"snapshot.Checkpoint": Checkpoint{}, "localapi.Binding": Binding{}, "localapi.ExecutionFailure": Failure{},
 		"StatusBody": Status{}, "SnapshotCreate": SnapshotCreate{},
+		"snapshot.Manifest": evidenceManifest{}, "snapshot.Entry": evidenceEntry{},
+		"statejournal.Operation": evidenceOperation{}, "statejournal.Transaction": evidenceTransaction{},
 	} {
 		t.Run(name, func(t *testing.T) {
 			if err := d.Compare(reflect.TypeOf(model), "#/components/schemas/"+name, false); err != nil {

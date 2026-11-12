@@ -125,3 +125,20 @@ available, and `native_detail_omission` when needed. For example, HTTP 409 with
 claiming which side of that combined condition occurred. Older receipts with only
 `export_rejected` cannot establish the lost native reason. Regenerate/export the
 report after explicit collection to see the new outcomes alongside that history.
+
+### Diagnosing rejected evidence
+
+An `invalid` result with reason `provenance_invalid` means Operator received an
+archive but rejected its local provenance checks. Its `failure` identifies
+`Operator / evidence.provenance-verification` and the failed member, record, or
+field when available. A remote export rejection instead identifies
+`Interceptor / evidence.export`, with the native status/code when supplied.
+Neither outcome authorizes replaying execution.
+
+After collection, use `operatorctl report --campaign <id>` or
+`operatorctl export --campaign <id> --output <directory>` to read the collection
+history and diagnostic. Online collection results also appear in
+`operatorctl campaign logs --campaign <id>`. Existing rejection records remain history;
+a later explicit collection or offline import uses the current verifier and
+records its own outcome. Valid ownership-aware evidence is accepted without
+rewriting it; unsupported ownership, versions, or changed hashes remain invalid.

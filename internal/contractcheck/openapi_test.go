@@ -83,3 +83,28 @@ func TestUnionCanOmitOptionalFieldButCannotRemoveRequiredField(t *testing.T) {
 		t.Fatal("required Go field removed")
 	}
 }
+
+func TestUnionRefinementsInheritCommonWireShape(t *testing.T) {
+	type item struct {
+		Kind  string `json:"kind"`
+		Value string `json:"value,omitempty"`
+	}
+	for _, branch := range []string{
+		`{"properties":{"kind":{"const":"one"}}}`,
+		`{"type":"object","additionalProperties":false,"properties":{"kind":{"const":"one"},"value":{"type":"string"}}}`,
+	} {
+		raw := []byte(`{"openapi":"3.1.0","components":{"schemas":{"Item":{"type":"object","properties":{"kind":{"type":"string"},"value":{"type":"string"}},"oneOf":[` + branch + `]}}}}`)
+		d, err := Parse(raw)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err = d.Compare(reflect.TypeFor[item](), "#/components/schemas/Item", false); err != nil {
+			t.Fatal(err)
+		}
+		variant := d.At("#/components/schemas/Item")["oneOf"].([]any)[0].(map[string]any)
+		variant["properties"].(map[string]any)["kind"].(map[string]any)["type"] = "integer"
+		if d.Compare(reflect.TypeFor[item](), "#/components/schemas/Item", false) == nil {
+			t.Fatal("branch type change accepted")
+		}
+	}
+}

@@ -41,6 +41,7 @@ type evidenceEvent struct {
 type evidenceOperation struct {
 	Kind       string          `json:"kind"`
 	Path       string          `json:"path,omitempty"`
+	Owner      *string         `json:"owner,omitempty"`
 	Mode       uint32          `json:"mode,omitempty"`
 	Blob       string          `json:"blob,omitempty"`
 	Size       int64           `json:"size,omitempty"`
@@ -112,12 +113,13 @@ type evidenceLimits struct {
 }
 
 type evidenceEntry struct {
-	Path   string `json:"path"`
-	Type   string `json:"type"`
-	Mode   uint32 `json:"mode"`
-	Blob   string `json:"blob,omitempty"`
-	Size   int64  `json:"size,omitempty"`
-	Target string `json:"target,omitempty"`
+	Path   string  `json:"path"`
+	Owner  *string `json:"owner,omitempty"`
+	Type   string  `json:"type"`
+	Mode   uint32  `json:"mode"`
+	Blob   string  `json:"blob,omitempty"`
+	Size   int64   `json:"size,omitempty"`
+	Target string  `json:"target,omitempty"`
 }
 
 type evidenceManifest struct {
