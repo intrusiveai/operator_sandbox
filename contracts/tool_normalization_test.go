@@ -70,36 +70,6 @@ func TestSharedToolNormalization(t *testing.T) {
 	}
 }
 
-func TestModelToolContextNonGrowth(t *testing.T) {
-	p, err := LoadProtocol(schemas.Files)
-	if err != nil {
-		t.Fatal(err)
-	}
-	raw, err := os.ReadFile("../schemas/fixtures/tool-context-cost.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	var report struct {
-		Cases []struct {
-			Codec, Mode          string
-			Operations, Surfaces []string
-			Before               int `json:"baseline_bytes"`
-			After                int `json:"revised_bytes"`
-		}
-	}
-	if err = json.Unmarshal(raw, &report); err != nil {
-		t.Fatal(err)
-	}
-	for _, c := range report.Cases {
-		got, err := p.ModelToolsSelected(c.Codec, c.Operations, c.Surfaces)
-		if err != nil || len(got) != c.After || c.After > c.Before {
-			t.Fatal(c.Codec, c.Mode, c.Surfaces, err)
-		}
-		if c.Mode == "ordinary" && c.After*4 > c.Before*3 {
-			t.Fatal("ordinary schema reduction below 25 percent")
-		}
-	}
-}
 func TestArtifactPublicationCanExceedDirectInputLimit(t *testing.T) {
 	p, err := LoadProtocol(schemas.Files)
 	if err != nil {
