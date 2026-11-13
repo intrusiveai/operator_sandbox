@@ -48,7 +48,7 @@ complete mode matrix, including GitHub OIDC, bearer tokens and LiteLLM without a
 | --- | --- |
 | Chat | `instruction_role`: `system` or `developer` (default) |
 | Responses | Native `reasoning` configuration |
-| Anthropic | Native `thinking` configuration |
+| Anthropic | Native `thinking` and `output_config` configuration, including `output_config.effort` |
 | Bedrock | Empty object; model routing is fixed by the profile |
 | Gemini | Native `thinking_config` configuration |
 
@@ -56,6 +56,27 @@ Provider-specific values are passed from this trusted configuration to the
 provider, not constrained by shared native API schemas. `response_models` in an
 existing private profile is accepted but does not restrict provider-reported model
 labels. Changing provider metadata does not change the shared contract.
+
+For an Anthropic model supporting adaptive thinking and effort, the private
+profile can select high effort with:
+
+```json
+{
+  "codec_options": {
+    "thinking": {"type": "adaptive"},
+    "output_config": {"effort": "high"}
+  }
+}
+```
+
+`thinking` and effort are independent provider settings; select a combination
+supported by the configured model. See [Anthropic's effort documentation](https://platform.claude.com/docs/en/build-with-claude/effort).
+Operator MUST forward the configured `output_config` unchanged for generation
+and compaction, without a local effort-value enum or model-version table.
+Omitted or null `output_config` MUST remain absent from the provider request,
+leaving provider defaults in effect. Existing output-token allowances still apply.
+These options remain host-owned and MUST NOT enter the public Harness model
+configuration or be accepted as top-level Harness request options.
 
 `Profile.PublicModel` MUST expose only conversation format, informational model,
 logical tool selection and context allowances. Private options and native tool
