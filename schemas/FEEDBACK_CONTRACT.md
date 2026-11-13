@@ -282,3 +282,20 @@ Preserve `oracle_evaluation_unavailable` for incomplete/unavailable evaluation a
 A partial category can retain valid results from independent oracles.
 `state_oracles_require_post_run_evidence` applies only to other unsupported state
 oracles when reported by Interceptor. Unknown reasons use bounded safe fallbacks.
+
+## Application model-response delivery
+
+For `injection_delivery`, native facts carrying `surface: model_response` and
+`direction: model_to_application` MUST retain both fields when projected, with
+`injection_id` replaced by the existing campaign-bound `action_id`. The permitted
+states are `applied`, `failed`, `response_written`, and `write_failed`, with native
+`scope: turn|attempt`. A generic `unknown` delivery fact remains unknown.
+
+`applied` establishes mutation, not delivery. `response_written` establishes only
+that Interceptor wrote the response bytes; it does not prove target SDK acceptance,
+argument parsing, tool execution or objective success. `write_failed` does not
+prove that no bytes arrived. These facts require diagnostic or oracle-assisted
+visibility and MUST NOT leak into black-box feedback. Independent permitted
+observations establish subsequent application behavior. Original/delivered native
+response references remain independently integrity-verified administrator evidence;
+this does not grant Harness access to either response body.

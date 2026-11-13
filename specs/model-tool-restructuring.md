@@ -106,7 +106,7 @@ form. Invalid/empty supplied values MUST NOT be treated as omission.
 `setup` is a bounded array of items with `surface`, `mode`, `scope`, `selector`,
 and `placement` directly, removing model-authored action IDs and the fixed action
 type wrapper. Product code MUST supply stable IDs and the fixed type. Preserve
-all five admitted injection surfaces and their restrictions. Selectors and
+all admitted injection surfaces and their restrictions. Selectors and
 placements remain real structured decisions with exact pointer, predicate, index,
 merge-field, policy, and simulation/fidelity validation.
 
@@ -295,7 +295,7 @@ requires prompt Harness exit; cleanup completion remains a later Operator fact.
 Update Go `ModelTools`/`ModelToolsSelected` and Python `model_tools` together,
 including their shape-dependent injection filters. They currently navigate
 `pre_actions.items.parameters`; the new `setup` structure MUST be filtered
-correctly. Preserve frozen admitted capabilities, all five injection surfaces,
+correctly. Preserve frozen admitted capabilities, all admitted injection surfaces,
 and Go/Python parity. Scenario wording MUST NOT hide legitimate capabilities.
 
 Test OpenAI Chat, OpenAI Responses, Anthropic Messages, Bedrock Converse, and

@@ -3,7 +3,7 @@ package capabilities
 
 var injectionVocabulary = func() map[string]InjectionProfile {
 	result := map[string]InjectionProfile{}
-	for _, p := range injectionProfiles([]string{"model_tool_result", "service_response", "mcp_tool_result", "environment_state", "database_response"}) {
+	for _, p := range injectionProfiles([]string{"model_tool_result", "model_response", "service_response", "mcp_tool_result", "environment_state", "database_response"}) {
 		result[p.Surface] = p
 	}
 	return result
@@ -14,6 +14,13 @@ func injectionProfiles(surfaces []string) []InjectionProfile {
 	for _, surface := range surfaces {
 		profile := InjectionProfile{Surface: surface}
 		switch surface {
+		case "model_response":
+			profile.Scopes = []string{"once", "standing"}
+			profile.Placements = []string{"replace", "prepend", "append", "insert", "merge"}
+			profile.SelectorFields = []string{"model_codec", "call_ordinal", "turn_id", "request_body_json_pointer", "request_body_equal", "request_body_contain"}
+			profile.Carriers = []string{"model_client_response"}
+			profile.ModelCodecs = []string{"anthropic_messages", "aws_bedrock_converse", "google_generate_content", "openai_chat_completions", "openai_responses"}
+			profile.PlacementRoot = "response-body"
 		case "model_tool_result":
 			profile.Scopes = []string{"once", "next_turn", "standing"}
 			profile.Placements = []string{"replace", "prepend", "append", "insert", "merge"}

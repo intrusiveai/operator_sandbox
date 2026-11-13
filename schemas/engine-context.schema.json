@@ -199,7 +199,8 @@
                   "environment_state",
                   "mcp_tool_result",
                   "model_tool_result",
-                  "service_response"
+                  "service_response",
+                  "model_response"
                 ]
               }
             }

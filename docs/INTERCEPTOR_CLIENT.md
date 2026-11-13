@@ -423,3 +423,6 @@ the archive member, journal record number, and failed field or version check whe
 available. Names are bounded, quoted data; record values and private error text
 are not copied into diagnostics. The `provenance_invalid` result classification
 remains stable, while its diagnostic describes the actual failed check.
+
+See [target model-response injection](MODEL_RESPONSE_INJECTION.md) for codec-based
+authorization, setup and evidence interpretation.

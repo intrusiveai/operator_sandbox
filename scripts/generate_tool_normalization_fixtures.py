@@ -40,13 +40,27 @@ add('null JSON by presence','attempt_execute',dict(origin='exploratory',operatio
 add('text content','attempt_execute',dict(origin='exploratory',operation_id='invoke',text='hello'))
 add('binary content','attempt_execute',dict(origin='exploratory',operation_id='invoke',base64='aGk=',media_type='application/octet-stream'))
 add('artifact and parent','attempt_execute',dict(origin='exploratory',operation_id='invoke',artifact='artifact-1',parent='exec-1',observations=['target_output']))
-for surface,mode,selector in [('model_tool_result','simulation',dict(tool_name='lookup',call_ordinal='first')),('service_response','simulation',dict(service='svc',call_ordinal='first')),('mcp_tool_result','simulation',dict(service='svc',tool_name='lookup',call_ordinal='first')),('database_response','simulation',dict(service='db',call_ordinal='first')),('environment_state','fidelity',dict(service='db',collection='accounts',key={'id':7}))]:
+for surface,mode,selector in [('model_response','simulation',dict(model_codec='openai_responses',call_ordinal='first')),('model_tool_result','simulation',dict(tool_name='lookup',call_ordinal='first')),('service_response','simulation',dict(service='svc',call_ordinal='first')),('mcp_tool_result','simulation',dict(service='svc',tool_name='lookup',call_ordinal='first')),('database_response','simulation',dict(service='db',call_ordinal='first')),('environment_state','fidelity',dict(service='db',collection='accounts',key={'id':7}))]:
  action=dict(surface=surface,mode=mode,scope='once',selector=selector,placement=dict(operation='replace',pointer=''))
  args=dict(attempt,setup=[action],injection=dict(json={'response':'test'}),retain_injections=True)
  add('setup '+surface,'attempt_execute',args)
  if surface=='environment_state':
   add('unknown key policy','attempt_execute',args,lambda c:c.update(database_keys={}),reason='invalid_state_key',path='/setup/0/selector/key')
   bad=deepcopy(args);bad['setup'][0]['selector']['key']={'other':7};add('wrong key column','attempt_execute',bad,reason='invalid_database_key')
+# The application response is deliberately allowed to violate its provider schema.
+for codec in ('anthropic_messages','aws_bedrock_converse','google_generate_content','openai_chat_completions','openai_responses'):
+ action=dict(surface='model_response',mode='simulation',scope='standing',selector=dict(model_codec=codec,call_ordinal='every'),placement=dict(operation='replace',pointer=''))
+ args=dict(attempt,setup=[action],injection=dict(json={'tool_calls':[{'name':'unavailable','arguments':'{invalid'}]}))
+ add('model response '+codec,'attempt_execute',args)
+ if codec != 'openai_responses': continue
+ for key,value in [('scope','next_turn'),('mode','fidelity')]:
+  bad=deepcopy(args);bad['setup'][0][key]=value
+  add('model response invalid '+codec+' '+key,'attempt_execute',bad,reason='invalid_structure')
+ for key,value in [('model_codec','embeddings'),('service','svc'),('tool_name','lookup')]:
+  bad=deepcopy(args);bad['setup'][0]['selector'][key]=value
+  add('model response invalid selector '+codec+' '+key,'attempt_execute',bad,reason='invalid_structure')
+ bad=deepcopy(args);del bad['setup'][0]['selector']['model_codec']
+ add('model response missing codec '+codec,'attempt_execute',bad,reason='invalid_structure')
 for name,selector,reason in [
  ('identity record key',dict(service='idp',collection='grants',key='grant-1'),None),
  ('identity fault key',dict(service='idp',collection='faults',key='issuer'),None),

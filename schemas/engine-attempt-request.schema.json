@@ -606,7 +606,8 @@
             "service_response",
             "mcp_tool_result",
             "environment_state",
-            "database_response"
+            "database_response",
+            "model_response"
           ],
           "description": "Injection surface selected from the permitted target capabilities."
         },
@@ -641,6 +642,9 @@
             },
             {
               "$ref": "#/$defs/databaseSelector"
+            },
+            {
+              "$ref": "#/$defs/modelResponseSelector"
             }
           ],
           "description": "Criteria selecting the target operation, resource or content."
@@ -779,6 +783,25 @@
               "description": "Criteria selecting the target operation, resource or content."
             }
           }
+        },
+        {
+          "properties": {
+            "surface": {
+              "const": "model_response"
+            },
+            "mode": {
+              "const": "simulation"
+            },
+            "scope": {
+              "enum": [
+                "once",
+                "standing"
+              ]
+            },
+            "selector": {
+              "$ref": "#/$defs/modelResponseSelector"
+            }
+          }
         }
       ]
     },
@@ -808,6 +831,45 @@
         "request_body_contain": {
           "$ref": "#/$defs/contains",
           "description": "Target request body subset that must be present."
+        }
+      }
+    },
+    "modelResponseSelector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model_codec",
+        "call_ordinal"
+      ],
+      "properties": {
+        "call_ordinal": {
+          "$ref": "#/$defs/ordinal",
+          "description": "Ordinal of the target call to match."
+        },
+        "request_body_pointer": {
+          "$ref": "#/$defs/pointer"
+        },
+        "request_body_equal": {
+          "$ref": "#/$defs/json3",
+          "description": "Target request body that must match exactly."
+        },
+        "request_body_contain": {
+          "$ref": "#/$defs/contains",
+          "description": "Target request body subset that must be present."
+        },
+        "model_codec": {
+          "enum": [
+            "anthropic_messages",
+            "aws_bedrock_converse",
+            "google_generate_content",
+            "openai_chat_completions",
+            "openai_responses"
+          ],
+          "description": "Application-facing target model codec from the advertised model_response action, independent of Harness and upstream provider configuration."
+        },
+        "turn_id": {
+          "$ref": "#/$defs/id",
+          "description": "Optional supervisor-observed turn in this campaign; omit when no observed turn is available."
         }
       }
     }

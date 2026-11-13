@@ -22,10 +22,13 @@ large['capabilities']['services'][0]['database_tables'][0]['fields']=['column_'+
 view,files=compact_target_context(p,json.dumps(large).encode())
 cases.append(dict(name='wide-table-context',target=large,view=json.loads(view),references={key:json.loads(value) for key,value in files.items()}))
 cases.append(discovery)
+raw=(ROOT/'schemas/fixtures/model-response-injection/public-capabilities.json').read_bytes()
+view,files=compact_target_context(p,raw)
+cases.append(dict(name='model-response-injection',target=json.loads(raw),view=json.loads(view),references={key:json.loads(value) for key,value in files.items()}))
 (ROOT/'schemas/fixtures/compact-target-context.json').write_text(json.dumps(cases,ensure_ascii=False,indent=2)+'\n')
 ops=sorted(op['name'] for op in p.operations());cases=[]
 for codec in ('openai-chat-text-tools-v1','openai-responses-text-tools-v1','anthropic-messages-text-tools-v1','bedrock-converse-text-tools-v1','gemini-text-tools-v1'):
-    for surfaces in ([],['mcp_tool_result'],['database_response','environment_state'],['database_response','environment_state','mcp_tool_result','model_tool_result','service_response']):
+    for surfaces in ([],['mcp_tool_result'],['model_response'],['database_response','environment_state'],['database_response','environment_state','mcp_tool_result','model_response','model_tool_result','service_response']):
         raw=p.model_tools(codec,ops,surfaces)
         cases.append(dict(codec=codec,operations=ops,surfaces=surfaces,digest=raw_digest(raw),size_bytes=len(raw)))
 (ROOT/'schemas/fixtures/selected-model-tools.json').write_text(json.dumps(cases,indent=2)+'\n')

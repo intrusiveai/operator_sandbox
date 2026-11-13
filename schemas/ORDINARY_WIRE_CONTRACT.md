@@ -217,3 +217,28 @@ no-replay rules, and the ordinary one-finish workflow. A database setup policy
 rejection uses `database_setup_denied` with the setup field path and confirms that
 execution did not occur. No arbitrary SQL tool or direct database credential is
 provided to the Harness.
+
+## Application model-response injection
+
+`model_response` is an optional simulation surface for successful, parseable,
+non-streaming generation responses delivered to the **target application**. It
+MUST NOT affect Harness generation or tool results sent to a model. The selector
+MUST supply an advertised `model_codec` and `call_ordinal`; it MAY constrain a
+supervisor-observed `turn_id` and original application request-body predicates.
+It MUST NOT supply tool, service, HTTP, database or filesystem selectors. Scopes
+are `once` and `standing`; `next_turn` is not supported.
+
+The placement root is the complete response body. Existing replace, text,
+array-insert and object-merge rules and administrator pointer/merge-field limits
+apply. Payloads MUST be valid bounded JSON but MAY intentionally violate the
+application codec's response schema, including tool names, argument shapes and
+invalid JSON inside argument strings. Operator MUST NOT repair or validate them
+as responses to Harness generation. Raw invalid JSON, embeddings, streaming,
+HTTP status/header mutation and upstream request mutation are outside this surface.
+
+Capability availability does not grant authorization: an installed route MUST
+select the exact application codec, scopes and placements. Native definitions
+remain bound to the attempt and its retained payload. Existing deletion, retained
+injection, snapshot, restore, admission and no-replay rules apply. Interceptor
+owns request-admission selection and ordinal state; Operator MUST NOT recompute
+ordinals or replay an invocation to obtain delivery evidence.

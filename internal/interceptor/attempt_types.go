@@ -129,6 +129,7 @@ type Definition struct {
 }
 
 type Selector struct {
+	ModelCodec         string            `json:"model_codec,omitempty"`
 	ToolName           string            `json:"tool_name"`
 	CallOrdinal        string            `json:"call_ordinal"`
 	ArgumentsPointer   string            `json:"arguments_pointer,omitempty"`

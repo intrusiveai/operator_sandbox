@@ -138,7 +138,7 @@ func validNative(n *nativeManifest) bool {
 	if !subset(n.CrossVMOperations, "application.invoke", "artifact.read", "artifact.register", "attempt.register", "capabilities.read", "injection.arm", "injection.delete", "observation.content.read", "observation.read", "operation.status", "session.owner", "session.status", "session.stop", "snapshot.create") {
 		return false
 	}
-	surfaces := []string{"model_tool_result", "service_response", "mcp_tool_result", "environment_state", "database_response"}
+	surfaces := []string{"model_tool_result", "model_response", "service_response", "mcp_tool_result", "environment_state", "database_response"}
 	if !subset(n.InjectionSurfaces, surfaces...) {
 		return false
 	}
@@ -164,6 +164,9 @@ func validNative(n *nativeManifest) bool {
 		ids = append(ids, profile.Surface)
 		permitted, ok := injectionVocabulary[profile.Surface]
 		if !ok || !contains(n.InjectionSurfaces, profile.Surface) || !subset(profile.Scopes, permitted.Scopes...) || !subset(profile.Placements, permitted.Placements...) || !subset(profile.SelectorFields, permitted.SelectorFields...) || !subset(profile.Carriers, permitted.Carriers...) {
+			return false
+		}
+		if profile.PlacementRoot != permitted.PlacementRoot || !subset(profile.ModelCodecs, permitted.ModelCodecs...) || !uniqueIDs(profile.ModelCodecs) || (profile.Surface == "model_response" && len(profile.ModelCodecs) == 0) {
 			return false
 		}
 	}
