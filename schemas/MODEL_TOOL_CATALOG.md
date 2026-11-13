@@ -136,6 +136,14 @@ rules plus database query-cell replacement, state mutation, exact keys, writable
 columns, row creation, removal and restore semantics. It does not grant permissions
 beyond the selected resource policy.
 
+The same deferred guide explains dynamic response method/path allowlists and
+existing state-collection keys/mutable fields. State-collection selectors use an
+advertised key string; database selectors use a key-column object. Both shared
+normalizers preserve string keys and validate database objects against the trusted
+table policy before serializing the native key. Endpoint delivery schemas describe
+complete records, not state-injection content. Read the resource details and use
+only administrator-permitted selections.
+
 See [shared tool presentation](../specs/tool-context-presentation.md) for generation
 and verification requirements. The current approved interface identity is in
 [the contract lock](../release/contract-lock.json).

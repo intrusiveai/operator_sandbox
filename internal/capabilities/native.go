@@ -183,7 +183,7 @@ func validNative(n *nativeManifest) bool {
 		collections := []string{}
 		for _, ep := range svc.Endpoints {
 			endpoints = append(endpoints, ep.ID)
-			if !deliveryVersion || !allowed(ep.Kind, "http-route", "mcp-tool") || !allowed(ep.InjectionRoot, "response-body", "mcp-tool-result") || ep.MaximumRequestBytes < 1 || ep.MaximumRequestBytes > nativedelivery.MaxBodyBytes || nativedelivery.Validate(ep.Delivery) != nil {
+			if !deliveryVersion || !validEndpoint(ep) || ep.MaximumRequestBytes < 1 || ep.MaximumRequestBytes > nativedelivery.MaxBodyBytes || nativedelivery.Validate(ep.Delivery) != nil {
 				return false
 			}
 		}

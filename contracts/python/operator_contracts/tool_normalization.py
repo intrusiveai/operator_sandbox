@@ -210,8 +210,11 @@ class _Normalizer:
                 selector=action['selector']
                 if action['surface']=='environment_state' and 'key' in selector:
                     key=selector['key'];cols=self.ctx.get('database_keys',{}).get(selector['service']+'/'+selector['collection'])
-                    if not isinstance(cols,list) or sorted(key)!=sorted(cols) or any(v is None or isinstance(v,(dict,list)) for v in key.values()):issue('invalid_database_key',mp+'/selector/key','Supply exactly the selected database policy key columns with non-null scalar values.')
-                    selector['key']=_canonical_value(key,ORDINARY_LIMIT).decode()
+                    if cols is None:
+                        if not isinstance(key,str):issue('invalid_state_key',mp+'/selector/key','Use an existing record key string from the selected state collection. Key-column objects require an advertised database table policy.')
+                    else:
+                        if not isinstance(cols,list) or not isinstance(key,dict) or sorted(key)!=sorted(cols) or any(v is None or isinstance(v,(dict,list)) for v in key.values()):issue('invalid_database_key',mp+'/selector/key','Supply exactly the selected database policy key columns with non-null scalar values.')
+                        selector['key']=_canonical_value(key,ORDINARY_LIMIT).decode()
                 out['pre_actions'].append(dict(action_id=self.identity(mp),action_type='interceptor.injection/v1alpha1',parameters=action))
             if out['pre_actions']:
                 out['injection_input']=self.expand_content(a['injection'],'/injection','/injection_input');out['retain_injections']=a.get('retain_injections',False)

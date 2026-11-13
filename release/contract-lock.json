@@ -1,7 +1,7 @@
 {
   "api_version": "operator.dev/host-contract-lock/v2",
   "package": {
-    "package_version": "0.9.1",
-    "package_digest": "sha256:db7139d69db7231dd8511fc6277c639bf25b03c27f3173a4a67edcf6ada69538"
+    "package_version": "0.10.0",
+    "package_digest": "sha256:42c1acda47dd66b10b08df3ee2dbc8096adf26cedefb129bcfeb94bf709d7434"
   }
 }

@@ -402,27 +402,33 @@ func (n *toolNormalizer) normalize(name string, a map[string]any) map[string]any
 			n.paths[hp] = mp
 			selector := action["selector"].(map[string]any)
 			if action["surface"] == "environment_state" && selector["key"] != nil {
-				key := selector["key"].(map[string]any)
+				key, object := selector["key"].(map[string]any)
 				cols, ok := n.ctx.DatabaseKeys[textField(selector, "service")+"/"+textField(selector, "collection")]
-				valid := ok && len(key) == len(cols)
-				for _, col := range cols {
-					value, exists := key[col]
-					if !exists || value == nil {
-						valid = false
+				if !ok {
+					if _, stringKey := selector["key"].(string); !stringKey {
+						n.fail("invalid_state_key", mp+"/selector/key", "Use an existing record key string from the selected state collection. Key-column objects require an advertised database table policy.")
 					}
-					switch value.(type) {
-					case map[string]any, []any:
-						valid = false
+				} else {
+					valid := object && len(key) == len(cols)
+					for _, col := range cols {
+						value, exists := key[col]
+						if !exists || value == nil {
+							valid = false
+						}
+						switch value.(type) {
+						case map[string]any, []any:
+							valid = false
+						}
 					}
+					if !valid {
+						n.fail("invalid_database_key", mp+"/selector/key", "Supply exactly the selected database policy key columns with non-null scalar values.")
+					}
+					raw, err := canonicalValue(key, OrdinaryLimit)
+					if err != nil && n.err == nil {
+						n.err = err
+					}
+					selector["key"] = string(raw)
 				}
-				if !valid {
-					n.fail("invalid_database_key", mp+"/selector/key", "Supply exactly the selected database policy key columns with non-null scalar values.")
-				}
-				raw, err := canonicalValue(key, OrdinaryLimit)
-				if err != nil && n.err == nil {
-					n.err = err
-				}
-				selector["key"] = string(raw)
 			}
 			actions = append(actions, map[string]any{"action_id": n.identity(mp), "action_type": "interceptor.injection/v1alpha1", "parameters": action})
 		}

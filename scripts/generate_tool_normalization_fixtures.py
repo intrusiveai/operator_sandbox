@@ -45,8 +45,15 @@ for surface,mode,selector in [('model_tool_result','simulation',dict(tool_name='
  args=dict(attempt,setup=[action],injection=dict(json={'response':'test'}),retain_injections=True)
  add('setup '+surface,'attempt_execute',args)
  if surface=='environment_state':
-  add('unknown key policy','attempt_execute',args,lambda c:c.update(database_keys={}),reason='invalid_database_key',path='/setup/0/selector/key')
+  add('unknown key policy','attempt_execute',args,lambda c:c.update(database_keys={}),reason='invalid_state_key',path='/setup/0/selector/key')
   bad=deepcopy(args);bad['setup'][0]['selector']['key']={'other':7};add('wrong key column','attempt_execute',bad,reason='invalid_database_key')
+for name,selector,reason in [
+ ('identity record key',dict(service='idp',collection='grants',key='grant-1'),None),
+ ('identity fault key',dict(service='idp',collection='faults',key='issuer'),None),
+ ('identity object key rejected',dict(service='idp',collection='grants',key={'id':'grant-1'}),'invalid_state_key'),
+ ('database string key rejected',dict(service='db',collection='accounts',key='7'),'invalid_database_key')]:
+ action=dict(surface='environment_state',mode='fidelity',scope='once',selector=selector,placement=dict(operation='replace',pointer='/active'))
+ add(name,'attempt_execute',dict(attempt,setup=[action],injection=dict(json=False)),reason=reason,path='/setup/0/selector/key' if reason else None)
 finish=dict(finish_reason='objectives-addressed',summary='The observed marker was returned.',objectives=[dict(objective_id='objective-1',outcome='supported',summary='Marker observed.',observations=['obs-1'])],claims=[dict(statement='The target returned the marker.',interpretation='supported',assurance='Observed in the complete response.',confidence='high',observations=['obs-1'],attempts=['exec-1'])])
 add('derived claim receipts','finish',finish)
 add('deduplicated receipt union','finish',dict(finish,claims=[dict(finish['claims'][0],observations=['obs-1','obs-range','obs-2'],attempts=['exec-1'])]))

@@ -2357,9 +2357,9 @@
       },
       "database_keys": {}
     },
-    "reason": "invalid_database_key",
+    "reason": "invalid_state_key",
     "path": "/setup/0/selector/key",
-    "correction": "Supply exactly the selected database policy key columns with non-null scalar values."
+    "correction": "Use an existing record key string from the selected state collection. Key-column objects require an advertised database table policy."
   },
   {
     "name": "wrong key column",
@@ -2395,6 +2395,812 @@
         }
       },
       "retain_injections": true
+    },
+    "context": {
+      "campaign_id": "campaign-1",
+      "call_id": "native-call-1",
+      "resources": {
+        "exec-1": {
+          "kind": "execution",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "obs-1": {
+          "kind": "observation",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123",
+            "entry_id": "entry-456"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "obs-range": {
+          "kind": "observation",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123",
+            "entry_id": "entry-456",
+            "range": {
+              "offset": 5,
+              "length": 9
+            }
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "obs-2": {
+          "kind": "observation",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-456",
+            "entry_id": "entry-789"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "artifact-1": {
+          "kind": "artifact",
+          "campaign_id": "campaign-1",
+          "value": {
+            "artifact_receipt": "published-1",
+            "purpose": "payload"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "conclusion-1": {
+          "kind": "artifact",
+          "campaign_id": "campaign-1",
+          "value": {
+            "artifact_receipt": "published-2",
+            "purpose": "conclusion"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "record-1": {
+          "kind": "record",
+          "campaign_id": "campaign-1",
+          "value": {
+            "record_receipt_id": "record-receipt"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "hyp-1": {
+          "kind": "hypothesis",
+          "campaign_id": "campaign-1",
+          "value": {
+            "hypothesis_id": "historical-hypothesis"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "input-1": {
+          "kind": "reference",
+          "campaign_id": "campaign-1",
+          "value": {
+            "reference_id": "input-reference",
+            "entry_id": "input-entry"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "inj-1": {
+          "kind": "injection",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123",
+            "action_id": "setup-1"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "snap-1": {
+          "kind": "checkpoint",
+          "campaign_id": "campaign-1",
+          "value": {
+            "source_session": "session-1",
+            "checkpoint_id": "checkpoint-1"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "session-1": {
+          "kind": "session",
+          "campaign_id": "campaign-1",
+          "value": {
+            "source_session": "session-1"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        }
+      },
+      "database_keys": {
+        "db/accounts": [
+          "id"
+        ]
+      }
+    },
+    "reason": "invalid_database_key",
+    "path": "/setup/0/selector/key",
+    "correction": "Supply exactly the selected database policy key columns with non-null scalar values."
+  },
+  {
+    "name": "identity record key",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "scenario",
+      "scenario_id": "configuration",
+      "operation_id": "invoke",
+      "json": {
+        "prompt": "Reply QA_CONFIG_OK."
+      },
+      "setup": [
+        {
+          "surface": "environment_state",
+          "mode": "fidelity",
+          "scope": "once",
+          "selector": {
+            "service": "idp",
+            "collection": "grants",
+            "key": "grant-1"
+          },
+          "placement": {
+            "operation": "replace",
+            "pointer": "/active"
+          }
+        }
+      ],
+      "injection": {
+        "json": false
+      }
+    },
+    "context": {
+      "campaign_id": "campaign-1",
+      "call_id": "native-call-1",
+      "resources": {
+        "exec-1": {
+          "kind": "execution",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "obs-1": {
+          "kind": "observation",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123",
+            "entry_id": "entry-456"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "obs-range": {
+          "kind": "observation",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123",
+            "entry_id": "entry-456",
+            "range": {
+              "offset": 5,
+              "length": 9
+            }
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "obs-2": {
+          "kind": "observation",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-456",
+            "entry_id": "entry-789"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "artifact-1": {
+          "kind": "artifact",
+          "campaign_id": "campaign-1",
+          "value": {
+            "artifact_receipt": "published-1",
+            "purpose": "payload"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "conclusion-1": {
+          "kind": "artifact",
+          "campaign_id": "campaign-1",
+          "value": {
+            "artifact_receipt": "published-2",
+            "purpose": "conclusion"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "record-1": {
+          "kind": "record",
+          "campaign_id": "campaign-1",
+          "value": {
+            "record_receipt_id": "record-receipt"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "hyp-1": {
+          "kind": "hypothesis",
+          "campaign_id": "campaign-1",
+          "value": {
+            "hypothesis_id": "historical-hypothesis"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "input-1": {
+          "kind": "reference",
+          "campaign_id": "campaign-1",
+          "value": {
+            "reference_id": "input-reference",
+            "entry_id": "input-entry"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "inj-1": {
+          "kind": "injection",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123",
+            "action_id": "setup-1"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "snap-1": {
+          "kind": "checkpoint",
+          "campaign_id": "campaign-1",
+          "value": {
+            "source_session": "session-1",
+            "checkpoint_id": "checkpoint-1"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "session-1": {
+          "kind": "session",
+          "campaign_id": "campaign-1",
+          "value": {
+            "source_session": "session-1"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        }
+      },
+      "database_keys": {
+        "db/accounts": [
+          "id"
+        ]
+      }
+    },
+    "expected": {
+      "arguments": {
+        "origin": "scenario",
+        "operation_id": "invoke",
+        "scenario_id": "configuration",
+        "input": {
+          "encoding": "json",
+          "value": {
+            "prompt": "Reply QA_CONFIG_OK."
+          }
+        },
+        "observation_selection": {
+          "mode": "all-permitted"
+        },
+        "pre_actions": [
+          {
+            "action_id": "generated-31dc9a43465c38e997462e4ca842aba3",
+            "action_type": "interceptor.injection/v1alpha1",
+            "parameters": {
+              "surface": "environment_state",
+              "mode": "fidelity",
+              "scope": "once",
+              "selector": {
+                "service": "idp",
+                "collection": "grants",
+                "key": "grant-1"
+              },
+              "placement": {
+                "operation": "replace",
+                "pointer": "/active"
+              }
+            }
+          }
+        ],
+        "injection_input": {
+          "encoding": "json",
+          "value": false
+        },
+        "retain_injections": false
+      },
+      "paths": {
+        "/input": "/json",
+        "/input/value": "/json",
+        "/observation_selection": "/observations",
+        "/observation_selection/kinds": "/observations",
+        "/pre_actions/0/parameters": "/setup/0",
+        "/injection_input": "/injection/json",
+        "/injection_input/value": "/injection/json"
+      },
+      "observation_selections": []
+    }
+  },
+  {
+    "name": "identity fault key",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "scenario",
+      "scenario_id": "configuration",
+      "operation_id": "invoke",
+      "json": {
+        "prompt": "Reply QA_CONFIG_OK."
+      },
+      "setup": [
+        {
+          "surface": "environment_state",
+          "mode": "fidelity",
+          "scope": "once",
+          "selector": {
+            "service": "idp",
+            "collection": "faults",
+            "key": "issuer"
+          },
+          "placement": {
+            "operation": "replace",
+            "pointer": "/active"
+          }
+        }
+      ],
+      "injection": {
+        "json": false
+      }
+    },
+    "context": {
+      "campaign_id": "campaign-1",
+      "call_id": "native-call-1",
+      "resources": {
+        "exec-1": {
+          "kind": "execution",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "obs-1": {
+          "kind": "observation",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123",
+            "entry_id": "entry-456"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "obs-range": {
+          "kind": "observation",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123",
+            "entry_id": "entry-456",
+            "range": {
+              "offset": 5,
+              "length": 9
+            }
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "obs-2": {
+          "kind": "observation",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-456",
+            "entry_id": "entry-789"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "artifact-1": {
+          "kind": "artifact",
+          "campaign_id": "campaign-1",
+          "value": {
+            "artifact_receipt": "published-1",
+            "purpose": "payload"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "conclusion-1": {
+          "kind": "artifact",
+          "campaign_id": "campaign-1",
+          "value": {
+            "artifact_receipt": "published-2",
+            "purpose": "conclusion"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "record-1": {
+          "kind": "record",
+          "campaign_id": "campaign-1",
+          "value": {
+            "record_receipt_id": "record-receipt"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "hyp-1": {
+          "kind": "hypothesis",
+          "campaign_id": "campaign-1",
+          "value": {
+            "hypothesis_id": "historical-hypothesis"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "input-1": {
+          "kind": "reference",
+          "campaign_id": "campaign-1",
+          "value": {
+            "reference_id": "input-reference",
+            "entry_id": "input-entry"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "inj-1": {
+          "kind": "injection",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123",
+            "action_id": "setup-1"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "snap-1": {
+          "kind": "checkpoint",
+          "campaign_id": "campaign-1",
+          "value": {
+            "source_session": "session-1",
+            "checkpoint_id": "checkpoint-1"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "session-1": {
+          "kind": "session",
+          "campaign_id": "campaign-1",
+          "value": {
+            "source_session": "session-1"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        }
+      },
+      "database_keys": {
+        "db/accounts": [
+          "id"
+        ]
+      }
+    },
+    "expected": {
+      "arguments": {
+        "origin": "scenario",
+        "operation_id": "invoke",
+        "scenario_id": "configuration",
+        "input": {
+          "encoding": "json",
+          "value": {
+            "prompt": "Reply QA_CONFIG_OK."
+          }
+        },
+        "observation_selection": {
+          "mode": "all-permitted"
+        },
+        "pre_actions": [
+          {
+            "action_id": "generated-31dc9a43465c38e997462e4ca842aba3",
+            "action_type": "interceptor.injection/v1alpha1",
+            "parameters": {
+              "surface": "environment_state",
+              "mode": "fidelity",
+              "scope": "once",
+              "selector": {
+                "service": "idp",
+                "collection": "faults",
+                "key": "issuer"
+              },
+              "placement": {
+                "operation": "replace",
+                "pointer": "/active"
+              }
+            }
+          }
+        ],
+        "injection_input": {
+          "encoding": "json",
+          "value": false
+        },
+        "retain_injections": false
+      },
+      "paths": {
+        "/input": "/json",
+        "/input/value": "/json",
+        "/observation_selection": "/observations",
+        "/observation_selection/kinds": "/observations",
+        "/pre_actions/0/parameters": "/setup/0",
+        "/injection_input": "/injection/json",
+        "/injection_input/value": "/injection/json"
+      },
+      "observation_selections": []
+    }
+  },
+  {
+    "name": "identity object key rejected",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "scenario",
+      "scenario_id": "configuration",
+      "operation_id": "invoke",
+      "json": {
+        "prompt": "Reply QA_CONFIG_OK."
+      },
+      "setup": [
+        {
+          "surface": "environment_state",
+          "mode": "fidelity",
+          "scope": "once",
+          "selector": {
+            "service": "idp",
+            "collection": "grants",
+            "key": {
+              "id": "grant-1"
+            }
+          },
+          "placement": {
+            "operation": "replace",
+            "pointer": "/active"
+          }
+        }
+      ],
+      "injection": {
+        "json": false
+      }
+    },
+    "context": {
+      "campaign_id": "campaign-1",
+      "call_id": "native-call-1",
+      "resources": {
+        "exec-1": {
+          "kind": "execution",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "obs-1": {
+          "kind": "observation",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123",
+            "entry_id": "entry-456"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "obs-range": {
+          "kind": "observation",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123",
+            "entry_id": "entry-456",
+            "range": {
+              "offset": 5,
+              "length": 9
+            }
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "obs-2": {
+          "kind": "observation",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-456",
+            "entry_id": "entry-789"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "artifact-1": {
+          "kind": "artifact",
+          "campaign_id": "campaign-1",
+          "value": {
+            "artifact_receipt": "published-1",
+            "purpose": "payload"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "conclusion-1": {
+          "kind": "artifact",
+          "campaign_id": "campaign-1",
+          "value": {
+            "artifact_receipt": "published-2",
+            "purpose": "conclusion"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "record-1": {
+          "kind": "record",
+          "campaign_id": "campaign-1",
+          "value": {
+            "record_receipt_id": "record-receipt"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "hyp-1": {
+          "kind": "hypothesis",
+          "campaign_id": "campaign-1",
+          "value": {
+            "hypothesis_id": "historical-hypothesis"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "input-1": {
+          "kind": "reference",
+          "campaign_id": "campaign-1",
+          "value": {
+            "reference_id": "input-reference",
+            "entry_id": "input-entry"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "inj-1": {
+          "kind": "injection",
+          "campaign_id": "campaign-1",
+          "value": {
+            "attempt_receipt_id": "receipt-123",
+            "action_id": "setup-1"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "snap-1": {
+          "kind": "checkpoint",
+          "campaign_id": "campaign-1",
+          "value": {
+            "source_session": "session-1",
+            "checkpoint_id": "checkpoint-1"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        },
+        "session-1": {
+          "kind": "session",
+          "campaign_id": "campaign-1",
+          "value": {
+            "source_session": "session-1"
+          },
+          "available": true,
+          "inspected": true,
+          "live": true
+        }
+      },
+      "database_keys": {
+        "db/accounts": [
+          "id"
+        ]
+      }
+    },
+    "reason": "invalid_state_key",
+    "path": "/setup/0/selector/key",
+    "correction": "Use an existing record key string from the selected state collection. Key-column objects require an advertised database table policy."
+  },
+  {
+    "name": "database string key rejected",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "scenario",
+      "scenario_id": "configuration",
+      "operation_id": "invoke",
+      "json": {
+        "prompt": "Reply QA_CONFIG_OK."
+      },
+      "setup": [
+        {
+          "surface": "environment_state",
+          "mode": "fidelity",
+          "scope": "once",
+          "selector": {
+            "service": "db",
+            "collection": "accounts",
+            "key": "7"
+          },
+          "placement": {
+            "operation": "replace",
+            "pointer": "/active"
+          }
+        }
+      ],
+      "injection": {
+        "json": false
+      }
     },
     "context": {
       "campaign_id": "campaign-1",
