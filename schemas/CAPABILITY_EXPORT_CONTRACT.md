@@ -229,3 +229,13 @@ does not grant access to that evidence or bypass effective-profile narrowing.
 The shared `fixtures/postgresql-capability-chain/` files bind a native PostgreSQL
 code-adapter export to its public projection and submitted ScenarioBundle. Go and
 Python conformance checks MUST agree on this projection and its admission.
+
+## Application model responses
+
+A `model_response` action MUST preserve the native `model_codecs` list and
+`placement_root: response-body`. Codec names describe the target application's
+model API, not its upstream provider configuration or Harness's configured model.
+They MUST survive compact target-context projection. The source digest MUST use
+Interceptor's typed field ordering and omission rules, including the new profile
+fields. Other surfaces MUST NOT acquire these fields or gain model-response
+permission through a service reference.

@@ -69,7 +69,14 @@ func FromNative(catalog *contracts.Catalog, raw []byte, targetID string) (*Expor
 	}
 	if contains(n.CrossVMOperations, "injection.arm") && contains(n.CrossVMOperations, "injection.delete") {
 		for _, profile := range n.InjectionProfiles {
-			add("actions", map[string]any{"ref": "action:injection:" + profile.Surface, "action_type": "interceptor.injection/v1alpha1", "surface": profile.Surface, "scopes": sorted(profile.Scopes), "placements": sorted(profile.Placements), "selector_fields": sorted(profile.SelectorFields), "carriers": sorted(profile.Carriers)})
+			item := map[string]any{"ref": "action:injection:" + profile.Surface, "action_type": "interceptor.injection/v1alpha1", "surface": profile.Surface, "scopes": sorted(profile.Scopes), "placements": sorted(profile.Placements), "selector_fields": sorted(profile.SelectorFields), "carriers": sorted(profile.Carriers)}
+			if len(profile.ModelCodecs) > 0 {
+				item["model_codecs"] = sorted(profile.ModelCodecs)
+			}
+			if profile.PlacementRoot != "" {
+				item["placement_root"] = profile.PlacementRoot
+			}
+			add("actions", item)
 		}
 	}
 	for _, svc := range records(source["services"]) {

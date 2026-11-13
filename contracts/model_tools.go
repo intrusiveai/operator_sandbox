@@ -28,7 +28,7 @@ func (p *Protocol) ModelToolsSelected(codec string, operations, surfaces []strin
 }
 func validSurface(s string) bool {
 	switch s {
-	case "model_tool_result", "service_response", "mcp_tool_result", "environment_state", "database_response":
+	case "model_tool_result", "model_response", "service_response", "mcp_tool_result", "environment_state", "database_response":
 		return true
 	}
 	return false

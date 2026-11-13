@@ -48,6 +48,8 @@ type OperationCapability struct {
 	Path              string                   `json:"path,omitempty"`
 }
 type InjectionProfile struct {
+	ModelCodecs    []string `json:"model_codecs,omitempty"`
+	PlacementRoot  string   `json:"placement_root,omitempty"`
 	Surface        string   `json:"surface"`
 	Scopes         []string `json:"scopes"`
 	Placements     []string `json:"placements"`

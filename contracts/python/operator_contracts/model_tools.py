@@ -8,7 +8,7 @@ from .schema_ids import MODEL_TOOL_ARGUMENTS_SCHEMA
 
 def model_tools(protocol,codec,operations,surfaces=None):
     if surfaces is not None:
-        require(type(surfaces) is list and surfaces==sorted(set(surfaces)) and all(s in ('model_tool_result','mcp_tool_result','service_response','environment_state','database_response') for s in surfaces))
+        require(type(surfaces) is list and surfaces==sorted(set(surfaces)) and all(s in ('model_tool_result','model_response','mcp_tool_result','service_response','environment_state','database_response') for s in surfaces))
     require(type(operations) is list and len(operations)<=64 and all(type(op) is str for op in operations)
             and operations==sorted(set(operations)) and all(op in protocol._operations for op in operations))
     document=protocol._catalog._validators[MODEL_TOOL_ARGUMENTS_SCHEMA].schema
@@ -43,7 +43,6 @@ def validate_tool_arguments(protocol,name,raw):
         raise ContractError('invalid_json: '+correction,reason='invalid_json',correction=correction) from None
     if type(value) is not dict:
         raise ContractError('invalid_structure: Expected object.',reason='invalid_structure',correction='Expected object. Supply named tool arguments in one JSON object.')
-    from jsonschema import ValidationError
     validator=protocol._catalog._validators[MODEL_TOOL_ARGUMENTS_SCHEMA]
     branch=next((b for b in validator.schema['oneOf'] if b['properties']['name']['const']==name),None)
     if branch is None: raise ContractError('unsupported_tool: Use a tool from the advertised catalog.',reason='unsupported_tool',field_path='/name')
@@ -62,9 +61,10 @@ def validate_tool_arguments(protocol,name,raw):
         try: check_model_content(protocol,name,value)
         except ContractError as error:
             if error.reason in ('input_depth_exceeded','direct_input_too_large','invalid_base64','content_choice','invalid_media_type','media_type_required','artifact_media_override'):raise
-    try: validator.evolve(schema=branch['properties']['arguments']).validate(value)
-    except ValidationError as error:
-        raise schema_argument_issue(error, protocol._catalog) from None
+    from .schema_diagnostic import selected_error_key
+    errors = list(validator.evolve(schema=branch['properties']['arguments']).iter_errors(value))
+    if errors:
+        raise schema_argument_issue(min(errors, key=selected_error_key), protocol._catalog) from None
     from .tool_normalization import check_model_content
     check_model_content(protocol, name, value)
     if name == 'snapshot_request':

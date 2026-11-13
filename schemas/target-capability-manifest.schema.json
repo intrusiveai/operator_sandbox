@@ -159,7 +159,8 @@
                   "service_response",
                   "mcp_tool_result",
                   "environment_state",
-                  "database_response"
+                  "database_response",
+                  "model_response"
                 ]
               },
               "scopes": {
@@ -221,6 +222,25 @@
                 "maxItems": 256,
                 "minItems": 0,
                 "uniqueItems": true
+              },
+              "model_codecs": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "enum": [
+                    "anthropic_messages",
+                    "aws_bedrock_converse",
+                    "google_generate_content",
+                    "openai_chat_completions",
+                    "openai_responses"
+                  ]
+                },
+                "description": "Implemented application-facing generation protocols, not configured upstream models."
+              },
+              "placement_root": {
+                "const": "response-body",
+                "description": "Whole application-facing model response JSON; valid JSON may intentionally violate the provider response schema."
               }
             },
             "required": [
@@ -231,6 +251,52 @@
               "placements",
               "selector_fields",
               "carriers"
+            ],
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "surface": {
+                      "const": "model_response"
+                    }
+                  },
+                  "required": [
+                    "surface"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "model_codecs",
+                    "placement_root"
+                  ],
+                  "properties": {
+                    "scopes": {
+                      "items": {
+                        "enum": [
+                          "once",
+                          "standing"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": [
+                          "model_codecs"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "placement_root"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
             ]
           },
           "maxItems": 256,

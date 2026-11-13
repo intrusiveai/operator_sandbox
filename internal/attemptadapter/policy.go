@@ -32,6 +32,7 @@ type Route struct {
 	MergeFields []string `json:"merge_fields,omitempty"`
 }
 type Target struct {
+	ModelCodec    string `json:"model_codec,omitempty"`
 	ToolName      string `json:"tool_name,omitempty"`
 	Service       string `json:"service,omitempty"`
 	Method        string `json:"method,omitempty"`
@@ -189,6 +190,8 @@ func validRoute(f capabilities.ExecutionFacts, r Route) bool {
 	}
 	t := r.Target
 	switch r.Surface {
+	case "model_response":
+		return t == (Target{ModelCodec: t.ModelCodec}) && slices.Contains(profile.ModelCodecs, t.ModelCodec) && profile.PlacementRoot == "response-body"
 	case "model_tool_result":
 		return t.ToolName != "" && t == (Target{ToolName: t.ToolName})
 	case "mcp_tool_result":
@@ -324,7 +327,7 @@ func (p *Policy) authorizeInjection(d interceptor.Definition, knownTurns []strin
 		}
 		seen[name] = true
 	}
-	t := Target{ToolName: s.ToolName, Service: s.Service, Method: s.Method, Path: s.Path, Collection: s.Collection, Key: s.Key, FileNamespace: s.FileNamespace, RelativePath: s.RelativePath}
+	t := Target{ModelCodec: s.ModelCodec, ToolName: s.ToolName, Service: s.Service, Method: s.Method, Path: s.Path, Collection: s.Collection, Key: s.Key, FileNamespace: s.FileNamespace, RelativePath: s.RelativePath}
 	routes := []Route{}
 	for _, r := range p.scopes.Routes {
 		if r.Surface == d.Surface && sameTarget(p.facts, r.Target, t) {

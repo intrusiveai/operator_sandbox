@@ -112,15 +112,24 @@ func TestDiscoveryRouteAuthorization(t *testing.T) {
 }
 
 func discoveryPlan(t *testing.T, route Route, payload []byte) (*Plan, []byte) {
+	return injectionPlan(t, route, payload, "discoverable-injection-targets")
+}
+func injectionPlan(t *testing.T, route Route, payload []byte, fixtureName string) (*Plan, []byte) {
 	t.Helper()
 	c, raw, in := fixture(t)
-	_, export, nativeRaw := discoveryExport(t)
+	nativeRaw, err := os.ReadFile("../../schemas/fixtures/" + fixtureName + "/interceptor-export.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	export, err := capabilities.FromNative(c, nativeRaw, "delivery-example")
+	if err != nil {
+		t.Fatal(err)
+	}
 	var n map[string]any
 	json.Unmarshal(nativeRaw, &n)
 	binding := in.Live.Binding()
 	a := interceptor.Attachment{CampaignID: "campaign-1", Binding: binding, Capabilities: nativeRaw, Session: interceptor.Session{ID: binding.SessionID, CampaignID: "campaign-1", OperationAPIVersion: interceptor.OperationVersion, Phase: "running", FeedbackProfile: "black-box", EnvironmentDigest: n["environment_digest"].(string), AppDigest: n["application_digest"].(string), CapabilityManifestDigest: export.SourceDigest()}}
 	status := interceptor.Status{InstanceID: "instance-1", CampaignID: "campaign-1", Active: binding, Sessions: map[string]interceptor.Binding{binding.SessionID: binding}, Phase: "ready", StoreAvailable: true}
-	var err error
 	in.Live, err = capabilities.BindLive(c, a, status, "instance-1", "delivery-example")
 	if err != nil {
 		t.Fatal(err)
@@ -136,7 +145,10 @@ func discoveryPlan(t *testing.T, route Route, payload []byte) (*Plan, []byte) {
 	bundleRaw = mutate(bundleRaw, func(m map[string]any) {
 		m["target_requirements"].(map[string]any)["capability_source_digest"] = export.SourceDigest()
 		s := m["scenarios"].([]any)[0].(map[string]any)
-		s["required_capability_refs"] = []string{"action:injection:" + route.Surface, "service:" + route.Target.Service}
+		s["required_capability_refs"] = []string{"action:injection:" + route.Surface}
+		if route.Target.Service != "" {
+			s["required_capability_refs"] = append(s["required_capability_refs"].([]string), "service:"+route.Target.Service)
+		}
 		s["guidance"].(map[string]any)["action_refs"] = []string{"action:injection:" + route.Surface}
 	})
 	bundle, err := capabilities.ParseBundle(c, bundleRaw)
@@ -151,7 +163,9 @@ func discoveryPlan(t *testing.T, route Route, payload []byte) (*Plan, []byte) {
 	in.Artifacts[pd.Digest] = Artifact{CampaignID: "campaign-1", Descriptor: pd, Bytes: payload}
 	mode := "simulation"
 	selector := map[string]any{"service": route.Target.Service}
-	if route.Surface == "environment_state" {
+	if route.Surface == "model_response" {
+		selector = map[string]any{"model_codec": route.Target.ModelCodec, "call_ordinal": "first"}
+	} else if route.Surface == "environment_state" {
 		mode = "fidelity"
 		selector["collection"], selector["key"] = route.Target.Collection, route.Target.Key
 	} else {
@@ -168,6 +182,13 @@ func discoveryPlan(t *testing.T, route Route, payload []byte) (*Plan, []byte) {
 	for _, fact := range []string{"exact allowlists", "administrator", "HEAD", "existing key string", "mutable_fields", "not injection payloads", "does not undo"} {
 		if !strings.Contains(string(guide), fact) {
 			t.Fatalf("missing tool guidance: %s", fact)
+		}
+	}
+	if route.Surface == "model_response" {
+		for _, fact := range []string{"target application", "not Harness responses", "model_codec", "response_written", "not SDK acceptance"} {
+			if !strings.Contains(string(guide), fact) {
+				t.Fatalf("missing model-response tool guidance: %s", fact)
+			}
 		}
 	}
 	modelInput := map[string]any{"origin": "scenario", "scenario_id": "scenario-marker", "operation_id": "invoke", "json": map[string]any{"query": "Summarize ticket T-1"}, "injection": map[string]any{"json": json.RawMessage(payload)}, "setup": []any{map[string]any{"surface": route.Surface, "mode": mode, "scope": "once", "selector": selector, "placement": interceptor.Placement{Operation: "replace", Pointer: route.Pointers[0]}}}}

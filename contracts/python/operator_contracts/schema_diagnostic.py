@@ -22,10 +22,17 @@ def select_error(error):
         candidates = [children for children in groups.values() if not any(mismatch(c) for c in children)]
         if len(candidates) != 1:
             return error
-        return select_error(sorted(candidates[0], key=lambda e: (list(map(str,e.absolute_path)), str(e.validator)))[0])
+        return select_error(sorted(candidates[0], key=selected_error_key)[0])
     if error.context:
-        return select_error(sorted(error.context, key=lambda e: (list(map(str,e.absolute_path)), str(e.validator)))[0])
+        return select_error(sorted(error.context, key=selected_error_key)[0])
     return error
+
+
+def selected_error_key(error):
+    # Compare the selected leaf, just as the Go validator does. Comparing wrapper
+    # paths can choose an ambiguous selector union instead of the surface's rule.
+    leaf = select_error(error)
+    return ('/'.join(map(str, leaf.absolute_path)) + str(leaf.validator))
 
 
 def correction(node, keyword):

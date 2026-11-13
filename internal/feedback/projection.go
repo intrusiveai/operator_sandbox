@@ -282,10 +282,20 @@ func normalize(kind string, b []byte, truncated bool, actions map[string]string,
 		id, _ := m["injection_id"].(string)
 		action := actions[id]
 		state, _ := m["state"].(string)
-		if !idPattern.MatchString(action) || !slices.Contains([]string{"applied", "failed", "unknown"}, state) {
+		states := []string{"applied", "failed", "unknown"}
+		r := map[string]any{"action_id": action, "state": state}
+		if surface, present := m["surface"]; present {
+			if surface != "model_response" || m["direction"] != "model_to_application" {
+				return nil, ErrFeedback
+			}
+			states = []string{"applied", "failed", "response_written", "write_failed"}
+			r["surface"], r["direction"] = surface, m["direction"]
+		} else if _, present := m["direction"]; present {
 			return nil, ErrFeedback
 		}
-		r := map[string]any{"action_id": action, "state": state}
+		if !idPattern.MatchString(action) || !slices.Contains(states, state) {
+			return nil, ErrFeedback
+		}
 		if state == "unknown" {
 			r["reason"] = "no_confirmed_delivery_in_window"
 		} else {
