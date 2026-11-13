@@ -10010,22 +10010,37 @@
                                         "type": "string"
                                       },
                                       "key": {
-                                        "additionalProperties": {
-                                          "type": [
-                                            "string",
-                                            "number",
-                                            "boolean"
-                                          ]
-                                        },
-                                        "description": "Use exactly the key columns from this database policy details_reference, with non-null scalar values.",
-                                        "maxProperties": 16,
-                                        "minProperties": 1,
-                                        "propertyNames": {
-                                          "maxLength": 128,
-                                          "minLength": 1,
-                                          "type": "string"
-                                        },
-                                        "type": "object"
+                                        "description": "Use an existing record key string for a state collection, or a key-column object for a database table. Read the selected resource details_reference.",
+                                        "oneOf": [
+                                          {
+                                            "description": "Existing record key from the selected state collection details_reference.",
+                                            "maxLength": 256,
+                                            "minLength": 1,
+                                            "not": {
+                                              "pattern": "[\\r\\n]"
+                                            },
+                                            "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+                                            "type": "string"
+                                          },
+                                          {
+                                            "additionalProperties": {
+                                              "type": [
+                                                "string",
+                                                "number",
+                                                "boolean"
+                                              ]
+                                            },
+                                            "description": "Exactly the database policy key columns, with non-null scalar values.",
+                                            "maxProperties": 16,
+                                            "minProperties": 1,
+                                            "propertyNames": {
+                                              "maxLength": 128,
+                                              "minLength": 1,
+                                              "type": "string"
+                                            },
+                                            "type": "object"
+                                          }
+                                        ]
                                       },
                                       "service": {
                                         "description": "Logical service identifier from the target capabilities.",
@@ -12089,22 +12104,37 @@
                                         "type": "string"
                                       },
                                       "key": {
-                                        "additionalProperties": {
-                                          "type": [
-                                            "string",
-                                            "number",
-                                            "boolean"
-                                          ]
-                                        },
-                                        "description": "Use exactly the key columns from this database policy details_reference, with non-null scalar values.",
-                                        "maxProperties": 16,
-                                        "minProperties": 1,
-                                        "propertyNames": {
-                                          "maxLength": 128,
-                                          "minLength": 1,
-                                          "type": "string"
-                                        },
-                                        "type": "object"
+                                        "description": "Use an existing record key string for a state collection, or a key-column object for a database table. Read the selected resource details_reference.",
+                                        "oneOf": [
+                                          {
+                                            "description": "Existing record key from the selected state collection details_reference.",
+                                            "maxLength": 256,
+                                            "minLength": 1,
+                                            "not": {
+                                              "pattern": "[\\r\\n]"
+                                            },
+                                            "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+                                            "type": "string"
+                                          },
+                                          {
+                                            "additionalProperties": {
+                                              "type": [
+                                                "string",
+                                                "number",
+                                                "boolean"
+                                              ]
+                                            },
+                                            "description": "Exactly the database policy key columns, with non-null scalar values.",
+                                            "maxProperties": 16,
+                                            "minProperties": 1,
+                                            "propertyNames": {
+                                              "maxLength": 128,
+                                              "minLength": 1,
+                                              "type": "string"
+                                            },
+                                            "type": "object"
+                                          }
+                                        ]
                                       },
                                       "service": {
                                         "description": "Logical service identifier from the target capabilities.",
@@ -12687,6 +12717,10 @@
                   "lifecycle": "Response replacement changes selected query-result cells delivered to the application, not persistent rows; state mutation changes persistent state. Deleting an injection does not reverse committed mutations. Use an admitted ready snapshot and restore when reverting persistent state is required; successful restore skips remaining calls in that response.",
                   "query": "Invoke the application through its permitted operation, not arbitrary SQL or database credentials. database_response uses simulation mode: select the declared service and admitted call ordinals/request-body predicates, not HTTP paths or MCP tool names. Replace eligible text/JSON cells using /rows/<zero-based-row>/<zero-based-column>; do not change row counts, column metadata, NULL semantics, binary cells or unsupported native types.",
                   "state": "environment_state uses fidelity mode: collection is the declared table-policy ID; key is a native JSON object with exactly its non-null scalar key columns. Field pointers target authorized writable columns. Creating a row requires explicit permission, root-replace semantics and payload keys matching the selector; this is not an upsert. Never infer permission from a successful query."
+                },
+                "discovered_setup": {
+                  "responses": "For an http-route-set, select a concrete method and path allowed by both the administrator route and endpoint details_reference. methods and paths are independent exact allowlists; omitted or empty lists impose no endpoint restriction, but never grant wildcard permission. HEAD is not injectable.",
+                  "state": "For a state-collection, use environment_state in fidelity mode, the advertised collection and an existing key string. Select a permitted pointer into mutable_fields, with JSON injection content for that field. Delivery schemas describe complete records, not injection payloads. Do not create/delete records, replace the record root, or change immutable fields. Deleting an injection does not undo an applied state mutation."
                 },
                 "parent": "Use an existing execution handle to express a follow-up experiment; omit parent for a root attempt.",
                 "setup": "Only use advertised setup fields and admitted surfaces. Nonempty setup requires injection content; injection and retain_injections require nonempty setup. Omitted setup means none; omitted retention means false. Payload/carrier purpose must match the selected route."
@@ -13433,21 +13467,30 @@
                                       "type": "string"
                                     },
                                     "key": {
-                                      "additionalProperties": {
-                                        "type": [
-                                          "string",
-                                          "number",
-                                          "boolean"
-                                        ]
-                                      },
-                                      "maxProperties": 16,
-                                      "minProperties": 1,
-                                      "propertyNames": {
-                                        "maxLength": 128,
-                                        "minLength": 1,
-                                        "type": "string"
-                                      },
-                                      "type": "object"
+                                      "oneOf": [
+                                        {
+                                          "maxLength": 256,
+                                          "minLength": 1,
+                                          "type": "string"
+                                        },
+                                        {
+                                          "additionalProperties": {
+                                            "type": [
+                                              "string",
+                                              "number",
+                                              "boolean"
+                                            ]
+                                          },
+                                          "maxProperties": 16,
+                                          "minProperties": 1,
+                                          "propertyNames": {
+                                            "maxLength": 128,
+                                            "minLength": 1,
+                                            "type": "string"
+                                          },
+                                          "type": "object"
+                                        }
+                                      ]
                                     },
                                     "service": {
                                       "maxLength": 128,
@@ -18685,6 +18728,108 @@
                       "endpoints": {
                         "items": {
                           "additionalProperties": false,
+                          "allOf": [
+                            {
+                              "if": {
+                                "properties": {
+                                  "kind": {
+                                    "const": "http-route-set"
+                                  }
+                                }
+                              },
+                              "then": {
+                                "not": {
+                                  "anyOf": [
+                                    {
+                                      "required": [
+                                        "method"
+                                      ]
+                                    },
+                                    {
+                                      "required": [
+                                        "path"
+                                      ]
+                                    },
+                                    {
+                                      "required": [
+                                        "collection"
+                                      ]
+                                    },
+                                    {
+                                      "required": [
+                                        "keys"
+                                      ]
+                                    },
+                                    {
+                                      "required": [
+                                        "mutable_fields"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "properties": {
+                                  "injection_root": {
+                                    "const": "response-body"
+                                  }
+                                },
+                                "required": [
+                                  "delivery"
+                                ]
+                              }
+                            },
+                            {
+                              "if": {
+                                "properties": {
+                                  "kind": {
+                                    "const": "state-collection"
+                                  }
+                                }
+                              },
+                              "then": {
+                                "not": {
+                                  "anyOf": [
+                                    {
+                                      "required": [
+                                        "method"
+                                      ]
+                                    },
+                                    {
+                                      "required": [
+                                        "path"
+                                      ]
+                                    },
+                                    {
+                                      "required": [
+                                        "methods"
+                                      ]
+                                    },
+                                    {
+                                      "required": [
+                                        "paths"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "properties": {
+                                  "injection_root": {
+                                    "const": "service-record"
+                                  },
+                                  "keys": {
+                                    "minItems": 1
+                                  },
+                                  "mutable_fields": {
+                                    "minItems": 1
+                                  }
+                                },
+                                "required": [
+                                  "collection",
+                                  "keys",
+                                  "mutable_fields",
+                                  "delivery"
+                                ]
+                              }
+                            }
+                          ],
                           "properties": {
                             "collection": {
                               "maxLength": 128,
@@ -18712,10 +18857,26 @@
                               "minLength": 1,
                               "type": "string"
                             },
+                            "keys": {
+                              "description": "Existing record keys scoped to this service and collection, not arbitrary keys or creation permission.",
+                              "items": {
+                                "maxLength": 128,
+                                "minLength": 1,
+                                "not": {
+                                  "pattern": "[\\r\\n]"
+                                },
+                                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                                "type": "string"
+                              },
+                              "type": "array",
+                              "uniqueItems": true
+                            },
                             "kind": {
                               "enum": [
                                 "http-route",
-                                "mcp-tool"
+                                "mcp-tool",
+                                "http-route-set",
+                                "state-collection"
                               ]
                             },
                             "maximum_request_bytes": {
@@ -18728,6 +18889,30 @@
                               "minLength": 1,
                               "type": "string"
                             },
+                            "methods": {
+                              "description": "Independent exact HTTP method allowlist for a route set; omitted or empty is unrestricted except HEAD. Choose a concrete method.",
+                              "items": {
+                                "maxLength": 32,
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              "type": "array",
+                              "uniqueItems": true
+                            },
+                            "mutable_fields": {
+                              "description": "Mutable top-level record fields; other fields and record identities are immutable.",
+                              "items": {
+                                "maxLength": 128,
+                                "minLength": 1,
+                                "not": {
+                                  "pattern": "[\\r\\n]"
+                                },
+                                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                                "type": "string"
+                              },
+                              "type": "array",
+                              "uniqueItems": true
+                            },
                             "output_pointer": {
                               "maxLength": 2048,
                               "minLength": 0,
@@ -18737,6 +18922,16 @@
                               "maxLength": 4096,
                               "minLength": 1,
                               "type": "string"
+                            },
+                            "paths": {
+                              "description": "Independent exact absolute path allowlist for a route set; omitted or empty is unrestricted. Entries are not templates.",
+                              "items": {
+                                "maxLength": 4096,
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              "type": "array",
+                              "uniqueItems": true
                             }
                           },
                           "required": [
@@ -19293,7 +19488,7 @@
   "defaultContentType": "application/json",
   "info": {
     "title": "Operator–Attack Harness interface",
-    "version": "0.9.1"
+    "version": "0.10.0"
   },
   "operations": {
     "control-in": {

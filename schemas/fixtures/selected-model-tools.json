@@ -67,8 +67,8 @@
       "database_response",
       "environment_state"
     ],
-    "digest": "sha256:97d70c9c97c3cd062e73e45fb20d00b65f543cc9ec6e4c89ce666cd17e0f4021",
-    "size_bytes": 18405
+    "digest": "sha256:c5f6f6cf716f2a242e581231e7034aef1193f78047b924ac410a0570fbb4f1da",
+    "size_bytes": 18465
   },
   {
     "codec": "openai-chat-text-tools-v1",
@@ -95,8 +95,8 @@
       "model_tool_result",
       "service_response"
     ],
-    "digest": "sha256:ecccd2258c391bad1da6884b014bb5c6b9c1add8c5051b24b8a37b4cd9770a8d",
-    "size_bytes": 23908
+    "digest": "sha256:aaa0905515f5a0eae1c1872f06eb30c59d72e9d1d94a78665080041f5d22bb26",
+    "size_bytes": 23968
   },
   {
     "codec": "openai-responses-text-tools-v1",
@@ -166,8 +166,8 @@
       "database_response",
       "environment_state"
     ],
-    "digest": "sha256:1b39b260ed0ece02545bdd6986532b25a8201583b701ff4d446cd6611990c70b",
-    "size_bytes": 18262
+    "digest": "sha256:a71bde6be7d6964f0458dd3d59982092ba074750010ee9d2171f54b17dd8eb97",
+    "size_bytes": 18322
   },
   {
     "codec": "openai-responses-text-tools-v1",
@@ -194,8 +194,8 @@
       "model_tool_result",
       "service_response"
     ],
-    "digest": "sha256:469c7a797bae04268e14a36fb074e936ce4808776f9a59589f3e2f46a2bb010a",
-    "size_bytes": 23765
+    "digest": "sha256:f42631e7b4ea90776537d8a8d1466ef79e7c8a8a0c1ace7bba778f9e52a353b3",
+    "size_bytes": 23825
   },
   {
     "codec": "anthropic-messages-text-tools-v1",
@@ -265,8 +265,8 @@
       "database_response",
       "environment_state"
     ],
-    "digest": "sha256:d35f8bad39d20d3a7f4f7eaa46aec004b435ef733939cf158975ba927ddc0d6a",
-    "size_bytes": 17921
+    "digest": "sha256:7051aa74168367fa56a49f62145e3c5442599bd1346fd746d6162a93af41b839",
+    "size_bytes": 17981
   },
   {
     "codec": "anthropic-messages-text-tools-v1",
@@ -293,8 +293,8 @@
       "model_tool_result",
       "service_response"
     ],
-    "digest": "sha256:9eaa276f0c8340ab14c549ee16bc211af129a405c77d52b20ceae96820ec1719",
-    "size_bytes": 23424
+    "digest": "sha256:3ea08721cc18dac79e8f102b0623b8645e9820ffd7e05f2314734e0762dac574",
+    "size_bytes": 23484
   },
   {
     "codec": "bedrock-converse-text-tools-v1",
@@ -364,8 +364,8 @@
       "database_response",
       "environment_state"
     ],
-    "digest": "sha256:41318be720e6e35c29ccc2fd34ffd77c7b91188ad3fbb4c8f4d46ab9cef9d392",
-    "size_bytes": 18152
+    "digest": "sha256:373bd540aa08b04e01d1640d57afec15ae61c9b043f49e13941a5bc3bdb00e02",
+    "size_bytes": 18212
   },
   {
     "codec": "bedrock-converse-text-tools-v1",
@@ -392,8 +392,8 @@
       "model_tool_result",
       "service_response"
     ],
-    "digest": "sha256:9e5f248788d5ce54e23ff8f9826edb3c5e4764bd05c7d5bc7b35744336d2c152",
-    "size_bytes": 23655
+    "digest": "sha256:ae5bfe60b7fb5515d3b3bcaf303acdadc02e19a867ef8a6a1220a1c90f322420",
+    "size_bytes": 23715
   },
   {
     "codec": "gemini-text-tools-v1",
@@ -463,8 +463,8 @@
       "database_response",
       "environment_state"
     ],
-    "digest": "sha256:e2881cb3c4f43fbee7e6e0c03c0cc133080812f51301e173974e9ad3bba590fa",
-    "size_bytes": 18036
+    "digest": "sha256:3d6f5d27e240fea84504458b79be7bc2ae8b89a04246b51b36b4594190244f74",
+    "size_bytes": 18096
   },
   {
     "codec": "gemini-text-tools-v1",
@@ -491,7 +491,7 @@
       "model_tool_result",
       "service_response"
     ],
-    "digest": "sha256:0ceb4e6d1cf42fc8da3a4a34d26ef6946c1872a3c00db829bb46b8beef701a62",
-    "size_bytes": 23539
+    "digest": "sha256:db3f3e34ff458d4da331eabc89fa9334e957cad908e0e48073c951b02b3bde44",
+    "size_bytes": 23599
   }
 ]

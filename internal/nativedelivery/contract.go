@@ -47,6 +47,8 @@ type Contract struct {
 
 // Endpoint describes a selectable service interaction, never a destination.
 // For MCP, Delivery.Output describes structuredContent, not the result envelope.
+// Field order/omission match the pinned Interceptor OpenAPI source and the native
+// hash preimage in schemas/fixtures/discoverable-injection-targets.
 type Endpoint struct {
 	ID                  string    `json:"id"`
 	Kind                string    `json:"kind"`
@@ -57,6 +59,12 @@ type Endpoint struct {
 	InjectionRoot       string    `json:"injection_root"`
 	OutputPointer       string    `json:"output_pointer,omitempty"`
 	MaximumRequestBytes int64     `json:"maximum_request_bytes"`
+	// Route sets carry independent exact allowlists; omitted lists are unrestricted.
+	Methods []string `json:"methods,omitempty"`
+	Paths   []string `json:"paths,omitempty"`
+	// State collections expose existing keys and mutable top-level fields only.
+	Keys          []string `json:"keys,omitempty"`
+	MutableFields []string `json:"mutable_fields,omitempty"`
 }
 
 // Clone retains JSON numbers exactly while detaching map/slice storage.

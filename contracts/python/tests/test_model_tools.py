@@ -101,3 +101,6 @@ class PresentationTest(unittest.TestCase):
             self.assertTrue(database[key])
         for fact in ('key columns', 'writable columns', 'row-creation', 'call ordinals', '/rows/', 'fidelity', 'NULL', 'restore'):
             self.assertIn(fact, json.dumps(database))
+        discovered = json.loads(tool_guidance(self.protocol, 'attempt_execute'))['examples']['discovered_setup']
+        for fact in ('exact allowlists', 'administrator', 'HEAD', 'existing key string', 'mutable_fields', 'not injection payloads', 'does not undo'):
+            self.assertIn(fact, json.dumps(discovered))

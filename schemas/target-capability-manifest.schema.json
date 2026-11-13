@@ -345,7 +345,9 @@
                     "kind": {
                       "enum": [
                         "http-route",
-                        "mcp-tool"
+                        "mcp-tool",
+                        "http-route-set",
+                        "state-collection"
                       ]
                     },
                     "method": {
@@ -384,6 +386,54 @@
                       "type": "integer",
                       "minimum": 1,
                       "maximum": 9007199254740991
+                    },
+                    "methods": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 32
+                      },
+                      "uniqueItems": true,
+                      "description": "Independent exact HTTP method allowlist for a route set; omitted or empty is unrestricted except HEAD. Choose a concrete method."
+                    },
+                    "paths": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 4096
+                      },
+                      "uniqueItems": true,
+                      "description": "Independent exact absolute path allowlist for a route set; omitted or empty is unrestricted. Entries are not templates."
+                    },
+                    "keys": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128,
+                        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      "uniqueItems": true,
+                      "description": "Existing record keys scoped to this service and collection, not arbitrary keys or creation permission."
+                    },
+                    "mutable_fields": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128,
+                        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      "uniqueItems": true,
+                      "description": "Mutable top-level record fields; other fields and record identities are immutable."
                     }
                   },
                   "required": [
@@ -391,6 +441,108 @@
                     "kind",
                     "injection_root",
                     "maximum_request_bytes"
+                  ],
+                  "allOf": [
+                    {
+                      "if": {
+                        "properties": {
+                          "kind": {
+                            "const": "http-route-set"
+                          }
+                        }
+                      },
+                      "then": {
+                        "required": [
+                          "delivery"
+                        ],
+                        "properties": {
+                          "injection_root": {
+                            "const": "response-body"
+                          }
+                        },
+                        "not": {
+                          "anyOf": [
+                            {
+                              "required": [
+                                "method"
+                              ]
+                            },
+                            {
+                              "required": [
+                                "path"
+                              ]
+                            },
+                            {
+                              "required": [
+                                "collection"
+                              ]
+                            },
+                            {
+                              "required": [
+                                "keys"
+                              ]
+                            },
+                            {
+                              "required": [
+                                "mutable_fields"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "kind": {
+                            "const": "state-collection"
+                          }
+                        }
+                      },
+                      "then": {
+                        "required": [
+                          "collection",
+                          "keys",
+                          "mutable_fields",
+                          "delivery"
+                        ],
+                        "properties": {
+                          "injection_root": {
+                            "const": "service-record"
+                          },
+                          "keys": {
+                            "minItems": 1
+                          },
+                          "mutable_fields": {
+                            "minItems": 1
+                          }
+                        },
+                        "not": {
+                          "anyOf": [
+                            {
+                              "required": [
+                                "method"
+                              ]
+                            },
+                            {
+                              "required": [
+                                "path"
+                              ]
+                            },
+                            {
+                              "required": [
+                                "methods"
+                              ]
+                            },
+                            {
+                              "required": [
+                                "paths"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    }
                   ]
                 },
                 "maxItems": 256,

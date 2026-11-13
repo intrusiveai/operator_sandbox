@@ -34,6 +34,13 @@ An export describes available capabilities. It grants no execution permission an
 does not assert that a session is ready. Operation methods/paths, network/provider
 configuration and native provenance stay out of public execution choices.
 
+Service endpoint metadata includes `http-route-set` method/path allowlists and
+`state-collection` record keys/mutable fields. These fields participate in native
+hash verification and the public projection; compact Harness context preserves
+them in verified detail references. They describe available selectors, not grants.
+See [discovered routes](TYPED_ATTEMPT_ADAPTER.md#discovered-response-and-state-routes)
+for administrator authorization and model input rules.
+
 ## Host preparation flow
 
 1. `LoadExport` safely reads a submitted public file and its deterministic native

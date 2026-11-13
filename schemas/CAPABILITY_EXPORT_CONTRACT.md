@@ -35,6 +35,13 @@ not last-writer-wins. Delivery examples preserve order, and embedded schemas and
 example JSON preserve their values; do not sort arrays inside those documents.
 Within services, sort endpoints by `id` and creatable collections by `collection`;
 reject duplicate identifiers within each enclosing service.
+Preserve endpoint `methods`, `paths`, `keys`, and `mutable_fields` with their
+native omission semantics. `http-route-set` allowlists are independent exact
+selectors, with empty/omitted lists unrestricted at the capability layer.
+`state-collection` lists existing record keys and writable top-level fields;
+its delivery schemas describe whole records. These fields remain available in
+compact-context detail references. Concrete host authorization is still required;
+discovery does not permit wildcard selection, creation, or immutable-field writes.
 Absent optional fields stay absent. Normalize native null collections to empty
 arrays only in the public projection, never when verifying the native source.
 No volatile session, worker, revision, readiness, active profile or remaining

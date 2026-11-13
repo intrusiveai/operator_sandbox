@@ -2097,5 +2097,2852 @@
         "service_id": "database"
       }
     }
+  },
+  {
+    "name": "discoverable-injection-targets",
+    "target": {
+      "schema_version": "operator.dev/target-capability-manifest/v1alpha1",
+      "source": {
+        "adapter": "interceptor/v1",
+        "schema_version": "interceptor.dev/capability-manifest/v1alpha3",
+        "capability_source_digest": "sha256:93f0f66e61e1bf9e9db248135fcd616d9cd21ef33af095c71bf1d4022f7e69e8",
+        "raw_digest": "sha256:a84585188d53afd1e3caeab604fc83b1f052f12cac3e8179755dea8c327c340f"
+      },
+      "capabilities": {
+        "target_id": "delivery-example",
+        "adapter": "interceptor/v1",
+        "operations": [
+          {
+            "ref": "operation:invoke",
+            "operation_id": "invoke",
+            "delivery_status": "described",
+            "maximum_input_bytes": 65536,
+            "delivery": {
+              "description": "Submit a task to the synthetic agent",
+              "input": {
+                "media_type": "application/json",
+                "encoding": "json",
+                "max_bytes": 65536,
+                "basis": "synthetic",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "query": {
+                      "description": "Task text for the agent",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                }
+              },
+              "output": {
+                "media_type": "application/json",
+                "encoding": "json",
+                "max_bytes": 65536,
+                "basis": "unknown"
+              },
+              "examples": [
+                {
+                  "id": "benign",
+                  "input": {
+                    "query": "Summarize ticket T-1"
+                  },
+                  "output": {
+                    "answer": "Illustrative summary"
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "actions": [
+          {
+            "ref": "action:injection:environment_state",
+            "action_type": "interceptor.injection/v1alpha1",
+            "surface": "environment_state",
+            "scopes": [
+              "next_turn",
+              "once",
+              "standing"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "selector_fields": [
+              "collection",
+              "file_namespace",
+              "key",
+              "path",
+              "relative_path",
+              "service",
+              "turn_id"
+            ],
+            "carriers": [
+              "managed_service_state",
+              "mutable_file"
+            ]
+          },
+          {
+            "ref": "action:injection:mcp_tool_result",
+            "action_type": "interceptor.injection/v1alpha1",
+            "surface": "mcp_tool_result",
+            "scopes": [
+              "once",
+              "standing"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "selector_fields": [
+              "arguments_contain",
+              "arguments_equal",
+              "arguments_json_pointer",
+              "call_ordinal",
+              "service",
+              "tool_name",
+              "turn_id"
+            ],
+            "carriers": [
+              "mcp_tools_call_result"
+            ]
+          },
+          {
+            "ref": "action:injection:model_tool_result",
+            "action_type": "interceptor.injection/v1alpha1",
+            "surface": "model_tool_result",
+            "scopes": [
+              "next_turn",
+              "once",
+              "standing"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "selector_fields": [
+              "arguments_contain",
+              "arguments_equal",
+              "arguments_json_pointer",
+              "call_ordinal",
+              "tool_name",
+              "turn_id"
+            ],
+            "carriers": [
+              "model_client_tool_result"
+            ]
+          },
+          {
+            "ref": "action:injection:service_response",
+            "action_type": "interceptor.injection/v1alpha1",
+            "surface": "service_response",
+            "scopes": [
+              "once",
+              "standing"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "selector_fields": [
+              "call_ordinal",
+              "headers_equal",
+              "method",
+              "path",
+              "query_equal",
+              "request_body_contain",
+              "request_body_equal",
+              "request_body_json_pointer",
+              "service",
+              "turn_id"
+            ],
+            "carriers": [
+              "dynamic_attacker_sink_response",
+              "managed_http_response"
+            ]
+          }
+        ],
+        "services": [
+          {
+            "ref": "service:head-only",
+            "service_id": "head-only",
+            "injection_surfaces": [],
+            "kind": "http_sink",
+            "role": "attacker",
+            "transports": [
+              "http"
+            ],
+            "response_mode": "dynamic"
+          },
+          {
+            "ref": "service:idp",
+            "service_id": "idp",
+            "injection_surfaces": [
+              "environment_state"
+            ],
+            "kind": "oidc",
+            "role": "identity",
+            "transports": [
+              "http"
+            ],
+            "endpoints": [
+              {
+                "id": "delegations",
+                "kind": "state-collection",
+                "collection": "delegations",
+                "delivery": {
+                  "description": "Existing identity records only. Input/output describe the complete record, not the injection envelope. Use environment_state with collection/key and a JSON Pointer into mutable_fields. Identifying fields are immutable; no creation or deletion. Runtime validates scopes and record identity.",
+                  "input": {
+                    "media_type": "application/json",
+                    "encoding": "json",
+                    "max_bytes": 1048576,
+                    "basis": "source-derived",
+                    "schema": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "active": {
+                          "type": "boolean"
+                        },
+                        "agent": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "scopes": {
+                          "items": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "type": "array"
+                        },
+                        "service": {
+                          "type": "string"
+                        },
+                        "user": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "active",
+                        "scopes",
+                        "id",
+                        "service",
+                        "agent",
+                        "user"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "output": {
+                    "media_type": "application/json",
+                    "encoding": "json",
+                    "max_bytes": 1048576,
+                    "basis": "source-derived",
+                    "schema": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "active": {
+                          "type": "boolean"
+                        },
+                        "agent": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "scopes": {
+                          "items": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "type": "array"
+                        },
+                        "service": {
+                          "type": "string"
+                        },
+                        "user": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "active",
+                        "scopes",
+                        "id",
+                        "service",
+                        "agent",
+                        "user"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                },
+                "injection_root": "service-record",
+                "maximum_request_bytes": 1048576,
+                "keys": [
+                  "delegation"
+                ],
+                "mutable_fields": [
+                  "active",
+                  "scopes"
+                ]
+              },
+              {
+                "id": "faults",
+                "kind": "state-collection",
+                "collection": "faults",
+                "delivery": {
+                  "description": "Existing identity records only. Input/output describe the complete record, not the injection envelope. Use environment_state with collection/key and a JSON Pointer into mutable_fields. Identifying fields are immutable; no creation or deletion. Runtime validates scopes and record identity.",
+                  "input": {
+                    "media_type": "application/json",
+                    "encoding": "json",
+                    "max_bytes": 1048576,
+                    "basis": "source-derived",
+                    "schema": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "issue_expired": {
+                          "type": "boolean"
+                        },
+                        "reject_exchange": {
+                          "type": "boolean"
+                        },
+                        "unavailable": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "issue_expired",
+                        "reject_exchange",
+                        "unavailable"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "output": {
+                    "media_type": "application/json",
+                    "encoding": "json",
+                    "max_bytes": 1048576,
+                    "basis": "source-derived",
+                    "schema": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "issue_expired": {
+                          "type": "boolean"
+                        },
+                        "reject_exchange": {
+                          "type": "boolean"
+                        },
+                        "unavailable": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "issue_expired",
+                        "reject_exchange",
+                        "unavailable"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                },
+                "injection_root": "service-record",
+                "maximum_request_bytes": 1048576,
+                "keys": [
+                  "issuer"
+                ],
+                "mutable_fields": [
+                  "issue_expired",
+                  "reject_exchange",
+                  "unavailable"
+                ]
+              },
+              {
+                "id": "grants",
+                "kind": "state-collection",
+                "collection": "grants",
+                "delivery": {
+                  "description": "Existing identity records only. Input/output describe the complete record, not the injection envelope. Use environment_state with collection/key and a JSON Pointer into mutable_fields. Identifying fields are immutable; no creation or deletion. Runtime validates scopes and record identity.",
+                  "input": {
+                    "media_type": "application/json",
+                    "encoding": "json",
+                    "max_bytes": 1048576,
+                    "basis": "source-derived",
+                    "schema": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "active": {
+                          "type": "boolean"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "principal": {
+                          "type": "string"
+                        },
+                        "scopes": {
+                          "items": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "type": "array"
+                        },
+                        "service": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "active",
+                        "scopes",
+                        "id",
+                        "service",
+                        "principal"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "output": {
+                    "media_type": "application/json",
+                    "encoding": "json",
+                    "max_bytes": 1048576,
+                    "basis": "source-derived",
+                    "schema": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "active": {
+                          "type": "boolean"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "principal": {
+                          "type": "string"
+                        },
+                        "scopes": {
+                          "items": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "type": "array"
+                        },
+                        "service": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "active",
+                        "scopes",
+                        "id",
+                        "service",
+                        "principal"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                },
+                "injection_root": "service-record",
+                "maximum_request_bytes": 1048576,
+                "keys": [
+                  "grant"
+                ],
+                "mutable_fields": [
+                  "active",
+                  "scopes"
+                ]
+              }
+            ]
+          },
+          {
+            "ref": "service:method-only",
+            "service_id": "method-only",
+            "injection_surfaces": [
+              "service_response"
+            ],
+            "kind": "http_sink",
+            "role": "attacker",
+            "transports": [
+              "http"
+            ],
+            "response_mode": "dynamic",
+            "endpoints": [
+              {
+                "id": "response",
+                "kind": "http-route-set",
+                "delivery": {
+                  "description": "Captured attacker requests receive a body-only injectable response. Method/path lists are exact allowlists; empty lists are unrestricted except HEAD, which has no response body. No response values are disclosed.",
+                  "input": {
+                    "media_type": "application/octet-stream",
+                    "encoding": "bytes",
+                    "max_bytes": 1048576,
+                    "basis": "source-derived"
+                  },
+                  "output": {
+                    "media_type": "text/plain",
+                    "encoding": "utf8",
+                    "max_bytes": 1048576,
+                    "basis": "source-derived"
+                  }
+                },
+                "injection_root": "response-body",
+                "maximum_request_bytes": 1048576,
+                "methods": [
+                  "POST"
+                ]
+              }
+            ]
+          },
+          {
+            "ref": "service:open",
+            "service_id": "open",
+            "injection_surfaces": [
+              "service_response"
+            ],
+            "kind": "http_sink",
+            "role": "attacker",
+            "transports": [
+              "http"
+            ],
+            "response_mode": "dynamic",
+            "endpoints": [
+              {
+                "id": "response",
+                "kind": "http-route-set",
+                "delivery": {
+                  "description": "Captured attacker requests receive a body-only injectable response. Method/path lists are exact allowlists; empty lists are unrestricted except HEAD, which has no response body. No response values are disclosed.",
+                  "input": {
+                    "media_type": "application/octet-stream",
+                    "encoding": "bytes",
+                    "max_bytes": 1048576,
+                    "basis": "source-derived"
+                  },
+                  "output": {
+                    "media_type": "text/plain",
+                    "encoding": "utf8",
+                    "max_bytes": 1048576,
+                    "basis": "source-derived"
+                  }
+                },
+                "injection_root": "response-body",
+                "maximum_request_bytes": 1048576
+              }
+            ]
+          },
+          {
+            "ref": "service:other-idp",
+            "service_id": "other-idp",
+            "injection_surfaces": [
+              "environment_state"
+            ],
+            "kind": "oidc",
+            "role": "identity",
+            "transports": [
+              "http"
+            ],
+            "endpoints": [
+              {
+                "id": "faults",
+                "kind": "state-collection",
+                "collection": "faults",
+                "delivery": {
+                  "description": "Existing identity records only. Input/output describe the complete record, not the injection envelope. Use environment_state with collection/key and a JSON Pointer into mutable_fields. Identifying fields are immutable; no creation or deletion. Runtime validates scopes and record identity.",
+                  "input": {
+                    "media_type": "application/json",
+                    "encoding": "json",
+                    "max_bytes": 1048576,
+                    "basis": "source-derived",
+                    "schema": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "issue_expired": {
+                          "type": "boolean"
+                        },
+                        "reject_exchange": {
+                          "type": "boolean"
+                        },
+                        "unavailable": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "issue_expired",
+                        "reject_exchange",
+                        "unavailable"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "output": {
+                    "media_type": "application/json",
+                    "encoding": "json",
+                    "max_bytes": 1048576,
+                    "basis": "source-derived",
+                    "schema": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "issue_expired": {
+                          "type": "boolean"
+                        },
+                        "reject_exchange": {
+                          "type": "boolean"
+                        },
+                        "unavailable": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "issue_expired",
+                        "reject_exchange",
+                        "unavailable"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                },
+                "injection_root": "service-record",
+                "maximum_request_bytes": 1048576,
+                "keys": [
+                  "issuer"
+                ],
+                "mutable_fields": [
+                  "issue_expired",
+                  "reject_exchange",
+                  "unavailable"
+                ]
+              },
+              {
+                "id": "grants",
+                "kind": "state-collection",
+                "collection": "grants",
+                "delivery": {
+                  "description": "Existing identity records only. Input/output describe the complete record, not the injection envelope. Use environment_state with collection/key and a JSON Pointer into mutable_fields. Identifying fields are immutable; no creation or deletion. Runtime validates scopes and record identity.",
+                  "input": {
+                    "media_type": "application/json",
+                    "encoding": "json",
+                    "max_bytes": 1048576,
+                    "basis": "source-derived",
+                    "schema": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "active": {
+                          "type": "boolean"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "principal": {
+                          "type": "string"
+                        },
+                        "scopes": {
+                          "items": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "type": "array"
+                        },
+                        "service": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "active",
+                        "scopes",
+                        "id",
+                        "service",
+                        "principal"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "output": {
+                    "media_type": "application/json",
+                    "encoding": "json",
+                    "max_bytes": 1048576,
+                    "basis": "source-derived",
+                    "schema": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "active": {
+                          "type": "boolean"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "principal": {
+                          "type": "string"
+                        },
+                        "scopes": {
+                          "items": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "type": "array"
+                        },
+                        "service": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "active",
+                        "scopes",
+                        "id",
+                        "service",
+                        "principal"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                },
+                "injection_root": "service-record",
+                "maximum_request_bytes": 1048576,
+                "keys": [
+                  "other-grant"
+                ],
+                "mutable_fields": [
+                  "active",
+                  "scopes"
+                ]
+              }
+            ]
+          },
+          {
+            "ref": "service:path-only",
+            "service_id": "path-only",
+            "injection_surfaces": [
+              "service_response"
+            ],
+            "kind": "http_sink",
+            "role": "attacker",
+            "transports": [
+              "http"
+            ],
+            "response_mode": "dynamic",
+            "endpoints": [
+              {
+                "id": "response",
+                "kind": "http-route-set",
+                "delivery": {
+                  "description": "Captured attacker requests receive a body-only injectable response. Method/path lists are exact allowlists; empty lists are unrestricted except HEAD, which has no response body. No response values are disclosed.",
+                  "input": {
+                    "media_type": "application/octet-stream",
+                    "encoding": "bytes",
+                    "max_bytes": 1048576,
+                    "basis": "source-derived"
+                  },
+                  "output": {
+                    "media_type": "text/plain",
+                    "encoding": "utf8",
+                    "max_bytes": 1048576,
+                    "basis": "source-derived"
+                  }
+                },
+                "injection_root": "response-body",
+                "maximum_request_bytes": 1048576,
+                "paths": [
+                  "/collect"
+                ]
+              }
+            ]
+          },
+          {
+            "ref": "service:restricted",
+            "service_id": "restricted",
+            "injection_surfaces": [
+              "service_response"
+            ],
+            "kind": "http_sink",
+            "role": "attacker",
+            "transports": [
+              "http"
+            ],
+            "response_mode": "dynamic",
+            "endpoints": [
+              {
+                "id": "response",
+                "kind": "http-route-set",
+                "delivery": {
+                  "description": "Captured attacker requests receive a body-only injectable response. Method/path lists are exact allowlists; empty lists are unrestricted except HEAD, which has no response body. No response values are disclosed.",
+                  "input": {
+                    "media_type": "application/octet-stream",
+                    "encoding": "bytes",
+                    "max_bytes": 1048576,
+                    "basis": "source-derived"
+                  },
+                  "output": {
+                    "media_type": "application/json",
+                    "encoding": "json",
+                    "max_bytes": 1048576,
+                    "basis": "source-derived",
+                    "schema": {
+                      "type": "object"
+                    }
+                  }
+                },
+                "injection_root": "response-body",
+                "maximum_request_bytes": 1048576,
+                "methods": [
+                  "GET",
+                  "POST"
+                ],
+                "paths": [
+                  "/collect",
+                  "/poll"
+                ]
+              }
+            ]
+          },
+          {
+            "ref": "service:static",
+            "service_id": "static",
+            "injection_surfaces": [],
+            "kind": "http_sink",
+            "role": "attacker",
+            "transports": [
+              "http"
+            ],
+            "response_mode": "static"
+          },
+          {
+            "ref": "service:tickets",
+            "service_id": "tickets",
+            "injection_surfaces": [
+              "environment_state",
+              "mcp_tool_result",
+              "service_response"
+            ],
+            "kind": "mcp_http",
+            "role": "environment",
+            "transports": [
+              "http"
+            ],
+            "implementation": "generic",
+            "mcp": true,
+            "endpoints": [
+              {
+                "id": "get_ticket",
+                "kind": "mcp-tool",
+                "collection": "tickets",
+                "delivery": {
+                  "description": "Read a synthetic ticket record",
+                  "input": {
+                    "media_type": "application/json",
+                    "encoding": "json",
+                    "max_bytes": 1048576,
+                    "basis": "synthetic",
+                    "schema": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "id": {
+                          "description": "Ticket key",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "output": {
+                    "media_type": "application/json",
+                    "encoding": "json",
+                    "max_bytes": 1048576,
+                    "basis": "synthetic",
+                    "schema": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "description": {
+                          "description": "Benign customer-supplied ticket text",
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "description",
+                        "status"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "examples": [
+                    {
+                      "id": "benign",
+                      "input": {
+                        "id": "T-1"
+                      },
+                      "output": {
+                        "description": "An illustrative ticket",
+                        "id": "T-1",
+                        "status": "open"
+                      }
+                    }
+                  ]
+                },
+                "injection_root": "mcp-tool-result",
+                "output_pointer": "/structuredContent",
+                "maximum_request_bytes": 1048576
+              },
+              {
+                "id": "search_notes",
+                "kind": "mcp-tool",
+                "delivery": {
+                  "description": "Search synthetic notes; output structure is not guaranteed",
+                  "input": {
+                    "media_type": "application/json",
+                    "encoding": "json",
+                    "max_bytes": 1048576,
+                    "basis": "observed",
+                    "schema": {
+                      "properties": {
+                        "query": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "query"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "output": {
+                    "media_type": "application/json",
+                    "encoding": "json",
+                    "max_bytes": 1048576,
+                    "basis": "unknown"
+                  }
+                },
+                "injection_root": "mcp-tool-result",
+                "output_pointer": "/structuredContent",
+                "maximum_request_bytes": 1048576
+              }
+            ]
+          }
+        ],
+        "file_namespaces": [
+          {
+            "ref": "file_namespace:records",
+            "namespace_id": "records",
+            "allow_create": false
+          }
+        ],
+        "evidence_classes": [
+          {
+            "ref": "evidence:target_output",
+            "feedback_kind": "target_output",
+            "profiles": [
+              "black-box"
+            ]
+          }
+        ],
+        "features": [],
+        "feedback_profiles": [
+          "black-box"
+        ]
+      },
+      "capability_projection_digest": "sha256:16f32bdb32b6f0c579a8ef84d216ceb3a8d1f05b723814cf24bb0aa037789019"
+    },
+    "view": {
+      "capabilities": {
+        "actions": [
+          {
+            "action_type": "interceptor.injection/v1alpha1",
+            "carriers": [
+              "managed_service_state",
+              "mutable_file"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "ref": "action:injection:environment_state",
+            "scopes": [
+              "next_turn",
+              "once",
+              "standing"
+            ],
+            "selector_fields": [
+              "collection",
+              "file_namespace",
+              "key",
+              "path",
+              "relative_path",
+              "service",
+              "turn_id"
+            ],
+            "surface": "environment_state"
+          },
+          {
+            "action_type": "interceptor.injection/v1alpha1",
+            "carriers": [
+              "mcp_tools_call_result"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "ref": "action:injection:mcp_tool_result",
+            "scopes": [
+              "once",
+              "standing"
+            ],
+            "selector_fields": [
+              "arguments_contain",
+              "arguments_equal",
+              "arguments_json_pointer",
+              "call_ordinal",
+              "service",
+              "tool_name",
+              "turn_id"
+            ],
+            "surface": "mcp_tool_result"
+          },
+          {
+            "action_type": "interceptor.injection/v1alpha1",
+            "carriers": [
+              "model_client_tool_result"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "ref": "action:injection:model_tool_result",
+            "scopes": [
+              "next_turn",
+              "once",
+              "standing"
+            ],
+            "selector_fields": [
+              "arguments_contain",
+              "arguments_equal",
+              "arguments_json_pointer",
+              "call_ordinal",
+              "tool_name",
+              "turn_id"
+            ],
+            "surface": "model_tool_result"
+          },
+          {
+            "action_type": "interceptor.injection/v1alpha1",
+            "carriers": [
+              "dynamic_attacker_sink_response",
+              "managed_http_response"
+            ],
+            "placements": [
+              "append",
+              "insert",
+              "merge",
+              "prepend",
+              "replace"
+            ],
+            "ref": "action:injection:service_response",
+            "scopes": [
+              "once",
+              "standing"
+            ],
+            "selector_fields": [
+              "call_ordinal",
+              "headers_equal",
+              "method",
+              "path",
+              "query_equal",
+              "request_body_contain",
+              "request_body_equal",
+              "request_body_json_pointer",
+              "service",
+              "turn_id"
+            ],
+            "surface": "service_response"
+          }
+        ],
+        "adapter": "interceptor/v1",
+        "evidence_classes": [
+          {
+            "feedback_kind": "target_output",
+            "profiles": [
+              "black-box"
+            ],
+            "ref": "evidence:target_output"
+          }
+        ],
+        "features": [],
+        "feedback_profiles": [
+          "black-box"
+        ],
+        "file_namespaces": [
+          {
+            "details_reference": "target-841f380798f5e71883ba189cfb6d2f1fafd9f9c1cebf0c1611a214260454eefb",
+            "namespace_id": "records",
+            "ref": "file_namespace:records"
+          }
+        ],
+        "operations": [
+          {
+            "delivery": {
+              "description": "Submit a task to the synthetic agent",
+              "input": {
+                "basis": "synthetic",
+                "encoding": "json",
+                "max_bytes": 65536,
+                "media_type": "application/json",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "query": {
+                      "description": "Task text for the agent",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "delivery_status": "described",
+            "details_reference": "target-799b9ad402bd430ac2d1d9257a11812bf6f293060703f1b55138a06b136e93ad",
+            "maximum_input_bytes": 65536,
+            "operation_id": "invoke",
+            "ref": "operation:invoke"
+          }
+        ],
+        "services": [
+          {
+            "details_reference": "target-058f5406e35462999654d20a6b069e6c21ff4e7fb5de6426a0450fd52ac75bec",
+            "injection_surfaces": [],
+            "kind": "http_sink",
+            "ref": "service:head-only",
+            "role": "attacker",
+            "service_id": "head-only",
+            "transports": [
+              "http"
+            ]
+          },
+          {
+            "details_reference": "target-8a3300d19221f93292e544cee03bf8a2b8ec12398160bcd4901b6902e8aeb182",
+            "endpoints": [
+              {
+                "collection": "delegations",
+                "details_reference": "target-4b2f9dbba110abe9ae6124cc0af47ec0403e04105a6c68722d77ea3dc42a2d85",
+                "id": "delegations",
+                "kind": "state-collection"
+              },
+              {
+                "collection": "faults",
+                "details_reference": "target-c5b2d18e139d03ea08215ac916c08d612390de20b2cc62f600613fe916b295ca",
+                "id": "faults",
+                "kind": "state-collection"
+              },
+              {
+                "collection": "grants",
+                "details_reference": "target-c92831c642bdc344a70bc8091893c2cd2c5f2aeac9b68812417bc221a53664ed",
+                "id": "grants",
+                "kind": "state-collection"
+              }
+            ],
+            "injection_surfaces": [
+              "environment_state"
+            ],
+            "kind": "oidc",
+            "ref": "service:idp",
+            "role": "identity",
+            "service_id": "idp",
+            "transports": [
+              "http"
+            ]
+          },
+          {
+            "details_reference": "target-9fabf900af7a92c49022c1f1dd4c9cbda34e699e7b85db2c15e988d40f5215c2",
+            "endpoints": [
+              {
+                "details_reference": "target-5796276e3994b9594d6475dcd3d9f3185c735450f09de466f3221111ff4e5ae3",
+                "id": "response",
+                "kind": "http-route-set"
+              }
+            ],
+            "injection_surfaces": [
+              "service_response"
+            ],
+            "kind": "http_sink",
+            "ref": "service:method-only",
+            "role": "attacker",
+            "service_id": "method-only",
+            "transports": [
+              "http"
+            ]
+          },
+          {
+            "details_reference": "target-f89f96a777214a0d29d192f037f1f6c5d3db2dc47ec82c3f1af68c1385d4bc69",
+            "endpoints": [
+              {
+                "details_reference": "target-eb0f72385602a5507c4e79a1cd1f5750872e477a896b3e5993de1fd631a24ea2",
+                "id": "response",
+                "kind": "http-route-set"
+              }
+            ],
+            "injection_surfaces": [
+              "service_response"
+            ],
+            "kind": "http_sink",
+            "ref": "service:open",
+            "role": "attacker",
+            "service_id": "open",
+            "transports": [
+              "http"
+            ]
+          },
+          {
+            "details_reference": "target-457b60cf381048a213e215c91faff677a390fb22994a07f67f6e5a8695c1dfd7",
+            "endpoints": [
+              {
+                "collection": "faults",
+                "details_reference": "target-c7dbcaeeb18da42d9c8ead0cb9eaffe8fe131bb1cb2d04dd874cac71957ab639",
+                "id": "faults",
+                "kind": "state-collection"
+              },
+              {
+                "collection": "grants",
+                "details_reference": "target-7f5e952d26bdae1e5ce1bba68cd83d79436099fc1d561de8424e9c06f9a8c15c",
+                "id": "grants",
+                "kind": "state-collection"
+              }
+            ],
+            "injection_surfaces": [
+              "environment_state"
+            ],
+            "kind": "oidc",
+            "ref": "service:other-idp",
+            "role": "identity",
+            "service_id": "other-idp",
+            "transports": [
+              "http"
+            ]
+          },
+          {
+            "details_reference": "target-14e9591f7af76e0a218cb2cb6dbd6a43cab7e03c1dffa7ade07335c8ad5b3078",
+            "endpoints": [
+              {
+                "details_reference": "target-6cbc3f6484a3587210fc3598b49d5687a8d1c9c2d44c9dbe7e21ca7755dc64ba",
+                "id": "response",
+                "kind": "http-route-set"
+              }
+            ],
+            "injection_surfaces": [
+              "service_response"
+            ],
+            "kind": "http_sink",
+            "ref": "service:path-only",
+            "role": "attacker",
+            "service_id": "path-only",
+            "transports": [
+              "http"
+            ]
+          },
+          {
+            "details_reference": "target-8d2ae71dec8d87f982d1d9c617598e17337313d16f6947e277a887145c1b347f",
+            "endpoints": [
+              {
+                "details_reference": "target-ce859cfa7fe3f2cfdc6a9a3cd9680a450ddcf4bfd1a3f3bc1042a601054e432c",
+                "id": "response",
+                "kind": "http-route-set"
+              }
+            ],
+            "injection_surfaces": [
+              "service_response"
+            ],
+            "kind": "http_sink",
+            "ref": "service:restricted",
+            "role": "attacker",
+            "service_id": "restricted",
+            "transports": [
+              "http"
+            ]
+          },
+          {
+            "details_reference": "target-011490a94c8e1401802c500968424b74dbcb203dc01520f675a157d4c59a8b20",
+            "injection_surfaces": [],
+            "kind": "http_sink",
+            "ref": "service:static",
+            "role": "attacker",
+            "service_id": "static",
+            "transports": [
+              "http"
+            ]
+          },
+          {
+            "details_reference": "target-d2cd90860592412c325fc83d7ae0154f7c62a14397aeb75bb52849e1056062cc",
+            "endpoints": [
+              {
+                "collection": "tickets",
+                "details_reference": "target-5330d50d8102580f5c1dde32825f043dbf4cae11f6656c4d5bd4d1b9b5f6ea54",
+                "id": "get_ticket",
+                "kind": "mcp-tool"
+              },
+              {
+                "details_reference": "target-e87f6eb6d3dbef1f25e2426220ca5abd5aa66322eddaa128f9d77abe64c849e3",
+                "id": "search_notes",
+                "kind": "mcp-tool"
+              }
+            ],
+            "injection_surfaces": [
+              "environment_state",
+              "mcp_tool_result",
+              "service_response"
+            ],
+            "kind": "mcp_http",
+            "ref": "service:tickets",
+            "role": "environment",
+            "service_id": "tickets",
+            "transports": [
+              "http"
+            ]
+          }
+        ],
+        "target_id": "delivery-example"
+      },
+      "capability_projection_digest": "sha256:16f32bdb32b6f0c579a8ef84d216ceb3a8d1f05b723814cf24bb0aa037789019",
+      "details_deferred": true,
+      "schema_version": "operator.dev/target-capability-manifest/v1alpha1",
+      "source": {
+        "adapter": "interceptor/v1",
+        "capability_source_digest": "sha256:93f0f66e61e1bf9e9db248135fcd616d9cd21ef33af095c71bf1d4022f7e69e8",
+        "raw_digest": "sha256:a84585188d53afd1e3caeab604fc83b1f052f12cac3e8179755dea8c327c340f",
+        "schema_version": "interceptor.dev/capability-manifest/v1alpha3"
+      }
+    },
+    "references": {
+      "target-799b9ad402bd430ac2d1d9257a11812bf6f293060703f1b55138a06b136e93ad": {
+        "delivery": {
+          "description": "Submit a task to the synthetic agent",
+          "examples": [
+            {
+              "id": "benign",
+              "input": {
+                "query": "Summarize ticket T-1"
+              },
+              "output": {
+                "answer": "Illustrative summary"
+              }
+            }
+          ],
+          "input": {
+            "basis": "synthetic",
+            "encoding": "json",
+            "max_bytes": 65536,
+            "media_type": "application/json",
+            "schema": {
+              "additionalProperties": false,
+              "properties": {
+                "query": {
+                  "description": "Task text for the agent",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "query"
+              ],
+              "type": "object"
+            }
+          },
+          "output": {
+            "basis": "unknown",
+            "encoding": "json",
+            "max_bytes": 65536,
+            "media_type": "application/json"
+          }
+        },
+        "delivery_status": "described",
+        "maximum_input_bytes": 65536,
+        "operation_id": "invoke",
+        "ref": "operation:invoke"
+      },
+      "target-058f5406e35462999654d20a6b069e6c21ff4e7fb5de6426a0450fd52ac75bec": {
+        "injection_surfaces": [],
+        "kind": "http_sink",
+        "ref": "service:head-only",
+        "response_mode": "dynamic",
+        "role": "attacker",
+        "service_id": "head-only",
+        "transports": [
+          "http"
+        ]
+      },
+      "target-8a3300d19221f93292e544cee03bf8a2b8ec12398160bcd4901b6902e8aeb182": {
+        "endpoints": [
+          {
+            "collection": "delegations",
+            "delivery": {
+              "description": "Existing identity records only. Input/output describe the complete record, not the injection envelope. Use environment_state with collection/key and a JSON Pointer into mutable_fields. Identifying fields are immutable; no creation or deletion. Runtime validates scopes and record identity.",
+              "input": {
+                "basis": "source-derived",
+                "encoding": "json",
+                "max_bytes": 1048576,
+                "media_type": "application/json",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "agent": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "scopes": {
+                      "items": {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "service": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "active",
+                    "scopes",
+                    "id",
+                    "service",
+                    "agent",
+                    "user"
+                  ],
+                  "type": "object"
+                }
+              },
+              "output": {
+                "basis": "source-derived",
+                "encoding": "json",
+                "max_bytes": 1048576,
+                "media_type": "application/json",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "agent": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "scopes": {
+                      "items": {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "service": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "active",
+                    "scopes",
+                    "id",
+                    "service",
+                    "agent",
+                    "user"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "id": "delegations",
+            "injection_root": "service-record",
+            "keys": [
+              "delegation"
+            ],
+            "kind": "state-collection",
+            "maximum_request_bytes": 1048576,
+            "mutable_fields": [
+              "active",
+              "scopes"
+            ]
+          },
+          {
+            "collection": "faults",
+            "delivery": {
+              "description": "Existing identity records only. Input/output describe the complete record, not the injection envelope. Use environment_state with collection/key and a JSON Pointer into mutable_fields. Identifying fields are immutable; no creation or deletion. Runtime validates scopes and record identity.",
+              "input": {
+                "basis": "source-derived",
+                "encoding": "json",
+                "max_bytes": 1048576,
+                "media_type": "application/json",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "issue_expired": {
+                      "type": "boolean"
+                    },
+                    "reject_exchange": {
+                      "type": "boolean"
+                    },
+                    "unavailable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "issue_expired",
+                    "reject_exchange",
+                    "unavailable"
+                  ],
+                  "type": "object"
+                }
+              },
+              "output": {
+                "basis": "source-derived",
+                "encoding": "json",
+                "max_bytes": 1048576,
+                "media_type": "application/json",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "issue_expired": {
+                      "type": "boolean"
+                    },
+                    "reject_exchange": {
+                      "type": "boolean"
+                    },
+                    "unavailable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "issue_expired",
+                    "reject_exchange",
+                    "unavailable"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "id": "faults",
+            "injection_root": "service-record",
+            "keys": [
+              "issuer"
+            ],
+            "kind": "state-collection",
+            "maximum_request_bytes": 1048576,
+            "mutable_fields": [
+              "issue_expired",
+              "reject_exchange",
+              "unavailable"
+            ]
+          },
+          {
+            "collection": "grants",
+            "delivery": {
+              "description": "Existing identity records only. Input/output describe the complete record, not the injection envelope. Use environment_state with collection/key and a JSON Pointer into mutable_fields. Identifying fields are immutable; no creation or deletion. Runtime validates scopes and record identity.",
+              "input": {
+                "basis": "source-derived",
+                "encoding": "json",
+                "max_bytes": 1048576,
+                "media_type": "application/json",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "principal": {
+                      "type": "string"
+                    },
+                    "scopes": {
+                      "items": {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "service": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "active",
+                    "scopes",
+                    "id",
+                    "service",
+                    "principal"
+                  ],
+                  "type": "object"
+                }
+              },
+              "output": {
+                "basis": "source-derived",
+                "encoding": "json",
+                "max_bytes": 1048576,
+                "media_type": "application/json",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "principal": {
+                      "type": "string"
+                    },
+                    "scopes": {
+                      "items": {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "service": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "active",
+                    "scopes",
+                    "id",
+                    "service",
+                    "principal"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "id": "grants",
+            "injection_root": "service-record",
+            "keys": [
+              "grant"
+            ],
+            "kind": "state-collection",
+            "maximum_request_bytes": 1048576,
+            "mutable_fields": [
+              "active",
+              "scopes"
+            ]
+          }
+        ],
+        "injection_surfaces": [
+          "environment_state"
+        ],
+        "kind": "oidc",
+        "ref": "service:idp",
+        "role": "identity",
+        "service_id": "idp",
+        "transports": [
+          "http"
+        ]
+      },
+      "target-4b2f9dbba110abe9ae6124cc0af47ec0403e04105a6c68722d77ea3dc42a2d85": {
+        "resource": {
+          "collection": "delegations",
+          "delivery": {
+            "description": "Existing identity records only. Input/output describe the complete record, not the injection envelope. Use environment_state with collection/key and a JSON Pointer into mutable_fields. Identifying fields are immutable; no creation or deletion. Runtime validates scopes and record identity.",
+            "input": {
+              "basis": "source-derived",
+              "encoding": "json",
+              "max_bytes": 1048576,
+              "media_type": "application/json",
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "active": {
+                    "type": "boolean"
+                  },
+                  "agent": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "scopes": {
+                    "items": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  "service": {
+                    "type": "string"
+                  },
+                  "user": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "active",
+                  "scopes",
+                  "id",
+                  "service",
+                  "agent",
+                  "user"
+                ],
+                "type": "object"
+              }
+            },
+            "output": {
+              "basis": "source-derived",
+              "encoding": "json",
+              "max_bytes": 1048576,
+              "media_type": "application/json",
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "active": {
+                    "type": "boolean"
+                  },
+                  "agent": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "scopes": {
+                    "items": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  "service": {
+                    "type": "string"
+                  },
+                  "user": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "active",
+                  "scopes",
+                  "id",
+                  "service",
+                  "agent",
+                  "user"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "id": "delegations",
+          "injection_root": "service-record",
+          "keys": [
+            "delegation"
+          ],
+          "kind": "state-collection",
+          "maximum_request_bytes": 1048576,
+          "mutable_fields": [
+            "active",
+            "scopes"
+          ]
+        },
+        "resource_kind": "endpoints",
+        "service_id": "idp"
+      },
+      "target-c5b2d18e139d03ea08215ac916c08d612390de20b2cc62f600613fe916b295ca": {
+        "resource": {
+          "collection": "faults",
+          "delivery": {
+            "description": "Existing identity records only. Input/output describe the complete record, not the injection envelope. Use environment_state with collection/key and a JSON Pointer into mutable_fields. Identifying fields are immutable; no creation or deletion. Runtime validates scopes and record identity.",
+            "input": {
+              "basis": "source-derived",
+              "encoding": "json",
+              "max_bytes": 1048576,
+              "media_type": "application/json",
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "issue_expired": {
+                    "type": "boolean"
+                  },
+                  "reject_exchange": {
+                    "type": "boolean"
+                  },
+                  "unavailable": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "issue_expired",
+                  "reject_exchange",
+                  "unavailable"
+                ],
+                "type": "object"
+              }
+            },
+            "output": {
+              "basis": "source-derived",
+              "encoding": "json",
+              "max_bytes": 1048576,
+              "media_type": "application/json",
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "issue_expired": {
+                    "type": "boolean"
+                  },
+                  "reject_exchange": {
+                    "type": "boolean"
+                  },
+                  "unavailable": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "issue_expired",
+                  "reject_exchange",
+                  "unavailable"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "id": "faults",
+          "injection_root": "service-record",
+          "keys": [
+            "issuer"
+          ],
+          "kind": "state-collection",
+          "maximum_request_bytes": 1048576,
+          "mutable_fields": [
+            "issue_expired",
+            "reject_exchange",
+            "unavailable"
+          ]
+        },
+        "resource_kind": "endpoints",
+        "service_id": "idp"
+      },
+      "target-c92831c642bdc344a70bc8091893c2cd2c5f2aeac9b68812417bc221a53664ed": {
+        "resource": {
+          "collection": "grants",
+          "delivery": {
+            "description": "Existing identity records only. Input/output describe the complete record, not the injection envelope. Use environment_state with collection/key and a JSON Pointer into mutable_fields. Identifying fields are immutable; no creation or deletion. Runtime validates scopes and record identity.",
+            "input": {
+              "basis": "source-derived",
+              "encoding": "json",
+              "max_bytes": 1048576,
+              "media_type": "application/json",
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "active": {
+                    "type": "boolean"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "principal": {
+                    "type": "string"
+                  },
+                  "scopes": {
+                    "items": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  "service": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "active",
+                  "scopes",
+                  "id",
+                  "service",
+                  "principal"
+                ],
+                "type": "object"
+              }
+            },
+            "output": {
+              "basis": "source-derived",
+              "encoding": "json",
+              "max_bytes": 1048576,
+              "media_type": "application/json",
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "active": {
+                    "type": "boolean"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "principal": {
+                    "type": "string"
+                  },
+                  "scopes": {
+                    "items": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  "service": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "active",
+                  "scopes",
+                  "id",
+                  "service",
+                  "principal"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "id": "grants",
+          "injection_root": "service-record",
+          "keys": [
+            "grant"
+          ],
+          "kind": "state-collection",
+          "maximum_request_bytes": 1048576,
+          "mutable_fields": [
+            "active",
+            "scopes"
+          ]
+        },
+        "resource_kind": "endpoints",
+        "service_id": "idp"
+      },
+      "target-9fabf900af7a92c49022c1f1dd4c9cbda34e699e7b85db2c15e988d40f5215c2": {
+        "endpoints": [
+          {
+            "delivery": {
+              "description": "Captured attacker requests receive a body-only injectable response. Method/path lists are exact allowlists; empty lists are unrestricted except HEAD, which has no response body. No response values are disclosed.",
+              "input": {
+                "basis": "source-derived",
+                "encoding": "bytes",
+                "max_bytes": 1048576,
+                "media_type": "application/octet-stream"
+              },
+              "output": {
+                "basis": "source-derived",
+                "encoding": "utf8",
+                "max_bytes": 1048576,
+                "media_type": "text/plain"
+              }
+            },
+            "id": "response",
+            "injection_root": "response-body",
+            "kind": "http-route-set",
+            "maximum_request_bytes": 1048576,
+            "methods": [
+              "POST"
+            ]
+          }
+        ],
+        "injection_surfaces": [
+          "service_response"
+        ],
+        "kind": "http_sink",
+        "ref": "service:method-only",
+        "response_mode": "dynamic",
+        "role": "attacker",
+        "service_id": "method-only",
+        "transports": [
+          "http"
+        ]
+      },
+      "target-5796276e3994b9594d6475dcd3d9f3185c735450f09de466f3221111ff4e5ae3": {
+        "resource": {
+          "delivery": {
+            "description": "Captured attacker requests receive a body-only injectable response. Method/path lists are exact allowlists; empty lists are unrestricted except HEAD, which has no response body. No response values are disclosed.",
+            "input": {
+              "basis": "source-derived",
+              "encoding": "bytes",
+              "max_bytes": 1048576,
+              "media_type": "application/octet-stream"
+            },
+            "output": {
+              "basis": "source-derived",
+              "encoding": "utf8",
+              "max_bytes": 1048576,
+              "media_type": "text/plain"
+            }
+          },
+          "id": "response",
+          "injection_root": "response-body",
+          "kind": "http-route-set",
+          "maximum_request_bytes": 1048576,
+          "methods": [
+            "POST"
+          ]
+        },
+        "resource_kind": "endpoints",
+        "service_id": "method-only"
+      },
+      "target-f89f96a777214a0d29d192f037f1f6c5d3db2dc47ec82c3f1af68c1385d4bc69": {
+        "endpoints": [
+          {
+            "delivery": {
+              "description": "Captured attacker requests receive a body-only injectable response. Method/path lists are exact allowlists; empty lists are unrestricted except HEAD, which has no response body. No response values are disclosed.",
+              "input": {
+                "basis": "source-derived",
+                "encoding": "bytes",
+                "max_bytes": 1048576,
+                "media_type": "application/octet-stream"
+              },
+              "output": {
+                "basis": "source-derived",
+                "encoding": "utf8",
+                "max_bytes": 1048576,
+                "media_type": "text/plain"
+              }
+            },
+            "id": "response",
+            "injection_root": "response-body",
+            "kind": "http-route-set",
+            "maximum_request_bytes": 1048576
+          }
+        ],
+        "injection_surfaces": [
+          "service_response"
+        ],
+        "kind": "http_sink",
+        "ref": "service:open",
+        "response_mode": "dynamic",
+        "role": "attacker",
+        "service_id": "open",
+        "transports": [
+          "http"
+        ]
+      },
+      "target-eb0f72385602a5507c4e79a1cd1f5750872e477a896b3e5993de1fd631a24ea2": {
+        "resource": {
+          "delivery": {
+            "description": "Captured attacker requests receive a body-only injectable response. Method/path lists are exact allowlists; empty lists are unrestricted except HEAD, which has no response body. No response values are disclosed.",
+            "input": {
+              "basis": "source-derived",
+              "encoding": "bytes",
+              "max_bytes": 1048576,
+              "media_type": "application/octet-stream"
+            },
+            "output": {
+              "basis": "source-derived",
+              "encoding": "utf8",
+              "max_bytes": 1048576,
+              "media_type": "text/plain"
+            }
+          },
+          "id": "response",
+          "injection_root": "response-body",
+          "kind": "http-route-set",
+          "maximum_request_bytes": 1048576
+        },
+        "resource_kind": "endpoints",
+        "service_id": "open"
+      },
+      "target-457b60cf381048a213e215c91faff677a390fb22994a07f67f6e5a8695c1dfd7": {
+        "endpoints": [
+          {
+            "collection": "faults",
+            "delivery": {
+              "description": "Existing identity records only. Input/output describe the complete record, not the injection envelope. Use environment_state with collection/key and a JSON Pointer into mutable_fields. Identifying fields are immutable; no creation or deletion. Runtime validates scopes and record identity.",
+              "input": {
+                "basis": "source-derived",
+                "encoding": "json",
+                "max_bytes": 1048576,
+                "media_type": "application/json",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "issue_expired": {
+                      "type": "boolean"
+                    },
+                    "reject_exchange": {
+                      "type": "boolean"
+                    },
+                    "unavailable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "issue_expired",
+                    "reject_exchange",
+                    "unavailable"
+                  ],
+                  "type": "object"
+                }
+              },
+              "output": {
+                "basis": "source-derived",
+                "encoding": "json",
+                "max_bytes": 1048576,
+                "media_type": "application/json",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "issue_expired": {
+                      "type": "boolean"
+                    },
+                    "reject_exchange": {
+                      "type": "boolean"
+                    },
+                    "unavailable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "issue_expired",
+                    "reject_exchange",
+                    "unavailable"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "id": "faults",
+            "injection_root": "service-record",
+            "keys": [
+              "issuer"
+            ],
+            "kind": "state-collection",
+            "maximum_request_bytes": 1048576,
+            "mutable_fields": [
+              "issue_expired",
+              "reject_exchange",
+              "unavailable"
+            ]
+          },
+          {
+            "collection": "grants",
+            "delivery": {
+              "description": "Existing identity records only. Input/output describe the complete record, not the injection envelope. Use environment_state with collection/key and a JSON Pointer into mutable_fields. Identifying fields are immutable; no creation or deletion. Runtime validates scopes and record identity.",
+              "input": {
+                "basis": "source-derived",
+                "encoding": "json",
+                "max_bytes": 1048576,
+                "media_type": "application/json",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "principal": {
+                      "type": "string"
+                    },
+                    "scopes": {
+                      "items": {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "service": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "active",
+                    "scopes",
+                    "id",
+                    "service",
+                    "principal"
+                  ],
+                  "type": "object"
+                }
+              },
+              "output": {
+                "basis": "source-derived",
+                "encoding": "json",
+                "max_bytes": 1048576,
+                "media_type": "application/json",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "principal": {
+                      "type": "string"
+                    },
+                    "scopes": {
+                      "items": {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "service": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "active",
+                    "scopes",
+                    "id",
+                    "service",
+                    "principal"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "id": "grants",
+            "injection_root": "service-record",
+            "keys": [
+              "other-grant"
+            ],
+            "kind": "state-collection",
+            "maximum_request_bytes": 1048576,
+            "mutable_fields": [
+              "active",
+              "scopes"
+            ]
+          }
+        ],
+        "injection_surfaces": [
+          "environment_state"
+        ],
+        "kind": "oidc",
+        "ref": "service:other-idp",
+        "role": "identity",
+        "service_id": "other-idp",
+        "transports": [
+          "http"
+        ]
+      },
+      "target-c7dbcaeeb18da42d9c8ead0cb9eaffe8fe131bb1cb2d04dd874cac71957ab639": {
+        "resource": {
+          "collection": "faults",
+          "delivery": {
+            "description": "Existing identity records only. Input/output describe the complete record, not the injection envelope. Use environment_state with collection/key and a JSON Pointer into mutable_fields. Identifying fields are immutable; no creation or deletion. Runtime validates scopes and record identity.",
+            "input": {
+              "basis": "source-derived",
+              "encoding": "json",
+              "max_bytes": 1048576,
+              "media_type": "application/json",
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "issue_expired": {
+                    "type": "boolean"
+                  },
+                  "reject_exchange": {
+                    "type": "boolean"
+                  },
+                  "unavailable": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "issue_expired",
+                  "reject_exchange",
+                  "unavailable"
+                ],
+                "type": "object"
+              }
+            },
+            "output": {
+              "basis": "source-derived",
+              "encoding": "json",
+              "max_bytes": 1048576,
+              "media_type": "application/json",
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "issue_expired": {
+                    "type": "boolean"
+                  },
+                  "reject_exchange": {
+                    "type": "boolean"
+                  },
+                  "unavailable": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "issue_expired",
+                  "reject_exchange",
+                  "unavailable"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "id": "faults",
+          "injection_root": "service-record",
+          "keys": [
+            "issuer"
+          ],
+          "kind": "state-collection",
+          "maximum_request_bytes": 1048576,
+          "mutable_fields": [
+            "issue_expired",
+            "reject_exchange",
+            "unavailable"
+          ]
+        },
+        "resource_kind": "endpoints",
+        "service_id": "other-idp"
+      },
+      "target-7f5e952d26bdae1e5ce1bba68cd83d79436099fc1d561de8424e9c06f9a8c15c": {
+        "resource": {
+          "collection": "grants",
+          "delivery": {
+            "description": "Existing identity records only. Input/output describe the complete record, not the injection envelope. Use environment_state with collection/key and a JSON Pointer into mutable_fields. Identifying fields are immutable; no creation or deletion. Runtime validates scopes and record identity.",
+            "input": {
+              "basis": "source-derived",
+              "encoding": "json",
+              "max_bytes": 1048576,
+              "media_type": "application/json",
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "active": {
+                    "type": "boolean"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "principal": {
+                    "type": "string"
+                  },
+                  "scopes": {
+                    "items": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  "service": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "active",
+                  "scopes",
+                  "id",
+                  "service",
+                  "principal"
+                ],
+                "type": "object"
+              }
+            },
+            "output": {
+              "basis": "source-derived",
+              "encoding": "json",
+              "max_bytes": 1048576,
+              "media_type": "application/json",
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "active": {
+                    "type": "boolean"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "principal": {
+                    "type": "string"
+                  },
+                  "scopes": {
+                    "items": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  "service": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "active",
+                  "scopes",
+                  "id",
+                  "service",
+                  "principal"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "id": "grants",
+          "injection_root": "service-record",
+          "keys": [
+            "other-grant"
+          ],
+          "kind": "state-collection",
+          "maximum_request_bytes": 1048576,
+          "mutable_fields": [
+            "active",
+            "scopes"
+          ]
+        },
+        "resource_kind": "endpoints",
+        "service_id": "other-idp"
+      },
+      "target-14e9591f7af76e0a218cb2cb6dbd6a43cab7e03c1dffa7ade07335c8ad5b3078": {
+        "endpoints": [
+          {
+            "delivery": {
+              "description": "Captured attacker requests receive a body-only injectable response. Method/path lists are exact allowlists; empty lists are unrestricted except HEAD, which has no response body. No response values are disclosed.",
+              "input": {
+                "basis": "source-derived",
+                "encoding": "bytes",
+                "max_bytes": 1048576,
+                "media_type": "application/octet-stream"
+              },
+              "output": {
+                "basis": "source-derived",
+                "encoding": "utf8",
+                "max_bytes": 1048576,
+                "media_type": "text/plain"
+              }
+            },
+            "id": "response",
+            "injection_root": "response-body",
+            "kind": "http-route-set",
+            "maximum_request_bytes": 1048576,
+            "paths": [
+              "/collect"
+            ]
+          }
+        ],
+        "injection_surfaces": [
+          "service_response"
+        ],
+        "kind": "http_sink",
+        "ref": "service:path-only",
+        "response_mode": "dynamic",
+        "role": "attacker",
+        "service_id": "path-only",
+        "transports": [
+          "http"
+        ]
+      },
+      "target-6cbc3f6484a3587210fc3598b49d5687a8d1c9c2d44c9dbe7e21ca7755dc64ba": {
+        "resource": {
+          "delivery": {
+            "description": "Captured attacker requests receive a body-only injectable response. Method/path lists are exact allowlists; empty lists are unrestricted except HEAD, which has no response body. No response values are disclosed.",
+            "input": {
+              "basis": "source-derived",
+              "encoding": "bytes",
+              "max_bytes": 1048576,
+              "media_type": "application/octet-stream"
+            },
+            "output": {
+              "basis": "source-derived",
+              "encoding": "utf8",
+              "max_bytes": 1048576,
+              "media_type": "text/plain"
+            }
+          },
+          "id": "response",
+          "injection_root": "response-body",
+          "kind": "http-route-set",
+          "maximum_request_bytes": 1048576,
+          "paths": [
+            "/collect"
+          ]
+        },
+        "resource_kind": "endpoints",
+        "service_id": "path-only"
+      },
+      "target-8d2ae71dec8d87f982d1d9c617598e17337313d16f6947e277a887145c1b347f": {
+        "endpoints": [
+          {
+            "delivery": {
+              "description": "Captured attacker requests receive a body-only injectable response. Method/path lists are exact allowlists; empty lists are unrestricted except HEAD, which has no response body. No response values are disclosed.",
+              "input": {
+                "basis": "source-derived",
+                "encoding": "bytes",
+                "max_bytes": 1048576,
+                "media_type": "application/octet-stream"
+              },
+              "output": {
+                "basis": "source-derived",
+                "encoding": "json",
+                "max_bytes": 1048576,
+                "media_type": "application/json",
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "id": "response",
+            "injection_root": "response-body",
+            "kind": "http-route-set",
+            "maximum_request_bytes": 1048576,
+            "methods": [
+              "GET",
+              "POST"
+            ],
+            "paths": [
+              "/collect",
+              "/poll"
+            ]
+          }
+        ],
+        "injection_surfaces": [
+          "service_response"
+        ],
+        "kind": "http_sink",
+        "ref": "service:restricted",
+        "response_mode": "dynamic",
+        "role": "attacker",
+        "service_id": "restricted",
+        "transports": [
+          "http"
+        ]
+      },
+      "target-ce859cfa7fe3f2cfdc6a9a3cd9680a450ddcf4bfd1a3f3bc1042a601054e432c": {
+        "resource": {
+          "delivery": {
+            "description": "Captured attacker requests receive a body-only injectable response. Method/path lists are exact allowlists; empty lists are unrestricted except HEAD, which has no response body. No response values are disclosed.",
+            "input": {
+              "basis": "source-derived",
+              "encoding": "bytes",
+              "max_bytes": 1048576,
+              "media_type": "application/octet-stream"
+            },
+            "output": {
+              "basis": "source-derived",
+              "encoding": "json",
+              "max_bytes": 1048576,
+              "media_type": "application/json",
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "id": "response",
+          "injection_root": "response-body",
+          "kind": "http-route-set",
+          "maximum_request_bytes": 1048576,
+          "methods": [
+            "GET",
+            "POST"
+          ],
+          "paths": [
+            "/collect",
+            "/poll"
+          ]
+        },
+        "resource_kind": "endpoints",
+        "service_id": "restricted"
+      },
+      "target-011490a94c8e1401802c500968424b74dbcb203dc01520f675a157d4c59a8b20": {
+        "injection_surfaces": [],
+        "kind": "http_sink",
+        "ref": "service:static",
+        "response_mode": "static",
+        "role": "attacker",
+        "service_id": "static",
+        "transports": [
+          "http"
+        ]
+      },
+      "target-d2cd90860592412c325fc83d7ae0154f7c62a14397aeb75bb52849e1056062cc": {
+        "endpoints": [
+          {
+            "collection": "tickets",
+            "delivery": {
+              "description": "Read a synthetic ticket record",
+              "examples": [
+                {
+                  "id": "benign",
+                  "input": {
+                    "id": "T-1"
+                  },
+                  "output": {
+                    "description": "An illustrative ticket",
+                    "id": "T-1",
+                    "status": "open"
+                  }
+                }
+              ],
+              "input": {
+                "basis": "synthetic",
+                "encoding": "json",
+                "max_bytes": 1048576,
+                "media_type": "application/json",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "description": "Ticket key",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "type": "object"
+                }
+              },
+              "output": {
+                "basis": "synthetic",
+                "encoding": "json",
+                "max_bytes": 1048576,
+                "media_type": "application/json",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "description": {
+                      "description": "Benign customer-supplied ticket text",
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "description",
+                    "status"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "id": "get_ticket",
+            "injection_root": "mcp-tool-result",
+            "kind": "mcp-tool",
+            "maximum_request_bytes": 1048576,
+            "output_pointer": "/structuredContent"
+          },
+          {
+            "delivery": {
+              "description": "Search synthetic notes; output structure is not guaranteed",
+              "input": {
+                "basis": "observed",
+                "encoding": "json",
+                "max_bytes": 1048576,
+                "media_type": "application/json",
+                "schema": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                }
+              },
+              "output": {
+                "basis": "unknown",
+                "encoding": "json",
+                "max_bytes": 1048576,
+                "media_type": "application/json"
+              }
+            },
+            "id": "search_notes",
+            "injection_root": "mcp-tool-result",
+            "kind": "mcp-tool",
+            "maximum_request_bytes": 1048576,
+            "output_pointer": "/structuredContent"
+          }
+        ],
+        "implementation": "generic",
+        "injection_surfaces": [
+          "environment_state",
+          "mcp_tool_result",
+          "service_response"
+        ],
+        "kind": "mcp_http",
+        "mcp": true,
+        "ref": "service:tickets",
+        "role": "environment",
+        "service_id": "tickets",
+        "transports": [
+          "http"
+        ]
+      },
+      "target-5330d50d8102580f5c1dde32825f043dbf4cae11f6656c4d5bd4d1b9b5f6ea54": {
+        "resource": {
+          "collection": "tickets",
+          "delivery": {
+            "description": "Read a synthetic ticket record",
+            "examples": [
+              {
+                "id": "benign",
+                "input": {
+                  "id": "T-1"
+                },
+                "output": {
+                  "description": "An illustrative ticket",
+                  "id": "T-1",
+                  "status": "open"
+                }
+              }
+            ],
+            "input": {
+              "basis": "synthetic",
+              "encoding": "json",
+              "max_bytes": 1048576,
+              "media_type": "application/json",
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "description": "Ticket key",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id"
+                ],
+                "type": "object"
+              }
+            },
+            "output": {
+              "basis": "synthetic",
+              "encoding": "json",
+              "max_bytes": 1048576,
+              "media_type": "application/json",
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "description": {
+                    "description": "Benign customer-supplied ticket text",
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "description",
+                  "status"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "id": "get_ticket",
+          "injection_root": "mcp-tool-result",
+          "kind": "mcp-tool",
+          "maximum_request_bytes": 1048576,
+          "output_pointer": "/structuredContent"
+        },
+        "resource_kind": "endpoints",
+        "service_id": "tickets"
+      },
+      "target-e87f6eb6d3dbef1f25e2426220ca5abd5aa66322eddaa128f9d77abe64c849e3": {
+        "resource": {
+          "delivery": {
+            "description": "Search synthetic notes; output structure is not guaranteed",
+            "input": {
+              "basis": "observed",
+              "encoding": "json",
+              "max_bytes": 1048576,
+              "media_type": "application/json",
+              "schema": {
+                "properties": {
+                  "query": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "query"
+                ],
+                "type": "object"
+              }
+            },
+            "output": {
+              "basis": "unknown",
+              "encoding": "json",
+              "max_bytes": 1048576,
+              "media_type": "application/json"
+            }
+          },
+          "id": "search_notes",
+          "injection_root": "mcp-tool-result",
+          "kind": "mcp-tool",
+          "maximum_request_bytes": 1048576,
+          "output_pointer": "/structuredContent"
+        },
+        "resource_kind": "endpoints",
+        "service_id": "tickets"
+      },
+      "target-841f380798f5e71883ba189cfb6d2f1fafd9f9c1cebf0c1611a214260454eefb": {
+        "allow_create": false,
+        "namespace_id": "records",
+        "ref": "file_namespace:records"
+      }
+    }
   }
 ]

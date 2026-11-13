@@ -1,0 +1,62 @@
+// Run in a disposable Interceptor checkout at the selected contract source.
+// This is a synthetic exporter fixture, with no live target or secret values.
+package adaptive
+
+import (
+	"encoding/json"
+	"github.com/intrusive-ai/interceptor-sandbox/internal/digest"
+	"github.com/intrusive-ai/interceptor-sandbox/internal/environment"
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+)
+
+func TestOperatorDiscoveryExport(t *testing.T) {
+	directory := filepath.Join(t.TempDir(), "environment")
+	if err := os.CopyFS(directory, os.DirFS("../../examples/delivery-contract-environment")); err != nil {
+		t.Fatal(err)
+	}
+	_, report, err := environment.Seal(directory, time.Unix(0, 0))
+	if err != nil {
+		t.Fatal(err)
+	}
+	b := report.Blueprint
+	b.AttackerServices = []environment.AttackerService{
+		{ID: "restricted", Kind: "http_sink", Response: environment.SinkResponse{Mode: "dynamic", Status: 200, JSON: map[string]any{"private": "not-exported"}}, Options: map[string]any{"methods": []string{"POST", "GET"}, "paths": []string{"/collect", "/poll"}}},
+		{ID: "open", Kind: "http_sink", Response: environment.SinkResponse{Mode: "dynamic", Status: 200}},
+		{ID: "method-only", Kind: "http_sink", Response: environment.SinkResponse{Mode: "dynamic", Status: 200}, Options: map[string]any{"methods": []string{"POST"}}},
+		{ID: "path-only", Kind: "http_sink", Response: environment.SinkResponse{Mode: "dynamic", Status: 200}, Options: map[string]any{"paths": []string{"/collect"}}},
+		{ID: "head-only", Kind: "http_sink", Response: environment.SinkResponse{Mode: "dynamic", Status: 200}, Options: map[string]any{"methods": []string{"HEAD"}}},
+		{ID: "static", Kind: "http_sink", Response: environment.SinkResponse{Status: 200}},
+	}
+	b.Identity = environment.Identity{
+		Issuers:     []environment.IdentityIssuer{{ID: "idp", Kind: "oidc"}, {ID: "other-idp", Kind: "oidc"}},
+		Principals:  []environment.IdentityPrincipal{{ID: "agent", Issuer: "idp"}, {ID: "other-agent", Issuer: "other-idp"}},
+		Grants:      []environment.IdentityGrant{{ID: "grant", Principal: "agent", Scopes: []string{"not-exported"}}, {ID: "other-grant", Principal: "other-agent"}},
+		Delegations: []environment.IdentityDelegation{{ID: "delegation", Agent: "agent"}},
+	}
+	m, err := BuildCapabilityManifest(b, digest.Bytes([]byte("discovery-environment")), digest.Bytes([]byte("discovery-application")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := json.MarshalIndent(m, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	destination := os.Getenv("OPERATOR_DISCOVERY_FIXTURES")
+	if destination == "" {
+		t.Fatal("set OPERATOR_DISCOVERY_FIXTURES")
+	}
+	if err = os.WriteFile(filepath.Join(destination, "interceptor-export.json"), append(raw, '\n'), 0600); err != nil {
+		t.Fatal(err)
+	}
+	m.Digest = ""
+	raw, err = json.Marshal(m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = os.WriteFile(filepath.Join(destination, "native-digest-input.json"), raw, 0600); err != nil {
+		t.Fatal(err)
+	}
+}

@@ -238,11 +238,14 @@ func validRoute(f capabilities.ExecutionFacts, r Route) bool {
 					return true
 				}
 			case "service_response":
-				if ep.Kind == "http-route" && ep.Method == t.Method && endpointMatches(ep.Path, t.Path) {
+				if responseEndpointMatches(ep, t.Method, t.Path) {
 					return true
 				}
 			case "environment_state":
 				if ep.Collection == t.Collection {
+					if ep.Kind == "state-collection" {
+						return validStateCollectionRoute(ep, r)
+					}
 					return true
 				}
 			}

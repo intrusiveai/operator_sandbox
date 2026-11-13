@@ -11,12 +11,17 @@ for name in ('capability-chain','postgresql-capability-chain'):
     raw=(ROOT/'schemas/fixtures'/name/'public-capabilities.json').read_bytes()
     view,files=compact_target_context(p,raw)
     cases.append(dict(name=name,target=json.loads(raw),view=json.loads(view),references={key:json.loads(value) for key,value in files.items()}))
+# Discovery metadata stays in verified detail references, without widening tools.
+raw=(ROOT/'schemas/fixtures/discoverable-injection-targets/public-capabilities.json').read_bytes()
+view,files=compact_target_context(p,raw)
+discovery=dict(name='discoverable-injection-targets',target=json.loads(raw),view=json.loads(view),references={key:json.loads(value) for key,value in files.items()})
 # A many-column target makes deferred table details materially useful.
 from copy import deepcopy
 large=deepcopy(cases[-1]['target'])
 large['capabilities']['services'][0]['database_tables'][0]['fields']=['column_'+str(i) for i in range(64)]
 view,files=compact_target_context(p,json.dumps(large).encode())
 cases.append(dict(name='wide-table-context',target=large,view=json.loads(view),references={key:json.loads(value) for key,value in files.items()}))
+cases.append(discovery)
 (ROOT/'schemas/fixtures/compact-target-context.json').write_text(json.dumps(cases,ensure_ascii=False,indent=2)+'\n')
 ops=sorted(op['name'] for op in p.operations());cases=[]
 for codec in ('openai-chat-text-tools-v1','openai-responses-text-tools-v1','anthropic-messages-text-tools-v1','bedrock-converse-text-tools-v1','gemini-text-tools-v1'):
