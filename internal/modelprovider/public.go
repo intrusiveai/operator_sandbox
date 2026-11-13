@@ -13,7 +13,7 @@ import (
 var optionFields = map[string][]string{
 	"openai-chat-text-tools-v1":        {"instruction_role", "response_models"},
 	"openai-responses-text-tools-v1":   {"reasoning", "response_models"},
-	"anthropic-messages-text-tools-v1": {"thinking", "response_models"},
+	"anthropic-messages-text-tools-v1": {"thinking", "output_config", "response_models"},
 	"bedrock-converse-text-tools-v1":   {},
 	"gemini-text-tools-v1":             {"thinking_config", "response_models"},
 }

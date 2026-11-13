@@ -50,7 +50,9 @@ func TestPublicModelMatchesSharedStartupForEveryCodec(t *testing.T) {
 				s.MaximumCompletionTokens = int64(f.Policy[outputField(s.Codec)].(float64))
 				options := map[string]any{}
 				for _, key := range optionFields[s.Codec] {
-					options[key] = f.Policy[key]
+					if value, exists := f.Policy[key]; exists {
+						options[key] = value
+					}
 				}
 				s.CodecOptions, _ = json.Marshal(options)
 				if s.Codec == "gemini-text-tools-v1" {

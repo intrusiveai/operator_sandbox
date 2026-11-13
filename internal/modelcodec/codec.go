@@ -90,6 +90,9 @@ func Build(policyRaw, relayRaw []byte) ([]byte, error) {
 		if p["thinking"] != nil {
 			q["thinking"] = p["thinking"]
 		}
+		if p["output_config"] != nil {
+			q["output_config"] = p["output_config"]
+		}
 	case Bedrock:
 		q = map[string]any{"system": []any{map[string]any{"text": p["prompt"]}}, "messages": history, "inferenceConfig": map[string]any{"maxTokens": n}}
 		if len(array(tools)) > 0 {
