@@ -14,7 +14,7 @@ for codec in codecs:
     for b in branches:
         if not set(b['x-operator-required-operations']).issubset(enabled):continue
         name=b['properties']['name']['const'];names.append(name);parameters=b.get('x-operator-provider-parameters',b['properties']['arguments']);description=b['description']
-        if codec in codecs[:2]:parameters=b.get('x-operator-openai-parameters',parameters)
+        if codec in codecs[:3]:parameters=b.get('x-operator-object-root-parameters',parameters)
         parameters=deepcopy(parameters)
         if name=='attempt_execute' and 'engine.injection_delete' not in enabled:
             for field in ('setup','injection','retain_injections'):parameters['properties'].pop(field,None)
@@ -32,7 +32,7 @@ for name,codec,ops in [('unknown-codec','unsupported',operations),('unknown-oper
 ordinary=json.loads((ROOT/'fixtures/ordinary-protocol.json').read_text())
 def body(op):
     return deepcopy(next(c['request']['body'] for c in ordinary if isinstance(c.get('request'),dict) and c['request'].get('operation')==op and c['valid']))
-def arg(name,tool,value,valid=True,openai_valid=None):
+def arg(name,tool,value,valid=True,object_root_valid=None):
     if tool=='record_append':
      value=dict(value);tool='record_'+value.pop('kind')
      if tool=='record_progress':
@@ -42,7 +42,7 @@ def arg(name,tool,value,valid=True,openai_valid=None):
      if 'artifact' in value:tool='finish_artifact'
      elif 'unavailable_reason' in value:tool='finish_unavailable'
     case=dict(name=name,mode='arguments',tool=tool,arguments=deepcopy(value),valid=valid)
-    if openai_valid is not None:case['openai_valid']=valid
+    if object_root_valid is not None:case['object_root_valid']=valid
     cases.append(case)
 arg('bounded reference','reference_read',dict(reference='ref-1',offset=0,max_bytes=262144))
 arg('read defaults','observation_read',dict(observation='obs-1'))
@@ -123,10 +123,13 @@ arg('completed with coverage gap','finish',dict(finish_reason='budget-limit',**d
 arg('finish artifact only','finish_artifact',dict(finish_reason='objectives-addressed',artifact='conclusion-1'),True,True)
 arg('finish artifact mixed','finish_artifact',dict(finish_reason='objectives-addressed',artifact='conclusion-1',summary='Mixed.'),False,False)
 arg('finish unavailable mixed','finish_unavailable',dict(finish_reason='harness-error',unavailable_reason='internal-error',summary='Mixed.'),False,False)
-# OpenAI's root-object subset cannot express these cross-field conditions.
+arg('hypothesis missing scenario','record_hypothesis',dict(origin='scenario',statement='Maybe.'),False,False)
+arg('hypothesis forbidden scenario','record_hypothesis',dict(origin='exploratory',scenario_id='scenario-1',statement='Maybe.'),False,False)
+arg('hypothesis scenario association','record_hypothesis',dict(origin='scenario',scenario_id='scenario-1',statement='Maybe.'),True,True)
+# OpenAI and Anthropic's root-object subset cannot express these cross-field conditions.
 # Adjacent descriptions are tested independently; runtime still rejects them.
-openai_documented = {'setup requires injection','no irrelevant injection','no cleanup flags without setup','missing scenario','forbidden scenario','conflicting input','supported progress missing citations','conclusion media mismatch','artifact missing content','artifact conflicting content','artifact JSON wrong media','completed with coverage gap'}
+object_root_documented = {'hypothesis missing scenario','hypothesis forbidden scenario','setup requires injection','no irrelevant injection','no cleanup flags without setup','missing scenario','forbidden scenario','conflicting input','supported progress missing citations','conclusion media mismatch','artifact missing content','artifact conflicting content','artifact JSON wrong media','completed with coverage gap'}
 for case in cases:
- if case['name'] in openai_documented or case['name'].startswith('invalid invocation content '):case['openai_valid']=True
+ if case['name'] in object_root_documented or case['name'].startswith('invalid invocation content '):case['object_root_valid']=True
 (ROOT/'fixtures/model-tools.json').write_text(json.dumps(cases,indent=2,ensure_ascii=False)+'\n')
 print(len(cases),'fixed tool fixtures')

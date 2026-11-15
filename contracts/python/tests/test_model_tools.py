@@ -28,9 +28,10 @@ class ModelToolsTest(unittest.TestCase):
                     self.assertEqual(len(raw),c['size_bytes'])
                     self.assertEqual('sha256:'+hashlib.sha256(raw).hexdigest(),c['digest'])
                     tools=json.loads(raw)
-                    if c['codec'] in ('openai-chat-text-tools-v1','openai-responses-text-tools-v1'):
+                    if c['codec'] in ('openai-chat-text-tools-v1','openai-responses-text-tools-v1','anthropic-messages-text-tools-v1'):
                         for tool in tools:
-                            parameters=(tool['function'] if 'function' in tool else tool)['parameters']
+                            declaration=tool.get('function',tool)
+                            parameters=declaration.get('parameters',declaration.get('input_schema'))
                             self.assertEqual(parameters['type'],'object')
                             self.assertIs(parameters['additionalProperties'],False)
                             self.assertIn('properties',parameters)
@@ -46,6 +47,24 @@ class ModelToolsTest(unittest.TestCase):
                 else:
                     with self.assertRaises(ContractError):run()
 
+    def test_anthropic_selected_catalog_keeps_nested_rules(self):
+        ops=sorted(op['name'] for op in self.protocol.operations())
+        for surfaces in ([], ['model_response'], ['database_response','environment_state'],
+                         ['database_response','environment_state','mcp_tool_result','model_response','model_tool_result','service_response']):
+            tools=json.loads(self.protocol.model_tools('anthropic-messages-text-tools-v1',ops,surfaces))
+            self.assertEqual(len(tools),17)
+            args={tool['name']:tool['input_schema'] for tool in tools}
+            for name, parameters in args.items():
+                with self.subTest(tool=name,surfaces=surfaces):
+                    self.assertEqual(parameters['type'],'object')
+                    self.assertFalse(set(parameters)&{'oneOf','anyOf','allOf'})
+                    Draft202012Validator.check_schema(parameters)
+            # Root restrictions must not erase nested evidence or injection rules.
+            self.assertIn('allOf',args['finish']['properties']['claims']['items'])
+            if surfaces:
+                self.assertIn('oneOf',args['attempt_execute']['properties']['injection'])
+                self.assertEqual(len(args['attempt_execute']['properties']['setup']['items']['oneOf']),len(surfaces))
+
     def test_projection_and_runtime_constraints(self):
         cases=json.loads((ROOT/'fixtures/model-tools.json').read_text())
         for codec in ('openai-chat-text-tools-v1','openai-responses-text-tools-v1','anthropic-messages-text-tools-v1','bedrock-converse-text-tools-v1','gemini-text-tools-v1'):
@@ -55,9 +74,9 @@ class ModelToolsTest(unittest.TestCase):
             declarations=[dict(t,parameters=t.get('parameters',t.get('input_schema',t.get('parametersJsonSchema',t.get('inputSchema',{}).get('json'))))) for t in declarations]
             validators={t['name']:Draft202012Validator(t['parameters']) for t in declarations}
             for case in cases:
-                if 'openai_valid' not in case:continue
+                if 'object_root_valid' not in case:continue
                 with self.subTest(codec=codec,case=case['name']):
-                    expected=case['openai_valid'] if codec.startswith('openai-') else case['valid']
+                    expected=case['object_root_valid'] if codec in ('openai-chat-text-tools-v1','openai-responses-text-tools-v1','anthropic-messages-text-tools-v1') else case['valid']
                     self.assertEqual(validators[case['tool']].is_valid(case['arguments']),expected)
                     if case['valid']:
                         self.protocol.validate_tool_arguments(case['tool'],encoded(case['arguments']))
@@ -110,7 +129,7 @@ class PresentationTest(unittest.TestCase):
 
 
 class AdjacentConstraintTest(unittest.TestCase):
-    def test_openai_exceptions_are_documented_and_other_codecs_keep_rules(self):
+    def test_provider_root_exceptions_are_documented_and_other_codecs_keep_rules(self):
         p=Protocol(ROOT)
         ops=sorted(op['name'] for op in p.operations())
         for codec in ('openai-chat-text-tools-v1','openai-responses-text-tools-v1','anthropic-messages-text-tools-v1','bedrock-converse-text-tools-v1','gemini-text-tools-v1'):
@@ -141,7 +160,7 @@ class AdjacentConstraintTest(unittest.TestCase):
                 self.assertNotIn('kind',args[tool]['properties'])
             self.assertEqual(set(args['scenario_select']['properties']),{'reference'})
             self.assertEqual(set(args['attempt_execute']['properties']['injection']['properties']),{'json','artifact'})
-            if not codec.startswith('openai'):
+            if codec in ('bedrock-converse-text-tools-v1','gemini-text-tools-v1'):
                 self.assertIn('allOf',args['attempt_execute'])
                 self.assertIn('allOf',args['artifact_publish'])
             # Encoded byte count is a runtime condition, not JSON Schema maxLength.

@@ -124,7 +124,7 @@
         "name",
         "arguments"
       ],
-      "x-operator-openai-parameters": {
+      "x-operator-object-root-parameters": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -5664,7 +5664,7 @@
           "lifecycle": "Response replacement changes selected query-result cells delivered to the application, not persistent rows; state mutation changes persistent state. Deleting an injection does not reverse committed mutations. Use an admitted ready snapshot and restore when reverting persistent state is required; successful restore skips remaining calls in that response."
         }
       },
-      "x-operator-openai-parameters": {
+      "x-operator-object-root-parameters": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -9406,7 +9406,7 @@
         "example_scope": "The uncertainty-reference example is an assessment fragment, not a complete finish request.",
         "correction": "Correct a rejected finish with a new call; do not replay completed target operations. Omit optional reporting collections when unnecessary."
       },
-      "x-operator-openai-parameters": {
+      "x-operator-object-root-parameters": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -10776,7 +10776,7 @@
         "name",
         "arguments"
       ],
-      "x-operator-openai-parameters": {
+      "x-operator-object-root-parameters": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -10884,7 +10884,7 @@
         "name",
         "arguments"
       ],
-      "x-operator-openai-parameters": {
+      "x-operator-object-root-parameters": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -10987,7 +10987,7 @@
         "name",
         "arguments"
       ],
-      "x-operator-openai-parameters": {
+      "x-operator-object-root-parameters": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -11097,7 +11097,7 @@
         "database_feedback": "When oracle-assisted feedback is enabled, inspect permitted oracle_outcome observations before the next experiment. A database_query_match positive verdict records an observed condition, not injection causality. Empty means no positive verdict was captured, not proof of attack failure. Unavailable evidence remains unknown; available entries in a partial category can still be read. Receipt bytes remain unchanged after later writes or restore; old verdicts and session-wide reports are not new-attempt results.",
         "rules": "Use the returned continuation verbatim. readable_observation remains readable, citation represents only verified inspected bytes. continuation is absent at EOF or when no readable bytes remain. Unavailable or truncated evidence must be reported as a limitation. A partial read never makes a whole-observation citation valid. Example handles must be replaced with actual returned handles."
       },
-      "x-operator-openai-parameters": {
+      "x-operator-object-root-parameters": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -11312,7 +11312,7 @@
         "name",
         "arguments"
       ],
-      "x-operator-openai-parameters": {
+      "x-operator-object-root-parameters": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -11731,7 +11731,7 @@
         "name",
         "arguments"
       ],
-      "x-operator-openai-parameters": {
+      "x-operator-object-root-parameters": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -12022,7 +12022,7 @@
         "name",
         "arguments"
       ],
-      "x-operator-openai-parameters": {
+      "x-operator-object-root-parameters": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -12316,7 +12316,7 @@
       "x-operator-guidance": {
         "progress": "Historical progress recording is optional. The optional assessment object requires interpretation, confidence, assurance and summary; gaps belongs inside it. Use returned typed handles for the selected record kind."
       },
-      "x-operator-openai-parameters": {
+      "x-operator-object-root-parameters": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -12664,7 +12664,7 @@
         "name",
         "arguments"
       ],
-      "x-operator-openai-parameters": {
+      "x-operator-object-root-parameters": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -12751,7 +12751,7 @@
         "name",
         "arguments"
       ],
-      "x-operator-openai-parameters": {
+      "x-operator-object-root-parameters": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -12816,7 +12816,7 @@
         "name",
         "arguments"
       ],
-      "x-operator-openai-parameters": {
+      "x-operator-object-root-parameters": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -12879,7 +12879,7 @@
         "name",
         "arguments"
       ],
-      "x-operator-openai-parameters": {
+      "x-operator-object-root-parameters": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -12954,7 +12954,7 @@
         "name",
         "arguments"
       ],
-      "x-operator-openai-parameters": {
+      "x-operator-object-root-parameters": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -13042,7 +13042,7 @@
         "name",
         "arguments"
       ],
-      "x-operator-openai-parameters": {
+      "x-operator-object-root-parameters": {
         "type": "object",
         "additionalProperties": false,
         "properties": {

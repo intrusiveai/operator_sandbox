@@ -58,9 +58,12 @@ assurance and summary inside one optional assessment object; gaps belongs inside
 
 ## Provider declarations and runtime validation
 
-All five codecs use closed object declarations. Only OpenAI omits root combinators
-for provider compatibility, including strict=false; every affected relationship
-is described beside its arguments. Other codecs retain these rules structurally.
+All five codecs use closed object declarations. OpenAI and Anthropic use the
+shared object-root projection: no root `oneOf`, `anyOf`, `allOf` or `not`. OpenAI
+requires this even with strict=false. Nested rules remain, and every omitted
+root relationship is described beside its affected arguments. Bedrock Converse
+and Gemini retain the root rules structurally. These declarations are a provider
+projection, not the authoritative argument validator.
 Distinct finish and record forms require their own fields in every projection.
 Runtime retains all content and evidence checks. Compact JSON declarations retain the same runtime size, depth,
 selector and placement checks. Strict mode is not a resource-authorization check.
@@ -151,7 +154,7 @@ and verification requirements. The current approved interface identity is in
 
 ## Declaration consistency
 
-Contract 0.12.0 uses 17 distinct tools. Four record tools translate to
+The interface identified in [the contract lock](../release/contract-lock.json) uses 17 distinct tools. Four record tools translate to
 `engine.record_append`; three completion tools translate to `engine.finish`.
 No kind selector or old record_append model alias remains. Progress assessment is
 one optional object requiring interpretation, confidence, assurance and summary;
