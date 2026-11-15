@@ -82,11 +82,11 @@ func TestPythonProcessCampaigns(t *testing.T) {
 						if origin == "scenario" {
 							provenance["scenario_id"] = "scenario-marker"
 						}
-						provenance["kind"] = "hypothesis"
+						// Record kind is selected by the model tool, not an argument.
 						provenance["objective_refs"] = []string{"objective-marker"}
 						provenance["statement"] = "A changed input may affect the response."
 						provenance["predicted_observations"] = []string{"A permitted response."}
-						calls = append(calls, modelCall("hypothesis", "record_append", provenance), publishCall("payload-1", "baseline"))
+						calls = append(calls, modelCall("hypothesis", "record_hypothesis", provenance), publishCall("payload-1", "baseline"))
 						var task map[string]any
 						_ = json.Unmarshal([]byte(q["messages"].([]any)[1].(map[string]any)["content"].(string)), &task)
 						for _, v := range task["reference_handles"].([]any) {

@@ -1,5 +1,9 @@
 # Shared model-tool restructuring
 
+The model tool surface is superseded by [tool interface alignment](tool-interface-alignment.md): separate record kinds, completion forms, and scenario selection. The native operations and integrity requirements below remain applicable.
+
+
+
 ## Outcome and scope
 
 Operator and Attack Harness MUST support a model-facing workflow of direct input
@@ -65,11 +69,11 @@ record rules below are part of the interface, not merely descriptive examples.
 | --- | --- | --- |
 | `attempt_execute` | `origin`, `operation_id`, one of `json`/`text`/`base64`/`artifact`; `scenario_id` for scenario origin; `media_type?`, `parent?`, `caller_principal_id?`, `rationale?`, `observations?`, `setup?`, `injection?`, `retain_injections?`, `strategy_provenance_ref?`, `technique_refs?` | Reconstruct input/setup envelopes, resolve parent/artifact handles, generate setup action IDs. Return execution, observation, and applicable injection handles with authoritative statuses. |
 | `observation_read` | `observation`, `offset?`, `max_bytes?` | Resolve receipt/entry/range; return verified content, observation/range handle, availability, truncation, and continuation metadata. |
-| `finish` | `finish_reason` and exactly one of inline assessment fields, `artifact`, or `unavailable_reason` | Normalize one assessment/alternative into the existing finish message. Preserve accepted/pending finalization and timely exit semantics. |
+| `finish` | `finish_reason`, `summary`, `objectives`; alternatives use `finish_artifact` or `finish_unavailable` | Normalize one assessment/alternative into the existing finish message. Preserve accepted/pending finalization and timely exit semantics. |
 | `artifact_publish` | `purpose`, `media_type`, one of `json`/`text`/`base64` | Keep chunking, serialization, hashing, descriptors, and commit protocol in product code. Return committed artifact handle and bounded metadata. |
-| `reference_read` | `reference`, `offset?`, `max_bytes?` | Resolve a verified task/resource/scenario/tool-guide reference; preserve complete active-scenario loading and its execution gate. |
+| `reference_read` | `reference`, `offset?`, `max_bytes?` | Resolve a verified task/resource/tool-guide reference; scenario_select activates a scenario; preserve complete active-scenario loading and its execution gate. |
 | `injection_delete` | `injection` | Resolve the action/execution pair; report actual removal/effect state, not reversal of committed mutations. |
-| `record_append` | `kind` and the flattened kind-specific fields below | Reconstruct the optional historical record; return record and applicable hypothesis handles. |
+| `record_hypothesis`, `record_progress`, `record_lineage`, `record_coverage` | kind-specific arguments through `record_hypothesis`, `record_progress`, `record_lineage`, `record_coverage` | Reconstruct the optional historical record; return record and applicable hypothesis handles. |
 | `snapshot_request` | `label?`, `description?` | Keep current arguments and quota checks; return checkpoint handle when an identity exists, with status distinct from readiness. |
 | `snapshot_list` | `session?`, `offset?`, `limit?` | Resolve an authorized session handle; keep current default scope and pagination; return checkpoint/session handles and continuation metadata. |
 | `snapshot_inspect` | `snapshot` | Resolve source session and checkpoint identity; inspect under existing ownership/availability checks. |
@@ -135,7 +139,7 @@ status, confidence, interpretation, finish-reason, and uncertainty-kind values.
 | `objectives` | `objective_id`, `outcome`, `summary` | `observations`, `attempts`, `records` |
 | `claims` | `statement`, `interpretation`, `assurance`, `confidence` | `observations`, `attempts`, `uncertainties` |
 | `hypotheses` | `origin`, `outcome`, `summary`; `scenario_id` for scenario origin | `label`, `parent`, `objective_refs`, `observations`, `attempts`, `records` |
-| `coverage` | `objective_id`, `status`, `reason` | `hypothesis`, `alternative`, `observations`, `attempts` |
+| `record_coverage` | `objective_id`, `status`, `reason` | `hypothesis`, `alternative`, `observations`, `attempts` |
 | `uncertainties` | `kind`, `description` | `label`, `observations`, `inputs`, `records` |
 
 Resource-reference collections contain typed handles. `inputs` selects verified
@@ -155,21 +159,21 @@ local diagnostic evidence, then populate the existing receipt field. Do not
 manufacture additional claims to carry these selections. Record handles expand
 only into accepted historical-record receipts.
 
-The alternative `artifact` path resolves a committed conclusion artifact meeting
+The `finish_artifact` tool with `artifact` resolves a committed conclusion artifact meeting
 the existing authoritative assessment and binding rules. It requires no separate
-conclusion-registration call. The alternative `unavailable_reason` maps to
+conclusion-registration call. The `finish_unavailable` tool with `unavailable_reason` maps to
 `unavailable.reason` and retains the existing allowed reasons. Neither alternative
 may be combined with inline fields or the other alternative. An unavailable finish
 MUST NOT fabricate an assessment or imply that one was committed.
 
 ### Optional historical records
 
-| `kind` | Required fields | Optional fields |
+| Record tool | Required fields | Optional fields |
 | --- | --- | --- |
-| `hypothesis` | `origin`, `statement`; `scenario_id` for scenario origin | `parent`, `objective_refs`, `assumptions`, `predicted_observations`, `surface_ref`, `records` |
-| `progress` | `summary` | `decision`, `objective_refs`, `hypotheses`, `attempts`, `observations`, `records`, `interpretation`, `confidence`, `assurance`, `assessment_summary`, `gaps` |
-| `lineage` | `hypothesis`, `attempt`, `mutation_summary` | `parent`, `records` |
-| `coverage` | `entries` | `records` |
+| `record_hypothesis` | `origin`, `statement`; `scenario_id` for scenario origin | `parent`, `objective_refs`, `assumptions`, `predicted_observations`, `surface_ref`, `records` |
+| `record_progress` | `summary` | `decision`, `objective_refs`, `hypotheses`, `attempts`, `observations`, `records`, `assessment` |
+| `record_lineage` | `hypothesis`, `attempt`, `mutation_summary` | `parent`, `records` |
+| `record_coverage` | `entries` | `records` |
 
 Hypothesis records get generated IDs and return hypothesis handles. A hypothesis
 parent is a hypothesis handle; a lineage parent is an execution handle. Coverage
@@ -177,10 +181,9 @@ entries use the inline coverage shape. Reference/list omissions become empty
 collections where allowed by the paired spec. Preserve the existing bounded types
 for assumptions, predicted observations, assurance, and gaps.
 
-Progress `interpretation`, `confidence`, `assurance`, and `assessment_summary`
-must all be present or all absent. With them, omitted `gaps` becomes empty; without
-them, `gaps` is invalid. Normalize the supplied fields into the existing optional
-progress assessment. Derive observation receipts as for finish. No record tool
+The optional progress assessment object MUST require interpretation, confidence,
+assurance and summary together. Gaps is optional inside that object. Normalize
+it into the existing native progress assessment. Derive observation receipts as for finish. No record tool
 becomes a required assessment-building step.
 
 ## 2. Shared normalization and trusted handle resolution

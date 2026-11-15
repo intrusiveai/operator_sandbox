@@ -54,7 +54,7 @@ func TestSharedSelectedTools(t *testing.T) {
 	}
 	for _, c := range cases {
 		b, err := p.ModelToolsSelected(c.Codec, c.Operations, c.Surfaces)
-		if err != nil || len(b) != c.Size || RawDigest(b) != c.Digest || len(b) > 31000 {
+		if err != nil || len(b) != c.Size || RawDigest(b) != c.Digest || len(b) > 55000 {
 			t.Fatal(c.Codec, c.Surfaces, err)
 		}
 	}

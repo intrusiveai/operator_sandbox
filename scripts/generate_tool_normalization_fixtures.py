@@ -22,6 +22,15 @@ resource('snap-1','checkpoint',dict(source_session='session-1',checkpoint_id='ch
 resource('session-1','session',dict(source_session='session-1'))
 cases=[]
 def add(name,tool,args,change=None,reason=None,path=None):
+
+ if tool=='record_append':
+  args=dict(args);tool='record_'+args.pop('kind')
+  if tool=='record_progress':
+   assessment={('summary' if k=='assessment_summary' else k):args.pop(k) for k in ('interpretation','confidence','assurance','assessment_summary','gaps') if k in args}
+   if assessment:args['assessment']=assessment
+ if tool=='finish' and 'summary' not in args:
+  if 'artifact' in args:tool='finish_artifact'
+  elif 'unavailable_reason' in args:tool='finish_unavailable'
  ctx=deepcopy(context)
  if change:change(ctx)
  case=dict(name=name,tool=tool,arguments=args,context=ctx)

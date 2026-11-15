@@ -18,6 +18,7 @@ for codec in codecs:
         parameters=deepcopy(parameters)
         if name=='attempt_execute' and 'engine.injection_delete' not in enabled:
             for field in ('setup','injection','retain_injections'):parameters['properties'].pop(field,None)
+            if 'allOf' in parameters:parameters['allOf']=[rule for rule in parameters['allOf'] if 'setup' not in rule.get('if',{}).get('properties',{})]
         if codec=='openai-chat-text-tools-v1':tools.append({'type':'function','function':{'name':name,'description':description,'parameters':parameters,'strict':False}})
         elif codec=='openai-responses-text-tools-v1':tools.append({'type':'function','name':name,'description':description,'parameters':parameters,'strict':False})
         elif codec=='anthropic-messages-text-tools-v1':tools.append({'name':name,'description':description,'input_schema':parameters})
@@ -32,8 +33,16 @@ ordinary=json.loads((ROOT/'fixtures/ordinary-protocol.json').read_text())
 def body(op):
     return deepcopy(next(c['request']['body'] for c in ordinary if isinstance(c.get('request'),dict) and c['request'].get('operation')==op and c['valid']))
 def arg(name,tool,value,valid=True,openai_valid=None):
-    case=dict(name=name,mode='arguments',tool=tool,arguments=value,valid=valid)
-    if openai_valid is not None:case['openai_valid']=openai_valid
+    if tool=='record_append':
+     value=dict(value);tool='record_'+value.pop('kind')
+     if tool=='record_progress':
+      assessment={('summary' if k=='assessment_summary' else k):value.pop(k) for k in ('interpretation','confidence','assurance','assessment_summary','gaps') if k in value}
+      if assessment:value['assessment']=assessment
+    if tool=='finish' and 'summary' not in value:
+     if 'artifact' in value:tool='finish_artifact'
+     elif 'unavailable_reason' in value:tool='finish_unavailable'
+    case=dict(name=name,mode='arguments',tool=tool,arguments=deepcopy(value),valid=valid)
+    if openai_valid is not None:case['openai_valid']=valid
     cases.append(case)
 arg('bounded reference','reference_read',dict(reference='ref-1',offset=0,max_bytes=262144))
 arg('read defaults','observation_read',dict(observation='obs-1'))
@@ -84,5 +93,40 @@ arg('internal model operation hidden','model_generate',{},False)
 arg('artifact chunk hidden','artifact_put_part',{},False)
 arg('shell hidden','exec',dict(command='true'),False)
 arg('non-object arguments','snapshot_request',[],False)
+# Reviewed regression cases from successful Claude/Astra customer-support runs.
+for field,value in [('origin','scenario'),('scenario_id','support-baseline'),('attempt','execution-1')]:
+ arg('progress forbids '+field,'record_progress',dict(summary='Output inspected.',**{field:value}),False,False)
+arg('summary-only progress','record_progress',dict(summary='Output inspected.'),True,True)
+arg('partial nested progress assessment','record_progress',dict(summary='Output inspected.',assessment=dict(interpretation='inconclusive')),False,False)
+arg('supported progress missing citations','record_progress',dict(summary='Output inspected.',assessment=dict(interpretation='supported',confidence='high',assurance='observed',summary='Observed.')),False,False)
+arg('supported progress with citations','record_progress',dict(summary='Output inspected.',observations=['obs-1'],assessment=dict(interpretation='supported',confidence='high',assurance='observed',summary='Observed.')),True,True)
+arg('scenario selection','scenario_select',dict(reference='scenario:baseline'),True,True)
+arg('scenario selection rejects pagination','scenario_select',dict(reference='scenario:baseline',offset=1),False,False)
+arg('conclusion media mismatch','artifact_publish',dict(purpose='conclusion',media_type='text/plain',text='assessment'),False,False)
+arg('artifact missing content','artifact_publish',dict(purpose='payload',media_type='application/json'),False,False)
+arg('artifact conflicting content','artifact_publish',dict(purpose='payload',media_type='application/json',json={},text='x'),False,False)
+arg('artifact JSON wrong media','artifact_publish',dict(purpose='payload',media_type='text/plain',json={}),False,False)
+for content in ({'text':'x'},{'base64':'eA==','media_type':'application/json'}):
+ arg('unsupported direct injection '+str(content),'attempt_execute',dict(attempt,setup=[action],injection=content),False,False)
+for content in ({'base64':'eA=='},{'json':{},'media_type':'text/plain'},{'artifact':'payload-1','media_type':'application/json'}):
+ arg('invalid invocation content '+str(content),'attempt_execute',dict(origin='exploratory',operation_id='invoke',**content),False,False)
+for collection,entry in [
+ ('claims',dict(statement='Observed.',interpretation='supported',assurance='observed',confidence='high')),
+ ('objectives',dict(objective_id='objective-1',outcome='supported',summary='Observed.')),
+ ('hypotheses',dict(origin='exploratory',outcome='supported',summary='Observed.')),
+ ('coverage',dict(objective_id='objective-1',status='tested',reason='Invoked.'))]:
+ value=dict(finish_reason='objectives-addressed',**deepcopy(draft));value[collection]=[entry]
+ arg('missing conditional evidence '+collection,'finish',value,False,False)
+ entry['observations']=['obs-1']
+ arg('conditional evidence '+collection,'finish',value,True,True)
+arg('completed with coverage gap','finish',dict(finish_reason='budget-limit',**draft,status='completed',uncertainties=[dict(kind='coverage-limit',description='A required test was not run.')]),False,False)
+arg('finish artifact only','finish_artifact',dict(finish_reason='objectives-addressed',artifact='conclusion-1'),True,True)
+arg('finish artifact mixed','finish_artifact',dict(finish_reason='objectives-addressed',artifact='conclusion-1',summary='Mixed.'),False,False)
+arg('finish unavailable mixed','finish_unavailable',dict(finish_reason='harness-error',unavailable_reason='internal-error',summary='Mixed.'),False,False)
+# OpenAI's root-object subset cannot express these cross-field conditions.
+# Adjacent descriptions are tested independently; runtime still rejects them.
+openai_documented = {'setup requires injection','no irrelevant injection','no cleanup flags without setup','missing scenario','forbidden scenario','conflicting input','supported progress missing citations','conclusion media mismatch','artifact missing content','artifact conflicting content','artifact JSON wrong media','completed with coverage gap'}
+for case in cases:
+ if case['name'] in openai_documented or case['name'].startswith('invalid invocation content '):case['openai_valid']=True
 (ROOT/'fixtures/model-tools.json').write_text(json.dumps(cases,indent=2,ensure_ascii=False)+'\n')
 print(len(cases),'fixed tool fixtures')

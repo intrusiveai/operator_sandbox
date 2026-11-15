@@ -27,11 +27,11 @@ IDs or counters. Host messages retain their canonical input and assessment shape
 | --- | --- |
 | attempt_execute | Required origin, operation_id and exactly one json/text/base64/artifact. Scenario origin requires scenario_id; exploratory forbids it. Optional media_type, parent, caller_principal_id, rationale, observations, setup, injection, retain_injections, strategy_provenance_ref, technique_refs. |
 | observation_read | observation; optional offset and max_bytes. |
-| finish | finish_reason and exactly one inline summary/objectives with optional status/hypotheses/claims/coverage/uncertainties/records, artifact, or unavailable_reason. |
+| finish | finish_reason, summary, objectives with optional status/hypotheses/claims/coverage/uncertainties/records. finish_artifact and finish_unavailable expose the other forms separately. |
 | artifact_publish | purpose, media_type and exactly one json/text/base64. |
 | reference_read | reference; optional offset and max_bytes. |
 | injection_delete | injection. |
-| record_append | kind and flattened hypothesis/progress/lineage/coverage fields from the generated schema. |
+| record_hypothesis / record_progress / record_lineage / record_coverage | distinct record tools and kind-specific fields from the generated schema. |
 | snapshot_request | Optional label and description; empty object is valid. |
 | snapshot_list | Optional session, offset and limit; empty object is valid. |
 | snapshot_inspect, restore_request | snapshot. |
@@ -54,17 +54,18 @@ Optional assessment collections are empty by default. Local labels permit forwar
 hypothesis/uncertainty references without preregistration. Normalization generates
 IDs and derives execution receipt lists from selected observations. Historical
 records remain optional. A progress assessment requires interpretation, confidence,
-assurance and assessment_summary together; gaps is only valid with that group.
+assurance and summary inside one optional assessment object; gaps belongs inside it.
 
 ## Provider declarations and runtime validation
 
-All five codecs use concise closed object declarations. Root combinators are
-omitted for OpenAI compatibility, including strict=false. Exact mutually exclusive
-content/finish choices and record-kind constraints remain enforced by shared
-runtime validation. Compact JSON declarations retain the same runtime size, depth,
+All five codecs use closed object declarations. Only OpenAI omits root combinators
+for provider compatibility, including strict=false; every affected relationship
+is described beside its arguments. Other codecs retain these rules structurally.
+Distinct finish and record forms require their own fields in every projection.
+Runtime retains all content and evidence checks. Compact JSON declarations retain the same runtime size, depth,
 selector and placement checks. Strict mode is not a resource-authorization check.
 
-Only admitted injection branches are declared, preserving all five supported
+Only admitted injection branches are declared, preserving all six supported
 surfaces when applicable. Scenario prose does not hide legitimate capabilities.
 Argument validation rejects unknown/obsolete fields, duplicate keys and invalid
 supplied values rather than silently repairing them. Runtime errors identify the
@@ -147,3 +148,30 @@ only administrator-permitted selections.
 See [shared tool presentation](../specs/tool-context-presentation.md) for generation
 and verification requirements. The current approved interface identity is in
 [the contract lock](../release/contract-lock.json).
+
+## Declaration consistency
+
+Contract 0.12.0 uses 17 distinct tools. Four record tools translate to
+`engine.record_append`; three completion tools translate to `engine.finish`.
+No kind selector or old record_append model alias remains. Progress assessment is
+one optional object requiring interpretation, confidence, assurance and summary;
+gaps is optional inside it. Supported progress requires inspected observations.
+`scenario_select(reference)` activates a scenario without pagination;
+`reference_read` reads bytes and provides the tool-guide:<tool_name> convention.
+
+Provider parameters retain cross-field choices and dependencies, except for the
+documented OpenAI root-schema restriction above. Scalar handle
+meanings and conditional evidence requirements remain beside their fields.
+Runtime still verifies resource ownership, purpose, inspection, byte size and
+permissions. Snapshot descriptions allow at most 4096 UTF-8 bytes, not merely
+4096 characters. No text is silently truncated.
+
+All five codec envelopes and their selected-capability projections are covered by
+shared Go/Python fixtures. OpenAI tools remain explicitly non-strict; these are
+best-effort declarations, not a guarantee of model compliance. Providers expose
+JSON Schema through their native parameter fields (OpenAI parameters, Anthropic
+input_schema, Bedrock inputSchema.json, Gemini parametersJsonSchema). Controlled
+schema/envelope tests do not establish live acceptance for every provider/model.
+See [OpenAI function calling](https://developers.openai.com/api/docs/guides/function-calling),
+[Bedrock tool schemas](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ToolInputSchema.html),
+and [Gemini function declarations](https://ai.google.dev/api/caching#FunctionDeclaration).

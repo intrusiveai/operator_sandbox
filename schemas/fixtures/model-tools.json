@@ -23,17 +23,23 @@
       "artifact_publish",
       "attempt_execute",
       "finish",
+      "finish_artifact",
+      "finish_unavailable",
       "injection_delete",
       "observation_read",
-      "record_append",
+      "record_coverage",
+      "record_hypothesis",
+      "record_lineage",
+      "record_progress",
       "reference_read",
       "restore_request",
+      "scenario_select",
       "snapshot_inspect",
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:3bdaafcd28bfedc8cdfb7283069bdac60d22a26f6da96b931ff66606f18cfa09",
-    "size_bytes": 25692,
+    "digest": "sha256:1f1a7636052116c1e8d337aa7f2bfb982b2f5cec23a8d5657b8bff230dd49fb3",
+    "size_bytes": 47303,
     "valid": true
   },
   {
@@ -42,10 +48,11 @@
     "codec": "openai-chat-text-tools-v1",
     "operations": [],
     "names": [
-      "reference_read"
+      "reference_read",
+      "scenario_select"
     ],
-    "digest": "sha256:62498409dbba77956b7ad3a734b5b2aa7f516a8ef6e67beb42adc90017bbce65",
-    "size_bytes": 712,
+    "digest": "sha256:4af0244608b7d0f2f67c23108f8fa38edbe4a1e045dd6c5c40b185f2c17f51bd",
+    "size_bytes": 1424,
     "valid": true
   },
   {
@@ -71,16 +78,22 @@
       "artifact_publish",
       "attempt_execute",
       "finish",
+      "finish_artifact",
+      "finish_unavailable",
       "observation_read",
-      "record_append",
+      "record_coverage",
+      "record_hypothesis",
+      "record_lineage",
+      "record_progress",
       "reference_read",
       "restore_request",
+      "scenario_select",
       "snapshot_inspect",
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:33affeae4d449dad185527dae553c646bc05af988c8004fb1ee8cd384f2a9bb8",
-    "size_bytes": 13381,
+    "digest": "sha256:60b4af4597af6a50cbfd76f2a373945bb7f467facd022a170cca221c09125239",
+    "size_bytes": 32532,
     "valid": true
   },
   {
@@ -105,17 +118,23 @@
     "names": [
       "attempt_execute",
       "finish",
+      "finish_artifact",
+      "finish_unavailable",
       "injection_delete",
       "observation_read",
-      "record_append",
+      "record_coverage",
+      "record_hypothesis",
+      "record_lineage",
+      "record_progress",
       "reference_read",
       "restore_request",
+      "scenario_select",
       "snapshot_inspect",
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:6bb31cded5ab84b87baefd67068f90cb5e6f4e2551ba2e30aeb6fcf238e64c96",
-    "size_bytes": 25024,
+    "digest": "sha256:32229e606eb88ee4256a7fd34074fd30e69470ddf36a2256b5eb5875969b125e",
+    "size_bytes": 45921,
     "valid": true
   },
   {
@@ -142,17 +161,23 @@
       "artifact_publish",
       "attempt_execute",
       "finish",
+      "finish_artifact",
+      "finish_unavailable",
       "injection_delete",
       "observation_read",
-      "record_append",
+      "record_coverage",
+      "record_hypothesis",
+      "record_lineage",
+      "record_progress",
       "reference_read",
       "restore_request",
+      "scenario_select",
       "snapshot_inspect",
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:4b6de158c7008ffdcc54c04d6d8c5ab2d44e695d0b6167bba6185451cb341d52",
-    "size_bytes": 25549,
+    "digest": "sha256:2bb9e6e934fe6e88a5d61c23c829209bbad8774fb4559d35361ee7c52aaf3d37",
+    "size_bytes": 47082,
     "valid": true
   },
   {
@@ -161,10 +186,11 @@
     "codec": "openai-responses-text-tools-v1",
     "operations": [],
     "names": [
-      "reference_read"
+      "reference_read",
+      "scenario_select"
     ],
-    "digest": "sha256:76034cdf96e6f4c48578abe722f94f33e6c633d1ccd80fc4a90441990808dd0d",
-    "size_bytes": 699,
+    "digest": "sha256:87a24eb0b4583ffa1226390252c34c35e3a80e2b4f7b77e95e5cd9f51a2541fa",
+    "size_bytes": 1398,
     "valid": true
   },
   {
@@ -190,16 +216,22 @@
       "artifact_publish",
       "attempt_execute",
       "finish",
+      "finish_artifact",
+      "finish_unavailable",
       "observation_read",
-      "record_append",
+      "record_coverage",
+      "record_hypothesis",
+      "record_lineage",
+      "record_progress",
       "reference_read",
       "restore_request",
+      "scenario_select",
       "snapshot_inspect",
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:0e41d5f857aaf1008f7ef6336e046a8616ee1d01c92daa2bfac897091826183a",
-    "size_bytes": 13251,
+    "digest": "sha256:b662fb6bcfc9bc127dffcdf4ad27c16bbee2a947b0d6c6e5b9272433861803e4",
+    "size_bytes": 32324,
     "valid": true
   },
   {
@@ -224,17 +256,23 @@
     "names": [
       "attempt_execute",
       "finish",
+      "finish_artifact",
+      "finish_unavailable",
       "injection_delete",
       "observation_read",
-      "record_append",
+      "record_coverage",
+      "record_hypothesis",
+      "record_lineage",
+      "record_progress",
       "reference_read",
       "restore_request",
+      "scenario_select",
       "snapshot_inspect",
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:002ee2ab52b0e2bfb40e4ef80f8e99f11ca4e763231468f79e58f64bd859ad7a",
-    "size_bytes": 24894,
+    "digest": "sha256:31d6f265ca8741d10ef8f42326a62ede6e2f47e3fdbff11f307a054ddd81704f",
+    "size_bytes": 45713,
     "valid": true
   },
   {
@@ -261,17 +299,23 @@
       "artifact_publish",
       "attempt_execute",
       "finish",
+      "finish_artifact",
+      "finish_unavailable",
       "injection_delete",
       "observation_read",
-      "record_append",
+      "record_coverage",
+      "record_hypothesis",
+      "record_lineage",
+      "record_progress",
       "reference_read",
       "restore_request",
+      "scenario_select",
       "snapshot_inspect",
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:ace6ae77a283552fb13dd196e834357ab2d19bbd10371d98425c0f816d12af9e",
-    "size_bytes": 25208,
+    "digest": "sha256:27781219331123f79f209f3423e452df372c95931781a1f0544d41ef55e12596",
+    "size_bytes": 48281,
     "valid": true
   },
   {
@@ -280,10 +324,11 @@
     "codec": "anthropic-messages-text-tools-v1",
     "operations": [],
     "names": [
-      "reference_read"
+      "reference_read",
+      "scenario_select"
     ],
-    "digest": "sha256:1e5b25dc94df3fd10ef822ec5926b8047ac203ab81b3718cfa06da4cf9e71f92",
-    "size_bytes": 668,
+    "digest": "sha256:a9f5104db1be5dd7415e87c5d56b11061b7587f1d8cae3c604ee89617cd259f8",
+    "size_bytes": 1336,
     "valid": true
   },
   {
@@ -309,16 +354,22 @@
       "artifact_publish",
       "attempt_execute",
       "finish",
+      "finish_artifact",
+      "finish_unavailable",
       "observation_read",
-      "record_append",
+      "record_coverage",
+      "record_hypothesis",
+      "record_lineage",
+      "record_progress",
       "reference_read",
       "restore_request",
+      "scenario_select",
       "snapshot_inspect",
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:879a8af2c54e8fef3d4ca9dec0be0725f9e268719e6b84aac6a1c1e25724f6a2",
-    "size_bytes": 12941,
+    "digest": "sha256:ab9a2edc252950471d3777390a0d5d55a0ca420d70feba208639c04640cba35c",
+    "size_bytes": 33363,
     "valid": true
   },
   {
@@ -343,17 +394,23 @@
     "names": [
       "attempt_execute",
       "finish",
+      "finish_artifact",
+      "finish_unavailable",
       "injection_delete",
       "observation_read",
-      "record_append",
+      "record_coverage",
+      "record_hypothesis",
+      "record_lineage",
+      "record_progress",
       "reference_read",
       "restore_request",
+      "scenario_select",
       "snapshot_inspect",
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:71b3a4e378488b28a25c1f831b048000b07d49da55f20dd585d2d3c9b1a469f9",
-    "size_bytes": 24584,
+    "digest": "sha256:5d1311d41e3ce222c628e90d05df55af905ac5ee29074f9add4b2598cb8a595d",
+    "size_bytes": 46533,
     "valid": true
   },
   {
@@ -380,17 +437,23 @@
       "artifact_publish",
       "attempt_execute",
       "finish",
+      "finish_artifact",
+      "finish_unavailable",
       "injection_delete",
       "observation_read",
-      "record_append",
+      "record_coverage",
+      "record_hypothesis",
+      "record_lineage",
+      "record_progress",
       "reference_read",
       "restore_request",
+      "scenario_select",
       "snapshot_inspect",
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:06459ef0a1e013c75bfa5a007cff38c470eba54b0f43c725ee53f237ac4ca92c",
-    "size_bytes": 25439,
+    "digest": "sha256:61b8c39b14f3633c32c44497c40bd50ba334f38ccef00df98221c6c06b36835e",
+    "size_bytes": 48638,
     "valid": true
   },
   {
@@ -399,10 +462,11 @@
     "codec": "bedrock-converse-text-tools-v1",
     "operations": [],
     "names": [
-      "reference_read"
+      "reference_read",
+      "scenario_select"
     ],
-    "digest": "sha256:4584c92f03d723844f4c2d366432d9888556c16ffecee3cc9fd52568b2875b32",
-    "size_bytes": 689,
+    "digest": "sha256:6904f2fea02c726335d798207f9744bb46acb4aa16db7ee22d97a848b5d66df9",
+    "size_bytes": 1378,
     "valid": true
   },
   {
@@ -428,16 +492,22 @@
       "artifact_publish",
       "attempt_execute",
       "finish",
+      "finish_artifact",
+      "finish_unavailable",
       "observation_read",
-      "record_append",
+      "record_coverage",
+      "record_hypothesis",
+      "record_lineage",
+      "record_progress",
       "reference_read",
       "restore_request",
+      "scenario_select",
       "snapshot_inspect",
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:e8cd9e97b70cf6869fee35682c96ba5a5720ad69befa89d441d7e4a0e8df1a3e",
-    "size_bytes": 13151,
+    "digest": "sha256:0926e03efab59592ac45a26f658f1859cd7ea6095a54dc5b318643351c9664a6",
+    "size_bytes": 33699,
     "valid": true
   },
   {
@@ -462,17 +532,23 @@
     "names": [
       "attempt_execute",
       "finish",
+      "finish_artifact",
+      "finish_unavailable",
       "injection_delete",
       "observation_read",
-      "record_append",
+      "record_coverage",
+      "record_hypothesis",
+      "record_lineage",
+      "record_progress",
       "reference_read",
       "restore_request",
+      "scenario_select",
       "snapshot_inspect",
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:3dd5af5d5a021814e0e68e0dd8131398c52b950cc6ab9ebb8a71b8d081ae38c5",
-    "size_bytes": 24794,
+    "digest": "sha256:3d74f4c406dd17faae94a062b9cca092baf8bb8cbd3091fc5a7993895fd27e67",
+    "size_bytes": 46869,
     "valid": true
   },
   {
@@ -499,17 +575,23 @@
       "artifact_publish",
       "attempt_execute",
       "finish",
+      "finish_artifact",
+      "finish_unavailable",
       "injection_delete",
       "observation_read",
-      "record_append",
+      "record_coverage",
+      "record_hypothesis",
+      "record_lineage",
+      "record_progress",
       "reference_read",
       "restore_request",
+      "scenario_select",
       "snapshot_inspect",
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:95cf0ac930b335ca285cfc86a3eab0fb21cd6a62a846c308b888b0ae10cbc088",
-    "size_bytes": 25323,
+    "digest": "sha256:df0f920efae106d02f9b8ce6953365d4b4bac9c71d7a21740789ac4604f29c9e",
+    "size_bytes": 48444,
     "valid": true
   },
   {
@@ -518,10 +600,11 @@
     "codec": "gemini-text-tools-v1",
     "operations": [],
     "names": [
-      "reference_read"
+      "reference_read",
+      "scenario_select"
     ],
-    "digest": "sha256:7e1e3326ca898ca91bd858ffb9fc084150157d43319c44352f3958be1580f3af",
-    "size_bytes": 703,
+    "digest": "sha256:38e230a15971a327a5f1ac4e732d847729af5cd63931f24dce1a4c3a15a733d8",
+    "size_bytes": 1379,
     "valid": true
   },
   {
@@ -547,16 +630,22 @@
       "artifact_publish",
       "attempt_execute",
       "finish",
+      "finish_artifact",
+      "finish_unavailable",
       "observation_read",
-      "record_append",
+      "record_coverage",
+      "record_hypothesis",
+      "record_lineage",
+      "record_progress",
       "reference_read",
       "restore_request",
+      "scenario_select",
       "snapshot_inspect",
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:50f0bae7c9ac7f0cfd21881ddab6b376d76ad6b33a3a0eab73dbc0d3dc717630",
-    "size_bytes": 13048,
+    "digest": "sha256:58c38e108e8170467e34582dda3c5b20bc9c7dd27f3874b7325e6731aaabd2df",
+    "size_bytes": 33518,
     "valid": true
   },
   {
@@ -581,17 +670,23 @@
     "names": [
       "attempt_execute",
       "finish",
+      "finish_artifact",
+      "finish_unavailable",
       "injection_delete",
       "observation_read",
-      "record_append",
+      "record_coverage",
+      "record_hypothesis",
+      "record_lineage",
+      "record_progress",
       "reference_read",
       "restore_request",
+      "scenario_select",
       "snapshot_inspect",
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:3a502da4484ab76361bf9e6b07e1fa1123f41a143cf77f62fedadb5bccbe7270",
-    "size_bytes": 24691,
+    "digest": "sha256:3f56cace8ca54df0c9149e6ee4e1561115c939ce95b0d4f290d202f080be7631",
+    "size_bytes": 46688,
     "valid": true
   },
   {
@@ -1224,9 +1319,8 @@
   {
     "name": "record hypothesis",
     "mode": "arguments",
-    "tool": "record_append",
+    "tool": "record_hypothesis",
     "arguments": {
-      "kind": "hypothesis",
       "origin": "exploratory",
       "statement": "Maybe."
     },
@@ -1236,21 +1330,19 @@
   {
     "name": "wrong record hypothesis",
     "mode": "arguments",
-    "tool": "record_append",
+    "tool": "record_progress",
     "arguments": {
-      "kind": "progress",
       "origin": "exploratory",
       "statement": "Maybe."
     },
     "valid": false,
-    "openai_valid": true
+    "openai_valid": false
   },
   {
     "name": "unknown record field hypothesis",
     "mode": "arguments",
-    "tool": "record_append",
+    "tool": "record_hypothesis",
     "arguments": {
-      "kind": "hypothesis",
       "origin": "exploratory",
       "statement": "Maybe.",
       "unexpected": true
@@ -1261,9 +1353,8 @@
   {
     "name": "record progress",
     "mode": "arguments",
-    "tool": "record_append",
+    "tool": "record_progress",
     "arguments": {
-      "kind": "progress",
       "summary": "So far."
     },
     "valid": true,
@@ -1272,20 +1363,18 @@
   {
     "name": "wrong record progress",
     "mode": "arguments",
-    "tool": "record_append",
+    "tool": "record_hypothesis",
     "arguments": {
-      "kind": "hypothesis",
       "summary": "So far."
     },
     "valid": false,
-    "openai_valid": true
+    "openai_valid": false
   },
   {
     "name": "unknown record field progress",
     "mode": "arguments",
-    "tool": "record_append",
+    "tool": "record_progress",
     "arguments": {
-      "kind": "progress",
       "summary": "So far.",
       "unexpected": true
     },
@@ -1295,9 +1384,8 @@
   {
     "name": "record lineage",
     "mode": "arguments",
-    "tool": "record_append",
+    "tool": "record_lineage",
     "arguments": {
-      "kind": "lineage",
       "hypothesis": "hyp-1",
       "attempt": "exec-1",
       "mutation_summary": "Changed."
@@ -1308,22 +1396,20 @@
   {
     "name": "wrong record lineage",
     "mode": "arguments",
-    "tool": "record_append",
+    "tool": "record_progress",
     "arguments": {
-      "kind": "progress",
       "hypothesis": "hyp-1",
       "attempt": "exec-1",
       "mutation_summary": "Changed."
     },
     "valid": false,
-    "openai_valid": true
+    "openai_valid": false
   },
   {
     "name": "unknown record field lineage",
     "mode": "arguments",
-    "tool": "record_append",
+    "tool": "record_lineage",
     "arguments": {
-      "kind": "lineage",
       "hypothesis": "hyp-1",
       "attempt": "exec-1",
       "mutation_summary": "Changed.",
@@ -1335,9 +1421,8 @@
   {
     "name": "record coverage",
     "mode": "arguments",
-    "tool": "record_append",
+    "tool": "record_coverage",
     "arguments": {
-      "kind": "coverage",
       "entries": []
     },
     "valid": true,
@@ -1346,20 +1431,18 @@
   {
     "name": "wrong record coverage",
     "mode": "arguments",
-    "tool": "record_append",
+    "tool": "record_progress",
     "arguments": {
-      "kind": "progress",
       "entries": []
     },
     "valid": false,
-    "openai_valid": true
+    "openai_valid": false
   },
   {
     "name": "unknown record field coverage",
     "mode": "arguments",
-    "tool": "record_append",
+    "tool": "record_coverage",
     "arguments": {
-      "kind": "coverage",
       "entries": [],
       "unexpected": true
     },
@@ -1369,38 +1452,41 @@
   {
     "name": "partial progress assessment",
     "mode": "arguments",
-    "tool": "record_append",
+    "tool": "record_progress",
     "arguments": {
-      "kind": "progress",
       "summary": "So far.",
-      "confidence": "low"
+      "assessment": {
+        "confidence": "low"
+      }
     },
     "valid": false,
-    "openai_valid": true
+    "openai_valid": false
   },
   {
     "name": "orphan gaps",
     "mode": "arguments",
-    "tool": "record_append",
+    "tool": "record_progress",
     "arguments": {
-      "kind": "progress",
       "summary": "So far.",
-      "gaps": []
+      "assessment": {
+        "gaps": []
+      }
     },
     "valid": false,
-    "openai_valid": true
+    "openai_valid": false
   },
   {
     "name": "full progress assessment",
     "mode": "arguments",
-    "tool": "record_append",
+    "tool": "record_progress",
     "arguments": {
-      "kind": "progress",
       "summary": "So far.",
-      "interpretation": "inconclusive",
-      "confidence": "low",
-      "assurance": "No evidence",
-      "assessment_summary": "Untested"
+      "assessment": {
+        "interpretation": "inconclusive",
+        "confidence": "low",
+        "assurance": "No evidence",
+        "summary": "Untested"
+      }
     },
     "valid": true,
     "openai_valid": true
@@ -1425,7 +1511,7 @@
   {
     "name": "honest unavailable finish",
     "mode": "arguments",
-    "tool": "finish",
+    "tool": "finish_unavailable",
     "arguments": {
       "finish_reason": "harness-error",
       "unavailable_reason": "invalid-call-limit"
@@ -1440,7 +1526,7 @@
       "finish_reason": "budget-limit"
     },
     "valid": false,
-    "openai_valid": true
+    "openai_valid": false
   },
   {
     "name": "finish conflicting sources",
@@ -1459,7 +1545,7 @@
       "artifact": "artifact-1"
     },
     "valid": false,
-    "openai_valid": true
+    "openai_valid": false
   },
   {
     "name": "no old assessment wrapper",
@@ -1484,10 +1570,8 @@
   {
     "name": "no conclusion record",
     "mode": "arguments",
-    "tool": "record_append",
-    "arguments": {
-      "kind": "conclusion"
-    },
+    "tool": "record_conclusion",
+    "arguments": {},
     "valid": false
   },
   {
@@ -1519,5 +1603,524 @@
     "tool": "snapshot_request",
     "arguments": [],
     "valid": false
+  },
+  {
+    "name": "progress forbids origin",
+    "mode": "arguments",
+    "tool": "record_progress",
+    "arguments": {
+      "summary": "Output inspected.",
+      "origin": "scenario"
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "progress forbids scenario_id",
+    "mode": "arguments",
+    "tool": "record_progress",
+    "arguments": {
+      "summary": "Output inspected.",
+      "scenario_id": "support-baseline"
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "progress forbids attempt",
+    "mode": "arguments",
+    "tool": "record_progress",
+    "arguments": {
+      "summary": "Output inspected.",
+      "attempt": "execution-1"
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "summary-only progress",
+    "mode": "arguments",
+    "tool": "record_progress",
+    "arguments": {
+      "summary": "Output inspected."
+    },
+    "valid": true,
+    "openai_valid": true
+  },
+  {
+    "name": "partial nested progress assessment",
+    "mode": "arguments",
+    "tool": "record_progress",
+    "arguments": {
+      "summary": "Output inspected.",
+      "assessment": {
+        "interpretation": "inconclusive"
+      }
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "supported progress missing citations",
+    "mode": "arguments",
+    "tool": "record_progress",
+    "arguments": {
+      "summary": "Output inspected.",
+      "assessment": {
+        "interpretation": "supported",
+        "confidence": "high",
+        "assurance": "observed",
+        "summary": "Observed."
+      }
+    },
+    "valid": false,
+    "openai_valid": true
+  },
+  {
+    "name": "supported progress with citations",
+    "mode": "arguments",
+    "tool": "record_progress",
+    "arguments": {
+      "summary": "Output inspected.",
+      "observations": [
+        "obs-1"
+      ],
+      "assessment": {
+        "interpretation": "supported",
+        "confidence": "high",
+        "assurance": "observed",
+        "summary": "Observed."
+      }
+    },
+    "valid": true,
+    "openai_valid": true
+  },
+  {
+    "name": "scenario selection",
+    "mode": "arguments",
+    "tool": "scenario_select",
+    "arguments": {
+      "reference": "scenario:baseline"
+    },
+    "valid": true,
+    "openai_valid": true
+  },
+  {
+    "name": "scenario selection rejects pagination",
+    "mode": "arguments",
+    "tool": "scenario_select",
+    "arguments": {
+      "reference": "scenario:baseline",
+      "offset": 1
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "conclusion media mismatch",
+    "mode": "arguments",
+    "tool": "artifact_publish",
+    "arguments": {
+      "purpose": "conclusion",
+      "media_type": "text/plain",
+      "text": "assessment"
+    },
+    "valid": false,
+    "openai_valid": true
+  },
+  {
+    "name": "artifact missing content",
+    "mode": "arguments",
+    "tool": "artifact_publish",
+    "arguments": {
+      "purpose": "payload",
+      "media_type": "application/json"
+    },
+    "valid": false,
+    "openai_valid": true
+  },
+  {
+    "name": "artifact conflicting content",
+    "mode": "arguments",
+    "tool": "artifact_publish",
+    "arguments": {
+      "purpose": "payload",
+      "media_type": "application/json",
+      "json": {},
+      "text": "x"
+    },
+    "valid": false,
+    "openai_valid": true
+  },
+  {
+    "name": "artifact JSON wrong media",
+    "mode": "arguments",
+    "tool": "artifact_publish",
+    "arguments": {
+      "purpose": "payload",
+      "media_type": "text/plain",
+      "json": {}
+    },
+    "valid": false,
+    "openai_valid": true
+  },
+  {
+    "name": "unsupported direct injection {'text': 'x'}",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "exploratory",
+      "operation_id": "invoke",
+      "json": {},
+      "setup": [
+        {
+          "surface": "model_tool_result",
+          "mode": "simulation",
+          "scope": "once",
+          "selector": {
+            "tool_name": "search",
+            "call_ordinal": "first"
+          },
+          "placement": {
+            "operation": "replace",
+            "pointer": ""
+          }
+        }
+      ],
+      "injection": {
+        "text": "x"
+      }
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "unsupported direct injection {'base64': 'eA==', 'media_type': 'application/json'}",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "exploratory",
+      "operation_id": "invoke",
+      "json": {},
+      "setup": [
+        {
+          "surface": "model_tool_result",
+          "mode": "simulation",
+          "scope": "once",
+          "selector": {
+            "tool_name": "search",
+            "call_ordinal": "first"
+          },
+          "placement": {
+            "operation": "replace",
+            "pointer": ""
+          }
+        }
+      ],
+      "injection": {
+        "base64": "eA==",
+        "media_type": "application/json"
+      }
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "invalid invocation content {'base64': 'eA=='}",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "exploratory",
+      "operation_id": "invoke",
+      "base64": "eA=="
+    },
+    "valid": false,
+    "openai_valid": true
+  },
+  {
+    "name": "invalid invocation content {'json': {}, 'media_type': 'text/plain'}",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "exploratory",
+      "operation_id": "invoke",
+      "json": {},
+      "media_type": "text/plain"
+    },
+    "valid": false,
+    "openai_valid": true
+  },
+  {
+    "name": "invalid invocation content {'artifact': 'payload-1', 'media_type': 'application/json'}",
+    "mode": "arguments",
+    "tool": "attempt_execute",
+    "arguments": {
+      "origin": "exploratory",
+      "operation_id": "invoke",
+      "artifact": "payload-1",
+      "media_type": "application/json"
+    },
+    "valid": false,
+    "openai_valid": true
+  },
+  {
+    "name": "missing conditional evidence claims",
+    "mode": "arguments",
+    "tool": "finish",
+    "arguments": {
+      "finish_reason": "objectives-addressed",
+      "summary": "No target experiment was run.",
+      "objectives": [
+        {
+          "objective_id": "objective-1",
+          "outcome": "not-tested",
+          "summary": "Not tested."
+        }
+      ],
+      "claims": [
+        {
+          "statement": "Observed.",
+          "interpretation": "supported",
+          "assurance": "observed",
+          "confidence": "high"
+        }
+      ]
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "conditional evidence claims",
+    "mode": "arguments",
+    "tool": "finish",
+    "arguments": {
+      "finish_reason": "objectives-addressed",
+      "summary": "No target experiment was run.",
+      "objectives": [
+        {
+          "objective_id": "objective-1",
+          "outcome": "not-tested",
+          "summary": "Not tested."
+        }
+      ],
+      "claims": [
+        {
+          "statement": "Observed.",
+          "interpretation": "supported",
+          "assurance": "observed",
+          "confidence": "high",
+          "observations": [
+            "obs-1"
+          ]
+        }
+      ]
+    },
+    "valid": true,
+    "openai_valid": true
+  },
+  {
+    "name": "missing conditional evidence objectives",
+    "mode": "arguments",
+    "tool": "finish",
+    "arguments": {
+      "finish_reason": "objectives-addressed",
+      "summary": "No target experiment was run.",
+      "objectives": [
+        {
+          "objective_id": "objective-1",
+          "outcome": "supported",
+          "summary": "Observed."
+        }
+      ]
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "conditional evidence objectives",
+    "mode": "arguments",
+    "tool": "finish",
+    "arguments": {
+      "finish_reason": "objectives-addressed",
+      "summary": "No target experiment was run.",
+      "objectives": [
+        {
+          "objective_id": "objective-1",
+          "outcome": "supported",
+          "summary": "Observed.",
+          "observations": [
+            "obs-1"
+          ]
+        }
+      ]
+    },
+    "valid": true,
+    "openai_valid": true
+  },
+  {
+    "name": "missing conditional evidence hypotheses",
+    "mode": "arguments",
+    "tool": "finish",
+    "arguments": {
+      "finish_reason": "objectives-addressed",
+      "summary": "No target experiment was run.",
+      "objectives": [
+        {
+          "objective_id": "objective-1",
+          "outcome": "not-tested",
+          "summary": "Not tested."
+        }
+      ],
+      "hypotheses": [
+        {
+          "origin": "exploratory",
+          "outcome": "supported",
+          "summary": "Observed."
+        }
+      ]
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "conditional evidence hypotheses",
+    "mode": "arguments",
+    "tool": "finish",
+    "arguments": {
+      "finish_reason": "objectives-addressed",
+      "summary": "No target experiment was run.",
+      "objectives": [
+        {
+          "objective_id": "objective-1",
+          "outcome": "not-tested",
+          "summary": "Not tested."
+        }
+      ],
+      "hypotheses": [
+        {
+          "origin": "exploratory",
+          "outcome": "supported",
+          "summary": "Observed.",
+          "observations": [
+            "obs-1"
+          ]
+        }
+      ]
+    },
+    "valid": true,
+    "openai_valid": true
+  },
+  {
+    "name": "missing conditional evidence coverage",
+    "mode": "arguments",
+    "tool": "finish",
+    "arguments": {
+      "finish_reason": "objectives-addressed",
+      "summary": "No target experiment was run.",
+      "objectives": [
+        {
+          "objective_id": "objective-1",
+          "outcome": "not-tested",
+          "summary": "Not tested."
+        }
+      ],
+      "coverage": [
+        {
+          "objective_id": "objective-1",
+          "status": "tested",
+          "reason": "Invoked."
+        }
+      ]
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "conditional evidence coverage",
+    "mode": "arguments",
+    "tool": "finish",
+    "arguments": {
+      "finish_reason": "objectives-addressed",
+      "summary": "No target experiment was run.",
+      "objectives": [
+        {
+          "objective_id": "objective-1",
+          "outcome": "not-tested",
+          "summary": "Not tested."
+        }
+      ],
+      "coverage": [
+        {
+          "objective_id": "objective-1",
+          "status": "tested",
+          "reason": "Invoked.",
+          "observations": [
+            "obs-1"
+          ]
+        }
+      ]
+    },
+    "valid": true,
+    "openai_valid": true
+  },
+  {
+    "name": "completed with coverage gap",
+    "mode": "arguments",
+    "tool": "finish",
+    "arguments": {
+      "finish_reason": "budget-limit",
+      "summary": "No target experiment was run.",
+      "objectives": [
+        {
+          "objective_id": "objective-1",
+          "outcome": "not-tested",
+          "summary": "Not tested."
+        }
+      ],
+      "status": "completed",
+      "uncertainties": [
+        {
+          "kind": "coverage-limit",
+          "description": "A required test was not run."
+        }
+      ]
+    },
+    "valid": false,
+    "openai_valid": true
+  },
+  {
+    "name": "finish artifact only",
+    "mode": "arguments",
+    "tool": "finish_artifact",
+    "arguments": {
+      "finish_reason": "objectives-addressed",
+      "artifact": "conclusion-1"
+    },
+    "valid": true,
+    "openai_valid": true
+  },
+  {
+    "name": "finish artifact mixed",
+    "mode": "arguments",
+    "tool": "finish_artifact",
+    "arguments": {
+      "finish_reason": "objectives-addressed",
+      "artifact": "conclusion-1",
+      "summary": "Mixed."
+    },
+    "valid": false,
+    "openai_valid": false
+  },
+  {
+    "name": "finish unavailable mixed",
+    "mode": "arguments",
+    "tool": "finish_unavailable",
+    "arguments": {
+      "finish_reason": "harness-error",
+      "unavailable_reason": "internal-error",
+      "summary": "Mixed."
+    },
+    "valid": false,
+    "openai_valid": false
   }
 ]

@@ -9,6 +9,24 @@ from .validation import ContractError, ORDINARY_LIMIT
 from .simple import resolve_direct_input, validate_attempt_origin
 
 
+RECORD_KINDS = {"record_"+kind:kind for kind in ("hypothesis", "progress", "lineage", "coverage")}
+FINISH_TOOLS = ("finish", "finish_artifact", "finish_unavailable")
+
+
+def native_tool(name):
+    return 'record_append' if name in RECORD_KINDS else 'finish' if name in FINISH_TOOLS else name
+
+
+def native_arguments(name, arguments):
+    value = deepcopy(arguments)
+    if name in RECORD_KINDS:
+        value['kind'] = RECORD_KINDS[name]
+        if name == 'record_progress' and 'assessment' in value:
+            assessment = value.pop('assessment')
+            value.update({('assessment_summary' if k=='summary' else k):v for k,v in assessment.items()})
+    return value
+
+
 def issue(reason, path, correction, facts=None):
     if reason=='invalid_resolution_context':correction='Internal resource resolution failed. Stop this operation and report the product error; do not supply internal identities or replay completed actions.'
     raise ContractError(reason+': '+correction, reason=reason, field_path=path, correction=correction, facts=facts)
@@ -66,9 +84,15 @@ def normalize_tool_arguments(protocol,name,raw,context):
     """
     args=protocol.validate_tool_arguments(name,raw)
     n=_Normalizer(protocol,context)
-    result=n.normalize(name,args)
+    model_name=name
+    name=native_tool(name)
+    result=n.normalize(name,native_arguments(model_name,args))
+    if model_name=='record_progress':
+        for host,path in list(n.paths.items()):
+            if host.startswith('/record/assessment/'):
+                n.paths[host]='/assessment/'+host.removeprefix('/record/assessment/')
     if name=='finish':n.paths.update({k.removeprefix('/assessment'):v for k,v in list(n.paths.items()) if k.startswith('/assessment/')})
-    schema=protocol._operations['engine.'+name]['request_schema'] if name not in ('artifact_publish','reference_read') else None
+    schema=protocol._operations['engine.'+name]['request_schema'] if name not in ('artifact_publish','reference_read','scenario_select') else None
     if schema:
         if len(_canonical_value(result,ORDINARY_LIMIT))>protocol._operations['engine.'+name]['max_request_bytes']:issue('request_too_large','','Expanded request exceeds its operation limit; reduce content/references or use a committed artifact.')
         try:protocol._catalog.validate_value(schema,result)
@@ -268,6 +292,10 @@ class _Normalizer:
         if name=='artifact_publish':
             body=self.expand_content(a,'','/content');body.pop('media_type',None)
             return dict(purpose=a['purpose'],media_type=a['media_type'],content=body)
+        if name=='scenario_select':
+            r=self.resource(a['reference'],'reference','/reference')
+            self.paths['/reference_id']='/reference'
+            return dict(reference_id=r['reference_id'])
         if name in ('observation_read','reference_read'):
             observation=name=='observation_read';key='observation' if observation else 'reference';r=self.resource(a[key],'observation' if observation else 'reference','/'+key)
             out=dict(offset=a['offset'],max_bytes=a['max_bytes'])
@@ -292,23 +320,28 @@ class _Normalizer:
         return a
 
 
-def check_model_choices(name,a):
+def check_model_choices(name,a,schema=None):
     """Give cross-field failures a useful path before schema union diagnostics."""
     if name=='finish':
         if 'assessment' in a:issue('obsolete_wrapper','/assessment','Put summary, objectives and optional assessment collections beside finish_reason; omit the assessment wrapper.')
-        inline=any(k in a for k in ('summary','objectives','status','hypotheses','claims','coverage','uncertainties','records'))
-        if sum((inline,'artifact' in a,'unavailable_reason' in a))!=1:issue('finish_choice','','Supply inline summary and objectives, or artifact, or unavailable_reason; never combine these alternatives.')
-        if inline:
-            for k in ('summary','objectives'):
-                if k not in a:issue('finish_field_required','/'+k,'Inline finish requires both summary and objectives.')
+        for k in ('summary','objectives'):
+            if k not in a:issue('finish_field_required','/'+k,'Inline finish requires both summary and objectives. Use finish_artifact or finish_unavailable for other completion forms.')
+    collections = {'objectives':('outcome','supported'), 'hypotheses':('outcome','supported'), 'claims':('interpretation','supported'), 'coverage':('status','tested')}
+    if name=='record_coverage':collections={'entries':('status','tested')}
+    if name in ('finish','record_coverage'):
+        for coll,(key,expected) in collections.items():
+            for i,entry in enumerate(a.get(coll,[]) if isinstance(a.get(coll,[]),list) else []):
+                if not isinstance(entry,dict) or entry.get(key)!=expected:continue
+                allowed=(schema or {}).get('properties',{}).get(coll,{}).get('items',{}).get('properties',{})
+                if allowed and set(entry)-set(allowed):continue
+                if coll=='claims':
+                    if not entry.get('observations'):issue('evidence_required',f'/{coll}/{i}/observations','Supported claims require inspected observation handles.')
+                elif not entry.get('attempts') and not entry.get('observations'):
+                    issue('evidence_required',f'/{coll}/{i}/attempts','Supported outcomes and tested coverage require execution handles or inspected observation citations; otherwise report untested or inconclusive.')
+    if name=='record_progress' and isinstance(a.get('assessment'),dict) and a['assessment'].get('interpretation')=='supported' and not a.get('observations'):
+        issue('evidence_required','/observations','Supported progress requires inspected observation handles.')
     if name=='attempt_execute' and isinstance(a.get('setup',[]),list):
         if a.get('setup') and 'injection' not in a:issue('injection_required','/injection','Nonempty setup requires injection content.')
         if not a.get('setup'):
             for k in ('injection','retain_injections'):
                 if k in a:issue('setup_required','/'+k,'Injection content and retention require nonempty setup; omit them when no setup is requested.')
-    if name=='record_append' and a.get('kind')=='progress':
-        fields=('interpretation','confidence','assurance','assessment_summary')
-        if any(k in a for k in fields):
-            for k in fields:
-                if k not in a:issue('assessment_fields_required','/'+k,'Supply interpretation, confidence, assurance and assessment_summary together, or omit all four.')
-        elif 'gaps' in a:issue('assessment_fields_required','/gaps','gaps is only allowed with the complete progress assessment.')

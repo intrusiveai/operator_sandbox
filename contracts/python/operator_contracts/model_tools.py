@@ -20,6 +20,8 @@ def model_tools(protocol,codec,operations,surfaces=None):
             parameters=deepcopy(branch.get('x-operator-openai-parameters',parameters))
         if name=='attempt_execute' and ('engine.injection_delete' not in operations or surfaces==[]):
             for field in ('setup','injection','retain_injections'):parameters['properties'].pop(field,None)
+            if 'allOf' in parameters:
+                parameters['allOf']=[rule for rule in parameters['allOf'] if 'setup' not in rule.get('if',{}).get('properties',{})]
         if name=='attempt_execute' and 'engine.injection_delete' in operations and surfaces:
             injection=parameters['properties']['setup']['items']
             injection['properties']['surface']={'enum':surfaces}
@@ -50,7 +52,7 @@ def validate_tool_arguments(protocol,name,raw):
         from .simple import validate_attempt_origin
         validate_attempt_origin(value)
     from .tool_normalization import check_model_choices
-    check_model_choices(name,value)
+    check_model_choices(name,value,branch['properties']['arguments'])
     if name == 'finish' and 'assessment' in value:
         from .tool_normalization import check_model_content
         check_model_content(protocol,name,value)

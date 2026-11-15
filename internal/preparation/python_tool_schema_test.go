@@ -19,7 +19,7 @@ func TestPythonProcessToolSchemaRejections(t *testing.T) {
 		t.Run(transport, func(t *testing.T) {
 			var record string
 			var completed bool
-			hypothesis := map[string]any{"kind": "hypothesis", "origin": "exploratory", "objective_refs": []string{"objective-marker"}, "statement": "Compare a bounded response."}
+			hypothesis := map[string]any{"origin": "exploratory", "objective_refs": []string{"objective-marker"}, "statement": "Compare a bounded response."}
 			r := newProcessRun(t, processCase{transport: transport, prompt: "default", reply: func(turn int, q map[string]any) ([]byte, error) {
 				// Mimic the provider's root-schema restriction on every real request.
 				for _, value := range q["tools"].([]any) {
@@ -38,7 +38,7 @@ func TestPythonProcessToolSchemaRejections(t *testing.T) {
 				case 1:
 					attempt := processAttempt("scenario", "", []byte(`{"query":"baseline"}`), "")
 					delete(attempt, "json")
-					return processResponse([]any{modelCall("bad-record", "record_append", map[string]any{"kind": "progress", "origin": "exploratory", "statement": "Wrong fields for progress."}), modelCall("bad-attempt", "attempt_execute", attempt)}), nil
+					return processResponse([]any{modelCall("bad-record", "record_progress", map[string]any{"origin": "exploratory", "statement": "Wrong fields for progress."}), modelCall("bad-attempt", "attempt_execute", attempt)}), nil
 				case 2:
 					badRecord, err := modelToolResult(q, "bad-record")
 					if err != nil || badRecord["code"] != "INVALID_ARGUMENTS" || badRecord["effect_state"] != "none" {
@@ -49,7 +49,7 @@ func TestPythonProcessToolSchemaRejections(t *testing.T) {
 						return nil, fmt.Errorf("attempt condition not enforced locally: %v %v", badAttempt, err)
 					}
 
-					return processResponse([]any{modelCall("hypothesis", "record_append", hypothesis), publishCall("payload", "baseline")}), nil
+					return processResponse([]any{modelCall("hypothesis", "record_hypothesis", hypothesis), publishCall("payload", "baseline")}), nil
 				case 3:
 					h, err := modelToolResult(q, "hypothesis")
 					if err != nil {

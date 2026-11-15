@@ -98,7 +98,11 @@ func (t *Target) addContextReferences() error {
 	if err != nil {
 		return err
 	}
-	for _, tool := range []string{"attempt_execute", "artifact_publish", "record_append", "finish", "reference_read", "observation_read", "injection_delete", "snapshot_request", "snapshot_list", "snapshot_inspect", "restore_request"} {
+	tools, err := t.protocol.ModelToolNames()
+	if err != nil {
+		return err
+	}
+	for _, tool := range tools {
 		raw, err := t.protocol.ToolGuidance(tool)
 		if err != nil {
 			return err
