@@ -40,6 +40,11 @@ introduces no network service or message broker.
    not functional conformance.
 
 The development AsyncAPI metaschema is vendored under `scripts/vendor/asyncapi`.
+PR verification also runs `TestSimplePythonSpoolAndSeparateCLI` with the controlled
+Python peer. It covers direct input, correction, evidence pagination, invalid-call
+termination and token-budget termination, including independent CLI inspection
+and export. This focused check complements the full candidate suite.
+
 Document validation does not prove lifecycle behavior, receipt ownership, budget
 enforcement or runtime reliability. Those obligations remain executable tests.
 

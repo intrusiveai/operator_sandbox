@@ -68,7 +68,7 @@ if mode=='invalid-limit':
                     execution_occurred='no',resubmission_safe=False)
     call('engine.diagnostic_report',dict(diagnostic=diagnostic,
                                         stopping=dict(condition='invalid-call-limit',observed_count=5,configured_limit=5)))
-    finish=normalized('finish',dict(finish_reason='harness-error',unavailable_reason='invalid-call-limit'),'finish')['arguments']
+    finish=normalized('finish_unavailable',dict(finish_reason='harness-error',unavailable_reason='invalid-call-limit'),'finish')['arguments']
     attempts=0
 else:
     if mode=='corrected':
@@ -137,7 +137,7 @@ else:
         report=dict(source='harness-local',stage='termination',reason='model_reservation_unavailable',message='Cannot fund next request.',execution_occurred='no',resubmission_safe=False)
         budget=dict(kind='model-tokens',total_allowance=524288,consumed=consumed,remaining=524288-consumed,next_request_reservation=36864)
         call('engine.diagnostic_report',dict(diagnostic=report,stopping=dict(condition='budget-limit',budget=budget)))
-        finish=normalized('finish',dict(finish_reason='budget-limit',unavailable_reason='budget-limit'),'finish')['arguments']
+        finish=normalized('finish_unavailable',dict(finish_reason='budget-limit',unavailable_reason='budget-limit'),'finish')['arguments']
     else:
         args=dict(finish_reason='objectives-addressed',summary='Observed the local target response.',objectives=[dict(objective_id='objective-marker',outcome='supported',summary='A target response was observed.',observations=selected)],claims=[dict(statement='The response was inspected.',interpretation='supported',assurance='Controlled local response.',confidence='high',observations=selected)])
         expansion=normalized('finish',args,'finish')
