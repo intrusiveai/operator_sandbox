@@ -225,7 +225,7 @@ func (l *HarnessLoop) FinishTool(outcome string) error {
 	if outcome == "invalid" {
 		s.InvalidToolCalls++
 		s.ConsecutiveInvalidToolCalls++
-	} else if (outcome == "success" || outcome == "restored") && name != "record_append" {
+	} else if (outcome == "success" || outcome == "restored") && NativeTool(name) != "record_append" {
 		s.ConsecutiveInvalidToolCalls = 0
 	}
 	s.ActiveTool = ""

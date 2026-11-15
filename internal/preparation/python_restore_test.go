@@ -84,7 +84,7 @@ func TestPythonProcessRestoredInjectionCleanupAndLineage(t *testing.T) {
 			reply := func(turn int, q map[string]any) ([]byte, error) {
 				switch turn {
 				case 1:
-					return processResponse([]any{modelCall("record", "record_append", map[string]any{"kind": "hypothesis", "origin": "scenario", "scenario_id": "scenario-marker", "objective_refs": []string{"objective-marker"}, "statement": "Compare retained setup before and after restore."}), publishCall("payload", "baseline"), modelCall("carrier", "artifact_publish", map[string]any{"purpose": "carrier", "media_type": "application/json", "json": map[string]any{"query": "baseline"}})}), nil
+					return processResponse([]any{modelCall("record", "record_hypothesis", map[string]any{"origin": "scenario", "scenario_id": "scenario-marker", "objective_refs": []string{"objective-marker"}, "statement": "Compare retained setup before and after restore."}), publishCall("payload", "baseline"), modelCall("carrier", "artifact_publish", map[string]any{"purpose": "carrier", "media_type": "application/json", "json": map[string]any{"query": "baseline"}})}), nil
 				case 2:
 					v, e := modelToolResult(q, "record")
 					if e != nil {

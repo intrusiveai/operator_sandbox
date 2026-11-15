@@ -32,6 +32,39 @@ type ToolNormalization struct {
 	ObservationSelections []map[string]any  `json:"observation_selections"`
 }
 
+// NativeTool maps model presentation to the existing native operation.
+func NativeTool(name string) string {
+	switch name {
+	case "record_hypothesis", "record_progress", "record_lineage", "record_coverage":
+		return "record_append"
+	case "finish_artifact", "finish_unavailable":
+		return "finish"
+	}
+	return name
+}
+func nativeToolArguments(name string, args map[string]any) map[string]any {
+	if NativeTool(name) != "record_append" {
+		return args
+	}
+	out := map[string]any{}
+	for k, v := range args {
+		out[k] = v
+	}
+	out["kind"] = strings.TrimPrefix(name, "record_")
+	if name == "record_progress" {
+		if assessment, ok := out["assessment"].(map[string]any); ok {
+			delete(out, "assessment")
+			for k, v := range assessment {
+				if k == "summary" {
+					k = "assessment_summary"
+				}
+				out[k] = v
+			}
+		}
+	}
+	return out
+}
+
 // RemapToolPath preserves unknown host paths and uses the longest boundary match.
 func RemapToolPath(paths map[string]string, path string) string {
 	best := ""
@@ -575,6 +608,10 @@ func (n *toolNormalizer) normalize(name string, a map[string]any) map[string]any
 		body := n.content(a, "", "/content")
 		delete(body, "media_type")
 		return map[string]any{"purpose": a["purpose"], "media_type": a["media_type"], "content": body}
+	case "scenario_select":
+		r := n.resource(textField(a, "reference"), "reference", "/reference", false, false)
+		n.paths["/reference_id"] = "/reference"
+		return map[string]any{"reference_id": r["reference_id"]}
 	case "reference_read", "observation_read":
 		key, kind := "reference", "reference"
 		if name == "observation_read" {
@@ -657,7 +694,16 @@ func (p *Protocol) NormalizeToolArguments(name string, raw []byte, ctx ToolResol
 		return ToolNormalization{}, contextErr
 	}
 	n := toolNormalizer{ctx: ctx, paths: map[string]string{}, selections: []map[string]any{}, locals: map[string][2]string{}}
-	result := n.normalize(name, args)
+	modelName := name
+	name = NativeTool(name)
+	result := n.normalize(name, nativeToolArguments(modelName, args))
+	if modelName == "record_progress" {
+		for host := range n.paths {
+			if strings.HasPrefix(host, "/record/assessment/") {
+				n.paths[host] = "/assessment/" + strings.TrimPrefix(host, "/record/assessment/")
+			}
+		}
+	}
 	// Conclusion semantic checks report paths within the draft, while request
 	// schema checks include /assessment. Both refer to the same model fields.
 	if name == "finish" {
@@ -679,7 +725,7 @@ func (p *Protocol) NormalizeToolArguments(name string, raw []byte, ctx ToolResol
 	if err != nil {
 		return ToolNormalization{}, err
 	}
-	if name != "artifact_publish" && name != "reference_read" {
+	if name != "artifact_publish" && name != "reference_read" && name != "scenario_select" {
 		operation := p.operations["engine."+name]
 		if len(raw) > operation.MaxRequestBytes {
 			return ToolNormalization{}, argumentIssue("request_too_large", "", "Expanded request exceeds its operation limit; reduce content/references or use a committed artifact.")
@@ -710,33 +756,62 @@ func validModelIdentity(s string) bool {
 	return true
 }
 
-func checkModelChoices(name string, a map[string]any) error {
+func checkModelChoices(name string, a map[string]any, schema map[string]any) error {
 	has := func(k string) bool { _, ok := a[k]; return ok }
 	if name == "finish" {
 		if has("assessment") {
 			return argumentIssue("obsolete_wrapper", "/assessment", "Put summary, objectives and optional assessment collections beside finish_reason; omit the assessment wrapper.")
 		}
-		inline := false
-		for _, k := range []string{"summary", "objectives", "status", "hypotheses", "claims", "coverage", "uncertainties", "records"} {
-			inline = inline || has(k)
-		}
-		count := 0
-		for _, b := range []bool{inline, has("artifact"), has("unavailable_reason")} {
-			if b {
-				count++
+		for _, k := range []string{"summary", "objectives"} {
+			if !has(k) {
+				return argumentIssue("finish_field_required", "/"+k, "Inline finish requires both summary and objectives. Use finish_artifact or finish_unavailable for other completion forms.")
 			}
 		}
-		if count != 1 {
-			return argumentIssue("finish_choice", "", "Supply inline summary and objectives, or artifact, or unavailable_reason; never combine these alternatives.")
-		}
-		if inline {
-			for _, k := range []string{"summary", "objectives"} {
-				if !has(k) {
-					return argumentIssue("finish_field_required", "/"+k, "Inline finish requires both summary and objectives.")
+	}
+
+	collections := []struct{ field, key, want string }{{"objectives", "outcome", "supported"}, {"hypotheses", "outcome", "supported"}, {"claims", "interpretation", "supported"}, {"coverage", "status", "tested"}}
+	if name == "record_coverage" {
+		collections = []struct{ field, key, want string }{{"entries", "status", "tested"}}
+	}
+	if name == "finish" || name == "record_coverage" {
+		for _, c := range collections {
+			entries, _ := a[c.field].([]any)
+			for i, value := range entries {
+				e, ok := value.(map[string]any)
+				if !ok || e[c.key] != c.want {
+					continue
+				}
+				collection := schema["properties"].(map[string]any)[c.field].(map[string]any)
+				allowed := collection["items"].(map[string]any)["properties"].(map[string]any)
+				unknown := false
+				for key := range e {
+					if _, ok := allowed[key]; !ok {
+						unknown = true
+					}
+				}
+				if unknown {
+					continue
+				}
+				obs, _ := e["observations"].([]any)
+				attempts, _ := e["attempts"].([]any)
+				if c.field == "claims" {
+					if len(obs) == 0 {
+						return argumentIssue("evidence_required", fmt.Sprintf("/%s/%d/observations", c.field, i), "Supported claims require inspected observation handles.")
+					}
+				} else if len(obs) == 0 && len(attempts) == 0 {
+					return argumentIssue("evidence_required", fmt.Sprintf("/%s/%d/attempts", c.field, i), "Supported outcomes and tested coverage require execution handles or inspected observation citations; otherwise report untested or inconclusive.")
 				}
 			}
 		}
 	}
+	if name == "record_progress" {
+		assessment, _ := a["assessment"].(map[string]any)
+		obs, _ := a["observations"].([]any)
+		if assessment["interpretation"] == "supported" && len(obs) == 0 {
+			return argumentIssue("evidence_required", "/observations", "Supported progress requires inspected observation handles.")
+		}
+	}
+
 	if name == "attempt_execute" {
 		setup, ok := a["setup"].([]any)
 		if !has("setup") {
@@ -755,22 +830,7 @@ func checkModelChoices(name string, a map[string]any) error {
 			}
 		}
 	}
-	if name == "record_append" && a["kind"] == "progress" {
-		fields := []string{"interpretation", "confidence", "assurance", "assessment_summary"}
-		any := false
-		for _, k := range fields {
-			any = any || has(k)
-		}
-		if any {
-			for _, k := range fields {
-				if !has(k) {
-					return argumentIssue("assessment_fields_required", "/"+k, "Supply interpretation, confidence, assurance and assessment_summary together, or omit all four.")
-				}
-			}
-		} else if has("gaps") {
-			return argumentIssue("assessment_fields_required", "/gaps", "gaps is only allowed with the complete progress assessment.")
-		}
-	}
+
 	return nil
 }
 

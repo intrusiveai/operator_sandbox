@@ -516,14 +516,12 @@
   },
   {
     "name": "selected record branch",
-    "tool": "record_append",
+    "tool": "record_lineage",
     "bad": {
-      "kind": "lineage",
       "hypothesis": "hyp",
       "attempt": "exec"
     },
     "good": {
-      "kind": "lineage",
       "hypothesis": "hyp",
       "attempt": "exec",
       "mutation_summary": "change"
@@ -532,7 +530,7 @@
     "contains": [
       "mutation_summary"
     ],
-    "correction": "Supply required fields: [\"kind\",\"hypothesis\",\"attempt\",\"mutation_summary\"]."
+    "correction": "Supply required fields: [\"hypothesis\",\"attempt\",\"mutation_summary\"]."
   },
   {
     "name": "attempt origin",
@@ -636,10 +634,10 @@
     "path": "/claims/0",
     "contains": [
       "\"references\"",
-      "\"observations\": \"Inspected observation citation handles supporting this claim.\" Optional.",
+      "\"observations\": \"Inspected observation citation handles supporting this claim. Required nonempty evidence when interpretation is supported.\" Optional.",
       "\"statement\": \"The claim being assessed.\" Required.",
       "Remove unsupported fields"
     ],
-    "correction": "Unsupported fields (names are data): [\"references\"]. Supported fields: \"assurance\": \"The basis for the assessment assurance.\" Required. \"attempts\": \"Execution handles associated with this claim.\" Optional. \"confidence\": \"Confidence in the assessment: low, medium, or high.\" Required. \"interpretation\": \"Whether the evidence supports the claim, is inconclusive, or contradicts it.\" Required. \"observations\": \"Inspected observation citation handles supporting this claim.\" Optional. \"statement\": \"The claim being assessed.\" Required. \"uncertainties\": \"Reference a label declared in top-level uncertainties. Put explanatory prose in that entry's description.\" Optional. Remove unsupported fields and resubmit using the supported structure."
+    "correction": "Unsupported fields (names are data): [\"references\"]. Supported fields: \"assurance\": \"The basis for the assessment assurance.\" Required. \"attempts\": \"Execution handles associated with this claim.\" Optional. \"confidence\": \"Confidence in the assessment: low, medium, or high.\" Required. \"interpretation\": \"Whether the evidence supports the claim, is inconclusive, or contradicts it.\" Required. \"observations\": \"Inspected observation citation handles supporting this claim. Required nonempty evidence when interpretation is supported.\" Optional. \"statement\": \"The claim being assessed.\" Required. \"uncertainties\": \"Reference a label declared in top-level uncertainties. Put explanatory prose in that entry's description.\" Optional. Remove unsupported fields and resubmit using the supported structure."
   }
 ]

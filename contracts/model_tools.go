@@ -84,6 +84,17 @@ func (p *Protocol) modelTools(codec string, operations, surfaces []string) ([]by
 			for _, field := range []string{"setup", "injection", "retain_injections"} {
 				delete(props, field)
 			}
+			if rules, ok := parameters.(map[string]any)["allOf"].([]any); ok {
+				kept := []any{}
+				for _, rule := range rules {
+					condition, _ := rule.(map[string]any)["if"].(map[string]any)
+					fields, _ := condition["properties"].(map[string]any)
+					if _, setup := fields["setup"]; !setup {
+						kept = append(kept, rule)
+					}
+				}
+				parameters.(map[string]any)["allOf"] = kept
+			}
 		}
 		if name == "attempt_execute" && admitted["engine.injection_delete"] && len(surfaces) > 0 {
 			injection := parameters.(map[string]any)["properties"].(map[string]any)["setup"].(map[string]any)["items"].(map[string]any)
@@ -144,9 +155,7 @@ func (p *Protocol) ValidateToolArguments(name string, raw []byte) (map[string]an
 			return nil, err
 		}
 	}
-	if err := checkModelChoices(name, object); err != nil {
-		return nil, err
-	}
+
 	if name == "finish" {
 		if _, exists := object["assessment"]; exists {
 			return nil, argumentIssue("obsolete_wrapper", "/assessment", "Put summary, objectives and optional assessment collections beside finish_reason; omit the assessment wrapper.")
@@ -173,6 +182,10 @@ func (p *Protocol) ValidateToolArguments(name string, raw []byte) (map[string]an
 			continue
 		}
 		matched = true
+		argsSchema := branch["properties"].(map[string]any)["arguments"].(map[string]any)
+		if err := checkModelChoices(name, object, argsSchema); err != nil {
+			return nil, err
+		}
 		if err := p.catalog.schemas[ModelToolArgumentsSchema].OneOf[index].Properties["arguments"].Validate(object); err != nil {
 			return nil, p.catalog.schemaArgumentIssue(err)
 		}
@@ -205,6 +218,19 @@ func (p *Protocol) ValidateToolArguments(name string, raw []byte) (map[string]an
 		}
 	}
 	return object, nil
+}
+
+// ModelToolNames lists the authoritative catalog, including local tools.
+func (p *Protocol) ModelToolNames() ([]string, error) {
+	value, err := Decode(p.catalog.sources[ModelToolArgumentsSchema], OrdinaryLimit)
+	if err != nil {
+		return nil, err
+	}
+	names := []string{}
+	for _, item := range value.(map[string]any)["oneOf"].([]any) {
+		names = append(names, item.(map[string]any)["properties"].(map[string]any)["name"].(map[string]any)["const"].(string))
+	}
+	return names, nil
 }
 
 // ToolGuidance is versioned reference material, not another tool catalog.

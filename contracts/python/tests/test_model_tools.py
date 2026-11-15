@@ -48,14 +48,17 @@ class ModelToolsTest(unittest.TestCase):
 
     def test_projection_and_runtime_constraints(self):
         cases=json.loads((ROOT/'fixtures/model-tools.json').read_text())
-        for codec in ('openai-chat-text-tools-v1','openai-responses-text-tools-v1'):
+        for codec in ('openai-chat-text-tools-v1','openai-responses-text-tools-v1','anthropic-messages-text-tools-v1','bedrock-converse-text-tools-v1','gemini-text-tools-v1'):
             tools=json.loads(self.protocol.model_tools(codec,cases[0]['operations']))
-            declarations=[t.get('function',t) for t in tools]
+            if codec=='gemini-text-tools-v1':declarations=tools[0]['functionDeclarations']
+            else:declarations=[t.get('function',t.get('toolSpec',t)) for t in tools]
+            declarations=[dict(t,parameters=t.get('parameters',t.get('input_schema',t.get('parametersJsonSchema',t.get('inputSchema',{}).get('json'))))) for t in declarations]
             validators={t['name']:Draft202012Validator(t['parameters']) for t in declarations}
             for case in cases:
                 if 'openai_valid' not in case:continue
                 with self.subTest(codec=codec,case=case['name']):
-                    self.assertEqual(validators[case['tool']].is_valid(case['arguments']),case['openai_valid'])
+                    expected=case['openai_valid'] if codec.startswith('openai-') else case['valid']
+                    self.assertEqual(validators[case['tool']].is_valid(case['arguments']),expected)
                     if case['valid']:
                         self.protocol.validate_tool_arguments(case['tool'],encoded(case['arguments']))
                     else:
@@ -73,8 +76,8 @@ class PresentationTest(unittest.TestCase):
         cases = json.loads((ROOT/'fixtures/model-tools.json').read_text())
         tools = json.loads(self.protocol.model_tools('openai-chat-text-tools-v1', cases[0]['operations']))
         declarations = {v['function']['name']: v['function'] for v in tools}
-        reference = declarations['reference_read']['description']
-        for text in ('offset 0', 'active scenario', 'no pagination', 'tool-guide:<tool_name>'):
+        reference = declarations['scenario_select']['description'] + declarations['reference_read']['description']
+        for text in ('active scenario', 'confirmation', 'tool-guide:<tool_name>'):
             self.assertIn(text, reference)
         for name, declaration in declarations.items():
             self.assertNotIn('Runtime enforces identifier', declaration['description'])
@@ -84,7 +87,7 @@ class PresentationTest(unittest.TestCase):
         self.assertIn('entire campaign', finish)
         self.assertIn('cleanup', finish)
         self.assertNotIn('No tests ran', finish)
-        self.assertIn('ordinary progress does not require', declarations['record_append']['description'])
+        self.assertIn('Optional', declarations['record_progress']['description'])
         self.assertIn('skips later calls', declarations['restore_request']['description'])
         guide = json.loads(tool_guidance(self.protocol, 'finish'))['examples']
         self.protocol.validate_tool_arguments('finish', encoded(guide['minimal_inline_example']))
@@ -104,3 +107,44 @@ class PresentationTest(unittest.TestCase):
         discovered = json.loads(tool_guidance(self.protocol, 'attempt_execute'))['examples']['discovered_setup']
         for fact in ('exact allowlists', 'administrator', 'HEAD', 'existing key string', 'mutable_fields', 'not injection payloads', 'does not undo'):
             self.assertIn(fact, json.dumps(discovered))
+
+
+class AdjacentConstraintTest(unittest.TestCase):
+    def test_openai_exceptions_are_documented_and_other_codecs_keep_rules(self):
+        p=Protocol(ROOT)
+        ops=sorted(op['name'] for op in p.operations())
+        for codec in ('openai-chat-text-tools-v1','openai-responses-text-tools-v1','anthropic-messages-text-tools-v1','bedrock-converse-text-tools-v1','gemini-text-tools-v1'):
+            tools=json.loads(p.model_tools(codec,ops))
+            decl=tools[0]['functionDeclarations'] if codec.startswith('gemini') else [t.get('function',t.get('toolSpec',t)) for t in tools]
+            args={t['name']:t.get('parameters',t.get('input_schema',t.get('parametersJsonSchema',t.get('inputSchema',{}).get('json')))) for t in decl}
+            for tool,key,text in (
+                ('attempt_execute','origin','scenario_id'),('attempt_execute','scenario_id','forbidden'),
+                ('attempt_execute','json','exactly one'),('attempt_execute','json','application/json'),
+                ('attempt_execute','base64','media_type'),('attempt_execute','artifact','payload'),
+                ('attempt_execute','setup','retain_injections'),('attempt_execute','retain_injections','false'),
+                ('attempt_execute','injection','purpose payload'),
+                ('artifact_publish','purpose','conclusion'),('artifact_publish','purpose','assessment byte'),
+                ('artifact_publish','json','exactly one'),('artifact_publish','json','application/json'),
+                ('record_hypothesis','parent','hypothesis'),('record_lineage','parent','Execution'),
+                ('record_progress','observations','assessment.interpretation'),('finish','status','coverage-limit'),
+                ('observation_read','observation','Readable'),('restore_request','snapshot','readiness'),
+                ('snapshot_list','session','session'),('injection_delete','injection','injection'),
+                ('snapshot_request','description','4096 UTF-8 bytes'),
+                ('attempt_execute','text','1 MiB UTF-8 bytes')):
+                with self.subTest(codec=codec,tool=tool,field=key):
+                    self.assertIn(text,args[tool]['properties'][key]['description'])
+            self.assertNotIn('json, text, base64, artifact', args['artifact_publish']['properties']['json']['description'])
+            self.assertNotIn('exactly one', args['attempt_execute']['properties']['injection']['properties']['json']['description'])
+            self.assertEqual(set(args['finish']['required']),{'finish_reason','summary','objectives'})
+            self.assertNotIn('record_append',args)
+            for tool in ('record_hypothesis','record_progress','record_lineage','record_coverage'):
+                self.assertNotIn('kind',args[tool]['properties'])
+            self.assertEqual(set(args['scenario_select']['properties']),{'reference'})
+            self.assertEqual(set(args['attempt_execute']['properties']['injection']['properties']),{'json','artifact'})
+            if not codec.startswith('openai'):
+                self.assertIn('allOf',args['attempt_execute'])
+                self.assertIn('allOf',args['artifact_publish'])
+            # Encoded byte count is a runtime condition, not JSON Schema maxLength.
+            value={'description':'é'*2049}
+            self.assertTrue(Draft202012Validator(args['snapshot_request']).is_valid(value))
+            with self.assertRaises(ContractError):p.validate_tool_arguments('snapshot_request',encoded(value))

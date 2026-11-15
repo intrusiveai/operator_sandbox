@@ -11,7 +11,7 @@ Go exposes `Protocol.NormalizeToolArguments(name, raw, ToolResolution)`; Python
 exposes `Protocol.normalize_tool_arguments(name, raw, context)`. Both return:
 
 - `arguments`: the canonical host request body, or local publication/read helper
-  arguments for `artifact_publish` and `reference_read`.
+  arguments for `artifact_publish`, `reference_read` and `scenario_select`.
 - `paths`: canonical host JSON Pointer to model JSON Pointer mappings. Use
   `RemapToolPath` / `tool_normalization.remap_tool_path` for the longest matching
   boundary prefix; preserve the host error code, reason and effect state.
@@ -186,3 +186,14 @@ valid assessment. If the next request cannot be funded, Harness MUST use the
 structured model-token stopping report in SHARED_CONTRACT.md and an unavailable
 finish. Previous correctable errors remain separate history; no evidence-read
 counter may stand in for a model-token admission failure.
+
+## Model operation mapping
+
+`record_hypothesis`, `record_progress`, `record_lineage`, and `record_coverage`
+normalize to the existing record_append request. They do not accept `kind`.
+Progress assessment is nested; its schema requires the complete optional group.
+`finish` accepts inline assessment only. `finish_artifact` and `finish_unavailable`
+normalize to the other existing finish forms. `NativeTool` / `native_tool` return
+the native handler identity after model argument validation. No old tool aliases
+are accepted. `scenario_select` resolves a verified reference for Harness's
+existing scenario activation; it makes no native target call.

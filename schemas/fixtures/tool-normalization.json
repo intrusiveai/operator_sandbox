@@ -6595,7 +6595,7 @@
   },
   {
     "name": "unavailable finish",
-    "tool": "finish",
+    "tool": "finish_unavailable",
     "arguments": {
       "finish_reason": "harness-error",
       "unavailable_reason": "invalid-call-limit"
@@ -6758,7 +6758,7 @@
   },
   {
     "name": "artifact finish",
-    "tool": "finish",
+    "tool": "finish_artifact",
     "arguments": {
       "finish_reason": "objectives-addressed",
       "artifact": "conclusion-1"
@@ -7100,7 +7100,7 @@
   },
   {
     "name": "wrong finish purpose",
-    "tool": "finish",
+    "tool": "finish_artifact",
     "arguments": {
       "finish_reason": "objectives-addressed",
       "artifact": "artifact-1"
@@ -11863,9 +11863,8 @@
   },
   {
     "name": "record hypothesis",
-    "tool": "record_append",
+    "tool": "record_hypothesis",
     "arguments": {
-      "kind": "hypothesis",
       "records": [
         "record-1"
       ],
@@ -12049,9 +12048,8 @@
   },
   {
     "name": "record progress",
-    "tool": "record_append",
+    "tool": "record_progress",
     "arguments": {
-      "kind": "progress",
       "records": [
         "record-1"
       ],
@@ -12062,10 +12060,12 @@
       "hypotheses": [
         "hyp-1"
       ],
-      "interpretation": "supported",
-      "confidence": "high",
-      "assurance": "Observed",
-      "assessment_summary": "Returned marker."
+      "assessment": {
+        "interpretation": "supported",
+        "confidence": "high",
+        "assurance": "Observed",
+        "summary": "Returned marker."
+      }
     },
     "context": {
       "campaign_id": "campaign-1",
@@ -12247,20 +12247,19 @@
         "/record/hypothesis_refs/0": "/hypotheses/0",
         "/record/observation_refs/0": "/observations/0",
         "/record/attempt_receipt_refs/0": "/observations/0",
-        "/record/assessment/interpretation": "/interpretation",
-        "/record/assessment/confidence": "/confidence",
-        "/record/assessment/assurance": "/assurance",
-        "/record/assessment/summary": "/assessment_summary",
-        "/record/assessment/gaps": "/gaps"
+        "/record/assessment/interpretation": "/assessment/interpretation",
+        "/record/assessment/confidence": "/assessment/confidence",
+        "/record/assessment/assurance": "/assessment/assurance",
+        "/record/assessment/summary": "/assessment/summary",
+        "/record/assessment/gaps": "/assessment/gaps"
       },
       "observation_selections": []
     }
   },
   {
     "name": "record lineage",
-    "tool": "record_append",
+    "tool": "record_lineage",
     "arguments": {
-      "kind": "lineage",
       "records": [
         "record-1"
       ],
@@ -12438,9 +12437,8 @@
   },
   {
     "name": "record coverage",
-    "tool": "record_append",
+    "tool": "record_coverage",
     "arguments": {
-      "kind": "coverage",
       "records": [
         "record-1"
       ],
