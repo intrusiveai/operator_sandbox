@@ -42,6 +42,7 @@ test-pr: check-generated
 	go build ./...
 	go vet ./...
 	go test ./contracts ./internal/hostconfig ./internal/targetprofile ./internal/modelprovider
+	OPERATOR_TEST_PYTHON="$(abspath $(PYTHON))" OPERATOR_CONTROLLED_PEER_TEST=1 go test -count=1 -timeout 2m -run '^TestSimplePythonSpoolAndSeparateCLI$$' ./internal/preparation
 	$(PYTHON) -m unittest discover -s scripts/tests
 	PYTHONPATH=contracts/python $(PYTHON) -m unittest discover -s contracts/python/tests
 	$(PYTHON) schemas/validate_cleanup_fixtures.py

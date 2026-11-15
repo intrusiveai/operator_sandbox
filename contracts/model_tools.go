@@ -1,8 +1,10 @@
 package contracts
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"sort"
 )
 
 // ModelTools returns the package-owned native projection for a verified operation
@@ -222,34 +224,54 @@ func (p *Protocol) ValidateToolArguments(name string, raw []byte) (map[string]an
 
 // ModelToolNames lists the authoritative catalog, including local tools.
 func (p *Protocol) ModelToolNames() ([]string, error) {
-	value, err := Decode(p.catalog.sources[ModelToolArgumentsSchema], OrdinaryLimit)
+	guides, err := p.toolGuides()
 	if err != nil {
 		return nil, err
 	}
-	names := []string{}
-	for _, item := range value.(map[string]any)["oneOf"].([]any) {
-		names = append(names, item.(map[string]any)["properties"].(map[string]any)["name"].(map[string]any)["const"].(string))
+	names := make([]string, 0, len(guides))
+	for name := range guides {
+		names = append(names, name)
 	}
+	sort.Strings(names)
 	return names, nil
 }
 
-// ToolGuidance is versioned reference material, not another tool catalog.
+// ToolGuidance returns a caller-owned copy of immutable, versioned reference
+// material. Preparing guides once avoids decoding the whole catalog for every
+// reference during repeated engine-context integrity checks.
 func (p *Protocol) ToolGuidance(name string) ([]byte, error) {
-	raw := p.catalog.sources[ModelToolArgumentsSchema]
-	v, err := Decode(raw, OrdinaryLimit)
+	guides, err := p.toolGuides()
 	if err != nil {
 		return nil, err
 	}
+	guide, ok := guides[name]
+	if !ok {
+		return nil, ErrProtocol
+	}
+	return bytes.Clone(guide), nil
+}
+
+// The cache belongs to this loaded protocol, never a process-wide tool name.
+// Runtime argument validation and capability-specific declarations remain separate.
+func (p *Protocol) loadToolGuides() (map[string][]byte, error) {
+	v, err := Decode(p.catalog.sources[ModelToolArgumentsSchema], OrdinaryLimit)
+	if err != nil {
+		return nil, err
+	}
+	guides := map[string][]byte{}
 	for _, item := range v.(map[string]any)["oneOf"].([]any) {
 		branch := item.(map[string]any)
 		props := branch["properties"].(map[string]any)
-		if props["name"].(map[string]any)["const"] == name {
-			guide := map[string]any{"tool": name, "description": branch["description"], "arguments": props["arguments"], "guidance": "Use the selected resource's details_reference for valid selectors and content. Use typed handles from corresponding verified inputs or tool results; never manufacture them. Runtime rejects invalid values before dispatch."}
-			if examples, ok := branch["x-operator-guidance"]; ok {
-				guide["examples"] = examples
-			}
-			return canonicalValue(guide, OrdinaryLimit)
+		name := props["name"].(map[string]any)["const"].(string)
+		guide := map[string]any{"tool": name, "description": branch["description"], "arguments": props["arguments"], "guidance": "Use the selected resource's details_reference for valid selectors and content. Use typed handles from corresponding verified inputs or tool results; never manufacture them. Runtime rejects invalid values before dispatch."}
+		if examples, ok := branch["x-operator-guidance"]; ok {
+			guide["examples"] = examples
 		}
+		raw, err := canonicalValue(guide, OrdinaryLimit)
+		if err != nil {
+			return nil, err
+		}
+		guides[name] = raw
 	}
-	return nil, ErrProtocol
+	return guides, nil
 }

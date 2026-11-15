@@ -8,7 +8,7 @@ apply to `intrusiveai/operator_sandbox` unless explicitly stated otherwise.
 
 | Event | Checks and release work |
 | --- | --- |
-| PR opened, updated or reopened | `context` and `verify`: fast compilation, vet, focused Go tests, shared-contract fixtures and publisher tests (`make test-pr`). No release builds. |
+| PR opened, updated or reopened | `context` and `verify`: fast compilation, vet, focused Go tests, shared-contract fixtures, a controlled Python spool/CLI completion regression, and publisher tests (`make test-pr`). No release builds. |
 | Merge or direct push to `candidate-v*` | Complete existing test suite, four platform builds, reproducibility and installed-package checks, then prerelease publication. |
 | Candidate PR merged into `main` | Promotion eligibility and existing-artifact checks, followed by promotion/catalog publication. No rebuild or test-suite rerun. |
 | Other PR closure or push to `main` | No full verification or publication. |

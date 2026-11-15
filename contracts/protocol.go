@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"sort"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -38,6 +39,7 @@ type Protocol struct {
 	operations       map[string]Operation
 	operationsDigest string
 	packageIdentity  *PackageIdentity
+	toolGuides       func() (map[string][]byte, error)
 }
 
 // Catalog is the frozen catalog compiled with this protocol's installed bytes.
@@ -68,6 +70,7 @@ func LoadProtocol(files fs.FS) (*Protocol, error) {
 		return nil, ErrCatalog
 	}
 	result := &Protocol{catalog: catalog, operations: map[string]Operation{}}
+	result.toolGuides = sync.OnceValues(result.loadToolGuides)
 	result.operationsDigest, err = objectDigest(value, OrdinaryLimit)
 	if err != nil {
 		return nil, ErrCatalog
