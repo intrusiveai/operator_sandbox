@@ -106,6 +106,17 @@ func TestSelectedToolPresentationAtProviderBoundary(t *testing.T) {
 				if c.Codec == modelcodec.Bedrock {
 					d = d["toolSpec"].(map[string]any)
 				}
+				if c.Codec == modelcodec.Anthropic {
+					parameters := d["input_schema"].(map[string]any)
+					if parameters["type"] != "object" {
+						t.Fatal("Anthropic requires an object input_schema", d["name"])
+					}
+					for _, key := range []string{"oneOf", "allOf", "anyOf"} {
+						if _, exists := parameters[key]; exists {
+							t.Fatal("Anthropic rejects root combinator", d["name"], key)
+						}
+					}
+				}
 				description := d["description"].(string)
 				if strings.Contains(description, "Runtime enforces") || strings.Contains(description, "Advanced guidance:") {
 					t.Fatal("repeated boilerplate", d["name"])

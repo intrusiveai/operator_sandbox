@@ -1,7 +1,7 @@
 # Model declarations and accepted arguments
 
 The Operator-owned catalog MUST define both runtime argument schemas and model
-projections. This breaking 0.12.0 interface supersedes the former flattened
+projections. The interface identified in `release/contract-lock.json` supersedes the former flattened
 historical-record and multi-format finish declarations. An old model-tool alias
 MUST NOT be advertised or accepted. Native engine operations remain unchanged.
 
@@ -33,8 +33,10 @@ inspected citations, execution/hypothesis/snapshot/session handles and UTF-8
 byte limits MUST have concise adjacent descriptions. Resource-state validation
 MUST remain authoritative; declarations do not grant permission or prove evidence.
 Provider projections MUST be tested independently, with any unsupported schema
-condition documented beside its arguments. OpenAI MUST omit unsupported root
-combinators only; the common projection MUST retain them. The catalog MUST stay frozen during
+condition documented beside its arguments. OpenAI and Anthropic MUST use the shared object-root projection without root
+`oneOf`, `allOf`, `anyOf` or `not`. Nested rules MUST remain; omitted root
+conditions MUST retain concise guidance beside their affected arguments.
+Bedrock Converse and Gemini MUST retain the common projection with root rules. The catalog MUST stay frozen during
 an admitted conversation. No existing signed history may be rewritten.
 
 ## Harness and verification
@@ -49,3 +51,12 @@ Tests MUST exercise all five codecs, archived invalid combinations and corrected
 first-attempt calls. Controlled multi-scenario processes MUST cover progress,
 selection, execution, evidence inspection, snapshot/restore and accepted finish.
 These checks MUST NOT be described as live-provider qualification.
+
+Provider compatibility tests MUST check the complete catalog, including all finish
+and historical-record tools and capability-selected injection variants. Shared
+Go/Python fixtures MUST distinguish provider projection acceptance from runtime
+argument validation. A live schema-acceptance check MUST send the entire catalog
+in one explicitly authorized minimal request, execute no returned tools and avoid
+automatic retries. Record the provider/model, exact catalog digest, HTTP result
+and bounded usage separately from controlled-test results. This check establishes
+schema acceptance, not campaign success or model compliance.

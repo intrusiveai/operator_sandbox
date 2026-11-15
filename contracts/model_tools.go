@@ -75,8 +75,8 @@ func (p *Protocol) modelTools(codec string, operations, surfaces []string) ([]by
 		if projected, ok := branch["x-operator-provider-parameters"]; ok {
 			parameters = projected
 		}
-		if codec == "openai-chat-text-tools-v1" || codec == responsesCodec {
-			if projected, ok := branch["x-operator-openai-parameters"]; ok {
+		if codec == "openai-chat-text-tools-v1" || codec == responsesCodec || codec == anthropicCodec {
+			if projected, ok := branch["x-operator-object-root-parameters"]; ok {
 				parameters = projected
 			}
 		}

@@ -8278,7 +8278,7 @@
                 "arguments"
               ],
               "type": "object",
-              "x-operator-openai-parameters": {
+              "x-operator-object-root-parameters": {
                 "additionalProperties": false,
                 "properties": {
                   "base64": {
@@ -13818,7 +13818,7 @@
                 "parent": "Use an existing execution handle to express a follow-up experiment; omit parent for a root attempt.",
                 "setup": "Only use advertised setup fields and admitted surfaces. Nonempty setup requires injection content; injection and retain_injections require nonempty setup. Omitted setup means none; omitted retention means false. Payload/carrier purpose must match the selected route."
               },
-              "x-operator-openai-parameters": {
+              "x-operator-object-root-parameters": {
                 "additionalProperties": false,
                 "properties": {
                   "artifact": {
@@ -17560,7 +17560,7 @@
                   ]
                 }
               },
-              "x-operator-openai-parameters": {
+              "x-operator-object-root-parameters": {
                 "additionalProperties": false,
                 "properties": {
                   "claims": {
@@ -18930,7 +18930,7 @@
                 "arguments"
               ],
               "type": "object",
-              "x-operator-openai-parameters": {
+              "x-operator-object-root-parameters": {
                 "additionalProperties": false,
                 "properties": {
                   "artifact": {
@@ -19038,7 +19038,7 @@
                 "arguments"
               ],
               "type": "object",
-              "x-operator-openai-parameters": {
+              "x-operator-object-root-parameters": {
                 "additionalProperties": false,
                 "properties": {
                   "finish_reason": {
@@ -19141,7 +19141,7 @@
                 "arguments"
               ],
               "type": "object",
-              "x-operator-openai-parameters": {
+              "x-operator-object-root-parameters": {
                 "additionalProperties": false,
                 "properties": {
                   "injection": {
@@ -19251,7 +19251,7 @@
                 },
                 "rules": "Use the returned continuation verbatim. readable_observation remains readable, citation represents only verified inspected bytes. continuation is absent at EOF or when no readable bytes remain. Unavailable or truncated evidence must be reported as a limitation. A partial read never makes a whole-observation citation valid. Example handles must be replaced with actual returned handles."
               },
-              "x-operator-openai-parameters": {
+              "x-operator-object-root-parameters": {
                 "additionalProperties": false,
                 "properties": {
                   "max_bytes": {
@@ -19466,7 +19466,7 @@
                 "arguments"
               ],
               "type": "object",
-              "x-operator-openai-parameters": {
+              "x-operator-object-root-parameters": {
                 "additionalProperties": false,
                 "properties": {
                   "entries": {
@@ -19885,7 +19885,7 @@
                 "arguments"
               ],
               "type": "object",
-              "x-operator-openai-parameters": {
+              "x-operator-object-root-parameters": {
                 "additionalProperties": false,
                 "properties": {
                   "assumptions": {
@@ -20176,7 +20176,7 @@
                 "arguments"
               ],
               "type": "object",
-              "x-operator-openai-parameters": {
+              "x-operator-object-root-parameters": {
                 "additionalProperties": false,
                 "properties": {
                   "attempt": {
@@ -20470,7 +20470,7 @@
               "x-operator-guidance": {
                 "progress": "Historical progress recording is optional. The optional assessment object requires interpretation, confidence, assurance and summary; gaps belongs inside it. Use returned typed handles for the selected record kind."
               },
-              "x-operator-openai-parameters": {
+              "x-operator-object-root-parameters": {
                 "additionalProperties": false,
                 "properties": {
                   "assessment": {
@@ -20818,7 +20818,7 @@
                 "arguments"
               ],
               "type": "object",
-              "x-operator-openai-parameters": {
+              "x-operator-object-root-parameters": {
                 "additionalProperties": false,
                 "properties": {
                   "max_bytes": {
@@ -20905,7 +20905,7 @@
                 "arguments"
               ],
               "type": "object",
-              "x-operator-openai-parameters": {
+              "x-operator-object-root-parameters": {
                 "additionalProperties": false,
                 "properties": {
                   "snapshot": {
@@ -20970,7 +20970,7 @@
                 "arguments"
               ],
               "type": "object",
-              "x-operator-openai-parameters": {
+              "x-operator-object-root-parameters": {
                 "additionalProperties": false,
                 "properties": {
                   "reference": {
@@ -21033,7 +21033,7 @@
                 "arguments"
               ],
               "type": "object",
-              "x-operator-openai-parameters": {
+              "x-operator-object-root-parameters": {
                 "additionalProperties": false,
                 "properties": {
                   "snapshot": {
@@ -21108,7 +21108,7 @@
                 "arguments"
               ],
               "type": "object",
-              "x-operator-openai-parameters": {
+              "x-operator-object-root-parameters": {
                 "additionalProperties": false,
                 "properties": {
                   "limit": {
@@ -21196,7 +21196,7 @@
                 "arguments"
               ],
               "type": "object",
-              "x-operator-openai-parameters": {
+              "x-operator-object-root-parameters": {
                 "additionalProperties": false,
                 "properties": {
                   "description": {
@@ -24266,7 +24266,7 @@
   "defaultContentType": "application/json",
   "info": {
     "title": "Operator–Attack Harness interface",
-    "version": "0.12.0"
+    "version": "0.12.1"
   },
   "operations": {
     "control-in": {

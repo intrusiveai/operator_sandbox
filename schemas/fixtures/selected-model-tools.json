@@ -266,8 +266,8 @@
       "engine.snapshot_request"
     ],
     "surfaces": [],
-    "digest": "sha256:c50000d73232515220341e99db8448488f5f231df57af44f5af457e2e41f0be6",
-    "size_bytes": 33759
+    "digest": "sha256:d30d06c29c32f6b66bfe8c72b45b573abc268fd0a19bfb995ba6a9c59f195742",
+    "size_bytes": 32224
   },
   {
     "codec": "anthropic-messages-text-tools-v1",
@@ -290,8 +290,8 @@
     "surfaces": [
       "mcp_tool_result"
     ],
-    "digest": "sha256:e638fcc46b8e04a5e3c25be2b171d5ce854b67aa69a4940bcc39d474f1e0c748",
-    "size_bytes": 38418
+    "digest": "sha256:74cf2eacab35794ad00cad191098905c1f44bf0ea672629fdbdbf4989b660d6a",
+    "size_bytes": 36692
   },
   {
     "codec": "anthropic-messages-text-tools-v1",
@@ -314,8 +314,8 @@
     "surfaces": [
       "model_response"
     ],
-    "digest": "sha256:ec0e886556b6eec125a4f9a70823fa28e9fbe642e654fbabd47ece3de6a0dade",
-    "size_bytes": 38327
+    "digest": "sha256:87106c580e67f769ba2bab93a4a832cf43975244666eaa8a765fe491b3591d89",
+    "size_bytes": 36601
   },
   {
     "codec": "anthropic-messages-text-tools-v1",
@@ -339,8 +339,8 @@
       "database_response",
       "environment_state"
     ],
-    "digest": "sha256:92b423ff86b1e0273ca70fc5e005802c26a915239837ed3f2af2565e05813769",
-    "size_bytes": 39645
+    "digest": "sha256:c72443dd71c33b60944b56502b81e41f4f7bf41a17a0d8211730903b3484277f",
+    "size_bytes": 37919
   },
   {
     "codec": "anthropic-messages-text-tools-v1",
@@ -368,8 +368,8 @@
       "model_tool_result",
       "service_response"
     ],
-    "digest": "sha256:fdf4b823e3bec5f7c18567b7ed97bc380af2904f396862f7605cce0fcffde230",
-    "size_bytes": 48281
+    "digest": "sha256:5b4c276c056649e6d3ee49edfc19b5576f2f83c8bd5616838b963a62edb98133",
+    "size_bytes": 46555
   },
   {
     "codec": "bedrock-converse-text-tools-v1",

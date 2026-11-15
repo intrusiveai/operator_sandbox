@@ -262,11 +262,12 @@ def build():
                 'pagination_example': {'request': {'observation':'observation-7','offset':0,'max_bytes':4096}, 'result_handles': {'readable_observation':'observation-7','citation':'observation-7-range-0-4096','continuation':{'tool':'observation_read','arguments':{'observation':'observation-7','offset':4096,'max_bytes':4096}}}, 'next_request':{'observation':'observation-7','offset':4096,'max_bytes':4096}, 'finish_objective_citation':{'observations':['observation-7-range-0-4096']}},
                 'database_feedback': 'When oracle-assisted feedback is enabled, inspect permitted oracle_outcome observations before the next experiment. A database_query_match positive verdict records an observed condition, not injection causality. Empty means no positive verdict was captured, not proof of attack failure. Unavailable evidence remains unknown; available entries in a partial category can still be read. Receipt bytes remain unchanged after later writes or restore; old verdicts and session-wide reports are not new-attempt results.',
                 'rules': 'Use the returned continuation verbatim. readable_observation remains readable, citation represents only verified inspected bytes. continuation is absent at EOF or when no readable bytes remain. Unavailable or truncated evidence must be reported as a limitation. A partial read never makes a whole-observation citation valid. Example handles must be replaced with actual returned handles.'}
-        openai=deepcopy(provider)
-        # Only OpenAI forbids root combinators. All removed conditions are
-        # also described beside their affected fields; nested rules remain.
-        for key in ('allOf','oneOf','anyOf','not'):openai.pop(key,None)
-        branch['x-operator-openai-parameters']=openai
+        object_root=deepcopy(provider)
+        # OpenAI and Anthropic reject root combinators. The object-root
+        # declaration keeps nested rules; adjacent descriptions explain the
+        # cross-field rules that remain authoritative at runtime.
+        for key in ('allOf','oneOf','anyOf','not'):object_root.pop(key,None)
+        branch['x-operator-object-root-parameters']=object_root
         branch['x-operator-provider-parameters']=provider
         branch['description']=description;branch['x-operator-required-operations']=sorted(operations);branches.append(branch)
     return {'$schema':'https://json-schema.org/draft/2020-12/schema','$id':ID,

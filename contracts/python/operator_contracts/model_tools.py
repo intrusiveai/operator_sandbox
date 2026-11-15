@@ -16,8 +16,8 @@ def model_tools(protocol,codec,operations,surfaces=None):
     for branch in document['oneOf']:
         if not all(op in operations for op in branch['x-operator-required-operations']):continue
         name=branch['properties']['name']['const'];parameters=deepcopy(branch.get('x-operator-provider-parameters',branch['properties']['arguments']));description=branch['description']
-        if codec in ('openai-chat-text-tools-v1','openai-responses-text-tools-v1'):
-            parameters=deepcopy(branch.get('x-operator-openai-parameters',parameters))
+        if codec in ('openai-chat-text-tools-v1','openai-responses-text-tools-v1','anthropic-messages-text-tools-v1'):
+            parameters=deepcopy(branch.get('x-operator-object-root-parameters',parameters))
         if name=='attempt_execute' and ('engine.injection_delete' not in operations or surfaces==[]):
             for field in ('setup','injection','retain_injections'):parameters['properties'].pop(field,None)
             if 'allOf' in parameters:

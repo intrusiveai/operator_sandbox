@@ -314,8 +314,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:27781219331123f79f209f3423e452df372c95931781a1f0544d41ef55e12596",
-    "size_bytes": 48281,
+    "digest": "sha256:b16f19cc1fee8e505c32b0c615c4477a65e41e913ab017e53228c6f736efefc0",
+    "size_bytes": 46555,
     "valid": true
   },
   {
@@ -368,8 +368,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:ab9a2edc252950471d3777390a0d5d55a0ca420d70feba208639c04640cba35c",
-    "size_bytes": 33363,
+    "digest": "sha256:b9515572af5fd060b5a160601a9f5c3e4fc6e0c9f858bf043c97f0382e5fd672",
+    "size_bytes": 31828,
     "valid": true
   },
   {
@@ -409,8 +409,8 @@
       "snapshot_list",
       "snapshot_request"
     ],
-    "digest": "sha256:5d1311d41e3ce222c628e90d05df55af905ac5ee29074f9add4b2598cb8a595d",
-    "size_bytes": 46533,
+    "digest": "sha256:1d44cdf68e434062965c043cfcd644a62546b0f902a92ba2745c34721554cc70",
+    "size_bytes": 45217,
     "valid": true
   },
   {
@@ -907,7 +907,7 @@
       "scenario_id": "scenario-1"
     },
     "valid": true,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "parent handle",
@@ -920,7 +920,7 @@
       "parent": "execution-1"
     },
     "valid": true,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "setup requires injection",
@@ -947,7 +947,7 @@
       ]
     },
     "valid": false,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "setup with injection",
@@ -977,7 +977,7 @@
       }
     },
     "valid": true,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "database result setup",
@@ -1007,7 +1007,7 @@
       }
     },
     "valid": true,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "database disallows method",
@@ -1038,7 +1038,7 @@
       }
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "database disallows tool_name",
@@ -1069,7 +1069,7 @@
       }
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "database disallows turn_id",
@@ -1100,7 +1100,7 @@
       }
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "no irrelevant injection",
@@ -1115,7 +1115,7 @@
       }
     },
     "valid": false,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "no cleanup flags without setup",
@@ -1128,7 +1128,7 @@
       "retain_injections": false
     },
     "valid": false,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "unknown attempt field",
@@ -1141,7 +1141,7 @@
       "unexpected": true
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "missing scenario",
@@ -1153,7 +1153,7 @@
       "json": {}
     },
     "valid": false,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "forbidden scenario",
@@ -1166,7 +1166,7 @@
       "scenario_id": "s"
     },
     "valid": false,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "empty observations",
@@ -1179,7 +1179,7 @@
       "observations": []
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "conflicting input",
@@ -1192,7 +1192,7 @@
       "text": "x"
     },
     "valid": false,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "obsolete input",
@@ -1208,7 +1208,7 @@
       }
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "obsolete generation",
@@ -1221,7 +1221,7 @@
       "generation": 1
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "obsolete thread_id",
@@ -1234,7 +1234,7 @@
       "thread_id": "thread"
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "obsolete attempt_index",
@@ -1247,7 +1247,7 @@
       "attempt_index": 1
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "obsolete request_id",
@@ -1260,7 +1260,7 @@
       "request_id": "r1"
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "obsolete attempt_id",
@@ -1273,7 +1273,7 @@
       "attempt_id": "a1"
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "injection_delete arguments",
@@ -1325,7 +1325,7 @@
       "statement": "Maybe."
     },
     "valid": true,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "wrong record hypothesis",
@@ -1336,7 +1336,7 @@
       "statement": "Maybe."
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "unknown record field hypothesis",
@@ -1348,7 +1348,7 @@
       "unexpected": true
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "record progress",
@@ -1358,7 +1358,7 @@
       "summary": "So far."
     },
     "valid": true,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "wrong record progress",
@@ -1368,7 +1368,7 @@
       "summary": "So far."
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "unknown record field progress",
@@ -1379,7 +1379,7 @@
       "unexpected": true
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "record lineage",
@@ -1391,7 +1391,7 @@
       "mutation_summary": "Changed."
     },
     "valid": true,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "wrong record lineage",
@@ -1403,7 +1403,7 @@
       "mutation_summary": "Changed."
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "unknown record field lineage",
@@ -1416,7 +1416,7 @@
       "unexpected": true
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "record coverage",
@@ -1426,7 +1426,7 @@
       "entries": []
     },
     "valid": true,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "wrong record coverage",
@@ -1436,7 +1436,7 @@
       "entries": []
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "unknown record field coverage",
@@ -1447,7 +1447,7 @@
       "unexpected": true
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "partial progress assessment",
@@ -1460,7 +1460,7 @@
       }
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "orphan gaps",
@@ -1473,7 +1473,7 @@
       }
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "full progress assessment",
@@ -1489,7 +1489,7 @@
       }
     },
     "valid": true,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "minimal finish",
@@ -1526,7 +1526,7 @@
       "finish_reason": "budget-limit"
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "finish conflicting sources",
@@ -1545,7 +1545,7 @@
       "artifact": "artifact-1"
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "no old assessment wrapper",
@@ -1565,7 +1565,7 @@
       }
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "no conclusion record",
@@ -1613,7 +1613,7 @@
       "origin": "scenario"
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "progress forbids scenario_id",
@@ -1624,7 +1624,7 @@
       "scenario_id": "support-baseline"
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "progress forbids attempt",
@@ -1635,7 +1635,7 @@
       "attempt": "execution-1"
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "summary-only progress",
@@ -1645,7 +1645,7 @@
       "summary": "Output inspected."
     },
     "valid": true,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "partial nested progress assessment",
@@ -1658,7 +1658,7 @@
       }
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "supported progress missing citations",
@@ -1674,7 +1674,7 @@
       }
     },
     "valid": false,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "supported progress with citations",
@@ -1693,7 +1693,7 @@
       }
     },
     "valid": true,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "scenario selection",
@@ -1703,7 +1703,7 @@
       "reference": "scenario:baseline"
     },
     "valid": true,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "scenario selection rejects pagination",
@@ -1714,7 +1714,7 @@
       "offset": 1
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "conclusion media mismatch",
@@ -1726,7 +1726,7 @@
       "text": "assessment"
     },
     "valid": false,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "artifact missing content",
@@ -1737,7 +1737,7 @@
       "media_type": "application/json"
     },
     "valid": false,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "artifact conflicting content",
@@ -1750,7 +1750,7 @@
       "text": "x"
     },
     "valid": false,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "artifact JSON wrong media",
@@ -1762,7 +1762,7 @@
       "json": {}
     },
     "valid": false,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "unsupported direct injection {'text': 'x'}",
@@ -1792,7 +1792,7 @@
       }
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "unsupported direct injection {'base64': 'eA==', 'media_type': 'application/json'}",
@@ -1823,7 +1823,7 @@
       }
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "invalid invocation content {'base64': 'eA=='}",
@@ -1835,7 +1835,7 @@
       "base64": "eA=="
     },
     "valid": false,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "invalid invocation content {'json': {}, 'media_type': 'text/plain'}",
@@ -1848,7 +1848,7 @@
       "media_type": "text/plain"
     },
     "valid": false,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "invalid invocation content {'artifact': 'payload-1', 'media_type': 'application/json'}",
@@ -1861,7 +1861,7 @@
       "media_type": "application/json"
     },
     "valid": false,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "missing conditional evidence claims",
@@ -1887,7 +1887,7 @@
       ]
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "conditional evidence claims",
@@ -1916,7 +1916,7 @@
       ]
     },
     "valid": true,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "missing conditional evidence objectives",
@@ -1934,7 +1934,7 @@
       ]
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "conditional evidence objectives",
@@ -1955,7 +1955,7 @@
       ]
     },
     "valid": true,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "missing conditional evidence hypotheses",
@@ -1980,7 +1980,7 @@
       ]
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "conditional evidence hypotheses",
@@ -2008,7 +2008,7 @@
       ]
     },
     "valid": true,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "missing conditional evidence coverage",
@@ -2033,7 +2033,7 @@
       ]
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "conditional evidence coverage",
@@ -2061,7 +2061,7 @@
       ]
     },
     "valid": true,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "completed with coverage gap",
@@ -2086,7 +2086,7 @@
       ]
     },
     "valid": false,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "finish artifact only",
@@ -2097,7 +2097,7 @@
       "artifact": "conclusion-1"
     },
     "valid": true,
-    "openai_valid": true
+    "object_root_valid": true
   },
   {
     "name": "finish artifact mixed",
@@ -2109,7 +2109,7 @@
       "summary": "Mixed."
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
   },
   {
     "name": "finish unavailable mixed",
@@ -2121,6 +2121,41 @@
       "summary": "Mixed."
     },
     "valid": false,
-    "openai_valid": false
+    "object_root_valid": false
+  },
+  {
+    "name": "hypothesis missing scenario",
+    "mode": "arguments",
+    "tool": "record_hypothesis",
+    "arguments": {
+      "origin": "scenario",
+      "statement": "Maybe."
+    },
+    "valid": false,
+    "object_root_valid": true
+  },
+  {
+    "name": "hypothesis forbidden scenario",
+    "mode": "arguments",
+    "tool": "record_hypothesis",
+    "arguments": {
+      "origin": "exploratory",
+      "scenario_id": "scenario-1",
+      "statement": "Maybe."
+    },
+    "valid": false,
+    "object_root_valid": true
+  },
+  {
+    "name": "hypothesis scenario association",
+    "mode": "arguments",
+    "tool": "record_hypothesis",
+    "arguments": {
+      "origin": "scenario",
+      "scenario_id": "scenario-1",
+      "statement": "Maybe."
+    },
+    "valid": true,
+    "object_root_valid": true
   }
 ]
