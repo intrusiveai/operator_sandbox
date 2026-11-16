@@ -19,5 +19,10 @@
     ],
     "max_attempt_bytes": 1048576
   },
-  "operation_timeout_ms": 30000
+  "operation_timeout_ms": 30000,
+  "interceptor": {
+    "protocol": "http",
+    "address": "127.0.0.1",
+    "port": 8080
+  }
 }

@@ -3,6 +3,8 @@ package attemptadapter
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"regexp"
 	"slices"
 	"time"
@@ -82,7 +84,10 @@ type command struct {
 // Plan is pure, immutable translation. Its commands contain exact verified bytes
 // and declared selectors. Rationale/technique prose never selects a native tactic.
 type Plan struct {
-	https                          *httpsExecution
+	started                        time.Time
+	allowanceMS                    int64
+	deadlineSource                 string
+	httpTarget                     *httpExecution
 	catalog                        *contracts.Catalog
 	request                        request
 	context                        interceptor.AttemptContext
@@ -107,8 +112,8 @@ func (p *Plan) ContextDigest() string    { return p.context.Digest }
 func Compile(catalog *contracts.Catalog, raw []byte, in Inputs) (*Plan, error) {
 	return compile(catalog, raw, in, nil)
 }
-func compile(catalog *contracts.Catalog, raw []byte, in Inputs, external *httpsExecution) (*Plan, error) {
-	if catalog == nil || in.Live == nil || in.Compatibility == nil || in.Policy == nil || in.SessionRevision == 0 || in.CreatedAt.IsZero() || !in.Deadline.After(in.CreatedAt) || in.Deadline.Sub(in.CreatedAt) > interceptor.MaxOperationTimeout || !digestID.MatchString(in.ReleaseDigest) || in.FeedbackBytes < 0 || in.FeedbackBytes > 64*feedback.MaxArtifact {
+func compile(catalog *contracts.Catalog, raw []byte, in Inputs, external *httpExecution) (*Plan, error) {
+	if catalog == nil || in.Live == nil || in.Compatibility == nil || in.Policy == nil || in.SessionRevision == 0 || in.CreatedAt.IsZero() || !in.Deadline.After(in.CreatedAt) || in.Deadline.Sub(in.CreatedAt) > 30*time.Minute || !digestID.MatchString(in.ReleaseDigest) || in.FeedbackBytes < 0 || in.FeedbackBytes > 64*feedback.MaxArtifact {
 		return nil, ErrAttempt
 	}
 	if _, err := catalog.Validate(contracts.AttemptPlanSchema, raw, contracts.OrdinaryLimit); err != nil {
@@ -147,7 +152,7 @@ func compile(catalog *contracts.Catalog, raw []byte, in Inputs, external *httpsE
 		return nil, err
 	}
 	p := &Plan{catalog: catalog, request: r, binding: in.Live.Binding(), policy: policy, actions: map[string]string{}, deadline: in.Deadline.UTC(), revision: in.SessionRevision, feedbackBytes: in.FeedbackBytes}
-	p.https = external
+	p.httpTarget = external
 	p.rawRequest = bytes.Clone(raw)
 	p.sourceDigest, p.projectionDigest = in.Live.Export().SourceDigest(), in.Live.Export().ProjectionDigest()
 	artifactBytes := map[string][]byte{}
@@ -189,7 +194,7 @@ func compile(catalog *contracts.Catalog, raw []byte, in Inputs, external *httpsE
 	}
 	p.context.Digest = interceptor.AttemptContextDigest(p.context)
 	if external != nil {
-		return compileHTTPSPlan(p, in, artifactBytes)
+		return compileHTTPPlan(p, in, artifactBytes)
 	}
 	if err = p.add("attempt.register", p.context, false); err != nil {
 		return nil, err
@@ -198,13 +203,20 @@ func compile(catalog *contracts.Catalog, raw []byte, in Inputs, external *httpsE
 	if len(r.PreActions) > 0 && !r.Cleanup.Delete && !in.Policy.scopes.AllowRetainedInjections {
 		return nil, ErrPolicy
 	}
-	for _, action := range r.PreActions {
+	for actionIndex, action := range r.PreActions {
 		if seen[action.ActionID] || action.Parameters.PayloadDigest != r.Payload.Digest {
 			return nil, ErrAttempt
 		}
 		seen[action.ActionID] = true
 		d := action.Parameters
+		d.Payload = artifactBytes[r.Payload.Digest]
 		if err = in.Policy.authorizeInjection(d, in.KnownTurnIDs); err != nil {
+			var issue *contracts.ArgumentError
+			if errors.As(err, &issue) {
+				copy := *issue
+				copy.FieldPath = fmt.Sprintf("/pre_actions/%d/parameters", actionIndex) + issue.FieldPath
+				return nil, &copy
+			}
 			return nil, err
 		}
 		payload := artifactBytes[r.Payload.Digest]

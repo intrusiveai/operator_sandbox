@@ -108,7 +108,7 @@ func TestCloudAPIKeysAndLocalGoogleADC(t *testing.T) {
 			if tc.mode != "secret-store" && resolver.calls != 0 {
 				t.Fatal("identity route read a model key")
 			}
-			public, err := p.PublicModel([]byte("[]"))
+			public, err := p.PublicModel()
 			if err != nil {
 				t.Fatal(err)
 			}

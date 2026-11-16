@@ -12,7 +12,7 @@ add('artifact reference','input',dict(artifact_receipt='artifact-returned'),arti
 add('input alternatives exclusive','input',dict(encoding='json',value={},artifact_receipt='artifact-returned'),False)
 add('empty input rejected','input',{},False)
 add('noncanonical base64','input',dict(encoding='base64',data='aGm=',media_type='application/octet-stream'),False)
-add('UTF8 decoded byte bound','input',dict(encoding='utf8',text='é'*16385),False)
+add('UTF8 decoded byte bound','input',dict(encoding='utf8',text='é'*524289),False)
 nested=0
 for i in range(16):nested=[nested]
 add('depth sixteen','input',dict(encoding='json',value=nested),bytes_utf8='['*16+'0'+']'*16,media_type='application/json',canonicalization='jcs-v1')

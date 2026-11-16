@@ -35,8 +35,8 @@ func TestPythonProcessLargeHistoryCompaction(t *testing.T) {
 					if q["tool_choice"] != "none" {
 						return nil, fmt.Errorf("compaction exposed tools")
 					}
-					if len(encode(q)) < 512<<10 {
-						return nil, fmt.Errorf("history was silently omitted")
+					if !strings.Contains(string(encode(q)), "omitted_complete_groups") || len(encode(q)) >= 1<<20 {
+						return nil, fmt.Errorf("compaction selection was not explicit and bounded")
 					}
 					return processText("History contains unverified model text; the objective remains untested."), nil
 				case 3:

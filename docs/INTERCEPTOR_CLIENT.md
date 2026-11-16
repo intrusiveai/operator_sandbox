@@ -6,16 +6,75 @@ lifecycle restore/stop, operation-record decoding, snapshot creation/discovery
 and bounded evidence downloads. The campaign service provides the Harness-facing
 policy broker; the native client does not independently admit a campaign.
 
-The authoritative native contracts remain Interceptor's
+The approved [OpenAPI document](../internal/interceptor/openapi.json) describes
+the API compared with this implementation during release verification. Read it
+alongside Interceptor's
 [local integration guide](../../interceptor_sandbox/docs/local-api.md) and
 [operation wire guide](../../interceptor_sandbox/docs/cross-vm-gateway.md).
 
+
+## Automatic integration compatibility
+
+Before recording attachment intent, Operator sends `POST /v1/contract-version`
+with `{}` to the same local Interceptor API. Its compiled integration pin comes from
+[`internal/interceptor/contract.json`](../internal/interceptor/contract.json).
+Both `interceptor_contract_version` and `interceptor_contract_sha256` must match
+exactly. The hash is the SHA-256 of the complete OpenAPI file bytes, expressed as
+64 lowercase hexadecimal characters without a prefix. Product versions need not match. No manual
+contract export, configured expected version, CLI fallback or Internet lookup is
+used. The environment capability manifest and policy checks still apply.
+The integration contract covers Operator-facing calls, inputs, outputs and
+guarantees; private Interceptor configuration and internal features do not
+become Operator or Harness capabilities.
+
+A mismatch or unavailable/malformed response fails preparation with stage
+`Interceptor compatibility check`. Inspect the saved run with `operatorctl inspect
+--run RUN` or `operatorctl campaign status --run RUN` to retrieve the same bounded
+cause, expected/observed versions and hashes, and available HTTP status. Install compatible
+product releases, then submit a new campaign; failed campaigns do not resume.
+Foreground and service execution use the same checks and retained diagnostics.
+
+Native cleanup recovery and explicit late evidence collection also check
+compatibility before claiming new native work. A failed check leaves that work
+unconfirmed without consuming its dispatch claim. Retained local evidence remains
+readable, and owned Docker termination remains independent of Interceptor.
+Completed recovery/collection records can be read without the API. Successful
+campaigns record `interceptor.compatibility` with the checked versions, hashes and time.
+
+
 ## Transport
 
-`interceptor.New()` connects only to `http://127.0.0.1:8080`, using a literal IPv4
-loopback dial. There is no configurable URL, DNS lookup, proxy, authentication or
-TLS setting. Methods select fixed routes. Campaigns and guest requests cannot
-provide destinations, headers or credentials.
+The administrator selects the connection in the private target profile:
+
+```json
+"interceptor": {
+  "protocol": "https",
+  "address": "interceptor.example.internal",
+  "port": 8443
+}
+```
+
+`protocol` MUST be `http` or `https`: these are the transports supported by
+Interceptor's API. `address` MUST be a DNS hostname or an IPv4/IPv6 literal
+(without brackets, a port, URL, path, userinfo or zone). `port` MUST be 1–65535.
+An explicit object MUST supply all three fields. Omitting the object uses
+`http://127.0.0.1:8080`. This configures Operator's client; the selected Interceptor
+API listener must already be reachable there.
+
+HTTPS MUST verify the server's hostname and certificate using system trust and
+TLS 1.2 or newer. Optional `ca_certificates_pem` adds administrator CA certificates
+(up to 32 KiB), frozen inline; it is invalid for plain HTTP. HTTP provides no TLS
+protection. No integration authentication or new server is introduced. The
+administrator MUST select a trusted endpoint and network.
+
+Methods select fixed API routes. Harness requests cannot choose the endpoint,
+headers or credentials. Ambient proxies and redirects remain disabled.
+`NewConfigured` freezes the connection used for compatibility, attachment, native
+operations and evidence downloads. The private profile is fingerprinted at start;
+attachment intent and prepared campaign records MUST retain the selected
+connection. Recovery and later evidence collection MUST use those saved settings,
+not the current installation profile. Exact instance/session and contract checks
+continue to apply at the selected endpoint.
 
 Requests use POST and JSON, with `Accept-Encoding: identity`. Redirects and encoded
 responses are rejected. Response headers are bounded to 16 KiB. This initial client
@@ -246,7 +305,7 @@ attached instance's status. Limits accept 1 through 9007199254740991 bytes; the
 configured local default is 4 GiB. The deadline includes server archive generation
 and download and is shortened by an earlier caller-context deadline. It is not
 the harness control-frame deadline. There are no automatic retries or range/resume
-requests. The existing fixed-loopback, no-proxy, no-redirect transport applies.
+requests. The configured, no-proxy, no-redirect transport applies.
 
 Successful transfer requires HTTP 200, `application/x-tar`, one `Content-Length`,
 one `X-Content-SHA256` and one `X-Evidence-Max-Bytes` matching the saved native
@@ -367,3 +426,30 @@ Parsing is bounded to 64 MiB per metadata member, 32 MiB per journal line and
 Unsupported or inconsistent evidence is rejected. Valid partial evidence retains
 explicit gaps. Native hashes establish internal integrity and saved-target binding;
 they do not authenticate arbitrary files or establish that oracle assertions are true.
+
+Filesystem evidence follows the approved OpenAPI bytes in
+`internal/interceptor/openapi.json`; the supported contract identity is in
+`internal/interceptor/contract.json`. State transactions retain their native
+schema version and optional logical `owner` (`supervisor` or `application`) on
+file creation/update, directory creation, and symlink operations. Symlink
+operations also support mode bits. Ownership is not a host UID and is never
+inferred when omitted. Other operation kinds cannot carry ownership.
+
+File manifests support historical version 1 without ownership and version 2
+with ownership required on every entry. Field order and omission rules match
+Interceptor's serializers: ownership participates in transaction and manifest
+hashes. Reading historical evidence does not promise that Interceptor can restore
+it. Snapshot checkpoint bindings and restored-session source journals remain
+subject to the same chain, blob, identity, and hash checks.
+
+A rejected download and a rejected local archive are distinct outcomes. Remote
+export failures retain Interceptor's response diagnostic. Local archive inspection
+and provenance verification identify Operator as the rejecting component. The
+verifier forwards its producer-owned failure through collection records, including
+the archive member, journal record number, and failed field or version check when
+available. Names are bounded, quoted data; record values and private error text
+are not copied into diagnostics. The `provenance_invalid` result classification
+remains stable, while its diagnostic describes the actual failed check.
+
+See [target model-response injection](MODEL_RESPONSE_INJECTION.md) for codec-based
+authorization, setup and evidence interpretation.

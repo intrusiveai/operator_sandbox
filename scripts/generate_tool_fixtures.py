@@ -14,10 +14,11 @@ for codec in codecs:
     for b in branches:
         if not set(b['x-operator-required-operations']).issubset(enabled):continue
         name=b['properties']['name']['const'];names.append(name);parameters=b.get('x-operator-provider-parameters',b['properties']['arguments']);description=b['description']
-        if codec in codecs[:2]:parameters=b.get('x-operator-openai-parameters',parameters)
+        if codec in codecs[:3]:parameters=b.get('x-operator-object-root-parameters',parameters)
         parameters=deepcopy(parameters)
         if name=='attempt_execute' and 'engine.injection_delete' not in enabled:
-            for field in ('pre_actions','injection_input','retain_injections'):parameters['properties'].pop(field,None)
+            for field in ('setup','injection','retain_injections'):parameters['properties'].pop(field,None)
+            if 'allOf' in parameters:parameters['allOf']=[rule for rule in parameters['allOf'] if 'setup' not in rule.get('if',{}).get('properties',{})]
         if codec=='openai-chat-text-tools-v1':tools.append({'type':'function','function':{'name':name,'description':description,'parameters':parameters,'strict':False}})
         elif codec=='openai-responses-text-tools-v1':tools.append({'type':'function','name':name,'description':description,'parameters':parameters,'strict':False})
         elif codec=='anthropic-messages-text-tools-v1':tools.append({'name':name,'description':description,'input_schema':parameters})
@@ -31,57 +32,104 @@ for name,codec,ops in [('unknown-codec','unsupported',operations),('unknown-oper
 ordinary=json.loads((ROOT/'fixtures/ordinary-protocol.json').read_text())
 def body(op):
     return deepcopy(next(c['request']['body'] for c in ordinary if isinstance(c.get('request'),dict) and c['request'].get('operation')==op and c['valid']))
-def arg(name,tool,value,valid=True,openai_valid=None):
-    case=dict(name=name,mode='arguments',tool=tool,arguments=value,valid=valid)
-    if openai_valid is not None:case['openai_valid']=openai_valid
+def arg(name,tool,value,valid=True,object_root_valid=None):
+    if tool=='record_append':
+     value=dict(value);tool='record_'+value.pop('kind')
+     if tool=='record_progress':
+      assessment={('summary' if k=='assessment_summary' else k):value.pop(k) for k in ('interpretation','confidence','assurance','assessment_summary','gaps') if k in value}
+      if assessment:value['assessment']=assessment
+    if tool=='finish' and 'summary' not in value:
+     if 'artifact' in value:tool='finish_artifact'
+     elif 'unavailable_reason' in value:tool='finish_unavailable'
+    case=dict(name=name,mode='arguments',tool=tool,arguments=deepcopy(value),valid=valid)
+    if object_root_valid is not None:case['object_root_valid']=valid
     cases.append(case)
-arg('bounded reference','reference_read',dict(reference_id='ref-1',offset=0,max_bytes=262144))
-arg('no arbitrary path','reference_read',dict(path='/etc/passwd',offset=0,max_bytes=1),False)
-arg('bounded reference ceiling','reference_read',dict(reference_id='ref-1',offset=0,max_bytes=262145),False)
-for content in [dict(encoding='utf8',text='payload'),dict(encoding='json',value={'payload':'data'}),dict(encoding='json',value='JSON string'),dict(encoding='base64',data='eA==')]:
- arg('data artifact '+str(content),'artifact_publish',dict(purpose='payload',media_type='application/json',content=content))
+arg('bounded reference','reference_read',dict(reference='ref-1',offset=0,max_bytes=262144))
+arg('read defaults','observation_read',dict(observation='obs-1'))
+arg('no arbitrary path','reference_read',dict(path='/etc/passwd'),False)
+arg('bounded reference ceiling','reference_read',dict(reference='ref-1',max_bytes=262145),False)
+for content in [dict(text='payload'),dict(json={'payload':'data'}),dict(json='JSON string'),dict(json=None),dict(base64='eA==')]:
+ arg('data artifact '+str(content),'artifact_publish',dict(purpose='payload',media_type='application/json',**content))
 arg('no artifact source file','artifact_publish',dict(purpose='payload',media_type='application/json',source_file='/tmp/file'),False)
-attempt=body('engine.attempt_execute')
+attempt=dict(origin='exploratory',operation_id='invoke',json={})
 arg('direct invocation','attempt_execute',attempt)
 def attempt_case(label,mutate,valid,projected=True):
  value=deepcopy(attempt);mutate(value);arg(label,'attempt_execute',value,valid,projected)
 attempt_case('scenario association',lambda a:a.update(origin='scenario',scenario_id='scenario-1'),True)
-attempt_case('parent receipt',lambda a:a.update(parent_attempt_receipt_id='execution-receipt'),True)
-action=dict(action_id='setup',action_type='interceptor.injection/v1alpha1',parameters=dict(surface='model_tool_result',mode='simulation',scope='once',selector=dict(tool_name='search',call_ordinal='first'),placement=dict(operation='replace',pointer='')))
-attempt_case('setup requires injection input',lambda a:a.update(pre_actions=[action]),False)
-attempt_case('setup with injection input',lambda a:a.update(pre_actions=[action],injection_input=dict(encoding='json',value='replacement')),True)
-attempt_case('no irrelevant injection input',lambda a:a.update(injection_input=dict(encoding='json',value='replacement')),False)
+attempt_case('parent handle',lambda a:a.update(parent='execution-1'),True)
+action=dict(surface='model_tool_result',mode='simulation',scope='once',selector=dict(tool_name='search',call_ordinal='first'),placement=dict(operation='replace',pointer=''))
+attempt_case('setup requires injection',lambda a:a.update(setup=[action]),False)
+attempt_case('setup with injection',lambda a:a.update(setup=[action],injection=dict(json='replacement')),True)
+database=dict(surface='database_response',mode='simulation',scope='once',selector=dict(service='database',call_ordinal='first'),placement=dict(operation='append_text',pointer='/rows/0/0'))
+attempt_case('database result setup',lambda a:a.update(setup=[database],injection=dict(json='replacement')),True)
+for field in ('method','tool_name','turn_id'):
+ bad=deepcopy(database);bad['selector'][field]='invalid'
+ attempt_case('database disallows '+field,lambda a:a.update(setup=[bad],injection=dict(json='replacement')),False,False)
+attempt_case('no irrelevant injection',lambda a:a.update(injection=dict(json='replacement')),False)
 attempt_case('no cleanup flags without setup',lambda a:a.update(retain_injections=False),False)
 attempt_case('unknown attempt field',lambda a:a.update(unexpected=True),False,False)
-for key,value in [('api_version','other'),('generator',{}),('generation',1),('thread_id','thread'),('attempt_index',1),('request_id','r1'),('attempt_id','a1')]:
- arg('reserved '+key,'attempt_execute',dict(attempt,**{key:value}),False,False)
-for name in ('injection_delete','observation_read','record_append','restore_request','snapshot_request','snapshot_list','snapshot_inspect'):
- arg(name+' arguments',name,body('engine.'+name))
-for kind in ('hypothesis','progress','lineage','coverage'):
-    record=deepcopy(next(c['request']['body'] for c in ordinary if c['name']=='record '+kind+' request'))
-    arg('record kind '+kind,'record_append',record,True,True)
-    wrong=deepcopy(record);wrong['record_kind']='progress' if kind!='progress' else 'hypothesis'
-    arg('record kind mismatch '+kind,'record_append',wrong,False,True)
-    missing=deepcopy(record);missing['record'].pop(next(iter(missing['record'])))
-    arg('record missing required field '+kind,'record_append',missing,False,False)
-    extra=deepcopy(record);extra['record']['unexpected']=True
-    arg('record unknown field '+kind,'record_append',extra,False,False)
-coverage=deepcopy(next(c['request']['body'] for c in ordinary if c['name']=='record coverage request'))
-coverage['record']['entries'][0]['attempt_receipt_refs']=[]
-arg('tested coverage requires evidence','record_append',coverage,False,False)
-progress=deepcopy(next(c['request']['body'] for c in ordinary if c['name']=='record typed interpretation'))
-progress['record']['observation_refs']=[]
-arg('supported assessment requires observations','record_append',progress,False,False)
+attempt_case('missing scenario',lambda a:a.update(origin='scenario'),False)
+attempt_case('forbidden scenario',lambda a:a.update(scenario_id='s'),False)
+attempt_case('empty observations',lambda a:a.update(observations=[]),False,False)
+attempt_case('conflicting input',lambda a:a.update(text='x'),False)
+for key,value in [('input',{'encoding':'json','value':{}}),('generation',1),('thread_id','thread'),('attempt_index',1),('request_id','r1'),('attempt_id','a1')]:
+ arg('obsolete '+key,'attempt_execute',dict(attempt,**{key:value}),False,False)
+for name,args in [('injection_delete',dict(injection='inj-1')),('restore_request',dict(snapshot='snap-1')),('snapshot_request',{}),('snapshot_list',{}),('snapshot_inspect',dict(snapshot='snap-1'))]:arg(name+' arguments',name,args)
+for kind,fields in [('hypothesis',dict(origin='exploratory',statement='Maybe.')),('progress',dict(summary='So far.')),('lineage',dict(hypothesis='hyp-1',attempt='exec-1',mutation_summary='Changed.')),('coverage',dict(entries=[]))]:
+ record=dict(kind=kind,**fields);arg('record '+kind,'record_append',record,True,True)
+ wrong=deepcopy(record);wrong['kind']='progress' if kind!='progress' else 'hypothesis';arg('wrong record '+kind,'record_append',wrong,False,True)
+ extra=dict(record,unexpected=True);arg('unknown record field '+kind,'record_append',extra,False,False)
+arg('partial progress assessment','record_append',dict(kind='progress',summary='So far.',confidence='low'),False,True)
+arg('orphan gaps','record_append',dict(kind='progress',summary='So far.',gaps=[]),False,True)
+arg('full progress assessment','record_append',dict(kind='progress',summary='So far.',interpretation='inconclusive',confidence='low',assurance='No evidence',assessment_summary='Untested'),True,True)
 draft=dict(summary='No target experiment was run.',objectives=[dict(objective_id='objective-1',outcome='not-tested',summary='Not tested.')])
-arg('minimal finish','finish',dict(finish_reason='budget-limit',assessment=draft))
-arg('honest unavailable finish','finish',dict(finish_reason='harness-error',unavailable=dict(reason='invalid-call-limit')))
-arg('finish requires one assessment source','finish',dict(finish_reason='budget-limit'),False,True)
-arg('finish rejects conflicting sources','finish',dict(finish_reason='budget-limit',assessment=draft,artifact_receipt='artifact-1'),False,True)
-arg('model cannot supply conclusion binding','finish',dict(finish_reason='budget-limit',assessment=dict(draft,binding={})),False,False)
-arg('record wrapper cannot fabricate finalization','record_append',dict(record_kind='conclusion',record={}),False)
+arg('minimal finish','finish',dict(finish_reason='budget-limit',**draft))
+arg('honest unavailable finish','finish',dict(finish_reason='harness-error',unavailable_reason='invalid-call-limit'))
+arg('finish requires one source','finish',dict(finish_reason='budget-limit'),False,True)
+arg('finish conflicting sources','finish',dict(finish_reason='budget-limit',**draft,artifact='artifact-1'),False,True)
+arg('no old assessment wrapper','finish',dict(finish_reason='budget-limit',assessment=draft),False,False)
+arg('no conclusion record','record_append',dict(kind='conclusion'),False)
 arg('internal model operation hidden','model_generate',{},False)
 arg('artifact chunk hidden','artifact_put_part',{},False)
 arg('shell hidden','exec',dict(command='true'),False)
 arg('non-object arguments','snapshot_request',[],False)
+# Reviewed regression cases from successful Claude/Astra customer-support runs.
+for field,value in [('origin','scenario'),('scenario_id','support-baseline'),('attempt','execution-1')]:
+ arg('progress forbids '+field,'record_progress',dict(summary='Output inspected.',**{field:value}),False,False)
+arg('summary-only progress','record_progress',dict(summary='Output inspected.'),True,True)
+arg('partial nested progress assessment','record_progress',dict(summary='Output inspected.',assessment=dict(interpretation='inconclusive')),False,False)
+arg('supported progress missing citations','record_progress',dict(summary='Output inspected.',assessment=dict(interpretation='supported',confidence='high',assurance='observed',summary='Observed.')),False,False)
+arg('supported progress with citations','record_progress',dict(summary='Output inspected.',observations=['obs-1'],assessment=dict(interpretation='supported',confidence='high',assurance='observed',summary='Observed.')),True,True)
+arg('scenario selection','scenario_select',dict(reference='scenario:baseline'),True,True)
+arg('scenario selection rejects pagination','scenario_select',dict(reference='scenario:baseline',offset=1),False,False)
+arg('conclusion media mismatch','artifact_publish',dict(purpose='conclusion',media_type='text/plain',text='assessment'),False,False)
+arg('artifact missing content','artifact_publish',dict(purpose='payload',media_type='application/json'),False,False)
+arg('artifact conflicting content','artifact_publish',dict(purpose='payload',media_type='application/json',json={},text='x'),False,False)
+arg('artifact JSON wrong media','artifact_publish',dict(purpose='payload',media_type='text/plain',json={}),False,False)
+for content in ({'text':'x'},{'base64':'eA==','media_type':'application/json'}):
+ arg('unsupported direct injection '+str(content),'attempt_execute',dict(attempt,setup=[action],injection=content),False,False)
+for content in ({'base64':'eA=='},{'json':{},'media_type':'text/plain'},{'artifact':'payload-1','media_type':'application/json'}):
+ arg('invalid invocation content '+str(content),'attempt_execute',dict(origin='exploratory',operation_id='invoke',**content),False,False)
+for collection,entry in [
+ ('claims',dict(statement='Observed.',interpretation='supported',assurance='observed',confidence='high')),
+ ('objectives',dict(objective_id='objective-1',outcome='supported',summary='Observed.')),
+ ('hypotheses',dict(origin='exploratory',outcome='supported',summary='Observed.')),
+ ('coverage',dict(objective_id='objective-1',status='tested',reason='Invoked.'))]:
+ value=dict(finish_reason='objectives-addressed',**deepcopy(draft));value[collection]=[entry]
+ arg('missing conditional evidence '+collection,'finish',value,False,False)
+ entry['observations']=['obs-1']
+ arg('conditional evidence '+collection,'finish',value,True,True)
+arg('completed with coverage gap','finish',dict(finish_reason='budget-limit',**draft,status='completed',uncertainties=[dict(kind='coverage-limit',description='A required test was not run.')]),False,False)
+arg('finish artifact only','finish_artifact',dict(finish_reason='objectives-addressed',artifact='conclusion-1'),True,True)
+arg('finish artifact mixed','finish_artifact',dict(finish_reason='objectives-addressed',artifact='conclusion-1',summary='Mixed.'),False,False)
+arg('finish unavailable mixed','finish_unavailable',dict(finish_reason='harness-error',unavailable_reason='internal-error',summary='Mixed.'),False,False)
+arg('hypothesis missing scenario','record_hypothesis',dict(origin='scenario',statement='Maybe.'),False,False)
+arg('hypothesis forbidden scenario','record_hypothesis',dict(origin='exploratory',scenario_id='scenario-1',statement='Maybe.'),False,False)
+arg('hypothesis scenario association','record_hypothesis',dict(origin='scenario',scenario_id='scenario-1',statement='Maybe.'),True,True)
+# OpenAI and Anthropic's root-object subset cannot express these cross-field conditions.
+# Adjacent descriptions are tested independently; runtime still rejects them.
+object_root_documented = {'hypothesis missing scenario','hypothesis forbidden scenario','setup requires injection','no irrelevant injection','no cleanup flags without setup','missing scenario','forbidden scenario','conflicting input','supported progress missing citations','conclusion media mismatch','artifact missing content','artifact conflicting content','artifact JSON wrong media','completed with coverage gap'}
+for case in cases:
+ if case['name'] in object_root_documented or case['name'].startswith('invalid invocation content '):case['object_root_valid']=True
 (ROOT/'fixtures/model-tools.json').write_text(json.dumps(cases,indent=2,ensure_ascii=False)+'\n')
 print(len(cases),'fixed tool fixtures')

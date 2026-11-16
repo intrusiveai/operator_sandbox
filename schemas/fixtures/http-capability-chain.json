@@ -1,0 +1,125 @@
+{
+  "mapping": {
+    "api_version": "operator.dev/http-mapping/v1alpha1",
+    "origin": "https://agent.example.com",
+    "allowed_private_cidrs": [],
+    "authentication": {
+      "mode": "none"
+    },
+    "operations": [
+      {
+        "id": "chat",
+        "method": "POST",
+        "path": "/chat",
+        "input": {
+          "format": "json",
+          "field": [
+            "input",
+            "text"
+          ],
+          "fixed": {
+            "mode": "test"
+          }
+        },
+        "response": {
+          "format": "json",
+          "field": [
+            "answer",
+            "text"
+          ]
+        },
+        "maximum_input_bytes": 65536,
+        "maximum_request_bytes": 524288,
+        "maximum_response_bytes": 1048576
+      }
+    ]
+  },
+  "source": {
+    "api_version": "operator.dev/http-capabilities/v1alpha1",
+    "target_id": "https-agent",
+    "mapping_digest": "sha256:7684d18c7d66c16be19fad20c81c46791fd1e9bbef2d367ebad2bd02466ac788",
+    "operations": [
+      {
+        "id": "chat",
+        "maximum_input_bytes": 65536,
+        "delivery": {
+          "description": "Administrator-declared HTTP application operation.",
+          "input": {
+            "media_type": "text/plain",
+            "encoding": "utf8",
+            "max_bytes": 65536,
+            "basis": "provider-declared"
+          },
+          "output": {
+            "media_type": "application/json",
+            "encoding": "json",
+            "max_bytes": 1048576,
+            "basis": "unknown"
+          }
+        }
+      }
+    ]
+  },
+  "public": {
+    "schema_version": "operator.dev/target-capability-manifest/v1alpha1",
+    "source": {
+      "adapter": "http/v1",
+      "schema_version": "operator.dev/http-capabilities/v1alpha1",
+      "capability_source_digest": "sha256:9c56ee385285e38ffe5739bf254b7cd1ac322f102a03ee4a9cc3909fd2224238",
+      "raw_digest": "sha256:9c56ee385285e38ffe5739bf254b7cd1ac322f102a03ee4a9cc3909fd2224238"
+    },
+    "capabilities": {
+      "target_id": "https-agent",
+      "adapter": "http/v1",
+      "operations": [
+        {
+          "ref": "operation:chat",
+          "operation_id": "chat",
+          "maximum_input_bytes": 65536,
+          "delivery_status": "described",
+          "delivery": {
+            "description": "Administrator-declared HTTP application operation.",
+            "input": {
+              "media_type": "text/plain",
+              "encoding": "utf8",
+              "max_bytes": 65536,
+              "basis": "provider-declared"
+            },
+            "output": {
+              "media_type": "application/json",
+              "encoding": "json",
+              "max_bytes": 1048576,
+              "basis": "unknown"
+            }
+          }
+        }
+      ],
+      "actions": [],
+      "services": [],
+      "file_namespaces": [],
+      "features": [],
+      "feedback_profiles": [
+        "black-box",
+        "diagnostic"
+      ],
+      "evidence_classes": [
+        {
+          "ref": "evidence:operation_error",
+          "feedback_kind": "operation_error",
+          "profiles": [
+            "diagnostic"
+          ]
+        },
+        {
+          "ref": "evidence:target_output",
+          "feedback_kind": "target_output",
+          "profiles": [
+            "black-box",
+            "diagnostic"
+          ]
+        }
+      ]
+    },
+    "capability_projection_digest": "sha256:ec271e3784ddf47337958abaf2df6ab68fdf276445e5a33e487cb96926aabced"
+  }
+}

@@ -7,12 +7,14 @@
     "label": {
       "type": "string",
       "minLength": 0,
-      "maxLength": 256
+      "maxLength": 256,
+      "description": "Administrator-readable label for the snapshot."
     },
     "description": {
       "type": "string",
       "minLength": 0,
-      "maxLength": 4096
+      "maxLength": 4096,
+      "description": "Explanation of this uncertainty or retained item."
     }
   },
   "required": []

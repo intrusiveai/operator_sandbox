@@ -3,7 +3,6 @@ package contracts
 import (
 	"encoding/binary"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -11,7 +10,7 @@ import (
 )
 
 // ErrTransport is terminal for an established transport. It carries no peer data.
-var ErrTransport = errors.New("contract transport closed")
+var ErrTransport = newPublicError("contract transport closed")
 
 func laneInfo(lane string) (hostWrites bool, control bool, maximum int, ok bool) {
 	switch lane {

@@ -16,10 +16,12 @@ import (
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/attemptadapter"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
-	"github.com/intrusiveai/operator_sandbox/internal/httpstarget"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
+	"github.com/intrusiveai/operator_sandbox/internal/httptarget"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/nativeexec"
+	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 	"github.com/intrusiveai/operator_sandbox/internal/preparation"
 	"github.com/intrusiveai/operator_sandbox/internal/termination"
 	"github.com/intrusiveai/operator_sandbox/internal/transport"
@@ -41,7 +43,7 @@ type Runtime interface {
 	termination.Killer
 }
 type Config struct {
-	HTTPS     *httpstarget.Client
+	HTTP      *httptarget.Client
 	Prepared  *preparation.Stored
 	Peer      Peer
 	Runtime   Runtime
@@ -53,11 +55,14 @@ type Config struct {
 	CheckHost func() error // Installed host lifetime gate; called before admission and every ordinary request.
 }
 type Service struct {
+	failureTrigger       atomic.Pointer[campaign.FailureTrigger]
+	sizes                contracts.SizeLimits
+	operationTimeouts    map[string]int64
 	resolvedAttempts     map[string]resolvedAttempt
 	modelDiagnostic      atomic.Pointer[modelprovider.Diagnostic]
 	conclusionDiagnostic atomic.Pointer[campaign.ConclusionDiagnostic]
 	workflowDiagnostic   atomic.Pointer[campaign.WorkflowDiagnostic]
-	httpsParent          *attemptadapter.Parent
+	httpParent           *attemptadapter.Parent
 	config               Config
 	writer               *campaign.Writer
 	attempts             *campaign.Attempts
@@ -91,6 +96,7 @@ type Service struct {
 	evidenceMu           sync.Mutex
 }
 type TerminalResult struct {
+	Failures             *[]diagnostictext.Failure      `json:"failures,omitempty"`
 	Dispatched           *int64                         `json:"attempts_dispatched,omitempty"`
 	AssessmentState      string                         `json:"assessment_state,omitempty"`
 	ConclusionDiagnostic *campaign.ConclusionDiagnostic `json:"conclusion_diagnostic,omitempty"`
@@ -104,7 +110,7 @@ type TerminalResult struct {
 }
 
 func New(ctx context.Context, c Config) (*Service, error) {
-	if c.Prepared == nil || (c.Peer == nil && c.HTTPS == nil) || c.Runtime == nil || c.StateRoot == "" || ctx.Err() != nil {
+	if c.Prepared == nil || (c.Peer == nil && c.HTTP == nil) || c.Runtime == nil || c.StateRoot == "" || ctx.Err() != nil {
 		return nil, ErrService
 	}
 	if c.Evidence == nil {
@@ -116,11 +122,11 @@ func New(ctx context.Context, c Config) (*Service, error) {
 	if c.Evidence.MaxArchiveBytes < 1 || c.Evidence.MaxArchiveBytes > contracts.MaxSafeInteger || c.Evidence.Timeout <= 0 || c.Evidence.Timeout > 5*time.Minute || c.Evidence.TotalTimeout <= 0 || c.Evidence.TotalTimeout > 30*time.Minute {
 		return nil, ErrService
 	}
-	if m := c.Prepared.Target().Profile().HTTPS(); m != nil {
-		if c.HTTPS == nil || c.HTTPS.MappingDigest() != m.Digest() {
+	if m := c.Prepared.Target().Profile().HTTP(); m != nil {
+		if c.HTTP == nil || c.HTTP.MappingDigest() != m.Digest() {
 			return nil, ErrService
 		}
-	} else if c.HTTPS != nil {
+	} else if c.HTTP != nil {
 		return nil, ErrService
 	}
 	w := c.Prepared.Writer()
@@ -131,7 +137,7 @@ func New(ctx context.Context, c Config) (*Service, error) {
 	}
 	operations := map[string]bool{}
 	for _, name := range parsed["operations"].([]any) {
-		if !slices.Contains([]string{"engine.attempt_execute", "engine.injection_delete", "engine.observation_read", "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request", "engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit", "engine.model_generate", "engine.record_append", "engine.finish", "engine.diagnostic_report"}, name.(string)) {
+		if (&Service{}).operationHandler(name.(string)) == nil {
 			return nil, attemptadapter.ErrOperation
 		}
 		operations[name.(string)] = true
@@ -147,6 +153,7 @@ func New(ctx context.Context, c Config) (*Service, error) {
 		}
 		copyModel := *c.Model
 		copyModel.Tools = slices.Clone(c.Model.Tools)
+		copyModel.Policy = slices.Clone(c.Model.Policy)
 		c.Model = &copyModel
 	}
 	persisted, err := campaign.ReadDockerBinding(c.StateRoot, m.CampaignID)
@@ -181,14 +188,18 @@ func New(ctx context.Context, c Config) (*Service, error) {
 	if _, err = w.AppendReserving(campaign.Entry{RunRevision: m.InitialRevision, Kind: "service.terminal-reserved", Metadata: meta}, terminalReservation, terminalCapacity); err != nil {
 		return nil, err
 	}
-	s := &Service{config: c, writer: w, attempts: a, gate: make(chan struct{}, 1), operations: operations, deadline: deadline, killDone: make(chan struct{}), terminalDone: make(chan struct{})}
+	sizes, err := contracts.SizeLimitsFromContext(c.Prepared.Context())
+	if err != nil {
+		return nil, err
+	}
+	s := &Service{sizes: sizes, operationTimeouts: operationpolicy.FromContext(c.Prepared.Context()), config: c, writer: w, attempts: a, gate: make(chan struct{}, 1), operations: operations, deadline: deadline, killDone: make(chan struct{}), terminalDone: make(chan struct{})}
 	s.live.Store(c.Prepared.Target())
 	s.artifacts = newArtifactStore()
 	s.lineage = cloneLineage(nativeLineage{}, "")
 	s.history = map[string]attemptadapter.Parent{}
 	s.checkpointLineage = map[string]nativeLineage{}
 	s.gate <- struct{}{}
-	b, err := attemptadapter.NewBroker(attemptadapter.BrokerConfig{Catalog: c.Prepared.Target().Protocol().Catalog(), Protocol: c.Prepared.Target().Protocol(), Writer: w, Attempts: a, Deadline: deadline, Admitted: s.admitted.Load, Prepare: s.prepare, ResolveAttempt: s.resolveAttempt, Rejection: s.recordArgumentRejection, Cleanup: s.cleanupTarget, ReadKinds: func() []string { return s.target().ReadKinds() }})
+	b, err := attemptadapter.NewBroker(attemptadapter.BrokerConfig{Catalog: c.Prepared.Target().Protocol().Catalog(), Protocol: c.Prepared.Target().Protocol(), Writer: w, Attempts: a, Deadline: deadline, AttemptAllowanceMS: c.Prepared.Target().Profile().Settings().OperationTimeoutMS, OperationTimeouts: s.operationTimeouts, Admitted: s.admitted.Load, Prepare: s.prepare, ResolveAttempt: s.resolveAttempt, Rejection: s.recordArgumentRejection, TimeoutDiagnostic: s.recordAttemptTimeout, TargetDiagnostic: s.recordTargetFailure, IntegrationDiagnostic: s.recordIntegrationFailure, Cleanup: s.cleanupTarget, ReadKinds: func() []string { return s.target().ReadKinds() }})
 	if err != nil {
 		w.Fence().Stop(err)
 		return nil, err
@@ -199,7 +210,7 @@ func New(ctx context.Context, c Config) (*Service, error) {
 		w.Fence().Stop(err)
 		return nil, err
 	}
-	if c.HTTPS == nil {
+	if c.HTTP == nil {
 		if err = s.rememberEvidenceTarget(c.Prepared.Target(), nil); err != nil {
 			w.Fence().Stop(err)
 			return nil, err
@@ -217,7 +228,7 @@ func New(ctx context.Context, c Config) (*Service, error) {
 		s.timer.Stop()
 		s.shutdownOnce.Do(func() { go s.finish() })
 	}()
-	if c.HTTPS == nil {
+	if c.HTTP == nil {
 		go s.watchTarget()
 	}
 	return s, nil
@@ -245,13 +256,17 @@ func (s *Service) watchTarget() {
 				continue
 			}
 			if err != nil || !status.Ready() || !status.Matches(s.target().InstanceID(), s.target().Live().Binding()) {
-				s.Stop(ErrService)
+				s.Stop(interceptor.StatusError(status, err, "status-watch"))
 				return
 			}
 		}
 	}
 }
-func (s *Service) Stop(err error) { s.admitted.Store(false); s.writer.Fence().Stop(err) }
+func (s *Service) Stop(err error) {
+	s.admitted.Store(false)
+	err = errors.Join(err, s.recordIntegrationFailure(err, ""))
+	s.writer.Fence().Stop(err)
+}
 func (s *Service) acquire(ctx context.Context) error {
 	select {
 	case <-ctx.Done():
@@ -295,7 +310,7 @@ func (s *Service) inspectTarget(ctx context.Context, terminal bool, t *preparati
 	campaignID := t.Live().CampaignID()
 	status, err := s.config.Peer.Status(ctx, campaignID)
 	if err != nil || status.CampaignID != campaignID || !status.Matches(t.InstanceID(), b) || (!terminal && !status.Ready()) {
-		return interceptor.SessionStatus{}, ErrService
+		return interceptor.SessionStatus{}, interceptor.StatusError(status, err, "status-inspect")
 	}
 	deadline, _ := ctx.Deadline()
 	if deadline.IsZero() {
@@ -306,24 +321,24 @@ func (s *Service) inspectTarget(ctx context.Context, terminal bool, t *preparati
 	if err != nil {
 		return interceptor.SessionStatus{}, err
 	}
-	r, err := s.config.Peer.Execute(ctx, p)
-	if logErr := s.log("service.native-status", p.Bytes(), boundedResponse(r), terminal, false); logErr != nil {
-		return interceptor.SessionStatus{}, logErr
-	}
+	view, err := interceptor.Call("session.status", id,
+		func() (interceptor.Response, error) { return s.config.Peer.Execute(ctx, p) },
+		func(r interceptor.Response) error {
+			return s.log("service.native-status", p.Bytes(), boundedResponse(r), terminal, false)
+		},
+		func(r interceptor.Response) (interceptor.SessionStatus, error) {
+			return interceptor.DecodeSessionStatus(r, campaignID, b)
+		})
 	if err != nil {
 		return interceptor.SessionStatus{}, err
 	}
-	if len(boundedResponse(r)) == 0 {
-		return interceptor.SessionStatus{}, ErrService
-	}
-	view, err := interceptor.DecodeSessionStatus(r, campaignID, b)
 	var native struct {
 		Environment string `json:"environment_digest"`
 		Application string `json:"application_digest"`
 	}
 	_ = json.Unmarshal(t.Live().Export().NativeJSON(), &native)
 	if err != nil || view.Session.CapabilityManifestDigest != t.Live().Export().SourceDigest() || view.Session.FeedbackProfile != t.Live().NativeProfile() || view.Session.EnvironmentDigest != native.Environment || view.Session.AppDigest != native.Application || view.Owner.AllowTargetStop != t.Profile().Settings().AllowTargetStop || (!terminal && !view.Available) {
-		return interceptor.SessionStatus{}, ErrService
+		return interceptor.SessionStatus{}, diagnostictext.Context(diagnostictext.New("Session metadata or execution availability does not match the owned target binding."), "Interceptor", "session.status", id)
 	}
 	return view, nil
 }
@@ -337,7 +352,7 @@ func boundedResponse(r interceptor.Response) []byte {
 func (s *Service) prepare(ctx context.Context, raw []byte, deadline time.Time) (*attemptadapter.Plan, *nativeexec.Guard, error) {
 	var view interceptor.SessionStatus
 	var err error
-	if s.config.HTTPS == nil {
+	if s.config.HTTP == nil {
 		view, err = s.inspect(ctx, false)
 	} else {
 		err = s.config.Runtime.CheckRunning(ctx, s.config.Docker)
@@ -369,17 +384,14 @@ func (s *Service) prepare(ctx context.Context, raw []byte, deadline time.Time) (
 	in.SessionRevision = view.Session.Revision
 	in.CreatedAt = time.Now()
 	in.Deadline = deadline
-	bound := in.CreatedAt.Add(time.Duration(s.target().Profile().Settings().OperationTimeoutMS) * time.Millisecond)
-	if bound.Before(in.Deadline) {
-		in.Deadline = bound
-	}
-	if s.config.HTTPS != nil {
-		p, e := attemptadapter.CompileHTTPS(s.target().Protocol().Catalog(), raw, in, s.target().Profile().HTTPS(), s.config.HTTPS)
+	// The caller supplies the original whole-attempt deadline, including preparation.
+	if s.config.HTTP != nil {
+		p, e := attemptadapter.CompileHTTP(s.target().Protocol().Catalog(), raw, in, s.target().Profile().HTTP(), s.config.HTTP)
 		if e != nil {
 			return nil, nil, e
 		}
-		parent := p.HTTPSParent()
-		s.httpsParent = &parent
+		parent := p.HTTPParent()
+		s.httpParent = &parent
 		return p, nil, nil
 	}
 	p, err := attemptadapter.Compile(s.target().Protocol().Catalog(), raw, in)
@@ -424,14 +436,36 @@ func (s *Service) Admit(ctx context.Context, in campaign.LaunchInputs) error {
 	}
 	s.initializeCompletion(in)
 	if s.operations["engine.model_generate"] {
-		policy, err := s.target().Protocol().ModelPolicyFromContext(s.config.Prepared.Context(), s.config.Model.Tools, in.Prompt)
-		if err != nil {
-			s.Stop(err)
-			return err
+		policy := s.config.Model.Policy
+		var private struct {
+			Codec         string                  `json:"codec_id"`
+			ProfileDigest string                  `json:"profile_digest"`
+			Prompt        string                  `json:"prompt"`
+			ContextLimits contracts.ContextLimits `json:"context_limits"`
 		}
+		if json.Unmarshal(policy, &private) != nil || private.Prompt != string(in.Prompt) || !private.ContextLimits.Valid() {
+			s.Stop(ErrService)
+			return ErrService
+		}
+		var context struct {
+			Model struct {
+				Codec         string                  `json:"codec_id"`
+				ContextLimits contracts.ContextLimits `json:"context_limits"`
+			} `json:"model"`
+		}
+		if json.Unmarshal(s.config.Prepared.Context(), &context) != nil || !context.Model.ContextLimits.Valid() || context.Model.ContextLimits.MaximumPromptTokens != s.config.Model.MaximumPromptTokens {
+			s.Stop(ErrService)
+			return ErrService
+		}
+		if private.ContextLimits != context.Model.ContextLimits || private.Codec != context.Model.Codec || private.ProfileDigest != s.config.Model.ProfileDigest {
+			s.Stop(ErrService)
+			return ErrService
+		}
+		s.model.codec = private.Codec
+		s.model.limits = context.Model.ContextLimits
 		s.model.policy = policy
 	}
-	if s.config.HTTPS == nil {
+	if s.config.HTTP == nil {
 		if _, err := s.inspect(ctx, false); err != nil {
 			s.Stop(err)
 			return err
@@ -454,14 +488,21 @@ func (s *Service) Admit(ctx context.Context, in campaign.LaunchInputs) error {
 // Handle retains the exact transport envelopes around broker work. Caller passes
 // the transport's original absolute operation deadline, never a refreshed timer.
 func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byte, error) {
+	started := time.Now()
+	deadlineSource := "campaign"
+	if at, ok := ctx.Deadline(); ok && at.Before(s.deadline) {
+		deadlineSource = "caller"
+	}
 	ctx, cancel := context.WithDeadline(ctx, s.deadline)
 	defer cancel()
+	ctx, stopContext := context.WithCancelCause(ctx)
+	defer stopContext(context.Canceled)
 
 	go func(watchCtx context.Context) {
 		select {
 		case <-watchCtx.Done():
 		case <-s.writer.Fence().Done():
-			cancel()
+			stopContext(s.writer.Fence().Err())
 		}
 	}(ctx)
 	if err := s.acquire(ctx); err != nil {
@@ -489,23 +530,42 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 	if !s.phaseAllows(request["operation"].(string), request["body"].(map[string]any)) {
 		return s.stateEnvelope(raw, sequence, stateDenied("STATE_CHANGED"))
 	}
-	if _, validationErr := s.target().Protocol().ValidateRequest(raw); validationErr != nil {
+	if validationErr := s.target().Protocol().ValidateRequestSizes(raw, s.sizes); validationErr != nil {
 		reply, rejectionErr := s.rejectArguments(raw, sequence, validationErr)
 		if rejectionErr != nil {
 			s.Stop(rejectionErr)
 		}
 		return reply, rejectionErr
 	}
-	ceiling := s.target().Profile().Settings().OperationTimeoutMS
-	if request["operation"] == "engine.snapshot_request" || request["operation"] == "engine.restore_request" {
-		ceiling = 300000
-	}
-	if request["operation"] == "engine.model_generate" {
-		ceiling = 120000
+	ceiling := s.operationTimeouts[request["operation"].(string)]
+	if request["operation"] == "engine.attempt_execute" {
+		ceiling = min(ceiling, s.target().Profile().Settings().OperationTimeoutMS)
 	}
 	milliseconds, _ := request["timeout_ms"].(json.Number).Float64()
-	ctx, operationCancel := context.WithTimeout(ctx, time.Duration(min(int64(milliseconds), ceiling))*time.Millisecond)
+	replyDeadline, _ := ctx.Deadline()
+	requestLimit := int64(milliseconds)
+	requestLimit = min(requestLimit, s.operationTimeouts[request["operation"].(string)])
+	if requested := started.Add(time.Duration(requestLimit) * time.Millisecond); requested.Before(replyDeadline) {
+		replyDeadline = requested
+	}
+	operationDeadline := started.Add(time.Duration(min(requestLimit, ceiling)) * time.Millisecond)
+	if at, ok := ctx.Deadline(); !ok || operationDeadline.Before(at) {
+		deadlineSource = "configured-operation"
+		if int64(milliseconds) < ceiling {
+			deadlineSource = "request"
+		}
+	}
+	ctx, operationCancel := context.WithDeadline(ctx, operationDeadline)
+	ctx = modelprovider.WithDeadlineSource(ctx, deadlineSource)
 	defer operationCancel()
+	if request["operation"] == "engine.attempt_execute" {
+		s.writer.Fence().ArmTimeoutReply(ctx, replyDeadline)
+		defer func() {
+			if !s.writer.Fence().Reporting() {
+				s.writer.Fence().EndTimeoutReply()
+			}
+		}()
+	}
 	reservation := "wire-" + termination.NewRequestID()
 	deadline, _ := ctx.Deadline()
 	meta, _ := json.Marshal(map[string]any{"deadline": deadline.UTC().Format(time.RFC3339Nano)})
@@ -522,21 +582,22 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 	var result []byte
 	if !s.phaseAllows(request["operation"].(string), request["body"].(map[string]any)) {
 		result, err = s.stateEnvelope(raw, sequence, stateDenied("STATE_CHANGED"))
-	} else if request["operation"] == "engine.record_append" || request["operation"] == "engine.finish" {
-		result, err = s.handleCompletion(ctx, raw, sequence)
-	} else if request["operation"] == "engine.diagnostic_report" {
-		result, err = s.handleDiagnostic(ctx, raw, sequence)
-	} else if isSnapshot(request["operation"].(string)) {
-		result, err = s.handleSnapshot(ctx, raw, sequence)
-	} else if request["operation"] == "engine.model_generate" {
-		result, err = s.handleModel(ctx, raw, sequence)
-	} else if isArtifact(request["operation"].(string)) {
-		result, err = s.handleArtifact(ctx, raw, sequence)
 	} else {
-		result, err = s.broker.Handle(ctx, raw, sequence)
+		handler := s.operationHandler(request["operation"].(string))
+		if handler == nil {
+			return nil, attemptadapter.ErrOperation
+		}
+		result, err = handler(ctx, raw, sequence)
 		if err == nil && request["operation"] == "engine.attempt_execute" {
 			err = s.rememberAttempt(raw, result)
 		}
+	}
+
+	if err != nil && s.ModelFailure() == nil {
+		if _, ok := diagnostictext.FromError(err); ok {
+			err = diagnostictext.Context(err, "Operator", request["operation"].(string), request["operation_id"].(string))
+		}
+		err = errors.Join(err, s.recordIntegrationFailure(err, request["operation_id"].(string)))
 	}
 	entry.Kind = "service.response"
 	entry.RunRevision = s.attempts.Status().RunRevision
@@ -576,7 +637,7 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 					s.workflowDiagnostic.Store(nil)
 				}
 			} else if reply.Result.Status == "failed" || reply.Result.Status == "unknown" {
-				reason, source := "target_failed", "target"
+				reason, source := "target_failed", "unknown"
 				if reply.Result.Status == "unknown" {
 					reason = "target_outcome_unknown"
 				}
@@ -584,8 +645,13 @@ func (s *Service) Handle(ctx context.Context, raw []byte, sequence int64) ([]byt
 					reason, source = "cleanup_failed", "cleanup"
 				}
 				d := campaign.NewWorkflowDiagnostic(request["operation_id"].(string), source, reply.Result.Stage, reason, "", "attempt_execute", request["call_id"].(string))
+				d.RetainDetails("The target operation result was "+reply.Result.Status+"; failure origin unknown. Inspect its retained execution evidence. The operation will not be replayed.", "", nil)
+				if known := s.WorkflowFailure(); known != nil && (known.Timeout != nil || known.TargetFailure != nil || known.Integration != nil) && known.OperationID == d.OperationID {
+					return result, nil
+				}
 				s.workflowDiagnostic.Store(&d)
-				if _, e := s.writer.AppendStored(campaign.Entry{RunRevision: s.attempts.Status().RunRevision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d})}, "", false); e != nil {
+				s.recordFailureTrigger("workflow", d.OperationID)
+				if _, e := s.writer.AppendStored(campaign.Entry{RunRevision: s.attempts.Status().RunRevision, Kind: "workflow.diagnostic", Metadata: marshal(map[string]any{"diagnostic": d, "failure_trigger": s.FailureTrigger()})}, "", false); e != nil {
 					s.Stop(errors.Join(d, e))
 					return nil, errors.Join(d, e)
 				}
@@ -604,6 +670,12 @@ func (s *Service) ServeOrdinary(ctx context.Context, channel *transport.Session)
 	}
 	ticker := time.NewTicker(transport.SpoolPoll)
 	defer ticker.Stop()
+	defer func() {
+		if d := s.WorkflowFailure(); d != nil && d.Timeout != nil && d.ResultDelivery == "unconfirmed" {
+			_ = s.recordTimeoutDelivery("unavailable")
+		}
+		s.writer.Fence().EndTimeoutReply()
+	}()
 	sequence := int64(0)
 	for {
 		select {
@@ -647,6 +719,33 @@ func (s *Service) ServeOrdinary(ctx context.Context, channel *transport.Session)
 				case <-ticker.C:
 				}
 			}
+			if d := s.WorkflowFailure(); d != nil && d.Timeout != nil {
+				// Published means complete FIFO write/atomic file publication, not consumption.
+				for !channel.Published("ordinary-in", sequence) && s.writer.Fence().Reporting() {
+					select {
+					case <-ctx.Done():
+						s.Stop(ctx.Err())
+					case <-s.writer.Fence().Done():
+					case <-ticker.C:
+					}
+				}
+				delivery := "unavailable"
+				if channel.Published("ordinary-in", sequence) {
+					delivery = "published"
+				}
+				saveErr := s.recordTimeoutDelivery(delivery)
+				// Allow the peer to capture the published reply before owned kill.
+				// This uses the original non-renewing two-second grace timer.
+				if saveErr == nil && delivery == "published" {
+					select {
+					case <-ctx.Done():
+						s.Stop(ctx.Err())
+					case <-s.writer.Fence().Done():
+					}
+				}
+				s.writer.Fence().EndTimeoutReply()
+				return errors.Join(*d, saveErr)
+			}
 			sequence++
 		}
 	}
@@ -688,3 +787,26 @@ func (s *Service) ExitDeadline() time.Time {
 }
 
 func (s *Service) AssessmentCommitted() bool { return s.assessmentCommitted.Load() }
+
+// operationHandler is the executable dispatch inventory. Conformance checks use
+// this same lookup, rather than maintaining a second list of claimed capabilities.
+func (s *Service) operationHandler(name string) func(context.Context, []byte, int64) ([]byte, error) {
+	switch name {
+	case "engine.record_append", "engine.finish":
+		return s.handleCompletion
+	case "engine.diagnostic_report":
+		return s.handleDiagnostic
+	case "engine.model_generate":
+		return s.handleModel
+	case "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request":
+		return s.handleSnapshot
+	case "engine.artifact_begin", "engine.artifact_put_part", "engine.artifact_commit":
+		return s.handleArtifact
+	case "engine.attempt_execute", "engine.observation_read", "engine.injection_delete":
+		return func(ctx context.Context, raw []byte, sequence int64) ([]byte, error) {
+			return s.broker.Handle(ctx, raw, sequence)
+		}
+	default:
+		return nil
+	}
+}

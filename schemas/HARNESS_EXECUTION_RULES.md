@@ -142,3 +142,7 @@ repeat/overlapping read charges versus novel-byte progress; EOF and unused read
 reservation; refusal/compaction/no-tool turns; repeated restore/snapshot and forged
 progress; restore-skipped tool accounting; bounded model-free finalization and
 host-stop precedence.
+
+The [model context contract](MODEL_CONTEXT_CONTRACT.md) defines frozen local allowances,
+validated response budgets, compact target references, selected tools and bounded
+read defaults for the current shared package.

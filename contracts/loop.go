@@ -2,13 +2,12 @@ package contracts
 
 import (
 	"encoding/json"
-	"errors"
 	"sort"
 	"strconv"
 	"strings"
 )
 
-var ErrLoopStopped = errors.New("contract exploration stopped")
+var ErrLoopStopped = newPublicError("contract exploration stopped")
 
 func harnessDefaults() map[string]int64 {
 	return map[string]int64{"max_model_turns": 300, "max_tool_calls": 2000, "max_tool_calls_per_response": 16,
@@ -226,7 +225,7 @@ func (l *HarnessLoop) FinishTool(outcome string) error {
 	if outcome == "invalid" {
 		s.InvalidToolCalls++
 		s.ConsecutiveInvalidToolCalls++
-	} else if (outcome == "success" || outcome == "restored") && name != "record_append" {
+	} else if (outcome == "success" || outcome == "restored") && NativeTool(name) != "record_append" {
 		s.ConsecutiveInvalidToolCalls = 0
 	}
 	s.ActiveTool = ""

@@ -27,6 +27,50 @@ The resolver consumes concrete host scope records from the private
 publishes the effective harness context. These records are host policy inputs,
 not additional model arguments or a new public wire contract.
 
+### Discovered response and state routes
+
+Dynamic attacker endpoints use `http-route-set`: `methods` and `paths` are
+independent exact allowlists. An omitted or empty list imposes no endpoint
+restriction. The administrator must still authorize a concrete method/path pair;
+Operator never turns an unrestricted endpoint into wildcard permission. `HEAD`
+is not injectable. Existing `http-route` template matching is unchanged.
+
+Identity endpoints use `state-collection`: `collection`, existing `keys`, and
+`mutable_fields` describe selectable records. Administrator routes must name an
+advertised key and pointers into mutable fields. Root replacement, unknown keys
+and immutable fields are rejected. For example, these entries in the profile's
+`scopes.routes` authorize only the listed selections (IDs must match the export):
+
+```json
+[
+  {
+    "surface": "service_response",
+    "target": {"service": "attacker", "method": "POST", "path": "/collect"},
+    "scopes": ["once"], "placements": ["replace"], "pointers": [""]
+  },
+  {
+    "surface": "environment_state",
+    "target": {"service": "idp", "collection": "grants", "key": "grant-1"},
+    "scopes": ["once"], "placements": ["replace"], "pointers": ["/active"]
+  }
+]
+```
+
+Harness reads the verified endpoint `details_reference` before selecting setup.
+State collections use string record keys; database tables keep their key-column
+objects at the model boundary. Operator checks the installed route again before
+dispatch. For a state field replacement, the injection content is that field's
+JSON value, such as `false` for `/active`; the endpoint's delivery schemas describe
+complete records, not injection payloads. Identity collection mutation does not
+create or delete records. Deleting an injection does not undo an applied mutation;
+use permitted snapshot/restore operations when rollback is required.
+
+The approved native contract is recorded in
+[`internal/interceptor/contract.json`](../internal/interceptor/contract.json).
+Harness must consume the shared interface identified by
+[`release/contract-lock.json`](../release/contract-lock.json), including the shared
+tool normalizer that distinguishes record keys from database key objects.
+
 ## Translation and execution
 
 Compilation verifies the installed request schema, exact artifact digest/size/media

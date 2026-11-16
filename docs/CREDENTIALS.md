@@ -1,9 +1,9 @@
 # Host credential resolution
 
 Operator's host-only resolver supports AWS Secrets Manager, Azure Key Vault,
-Google Cloud Secret Manager and HashiCorp Vault. It adapts Interceptor's existing
+Google Cloud Secret Manager, HashiCorp Vault and [1Password](ONEPASSWORD.md). It adapts Interceptor's existing
 credential profile and backend pattern; Operator uses its own `operator.dev`
-version identifiers and stricter private-file loading. Interceptor is unchanged.
+version identifiers and stricter private-file loading. Both products accept the same 1Password profile fields and explicit authentication modes.
 
 The installed configuration selects an absolute `credentials.file`. The file MUST
 be a private regular file, owned by the service user or root, at most 1 MiB, with
@@ -45,6 +45,7 @@ Profiles MUST choose one of:
 | `azure-key-vault` | HTTPS `vault_url` | matching `vault_url`, `secret_name`, optional `version` | Workload/managed identity (default), explicit `azure-cli`, or explicit `azure-client-secret`. |
 | `gcp-secret-manager` | No extra route field | `project`, `secret_name`, `version` | Metadata identity or ADC external-account federation (default); explicit `google-adc` also permits local user, service-account-key and impersonated ADC. |
 | `hashicorp-vault` | HTTPS `vault_url`; optional `vault_namespace`, `vault_ca_certificate`; exactly one of `vault_token_file` or `vault_proxy: true` | `mount`, safe `path`, optional positive integer `version` | Configured Agent token sink or authenticating Proxy. |
+| `onepassword` | Explicit authentication; desktop requires `onepassword_account` | `secret_reference` | `onepassword-desktop` or `onepassword-service-account`; [setup](ONEPASSWORD.md). |
 
 Vault token sinks MUST be bounded private regular files and MUST be reread for
 uncached secret resolution so Agent rotation takes effect. Proxy mode MUST NOT
@@ -80,7 +81,11 @@ standard envelope supplies campaign, launch, sequence and recording identity.
 
 Metadata MUST contain only the configured opaque credential/profile IDs, backend
 kind, `outcome` (`resolved` or `failed`), fixed `code` (`ok`, `resolution_failed`
-or `canceled`), `cache_hit` and timestamps. A successful event MAY contain the
+or `canceled`), `cache_hit` and timestamps. Failures also retain the failed step,
+a sanitized category, typed backend error code and observed HTTP status when
+available. Backend exception messages, request/response bodies and secret locators
+are not retained. A category of `unknown` means the backend did not expose a
+recognized typed condition; an absent HTTP status means none was observed. A successful event MAY contain the
 SHA-256 digest of a nonempty backend version string. It MUST NOT contain the raw
 version string, locator, value, selected JSON field, endpoint, remote exception,
 HTTP header or token. Unknown requested IDs MUST be omitted from metadata.

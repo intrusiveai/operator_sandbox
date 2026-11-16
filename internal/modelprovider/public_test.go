@@ -50,7 +50,9 @@ func TestPublicModelMatchesSharedStartupForEveryCodec(t *testing.T) {
 				s.MaximumCompletionTokens = int64(f.Policy[outputField(s.Codec)].(float64))
 				options := map[string]any{}
 				for _, key := range optionFields[s.Codec] {
-					options[key] = f.Policy[key]
+					if value, exists := f.Policy[key]; exists {
+						options[key] = value
+					}
 				}
 				s.CodecOptions, _ = json.Marshal(options)
 				if s.Codec == "gemini-text-tools-v1" {
@@ -63,7 +65,7 @@ func TestPublicModelMatchesSharedStartupForEveryCodec(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				model, err := p.PublicModel(f.Tools)
+				model, err := p.PublicModel()
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -78,14 +80,21 @@ func TestPublicModelMatchesSharedStartupForEveryCodec(t *testing.T) {
 				}
 				f.Context["model"] = public
 				contextRaw, _ := json.Marshal(f.Context)
-				policy, err := protocol.ModelPolicyFromContext(contextRaw, f.Tools, []byte(f.Prompt))
+				_, err = protocol.ValidateEngineContext(contextRaw)
 				if err != nil {
 					t.Fatal(err)
 				}
+				policy, err := p.Policy(f.Tools, []byte(f.Prompt))
+				if err != nil {
+					t.Fatal(err)
+				}
+				delete(f.Policy, "response_models")
 				f.Policy["profile_id"] = s.ID
 				f.Policy["profile_digest"] = p.Digest()
+				f.Policy["context_limits"] = public["context_limits"]
 				expected, _ := json.Marshal(f.Policy)
 				expected, err = contracts.Canonicalize(expected, contracts.OrdinaryLimit)
+				policy, _ = contracts.Canonicalize(policy, contracts.OrdinaryLimit)
 				if err != nil || !bytes.Equal(policy, expected) {
 					t.Fatal("startup policy differs", err)
 				}
@@ -107,15 +116,8 @@ func TestPublicModelMatchesSharedStartupForEveryCodec(t *testing.T) {
 }
 func TestProfileRejectsUnboundCodecOptions(t *testing.T) {
 	for _, tc := range []struct{ provider, options string }{
-		{"openai-chat", `{}`}, {"openai-chat", `{"instruction_role":"user","response_models":["test-model"]}`},
-		{"openai-chat", `{"instruction_role":"developer","response_models":[]}`},
-		{"openai-chat", `{"instruction_role":"developer","response_models":["x","x"]}`},
+		{"openai-chat", `{"instruction_role":"user","response_models":["test-model"]}`},
 		{"openai-chat", `{"instruction_role":"developer","response_models":["x"],"endpoint":"https://private"}`},
-		{"openai-responses", `{"reasoning":{"arbitrary":"x"},"response_models":["x"]}`},
-		{"openai-responses", `{"reasoning":{"effort":"invalid"},"response_models":["x"]}`},
-		{"anthropic-messages", `{"thinking":{"type":"enabled","budget_tokens":1024},"response_models":["x"]}`},
-		{"anthropic-messages", `{"thinking":{"type":"enabled","budget_tokens":1},"response_models":["x"]}`},
-		{"gemini-api", `{"thinking_config":{"thinkingBudget":0,"thinkingLevel":"HIGH"},"response_models":["x"]}`},
 		{"bedrock-converse", `{"tools_digest":"sha256:bad"}`}, {"bedrock-converse", `null`},
 	} {
 		t.Run(tc.provider+tc.options, func(t *testing.T) {
@@ -127,4 +129,30 @@ func TestProfileRejectsUnboundCodecOptions(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestContextWarningConfiguration(t *testing.T) {
+	p := profile(t, "openai-chat", "https://example.test/chat/completions")
+	var fields map[string]any
+	_ = json.Unmarshal(p.JSON(), &fields)
+	delete(fields, "context_warning_percent")
+	raw, _ := json.Marshal(fields)
+	omitted, err := Parse(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fields["context_warning_percent"] = 80
+	raw, _ = json.Marshal(fields)
+	explicit, err := Parse(raw)
+	if err != nil || omitted.Digest() != explicit.Digest() {
+		t.Fatal("default must be fingerprinted", err)
+	}
+	for _, value := range []any{0, 100, -1, 80.5, nil, "80"} {
+		fields["context_warning_percent"] = value
+		raw, _ = json.Marshal(fields)
+		if _, err = Parse(raw); err == nil {
+			t.Fatal("invalid warning", value)
+		}
+	}
+
 }

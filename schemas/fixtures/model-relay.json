@@ -1,0 +1,352 @@
+[
+  {
+    "name": "generation",
+    "valid": true,
+    "model": {
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 1024,
+        "warning_threshold_tokens": 26214
+      }
+    },
+    "request": {
+      "purpose": "generation",
+      "conversation": [
+        {
+          "role": "user",
+          "content": "hi",
+          "future_native_value": {
+            "type": "new",
+            "metadata": [
+              true,
+              1.25,
+              null
+            ]
+          }
+        }
+      ]
+    },
+    "result": {
+      "receipt_id": "model-1",
+      "response": {
+        "arbitrary_provider_json": {
+          "metadata": {
+            "new": "allowed"
+          }
+        }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 10,
+        "total_tokens": 110,
+        "requested_completion_tokens": 1024,
+        "reserved_tokens": 33792,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 10000,
+        "remaining_model_turns": 9
+      }
+    }
+  },
+  {
+    "name": "compaction",
+    "valid": true,
+    "model": {
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 1024,
+        "warning_threshold_tokens": 26214
+      }
+    },
+    "request": {
+      "purpose": "compaction",
+      "conversation": [
+        {
+          "role": "user",
+          "content": "hi",
+          "future_native_value": {
+            "type": "new",
+            "metadata": [
+              true,
+              1.25,
+              null
+            ]
+          }
+        }
+      ]
+    },
+    "result": {
+      "receipt_id": "model-1",
+      "response": {
+        "arbitrary_provider_json": {
+          "metadata": {
+            "new": "allowed"
+          }
+        }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 10,
+        "total_tokens": 110,
+        "requested_completion_tokens": 1024,
+        "reserved_tokens": 33792,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 10000,
+        "remaining_model_turns": 9
+      }
+    }
+  },
+  {
+    "name": "old-full-request",
+    "valid": false,
+    "model": {
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 1024,
+        "warning_threshold_tokens": 26214
+      }
+    },
+    "request": {
+      "codec_id": "openai-chat-text-tools-v1",
+      "request": {}
+    },
+    "result": {
+      "receipt_id": "model-1",
+      "response": {
+        "arbitrary_provider_json": {
+          "metadata": {
+            "new": "allowed"
+          }
+        }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 10,
+        "total_tokens": 110,
+        "requested_completion_tokens": 1024,
+        "reserved_tokens": 33792,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 10000,
+        "remaining_model_turns": 9
+      }
+    }
+  },
+  {
+    "name": "guest-endpoint",
+    "valid": false,
+    "model": {
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 1024,
+        "warning_threshold_tokens": 26214
+      }
+    },
+    "request": {
+      "purpose": "generation",
+      "conversation": [
+        {
+          "role": "user",
+          "content": "hi",
+          "future_native_value": {
+            "type": "new",
+            "metadata": [
+              true,
+              1.25,
+              null
+            ]
+          }
+        }
+      ],
+      "endpoint": "https://forbidden.example"
+    },
+    "result": {
+      "receipt_id": "model-1",
+      "response": {
+        "arbitrary_provider_json": {
+          "metadata": {
+            "new": "allowed"
+          }
+        }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 10,
+        "total_tokens": 110,
+        "requested_completion_tokens": 1024,
+        "reserved_tokens": 33792,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 10000,
+        "remaining_model_turns": 9
+      }
+    }
+  },
+  {
+    "name": "unknown-purpose",
+    "valid": false,
+    "model": {
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 1024,
+        "warning_threshold_tokens": 26214
+      }
+    },
+    "request": {
+      "purpose": "fetch",
+      "conversation": [
+        {
+          "role": "user",
+          "content": "hi",
+          "future_native_value": {
+            "type": "new",
+            "metadata": [
+              true,
+              1.25,
+              null
+            ]
+          }
+        }
+      ]
+    },
+    "result": {
+      "receipt_id": "model-1",
+      "response": {
+        "arbitrary_provider_json": {
+          "metadata": {
+            "new": "allowed"
+          }
+        }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 10,
+        "total_tokens": 110,
+        "requested_completion_tokens": 1024,
+        "reserved_tokens": 33792,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 10000,
+        "remaining_model_turns": 9
+      }
+    }
+  },
+  {
+    "name": "nonarray-conversation",
+    "valid": false,
+    "model": {
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 1024,
+        "warning_threshold_tokens": 26214
+      }
+    },
+    "request": {
+      "purpose": "generation",
+      "conversation": {}
+    },
+    "result": {
+      "receipt_id": "model-1",
+      "response": {
+        "arbitrary_provider_json": {
+          "metadata": {
+            "new": "allowed"
+          }
+        }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 10,
+        "total_tokens": 110,
+        "requested_completion_tokens": 1024,
+        "reserved_tokens": 33792,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 10000,
+        "remaining_model_turns": 9
+      }
+    }
+  },
+  {
+    "name": "missing-budget",
+    "valid": false,
+    "model": {
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 1024,
+        "warning_threshold_tokens": 26214
+      }
+    },
+    "request": {
+      "purpose": "generation",
+      "conversation": [
+        {
+          "role": "user",
+          "content": "hi",
+          "future_native_value": {
+            "type": "new",
+            "metadata": [
+              true,
+              1.25,
+              null
+            ]
+          }
+        }
+      ]
+    },
+    "result": {
+      "receipt_id": "model-1",
+      "response": {}
+    }
+  },
+  {
+    "name": "budget-mismatch",
+    "valid": false,
+    "model": {
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 1024,
+        "warning_threshold_tokens": 26214
+      }
+    },
+    "request": {
+      "purpose": "generation",
+      "conversation": [
+        {
+          "role": "user",
+          "content": "hi",
+          "future_native_value": {
+            "type": "new",
+            "metadata": [
+              true,
+              1.25,
+              null
+            ]
+          }
+        }
+      ]
+    },
+    "result": {
+      "receipt_id": "model-1",
+      "response": {
+        "arbitrary_provider_json": {
+          "metadata": {
+            "new": "allowed"
+          }
+        }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 10,
+        "total_tokens": 111,
+        "requested_completion_tokens": 1024,
+        "reserved_tokens": 33792,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 10000,
+        "remaining_model_turns": 9
+      }
+    }
+  }
+]

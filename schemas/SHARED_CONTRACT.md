@@ -4,10 +4,12 @@ This is the authoritative Operator-owned contract for shared wire semantics,
 identity, startup, manifest delivery and completion. Component specifications MUST
 reference these rules rather than define competing contracts. The
 [release contract lock](../release/contract-lock.json) identifies the exact
-source and package digest consumed by both products.
+contract version and exact AsyncAPI document hash consumed by both products.
 
-JSON Schemas, Go/Python bindings, semantic validators and shared fixtures define
-package `0.2.1`. Section 12 defines its conformance requirements.
+The self-contained [AsyncAPI document](asyncapi.json) defines the interface approved in the [release contract lock](../release/contract-lock.json).
+JSON Schema 2020-12 payloads and explicit semantic extensions describe its messages
+and stateful obligations. Go/Python bindings and shared fixtures verify conformance;
+their source bytes are not compatibility identity. See [conformance](../docs/CONTRACT_CONFORMANCE.md).
 In every attempt, `generator.release_digest` MUST equal the frozen
 `EngineContext.release.release_record_digest`. It identifies the validated
 embedded compatibility file. `release.image_digest` separately pins the harness image
@@ -42,23 +44,22 @@ The [loop accounting stage](HARNESS_LOOP_ACCOUNTING_CONTRACT.md) implements
 finite-loop limits, read/progress accounting, batch skipping and bounded finalization.
 Durable history, dispatch, verified event sources and timers are integrated into
 the host service and harness runtime.
-The [model codec stage](MODEL_CODEC_CONTRACT.md) supplies typed model relay,
-trusted policy binding and correlated native continuation segments for Chat
-Completions, OpenAI Responses, Anthropic Messages, Bedrock Converse and Gemini
-GenerateContent. Their schemas, bindings and stateful checks are implemented.
+The [model relay](MODEL_CODEC_CONTRACT.md) defines purpose/conversation requests,
+opaque provider responses and host accounting. Native provider interpretation is
+implemented by product adapters rather than shared API schemas.
 
 ## 1. One owner and one pinned package
 
-Operator owns `operator-contracts`, package version `0.2.1`, with package
-manifest schema `operator.dev/contract-package/v1alpha1`. The package contains
+Operator owns the interface approved in the [release contract lock](../release/contract-lock.json), distributed in `operator-contracts` with
+package manifest format `operator.dev/contract-package/v2`. The package contains
 closed JSON Schemas, the offline URI catalog, operation registry, semantic rules,
-Go/Python bindings and validators, and shared golden test vectors. Engine builds
-pin the exact package version and content digest; the installed Operator broker
-must support that exact digest. No runtime negotiation, network schema fetching,
+Go/Python bindings and validators, and shared golden test vectors. Both products pin `info.version` and SHA-256 of the exact `asyncapi.json` bytes.
+Existing `package_version` / `package_digest` fields carry that pair. Operator
+source revisions and implementation-package hashes are not counterpart restrictions. No runtime negotiation, network schema fetching,
 unknown-field tolerance or silent fallback is needed in this MVP.
 
 Package version and individual message versions are separate. Keep the current
-attempt request/result v1alpha2 and observation read/selection/manifest schemas.
+attempt request v1alpha4/result v1alpha2 and observation read/selection/manifest schemas.
 Use engine-pipe/v1alpha1 for the new pipe envelope and engine-conclusion/v1alpha2
 for the expanded conclusion. Package upgrades publish a new immutable digest;
 a running campaign never changes its contract package.
@@ -66,10 +67,11 @@ a running campaign never changes its contract package.
 The package manifest contains `api_version`, `package_version`, sorted file
 inventory (relative path, byte length, raw digest), schema catalog identity,
 operation-registry identity and semantic-profile identities. Exclude the package
-manifest and signatures from the inventory they bind. The package content digest
-is the canonical digest of that manifest payload. The host-only
+manifest and signatures from the inventory they bind. The manifest independently checks installation integrity. The compatibility hash
+is SHA-256 of exact `asyncapi.json` bytes, including whitespace; it is not a
+canonicalized object or package manifest hash. The host-only
 [embedded compatibility record](ENGINE_RELEASE_CONTRACT.md) binds this package
-digest and required Operator/runtime/platform compatibility. The independently
+digest and required runtime/platform compatibility. The independently
 resolved local Docker image ID binds the embedded record bytes.
 Operator and the engine consume their installed package copies.
 
@@ -79,6 +81,7 @@ filenames compatible with the offline catalog loader:
 ```text
 operator-contracts/
   package.json
+  asyncapi.json
   catalog.json
   operations.json
   *.schema.json
@@ -365,11 +368,12 @@ target restores retain all transport/ACK state.
 
 The guest requests positive relative `timeout_ms`. Operator computes a monotonic
 host deadline from the smaller request, operation-policy limit and remaining
-campaign time. Guest timestamps/heartbeats cannot extend it. Initial operation
-ceilings: model generation 120 seconds; snapshot creation/restore 300 seconds;
-other ordinary operations 30 seconds. Target invocations also obey their declared
-adapter timeout. Initial phase limits remain 60 seconds for confinement/readiness
-and 60 seconds for input initialization. The 30-minute campaign hard ceiling stays.
+campaign time. Guest timestamps/heartbeats cannot extend it. Ordinary-operation waits
+come from the verified EngineContext `operation_timeouts_ms` map; durations and sizing
+policy are defined in [Operating limits](OPERATING_LIMITS_CONTRACT.md). Target invocations
+also obey their complete-attempt profile allowance and native limits. Initial phase
+limits remain 60 seconds for confinement/readiness and 60 seconds for input initialization.
+The host's supported campaign lifetime bounds its configurable operating waits.
 
 Snapshot creation uses configurable campaign defaults of 20 admissions and
 1,073,741,824 cumulative committed canonical file bytes, as defined in Operator
@@ -506,14 +510,14 @@ feedback schemas. Typed records and conclusions are defined in the
 allowlist for ordinary operation dispatch in this package.
 
 `operations.json` binds each operation name to exact request/result/error schema
-IDs, permitted lifecycle states, timeout and size ceilings, effect classification
+IDs, permitted lifecycle states, framing ceilings, effect classification
 and receipt policy. Both tool catalog generation and broker dispatch use it.
 Arbitrary strings, unknown fields and generic forwarding are not dispatch paths.
 
 | Family | Operations and important constraints |
 |---|---|
-| Model | engine.model_generate; pinned provider-native codec/profile, no guest endpoint selection or silent translation. Codec-specific schemas/vectors are package members. |
-| Artifacts | engine.artifact_begin / put_part / commit; begin fixes purpose/media/raw size/digest, parts identify upload/offset/base64 bytes, commit verifies complete content and returns immutable receipt. Parts ≤256 KiB; objects ≤16 MiB. |
+| Model | engine.model_generate; purpose/conversation request; opaque provider response and host accounting. Operator owns endpoint, model, credentials, prompt, tools and all provider options. |
+| Artifacts | engine.artifact_begin / put_part / commit; begin fixes purpose/media/raw size/digest, parts identify upload/offset/base64 bytes, commit verifies complete content and returns immutable receipt. Parts obey the frozen artifact_part_bytes allowance (wire ceiling 1 MiB); objects obey artifact_bytes (integrity-verification ceiling 16 MiB). |
 | Attempts | engine.attempt_execute; compact v1alpha4 request with explicit origin and direct/artifact input, v1alpha2 result, permitted observation selection and native delivery semantics. |
 | Cleanup | engine.injection_delete; [closed schemas and semantics](INJECTION_CLEANUP_CONTRACT.md), one attempt-receipt/action handle, current-target deletion, confirmed absence succeeds, restore-aware duplicate behavior. |
 | Feedback | engine.observation_read; retain adopted receipt/entry/range contract and profile-limited manifest. |
@@ -674,6 +678,34 @@ facts, attributed to Harness. Host evidence separately establishes dispatch and
 cleanup. Operation errors may carry the shared workflow-diagnostic structure.
 Primary failures MUST survive generic worker shutdown and cleanup errors.
 
+For a failed next-model-request reservation, `stopping` MUST contain exactly:
+
+```json
+{"condition":"budget-limit","budget":{"kind":"model-tokens","total_allowance":524288,"consumed":493460,"remaining":30828,"next_request_reservation":36864}}
+```
+
+The accompanying diagnostic MUST use source `harness-local`, stage `termination`,
+reason `model_reservation_unavailable`, execution_occurred `no`, and
+resubmission_safe `false`, plus the required bounded message. Do not attach
+previous tool_name/tool_call_id, field_path, identifier or correction. Earlier
+recoverable tool rejections MUST be retained as separate diagnostic events.
+`observed_count`/`configured_limit` MUST be absent for this budget form; they remain
+required for other stopping forms. No unrelated counter fallback is permitted.
+All numeric facts MUST be JSON-safe integers. Total allowance and next reservation
+MUST be positive; consumed and remaining MUST be nonnegative, sum to the allowance,
+and remaining MUST be smaller than the next reservation. Both validators enforce
+these rules. These are Harness-attributed accounting facts, not an upstream cloud
+quota rejection or a claim of independently verified consumption.
+
+Operator MUST retain the complete structured budget in the native journal,
+completion diagnostics and projected evidence. CLI and report summaries MUST use
+these numeric facts rather than Harness prose or prior recoverable errors.
+Accepted unavailable finish, zero process exit, and completed cleanup MUST NOT
+turn token-admission failure into a successful assessed campaign. Older retained
+records without budget facts remain readable; missing facts MUST NOT be invented.
+Matching package version and digest are required through existing startup checks.
+
+
 ## 12. Go/Python conformance is part of publication
 
 The release is not 'locked' merely because JSON files exist. Check in one set of
@@ -724,15 +756,58 @@ containment, real-provider behavior or Operator runtime implementation.
 
 ## 13. Package distribution
 
-The [release contract lock](../release/contract-lock.json) pins the shared package
-source, version, catalog, registry and complete content identity. The package
-contains these semantic documents as well as schemas, Go/Python validators and
-shared fixtures. Documentation changes therefore also change its digest.
-Both products MUST consume the same exact package. Distribution MUST run the
-Section 12 conformance checks and package verification before admitting a build.
+The [release contract lock](../release/contract-lock.json) pins only the AsyncAPI
+interface version and SHA-256 of its exact bytes. The distribution contains the
+document, schema projections, Go/Python validators, explanatory documentation and
+shared fixtures. Those distribution files have independent inventory hashes;
+implementation, test and documentation edits do not change compatibility identity.
+Both products MUST conform to the same approved interface, without requiring equal
+source revisions or implementation trees. Distribution MUST run the Section 12
+conformance checks and package verification before admitting a build. Interface
+changes require reviewed generation and a coordinated new identity as described
+in [contract conformance](../docs/CONTRACT_CONFORMANCE.md).
 
 [Harness execution rules](HARNESS_EXECUTION_RULES.md),
 [attempt bookkeeping](ATTEMPT_BOOKKEEPING_CONTRACT.md) and
 [loop accounting](HARNESS_LOOP_ACCOUNTING_CONTRACT.md) define admission,
 numbering, progress and finalization independently of the transport.
 Interceptor's native APIs remain separately versioned; Operator is the adapter.
+
+The [model context contract](MODEL_CONTEXT_CONTRACT.md) defines frozen local allowances,
+validated response budgets, compact target references, selected tools and bounded
+read defaults for the current shared package.
+
+Complete-attempt execution budgets, bounded terminal reply delivery and timeout facts
+MUST follow [Attempt deadlines](ATTEMPT_TIMEOUT_CONTRACT.md).
+
+Ordinary-operation durations and operating sizes are supplied by Operator at startup
+as specified in [Operating limits](OPERATING_LIMITS_CONTRACT.md). Numeric registry
+timeouts are not part of this contract.
+
+### Actionable tool corrections and no-progress exhaustion
+
+Correctable rejections MUST carry the model-facing path, known rule/expectation,
+concrete next action, execution effect and resubmission safety. Go and Python MUST
+use the installed schema's constraint values. `diagnostic.constraint` identifies
+`schema`, `path` and `keyword`; Operator MUST resolve these against its own approved
+catalog before retaining an expectation. Producer message/correction MUST be
+bounded and credential-filtered, with omissions identified and Harness assertions
+attributed separately from host observations. Reports MUST NOT replace known
+failure details using a reason-to-message lookup table. Valid unknown reason
+identifiers MUST survive. Unsupported names MUST be quoted as bounded data beside
+the containing object path, with schema-derived supported purposes and required
+flags. The `unsupported_fields` object carries omitted-name counts and reasons.
+`facts` permits bounded scalar failure details; neither prose nor facts can grant
+capabilities or change execution admission. Full corrections allow 4096 bytes;
+short envelope messages remain bounded separately.
+Discriminated alternatives MUST select the relevant branch; ambiguous alternatives
+MUST explain their distinguishing fields. Normalization MUST preserve rule detail
+and remap the field path. Internal resolution defects MUST NOT invite the model to
+supply canonical bookkeeping. See [correction behavior](../docs/TOOL_CORRECTIONS.md).
+
+`stopping.condition = no-progress-limit` MUST carry observed_count and
+configured_limit for consecutive turns without recognized progress. The diagnostic
+reason is `no_progress_limit`, stage `termination`, and resubmission_safe is false.
+The terminal diagnostic MUST NOT reuse earlier tool/call identities or field errors.
+Earlier rejections remain separate history. Unavailable finish MAY use
+`no-progress-limit`; this is not a committed assessment or a successful campaign.

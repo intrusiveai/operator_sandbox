@@ -1,6 +1,7 @@
 # Ordinary campaign contract
 
-This is the ordinary campaign contract for shared package **0.2.1**.
+This is the ordinary campaign contract for the shared package identified in the
+[release contract lock](../release/contract-lock.json).
 The [release contract lock](../release/contract-lock.json) identifies its exact
 source revision and package digest. Operator and Harness MUST require that
 matching identity. Transport envelopes, sequencing, deadlines, restore bindings
@@ -8,7 +9,11 @@ and no-replay semantics apply throughout the workflow.
 
 ## Ordinary execution
 
-The model tool `attempt_execute` maps directly to `engine.attempt_execute`:
+The model interface uses flat content fields and typed handles; see
+[MODEL_TOOL_CATALOG.md](MODEL_TOOL_CATALOG.md) and
+[MODEL_TOOL_NORMALIZATION.md](MODEL_TOOL_NORMALIZATION.md). The shared normalizer
+expands that presentation to the canonical `engine.attempt_execute` message below.
+These canonical fields are runtime obligations, not model-authored bookkeeping:
 
 ```json
 {"origin":"scenario","operation_id":"invoke","scenario_id":"configuration","input":{"encoding":"json","value":{"prompt":"Reply exactly QA_CONFIG_OK. Do not call tools."}}}
@@ -34,7 +39,7 @@ Input MUST be exactly one of:
 - `{"artifact_receipt":"..."}`: an already committed payload or carrier artifact
   in this campaign. The host resolves its descriptor and verifies bytes and purpose.
 
-Direct decoded input MUST be at most **32,768 bytes**, with JSON nesting at most
+Direct decoded input MUST fit EngineContext `size_limits.direct_input_bytes` (safety ceiling 1 MiB), with JSON nesting at most
 **16 containers** (scalar depth zero), and obey the smaller target input limit.
 The entire request MUST fit the registry limit. Larger inputs use artifact
 publication. Unknown fields, duplicate keys, noncanonical base64 and invalid
@@ -72,7 +77,9 @@ not establish objective success.
 
 ## One finish operation
 
-The model tool `finish` maps directly to `engine.finish`:
+The model supplies `finish_reason`, `summary` and `objectives` at the root, or a
+returned artifact handle or unavailable_reason. The shared normalizer resolves
+handles, derives receipt lists and produces this canonical `engine.finish` body:
 
 ```json
 {"finish_reason":"objectives-addressed","assessment":{"summary":"The target returned the expected marker.","objectives":[{"objective_id":"configuration","outcome":"supported","summary":"Observed QA_CONFIG_OK.","attempt_receipt_refs":["receipt-returned-by-Operator"]}]}}

@@ -4,19 +4,20 @@ package attemptadapter
 
 import (
 	"encoding/json"
-	"errors"
 	"net/textproto"
 	"path"
 	"slices"
 	"strings"
 
+	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/capabilities"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
-var ErrPolicy = errors.New("attempt is outside installed target scope")
-var ErrAttempt = errors.New("attempt arguments, artifacts or lineage are invalid")
-var ErrResult = errors.New("native result does not match the authorized attempt step")
+var ErrPolicy = diagnostictext.New("attempt is outside installed target scope")
+var ErrAttempt = diagnostictext.New("attempt arguments, artifacts or lineage are invalid")
+var ErrResult = diagnostictext.New("native result does not match the authorized attempt step")
 
 // Route is one concrete host-reviewed injection target. Empty fields are exact
 // empty values, not wildcards. Request predicates may narrow this route further.
@@ -31,6 +32,7 @@ type Route struct {
 	MergeFields []string `json:"merge_fields,omitempty"`
 }
 type Target struct {
+	ModelCodec    string `json:"model_codec,omitempty"`
 	ToolName      string `json:"tool_name,omitempty"`
 	Service       string `json:"service,omitempty"`
 	Method        string `json:"method,omitempty"`
@@ -68,7 +70,7 @@ func Resolve(e *capabilities.Export, scopes Scopes, evidenceKinds []string, ceil
 	_ = json.Unmarshal(raw, &copy)
 	facts := e.ExecutionFacts()
 	p := &Policy{scopes: copy, facts: facts, sourceDigest: e.SourceDigest()}
-	cp := capabilities.Policy{AllowedRefs: []string{}, SelectableActionRefs: []string{}, FeedbackCeiling: ceiling, FeedbackKinds: append([]string{}, evidenceKinds...)}
+	cp := capabilities.Policy{AllowedRefs: []string{}, SelectableActionRefs: []string{}, FeedbackCeiling: ceiling, FeedbackKinds: []string{}}
 	if ceiling != "" && !slices.Contains([]string{"black-box", "diagnostic", "oracle-assisted"}, ceiling) {
 		return nil, ErrPolicy
 	}
@@ -93,18 +95,28 @@ func Resolve(e *capabilities.Export, scopes Scopes, evidenceKinds []string, ceil
 			cp.AllowedRefs = append(cp.AllowedRefs, ref)
 			cp.SelectableActionRefs = append(cp.SelectableActionRefs, ref)
 		}
-		if r.Target.Service != "" {
-			cp.AllowedRefs = appendUnique(cp.AllowedRefs, "service:"+r.Target.Service)
-		}
-		if r.Target.FileNamespace != "" {
-			cp.AllowedRefs = appendUnique(cp.AllowedRefs, "file_namespace:"+r.Target.FileNamespace)
-		}
 	}
+	// Resource references assert availability, not permission to mutate them.
+	// Concrete injection routes above remain the only source of action grants.
+	for _, service := range facts.Services {
+		cp.AllowedRefs = appendUnique(cp.AllowedRefs, "service:"+service.ID)
+	}
+	for _, namespace := range facts.FileNamespaces {
+		cp.AllowedRefs = appendUnique(cp.AllowedRefs, "file_namespace:"+namespace.ID)
+	}
+	if slices.Contains(facts.Features, capabilities.FeatureSnapshots) {
+		cp.AllowedRefs = appendUnique(cp.AllowedRefs, capabilities.FeatureSnapshots)
+	}
+	seenKinds := map[string]bool{}
 	for _, k := range evidenceKinds {
-		if !slices.Contains([]string{"target_output", "operation_error", "injection_delivery", "oracle_outcome"}, k) || slices.Contains(cp.AllowedRefs, "evidence:"+k) {
+		if !slices.Contains([]string{"target_output", "operation_error", "injection_delivery", "oracle_outcome"}, k) || seenKinds[k] {
 			return nil, ErrPolicy
 		}
-		cp.AllowedRefs = append(cp.AllowedRefs, "evidence:"+k)
+		seenKinds[k] = true
+		if slices.Contains(facts.EvidenceKinds, k) {
+			cp.AllowedRefs = append(cp.AllowedRefs, "evidence:"+k)
+			cp.FeedbackKinds = append(cp.FeedbackKinds, k)
+		}
 	}
 	for _, id := range copy.CallerPrincipalIDs {
 		if !identifier.MatchString(id) {
@@ -159,7 +171,7 @@ func validRoute(f capabilities.ExecutionFacts, r Route) bool {
 		if !slices.Contains(profile.Placements, nativePlacement(s)) {
 			return false
 		}
-		if s == "insert_array" && (r.Surface == "service_response" || r.Surface == "mcp_tool_result") {
+		if s == "insert_array" && (r.Surface == "service_response" || r.Surface == "mcp_tool_result" || r.Surface == "database_response") {
 			return false
 		}
 		if s == "merge_object" && len(r.MergeFields) == 0 {
@@ -178,10 +190,16 @@ func validRoute(f capabilities.ExecutionFacts, r Route) bool {
 	}
 	t := r.Target
 	switch r.Surface {
+	case "model_response":
+		return t == (Target{ModelCodec: t.ModelCodec}) && slices.Contains(profile.ModelCodecs, t.ModelCodec) && profile.PlacementRoot == "response-body"
 	case "model_tool_result":
 		return t.ToolName != "" && t == (Target{ToolName: t.ToolName})
 	case "mcp_tool_result":
 		if t != (Target{Service: t.Service, ToolName: t.ToolName}) || t.ToolName == "" {
+			return false
+		}
+	case "database_response":
+		if t != (Target{Service: t.Service}) || t.Service == "" {
 			return false
 		}
 	case "service_response":
@@ -200,7 +218,7 @@ func validRoute(f capabilities.ExecutionFacts, r Route) bool {
 			}
 			return false
 		}
-		if t != (Target{Service: t.Service, Collection: t.Collection, Key: t.Key}) || t.Collection == "" || t.Key == "" || t.Key == "." || t.Key == ".." || strings.ContainsAny(t.Key, "/\\\x00\r\n") {
+		if t != (Target{Service: t.Service, Collection: t.Collection, Key: t.Key}) || t.Collection == "" || t.Key == "" {
 			return false
 		}
 	default:
@@ -210,6 +228,12 @@ func validRoute(f capabilities.ExecutionFacts, r Route) bool {
 		if svc.ID != t.Service || !slices.Contains(svc.InjectionSurfaces, r.Surface) {
 			continue
 		}
+		if svc.Kind == "postgresql" {
+			return validDatabaseRoute(svc, r)
+		}
+		if t.Key == "." || t.Key == ".." || strings.ContainsAny(t.Key, "/\\\x00\r\n") {
+			return false
+		}
 		for _, ep := range svc.Endpoints {
 			switch r.Surface {
 			case "mcp_tool_result":
@@ -217,11 +241,14 @@ func validRoute(f capabilities.ExecutionFacts, r Route) bool {
 					return true
 				}
 			case "service_response":
-				if ep.Kind == "http-route" && ep.Method == t.Method && endpointMatches(ep.Path, t.Path) {
+				if responseEndpointMatches(ep, t.Method, t.Path) {
 					return true
 				}
 			case "environment_state":
 				if ep.Collection == t.Collection {
+					if ep.Kind == "state-collection" {
+						return validStateCollectionRoute(ep, r)
+					}
 					return true
 				}
 			}
@@ -275,35 +302,69 @@ func validPointer(s string) bool {
 	}
 	return true
 }
+func policyRule(path, rule, correction string) error {
+	return &contracts.ArgumentError{Reason: rule, FieldPath: path, Correction: correction, Cause: ErrPolicy}
+}
 func (p *Policy) authorizeInjection(d interceptor.Definition, knownTurns []string) error {
 	s := d.Selector
 	if s.TurnID != "" && !slices.Contains(knownTurns, s.TurnID) {
-		return ErrPolicy
+		return policyRule("/selector/turn_id", "unknown_turn", "Select a turn recorded in this campaign, or omit the optional turn selector. No injection was armed.")
 	}
-	if s.Path != "" && !cleanAbsolute(s.Path) || s.RelativePath != "" && !cleanRelative(s.RelativePath) {
-		return ErrPolicy
+	if s.Path != "" && !cleanAbsolute(s.Path) {
+		return policyRule("/selector/path", "invalid_path", "Use a normalized absolute path without query, fragment or escape characters.")
+	}
+	if s.RelativePath != "" && !cleanRelative(s.RelativePath) {
+		return policyRule("/selector/relative_path", "invalid_path", "Use a normalized relative path inside the authorized namespace; parent traversal is forbidden.")
 	}
 	seen := map[string]bool{}
 	for k := range s.HeadersEqual {
 		name := textproto.CanonicalMIMEHeaderKey(k)
-		if !headerName(k) || name == "" || seen[name] || slices.Contains([]string{"Authorization", "Proxy-Authorization", "Cookie", "Set-Cookie", "Host", "Connection", "Transfer-Encoding", "Content-Length", "Forwarded", "X-Forwarded-Host", "X-Forwarded-For", "X-Forwarded-Proto"}, name) {
-			return ErrPolicy
+		if !headerName(k) || name == "" || seen[name] {
+			return policyRule("/selector/headers_equal", "invalid_header", "Use valid, case-insensitively unique header names.")
+		}
+		if slices.Contains([]string{"Authorization", "Proxy-Authorization", "Cookie", "Set-Cookie", "Host", "Connection", "Transfer-Encoding", "Content-Length", "Forwarded", "X-Forwarded-Host", "X-Forwarded-For", "X-Forwarded-Proto"}, name) {
+			return policyRule("/selector/headers_equal", "forbidden_header", "Remove credential, connection and routing header selectors; they are not permitted.")
 		}
 		seen[name] = true
 	}
-	t := Target{ToolName: s.ToolName, Service: s.Service, Method: s.Method, Path: s.Path, Collection: s.Collection, Key: s.Key, FileNamespace: s.FileNamespace, RelativePath: s.RelativePath}
+	t := Target{ModelCodec: s.ModelCodec, ToolName: s.ToolName, Service: s.Service, Method: s.Method, Path: s.Path, Collection: s.Collection, Key: s.Key, FileNamespace: s.FileNamespace, RelativePath: s.RelativePath}
+	routes := []Route{}
 	for _, r := range p.scopes.Routes {
-		if r.Surface != d.Surface || r.Target != t || !slices.Contains(r.Scopes, d.Scope) || !slices.Contains(r.Placements, d.Placement.Operation) || !slices.Contains(r.Pointers, d.Placement.Pointer) {
-			continue
+		if r.Surface == d.Surface && sameTarget(p.facts, r.Target, t) {
+			routes = append(routes, r)
 		}
-		for _, k := range d.Placement.AllowedFields {
-			if !slices.Contains(r.MergeFields, k) {
-				return ErrPolicy
+	}
+	if len(routes) == 0 {
+		return policyRule("/selector", "unauthorized_target", "Select an exact target authorized for this injection surface in the target reference. Repeating this selection cannot grant access.")
+	}
+	for _, check := range []struct {
+		path, rule, correction string
+		accepts                func(Route) bool
+	}{
+		{"/scope", "unauthorized_scope", "Select a scope authorized for this target in the target reference.", func(r Route) bool { return slices.Contains(r.Scopes, d.Scope) }},
+		{"/placement/operation", "unauthorized_placement", "Select a placement authorized for this target and scope.", func(r Route) bool { return slices.Contains(r.Placements, d.Placement.Operation) }},
+		{"/placement/pointer", "unauthorized_pointer", "Select a pointer authorized for this target, scope and placement.", func(r Route) bool { return slices.Contains(r.Pointers, d.Placement.Pointer) }},
+		{"/placement/allowed_fields", "unauthorized_merge_fields", "Use only merge fields authorized for this placement.", func(r Route) bool {
+			for _, k := range d.Placement.AllowedFields {
+				if !slices.Contains(r.MergeFields, k) {
+					return false
+				}
+			}
+			return true
+		}},
+	} {
+		next := []Route{}
+		for _, r := range routes {
+			if check.accepts(r) {
+				next = append(next, r)
 			}
 		}
-		return nil
+		if len(next) == 0 {
+			return policyRule(check.path, check.rule, check.correction)
+		}
+		routes = next
 	}
-	return ErrPolicy
+	return p.validateDatabaseInjection(d)
 }
 
 func headerName(s string) bool {

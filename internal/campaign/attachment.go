@@ -13,17 +13,18 @@ import (
 // AttachmentIntent precedes the first native mutation, independently of launch
 // preparation. It freezes permission even when the configuration later changes.
 type AttachmentIntent struct {
-	CampaignID        string `json:"campaign_id"`
-	LaunchID          string `json:"launch_id"`
-	StartRequestID    string `json:"start_request_id"`
-	WorkerInstanceID  string `json:"worker_instance_id"`
-	InputsFingerprint string `json:"inputs_fingerprint"`
-	AllowTargetStop   bool   `json:"allow_target_stop"`
-	MinimumFreeBytes  int64  `json:"minimum_free_bytes"`
+	Interceptor       *interceptor.Connection `json:"interceptor,omitempty"`
+	CampaignID        string                  `json:"campaign_id"`
+	LaunchID          string                  `json:"launch_id"`
+	StartRequestID    string                  `json:"start_request_id"`
+	WorkerInstanceID  string                  `json:"worker_instance_id"`
+	InputsFingerprint string                  `json:"inputs_fingerprint"`
+	AllowTargetStop   bool                    `json:"allow_target_stop"`
+	MinimumFreeBytes  int64                   `json:"minimum_free_bytes"`
 }
 
 func (i AttachmentIntent) valid() bool {
-	return validID(i.CampaignID) && validID(i.LaunchID) && validID(i.WorkerInstanceID) && ValidStopRequest(i.StartRequestID, "start") && digestPattern.MatchString(i.InputsFingerprint) && i.MinimumFreeBytes >= 0 && i.MinimumFreeBytes <= contracts.MaxSafeInteger
+	return i.Interceptor.Validate() == nil && validID(i.CampaignID) && validID(i.LaunchID) && validID(i.WorkerInstanceID) && ValidStopRequest(i.StartRequestID, "start") && digestPattern.MatchString(i.InputsFingerprint) && i.MinimumFreeBytes >= 0 && i.MinimumFreeBytes <= contracts.MaxSafeInteger
 }
 
 // AttachmentBinding is a bounded routing projection, not capability content or

@@ -1,0 +1,43 @@
+// Overlay into Interceptor internal/sandboxd to capture native live feedback.
+package sandboxd
+
+import (
+ "encoding/json"
+ "os"
+ "testing"
+ "github.com/intrusive-ai/interceptor-sandbox/internal/adaptive"
+ "github.com/intrusive-ai/interceptor-sandbox/internal/environment"
+ "github.com/intrusive-ai/interceptor-sandbox/internal/recording"
+)
+func TestOperatorDatabaseFeedbackFixtures(t *testing.T) {
+ cases:=[]any{}
+ for _,name:=range []string{"positive","nonmatching","missing","mixed","other-state","earlier-turn","other-attempt","late","ambiguous","harness-only"} {
+  s,g,a:=feedbackFixture(t,"oracle-assisted",nil)
+  s.blueprint.Oracles=[]environment.Oracle{{ID:"refund",Kind:"database_query_match",Service:"database"}}
+  if name=="mixed" {s.blueprint.Oracles=append(s.blueprint.Oracles,environment.Oracle{ID:"missing",Kind:"database_query_match",Service:"database"})}
+  if name=="other-state" {s.blueprint.Oracles=append(s.blueprint.Oracles,environment.Oracle{ID:"state",Kind:"service_state_match"})}
+  draft:=databaseOracleDraft("turn-db",a.AttemptID,"application",true)
+  switch name {
+  case "nonmatching":draft=databaseOracleDraft("turn-db",a.AttemptID,"application",false)
+  case "earlier-turn":draft.TurnID="earlier"
+  case "other-attempt":draft.Attribution.ObservedAttemptID="other"
+  case "harness-only":draft=databaseOracleDraft("turn-db",a.AttemptID,"harness",true)
+  case "ambiguous":draft.TurnID="";draft.Attribution=recording.Attribution{Window:"ambiguous"}
+  }
+  if name!="missing"&&name!="late" {appendFeedbackEvent(t,s,draft)}
+  if name=="earlier-turn"||name=="other-attempt"||name=="harness-only" {appendFeedbackEvent(t,s,databaseOracleDraft("turn-db",a.AttemptID,"application",false))}
+  turn:=completeDatabaseTurn(t,s,a)
+  if name=="late" {appendFeedbackEvent(t,s,draft)}
+  v:=collectFeedback(t,s,g,a,adaptive.ObservationRequest{TurnID:turn.ID})
+  content:=map[string][]byte{}
+  for _,entry:=range v.Entries {
+   got:=nativeCall(t,g,s,"read-"+entry.ID,"observation.content.read",adaptive.FeedbackReadRequest{ReceiptID:v.ReceiptID,EntryID:entry.ID,MaxBytes:1024},&a)
+   var chunk adaptive.FeedbackChunk
+   if got.Status!=200||json.Unmarshal(got.Body,&chunk)!=nil {t.Fatal(got)}
+   content[entry.ID]=chunk.Content
+  }
+  cases=append(cases,map[string]any{"name":name,"view":v,"content":content})
+ }
+ raw,err:=json.MarshalIndent(cases,"","  ");if err!=nil{t.Fatal(err)}
+ if err=os.WriteFile(os.Getenv("OPERATOR_DATABASE_FEEDBACK_FIXTURES"),append(raw,'\n'),0600);err!=nil{t.Fatal(err)}
+}

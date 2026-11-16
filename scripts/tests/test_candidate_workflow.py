@@ -96,6 +96,9 @@ class CandidateWorkflowTest(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.github = GitHubFixture()
+        gate = patch("integration_qualification.require_qualification", return_value={"run_id": 100, "run_attempt": 1, "artifact_digest": "sha256:" + "e" * 64})
+        self.qualification = gate.start()
+        self.addCleanup(gate.stop)
 
     def publish(self, source=FIRST, contract_version="0.2.1"):
         context = release.event_context({}, "push", "refs/heads/" + BRANCH, source, REPO)
@@ -106,8 +109,12 @@ class CandidateWorkflowTest(unittest.TestCase):
             path.write_bytes((name + ":" + source).encode())
             files.append(path)
         inventory = {"version": context["version"], "source_commit": source,
-                     "contract": {"package_version": contract_version, "package_digest": "sha256:" + "a" * 64},
+                     "interceptor_contract_version": "0.1.0", "contract": {"package_version": contract_version, "package_digest": "sha256:" + "a" * 64},
                      "assets": {f.name: release.checksum(f) for f in files}}
+        pin = json.loads((ROOT / "internal/interceptor/contract.json").read_text())
+        inventory["interceptor_contract_version"] = pin["interceptor_contract_version"]
+        inventory["interceptor_contract"] = pin
+        inventory["interceptor_contract_source"] = json.loads((ROOT / "release/interceptor-contract-source.json").read_text())
         path = self.root / release.INVENTORY_ASSET
         path.write_text(json.dumps(inventory))
         files.append(path)
@@ -207,7 +214,7 @@ class CandidateWorkflowTest(unittest.TestCase):
         for branch in ("candidate-v1.2", "candidate-v01.2.3", "candidate-v1.2.3-rc1", "candidate-v1.2.3/x"):
             with self.assertRaises(ValueError):
                 release.candidate_version(branch)
-        self.assertEqual(release.event_context({}, "push", "refs/heads/main", MERGE, REPO)["mode"], "verify")
+        self.assertEqual(release.event_context({}, "push", "refs/heads/main", MERGE, REPO)["mode"], "ignore")
         self.assertEqual(release.event_context({}, "workflow_dispatch", "refs/heads/" + BRANCH, FIRST, REPO)["mode"], "publish")
         self.assertEqual(release.event_context({"deleted": True}, "push", "refs/heads/" + BRANCH, FIRST, REPO)["mode"], "ignore")
         pr = pull(merged=False)
@@ -217,15 +224,34 @@ class CandidateWorkflowTest(unittest.TestCase):
         context = release.event_context({"action": "synchronize", "pull_request": pr}, "pull_request", "refs/pull/42/merge", FIRST, REPO)
         self.assertEqual((context["mode"], context["version"]), ("verify", "1.2.3"))
 
-    def test_context_cli_produces_actions_outputs(self):
-        event = self.root / "event.json"
-        event.write_text("{}")
-        output = self.root / "output"
-        subprocess.run([sys.executable, str(ROOT / "scripts/publish_host_release.py"), "context"], check=True,
-                       env=dict(os.environ, GITHUB_EVENT_PATH=str(event), GITHUB_EVENT_NAME="push",
-                                GITHUB_REF="refs/heads/" + BRANCH, GITHUB_SHA=FIRST,
-                                GITHUB_REPOSITORY=REPO, GITHUB_OUTPUT=str(output)))
-        self.assertIn("mode=publish\nversion=1.2.3\n", output.read_text())
+    def test_context_cli_routes_pr_candidate_and_promotion_without_duplicate_runs(self):
+        feature = pull()
+        feature["head"]["ref"], feature["base"]["ref"] = "feature/example", BRANCH
+        cases = [
+            ("pull_request", "refs/pull/42/merge", {"action": action, "pull_request": feature}, "verify")
+            for action in ("opened", "synchronize", "reopened")
+        ] + [
+            ("pull_request", "refs/heads/" + BRANCH, {"action": "closed", "pull_request": feature}, "ignore"),
+            ("push", "refs/heads/" + BRANCH, {}, "publish"),
+            ("workflow_dispatch", "refs/heads/" + BRANCH, {}, "publish"),
+            ("pull_request", "refs/heads/main", {"action": "closed", "pull_request": pull()}, "promote"),
+            ("push", "refs/heads/main", {}, "ignore"),
+            ("push", "refs/heads/feature/example", {}, "ignore"),
+            ("workflow_dispatch", "refs/heads/feature/example", {}, "verify"),
+        ]
+        for index, (name, ref, payload, expected) in enumerate(cases):
+            with self.subTest(name=name, ref=ref, action=payload.get("action")):
+                event = self.root / "event.json"
+                event.write_text(json.dumps(payload))
+                output = self.root / f"output-{index}"
+                subprocess.run([sys.executable, str(ROOT / "scripts/publish_host_release.py"), "context"], check=True,
+                               env=dict(os.environ, GITHUB_EVENT_PATH=str(event), GITHUB_EVENT_NAME=name,
+                                        GITHUB_REF=ref, GITHUB_SHA=FIRST,
+                                        GITHUB_REPOSITORY=REPO, GITHUB_OUTPUT=str(output)))
+                values = dict(line.split("=", 1) for line in output.read_text().splitlines())
+                self.assertEqual(values["mode"], expected)
+                if expected in ("publish", "promote"):
+                    self.assertEqual(values["version"], "1.2.3")
 
     def test_github_api_does_not_mistake_auth_errors_for_missing_release(self):
         github = release.GitHub(REPO)

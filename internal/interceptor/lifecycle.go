@@ -164,7 +164,9 @@ type LifecycleRecord struct {
 
 // LifecycleStatus uses the lifecycle ledger, not native operation.status.
 // A missing record, running record or failed query cannot prove non-execution.
-func (c *Client) LifecycleStatus(ctx context.Context, p PreparedLifecycle) (LifecycleRecord, error) {
+func (c *Client) LifecycleStatus(ctx context.Context, p PreparedLifecycle) (result LifecycleRecord, err error) {
+	var observed Response
+	defer func() { err = ResponseError("/v1/status", "", observed, err) }()
 	if len(p.envelope) == 0 {
 		return LifecycleRecord{}, ErrRequest
 	}
@@ -172,6 +174,7 @@ func (c *Client) LifecycleStatus(ctx context.Context, p PreparedLifecycle) (Life
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 	r, err := c.post(ctx, "/v1/status", raw)
+	observed = r
 	if err = success(r, err); err != nil {
 		return LifecycleRecord{}, err
 	}

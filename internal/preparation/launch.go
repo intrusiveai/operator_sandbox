@@ -5,6 +5,7 @@ package preparation
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 	"sort"
 	"strings"
 	"sync/atomic"
@@ -19,6 +20,8 @@ import (
 )
 
 type LaunchConfig struct {
+	Sizes                 contracts.SizeLimits
+	OperationTimeouts     map[string]int64
 	LaunchID, ContainerID string // Fresh host-generated identities; never bundle-selected.
 	CreatedAt             time.Time
 	Image                 imagerelease.Prepared
@@ -99,20 +102,42 @@ func (t *Target) BuildLaunch(c LaunchConfig) (*Launch, error) {
 	}
 	operations := []string{}
 	for _, op := range t.protocol.Operations() {
-		if t.profile.HTTPS() != nil && (op.Name == "engine.injection_delete" || op.Name == "engine.snapshot_request" || op.Name == "engine.snapshot_list" || op.Name == "engine.snapshot_inspect" || op.Name == "engine.restore_request") {
+		if !t.AllowsOperationFeatures(op.Name) || t.profile.HTTP() != nil && op.Name == "engine.injection_delete" {
 			continue
 		}
 		operations = append(operations, op.Name)
 	}
-	tools, err := t.protocol.ModelTools(c.Model.Settings().Codec, operations)
+	surfaces := []string{}
+	for _, ref := range t.policy.CapabilityPolicy().SelectableActionRefs {
+		if strings.HasPrefix(ref, "action:injection:") {
+			surfaces = append(surfaces, strings.TrimPrefix(ref, "action:injection:"))
+		}
+	}
+	sort.Strings(surfaces)
+	tools, err := t.protocol.ModelToolsSelected(c.Model.Settings().Codec, operations, surfaces)
 	if err != nil {
 		return nil, err
 	}
-	model, err := c.Model.PublicModel(tools)
+	model, err := c.Model.PublicModel()
+	if err != nil {
+		return nil, err
+	}
+	var modelObject map[string]any
+	if json.Unmarshal(model, &modelObject) != nil {
+		return nil, ErrPreparation
+	}
+	modelObject["tool_selection"] = map[string]any{"injection_surfaces": surfaces}
+	model, _ = json.Marshal(modelObject)
+	sizes, err := operationpolicy.SizesForLaunch(c.Sizes)
+	if err != nil {
+		return nil, err
+	}
+	timeouts, err := operationpolicy.Select(operations, c.OperationTimeouts)
 	if err != nil {
 		return nil, err
 	}
 	template, err := canonicalJSON(map[string]any{
+		"operation_timeouts_ms": timeouts, "size_limits": sizes,
 		"api_version": "operator.dev/engine-context/v1alpha1", "campaign_id": t.live.CampaignID(), "launch_id": c.LaunchID, "attempt_index_high_watermark": 0,
 		"release":         map[string]any{"image_digest": c.Image.Image.ImageID, "release_record_digest": c.Image.Release.Digest()},
 		"scenario_bundle": inputDescriptor("bundle", "scenario-bundle.json", "scenario-bundle", "application/json", contracts.ScenarioBundleSchema, t.BundleJSON()),
@@ -145,7 +170,7 @@ func (t *Target) BuildLaunch(c LaunchConfig) (*Launch, error) {
 	if err = t.protocol.ValidateManifestSet(tree, set, skillManifests); err != nil {
 		return nil, err
 	}
-	policy, err := t.protocol.ModelPolicyFromContext(context, tools, prompt)
+	policy, err := c.Model.Policy(tools, prompt)
 	if err != nil {
 		return nil, err
 	}

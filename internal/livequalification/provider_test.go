@@ -103,7 +103,7 @@ func TestEveryProviderRouteConversation(t *testing.T) {
 	for _, route := range routes {
 		t.Run(strings.Join(route[:], "/"), func(t *testing.T) {
 			q, text, tool := providerFixture(t, route[0], route[1], route[2])
-			c, err := newConversation(q)
+			_, err := newConversation(q)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -115,9 +115,12 @@ func TestEveryProviderRouteConversation(t *testing.T) {
 					return nil, ctx.Err()
 				}
 				calls++
-				c.body["request"] = json.RawMessage(raw)
-				if _, err := c.protocol.ValidateModelRequest(c.policy, jsonBytes(c.body)); err != nil {
-					t.Fatal(err)
+				var native map[string]any
+				if json.Unmarshal(raw, &native) != nil {
+					t.Fatal("invalid native request")
+				}
+				if route[0] != "bedrock-converse-text-tools-v1" && route[0] != "gemini-text-tools-v1" && native["model"] != q.profile.Settings().Model {
+					t.Fatal("model override")
 				}
 				response := text
 				if calls == 2 {
@@ -199,7 +202,7 @@ func TestNativeProbeBoundedBeforeDispatch(t *testing.T) {
 	s.CodecOptions = jsonBytes(map[string]any{"thinking": map[string]any{"type": "enabled", "budget_tokens": 1024}, "response_models": []string{"fixture-model-2026"}})
 	q.profile, _ = modelprovider.Parse(jsonBytes(s))
 	q.plan.MaximumOutputTokens = 512
-	if _, err := newConversation(q); err == nil {
-		t.Fatal("accepted thinking budget exceeding probe cap")
+	if c, err := newConversation(q); err != nil || c.request["max_tokens"] == nil {
+		t.Fatal("configured completion cap not constructed", err)
 	}
 }

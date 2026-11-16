@@ -120,8 +120,8 @@ func TestPythonProcessUnknownRestoreIsTerminal(t *testing.T) {
 					if e != nil {
 						return nil, e
 					}
-					s := v["snapshot"].(map[string]any)
-					return processResponse([]any{modelCall("restore", "restore_request", map[string]any{"source_session": s["source_session"], "checkpoint_id": s["checkpoint_id"]}), modelCall("must-not-run", "snapshot_request", map[string]any{})}), nil
+					s := v
+					return processResponse([]any{modelCall("restore", "restore_request", map[string]any{"snapshot": s["snapshot"]}), modelCall("must-not-run", "snapshot_request", map[string]any{})}), nil
 				}
 				return nil, errors.New("model resumed after unknown restore")
 			}

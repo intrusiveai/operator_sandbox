@@ -1,5 +1,10 @@
 # Shared transport codecs and state
 
+The machine-readable interface is [asyncapi.json](asyncapi.json). Compatibility
+uses its version and exact byte hash; the existing lanes and message envelopes
+remain unchanged. See [conformance](../docs/CONTRACT_CONFORMANCE.md).
+
+
 This stage implements the message-level mechanics shared by Linux FIFOs and macOS
 file spools. The normative physical rules remain in
 [SHARED_CONTRACT.md](SHARED_CONTRACT.md#4-pipe-envelope-and-channels).

@@ -36,7 +36,7 @@ func ImportEvidence(ctx context.Context, root, id, session, filename string, max
 	if e != nil {
 		return out, e
 	}
-	if f.manifest.Target.Adapter == "https/v1" {
+	if f.manifest.Target.Adapter == "http/v1" {
 		return out, campaign.ErrInvalid
 	}
 	facts, e := loadEvidenceFacts(ctx, a, f)

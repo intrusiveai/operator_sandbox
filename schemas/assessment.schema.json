@@ -9,47 +9,54 @@
         "completed",
         "partial",
         "failed"
-      ]
+      ],
+      "description": "Assessment completeness, separate from whether objectives succeeded."
     },
     "summary": {
       "type": "string",
       "minLength": 1,
-      "maxLength": 8192
+      "maxLength": 8192,
+      "description": "Concise assessment based on the available evidence."
     },
     "objectives": {
       "type": "array",
       "maxItems": 100,
       "items": {
         "$ref": "urn:operator:schema:assessment:v1alpha1#/$defs/objective"
-      }
+      },
+      "description": "Outcomes for submitted objectives."
     },
     "hypotheses": {
       "type": "array",
       "maxItems": 100,
       "items": {
         "$ref": "urn:operator:schema:assessment:v1alpha1#/$defs/hypothesis"
-      }
+      },
+      "description": "Optional local hypothesis definitions and outcomes."
     },
     "claims": {
       "type": "array",
       "maxItems": 100,
       "items": {
         "$ref": "urn:operator:schema:assessment:v1alpha1#/$defs/claim"
-      }
+      },
+      "description": "Claims interpreted from retained evidence."
     },
     "coverage": {
       "type": "array",
       "maxItems": 100,
       "items": {
         "$ref": "urn:operator:schema:assessment:v1alpha1#/$defs/coverage_entry"
-      }
+      },
+      "description": "Coverage of submitted objectives, separate from proof of success."
     },
     "uncertainties": {
       "type": "array",
       "maxItems": 100,
       "items": {
         "$ref": "urn:operator:schema:assessment:v1alpha1#/$defs/uncertainty"
-      }
+      },
+      "description": "Limitations of the available evidence."
     },
     "record_refs": {
       "type": "array",
@@ -57,7 +64,8 @@
       "items": {
         "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
       },
-      "uniqueItems": true
+      "uniqueItems": true,
+      "description": "Accepted historical record receipts supporting this assessment."
     }
   },
   "required": [
@@ -70,7 +78,8 @@
       "additionalProperties": false,
       "properties": {
         "offset": {
-          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer"
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/integer",
+          "description": "Zero-based byte offset at which to start reading."
         },
         "length": {
           "type": "integer",
@@ -113,7 +122,8 @@
           ]
         },
         "scenario_id": {
-          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id",
+          "description": "Submitted scenario associated with scenario-origin work."
         },
         "parent_hypothesis_id": {
           "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
@@ -151,7 +161,8 @@
       "additionalProperties": false,
       "properties": {
         "objective_id": {
-          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id",
+          "description": "Identifier of the submitted objective being assessed."
         },
         "hypothesis_id": {
           "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
@@ -159,19 +170,22 @@
         "alternative": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 1024
+          "maxLength": 1024,
+          "description": "Alternative experiment or approach considered."
         },
         "status": {
           "enum": [
             "tested",
             "untested",
             "partial"
-          ]
+          ],
+          "description": "Assessment completeness, separate from whether objectives succeeded."
         },
         "reason": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 4096
+          "maxLength": 4096,
+          "description": "Explanation of the coverage status."
         },
         "attempt_receipt_refs": {
           "type": "array",
@@ -192,7 +206,8 @@
           "if": {
             "properties": {
               "status": {
-                "const": "tested"
+                "const": "tested",
+                "description": "Assessment completeness, separate from whether objectives succeeded."
               }
             }
           },
@@ -216,19 +231,22 @@
         "statement": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 4096
+          "maxLength": 4096,
+          "description": "The claim or hypothesis being assessed."
         },
         "interpretation": {
           "enum": [
             "supported",
             "inconclusive",
             "not-observed"
-          ]
+          ],
+          "description": "Whether the evidence supports the claim, is inconclusive, or contradicts it."
         },
         "assurance": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 128
+          "maxLength": 128,
+          "description": "The basis for the assessment assurance."
         },
         "attempt_receipt_refs": {
           "type": "array",
@@ -258,7 +276,8 @@
             "low",
             "medium",
             "high"
-          ]
+          ],
+          "description": "Confidence in the assessment: low, medium, or high."
         }
       },
       "required": [
@@ -273,7 +292,8 @@
           "if": {
             "properties": {
               "interpretation": {
-                "const": "supported"
+                "const": "supported",
+                "description": "Whether the evidence supports the claim, is inconclusive, or contradicts it."
               }
             }
           },
@@ -292,7 +312,8 @@
       "additionalProperties": false,
       "properties": {
         "objective_id": {
-          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
+          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id",
+          "description": "Identifier of the submitted objective being assessed."
         },
         "outcome": {
           "enum": [
@@ -300,12 +321,14 @@
             "inconclusive",
             "not-observed",
             "not-tested"
-          ]
+          ],
+          "description": "Whether evidence supports this objective or hypothesis, is inconclusive, or it was not tested."
         },
         "summary": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 4096
+          "maxLength": 4096,
+          "description": "Concise assessment based on the available evidence."
         },
         "attempt_receipt_refs": {
           "type": "array",
@@ -343,7 +366,8 @@
           "items": {
             "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
           },
-          "uniqueItems": true
+          "uniqueItems": true,
+          "description": "Submitted objective identifiers associated with this hypothesis or record."
         },
         "provenance": {
           "$ref": "urn:operator:schema:assessment:v1alpha1#/$defs/provenance"
@@ -354,12 +378,14 @@
             "inconclusive",
             "not-observed",
             "not-tested"
-          ]
+          ],
+          "description": "Whether evidence supports this objective or hypothesis, is inconclusive, or it was not tested."
         },
         "summary": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 4096
+          "maxLength": 4096,
+          "description": "Concise assessment based on the available evidence."
         },
         "attempt_receipt_refs": {
           "type": "array",
@@ -402,12 +428,14 @@
             "omitted-range",
             "coverage-limit",
             "evidence-gap"
-          ]
+          ],
+          "description": "The kind of record or uncertainty represented by this object."
         },
         "description": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 4096
+          "maxLength": 4096,
+          "description": "Explanation of this uncertainty or retained item."
         },
         "observation_refs": {
           "type": "array",

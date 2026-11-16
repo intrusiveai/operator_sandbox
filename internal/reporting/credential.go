@@ -11,6 +11,10 @@ import (
 // CredentialResolution contains only audit facts, never locators or values.
 // Event is the sequence in the exported, digest-bound source event stream.
 type CredentialResolution struct {
+	Category     string   `json:"category,omitempty"`
+	BackendCode  string   `json:"backend_code,omitempty"`
+	HTTPStatus   int      `json:"http_status,omitempty"`
+	Step         string   `json:"step,omitempty"`
 	Event        int64    `json:"event"`
 	RecordedAt   string   `json:"recorded_at"`
 	CredentialID string   `json:"credential_id,omitempty"`
@@ -33,11 +37,15 @@ func projectCredential(sequence int64, at string, metadata map[string]json.RawMe
 		dst     *string
 		allowed []string
 	}{
-		{"credential_id", &c.CredentialID, nil}, {"profile_id", &c.ProfileID, nil},
-		{"backend", &c.Backend, []string{"aws-secrets-manager", "azure-key-vault", "gcp-secret-manager", "hashicorp-vault"}},
+		{"category", &c.Category, nil}, {"backend_code", &c.BackendCode, nil}, {"credential_id", &c.CredentialID, nil}, {"profile_id", &c.ProfileID, nil},
+		{"backend", &c.Backend, []string{"aws-secrets-manager", "azure-key-vault", "gcp-secret-manager", "hashicorp-vault", "onepassword"}},
 		{"outcome", &c.Outcome, []string{"resolved", "failed"}},
 		{"code", &c.Code, []string{"ok", "resolution_failed", "canceled"}},
+		{"step", &c.Step, []string{"backend-initialization", "secret-read", "value-selection", "audit-retention"}},
 	} {
+		if (f.name == "step" || f.name == "category" || f.name == "backend_code") && metadata[f.name] == nil {
+			continue
+		}
 		var value string
 		valid := json.Unmarshal(metadata[f.name], &value) == nil && auditID.MatchString(value)
 		if f.allowed != nil {
@@ -53,6 +61,11 @@ func projectCredential(sequence int64, at string, metadata map[string]json.RawMe
 		} else {
 			c.Omitted = append(c.Omitted, f.name+":unavailable_or_invalid")
 		}
+	}
+	if json.Unmarshal(metadata["http_status"], &c.HTTPStatus) == nil && c.HTTPStatus >= 100 && c.HTTPStatus <= 599 {
+		keep["http_status"], _ = json.Marshal(c.HTTPStatus)
+	} else {
+		c.HTTPStatus = 0
 	}
 	var cache bool
 	if string(metadata["cache_hit"]) == "true" || string(metadata["cache_hit"]) == "false" {

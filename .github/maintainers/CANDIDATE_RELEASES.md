@@ -4,6 +4,26 @@ Use this guide to configure release publication once, publish a rolling candidat
 and promote its existing packages to stable. All settings and commands
 apply to `intrusiveai/operator_sandbox` unless explicitly stated otherwise.
 
+## Verification schedule
+
+| Event | Checks and release work |
+| --- | --- |
+| PR opened, updated or reopened | `context` and `verify`: fast compilation, vet, focused Go tests, shared-contract fixtures, a controlled Python spool/CLI completion regression, and publisher tests (`make test-pr`). No release builds. |
+| Merge or direct push to `candidate-v*` | Complete existing test suite, four platform builds, reproducibility and installed-package checks, then prerelease publication. |
+| Candidate PR merged into `main` | Promotion eligibility and existing-artifact checks, followed by promotion/catalog publication. No rebuild or test-suite rerun. |
+| Other PR closure or push to `main` | No full verification or publication. |
+
+New commits cancel older active PR-check runs for the same PR. Candidate updates
+and promotion are isolated from PR cancellation; release mutations remain queued
+and serialized. Feature-branch pushes without an open PR do not start verification.
+Manual dispatch on a candidate performs full verification/publication; other refs
+run the fast checks. Promotion still requires a merged candidate PR.
+
+Use `context` and `verify` for required PR status checks, rather than candidate-only
+build matrix jobs. A fast PR pass does not qualify release artifacts. Integration
+or packaging failures may be found after the candidate merge and MUST block
+publication; correct the candidate and wait for its complete run before promotion.
+
 ## How the release moves through the system
 
 1. A push to `candidate-v<major.minor.patch>` (including a merged feature PR)
@@ -172,8 +192,9 @@ GitHub describes these controls in [ruleset setup](https://docs.github.com/en/re
    These are the reviewed production values; confirm them against the deployed
    service before saving. Do not add a record-publisher role or AWS access keys.
 
-Only the local catalog job obtains temporary AWS credentials through GitHub
-OIDC. The environment belongs to
+Only the local catalog job obtains the publisher's temporary AWS credentials
+through GitHub OIDC. GitHub-managed dependency jobs also request OIDC tokens,
+without using the publisher role. The production environment belongs to
 `intrusiveai/operator_sandbox`, not `intrusiveai-engineering/releases`.
 See GitHub's [environment setup instructions](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments).
 
@@ -181,7 +202,9 @@ See GitHub's [environment setup instructions](https://docs.github.com/en/actions
 
 OIDC lets GitHub obtain temporary AWS credentials. AWS checks a subject string
 identifying the repository, environment, tag, and workflow file. The default
-GitHub subject does not satisfy the new trust policy.
+GitHub subject does not satisfy the publisher trust policy. Use this section for
+Operator's repository configuration; it supersedes the mandatory `environment`
+template in the pinned publisher bundle's historical README.
 
 1. Inventory workflows requesting `id-token: write` and coordinate any other
    cloud roles before changing the subject. In this checkout, run:
@@ -191,7 +214,9 @@ GitHub subject does not satisfy the new trust policy.
    ```
 
    This setting affects **every OIDC job in this repository**, not just releases.
-   All such jobs must declare an environment for the new subject to be issued.
+   Include GitHub-managed Dependabot and Dependency Graph jobs in this inventory;
+   they are not defined in the repository's workflow files and have no environment.
+   Requiring an `environment` claim prevents those jobs from starting.
 2. Sign in to `gh` with repository administrator access. Run this read-only
    command and retain its output with your configuration change record:
 
@@ -199,29 +224,59 @@ GitHub subject does not satisfy the new trust policy.
    gh api repos/intrusiveai/operator_sandbox/actions/oidc/customization/sub
    ```
 
-3. After the administrator confirms the IAM migration in step 5, run:
+3. Compare the publisher subject with the deployed IAM trust policy from step 5.
+   Keep its production environment, numeric repository/owner identities,
+   `sts.amazonaws.com` audience, release-tag and workflow-file restrictions.
+   Then replace `environment` with `context`, preserving the existing
+   immutable-subject setting:
 
    ```sh
-   gh api --method PUT \
-     repos/intrusiveai/operator_sandbox/actions/oidc/customization/sub \
-     --input - <<'JSON'
-   {"use_default":false,"include_claim_keys":["repository_id","repository_owner_id","environment","ref","workflow_ref"]}
-   JSON
+   set -o pipefail
+   gh api repos/intrusiveai/operator_sandbox/actions/oidc/customization/sub |
+     jq '{use_default:false,
+          include_claim_keys:["repository_id","repository_owner_id","context","ref","workflow_ref"]}
+         + (if has("use_immutable_subject") then
+              {use_immutable_subject:.use_immutable_subject} else {} end)' |
+     gh api --method PUT \
+       repos/intrusiveai/operator_sandbox/actions/oidc/customization/sub --input -
    ```
 
    Keep the exact key order. Use `workflow_ref`, not `job_workflow_ref`: the
-   publisher is an ordinary job, not a reusable workflow.
+   publisher is an ordinary job, not a reusable workflow. `context` expands to
+   `environment:production` for the publisher, or the applicable branch/PR
+   context for jobs without an environment. This permits dependency jobs to
+   obtain tokens without granting them access to the publisher role.
 4. Repeat the GET command from step 2 and confirm `use_default` is `false` and
-   the five keys appear in the specified order. For tag `v0.0.1`, the subject
+   the five keys appear in the specified order, with `context` in place of
+   `environment`. Confirm `use_immutable_subject` was preserved. For tag `v0.0.1`,
+   the custom-claim portion of the subject
    expected by the role is:
 
    ```text
    repository_id:1383999597:repository_owner_id:296295422:environment:production:ref:refs/tags/v0.0.1:workflow_ref:intrusiveai/operator_sandbox/.github/workflows/publish-catalog.yml@refs/tags/v0.0.1
    ```
 
+   Verify the complete emitted subject against IAM, including any repository
+   prefix if present; do not infer token contents from the settings response's
+   `sub_claim_prefix` alone. Do not change immutable-subject formats or broaden
+   role trust to make a mismatch pass.
+5. Verify a fresh dependency job starts. Failed GitHub-managed runs cannot be
+   retried with `gh run rerun`. For security updates, open **Security and quality →
+   Dependabot → affected alert** and use **Try again** or **Create Dependabot
+   security update**, if offered. For version updates, use **Insights → Dependency
+   graph → Dependabot → Recent update jobs → Check for updates**. If those controls
+   are unavailable, wait for a fresh automatic job. Old failures remain in history;
+   a successful settings update alone does not establish a successful job.
+6. Confirm publisher authentication separately with a nonpublishing role-assumption
+   check or the next authorized release publication. Do not dispatch the catalog
+   publisher merely to test authentication. Until then, distinguish review of the
+   settings and IAM trust from a verified live OIDC exchange.
+
 The subject binds the workflow file and ref, not its contents. Protect release
 tags and review publisher/workflow changes before approving production jobs.
 See GitHub's [repository OIDC configuration API](https://docs.github.com/en/rest/actions/oidc#set-the-customization-template-for-an-oidc-subject-claim-for-a-repository).
+See also [subject customization](https://docs.github.com/en/actions/reference/security/oidc#customizing-the-subject-claims-for-an-organization-or-repository)
+and [Dependabot retry instructions](https://docs.github.com/en/enterprise-cloud%40latest/code-security/how-tos/secure-your-supply-chain/manage-your-dependency-security/re-run-dependabot-jobs).
 
 ### 7. Confirm setup with the first candidate
 
@@ -297,7 +352,8 @@ Running campaigns retain their previously installed binaries and frozen inputs.
    publication and testing to finish. The merge into `main` must preserve the
    candidate's file tree.
 2. Open a same-repository PR with **base: main** and **compare: candidate-v1.2.3**.
-   Review it and merge only after the latest candidate publish job succeeds.
+   Review it and merge only after the latest candidate publish and
+   `interceptor-contract` jobs succeed.
 3. Open the merged PR's **verify-host-candidates** run and follow its **promote**
    job. Approve the resulting catalog deployment if required; wait for both jobs
    to finish successfully.
@@ -310,7 +366,7 @@ Running campaigns retain their previously installed binaries and frozen inputs.
 The executable version remains `1.2.3` throughout. Merge, squash and rebase merges
 are supported if the resulting tree matches the published candidate. A direct
 local merge pushed to `main` has no merged-PR receipt and does not promote. Ordinary
-`main` pushes verify code without rebuilding release packages. A stable version
+`main` pushes do not start this verification workflow. A stable version
 cannot be replaced by candidate pushes; start a new version for later changes.
 GitHub's Latest designation follows semantic version ordering, so an older
 maintenance version does not deliberately replace a newer release.
@@ -333,7 +389,7 @@ Verify those named checksum files before unpacking, as described in
 [host distribution](../../docs/HOST_DISTRIBUTION.md).
 
 `candidate.json` binds the four packages to their version,
-source commit and shared contract. Release metadata records the complete package asset
+source commit, shared contract, and Interceptor integration contract. Release metadata records the complete package asset
 inventory and GitHub-reported SHA-256 digests for promotion checks.
 
 `release-index-entry.json` is mutable catalog metadata, outside the package
@@ -342,7 +398,9 @@ label changes on promotion while the packages remain unchanged.
 
 Operator entries also contain `contract_package_version`, the exact shared package
 version recorded by all four verified host manifests. It is independent of the
-Operator product version: for example, Operator `v0.1.2` can ship contract `0.2.1`.
+Operator product version. The source approval is recorded in the
+[contract lock](../../release/contract-lock.json); publication uses the built
+artifact identity described below.
 The generator downloads `candidate.json`, verifies its published SHA-256 and its
 source/version/archive digest bindings, and uses its `contract.package_version`.
 Do not supply a version from the current checkout or edit it into the catalog by
@@ -351,8 +409,65 @@ Promotion retains this version and the archive identities.
 
 After publication, check `contract_package_version` in the public catalog against
 the release's `candidate.json`. After stable promotion, also check the website's
-**Shared contract: <version>** indicator. Matching displayed versions do not replace
+**Operator / Attack Harness contract** and **Interceptor / Operator contract** indicators. Matching displayed versions do not replace
 Operator's exact contract-digest compatibility checks.
+
+## Integration qualification before stable promotion
+
+1. Select the Interceptor release tag or source commit whose OpenAPI contract
+   Operator should support. Product versions do not need to match. Authenticate
+   `gh` for read access to `intrusiveai/interceptor_sandbox`.
+2. On the Operator feature branch, run:
+
+   ```sh
+   python3 scripts/interceptor_contract.py adopt --ref <interceptor-tag-or-commit>
+   ```
+
+   This retrieves `internal/integrationcontract/contract.json` at the resolved
+   immutable commit and compares it with Operator's integration implementation.
+   It saves files only after comparison passes. A failure identifies the request,
+   response, field or operation needing attention. If Interceptor's schema
+   contradicts its implementation, correct the upstream contract before adopting
+   it; do not weaken Operator's checks to force approval.
+3. Review and commit these files together with any integration changes:
+
+   - `internal/interceptor/openapi.json`: the exact upstream file.
+   - `internal/interceptor/contract.json`: version and SHA-256 of those bytes.
+   - `release/interceptor-contract-source.json`: selection and retrieval provenance.
+
+   Run `python3 scripts/interceptor_contract.py verify --fetch` before requesting
+   merge. Use `verify` without `--fetch` to compare the committed copy offline.
+   Neither command updates an existing approval. A contract formatting change
+   changes its hash; an executable rebuild with unchanged contract bytes does not.
+4. Merge the reviewed feature PR into the candidate branch. The
+   `interceptor-contract` job retrieves the approved contract source and runs
+   comparison before the candidate can be packaged/published. It does not download
+   Interceptor binaries or run Docker campaigns. Download
+   `interceptor-contract-comparison` from that Actions run to inspect `result.json`.
+5. Wait for all candidate checks and publication to succeed. Stable promotion
+   requires the successful candidate workflow at the exact Operator source and
+   its matching, unexpired comparison artifact. A stale or failed result cannot
+   be replaced with a hand-authored pass. If the artifact expires, rerun the
+   candidate workflow. Promotion preserves existing package bytes.
+6. Merge the candidate PR into `main` through the normal promotion procedure.
+   At campaign startup, Operator compares `/v1/contract-version` against its
+   embedded version and hash. It does not require the Interceptor executable to
+   come from the source commit used to obtain the contract.
+
+The optional `scripts/qualify_interceptor_release.py` campaign regression accepts
+local archives and an explicit private `--dependencies` JSON file; see `--help`.
+The test configuration contains Interceptor `source_commit` and
+`interceptor_contract_version`, plus `harness` with `image`, `source_commit` and
+`contract` (`package_version`, `package_digest`). These identify the tested builds,
+not Operator's compatibility policy. Run on an idle Docker host with port 8080
+free. Its result cannot establish compatibility or satisfy promotion's OpenAPI
+gate; the script uses controlled local model replies without paid model calls.
+
+Operator catalog entries MUST contain `interceptor_contract_version` from every
+verified package, alongside `contract_package_version`. The first identifies the
+native integration and the second identifies the Harness protocol. Neither is the
+product release version. Historical catalog entries stay unchanged; absent fields
+mean unknown rather than the current compiled value.
 
 ## Catalog publication and recovery
 
@@ -429,7 +544,7 @@ publish or configure GitHub, AWS, the releases service, or the public website.
 ## Updating the local publisher
 
 `tools/release-publisher` is the complete catalog-only export from reviewed
-releases commit `0a88c3564b5266581dc94d3f1ce71880cac2376a`.
+releases commit `381271ccaa48a1af631ea052217b97196735786d`.
 `publisher-source.json` records the source revision and each file's SHA-256.
 The private module name is only a local Go import namespace; publication runs
 with `GOWORK=off`, `GOPROXY=off`, and `GOTOOLCHAIN=local` and fetches no private code.
@@ -458,3 +573,67 @@ maintenance tooling, separate from the installed Operator binaries.
    candidate containing the reviewed publisher. Existing catalog history is retained.
    Confirm live OIDC and public delivery using step 7; local tests alone cannot
    establish deployment readiness.
+
+## Native release builds
+
+Candidate host binaries compile on matching runners: `ubuntu-24.04` (AMD64),
+`ubuntu-24.04-arm` (ARM64), `macos-15-intel` (AMD64) and `macos-15` (ARM64).
+The scripts select the native compiler, enable CGO for desktop SDK support and
+reject a different requested OS/architecture. macOS uses Xcode's installed SDK
+and deployment target 15.0. No Apple SDK URL or checksum repository setting is
+needed. Keep the pinned Go version in the workflow and build script aligned.
+
+Each job builds twice and compares bytes, verifies native library requirements,
+and checks SDK initialization offline without credentials. Packaged identity
+checks and the OpenAPI comparison remain publication gates. Linux uses
+the Ubuntu 24.04 libc baseline; macOS links system libraries. The 1Password app
+supplies its desktop IPC library at runtime and is not included in the archive.
+
+For a local release build, use a clean committed checkout, the pinned Go version
+and a native C compiler. Select only the current host platform. Run the existing
+archive and installed-binary checks before publication. CI's four native runners
+are required to validate all four release outputs.
+
+### Diagnose a slow candidate build
+
+The candidate job uses one command:
+
+```sh
+python3 scripts/build_host_release.py --version 0.1.4 --platform darwin/arm64 \
+  --output dist/first --reproduce-output dist/second
+```
+
+Select the native platform and intended version. The first build runs the Go and
+Python contract suites; the second rebuilds the complete payload without repeating
+those suites. Both builds verify the pinned contract, and all paths, bytes and
+file modes must match before the workflow can publish.
+
+Look for `[host-release] START`, `OK`, `FAILED` or `TIMEOUT` in the job log.
+Each command identifies its limit and elapsed duration; test output streams as
+it runs. Go builds are capped at ten minutes, contract suites at five minutes,
+and other builder commands at two minutes. A timeout kills the command and its
+children and fails the job. Native compiler/binary inspections retain their
+30-second bounds. The overall job limit remains 40 minutes. Inspect the named
+command before changing a timeout; a failed validation never triggers a rebuild.
+
+## Shared Harness interface approval
+
+1. Review `schemas/asyncapi.json` and the version/hash in
+   `release/contract-lock.json`. The hash covers exact document bytes; it does not
+   cover the Operator source commit or validator package inventory.
+2. For an interface change, update schema/registry/semantic inputs, generate the
+   document, review it and run
+   `.venv/bin/python scripts/generate_asyncapi.py --approve`. Commit the inputs,
+   generated document and approval together. Do not refresh the identity for an
+   implementation-only change.
+3. Run the [conformance checks](../../docs/CONTRACT_CONFORMANCE.md) and affected
+   product tests. Candidate CI checks the approved document and production behavior.
+   The native builder verifies it again and packages the exact document alongside
+   the shared validators. Package inventories and build provenance remain separate.
+4. Coordinate interface changes with Attack Harness. Its local compatibility file
+   and startup identities must match the same version/hash; a particular Operator
+   source revision is not required. Optional end-to-end qualification records tested
+   builds without making them compatibility pins.
+5. Publish using the normal candidate workflow. `contract_package_version` in the
+   catalog is derived from the verified interface identity. Promotion preserves
+   that identity with the qualified artifact bytes.

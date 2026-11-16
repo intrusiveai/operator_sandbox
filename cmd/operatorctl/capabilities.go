@@ -94,14 +94,14 @@ func exportCapabilities(ctx context.Context, args []string, stdout, stderr io.Wr
 	if profileFile == "" {
 		profileFile = loaded.Config.Target.ProfileFile
 	}
-	profile, err := targetprofile.Load(profileFile)
+	profile, err := targetprofile.LoadWithLimit(profileFile, loaded.Config.Target.MaxOperationTimeoutMS)
 	if err != nil {
 		fmt.Fprintln(stderr, "cannot load private target profile")
 		return 1
 	}
 	var exported *capabilities.Export
-	if *native != "" && profile.HTTPS() != nil {
-		fmt.Fprintln(stderr, "HTTPS capabilities are derived from the target profile")
+	if *native != "" && profile.HTTP() != nil {
+		fmt.Fprintln(stderr, "HTTP capabilities are derived from the target profile")
 		return 2
 	}
 	if *native != "" {
@@ -117,8 +117,8 @@ func exportCapabilities(ctx context.Context, args []string, stdout, stderr io.Wr
 		exported, err = capabilities.FromNative(installed.Protocol().Catalog(), raw, profile.Settings().TargetID)
 	} else if public != "" {
 		exported, err = capabilities.LoadExport(ctx, installed.Protocol().Catalog(), public, profile.Settings().TargetID)
-	} else if profile.HTTPS() != nil {
-		exported, err = capabilities.FromHTTPS(installed.Protocol().Catalog(), profile.HTTPS(), profile.Settings().TargetID)
+	} else if profile.HTTP() != nil {
+		exported, err = capabilities.FromHTTP(installed.Protocol().Catalog(), profile.HTTP(), profile.Settings().TargetID)
 	} else {
 		fmt.Fprintln(stderr, "capability export requires --native, --capabilities or --environment")
 		return 2

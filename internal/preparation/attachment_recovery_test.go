@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -139,7 +140,7 @@ func TestStartupReconcilesAttachmentBeforeCampaignPreparation(t *testing.T) {
 			}
 			again, e := gate.FinalizeNative(context.Background(), checked)
 			gate.Close()
-			if e != nil || len(p.calls) != calls || checked.statusCalls != statusCalls || *again[0].Native != *out {
+			if e != nil || len(p.calls) != calls || checked.statusCalls != statusCalls || !reflect.DeepEqual(*again[0].Native, *out) {
 				t.Fatal("replayed recovery", again, e, p.calls)
 			}
 			if kind == "prepared journal" {

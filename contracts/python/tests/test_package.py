@@ -11,6 +11,7 @@ class PackageTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.protocol = Protocol(ROOT / 'schemas')
+        cls.version = json.loads((ROOT/'schemas/asyncapi.json').read_text())['info']['version']
 
     def test_shared_package_integrity(self):
         cases = json.loads((ROOT / 'schemas/fixtures/package-integrity.json').read_text())
@@ -33,7 +34,7 @@ class PackageTest(unittest.TestCase):
 
     def payload(self):
         files = {path.name: path.read_bytes() for path in (ROOT / 'schemas').glob('*.schema.json')}
-        for name in ('catalog.json', 'operations.json'): files[name] = (ROOT / 'schemas' / name).read_bytes()
+        for name in ('catalog.json', 'operations.json', 'asyncapi.json'): files[name] = (ROOT / 'schemas' / name).read_bytes()
         profiles = {'jcs-v1':'semantics/digests.md', 'manifest-paths-v1':'semantics/paths.md', 'harness-loop-v1':'semantics/limits.md'}
         files.update({name:b'Fixture semantic profile, not a published release.\n' for name in profiles.values()})
         return files, profiles
@@ -42,7 +43,7 @@ class PackageTest(unittest.TestCase):
         p = self.protocol
         self.assertIsNone(p.package_identity())
         files, profiles = self.payload()
-        manifest, pin = p.build_package_manifest('0.0.0', files, profiles)
+        manifest, pin = p.build_package_manifest(self.version, files, profiles)
         loaded = p.load_verified_protocol(manifest, files, pin)
         self.assertEqual(loaded.package_identity(), pin)
         self.assertEqual(loaded.registry_digests(), p.registry_digests())
@@ -63,21 +64,20 @@ class PackageTest(unittest.TestCase):
     def test_loading_stays_offline(self):
         files, profiles = self.payload()
         files['wire-common.schema.json'] = b'{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"urn:operator:schema:wire-common:v1alpha1","$ref":"https://invalid.example/schema"}'
-        manifest, pin = self.protocol.build_package_manifest('0.0.0', files, profiles)
-        with self.assertRaises(ContractError): self.protocol.load_verified_protocol(manifest, files, pin)
+        with self.assertRaises(ContractError): self.protocol.build_package_manifest(self.version, files, profiles)
         files, profiles = self.payload()
         files['../escape'] = b'x'
-        with self.assertRaises(ContractError): self.protocol.build_package_manifest('0.0.0', files, profiles)
+        with self.assertRaises(ContractError): self.protocol.build_package_manifest(self.version, files, profiles)
 
     def test_builder_rejects_invalid_source_values(self):
         files, profiles = self.payload()
         with self.assertRaises(ContractError):
             self.protocol.build_package_manifest('\ud800', files, profiles)
         with self.assertRaises(ContractError):
-            self.protocol.build_package_manifest('0.0.0', files, {**profiles, '\ud800': 'semantics/paths.md'})
+            self.protocol.build_package_manifest(self.version, files, {**profiles, '\ud800': 'semantics/paths.md'})
         files['catalog.json'] = bytearray(files['catalog.json'])
         with self.assertRaises(ContractError):
-            self.protocol.build_package_manifest('0.0.0', files, profiles)
+            self.protocol.build_package_manifest(self.version, files, profiles)
 
 
 if __name__ == '__main__': unittest.main()

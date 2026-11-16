@@ -1,8 +1,11 @@
 # Campaign model relay
 
-The campaign service implements `engine.model_generate` with the shared
-`openai-chat-text-tools-v1` and `anthropic-messages-text-tools-v1` codecs. The launcher supplies a trusted `ModelConfig`;
-this service does not discover endpoints or resolve production credentials.
+`engine.model_generate` carries `purpose` (`generation` or `compaction`) and an
+opaque provider-native `conversation` array. Operator constructs the actual request
+from its private model profile, trusted prompt and installed tools. Successful
+results contain a receipt, opaque provider response and host accounting. This works
+with Chat Completions, Responses, Anthropic Messages, Bedrock Converse, and Gemini/
+Vertex. See the [relay contract](../schemas/MODEL_CODEC_CONTRACT.md).
 
 The shared [model-tool catalog](../schemas/MODEL_TOOL_CATALOG.md#openai-object-declarations)
 provides OpenAI-compatible object declarations for Chat Completions and Responses,
@@ -15,32 +18,34 @@ before dispatch. `strict: false` does not permit root schema combinators.
   The provider MUST issue exactly one non-streaming request without retries,
   honor cancellation, bound returned bytes, and exclude private transport headers
   and credentials from returned native response bytes and errors exposed to guests.
-- Admission MUST derive model policy from verified EngineContext, exact prompt
-  bytes and the native tools digest. Requests MUST match that frozen policy.
+- Admission MUST bind private provider configuration to the retained profile digest,
+  exact prompt bytes and startup allowances. Conversation MUST never be merged
+  into configuration. Compaction MUST omit tools.
 - A new generation MUST reserve the profile input-token ceiling plus requested
   maximum completion tokens, and charge one model turn, before provider contact.
   Both campaign and harness model-turn limits MUST apply. Known usage MUST settle
   the reservation; missing usage, cancellation, transport ambiguity or invalid
   native responses MUST retain it and terminate execution without retry.
-  Shared codec accounting MUST derive native token fields; Anthropic input MUST
+  Host adapter accounting MUST derive native token fields; Anthropic input MUST
   include cache-creation and cache-read tokens in addition to uncached input.
 - A response exceeding the configured per-response tool-call limit MUST be
   rejected as a whole after accounting for its generation. It MUST enter bounded
   finalization; no prefix of that batch may execute.
 - Native request bytes, validated successful response bytes, timing, profile binding
-  and usage MUST be retained before a model receipt is returned. Failed, malformed
-  or contract-invalid provider response bodies MUST NOT be journaled. Their bounded
-  host-selected diagnostic MUST be retained instead. Selected provider error fields
-  MUST be bounded and credential-redacted before retention. Raw error bodies and
-  unrestricted provider text MUST NOT appear in guest replies or journal diagnostics.
+  and usage MUST be retained before a model receipt is returned. A bounded, complete
+  HTTP-200 response rejected by validation MUST be retained separately as private,
+  credential-redacted administrator evidence, marked rejected and untrusted. It
+  MUST NOT enter a successful result or be delivered to Harness. Selected failure
+  diagnostics MUST contain validation facts rather than unrestricted body text.
+  Non-200 error bodies retain only the selected fields described below.
 - Exact duplicate operations MUST replay the committed result without another
   generation. Healthy target restores MUST preserve model charges and receipts.
 - The provider callback MUST NOT control Docker termination. Administrative stop
   MUST cancel a blocked generation and start independent termination immediately.
 
 Tests use a scripted provider with real launch validation and durable journals.
-They cover frozen-policy rejection, usage settlement, duplicate replay across
-restore, turn exhaustion, lost replies, missing usage, response-model mismatch,
+They cover configuration override rejection, usage settlement, duplicate replay across
+restore, turn exhaustion, lost replies, missing usage, additional provider metadata,
 input-token bound violations, oversized responses and independent cancellation.
 The [host provider transports](MODEL_PROVIDERS.md) and [credential resolver](CREDENTIALS.md) now implement private profile loading and native transport dependencies. Installed service startup wires both dependencies.
 
@@ -50,7 +55,7 @@ Provider failures MUST retain a host-only diagnostic in `model.exchange` metadat
 with the operation ID, failure category, provider/model when known, and observed
 HTTP status. A missing HTTP status MUST mean none was observed, not an inferred
 provider rejection. The native HTTP client MUST return selected response facts on
-success too, so later contract-validation failures can retain HTTP status/request ID.
+success too, so later adapter-validation failures can retain HTTP status/request ID.
 
 For HTTP rejections, diagnostics MUST retain `provider_message`, `provider_type`,
 `provider_code` and `provider_parameter` when supplied. The original `message`
@@ -120,3 +125,124 @@ records without these optional fields MUST remain readable.
 `model_diagnostic`; `--run` also exposes the retained start completion.
 [Reports and exports](REPORTING.md) MUST carry the same selected facts and keep
 reserved allowance separate from confirmed token usage.
+
+### Usage rejected against local allowances
+
+After successful response/usage validation, `usage_exceeds_reservation` means
+Operator rejected the call against its local prompt or total-token allowance.
+It MUST NOT be described as provider throttling or cloud quota exhaustion. The
+diagnostic MUST retain `usage_allowance` with validated normalized `input_tokens`,
+`output_tokens`, `total_tokens`, configured `maximum_prompt_tokens`, the request's
+`requested_completion_tokens`, and the actual `reserved_tokens` for this call.
+`prompt_allowance_exceeded` and `total_reservation_exceeded` MUST independently
+record the two comparisons, including both when applicable. Counts include the
+existing codec's cache/thinking accounting; no new token estimate is introduced.
+
+These bounded numeric facts MUST survive native journaling, selected event export,
+completion diagnostics, inspection, CLI rendering and the human-readable report.
+Missing/malformed/unknown usage MUST NOT be represented as validated counts.
+Older diagnostics without `usage_allowance` remain valid and MUST NOT acquire
+invented counts. Rejected content follows the private-evidence rules below and
+MUST NOT become accepted model output.
+
+Enforcement and budget charging remain unchanged: rejection terminates execution,
+retains the reservation charge and does not retry or settle that call into accepted
+usage totals. The retained diagnostic counts are distinct from that reservation.
+Subsequent Harness termination, including a forced exit 137, MUST remain secondary
+to the original model failure. Output exceeding the configured completion allowance remains a terminal adapter
+failure. Validated input/total overflow diagnostics retain the actual usage and
+reservation; unknown or malformed usage never becomes confirmed consumption.
+
+## Context allowances and response accounting
+
+The frozen startup model includes `context_limits`: the local maximum prompt and
+completion tokens and a warning threshold. These are Operator policy, not a claim
+about the model's physical context window. `context_warning_percent` defaults to
+80 in the private model profile; explicit values must be integers from 1 to 99.
+The resolved default participates in the profile fingerprint.
+
+Successful model results include `context_budget`, binding validated native usage,
+the actual requested completion allowance/reservation, remaining prompt allowance,
+a near-limit warning, and remaining campaign tokens/turns to that response receipt.
+Remaining prompt allowance describes the completed request, not guaranteed space
+for the next one. Duplicate operations return the original snapshot. Unknown usage
+and hard overflows retain terminal behavior; no automatic retry or limit increase
+is performed. Reports and exports retain the numeric accounting without requiring
+prompt content in diagnostics.
+
+Model context reports include local prompt/completion allowances and the warning
+threshold, validated per-response usage and remaining budgets, and native request
+byte partitions. Bytes and local estimates are not exact token counts. Operator
+does not perform rejecting token-count preflight. See the
+[shared model context rules](../schemas/MODEL_CONTEXT_CONTRACT.md).
+
+Harness reads small text chunks directly, loads resource details on demand and
+compacts after a warning before its next generation. If the fixed task cannot fit
+or the remaining campaign budget cannot fund another call, it finishes honestly
+with the existing context/budget-limit reason. Raising budgets is not an automatic
+recovery action. Existing post-response overflow diagnostics remain authoritative.
+
+## Rejected successful-HTTP responses
+
+HTTP 200 establishes that a response arrived; it does not establish usable
+accounting or safe tool execution. For decoding, adapter and context-budget
+failures, Operator MUST preserve `reason`, `validation_stage`, and `field_path`
+from the existing checks. Paths are relative to the native-result envelope, such
+as `/response/stopReason`. Unknown/private keys MUST be withheld with
+`field_path_omitted: true`. Messages MUST use fixed validation explanations, never
+raw validator error text, provider values, or unrestricted headers. Older generic
+`contract_invalid` records remain readable and MUST NOT acquire an inferred cause.
+
+Reasons distinguish missing response fields needed for dispatch, inconsistent stop
+reason, duplicate tool-call identity, invalid or unknown usage, output exceeding
+the configured completion allowance, tools returned during compaction, and
+context-budget mismatch. Provider model labels and unrelated metadata are not
+compatibility gates. Adapter rejection identifies the specific accounting or
+dispatch fact that could not be established; it does not imply that every field
+in a provider response is governed by the shared contract.
+
+The HTTP client MUST prepare a separate request-local audit copy while credentials
+are available for redaction. For valid JSON, preserve bytes and duplicate keys
+except where redaction is required. Decode string tokens before redacting so JSON
+escapes cannot hide credentials. Apply the existing credential/routing redactor
+and remove values under credential-bearing keys. Record `redacted: true` when
+bytes change; retained digests describe the redacted bytes. Do not retain headers.
+Other model-generated content remains private audit data, including tool arguments;
+it MUST NOT be silently removed merely because it is adversarial or untrusted.
+
+A failed exchange MUST include `rejected_response` with state `retained`, `omitted`
+or `unconfirmed`. Retained copies have digest and size and use content role
+`provider-response-rejected-untrusted`. Existing journal/export ownership, size,
+integrity and administrator-evidence permissions apply. Public Markdown summaries
+MUST reference these bytes without rendering them as trusted text or instructions.
+This content is not an artifact receipt and MUST NOT enter Harness observation reads.
+
+Omission reasons MUST distinguish `no_complete_response`, `response_too_large`,
+`unsupported_encoding`, `invalid_json_redaction_unavailable`,
+`redacted_size_limit`, `provider_evidence_unavailable`, and `http_rejection`.
+Malformed JSON/invalid UTF-8 is omitted when safe string-token redaction is
+unavailable; its decoding diagnostic remains. Incomplete/oversized bodies are
+not retained as if complete. An interrupted journal write MUST mark retention
+`unconfirmed` with `retention_failed` in the surviving completion diagnostic.
+The original validation cause remains primary even if evidence persistence or
+cleanup also fails. No retry, replay, altered usage settlement or weaker validation
+is permitted.
+
+### Inspect a rejected response
+
+After a failed campaign, run separate commands against its retained state:
+
+```sh
+operatorctl inspect --state-root /path/to/operator-state --campaign CAMPAIGN_ID
+operatorctl export --state-root /path/to/operator-state --campaign CAMPAIGN_ID \
+  --output /private/path/to/new-export
+```
+
+Read `model_diagnostic` from inspection and the model-failure section of
+`report.md`. Both carry the operation ID, observed provider request ID, validation
+stage/rule/path and rejected-response retention status. `result-manifest.json`
+and exported `model.exchange` events retain the same facts. For retained bytes,
+use `content/<digest-without-sha256-prefix>` inside the private export, verify its
+digest against the event descriptor, and treat it as untrusted data. Do not execute
+returned tool calls or replay the campaign. A later Harness exit 137 is a secondary
+termination fact, not a substitute for the original validation error.

@@ -10,9 +10,12 @@ import (
 )
 
 type evidenceAttribution struct {
-	ToolCallID string `json:"tool_call_id,omitempty"`
-	PID        int    `json:"pid,omitempty"`
-	Confidence string `json:"confidence,omitempty"`
+	Window                string `json:"window,omitempty"`
+	ObservedAttemptID     string `json:"observed_attempt_id,omitempty"`
+	ObservedPayloadDigest string `json:"observed_payload_digest,omitempty"`
+	ToolCallID            string `json:"tool_call_id,omitempty"`
+	PID                   int    `json:"pid,omitempty"`
+	Confidence            string `json:"confidence,omitempty"`
 }
 
 type evidenceEvent struct {
@@ -38,6 +41,7 @@ type evidenceEvent struct {
 type evidenceOperation struct {
 	Kind       string          `json:"kind"`
 	Path       string          `json:"path,omitempty"`
+	Owner      *string         `json:"owner,omitempty"`
 	Mode       uint32          `json:"mode,omitempty"`
 	Blob       string          `json:"blob,omitempty"`
 	Size       int64           `json:"size,omitempty"`
@@ -109,12 +113,13 @@ type evidenceLimits struct {
 }
 
 type evidenceEntry struct {
-	Path   string `json:"path"`
-	Type   string `json:"type"`
-	Mode   uint32 `json:"mode"`
-	Blob   string `json:"blob,omitempty"`
-	Size   int64  `json:"size,omitempty"`
-	Target string `json:"target,omitempty"`
+	Path   string  `json:"path"`
+	Owner  *string `json:"owner,omitempty"`
+	Type   string  `json:"type"`
+	Mode   uint32  `json:"mode"`
+	Blob   string  `json:"blob,omitempty"`
+	Size   int64   `json:"size,omitempty"`
+	Target string  `json:"target,omitempty"`
 }
 
 type evidenceManifest struct {

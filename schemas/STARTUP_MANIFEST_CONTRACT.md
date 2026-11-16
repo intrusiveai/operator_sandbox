@@ -1,5 +1,10 @@
 # Startup and manifest validation
 
+The machine-readable interface is [asyncapi.json](asyncapi.json). Compatibility
+uses its version and exact byte hash; the existing lanes and message envelopes
+remain unchanged. See [conformance](../docs/CONTRACT_CONFORMANCE.md).
+
+
 This document fixes the startup messages and manifest inventories implemented in
 the Go/Python shared library. It supplements [SHARED_CONTRACT.md](SHARED_CONTRACT.md).
 

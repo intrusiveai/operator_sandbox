@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"net"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -20,6 +19,13 @@ import (
 // authorize execution to resume after an uncertain outcome. After loss it only
 // reconciles, closes/stops the replacement and reads retained source evidence.
 func TestNativeClientWorkflowWithLostRestoreReply(t *testing.T) {
+	for _, secure := range []bool{false, true} {
+		t.Run(map[bool]string{false: "http", true: "https"}[secure], func(t *testing.T) { nativeClientWorkflowWithLostRestoreReply(t, secure) })
+	}
+}
+
+func nativeClientWorkflowWithLostRestoreReply(t *testing.T, secure bool) {
+	t.Helper()
 	attach := attachmentBody(t)
 	metadata := attach["session"].(map[string]any)
 	_, cp := checkpointFixture(t, false)
@@ -35,7 +41,12 @@ func TestNativeClientWorkflowWithLostRestoreReply(t *testing.T) {
 	var savedRestore LifecycleRecord
 	snapshotEffects, restoreEffects, stopEffects := 0, 0, 0
 	var addressed []string
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	newServer := httptest.NewServer
+	if secure {
+		newServer = httptest.NewTLSServer
+	}
+	var authority string
+	srv := newServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		mu.Lock()
 		defer mu.Unlock()
 		raw, err := io.ReadAll(r.Body)
@@ -44,7 +55,7 @@ func TestNativeClientWorkflowWithLostRestoreReply(t *testing.T) {
 			http.Error(w, "bad body", 400)
 			return
 		}
-		if r.Method != "POST" || r.Host != "127.0.0.1:8080" || r.Header.Get("Authorization") != "" {
+		if r.Method != "POST" || r.Host != authority || r.Header.Get("Authorization") != "" {
 			t.Error("unexpected routing")
 		}
 		send := func(status int, body any, revision uint64) {
@@ -177,14 +188,12 @@ func TestNativeClientWorkflowWithLostRestoreReply(t *testing.T) {
 		}
 	}))
 	defer srv.Close()
-	c := New()
-	defer c.Close()
-	c.http.Transport.(*http.Transport).DialContext = func(ctx context.Context, network, address string) (net.Conn, error) {
-		if address != "127.0.0.1:8080" {
-			t.Error("unexpected dial")
-		}
-		return (&net.Dialer{}).DialContext(ctx, "tcp4", srv.Listener.Addr().String())
+	authority = srv.Listener.Addr().String()
+	c, err := NewConfigured(connectionFor(t, srv))
+	if err != nil {
+		t.Fatal(err)
 	}
+	defer c.Close()
 	ctx := context.Background()
 	a, err := c.Attach(ctx, "campaign-1", "worker-2", true)
 	if err != nil {

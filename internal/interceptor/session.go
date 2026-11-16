@@ -38,7 +38,9 @@ type Attachment struct {
 	RawSession, Capabilities json.RawMessage
 }
 
-func (c *Client) Attach(ctx context.Context, campaign, worker string, allowTargetStop bool) (Attachment, error) {
+func (c *Client) Attach(ctx context.Context, campaign, worker string, allowTargetStop bool) (result Attachment, err error) {
+	var observed Response
+	defer func() { err = ResponseError("/v1/attach", "", observed, err) }()
 	if !identifier.MatchString(campaign) || !identifier.MatchString(worker) {
 		return Attachment{}, ErrRequest
 	}
@@ -52,6 +54,7 @@ func (c *Client) Attach(ctx context.Context, campaign, worker string, allowTarge
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 	r, err := c.post(ctx, "/v1/attach", raw)
+	observed = r
 	if err = success(r, err); err != nil {
 		return Attachment{}, err
 	}
@@ -139,7 +142,9 @@ func (s Status) Matches(instance string, b Binding) bool {
 	return s.InstanceID == instance && s.Active.SessionID == b.SessionID && s.Active.RunRevision == b.RunRevision
 }
 
-func (c *Client) Status(ctx context.Context, campaign string) (Status, error) {
+func (c *Client) Status(ctx context.Context, campaign string) (result Status, err error) {
+	var observed Response
+	defer func() { err = ResponseError("/v1/status", "", observed, err) }()
 	if !identifier.MatchString(campaign) {
 		return Status{}, ErrRequest
 	}
@@ -147,6 +152,7 @@ func (c *Client) Status(ctx context.Context, campaign string) (Status, error) {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 	r, err := c.post(ctx, "/v1/status", raw)
+	observed = r
 	if err = success(r, err); err != nil {
 		return Status{}, err
 	}

@@ -18,16 +18,20 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/capabilities"
 	"github.com/intrusiveai/operator_sandbox/internal/contractstore"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
 	"github.com/intrusiveai/operator_sandbox/internal/hostrun"
 	"github.com/intrusiveai/operator_sandbox/internal/imagerelease"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/startrequest"
 	"github.com/intrusiveai/operator_sandbox/internal/workerjob"
@@ -175,6 +179,46 @@ func diagnosticFixture(t *testing.T) (hostconfig.Paths, string) {
 		t.Fatal(e)
 	}
 	p := installed.Protocol()
+	if os.Getenv("OPERATOR_DIAGNOSTIC_FAULT") == "capability-policy" {
+		// Use a real database-capable export and an offline-valid submission.
+		// Live admission must deny injection without an installed route.
+		native, err := os.ReadFile("../../schemas/fixtures/postgresql-capability-chain/interceptor-export.json")
+		if err != nil {
+			t.Fatal(err)
+		}
+		exported, err := capabilities.FromNative(p.Catalog(), native, "delivery-example")
+		if err != nil {
+			t.Fatal(err)
+		}
+		environment := filepath.Dir(args[1])
+		if err := os.WriteFile(filepath.Join(environment, "target-profile.json"), []byte(strings.Replace(adminTarget, `"operation_ids":["invoke"]`, `"operation_ids":["ask"]`, 1)), 0600); err != nil {
+			t.Fatal(err)
+		}
+		for name, data := range map[string][]byte{"capabilities.json": exported.PublicJSON(), exported.CompanionName(): native} {
+			if err := os.WriteFile(filepath.Join(environment, name), data, 0600); err != nil {
+				t.Fatal(err)
+			}
+		}
+		raw, err := os.ReadFile(args[1])
+		if err != nil {
+			t.Fatal(err)
+		}
+		var bundle map[string]any
+		if err := json.Unmarshal(raw, &bundle); err != nil {
+			t.Fatal(err)
+		}
+		target := bundle["target_requirements"].(map[string]any)
+		target["capability_source_digest"] = exported.SourceDigest()
+		target["required_capability_refs"] = []string{"action:injection:database_response"}
+		bundle["scenarios"] = []any{}
+		raw, err = json.Marshal(bundle)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(args[1], raw, 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
 	dir := t.TempDir()
 	os.Chmod(dir, 0700)
 	put := func(name string, raw []byte) {
@@ -212,7 +256,7 @@ func diagnosticFixture(t *testing.T) (hostconfig.Paths, string) {
 	for name, raw := range files {
 		put(name, raw)
 	}
-	compatibility := marshal(imagerelease.Record{APIVersion: imagerelease.CompatibilityVersion, MinimumOperatorVersion: "0.1.0", ContractPackageVersion: pin.Version, ContractPackageDigest: pin.Digest, RuntimeProfile: "operator-container/v1", Platform: "linux/" + runtime.GOARCH})
+	compatibility := marshal(imagerelease.Record{APIVersion: imagerelease.CompatibilityVersion, ContractPackageVersion: pin.Version, ContractPackageDigest: pin.Digest, RuntimeProfile: "operator-container/v1", Platform: "linux/" + runtime.GOARCH})
 	put("compatibility.json", compatibility)
 	// An unauthenticated local model profile initializes without resolving credentials
 	// or contacting a provider. Execution must never be reached in these tests.
@@ -240,22 +284,81 @@ func diagnosticFixture(t *testing.T) (hostconfig.Paths, string) {
 }
 
 func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
-	for _, fault := range []string{"image", "image-missing", "image-timeout", "attach"} {
+	for _, fault := range []string{"image", "image-missing", "image-timeout", "attach", "contract", "contract-hash", "capability-policy"} {
 		t.Run(fault, func(t *testing.T) {
 			var requests atomic.Int64
-			if fault == "attach" {
+			if fault == "attach" || fault == "capability-policy" || strings.HasPrefix(fault, "contract") {
 				listener, e := net.Listen("tcp4", "127.0.0.1:8080")
 				if e != nil {
 					t.Skip("controlled attachment test requires unused localhost port 8080:", e)
 				}
+				var binding interceptor.Binding
+				var bindingMu sync.Mutex
 				server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+					if r.URL.Path == "/v1/contract-version" {
+						w.Header().Set("Content-Type", "application/json")
+						version := interceptor.SupportedContractVersion
+						hash := interceptor.SupportedContractSHA256
+						if fault == "contract-hash" {
+							hash = strings.Repeat("a", 64)
+							requests.Add(1)
+						}
+						if fault == "contract" {
+							version = "9.0.0"
+							requests.Add(1)
+						}
+						fmt.Fprintf(w, `{"status":200,"session_revision":0,"body":{"interceptor_contract_version":%q,"interceptor_contract_sha256":%q}}`, version, hash)
+						return
+					}
 					requests.Add(1)
+					if fault == "capability-policy" {
+						bindingMu.Lock()
+						defer bindingMu.Unlock()
+						var request struct {
+							CampaignID string `json:"campaign_id"`
+							Worker     string `json:"worker_instance_id"`
+						}
+						if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+							t.Error(err)
+							w.WriteHeader(400)
+							return
+						}
+						var body any
+						switch r.URL.Path {
+						case "/v1/attach":
+							raw, err := os.ReadFile("../../schemas/fixtures/postgresql-capability-chain/interceptor-export.json")
+							if err != nil {
+								t.Error(err)
+								w.WriteHeader(500)
+								return
+							}
+							var native map[string]any
+							if err := json.Unmarshal(raw, &native); err != nil {
+								t.Error(err)
+								w.WriteHeader(500)
+								return
+							}
+							binding = interceptor.Binding{SessionID: "session-1", WorkerInstanceID: request.Worker, RunRevision: 1}
+							session := interceptor.Session{ID: binding.SessionID, CampaignID: request.CampaignID, OperationAPIVersion: interceptor.OperationVersion, Revision: 1, Phase: "running", FeedbackProfile: "black-box", EnvironmentDigest: native["environment_digest"].(string), AppDigest: native["application_digest"].(string), CapabilityManifestDigest: native["digest"].(string)}
+							body = map[string]any{"api_version": interceptor.LifecycleVersion, "campaign_id": request.CampaignID, "binding": binding, "session": session, "capabilities": json.RawMessage(raw), "evidence_max_bytes": 1 << 20}
+						case "/v1/status":
+							body = interceptor.Status{InstanceID: "instance-1", CampaignID: request.CampaignID, Active: binding, Sessions: map[string]interceptor.Binding{binding.SessionID: binding}, Phase: "ready", StoreAvailable: true, EvidenceMaxBytes: 1 << 20}
+						default:
+							t.Errorf("unexpected native request %s %s", r.Method, r.URL.Path)
+							w.WriteHeader(400)
+							return
+						}
+						w.Header().Set("Content-Type", "application/json")
+						json.NewEncoder(w).Encode(map[string]any{"status": 200, "session_revision": 1, "body": body})
+						return
+					}
 					if r.Method != "POST" || r.URL.Path != "/v1/attach" {
 						t.Errorf("unexpected native request %s %s", r.Method, r.URL.Path)
 					}
 					w.Header().Set("Content-Type", "application/json")
 					w.WriteHeader(409)
-					fmt.Fprintf(w, `{"status":409,"session_revision":0,"body":{"code":"conflict","message":%q}}`, diagnosticSecret)
+					fmt.Fprintf(w, `{"status":409,"session_revision":0,"body":{"code":"conflict","message":%q,"private":%q}}`, "permission denied; authorization: Bearer "+diagnosticSecret, diagnosticSecret)
 				}))
 				server.Listener.Close()
 				server.Listener = listener
@@ -301,7 +404,19 @@ func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
 						if d.Stage != "local Harness image inspection" || !strings.Contains(d.Message, expected) {
 							t.Fatal(d)
 						}
-					} else if d.Stage != "Interceptor attachment" || !strings.Contains(d.Message, "HTTP 409") {
+					} else if strings.HasPrefix(fault, "contract") {
+						reason := "version_mismatch"
+						if fault == "contract-hash" {
+							reason = "hash_mismatch"
+						}
+						if d.Stage != "Interceptor compatibility check" || d.Interceptor.Reason != reason || !strings.Contains(d.Message, interceptor.SupportedContractVersion) || d.Interceptor.ExpectedSHA256 != interceptor.SupportedContractSHA256 {
+							t.Fatal(d)
+						}
+					} else if fault == "capability-policy" {
+						if d.Stage != "target preparation" || d.Message != "Operator preparation (target preparation): scenario bundle is incompatible with the selected target: action:injection:database_response (host_policy)" {
+							t.Fatal(d)
+						}
+					} else if d.Stage != "Interceptor attachment" || !strings.Contains(d.Message, "HTTP 409") || !strings.Contains(d.Message, "conflict") || !strings.Contains(d.Message, "permission denied") {
 						t.Fatal(d)
 					}
 					if mode == "foreground" {
@@ -328,7 +443,7 @@ func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
 					}
 					intent := filepath.Join(paths.StateRoot, "attachments", receipt.CampaignID, "intent.json")
 					_, e = os.Stat(intent)
-					if (e == nil) != (fault == "attach") {
+					if (e == nil) != (fault == "attach" || fault == "capability-policy") {
 						t.Fatal("attachment intent ordering", e)
 					}
 					before, _ := os.ReadFile(filepath.Join(os.Getenv("OPERATOR_DIAGNOSTIC_FILES"), "calls"))
@@ -350,8 +465,11 @@ func TestPreparationFailureCLIThenSeparateInspection(t *testing.T) {
 					}
 				})
 			}
-			if fault == "attach" && requests.Load() != 2 {
+			if (fault == "attach" || strings.HasPrefix(fault, "contract")) && requests.Load() != 2 {
 				t.Fatal("attachment replayed or skipped", requests.Load())
+			}
+			if fault == "capability-policy" && requests.Load() != 4 {
+				t.Fatal("admission dispatched or replayed native work", requests.Load())
 			}
 		})
 	}
@@ -385,7 +503,7 @@ func TestLocalCompatibilityWithoutReleaseService(t *testing.T) {
 	t.Setenv("https_proxy", proxy.URL)
 	t.Setenv("NO_PROXY", "")
 	t.Setenv("no_proxy", "")
-	for _, fault := range []string{"missing", "malformed", "minimum version", "contract", "platform", "resource digest"} {
+	for _, fault := range []string{"missing", "malformed", "legacy format", "contract", "platform", "resource digest"} {
 		t.Run(fault, func(t *testing.T) {
 			t.Setenv("OPERATOR_DIAGNOSTIC_FAULT", fault)
 			paths, dir := diagnosticFixture(t)
@@ -406,8 +524,9 @@ func TestLocalCompatibilityWithoutReleaseService(t *testing.T) {
 			case "malformed":
 				e = os.WriteFile(file, []byte(`{"unexpected":"`+diagnosticSecret+`"}`), 0600)
 				want = "invalid embedded Harness compatibility record"
-			case "minimum version":
-				record.MinimumOperatorVersion = "999.0.0"
+			case "legacy format":
+				record.APIVersion = "operator.dev/harness-compatibility/v1alpha1"
+				want = "invalid embedded Harness compatibility record"
 			case "contract":
 				record.ContractPackageDigest = contracts.RawDigest([]byte("wrong package"))
 			case "platform":
@@ -423,7 +542,7 @@ func TestLocalCompatibilityWithoutReleaseService(t *testing.T) {
 			if e != nil {
 				t.Fatal(e)
 			}
-			if fault == "minimum version" || fault == "contract" || fault == "platform" {
+			if fault == "legacy format" || fault == "contract" || fault == "platform" {
 				raw, _ = json.Marshal(record)
 				if e = os.WriteFile(file, raw, 0600); e != nil {
 					t.Fatal(e)
@@ -476,7 +595,7 @@ func TestModelFailureForegroundAndWorkerOutput(t *testing.T) {
 	if code != 1 {
 		t.Fatal(code, stderr)
 	}
-	for _, want := range []string{"Campaign execution failed during model request (http_rejection) (execution_failed)", "openai-chat returned HTTP 401 (invalid_api_key)", "Operation: model-generate-0000000000000001", "Model: test-model", `Provider message: "The parameter temperature is unsupported."`, `Provider type: "invalid_request_error"`, `Provider parameter: "temperature"`, "Provider request ID omission: not_provided", "Execution will not resume."} {
+	for _, want := range []string{"Campaign execution failed during model request (http_rejection) (execution_failed)", "openai-chat rejected an Attack Harness model request (observed HTTP 401) (invalid_api_key)", "Operation: model-generate-0000000000000001", "Model: test-model", `Provider message: "The parameter temperature is unsupported."`, `Provider type: "invalid_request_error"`, `Provider parameter: "temperature"`, "Provider request ID omission: not_provided", "Execution will not resume."} {
 		if !strings.Contains(stderr, want) {
 			t.Fatalf("missing %q: %s", want, stderr)
 		}
@@ -485,6 +604,43 @@ func TestModelFailureForegroundAndWorkerOutput(t *testing.T) {
 	printWorkerFailure(&worker, "execution_failed", d, "recorded")
 	if worker.String() != stderr {
 		t.Fatal("foreground/supervised mismatch", worker.String(), stderr)
+	}
+	t.Log(stderr)
+}
+
+func TestModelUsageFailureForegroundAndWorkerOutput(t *testing.T) {
+	dir, paths, deps, _ := startFixture(t)
+	model := modelprovider.Diagnostic{Provider: "bedrock-converse", Model: "mistral-fixture", OperationID: "model-1", HTTPStatus: 200}.WithUsageRejection(
+		contracts.ModelMetrics{Known: true, InputTokens: 33500, OutputTokens: 300, TotalTokens: 33800}, 32768, 4096, 36864)
+	h := campaign.HarnessExit{Outcome: "failed", ExitObserved: true, ExitCode: 137, Forced: true, WorkerCause: "model_failure", Cause: model.Summary(), StderrState: "empty", CleanupComplete: true, Details: "campaign journal event launch.exit"}
+	d := &hostrun.PreparationDiagnostic{Stage: "model request (response_validation)", Message: model.Summary(), Model: model, HarnessExit: h}
+	if !d.Valid() {
+		t.Fatal("invalid completion diagnostic", d)
+	}
+	deps.run = func(context.Context, string, string, string) (workerjob.Result, error) {
+		return workerjob.Result{Code: "execution_failed", Diagnostic: d, CompletionRecording: "recorded"}, modelprovider.FailureError(model)
+	}
+	code, _, stderr := invokeStart(t, context.Background(), "start", []string{"--run", dir}, paths, deps)
+	if code != 1 {
+		t.Fatal(code, stderr)
+	}
+	for _, want := range []string{model.Summary(), "Campaign execution failed", "exit", "137", "model_failure", "Operation: model-1", "Execution will not resume."} {
+		if !strings.Contains(stderr, want) {
+			t.Fatalf("missing %q: %s", want, stderr)
+		}
+	}
+	for _, line := range strings.Split(model.UsageDetailsText(), "\n") {
+		if !strings.Contains(stderr, line) {
+			t.Fatal("usage details lost", stderr)
+		}
+	}
+	if strings.Index(stderr, model.Summary()) > strings.Index(stderr, "137") {
+		t.Fatal("exit replaced original cause", stderr)
+	}
+	var supervised bytes.Buffer
+	printWorkerFailure(&supervised, "execution_failed", d, "recorded")
+	if supervised.String() != stderr {
+		t.Fatal("foreground/supervised mismatch")
 	}
 	t.Log(stderr)
 }
@@ -515,13 +671,13 @@ func TestConclusionFailureForegroundAndWorkerOutput(t *testing.T) {
 
 func TestWorkflowFailureForegroundAndWorkerOutput(t *testing.T) {
 	dir, paths, deps, _ := startFixture(t)
-	detail := campaign.NewWorkflowDiagnostic("local-report", "harness-local", "arguments", "invalid_structure", "/input", "attempt_execute", "call-5")
+	detail := campaign.NewWorkflowDiagnostic("local-report", "harness-local", "termination", "invalid_call_limit", "", "", "")
 	detail.Stopping = "invalid-call-limit"
 	detail.Observed = 5
 	detail.Limit = 5
 	detail.HostFinalized = true
 	detail.CleanupCompleted = true
-	d := &hostrun.PreparationDiagnostic{Stage: "Harness arguments", Message: detail.Message(), Workflow: detail}
+	d := &hostrun.PreparationDiagnostic{Stage: "Harness termination", Message: detail.Message(), Workflow: detail}
 	deps.run = func(context.Context, string, string, string) (workerjob.Result, error) {
 		return workerjob.Result{Code: "execution_failed", Diagnostic: d, CompletionRecording: "recorded"}, detail
 	}
@@ -529,9 +685,14 @@ func TestWorkflowFailureForegroundAndWorkerOutput(t *testing.T) {
 	if code != 1 {
 		t.Fatal(code, stderr)
 	}
-	for _, want := range []string{"Campaign execution failed", "invalid-call-limit (observed 5; configured limit 5)", "Field: /input.", "No target attempt was dispatched.", "Assessment accepted: false", "Cleanup completed: true", "Tool: attempt_execute", "Call: call-5", "Execution will not resume."} {
+	for _, want := range []string{"Campaign execution failed during Harness termination", "Harness stopped after 5 invalid tool calls (configured limit 5)", "No final assessment was committed.", "No target attempt was dispatched.", "Assessment accepted: false", "Cleanup completed: true", "Execution will not resume."} {
 		if !strings.Contains(stderr, want) {
 			t.Fatalf("missing %q: %s", want, stderr)
+		}
+	}
+	for _, unwanted := range []string{"Field:", "Tool:", "Call:", "invalid_structure", "Harness arguments"} {
+		if strings.Contains(stderr, unwanted) {
+			t.Fatalf("rejection details leaked into terminal cause: %s", stderr)
 		}
 	}
 	var supervised bytes.Buffer
@@ -559,4 +720,154 @@ func TestHarnessExitFailureForegroundAndWorkerOutput(t *testing.T) {
 		t.Fatal("foreground/supervised mismatch")
 	}
 	t.Log(stderr)
+}
+
+func TestAttemptTimeoutForegroundAndWorkerOutput(t *testing.T) {
+	dir, paths, deps, _ := startFixture(t)
+	detail := campaign.NewWorkflowDiagnostic("request-1", "operator", "observation", "attempt_timeout", "", "attempt_execute", "call-1")
+	detail.AttemptID = "attempt-1"
+	detail.Invocation = "succeeded"
+	detail.ResultDelivery = "published"
+	detail.Timeout = &campaign.AttemptTimeout{NativeOperation: "observation.content.read", AllowanceMS: 30000, ElapsedMS: 30005, DeadlineSource: "attempt", Observation: "incomplete"}
+	d := &hostrun.PreparationDiagnostic{Stage: "Operator observation", Message: detail.Message(), Workflow: detail}
+	deps.run = func(context.Context, string, string, string) (workerjob.Result, error) {
+		return workerjob.Result{Code: "execution_failed", Diagnostic: d, CompletionRecording: "recorded"}, detail
+	}
+	code, _, stderr := invokeStart(t, context.Background(), "start", []string{"--run", dir}, paths, deps)
+	if code != 1 {
+		t.Fatal(code, stderr)
+	}
+	for _, want := range []string{"Campaign execution failed", "Attempt timed out during observation collection", "observation.content.read", "Target invocation: succeeded", "Observation collection: incomplete", "30000 ms", "30005 ms", "Operation: request-1", "Attempt: attempt-1", "Result delivery: published", "Execution will not resume."} {
+		if !strings.Contains(stderr, want) {
+			t.Fatalf("missing %q: %s", want, stderr)
+		}
+	}
+	var supervised bytes.Buffer
+	printWorkerFailure(&supervised, "execution_failed", d, "recorded")
+	if supervised.String() != stderr {
+		t.Fatal("foreground/supervised mismatch")
+	}
+	t.Log(stderr)
+}
+
+func TestModelValidationFailureForegroundAndWorkerOutput(t *testing.T) {
+	dir, paths, deps, _ := startFixture(t)
+	model := modelprovider.Diagnostic{Provider: "bedrock-converse", Model: "mistral-fixture", OperationID: "model-1", HTTPStatus: 200}.WithValidation(&contracts.ModelValidationError{Stage: "semantics", Reason: "inconsistent_stop_reason", FieldPath: "/response/stopReason"})
+	model.RequestID = "5ff57339-db46-44e9-83b1-ac71d7bcce27"
+	model.RejectedResponse = modelprovider.RejectedResponse{State: "retained", Digest: contracts.RawDigest([]byte("private evidence")), SizeBytes: 16, Redacted: true}
+	h := campaign.HarnessExit{Outcome: "failed", ExitObserved: true, ExitCode: 137, Forced: true, WorkerCause: "model_failure", Cause: model.Summary(), StderrState: "empty", CleanupComplete: true, Details: "campaign journal event launch.exit"}
+	d := &hostrun.PreparationDiagnostic{Stage: "model request (response_validation)", Message: model.Summary(), Model: model, HarnessExit: h}
+	if !d.Valid() {
+		t.Fatal("invalid completion diagnostic", d)
+	}
+	deps.run = func(context.Context, string, string, string) (workerjob.Result, error) {
+		return workerjob.Result{Code: "execution_failed", Diagnostic: d, CompletionRecording: "recorded"}, modelprovider.FailureError(model)
+	}
+	code, _, stderr := invokeStart(t, context.Background(), "start", []string{"--run", dir}, paths, deps)
+	if code != 1 {
+		t.Fatal(code, stderr)
+	}
+	for _, want := range []string{model.Summary(), "Campaign execution failed", "exit", "137", "model_failure", "Operation: model-1", "Execution will not resume."} {
+		if !strings.Contains(stderr, want) {
+			t.Fatalf("missing %q: %s", want, stderr)
+		}
+	}
+	for _, line := range strings.Split(model.ValidationDetailsText(), "\n") {
+		if !strings.Contains(stderr, line) {
+			t.Fatal("usage details lost", stderr)
+		}
+	}
+	if strings.Index(stderr, model.Summary()) > strings.Index(stderr, "137") {
+		t.Fatal("exit replaced original cause", stderr)
+	}
+	var supervised bytes.Buffer
+	printWorkerFailure(&supervised, "execution_failed", d, "recorded")
+	if supervised.String() != stderr {
+		t.Fatal("foreground/supervised mismatch")
+	}
+	t.Log(stderr)
+}
+
+func TestTokenBudgetFailureForegroundAndWorkerOutput(t *testing.T) {
+	dir, paths, deps, _ := startFixture(t)
+	detail := campaign.NewWorkflowDiagnostic("local-report", "harness-local", "termination", "model_reservation_unavailable", "", "", "")
+	detail.Stopping = "budget-limit"
+	detail.Budget = &contracts.ModelTokenBudget{Kind: "model-tokens", TotalAllowance: 524288, Consumed: 493460, Remaining: 30828, NextRequestReservation: 36864}
+	detail.HostFinalized = true
+	detail.CleanupCompleted = true
+	d := &hostrun.PreparationDiagnostic{Stage: "Harness termination", Message: detail.Message(), Workflow: detail}
+	deps.run = func(context.Context, string, string, string) (workerjob.Result, error) {
+		return workerjob.Result{Code: "execution_failed", Diagnostic: d, CompletionRecording: "recorded"}, detail
+	}
+	code, _, stderr := invokeStart(t, context.Background(), "start", []string{"--run", dir}, paths, deps)
+	if code != 1 {
+		t.Fatal(code, stderr)
+	}
+	for _, want := range []string{"Campaign execution failed", "Model-token allowance: 524288; consumed: 493460; remaining: 30828; required reservation: 36864.", "No final assessment was committed.", "No target attempt was dispatched.", "Assessment accepted: false", "Cleanup completed: true", "Execution will not resume."} {
+		if !strings.Contains(stderr, want) {
+			t.Fatalf("missing %q: %s", want, stderr)
+		}
+	}
+	var supervised bytes.Buffer
+	printWorkerFailure(&supervised, "execution_failed", d, "recorded")
+	if supervised.String() != stderr {
+		t.Fatal("foreground/supervised mismatch")
+	}
+	t.Log(stderr)
+}
+
+func TestTargetFailureForegroundAndWorkerOutput(t *testing.T) {
+	dir, paths, deps, _ := startFixture(t)
+	detail := campaign.NewWorkflowDiagnostic("request-1", "target", "delivery", "target_failed", "", "attempt_execute", "call-1")
+	detail.TargetFailure = &campaign.TargetFailure{NativeOperation: "application.invoke", Operation: "support-baseline", AttemptID: "attempt-1", TurnID: "turn-1", StepID: "step-1", ResponseDigest: contracts.RawDigest([]byte("native error")), HTTPStatus: 200, Category: "target_turn_timeout", Detail: "context deadline exceeded"}
+	d := &hostrun.PreparationDiagnostic{Stage: "target delivery", Message: detail.Message(), Workflow: detail, HarnessExit: campaign.HarnessExit{Outcome: "failed", ExitObserved: true, ExitCode: 137, Forced: true, StderrState: "empty", Details: "campaign journal event launch.exit"}}
+	deps.run = func(context.Context, string, string, string) (workerjob.Result, error) {
+		return workerjob.Result{Code: "execution_failed", Diagnostic: d, CompletionRecording: "recorded"}, detail
+	}
+	code, _, stderr := invokeStart(t, context.Background(), "start", []string{"--run", dir}, paths, deps)
+	if code != 1 {
+		t.Fatal(code, stderr)
+	}
+	for _, want := range []string{"Campaign execution failed", "target application turn exceeded its deadline while running support-baseline", `Interceptor reported "context deadline exceeded"`, "Native operation: application.invoke", "Native response evidence: sha256:", "Execution will not resume."} {
+		if !strings.Contains(stderr, want) {
+			t.Fatalf("missing %q: %s", want, stderr)
+		}
+	}
+	if strings.Index(stderr, "context deadline exceeded") > strings.Index(stderr, "code 137") {
+		t.Fatal("secondary exit obscures target failure")
+	}
+	var supervised bytes.Buffer
+	printWorkerFailure(&supervised, "execution_failed", d, "recorded")
+	if supervised.String() != stderr {
+		t.Fatal("foreground/supervised mismatch")
+	}
+	t.Log(stderr)
+}
+
+func TestIntegrationFailureForegroundAndWorkerOutput(t *testing.T) {
+	dir, paths, deps, _ := startFixture(t)
+	detail := campaign.NewWorkflowDiagnostic("snapshot-1", "operator", "integration", "remote_rejection", "", "", "")
+	detail.Integration = &diagnostictext.Failure{Component: "Interceptor", Operation: "snapshot.create", RequestID: "request-1", Category: "remote_rejection", HTTPStatus: 409, Code: "snapshot_failed", Message: "scan mutable root /state/app: permission denied", RemoteRequestID: "req-native-1"}
+	detail.IntegrationTerminal = true
+	d := &hostrun.PreparationDiagnostic{Stage: "Operator integration", Message: detail.Message(), Workflow: detail, HarnessExit: campaign.HarnessExit{Outcome: "failed", ExitObserved: true, ExitCode: 137, Forced: true, StderrState: "empty", Details: "campaign journal event launch.exit"}}
+	deps.run = func(context.Context, string, string, string) (workerjob.Result, error) {
+		return workerjob.Result{Code: "execution_failed", Diagnostic: d, CompletionRecording: "recorded"}, detail
+	}
+	code, _, stderr := invokeStart(t, context.Background(), "start", []string{"--run", dir}, paths, deps)
+	if code != 1 {
+		t.Fatal(code, stderr)
+	}
+	for _, want := range []string{"Campaign execution failed", "Interceptor", "snapshot.create", "HTTP 409", "snapshot_failed", "permission denied", "req-native-1", "Execution will not resume."} {
+		if !strings.Contains(stderr, want) {
+			t.Fatalf("missing %q: %s", want, stderr)
+		}
+	}
+	if strings.Index(stderr, "permission denied") > strings.Index(stderr, "code 137") {
+		t.Fatal("shutdown obscured native cause", stderr)
+	}
+	var supervised bytes.Buffer
+	printWorkerFailure(&supervised, "execution_failed", d, "recorded")
+	if supervised.String() != stderr {
+		t.Fatal("foreground and supervised output differ")
+	}
 }

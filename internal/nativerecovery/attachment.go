@@ -15,9 +15,6 @@ import (
 // campaign.prepared record. Prepared or damaged journals take precedence.
 func RunAttachment(ctx context.Context, root, id string, peer Peer) (out Outcome, err error) {
 	out = Outcome{CampaignID: id, State: "unconfirmed", Reason: "attachment_identity_unconfirmed", Closure: "unconfirmed", Cleanup: "not-started", TargetStop: "not-permitted"}
-	if peer == nil {
-		return out, campaign.ErrInvalid
-	}
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	if e := ctx.Err(); e != nil {
@@ -80,6 +77,14 @@ func RunAttachment(ctx context.Context, root, id string, peer Peer) (out Outcome
 			return out, campaign.ErrCorrupt
 		}
 		return previous, nil
+	}
+	if peer == nil {
+		client, err := interceptor.NewConfigured(s.Intent.Interceptor)
+		if err != nil {
+			return out, err
+		}
+		defer client.Close()
+		peer = client
 	}
 	b := s.Binding
 	f := facts{instance: s.InstanceID, binding: b.Binding, allowStop: s.Intent.AllowTargetStop, environment: b.Session.EnvironmentDigest, application: b.Session.AppDigest}

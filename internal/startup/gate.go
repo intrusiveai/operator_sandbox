@@ -11,12 +11,13 @@ import (
 	"sync/atomic"
 
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 	"github.com/intrusiveai/operator_sandbox/internal/nativerecovery"
 	"github.com/intrusiveai/operator_sandbox/internal/termination"
 )
 
-var ErrUnresolved = errors.New("prior campaign execution remains unresolved")
+var ErrUnresolved = diagnostictext.New("prior campaign execution remains unresolved")
 
 type Docker interface {
 	termination.Killer

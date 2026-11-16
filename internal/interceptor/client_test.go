@@ -387,3 +387,21 @@ func TestRealHTTPPreservesBodyAndDoesNotReplayLostReply(t *testing.T) {
 		t.Fatal(err, calls.Load())
 	}
 }
+
+func TestNativeErrorCodeShapes(t *testing.T) {
+	for _, tc := range []struct{ body, want string }{
+		{`{"code":"not_found"}`, "not_found"},
+		{`{"error":{"code":"not_found","message":"injection does not exist","request_id":"req-1"}}`, "not_found"},
+		{`{"code":"not_found","error":{"code":"not_found"}}`, "not_found"},
+		{`{"code":"execution_closed","error":{"code":"not_found"}}`, ""},
+		{`{"error":{"message":"not_found"}}`, ""},
+		{`{"error":{"code":"not_found","code":"other"}}`, ""},
+		{`{"error":{"code":"not_found\nsecret"}}`, ""},
+		{`{"error":null}`, ""},
+	} {
+		r := Response{Status: 404, Body: json.RawMessage(tc.body)}
+		if got := r.Code(); got != tc.want {
+			t.Fatalf("%s: got %q want %q", tc.body, got, tc.want)
+		}
+	}
+}

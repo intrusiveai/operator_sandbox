@@ -17,36 +17,47 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/campaignservice"
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
+	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 	"github.com/intrusiveai/operator_sandbox/internal/preparation"
 	"github.com/intrusiveai/operator_sandbox/internal/targetprofile"
 	"github.com/intrusiveai/operator_sandbox/internal/transport"
 )
 
 type peer struct {
-	feedbackView        interceptor.ObservationView
-	statusSample        *delayedStatus
-	mu                  sync.Mutex
-	input               preparation.Input
-	calls               []string
-	revision            uint64
-	closed              bool
-	unknownClose        bool
-	unknownDelete       bool
-	checkpoints         []interceptor.Checkpoint
-	contexts            map[string]interceptor.AttemptContext
-	checkpointContexts  map[string]map[string]interceptor.AttemptContext
-	allowances          []int64
-	restoreMode         string
-	restores            int
-	block               chan struct{}
-	entered             chan struct{}
-	restoreEntered      chan struct{}
-	restoreRelease      chan struct{}
-	beforeRestoreResult func()
+	nativeResponses       map[string]interceptor.Response
+	turnError             string
+	invokeTarget          func() string
+	delayOperation        string
+	delay                 time.Duration
+	feedbackView          interceptor.ObservationView
+	statusSample          *delayedStatus
+	mu                    sync.Mutex
+	input                 preparation.Input
+	calls                 []string
+	revision              uint64
+	closed                bool
+	unknownClose          bool
+	unknownDelete         bool
+	checkpoints           []interceptor.Checkpoint
+	contexts              map[string]interceptor.AttemptContext
+	checkpointContexts    map[string]map[string]interceptor.AttemptContext
+	allowances            []int64
+	restoreMode           string
+	restores              int
+	block                 chan struct{}
+	entered               chan struct{}
+	restoreEntered        chan struct{}
+	restoreRelease        chan struct{}
+	beforeNativeRejection func()
+	beforeRestoreResult   func()
 }
 
 func (p *peer) Status(ctx context.Context, _ string) (interceptor.Status, error) {
 	p.mu.Lock()
+	if r, ok := p.nativeResponses["status"]; ok {
+		p.mu.Unlock()
+		return interceptor.Status{}, &interceptor.RemoteError{Response: r}
+	}
 	block, entered := p.block, p.entered
 	status := p.input.Status
 	sample := p.statusSample
@@ -76,11 +87,26 @@ func (p *peer) Status(ctx context.Context, _ string) (interceptor.Status, error)
 	}
 	return status, nil
 }
-func (p *peer) Execute(_ context.Context, q interceptor.PreparedOperation) (interceptor.Response, error) {
+func (p *peer) Execute(ctx context.Context, q interceptor.PreparedOperation) (interceptor.Response, error) {
+	if q.Request().Operation == p.delayOperation {
+		timer := time.NewTimer(p.delay)
+		defer timer.Stop()
+		select {
+		case <-timer.C:
+		case <-ctx.Done():
+			return interceptor.Response{}, &interceptor.CallError{Kind: "timeout", Uncertain: true}
+		}
+	}
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	r := q.Request()
 	p.calls = append(p.calls, r.Operation)
+	if response, ok := p.nativeResponses[r.Operation]; ok {
+		if p.beforeNativeRejection != nil {
+			p.beforeNativeRejection()
+		}
+		return response, nil
+	}
 	var envelope struct {
 		Body json.RawMessage `json:"body"`
 	}
@@ -141,8 +167,14 @@ func (p *peer) Execute(_ context.Context, q interceptor.PreparedOperation) (inte
 		p.contexts[body.AttemptID] = body
 		return result(201, body)
 	case "application.invoke":
+		if p.invokeTarget != nil {
+			p.turnError = p.invokeTarget()
+		}
 		var invoke interceptor.TurnRequest
 		_ = json.Unmarshal(envelope.Body, &invoke)
+		if p.turnError != "" {
+			return result(200, interceptor.Turn{ID: fmt.Sprintf("turn-%d", p.revision), Operation: "invoke", Status: "error", AttemptID: r.AttemptID, PayloadDigest: invoke.PayloadDigest, Error: p.turnError, Started: now, Finished: time.Now().UTC()})
+		}
 		return result(200, interceptor.Turn{ID: fmt.Sprintf("turn-%d", p.revision), Operation: "invoke", Status: "complete", AttemptID: r.AttemptID, PayloadDigest: invoke.PayloadDigest, Body: []byte(`{"answer":"test"}`), MediaType: "application/json", OutputDigest: contracts.RawDigest([]byte(`{"answer":"test"}`)), Started: now, Finished: now})
 	case "observation.read":
 		var lookup map[string]string
@@ -242,7 +274,35 @@ func serviceWithTemplate(t *testing.T, budget time.Duration, operations []string
 	if err != nil {
 		t.Fatal(err)
 	}
-	w, launch, root := preparedLaunchConfigured(t, target, template, "", operations...)
+	var modelConfig campaignservice.Config
+	for _, op := range operations {
+		if op == "engine.model_generate" && settings != nil {
+			settings(&modelConfig)
+		}
+	}
+	wrappedTemplate := func(c map[string]any) {
+		if template != nil {
+			template(c)
+		}
+		if modelConfig.Model != nil {
+			m := c["model"].(map[string]any)
+			m["tool_selection"] = map[string]any{"injection_surfaces": []string{}}
+			var settings map[string]any
+			_ = json.Unmarshal(modelConfig.Model.Policy, &settings)
+			completion := settings["max_completion_tokens"]
+			if completion == nil {
+				completion = settings["max_tokens"]
+			}
+			if completion == nil {
+				completion = settings["max_output_tokens"]
+			}
+			m["context_limits"] = map[string]any{"maximum_prompt_tokens": modelConfig.Model.MaximumPromptTokens, "maximum_completion_tokens": completion, "warning_threshold_tokens": contracts.ContextWarningThreshold(modelConfig.Model.MaximumPromptTokens, 80)}
+			delete(m, "codec_settings")
+			delete(m, "profile_id")
+			delete(m, "profile_digest")
+		}
+	}
+	w, launch, root := preparedLaunchConfigured(t, target, wrappedTemplate, "", operations...)
 	stored, err := target.Persist(w, launch.EngineContext)
 	if err != nil {
 		t.Fatal(err)
@@ -261,6 +321,17 @@ func serviceWithTemplate(t *testing.T, budget time.Duration, operations []string
 	config := campaignservice.Config{Prepared: stored, Peer: native, Runtime: runtime, Docker: docker, StateRoot: root, Deadline: deadline}
 	if settings != nil {
 		settings(&config)
+	}
+	if config.Model != nil {
+		var policy map[string]any
+		_ = json.Unmarshal(config.Model.Policy, &policy)
+		var context map[string]any
+		_ = json.Unmarshal(launch.EngineContext, &context)
+		policy["context_limits"] = context["model"].(map[string]any)["context_limits"]
+		policy["prompt"] = string(launch.Prompt)
+		config.Model.ProfileDigest = w.Manifest().ModelProfileDigest
+		policy["profile_digest"] = config.Model.ProfileDigest
+		config.Model.Policy = encode(policy)
 	}
 	service, err := campaignservice.New(context.Background(), config)
 	if err != nil {
@@ -461,7 +532,7 @@ func serviceSpool(t *testing.T, s *campaignservice.Service, p *peer, w *campaign
 	t.Helper()
 	dir := t.TempDir()
 	_ = os.Chmod(dir, 0700)
-	channel, err := transport.NewSpool(dir, transport.Config{Protocol: p.input.Protocol, CampaignID: "campaign-1", LaunchID: "launch-1", Fence: w.Fence(), CampaignDeadline: time.Now().Add(time.Minute)})
+	channel, err := transport.NewSpool(dir, transport.Config{OperationTimeouts: operationpolicy.FromContext(launch.EngineContext), Protocol: p.input.Protocol, CampaignID: "campaign-1", LaunchID: "launch-1", Fence: w.Fence(), CampaignDeadline: time.Now().Add(time.Minute)})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -724,3 +795,5 @@ func TestServiceCampaignDeadlineTerminatesWithoutOrdinaryWork(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func (p *peer) CheckContract(context.Context) error { return nil }

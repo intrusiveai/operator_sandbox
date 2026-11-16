@@ -52,12 +52,12 @@ func (s *Service) rememberAttempt(request, response []byte) error {
 	if _, exists := s.history[q.Body.AttemptID]; exists {
 		return nil
 	} // Historical duplicate after restore.
-	if s.config.HTTPS != nil {
-		if s.httpsParent == nil || s.httpsParent.Context.AttemptID != q.Body.AttemptID {
+	if s.config.HTTP != nil {
+		if s.httpParent == nil || s.httpParent.Context.AttemptID != q.Body.AttemptID {
 			return ErrService
 		}
-		s.history[q.Body.AttemptID] = *s.httpsParent
-		s.lineage.Parents[q.Body.AttemptID] = *s.httpsParent
+		s.history[q.Body.AttemptID] = *s.httpParent
+		s.lineage.Parents[q.Body.AttemptID] = *s.httpParent
 		return nil
 	}
 	session := s.target().Live().Binding().SessionID

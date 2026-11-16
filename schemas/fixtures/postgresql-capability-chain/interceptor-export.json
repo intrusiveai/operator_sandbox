@@ -1,0 +1,242 @@
+{
+  "feedback": {
+    "view_version": "interceptor.dev/observation-view/v1alpha2",
+    "selection_modes": [
+      "all-permitted",
+      "selected"
+    ],
+    "kinds": [
+      "target_output",
+      "operation_error",
+      "injection_delivery",
+      "oracle_outcome"
+    ],
+    "maximum_chunk_bytes": 262144,
+    "maximum_entries": 64
+  },
+  "delivery_schema_profile": "interceptor.delivery-schema/v1",
+  "api_version": "interceptor.dev/capability-manifest/v1alpha3",
+  "kind": "CapabilityManifest",
+  "interceptor_release": "0.1.3-dev",
+  "environment_digest": "sha256:32efd43d3394920c90b6375ec9c7a6ac235a71ee5647c4906a3b7b3a95beb715",
+  "application_digest": "sha256:3f844f61a96a9c7af349d85a152c5f310adf74b06cab27d9fced1b58374186ca",
+  "target": {
+    "name": "adapter-python",
+    "version": "1",
+    "interface": "code"
+  },
+  "feedback_profiles": [
+    "black-box",
+    "oracle-assisted"
+  ],
+  "operations": [
+    {
+      "delivery": {
+        "description": "Invoke the seeded PostgreSQL support application",
+        "input": {
+          "media_type": "application/json",
+          "encoding": "json",
+          "max_bytes": 65536,
+          "basis": "synthetic",
+          "schema": {
+            "additionalProperties": false,
+            "properties": {
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message"
+            ],
+            "type": "object"
+          }
+        },
+        "output": {
+          "media_type": "application/json",
+          "encoding": "json",
+          "max_bytes": 65536,
+          "basis": "unknown"
+        }
+      },
+      "delivery_status": "described",
+      "maximum_input_bytes": 65536,
+      "id": "ask"
+    }
+  ],
+  "cross_vm_operations": [
+    "application.invoke",
+    "artifact.read",
+    "artifact.register",
+    "attempt.register",
+    "capabilities.read",
+    "injection.arm",
+    "injection.delete",
+    "observation.content.read",
+    "observation.read",
+    "operation.status",
+    "session.owner",
+    "session.status",
+    "session.stop",
+    "snapshot.create"
+  ],
+  "injection_surfaces": [
+    "database_response",
+    "environment_state",
+    "model_tool_result"
+  ],
+  "injection_profiles": [
+    {
+      "surface": "database_response",
+      "scopes": [
+        "once",
+        "standing"
+      ],
+      "placements": [
+        "replace",
+        "prepend",
+        "append",
+        "insert",
+        "merge"
+      ],
+      "selector_fields": [
+        "service",
+        "call_ordinal",
+        "request_body_json_pointer",
+        "request_body_equal",
+        "request_body_contain"
+      ],
+      "carriers": [
+        "postgresql_result"
+      ]
+    },
+    {
+      "surface": "environment_state",
+      "scopes": [
+        "once",
+        "next_turn",
+        "standing"
+      ],
+      "placements": [
+        "replace",
+        "prepend",
+        "append",
+        "insert",
+        "merge"
+      ],
+      "selector_fields": [
+        "service",
+        "collection",
+        "key",
+        "path",
+        "file_namespace",
+        "relative_path",
+        "turn_id"
+      ],
+      "carriers": [
+        "managed_service_state",
+        "mutable_file"
+      ]
+    },
+    {
+      "surface": "model_tool_result",
+      "scopes": [
+        "once",
+        "next_turn",
+        "standing"
+      ],
+      "placements": [
+        "replace",
+        "prepend",
+        "append",
+        "insert",
+        "merge"
+      ],
+      "selector_fields": [
+        "tool_name",
+        "call_ordinal",
+        "arguments_json_pointer",
+        "arguments_equal",
+        "arguments_contain",
+        "turn_id"
+      ],
+      "carriers": [
+        "model_client_tool_result"
+      ]
+    }
+  ],
+  "services": [
+    {
+      "database_tables": [
+        {
+          "id": "documents",
+          "keys": [
+            "id"
+          ],
+          "fields": [
+            "body",
+            "metadata",
+            "embedding",
+            "author_id"
+          ],
+          "allow_create": false
+        },
+        {
+          "id": "refunds",
+          "keys": [
+            "id"
+          ],
+          "fields": [
+            "amount"
+          ],
+          "allow_create": true,
+          "max_records": 10
+        }
+      ],
+      "id": "database",
+      "kind": "postgresql",
+      "role": "environment",
+      "transports": [
+        "postgresql+tls"
+      ],
+      "injection_surfaces": [
+        "database_response",
+        "environment_state"
+      ],
+      "creatable_collections": [
+        {
+          "collection": "refunds",
+          "max_resources": 10
+        }
+      ]
+    }
+  ],
+  "oracle_types": [
+    "database_query_match"
+  ],
+  "network": {
+    "dns": {
+      "enabled": true,
+      "record_types": [
+        "A"
+      ],
+      "unknown_policy": "nxdomain",
+      "upstream_forwarding": false,
+      "maximum_queries": 10000
+    },
+    "http_frontdoor": false,
+    "https_frontdoor": {
+      "enabled": true,
+      "trust_mode": "auto",
+      "minimum_version": "TLS1.2"
+    }
+  },
+  "snapshot_capable": true,
+  "limits": {
+    "maximum_attempts": 200,
+    "maximum_artifacts": 400,
+    "maximum_artifact_bytes": 33554432,
+    "maximum_invocations": 40,
+    "maximum_snapshots": 3
+  },
+  "digest": "sha256:36ffaa718abba75bbd260ada3b5c88e195c8abb43da1f78dd2c25913aa23a8b9"
+}

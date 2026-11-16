@@ -38,20 +38,34 @@ func TestPythonProcessModelDiagnosticInspectionAndExport(t *testing.T) {
 	if os.Getenv("OPERATOR_HARNESS_INTEGRATION") != "1" {
 		t.Skip("set OPERATOR_HARNESS_INTEGRATION=1 with sibling Harness and Python environment")
 	}
-	operator, _ := filepath.Abs("../..")
-	binary := filepath.Join(t.TempDir(), "operatorctl")
-	build := exec.Command("go", "build", "-o", binary, "./cmd/operatorctl")
-	build.Dir = operator
-	if out, e := build.CombinedOutput(); e != nil {
-		t.Fatal(e, string(out))
-	}
+	binary := processCLI(t)
 	for _, transport := range []string{"fifo", "spool"} {
-		for _, status := range []int{400, 200} {
-			t.Run(fmt.Sprintf("%s/%d", transport, status), func(t *testing.T) {
+		for _, mode := range []string{"http-rejection", "contract-invalid", "usage-input", "usage-both"} {
+			// Error categories are transport-independent; keep a rejection/export smoke on spool.
+			if transport == "spool" && mode != "http-rejection" {
+				continue
+			}
+			status := 200
+			if mode == "http-rejection" {
+				status = 400
+			}
+			t.Run(fmt.Sprintf("%s/%s", transport, mode), func(t *testing.T) {
+				usageFailure := strings.HasPrefix(mode, "usage-")
+				var completion atomic.Int64
 				var calls atomic.Int32
 				server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					calls.Add(1)
-					_, _ = io.Copy(io.Discard, r.Body)
+					if usageFailure {
+						var request struct {
+							Completion int64 `json:"max_completion_tokens"`
+						}
+						if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+							t.Error(err)
+						}
+						completion.Store(request.Completion)
+					} else {
+						_, _ = io.Copy(io.Discard, r.Body)
+					}
 					w.Header().Set("Content-Type", "application/json")
 					w.Header().Set("X-Request-Id", "req_0123456789abcdef0123456789abcdef")
 					if transport == "spool" && status == 400 {
@@ -59,6 +73,14 @@ func TestPythonProcessModelDiagnosticInspectionAndExport(t *testing.T) {
 					}
 					w.Header().Set("X-Private", "synthetic-private-header")
 					w.WriteHeader(status)
+					if usageFailure {
+						input := int64(10001)
+						if mode == "usage-both" {
+							input = 10000 + completion.Load()
+						}
+						fmt.Fprintf(w, `{"id":"chat-local-1","object":"chat.completion","created":1,"model":"test-model","choices":[{"index":0,"message":{"role":"assistant","content":"synthetic-private-body"},"finish_reason":"stop"}],"usage":{"prompt_tokens":%d,"completion_tokens":3,"total_tokens":%d}}`, input, input+3)
+						return
+					}
 					fmt.Fprint(w, `{"error":{"code":"unsupported_parameter","type":"invalid_request_error","param":"temperature","message":"Parameter temperature is unsupported; api_key=synthetic-provider-key","debug":"synthetic-private-body"}}`)
 				}))
 				defer server.Close()
@@ -93,6 +115,18 @@ func TestPythonProcessModelDiagnosticInspectionAndExport(t *testing.T) {
 				category := "http_rejection"
 				if status == 200 {
 					category = "response_validation"
+				}
+				if usageFailure {
+					u := d.UsageAllowance
+					input := int64(10001)
+					if mode == "usage-both" {
+						input = 10000 + completion.Load()
+					}
+					if d.Reason != "usage_exceeds_reservation" || u.InputTokens != input || u.OutputTokens != 3 || u.TotalTokens != input+3 || u.MaximumPromptTokens != 10000 || u.RequestedCompletionTokens != completion.Load() || u.ReservedTokens != 10000+completion.Load() || !u.PromptAllowanceExceeded || u.TotalReservationExceeded != (mode == "usage-both") {
+						t.Fatal("usage diagnostics lost", d)
+					}
+				} else if d.UsageAllowance != (modelprovider.UsageAllowance{}) {
+					t.Fatal("unvalidated counts retained", d)
 				}
 				if d.Category != category {
 					t.Fatal(d)
@@ -131,8 +165,11 @@ func TestPythonProcessModelDiagnosticInspectionAndExport(t *testing.T) {
 				_, e = campaign.Inspect(r.root, "campaign-1", func(event campaign.Event) error {
 					if event.Kind == "model.exchange" {
 						count++
-						if len(event.Content) != 0 {
-							t.Fatal("failed provider body retained")
+						if status == 400 && len(event.Content) != 0 {
+							t.Fatal("HTTP error body retained")
+						}
+						if status == 200 && (len(event.Content) != 1 || event.Content[0].Role != "provider-response-rejected-untrusted") {
+							t.Fatal("rejected response evidence missing")
 						}
 					}
 					return nil
@@ -186,6 +223,17 @@ func TestPythonProcessModelDiagnosticInspectionAndExport(t *testing.T) {
 						t.Fatal("reservation presented as usage", result.Usage)
 					}
 					if verb == "export" {
+						if usageFailure {
+							markdown, err := os.ReadFile(filepath.Join(output, "report.md"))
+							if err != nil || !strings.Contains(string(markdown), d.Summary()) {
+								t.Fatal("missing human-readable usage", err, string(markdown))
+							}
+							for _, line := range strings.Split(d.UsageDetailsText(), "\n") {
+								if !strings.Contains(string(markdown), line) {
+									t.Fatal("missing usage comparison", line)
+								}
+							}
+						}
 						diagnosticFound := false
 						e = filepath.WalkDir(output, func(path string, entry os.DirEntry, err error) error {
 							if err != nil {
@@ -200,8 +248,11 @@ func TestPythonProcessModelDiagnosticInspectionAndExport(t *testing.T) {
 							}
 							if bytes.Contains(b, []byte(`"diagnostic"`)) && bytes.Contains(b, []byte(d.OperationID)) {
 								diagnosticFound = true
+								if usageFailure && !bytes.Contains(b, []byte(`"usage_allowance"`)) {
+									t.Fatal("export removed numeric diagnostic", path)
+								}
 							}
-							for _, secret := range []string{"synthetic-provider-key", "synthetic-private-header", "synthetic-private-body"} {
+							for _, secret := range []string{"synthetic-provider-key", "synthetic-private-header"} {
 								if bytes.Contains(b, []byte(secret)) {
 									t.Fatal("export leaked secret", path)
 								}
@@ -224,7 +275,7 @@ func TestPythonProcessModelDiagnosticInspectionAndExport(t *testing.T) {
 					if err != nil {
 						return err
 					}
-					for _, secret := range []string{"synthetic-provider-key", "synthetic-private-header", "synthetic-private-body"} {
+					for _, secret := range []string{"synthetic-provider-key", "synthetic-private-header"} {
 						if bytes.Contains(b, []byte(secret)) {
 							t.Fatal("retained secret", path)
 						}

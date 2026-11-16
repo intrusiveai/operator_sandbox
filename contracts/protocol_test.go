@@ -118,7 +118,7 @@ func TestRegistryAndAckGuards(t *testing.T) {
 			case "bad-finalization-rule":
 				items[0].(map[string]any)["finalization_rule"] = "anything"
 			case "integer-exponent":
-				items[0].(map[string]any)["timeout_ms"] = json.Number("3e4")
+				items[0].(map[string]any)["max_request_bytes"] = json.Number("4.194304e6")
 			}
 			raw, err := json.Marshal(registry)
 			if err != nil {

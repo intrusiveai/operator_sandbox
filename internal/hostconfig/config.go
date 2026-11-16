@@ -22,10 +22,17 @@ import (
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/campaignlimits"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
+	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 )
 
 const MaxBytes = 64 << 10
+const DefaultOperationTimeoutMS int64 = 120000
+
+// No attempt can outlive the supported 30-minute campaign lifetime.
+const MaximumOperationTimeoutMS int64 = operationpolicy.MaximumMS
+
 const DefaultSpoolBytes int64 = 512 << 20
 const DefaultEvidenceBytes int64 = 4 << 30
 const DefaultJournalBytes int64 = 8 << 30
@@ -33,12 +40,12 @@ const DefaultSegmentBytes int64 = 16 << 20
 const DefaultMinimumFreeBytes int64 = 256 << 20
 
 var (
-	ErrInvalid  = errors.New("invalid configuration: use only documented sections, fields and scalar types")
-	ErrPrivate  = errors.New("configuration must be a private regular file owned by the service user or root")
-	ErrImage    = errors.New("engine.image must select a local Docker image name, repository digest or full image ID")
-	ErrPath     = errors.New("configuration paths must be absolute and clean, without control characters")
-	ErrSpool    = errors.New("spool.max_bytes must be a positive decimal integer no greater than 9007199254740991")
-	ErrEvidence = errors.New("evidence.max_archive_bytes must be a positive decimal integer no greater than 9007199254740991")
+	ErrInvalid  = diagnostictext.New("invalid configuration: use only documented sections, fields and scalar types")
+	ErrPrivate  = diagnostictext.New("configuration must be a private regular file owned by the service user or root")
+	ErrImage    = diagnostictext.New("engine.image must select a local Docker image name, repository digest or full image ID")
+	ErrPath     = diagnostictext.New("configuration paths must be absolute and clean, without control characters")
+	ErrSpool    = diagnostictext.New("spool.max_bytes must be a positive decimal integer no greater than 9007199254740991")
+	ErrEvidence = diagnostictext.New("evidence.max_archive_bytes must be a positive decimal integer no greater than 9007199254740991")
 )
 
 type Paths struct{ ConfigFile, StateRoot, DockerEndpoint string }
@@ -55,12 +62,14 @@ func Defaults(goos, home string) (Paths, error) {
 		base := filepath.Join(home, "Library", "Application Support", "Operator")
 		return Paths{filepath.Join(base, "config", "config.yaml"), filepath.Join(base, "data"), "unix://" + filepath.Join(home, ".docker", "run", "docker.sock")}, nil
 	default:
-		return Paths{}, errors.New("unsupported Operator host OS")
+		return Paths{}, diagnostictext.New("unsupported Operator host OS")
 	}
 }
 
 type Config struct {
-	Journal struct {
+	Sizes             contracts.SizeLimits `json:"size_limits"`
+	OperationTimeouts map[string]int64     `json:"operation_timeouts_ms"`
+	Journal           struct {
 		MinimumFreeBytes int64 `json:"minimum_free_bytes"`
 		MaxBytes         int64 `json:"max_bytes"`
 		SegmentBytes     int64 `json:"segment_bytes"`
@@ -78,7 +87,8 @@ type Config struct {
 		Digest    string `json:"digest"`
 	} `json:"contract"`
 	Target struct {
-		ProfileFile string `json:"profile_file"`
+		MaxOperationTimeoutMS int64  `json:"max_operation_timeout_ms"`
+		ProfileFile           string `json:"profile_file"`
 	} `json:"target"`
 	Engine struct {
 		Image string `json:"image"`
@@ -149,6 +159,12 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 	if err != nil {
 		return c, err
 	}
+	c.OperationTimeouts, err = operationpolicy.Resolve(nil)
+	if err != nil {
+		return Config{}, err
+	}
+	c.Sizes = operationpolicy.SizeDefaults()
+	c.Target.MaxOperationTimeoutMS = DefaultOperationTimeoutMS
 	c.State.Root = defaults.StateRoot
 	c.Docker.Endpoint = defaults.DockerEndpoint
 	c.Spool.MaxBytes = DefaultSpoolBytes
@@ -170,6 +186,32 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 		"cache":       {"release_directory": &c.Cache.ReleaseDirectory},
 	}
 	for section, node := range sections {
+		if section == "size_limits" || section == "operation_timeouts_ms" {
+			values, e := mapping(node)
+			if e != nil {
+				return Config{}, ErrInvalid
+			}
+			overrides := map[string]int64{}
+			for name, value := range values {
+				if value.Kind != yaml.ScalarNode || value.Tag != "!!int" || !decimal.MatchString(value.Value) {
+					return Config{}, ErrInvalid
+				}
+				n, e := strconv.ParseInt(value.Value, 10, 64)
+				if e != nil {
+					return Config{}, ErrInvalid
+				}
+				overrides[name] = n
+			}
+			if section == "size_limits" {
+				c.Sizes, e = operationpolicy.ResolveSizes(overrides)
+			} else {
+				c.OperationTimeouts, e = operationpolicy.Resolve(overrides)
+			}
+			if e != nil {
+				return Config{}, e
+			}
+			continue
+		}
 		if section == "limits" {
 			raw, e := limitsJSON(node, true)
 			if e != nil {
@@ -192,6 +234,17 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 		for name, value := range values {
 			if value.Kind != yaml.ScalarNode || value.Anchor != "" {
 				return Config{}, ErrInvalid
+			}
+			if section == "target" && name == "max_operation_timeout_ms" {
+				if value.Tag != "!!int" || !decimal.MatchString(value.Value) {
+					return Config{}, ErrInvalid
+				}
+				n, err := strconv.ParseInt(value.Value, 10, 64)
+				if err != nil || n > MaximumOperationTimeoutMS {
+					return Config{}, ErrInvalid
+				}
+				c.Target.MaxOperationTimeoutMS = n
+				continue
 			}
 			if section == "spool" || section == "evidence" || section == "journal" {
 				key, dst, invalid := "max_bytes", &c.Spool.MaxBytes, ErrSpool
@@ -232,11 +285,11 @@ func Parse(raw []byte, defaults Paths) (Config, error) {
 	}
 	if c.Contract.Directory != "" || c.Contract.Version != "" || c.Contract.Digest != "" {
 		if !absolute(c.Contract.Directory) || !regexp.MustCompile(`^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$`).MatchString(c.Contract.Version) || !regexp.MustCompile(`^sha256:[0-9a-f]{64}$`).MatchString(c.Contract.Digest) {
-			return Config{}, errors.New("contract requires an absolute directory, release version and independently installed SHA-256 digest")
+			return Config{}, diagnostictext.New("contract requires an absolute directory, release version and independently installed SHA-256 digest")
 		}
 	}
 	if campaign.ValidateDockerEndpoint(c.Docker.Endpoint) != nil {
-		return Config{}, errors.New("docker.endpoint must be a canonical local unix:/// socket")
+		return Config{}, diagnostictext.New("docker.endpoint must be a canonical local unix:/// socket")
 	}
 	if !absolute(c.State.Root) || (c.Docker.Executable != "" && !absolute(c.Docker.Executable)) {
 		return Config{}, ErrPath

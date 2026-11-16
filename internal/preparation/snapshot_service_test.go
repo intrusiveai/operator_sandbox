@@ -119,6 +119,10 @@ func (p *peer) restoreCheckpoint(q interceptor.PreparedLifecycle) (interceptor.R
 var snapshotRoutes = []string{"engine.attempt_execute", "engine.observation_read", "engine.injection_delete", "engine.snapshot_request", "engine.snapshot_list", "engine.snapshot_inspect", "engine.restore_request"}
 
 func stateWire(op, id string, rev int, body any) []byte {
+	if op == "engine.model_generate" {
+		body = relayFixture(body)
+	}
+
 	return encode(map[string]any{"api_version": "operator.dev/engine-pipe/v1alpha1", "kind": "request", "seq": 0, "campaign_id": "campaign-1", "launch_id": "launch-1", "run_revision": rev, "call_id": id, "operation_id": id, "operation": op, "timeout_ms": 30000, "body": body})
 }
 func stateResult(t *testing.T, raw []byte, err error) map[string]any {
@@ -134,7 +138,7 @@ func stateResult(t *testing.T, raw []byte, err error) map[string]any {
 	return v["result"].(map[string]any)
 }
 func TestServiceSnapshotsRestoreAndCumulativeLimits(t *testing.T) {
-	s, p, r, w, launch := serviceWithOperations(t, 0, snapshotRoutes, snapshotInput(t))
+	s, p, r, w, launch := serviceWithOperations(t, 0, snapshotRoutes, requiredSnapshotResources(t))
 	if err := s.Admit(context.Background(), launch); err != nil {
 		t.Fatal(err)
 	}
@@ -145,6 +149,18 @@ func TestServiceSnapshotsRestoreAndCumulativeLimits(t *testing.T) {
 			t.Fatalf("%s: %v", op, err)
 		}
 		return stateResult(t, raw, err)
+	}
+	for _, test := range []struct {
+		op, id, field, next string
+		body                any
+	}{
+		{"engine.snapshot_request", "description-bytes", "/description", "UTF-8 bytes", map[string]any{"description": strings.Repeat("😀", 3000)}},
+		{"engine.snapshot_list", "inventory-offset", "/offset", "offset 0", map[string]any{"offset": interceptor.MaxSnapshotInventory + 1}},
+	} {
+		raw, err := s.Handle(context.Background(), stateWire(test.op, test.id, 1, test.body), 0)
+		if err != nil || !strings.Contains(string(raw), test.field) || !strings.Contains(string(raw), test.next) || !strings.Contains(string(raw), `"effect_state":"none"`) {
+			t.Fatal("missing native-bound correction", string(raw), err)
+		}
 	}
 	created := call("engine.snapshot_request", "snapshot-1", 1, map[string]any{"label": "baseline", "description": "Before branch one"})
 	cp := created["snapshot"].(map[string]any)
@@ -173,14 +189,28 @@ func TestServiceSnapshotsRestoreAndCumulativeLimits(t *testing.T) {
 		revision int
 		body     any
 		code     string
+		next     string
+		safe     bool
 	}{
-		{"stale-restore", 1, handle, "STATE_CHANGED"},
-		{"restore-1", 2, map[string]any{"source_session": "session-1", "checkpoint_id": "cp-missing"}, "IDEMPOTENCY_CONFLICT"},
-		{"missing-restore", 2, map[string]any{"source_session": "session-1", "checkpoint_id": "cp-missing"}, "SNAPSHOT_NOT_FOUND"},
+		{"stale-restore", 1, handle, "STATE_CHANGED", "Inspect the current state", false},
+		{"restore-1", 2, map[string]any{"source_session": "session-1", "checkpoint_id": "cp-missing"}, "IDEMPOTENCY_CONFLICT", "new call identity", true},
+		{"missing-restore", 2, map[string]any{"source_session": "session-1", "checkpoint_id": "cp-missing"}, "SNAPSHOT_NOT_FOUND", "snapshot_list", true},
 	} {
 		raw, err := s.Handle(context.Background(), stateWire("engine.restore_request", test.id, test.revision, test.body), 0)
 		if err != nil || !strings.Contains(string(raw), test.code) {
 			t.Fatal(string(raw), err)
+		}
+		var reply struct {
+			Error struct {
+				Diagnostic struct {
+					Correction string `json:"correction"`
+					Execution  string `json:"execution_occurred"`
+					Safe       bool   `json:"resubmission_safe"`
+				} `json:"diagnostic"`
+			} `json:"error"`
+		}
+		if json.Unmarshal(raw, &reply) != nil || !strings.Contains(reply.Error.Diagnostic.Correction, test.next) || reply.Error.Diagnostic.Execution != "no" || reply.Error.Diagnostic.Safe != test.safe {
+			t.Fatal("admission correction lost", string(raw))
 		}
 	}
 	second := call("engine.snapshot_request", "snapshot-2", 2, map[string]any{})
@@ -192,7 +222,13 @@ func TestServiceSnapshotsRestoreAndCumulativeLimits(t *testing.T) {
 	if err != nil || !strings.Contains(string(raw), "SNAPSHOT_BUDGET_EXCEEDED") {
 		t.Fatal(string(raw), err)
 	}
-	raw, err = s.Handle(context.Background(), attemptWire(p, 2, 1, w.Manifest().ReleaseRecordDigest), 0)
+	if !strings.Contains(string(raw), "Do not repeat") || !strings.Contains(string(raw), `"resubmission_safe":false`) {
+		t.Fatal("exhaustion invited a retry", string(raw))
+	}
+	call("engine.snapshot_list", "list-exhausted", 2, map[string]any{})
+	call("engine.snapshot_inspect", "inspect-exhausted", 2, handle)
+	call("engine.restore_request", "restore-exhausted", 2, handle)
+	raw, err = s.Handle(context.Background(), attemptWire(p, 3, 1, w.Manifest().ReleaseRecordDigest), 0)
 	stateResult(t, raw, err)
 	select {
 	case <-r.killed:
@@ -201,7 +237,7 @@ func TestServiceSnapshotsRestoreAndCumulativeLimits(t *testing.T) {
 	}
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if p.restores != 1 || len(p.allowances) != 2 || p.allowances[0] != 4 || p.allowances[1] != 2 {
+	if p.restores != 2 || len(p.allowances) != 2 || p.allowances[0] != 4 || p.allowances[1] != 2 {
 		t.Fatal(p.restores, p.allowances)
 	}
 }

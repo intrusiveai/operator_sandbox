@@ -15,7 +15,7 @@ const PackageManifestLimit = 8 << 20
 const PackageFileLimit = 16 << 20
 const PackageContentLimit = 128 << 20
 
-// PackageIdentity is a caller-approved version plus canonical manifest digest.
+// PackageIdentity is a caller-approved version plus exact AsyncAPI document digest.
 // Matching it verifies content identity, not publisher authenticity or conformance.
 type PackageIdentity struct {
 	Version string `json:"package_version"`
@@ -23,7 +23,7 @@ type PackageIdentity struct {
 }
 
 // PackageIdentity returns a copy of the pin only when this protocol was loaded
-// through LoadVerifiedProtocol. Ordinary LoadProtocol is the development loader.
+// through LoadVerifiedProtocol or LoadInterfaceProtocol. LoadProtocol is a development loader.
 func (p *Protocol) PackageIdentity() (PackageIdentity, bool) {
 	if p.packageIdentity == nil {
 		return PackageIdentity{}, false
@@ -87,12 +87,11 @@ func (p *Protocol) VerifyPackage(manifest []byte, files map[string][]byte, expec
 	if err != nil {
 		return err
 	}
-	digest, err := CanonicalDigest(manifest, PackageManifestLimit)
-	if err != nil {
-		return err
-	}
-	if m["package_version"] != expected.Version || digest != expected.Digest {
+	if m["package_version"] != expected.Version {
 		return ErrProtocol
+	}
+	if err := verifyInterface(files, expected); err != nil {
+		return err
 	}
 	if len(files) != len(m["files"].([]any)) {
 		return ErrProtocol
@@ -190,7 +189,7 @@ func (p *Protocol) BuildPackageManifest(version string, files map[string][]byte,
 	if err != nil {
 		return fail(err)
 	}
-	m := map[string]any{"api_version": "operator.dev/contract-package/v1alpha1", "package_version": version, "files": inventory, "semantic_profiles": semantics, "catalog": map[string]any{"path": "catalog.json", "object_digest": catalog}, "operations": map[string]any{"path": "operations.json", "object_digest": operations}}
+	m := map[string]any{"api_version": "operator.dev/contract-package/v2", "package_version": version, "files": inventory, "semantic_profiles": semantics, "catalog": map[string]any{"path": "catalog.json", "object_digest": catalog}, "operations": map[string]any{"path": "operations.json", "object_digest": operations}}
 	// Marshal only construction metadata, then validate before canonicalization.
 	raw, err := json.Marshal(m)
 	if err != nil {
@@ -203,7 +202,10 @@ func (p *Protocol) BuildPackageManifest(version string, files map[string][]byte,
 	if err != nil {
 		return fail(err)
 	}
-	identity := PackageIdentity{Version: version, Digest: RawDigest(raw)}
+	identity, err := InterfaceIdentity(files[InterfaceDocument])
+	if err != nil || identity.Version != version {
+		return fail(ErrProtocol)
+	}
 	if err := p.VerifyPackage(raw, files, identity); err != nil {
 		return fail(err)
 	}

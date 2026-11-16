@@ -22,6 +22,7 @@ import (
 )
 
 type fakeRun struct {
+	failureTrigger       *campaign.FailureTrigger
 	harnessExit          *campaign.HarnessExit
 	stopAccepted         bool
 	workflowDiagnostic   *campaign.WorkflowDiagnostic
@@ -42,7 +43,7 @@ func (f *fakeRun) Run(ctx context.Context) (hostworker.Result, error) {
 	if f.check != nil {
 		f.check()
 	}
-	return hostworker.Result{HarnessExit: f.harnessExit, StopAccepted: f.stopAccepted, ContainerCleanup: "removed", ModelDiagnostic: f.modelDiagnostic, ConclusionDiagnostic: f.conclusionDiagnostic, WorkflowDiagnostic: f.workflowDiagnostic}, f.runError
+	return hostworker.Result{FailureTrigger: f.failureTrigger, HarnessExit: f.harnessExit, StopAccepted: f.stopAccepted, ContainerCleanup: "removed", ModelDiagnostic: f.modelDiagnostic, ConclusionDiagnostic: f.conclusionDiagnostic, WorkflowDiagnostic: f.workflowDiagnostic}, f.runError
 }
 func (f *fakeRun) Cancel() error { f.cancels++; return nil }
 
@@ -226,6 +227,7 @@ func TestModelDiagnosticCompletionAndPersistenceFailure(t *testing.T) {
 		d.ProviderParameter = "temperature"
 		d.Omissions.RequestID = "not_provided"
 		inputs.run.modelDiagnostic = &d
+		inputs.run.failureTrigger = &campaign.FailureTrigger{Kind: "model", OperationID: d.OperationID}
 		secondary := errors.New("cleanup failed")
 		inputs.run.runError = errors.Join(modelprovider.FailureError(d), secondary)
 		inputs.run.check = func() {
@@ -250,6 +252,41 @@ func TestModelDiagnosticCompletionAndPersistenceFailure(t *testing.T) {
 			}
 			if _, e = run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", load); !errors.Is(e, startrequest.ErrClaimed) {
 				t.Fatal("replay", e)
+			}
+		}
+	}
+}
+
+func TestUsageDiagnosticSurvivesCompletionAndForcedExit(t *testing.T) {
+	for _, failWrite := range []bool{false, true} {
+		saved, inputs := jobFixture(t)
+		r := saved.Request
+		d := modelprovider.Diagnostic{Provider: "bedrock-converse", Model: "mistral-fixture", OperationID: "model-1", HTTPStatus: 200}.WithUsageRejection(
+			contracts.ModelMetrics{Known: true, InputTokens: 33500, OutputTokens: 300, TotalTokens: 33800}, 32768, 4096, 36864)
+		inputs.run.modelDiagnostic = &d
+		inputs.run.failureTrigger = &campaign.FailureTrigger{Kind: "model", OperationID: d.OperationID}
+		inputs.run.harnessExit = &campaign.HarnessExit{Outcome: "failed", ExitObserved: true, ExitCode: 137, Forced: true, WorkerCause: "model_failure", Cause: d.Summary(), StderrState: "empty", CleanupComplete: true, Details: "campaign journal event launch.exit"}
+		secondary := errors.New("subsequent forced exit")
+		inputs.run.runError = errors.Join(modelprovider.FailureError(d), secondary)
+		inputs.run.check = func() {
+			if failWrite {
+				if err := os.WriteFile(filepath.Join(r.StateRoot, "starts", r.Selection.StartRequestID, "completion.json.pending"), []byte("interrupted"), 0600); err != nil {
+					t.Fatal(err)
+				}
+			}
+		}
+		load := func(context.Context, startrequest.Request) (verifiedInputs, error) { return inputs, nil }
+		result, err := run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", load)
+		if result.Code != "execution_failed" || result.Diagnostic == nil || result.Diagnostic.Model != d || result.Diagnostic.Message != d.Summary() || result.Diagnostic.HarnessExit.ExitCode != 137 || !errors.Is(err, secondary) || modelprovider.Details(err) == nil || inputs.run.runs != 1 {
+			t.Fatal(result, err)
+		}
+		if (result.CompletionRecording == "unconfirmed") != failWrite {
+			t.Fatal(result)
+		}
+		if !failWrite {
+			disk, err := startrequest.Read(r.StateRoot, r.Selection.StartRequestID)
+			if err != nil || disk.Completion == nil || disk.Completion.Diagnostic == nil || *disk.Completion.Diagnostic != *result.Diagnostic {
+				t.Fatal("durable usage lost", disk, err)
 			}
 		}
 	}
@@ -295,7 +332,7 @@ func TestWorkflowDiagnosticCompletionAndPersistenceFailure(t *testing.T) {
 	for _, failWrite := range []bool{false, true} {
 		saved, inputs := jobFixture(t)
 		r := saved.Request
-		d := campaign.NewWorkflowDiagnostic("local-report", "harness-local", "arguments", "invalid_structure", "/input", "attempt_execute", "call-5")
+		d := campaign.NewWorkflowDiagnostic("local-report", "harness-local", "termination", "invalid_call_limit", "", "", "")
 		d.Stopping = "invalid-call-limit"
 		d.Observed = 5
 		d.Limit = 5
@@ -347,5 +384,98 @@ func TestHarnessExitCompletionRetainsCauseAndIgnoresRecoveredRejection(t *testin
 	disk, e := startrequest.Read(r.StateRoot, r.Selection.StartRequestID)
 	if e != nil || disk.Completion == nil || disk.Completion.Diagnostic == nil || disk.Completion.Diagnostic.HarnessExit != h {
 		t.Fatal("exit diagnostic not persisted", disk, e)
+	}
+}
+
+func TestAttemptTimeoutCompletionPreservesPrimaryCause(t *testing.T) {
+	saved, inputs := jobFixture(t)
+	r := saved.Request
+	d := campaign.NewWorkflowDiagnostic("request-1", "operator", "observation", "attempt_timeout", "", "attempt_execute", "call-1")
+	d.AttemptID = "attempt-1"
+	d.Invocation = "succeeded"
+	d.ResultDelivery = "published"
+	d.Timeout = &campaign.AttemptTimeout{NativeOperation: "observation.content.read", AllowanceMS: 90000, ElapsedMS: 90001, DeadlineSource: "attempt", Observation: "incomplete"}
+	inputs.run.workflowDiagnostic = &d
+	inputs.run.failureTrigger = &campaign.FailureTrigger{Kind: "workflow", OperationID: d.OperationID}
+	inputs.run.harnessExit = &campaign.HarnessExit{Outcome: "failed", ExitObserved: true, ExitCode: 137, Forced: true, Cause: "secondary Harness shutdown", StderrState: "empty", CleanupComplete: true, Details: "campaign journal event launch.exit"}
+	inputs.run.runError = d
+	load := func(context.Context, startrequest.Request) (verifiedInputs, error) { return inputs, nil }
+	result, err := run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", load)
+	if err == nil || result.Diagnostic == nil || result.Diagnostic.Message != d.Message() || result.Diagnostic.HarnessExit.ExitCode != 137 {
+		t.Fatal(result, err)
+	}
+	disk, err := startrequest.Read(r.StateRoot, r.Selection.StartRequestID)
+	if err != nil || disk.Completion == nil || disk.Completion.Diagnostic == nil || disk.Completion.Diagnostic.Workflow.Timeout == nil || *disk.Completion.Diagnostic.Workflow.Timeout != *d.Timeout || disk.Completion.Diagnostic.Workflow.Invocation != "succeeded" {
+		t.Fatal(disk, err)
+	}
+}
+
+func TestValidationDiagnosticSurvivesCompletionAndForcedExit(t *testing.T) {
+	for _, failWrite := range []bool{false, true} {
+		saved, inputs := jobFixture(t)
+		r := saved.Request
+		d := modelprovider.Diagnostic{Provider: "bedrock-converse", Model: "mistral-fixture", OperationID: "model-1", HTTPStatus: 200}.WithValidation(&contracts.ModelValidationError{Stage: "semantics", Reason: "inconsistent_stop_reason", FieldPath: "/response/stopReason"})
+		d.RequestID = "5ff57339-db46-44e9-83b1-ac71d7bcce27"
+		d.RejectedResponse = modelprovider.RejectedResponse{State: "retained", Digest: contracts.RawDigest([]byte("private evidence")), SizeBytes: 16, Redacted: true}
+		inputs.run.modelDiagnostic = &d
+		inputs.run.failureTrigger = &campaign.FailureTrigger{Kind: "model", OperationID: d.OperationID}
+		inputs.run.harnessExit = &campaign.HarnessExit{Outcome: "failed", ExitObserved: true, ExitCode: 137, Forced: true, WorkerCause: "model_failure", Cause: d.Summary(), StderrState: "empty", CleanupComplete: true, Details: "campaign journal event launch.exit"}
+		secondary := errors.New("subsequent forced exit")
+		inputs.run.runError = errors.Join(modelprovider.FailureError(d), secondary)
+		inputs.run.check = func() {
+			if failWrite {
+				if err := os.WriteFile(filepath.Join(r.StateRoot, "starts", r.Selection.StartRequestID, "completion.json.pending"), []byte("interrupted"), 0600); err != nil {
+					t.Fatal(err)
+				}
+			}
+		}
+		load := func(context.Context, startrequest.Request) (verifiedInputs, error) { return inputs, nil }
+		result, err := run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", load)
+		if result.Code != "execution_failed" || result.Diagnostic == nil || result.Diagnostic.Model != d || result.Diagnostic.Message != d.Summary() || result.Diagnostic.HarnessExit.ExitCode != 137 || !errors.Is(err, secondary) || modelprovider.Details(err) == nil || inputs.run.runs != 1 {
+			t.Fatal(result, err)
+		}
+		if (result.CompletionRecording == "unconfirmed") != failWrite {
+			t.Fatal(result)
+		}
+		if !failWrite {
+			disk, err := startrequest.Read(r.StateRoot, r.Selection.StartRequestID)
+			if err != nil || disk.Completion == nil || disk.Completion.Diagnostic == nil || *disk.Completion.Diagnostic != *result.Diagnostic {
+				t.Fatal("durable usage lost", disk, err)
+			}
+		}
+	}
+}
+
+func TestTargetFailureCompletionPreservesNativeCause(t *testing.T) {
+	saved, inputs := jobFixture(t)
+	r := saved.Request
+	d := campaign.NewWorkflowDiagnostic("request-1", "target", "delivery", "target_failed", "", "attempt_execute", "call-1")
+	d.TargetFailure = &campaign.TargetFailure{NativeOperation: "application.invoke", Operation: "support-baseline", AttemptID: "attempt-1", TurnID: "turn-1", StepID: "step-1", ResponseDigest: contracts.RawDigest([]byte("native error")), HTTPStatus: 200, Category: "target_turn_timeout", Detail: "context deadline exceeded"}
+	inputs.run.workflowDiagnostic = &d
+	inputs.run.failureTrigger = &campaign.FailureTrigger{Kind: "workflow", OperationID: d.OperationID}
+	inputs.run.harnessExit = &campaign.HarnessExit{Outcome: "failed", ExitObserved: true, ExitCode: 137, Forced: true, Cause: "secondary Harness shutdown", StderrState: "empty", CleanupComplete: false, Details: "campaign journal event launch.exit"}
+	inputs.run.runError = d
+	result, err := run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", func(context.Context, startrequest.Request) (verifiedInputs, error) { return inputs, nil })
+	if err == nil || result.Diagnostic == nil || result.Diagnostic.Message != d.Message() || result.Diagnostic.HarnessExit.ExitCode != 137 {
+		t.Fatal(result, err)
+	}
+	disk, err := startrequest.Read(r.StateRoot, r.Selection.StartRequestID)
+	if err != nil || disk.Completion == nil || disk.Completion.Diagnostic == nil || disk.Completion.Diagnostic.Workflow.TargetFailure == nil || *disk.Completion.Diagnostic.Workflow.TargetFailure != *d.TargetFailure {
+		t.Fatal(disk, err)
+	}
+}
+
+func TestCoexistingDiagnosticsDoNotInventCausalOrder(t *testing.T) {
+	saved, inputs := jobFixture(t)
+	r := saved.Request
+	d := modelprovider.Diagnostic{Provider: "openai-chat", Model: "same-model-as-target", OperationID: "model-1"}.WithFailure("cancellation", "canceled")
+	inputs.run.modelDiagnostic = &d // No recorded initiating failure: cancellation may be secondary.
+	rejection := campaign.NewWorkflowDiagnostic("finish-1", "harness-local", "arguments", "invalid_arguments", "/objectives", "finish", "call-1")
+	inputs.run.workflowDiagnostic = &rejection
+	inputs.run.harnessExit = &campaign.HarnessExit{Outcome: "failed", ExitObserved: true, ExitCode: 137, Forced: true, StderrState: "empty", Details: "campaign journal event launch.exit"}
+	inputs.run.runError = errors.New("independent failure")
+	result, err := run(context.Background(), r.StateRoot, r.Selection.StartRequestID, saved.Digest, "0.1.0", func(context.Context, startrequest.Request) (verifiedInputs, error) { return inputs, nil })
+	if err == nil || result.Diagnostic == nil || !strings.Contains(result.Diagnostic.Message, "initiating failure could not be established") || result.Diagnostic.Model != d || result.Diagnostic.Workflow.Reason != "invalid_arguments" {
+		t.Fatal(result, err)
 	}
 }

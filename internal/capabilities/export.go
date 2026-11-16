@@ -5,23 +5,23 @@ package capabilities
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"sort"
 	"strings"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
 var (
-	ErrNative     = errors.New("invalid or unsupported native capability manifest")
-	ErrProjection = errors.New("public capability export does not match verified native source")
+	ErrNative     = diagnostictext.New("invalid or unsupported native capability manifest")
+	ErrProjection = diagnostictext.New("public capability export does not match verified native source")
 )
 
 // Export can only be populated by verification. Its buffers and decoded values
 // are private so callers cannot alter provenance after successful verification.
 type Export struct {
 	native           nativeManifest
-	https            *httpsDeclaration
+	httpTarget       *httpDeclaration
 	raw, public      []byte
 	projection       map[string]any
 	projectionDigest string
@@ -30,7 +30,7 @@ type Export struct {
 func (e *Export) NativeJSON() []byte { return bytes.Clone(e.raw) }
 func (e *Export) PublicJSON() []byte { return bytes.Clone(e.public) }
 func (e *Export) SourceDigest() string {
-	if e.https != nil {
+	if e.httpTarget != nil {
 		return contracts.RawDigest(e.raw)
 	}
 	return e.native.Digest
@@ -69,13 +69,20 @@ func FromNative(catalog *contracts.Catalog, raw []byte, targetID string) (*Expor
 	}
 	if contains(n.CrossVMOperations, "injection.arm") && contains(n.CrossVMOperations, "injection.delete") {
 		for _, profile := range n.InjectionProfiles {
-			add("actions", map[string]any{"ref": "action:injection:" + profile.Surface, "action_type": "interceptor.injection/v1alpha1", "surface": profile.Surface, "scopes": sorted(profile.Scopes), "placements": sorted(profile.Placements), "selector_fields": sorted(profile.SelectorFields), "carriers": sorted(profile.Carriers)})
+			item := map[string]any{"ref": "action:injection:" + profile.Surface, "action_type": "interceptor.injection/v1alpha1", "surface": profile.Surface, "scopes": sorted(profile.Scopes), "placements": sorted(profile.Placements), "selector_fields": sorted(profile.SelectorFields), "carriers": sorted(profile.Carriers)}
+			if len(profile.ModelCodecs) > 0 {
+				item["model_codecs"] = sorted(profile.ModelCodecs)
+			}
+			if profile.PlacementRoot != "" {
+				item["placement_root"] = profile.PlacementRoot
+			}
+			add("actions", item)
 		}
 	}
 	for _, svc := range records(source["services"]) {
 		item := map[string]any{"ref": "service:" + svc["id"].(string), "service_id": svc["id"], "transports": sorted(stringsOf(svc["transports"])), "injection_surfaces": sorted(stringsOf(svc["injection_surfaces"]))}
-		copyFields(item, svc, "kind", "role", "implementation", "response_mode", "mcp", "endpoints", "creatable_collections")
-		for key, id := range map[string]string{"endpoints": "id", "creatable_collections": "collection"} {
+		copyFields(item, svc, "kind", "role", "implementation", "response_mode", "mcp", "endpoints", "creatable_collections", "database_tables")
+		for key, id := range map[string]string{"endpoints": "id", "creatable_collections": "collection", "database_tables": "id"} {
 			if value, ok := item[key]; ok {
 				items := records(value)
 				sort.Slice(items, func(i, j int) bool { return items[i][id].(string) < items[j][id].(string) })
@@ -103,7 +110,7 @@ func FromNative(catalog *contracts.Catalog, raw []byte, targetID string) (*Expor
 		}
 	}
 	if n.SnapshotCapable && contains(n.CrossVMOperations, "snapshot.create") {
-		p["features"] = []string{"feature:snapshots"}
+		p["features"] = []string{FeatureSnapshots}
 	}
 	for _, key := range []string{"operations", "actions", "services", "file_namespaces", "evidence_classes"} {
 		items := p[key].([]any)
@@ -147,8 +154,8 @@ func Import(catalog *contracts.Catalog, public, native []byte, targetID string) 
 	_ = json.Unmarshal(public, &source)
 	var e *Export
 	var err error
-	if source.Source.Adapter == "https/v1" {
-		e, err = fromHTTPSDeclaration(catalog, native, targetID)
+	if source.Source.Adapter == "http/v1" {
+		e, err = fromHTTPDeclaration(catalog, native, targetID)
 	} else {
 		e, err = FromNative(catalog, native, targetID)
 	}

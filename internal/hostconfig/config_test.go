@@ -225,3 +225,37 @@ func TestJournalConfigurationBounds(t *testing.T) {
 		}
 	}
 }
+
+func TestGlobalOperationTimeoutCeiling(t *testing.T) {
+	defaults, _ := Defaults("linux", "")
+	for _, ms := range []string{"1", "90000", "120000", "1800000"} {
+		c, err := Parse([]byte(minimal+"target:\n  max_operation_timeout_ms: "+ms+"\n"), defaults)
+		if err != nil || fmt.Sprint(c.Target.MaxOperationTimeoutMS) != ms {
+			t.Fatal(ms, c, err)
+		}
+	}
+	for _, ms := range []string{"0", "-1", "1800001", "1.5", "\"90000\""} {
+		if _, err := Parse([]byte(minimal+"target:\n  max_operation_timeout_ms: "+ms+"\n"), defaults); err == nil {
+			t.Fatal("invalid ceiling", ms)
+		}
+	}
+}
+
+func TestOperatingPolicies(t *testing.T) {
+	for _, bad := range []string{
+		"operation_timeouts_ms:\n  engine.attempt_execute: 0\n",
+		"operation_timeouts_ms:\n  engine.unknown: 1000\n",
+		"operation_timeouts_ms:\n  engine.finish: 1800001\n",
+		"size_limits:\n  direct_input_bytes: 1048577\n",
+		"size_limits:\n  artifact_part_bytes: 0\n",
+		"size_limits:\n  unknown: 5\n",
+	} {
+		if _, err := Parse([]byte(minimal+bad), Paths{StateRoot: "/tmp/operator", DockerEndpoint: "unix:///var/run/docker.sock"}); err == nil {
+			t.Fatal("accepted invalid policy", bad)
+		}
+	}
+	c, err := Parse([]byte(minimal+"operation_timeouts_ms:\n  engine.finish: 75000\nsize_limits:\n  direct_input_bytes: 65536\n  artifact_part_bytes: 524288\n"), Paths{StateRoot: "/tmp/operator", DockerEndpoint: "unix:///var/run/docker.sock"})
+	if err != nil || c.OperationTimeouts["engine.finish"] != 75000 || c.OperationTimeouts["engine.attempt_execute"] != 120000 || c.Sizes.DirectInput != 65536 || c.Sizes.ArtifactPart != 524288 {
+		t.Fatal(c, err)
+	}
+}

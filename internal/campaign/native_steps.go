@@ -5,14 +5,14 @@ package campaign
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
-var ErrExecutionFailure = errors.New("native execution failed; execution closed")
+var ErrExecutionFailure = diagnostictext.New("native execution failed; execution closed")
 
 // Each step reserves dispatch/result plus ONE reporting-only reconciliation.
 // Native frames can exceed a journal content member; retain them in ordered parts.

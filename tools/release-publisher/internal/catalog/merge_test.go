@@ -81,7 +81,7 @@ func TestDownloadCatalogLifecycle(t *testing.T) {
 		t.Run(product, func(t *testing.T) {
 			entry := func(version, tag, digest string) []byte {
 				contract := catalogContractVersion(product)
-				raw, err := json.Marshal(Entry{ContractPackageVersion: contract, Version: version, Tags: []string{tag}, Artifacts: []Artifact{
+				raw, err := json.Marshal(Entry{InterceptorContractVersion: "2.0.0", ContractPackageVersion: contract, Version: version, Tags: []string{tag}, Artifacts: []Artifact{
 					{Platform: "linux/amd64", Filename: "product.tar.gz", URL: "https://github.com/intrusiveai/" + product + "/releases/download/" + version + "/product.tar.gz", SHA256: strings.Repeat(digest, 64)},
 				}})
 				if err != nil {
@@ -148,6 +148,9 @@ func TestSharedContractPublication(t *testing.T) {
 		t.Run(product, func(t *testing.T) {
 			entry := func(contract, tag, digest string) []byte {
 				e := Entry{Version: "v2.7.0", Tags: []string{tag}, ContractPackageVersion: ContractVersion(contract)}
+				if product != "attack_harness" {
+					e.InterceptorContractVersion = "2.0.0"
+				}
 				if product == "attack_harness" {
 					e.Image = "ghcr.io/intrusiveai/attack_harness:v2.7.0"
 					e.Digest = "sha256:" + strings.Repeat(digest, 64)
@@ -239,5 +242,83 @@ func TestSharedContractPublication(t *testing.T) {
 				t.Fatal("metadata completion changed visibility")
 			}
 		})
+	}
+}
+
+func TestInterceptorContractPublication(t *testing.T) {
+	for _, product := range []string{"operator_sandbox", "interceptor_sandbox"} {
+		t.Run(product, func(t *testing.T) {
+			entry := func(version, tag, digest string) []byte {
+				e := Entry{Version: "v3.0.0", Tags: []string{tag}, InterceptorContractVersion: ContractVersion(version), ContractPackageVersion: catalogContractVersion(product), Artifacts: []Artifact{{Platform: "linux/amd64", Filename: "product.tar.gz", URL: "https://github.com/intrusiveai/" + product + "/releases/download/v3.0.0/product.tar.gz", SHA256: strings.Repeat(digest, 64)}}}
+				raw, err := json.Marshal(e)
+				if err != nil {
+					t.Fatal(err)
+				}
+				return raw
+			}
+			valid := entry("2.0.0", "rc", "a")
+			for _, version := range []string{"", "v2.0.0", "^2.0.0", "2.0", "02.0.0", "2.0.0-rc.1", "2.0.0+build", "2.0.0\n", strings.Repeat("1", 129) + ".0.0"} {
+				if _, err := MergeCatalogEntry(product, nil, entry(version, "rc", "a")); err == nil {
+					t.Fatalf("accepted %q", version)
+				}
+			}
+			for _, value := range []string{`null`, `123`, `""`} {
+				if _, err := MergeCatalogEntry(product, nil, bytes.Replace(valid, []byte(`"2.0.0"`), []byte(value), 1)); err == nil {
+					t.Fatalf("accepted %s", value)
+				}
+			}
+			current, err := MergeCatalogEntry(product, nil, valid)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, bad := range [][]byte{entry("2.1.0", "rc", "a"), entry("2.1.0", "release", "a"), entry("2.1.0", "release", "b")} {
+				if _, err := MergeCatalogEntry(product, current, bad); err == nil {
+					t.Fatal("changed contract without candidate rebuild and qualification")
+				}
+			}
+			rebuilt, err := MergeCatalogEntry(product, current, entry("2.1.0", "rc", "b"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			final, err := MergeCatalogEntry(product, rebuilt, entry("2.1.0", "release", "b"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, bad := range [][]byte{entry("2.0.0", "release", "b"), entry("2.1.0", "rc", "b"), entry("2.1.0", "release", "c")} {
+				if _, err := MergeCatalogEntry(product, final, bad); err == nil {
+					t.Fatal("changed final release")
+				}
+			}
+			var index Index
+			json.Unmarshal(final, &index)
+			if index.Releases[0].ContractPackageVersion != catalogContractVersion(product) {
+				t.Fatal("rewrote the other contract")
+			}
+			// Existing entries remain readable; completing metadata preserves identity and labels.
+			index.Releases[0].InterceptorContractVersion = ""
+			oldFinal, _ := json.Marshal(index)
+			completed, err := MergeCatalogEntry(product, oldFinal, entry("2.1.0", "release", "b"))
+			if err != nil || !bytes.Equal(completed, final) {
+				t.Fatal("metadata completion changed identity", err)
+			}
+			index.Releases[0].Tags = nil
+			oldHidden, _ := json.Marshal(index)
+			if _, err := MergeCatalogEntry(product, oldHidden, entry("2.1.0", "release", "b")); err == nil {
+				t.Fatal("combined missing metadata with promotion")
+			}
+			next, err := MergeCatalogEntry(product, oldHidden, bytes.ReplaceAll(valid, []byte("v3.0.0"), []byte("v4.0.0")))
+			if err != nil {
+				t.Fatal(err)
+			}
+			index = Index{}
+			json.Unmarshal(next, &index)
+			if len(index.Releases) != 2 || index.Releases[1].InterceptorContractVersion != "" || len(index.Releases[1].Tags) != 0 {
+				t.Fatal("rewrote hidden history")
+			}
+		})
+	}
+	bad := bytes.Replace(catalogEntry("v1.0.0", "rc", "a"), []byte(`"latest"`), []byte(`"interceptor_contract_version":"2.0.0","latest"`), 1)
+	if _, err := MergeCatalogEntry("attack_harness", nil, bad); err == nil {
+		t.Fatal("accepted Interceptor contract on Attack Harness")
 	}
 }

@@ -4,11 +4,11 @@ package campaign
 
 import (
 	"encoding/json"
-	"errors"
 	"math/big"
 	"sync"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
 // Capacity for admission/dispatch/completion event envelopes, one translated plan,
@@ -375,7 +375,7 @@ func (a *Attempts) resolveLocked(id string, c AttemptCompletion) error {
 	return nil
 }
 
-var ErrUnknownOutcome = errors.New("attempt outcome is unknown; execution closed")
+var ErrUnknownOutcome = diagnostictext.New("attempt outcome is unknown; execution closed")
 
 func validJSONObject(raw []byte, limit int) bool {
 	v, err := contracts.Decode(raw, limit)

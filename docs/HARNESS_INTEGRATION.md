@@ -2,16 +2,17 @@
 
 Operator owns the shared contract. A Harness image must use the same package
 version and digest as its Operator installation. The source release's
-[contract lock](../release/contract-lock.json) identifies the exact package and
-source revision; `operatorctl version` exposes the installed supported identity.
+[contract lock](../release/contract-lock.json) identifies the interface version and
+exact document hash; `operatorctl version` exposes the installed supported identity.
 The [shared contract](../schemas/SHARED_CONTRACT.md) defines the wire protocol,
 semantic rules and common Go/Python fixtures.
 
 ## Package and image compatibility
 
-Build the package from the immutable source revision in the release lock using
-the [package build and check commands](CONTRACT_PUBLICATION.md). Verify its version,
-digest, catalog, registry and complete inventory against that lock. Harness uses
+Obtain the approved `asyncapi.json` and a conforming validator distribution.
+Use the [package build/check commands](CONTRACT_PUBLICATION.md) for installation
+integrity and [conformance checks](CONTRACT_CONFORMANCE.md) for implementation
+behavior. Compare only the interface version/hash for product compatibility. Harness uses
 the matching Python validators and provider tool projections from this package.
 Do not independently reimplement their rules or select validators from guest data.
 
@@ -21,10 +22,9 @@ file of at most 64 KiB. Its fields are:
 
 | Field | Value |
 |---|---|
-| `api_version` | `operator.dev/harness-compatibility/v1alpha1` |
-| `minimum_operator_version` | Stable SemVer required by the image |
+| `api_version` | `operator.dev/harness-compatibility/v1alpha2` |
 | `contract_package_version` | Exact package version from the release lock |
-| `contract_package_digest` | Exact package digest from the release lock |
+| `contract_package_digest` | SHA-256 of exact AsyncAPI bytes from the release lock |
 | `runtime_profile` | `operator-container/v1` |
 | `platform` | `linux/amd64` or `linux/arm64`, matching the image |
 
@@ -51,7 +51,19 @@ ordinary requests. Sequencing, acknowledgements, deadlines, bounds and terminal
 behavior follow the [transport contract](../schemas/TRANSPORT_CODEC_CONTRACT.md).
 Do not negotiate an alternate contract or resume an interrupted campaign.
 
-## Ordinary campaign workflow
+## Model interface
+
+Use `Protocol.normalize_tool_arguments` with the trusted resolution context in
+[MODEL_TOOL_NORMALIZATION.md](../schemas/MODEL_TOOL_NORMALIZATION.md). The
+[model catalog](../schemas/MODEL_TOOL_CATALOG.md) exposes flat JSON/text/base64 or
+artifact choices, single resource handles and root-level finish fields. It is
+separate from the canonical host messages below. Keep the typed handle map outside
+model context, preserve it across compaction, and revalidate live resources after
+restore. Record returned observation selections through existing diagnostic reports
+before the corresponding submission. Report normalization failures with their
+safe reason/path/correction and translate host paths back for model feedback.
+
+## Ordinary canonical host workflow
 
 1. Submit `engine.attempt_execute` with explicit `origin`, target `operation_id`
    and exactly one direct input or committed artifact receipt. Scenario origin
@@ -126,3 +138,23 @@ duplicate dispatch, direct/artifact inputs, observation reads, local hypotheses,
 accepted finish, exit 0, fatal exits and cleanup. Verify separate inspection and
 export after container removal. Controlled process tests establish protocol
 behavior; actual-image containment and live-provider checks test different facts.
+
+For constraint references, model-facing path recovery and no-progress stopping, follow [tool corrections](TOOL_CORRECTIONS.md). Matching builds use the version and exact document hash in the [contract lock](../release/contract-lock.json).
+
+
+### Protected Harness finalization diagnostics
+
+Harness may end exploration to preserve its assessment and correction capacity.
+The existing `engine.diagnostic_report` operation retains reason
+`finalization_capacity_protected` at stage `dispatch` as informational evidence,
+without a stopping condition. This transition does not replace an earlier
+failure or imply that execution admission has closed, an assessment was accepted,
+or cleanup completed. Report and export retain the reason independently of
+untrusted diagnostic prose.
+
+`finalization_action_blocked` and `assessment_repair_active` identify locally
+withheld exploration actions. `finish_repair_unresolved` preserves an outstanding
+finish correction separately from a terminal `context_limit`, `model_call_limit`,
+or structured `model_reservation_unavailable` diagnostic. These are diagnostic
+implementation additions within the existing interface; they do not change the
+shared contract identity.

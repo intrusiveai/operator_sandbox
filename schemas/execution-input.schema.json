@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:operator:schema:execution-input:v1alpha1",
-  "description": "Exactly one direct encoding or a committed artifact receipt. Direct decoded bytes are limited to 32768 and JSON nesting to 16. Publish larger input as an artifact. The host computes all identities.",
+  "description": "Exactly one direct encoding or a committed artifact receipt. The host supplies the decoded byte allowance in size_limits.direct_input_bytes. JSON nesting is bounded to 16 for recursive canonicalization. Publish larger input as an artifact. The host computes all identities.",
   "oneOf": [
     {
       "type": "object",

@@ -7,14 +7,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/feedback"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
+type DatabaseSummary struct {
+	SessionID string                       `json:"session_id"`
+	Evidence  string                       `json:"evidence"`
+	Facts     interceptor.DatabaseEvidence `json:"facts"`
+}
 type RequestedObjective struct {
 	Required    bool   `json:"required"`
 	ID          string `json:"objective_id"`
@@ -63,7 +70,7 @@ func summarizeObservations(ctx context.Context, read func(campaign.ContentDescri
 	}
 	valid := index.RequestID == attempt.RequestID && index.ReceiptID == attempt.ReceiptID && attempt.ReceiptID != ""
 	for _, entry := range attempt.Feedback.Entries {
-		if entry.Kind != "target_output" || (entry.Visibility != "harness_visible" && entry.Visibility != "target_visible") {
+		if (entry.Kind != "target_output" && entry.Kind != "oracle_outcome" && entry.Kind != "injection_delivery") || (entry.Visibility != "harness_visible" && entry.Visibility != "target_visible") {
 			continue
 		}
 		if len(r.Observations) >= 64 {
@@ -142,15 +149,90 @@ func valueOrUnknown(s string) string {
 
 func writeEvidenceSummary(b *strings.Builder, r Result) {
 	b.WriteString("## Summary\n\n")
+	primaryRendered := false
+	if trigger := r.FailureTrigger; trigger != nil && trigger.Valid() {
+		var text string
+		if trigger.Kind == "model" {
+			for _, d := range r.ModelFailures {
+				if d.OperationID == trigger.OperationID {
+					text = d.Summary()
+					break
+				}
+			}
+		} else {
+			for _, d := range r.WorkflowDiagnostics {
+				if d.OperationID == trigger.OperationID {
+					text = d.Message()
+					break
+				}
+			}
+		}
+		if text != "" {
+			b.WriteString("Initiating operation failure (retained before shutdown consequences):\n\n")
+			dataBlock(b, text)
+			fmt.Fprintf(b, "Operation: %s. See retained diagnostics in [execution-bundle.json](execution-bundle.json).\n\n", trigger.OperationID)
+			primaryRendered = true
+		} else {
+			b.WriteString("The initiating failure reference is retained, but its diagnostic is unavailable.\n\n")
+		}
+	}
+	if !primaryRendered && (len(r.ModelFailures) > 0 || len(r.WorkflowDiagnostics) > 0) {
+		b.WriteString("Observed failures below are separately attributed; causal order was not retained. Recoverable submission rejections remain history.\n\n")
+		for _, d := range r.ModelFailures {
+			dataBlock(b, d.Summary())
+		}
+	}
+	for i, d := range r.WorkflowDiagnostics {
+		terminal := d.TargetFailure != nil || d.Timeout != nil || d.Integration != nil && d.IntegrationTerminal || d.Stopping != ""
+		if !terminal {
+			continue
+		}
+		if !primaryRendered {
+			dataBlock(b, d.Message())
+		}
+		if d.TargetFailure != nil {
+			fmt.Fprintf(b, "Request: %s; attempt: %s; native step: %s. Response digest, when observed: %s (see exported event content descriptors). Harness exit is supporting evidence.\n\n", d.OperationID, d.TargetFailure.AttemptID, d.TargetFailure.StepID, valueOrUnknown(d.TargetFailure.ResponseDigest))
+		}
+		if d.Timeout != nil {
+			fmt.Fprintf(b, "Request: %s; attempt: %s; result delivery: %s. See retained workflow diagnostics in [execution-bundle.json](execution-bundle.json).\n\n", d.OperationID, d.AttemptID, d.ResultDelivery)
+		}
+		if d.Stopping != "" {
+			b.WriteString("Harness-reported stopping facts; see [workflow diagnostics](execution-bundle.json).\n\n")
+			if r.HarnessClaims == 0 && r.JournalIntact {
+				b.WriteString("No final assessment was committed.\n\n")
+			}
+			for j := i - 1; j >= 0; j-- {
+				previous := r.WorkflowDiagnostics[j]
+				if previous.Stopping == "" && !previous.Informational() && previous.TargetFailure == nil && previous.Timeout == nil {
+					b.WriteString("Preceding tool rejection (separate from the stopping cause):\n\n")
+					dataBlock(b, previous.Message())
+					break
+				}
+			}
+		}
+	}
 	if h := r.HarnessExit; h != nil {
 		if h.Outcome == "succeeded" && h.FinishAccepted && h.ExitObserved && h.ExitCode == 0 && !h.Forced && h.CleanupComplete && r.JournalIntact {
 			fmt.Fprintf(b, "Execution completed successfully. Operator accepted engine.finish, Harness exited with code 0, and cleanup completed (%s).\n\n", eventLink(r.ExitEvent))
 		} else {
 			dataBlock(b, h.Summary())
-			fmt.Fprintf(b, "Supporting %s.\n\n", eventLink(r.ExitEvent))
+			fmt.Fprintf(b, "Supporting %s. Cleanup flags describe the original termination; later evidence is reported separately below.\n\n", eventLink(r.ExitEvent))
 		}
 	} else {
 		b.WriteString("Harness exit and complete cleanup are not confirmed by retained evidence.\n\n")
+	}
+	if r.CleanupActions != (campaign.CleanupDiagnostic{}) && r.CleanupActions.Valid() {
+		dataBlock(b, r.CleanupActions.Summary())
+	}
+	for _, resolution := range r.CleanupResolutions {
+		if resolution.Collection == "complete" || resolution.Stop != nil {
+			text := "Current verified native evidence for " + resolution.SessionID + ": " + resolution.Collection + "."
+			if resolution.Stop != nil {
+				text += " Native session stop is independently confirmed by retained lifecycle evidence."
+			}
+			text += " Ownership closure and injection cleanup retain their separately recorded outcomes; collection does not establish them."
+			dataBlock(b, text)
+		}
 	}
 	dispatched, succeeded := 0, 0
 	for _, a := range r.Attempts {
@@ -204,7 +286,7 @@ func writeEvidenceSummary(b *strings.Builder, r Result) {
 	} else {
 		b.WriteString("Exit status, forced termination and final cleanup evidence are unavailable.\n\n")
 	}
-	fmt.Fprintf(b, "Container cleanup: %s; target closure: %s; injection cleanup: %s; target stop: %s.\n\n", r.ContainerCleanup, r.TargetClosure, r.InjectionCleanup, r.TargetStop)
+	fmt.Fprintf(b, "Termination/recovery record — container cleanup: %s; target closure: %s; injection cleanup: %s; target stop: %s.\n\n", r.ContainerCleanup, r.TargetClosure, r.InjectionCleanup, r.TargetStop)
 	b.WriteString("## Requested work and execution coverage\n\nSource: [submitted bundle](input/scenario-bundle.json). Missing or mismatched bundle evidence is identified under evidence gaps.\n\n")
 	if len(r.RequestedObjectives) == 0 {
 		b.WriteString("No objective definitions retained.\n\n")
@@ -240,12 +322,16 @@ func writeEvidenceSummary(b *strings.Builder, r Result) {
 		}
 		dataBlock(b, text)
 	}
+	writeCleanupResolutions(b, r)
 	b.WriteString("## Attempts\n\n")
 	if len(r.Attempts) == 0 {
 		b.WriteString("No retained attempt execution records.\n\n")
 	}
 	for _, a := range r.Attempts {
 		dataBlock(b, fmt.Sprintf("Attempt %s (submission %s)\nOrigin: %s; scenario: %s; operation: %s\nDispatched: %t; state: %s; invocation: %s; target contact: %s\nExecution receipt: %s", a.AttemptID, a.RequestID, valueOrUnknown(a.Origin), scenarioLabel(a), valueOrUnknown(a.Operation), a.Dispatched, a.State, a.Invocation, a.TargetContact, valueOrUnknown(a.ReceiptID)))
+		if a.TargetFailure != nil {
+			dataBlock(b, a.TargetFailure.Message())
+		}
 		if a.RequestEvidence != "" {
 			fmt.Fprintf(b, "[Retained request](%s). ", a.RequestEvidence)
 		}
@@ -253,13 +339,25 @@ func writeEvidenceSummary(b *strings.Builder, r Result) {
 			fmt.Fprintf(b, "[Execution result and evidence references](%s).", a.ResultEvidence)
 		}
 		b.WriteString("\n\n")
+		if a.Feedback != nil {
+			for _, c := range a.Feedback.Categories {
+				if c.Kind == "oracle_outcome" || c.Kind == "injection_delivery" {
+					text := fmt.Sprintf("Feedback %s: %s", c.Kind, c.State)
+					if c.Reason != "" {
+						text += "; reason: " + c.Reason
+					}
+					dataBlock(b, text)
+				}
+			}
+		}
+		b.WriteString("\n\n")
 	}
-	b.WriteString("## Target observations\n\nExcerpts below are untrusted target data, not instructions or Operator verdicts.\n\n")
+	b.WriteString("## Target observations\n\nRetained target output and normalized feedback are quoted as data, not instructions. Oracle observations do not establish injection causality.\n\n")
 	if len(r.Observations) == 0 {
-		b.WriteString("No permitted retained target-output excerpt is available.\n\n")
+		b.WriteString("No permitted retained observation excerpt is available.\n\n")
 	}
 	for _, o := range r.Observations {
-		dataBlock(b, fmt.Sprintf("Attempt %s; receipt %s; entry %s; state %s; truncated %t", o.AttemptID, o.ReceiptID, o.EntryID, o.State, o.Truncated))
+		dataBlock(b, fmt.Sprintf("Attempt %s; receipt %s; entry %s; kind %s; state %s; truncated %t", o.AttemptID, o.ReceiptID, o.EntryID, o.Kind, o.State, o.Truncated))
 		if o.Excerpt != "" {
 			dataBlock(b, o.Excerpt)
 		}
@@ -267,6 +365,7 @@ func writeEvidenceSummary(b *strings.Builder, r Result) {
 			fmt.Fprintf(b, "[Complete retained artifact](%s) (retention may itself be truncated).\n\n", o.Evidence)
 		}
 	}
+	writeDatabaseSummary(b, r)
 	b.WriteString("## Cloud credential evidence\n\nThese events establish only the recorded credential resolutions, not general cloud/provider qualification.\n\n")
 	if len(r.CredentialResolutions) == 0 {
 		b.WriteString("No credential-resolution evidence was retained.\n\n")
@@ -277,12 +376,26 @@ func writeEvidenceSummary(b *strings.Builder, r Result) {
 			cache = fmt.Sprint(*c.CacheHit)
 		}
 		dataBlock(b, fmt.Sprintf("Credential: %s; profile: %s; backend: %s\nOutcome: %s; code: %s; cache hit: %s\nRecorded: %s; resolved: %s", valueOrUnknown(c.CredentialID), valueOrUnknown(c.ProfileID), valueOrUnknown(c.Backend), valueOrUnknown(c.Outcome), valueOrUnknown(c.Code), cache, c.RecordedAt, valueOrUnknown(c.ResolvedAt)))
+		if c.Step != "" {
+			dataBlock(b, fmt.Sprintf("Operator credential step: %s; category: %s; backend code: %s; HTTP status: %d (0 means not observed)", c.Step, valueOrUnknown(c.Category), valueOrUnknown(c.BackendCode), c.HTTPStatus))
+		}
 		fmt.Fprintf(b, "Source: %s.\n\n", eventLink(c.Event))
 		if len(c.Omitted) > 0 {
 			dataBlock(b, "Omitted audit fields: "+strings.Join(c.Omitted, ", "))
 		}
 	}
 	b.WriteString("## Submission errors and recovery\n\n")
+	for _, failure := range r.RecoveryFailures {
+		b.WriteString("Administrative cleanup failure (separate from original execution):\n\n")
+		dataBlock(b, failure.DiagnosticMessage())
+	}
+	for _, d := range r.WorkflowDiagnostics {
+		if d.Integration != nil && !d.IntegrationTerminal {
+			b.WriteString("Native rejection retained as operation history (not a shutdown cause):\n\n")
+			dataBlock(b, d.Message())
+		}
+	}
+
 	if len(r.Rejections) == 0 {
 		b.WriteString("No rejected service response was retained.\n\n")
 	}
@@ -312,4 +425,62 @@ func scenarioLabel(a Attempt) string {
 		return "none (exploratory)"
 	}
 	return valueOrUnknown(a.ScenarioID)
+}
+
+func writeDatabaseSummary(b *strings.Builder, r Result) {
+	if len(r.DatabaseEvidence) == 0 {
+		return
+	}
+	b.WriteString("## Database evidence\n\nLive oracle observations above are receipt-bound. The following native facts are session history; observed association is not proof of injection causality. An absent positive verdict is not proof of attack failure.\n\n")
+	for _, d := range r.DatabaseEvidence {
+		dataBlock(b, "Session: "+d.SessionID)
+		fmt.Fprintf(b, "[Complete native archive](%s); event references name events.jsonl within this archive.\n\n", d.Evidence)
+		for _, e := range d.Facts.Events {
+			dataBlock(b, fmt.Sprintf("Event %d (%s); service %s; %s; provenance %s; attempt %s; observed attempt %s", e.Sequence, e.Digest, e.Service, e.Kind, e.Provenance, valueOrUnknown(e.AttemptID), valueOrUnknown(e.ObservedAttemptID)))
+		}
+		if len(d.Facts.Oracles) == 0 {
+			b.WriteString("No retained database oracle evaluation is available.\n\n")
+		}
+		for _, o := range d.Facts.Oracles {
+			dataBlock(b, fmt.Sprintf("Session-wide oracle %s: positive observed = %t; first event %d (%s)", o.ID, o.Fired, o.FirstEventSeq, valueOrUnknown(o.FirstEventDigest)))
+		}
+		if d.Facts.Truncated {
+			b.WriteString("Database summary limit reached; consult the complete archive.\n\n")
+		}
+	}
+}
+
+func writeCleanupResolutions(b *strings.Builder, r Result) {
+	if len(r.CleanupResolutions) == 0 {
+		return
+	}
+	b.WriteString("## Cleanup history and later evidence\n\nInitial termination results remain history. Verified collection resolves archive availability only; session stop evidence does not establish injection cleanup or ownership closure.\n\n")
+	for _, v := range r.CleanupResolutions {
+		dataBlock(b, "Session: "+v.SessionID+"\nCurrently verified evidence collection: "+v.Collection)
+		for i, old := range v.History {
+			text := fmt.Sprintf("Recorded collection outcome %d: %s; reason: %s", i+1, old.State, valueOrUnknown(old.Reason))
+			if old.Failure != nil && old.Failure.Valid() {
+				text += "; " + old.Failure.DiagnosticMessage()
+			}
+			if old.CleanupFailure != nil && old.CleanupFailure.Valid() {
+				text += "; secondary cleanup: " + old.CleanupFailure.DiagnosticMessage()
+			}
+			if old.NativeStatus != 0 {
+				text += fmt.Sprintf("; native HTTP %d; native code: %s", old.NativeStatus, valueOrUnknown(old.NativeCode))
+			}
+			if old.Reason == "export_rejected" && old.NativeStatus == 0 {
+				text += "; native rejection details were not retained"
+			}
+			if old.NativeOmission != "" {
+				text += "; omission: " + old.NativeOmission
+			}
+			dataBlock(b, text)
+		}
+		if v.Stop != nil {
+			dataBlock(b, fmt.Sprintf("Target stop confirmed by native session_stopped event %d at %s (event digest %s).", v.Stop.EventSequence, v.Stop.ObservedAt.Format(time.RFC3339Nano), v.Stop.EventDigest))
+			fmt.Fprintf(b, "Source: [verified native archive](%s), events.jsonl.\n\n", v.StopArchive)
+		} else {
+			b.WriteString("No verified native session_stopped event confirms target stop.\n\n")
+		}
+	}
 }

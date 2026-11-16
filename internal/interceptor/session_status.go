@@ -17,7 +17,10 @@ func DecodeSessionStatus(r Response, campaign string, binding Binding) (SessionS
 		Owner     Owner           `json:"owner"`
 		Available bool            `json:"execution_available"`
 	}
-	if r.Status != 200 || decodeClosed(r.Body, &body, []string{"session", "owner", "execution_available"}, nil) != nil {
+	if r.Status != 200 {
+		return SessionStatus{}, &RemoteError{r}
+	}
+	if decodeClosed(r.Body, &body, []string{"session", "owner", "execution_available"}, nil) != nil {
 		return SessionStatus{}, invalidResponse()
 	}
 	session, err := decodeRunningSession(body.Session)

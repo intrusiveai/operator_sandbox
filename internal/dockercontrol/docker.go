@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -18,6 +17,7 @@ import (
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
 const ConfirmationTimeout = 5 * time.Second
@@ -25,12 +25,12 @@ const outputLimit = 64 << 10
 
 // Initialization errors have fixed descriptions suitable for preparation diagnostics.
 var (
-	ErrCLIUnavailable        = errors.New("Docker CLI unavailable")
-	ErrExecutablePath        = errors.New("Docker executable must be absolute")
-	ErrExecutableUnavailable = errors.New("Docker executable unavailable")
+	ErrCLIUnavailable        = diagnostictext.New("Docker CLI unavailable")
+	ErrExecutablePath        = diagnostictext.New("Docker executable must be absolute")
+	ErrExecutableUnavailable = diagnostictext.New("Docker executable unavailable")
 )
 
-var ErrNotRunning = errors.New("Docker container is not running under the pinned lifecycle policy")
+var ErrNotRunning = diagnostictext.New("Docker container is not running under the pinned lifecycle policy")
 
 type Outcome = campaign.TerminationOutcome
 
@@ -253,7 +253,7 @@ func (c *Client) Terminate(ctx context.Context, b campaign.DockerBinding) (out O
 // running under the required lifecycle policy. It never starts or repairs one.
 func (c *Client) CheckRunning(ctx context.Context, b campaign.DockerBinding) error {
 	if b.Validate() != nil || c == nil || c.run == nil {
-		return errors.New("invalid Docker binding")
+		return diagnostictext.New("invalid Docker binding")
 	}
 	ctx, cancel := context.WithTimeout(ctx, ConfirmationTimeout)
 	defer cancel()

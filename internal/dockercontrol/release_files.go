@@ -17,12 +17,13 @@ import (
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
 const imageArchiveLimit = (1 << 20) + (64 << 10)
 const inspectionLabel = "ai.intrusive.operator.image-inspection"
 
-var ErrReleaseFiles = errors.New("cannot inspect immutable image release files")
+var ErrReleaseFiles = diagnostictext.New("cannot inspect immutable image release files")
 
 // ReleaseFiles retains exact bytes and the inspection identity for diagnostics.
 // A nonempty ContainerID with Removed=false requires administrative cleanup.

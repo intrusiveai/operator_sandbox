@@ -68,8 +68,8 @@ transport, resource controls and syscall filter installation. A missing capabili
 produces an actionable error identifying that capability. No OS/Docker patch-age
 policy, enforced update schedule, per-release version matrix or prior qualification
 of every new OS/Docker combination is required for the MVP. Ordinary launch identity
-and image/release compatibility records remain required. The image release's
-`minimum_operator_version` is a separate application compatibility field.
+and image/release compatibility records remain required. The image's exact AsyncAPI contract version/hash and its runtime/platform
+requirements establish compatibility independently of product version.
 
 ### 1.2 MVP filesystem and syscall controls
 

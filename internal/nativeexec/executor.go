@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
@@ -52,6 +53,10 @@ func New(steps *campaign.NativeSteps, guard *Guard, adapter Adapter) (*Executor,
 }
 
 type Result struct {
+	Failure *diagnostictext.Failure
+	// Boundary is a host-selected failure observation, never a remote error string.
+	Boundary string
+
 	Step   campaign.NativeStep
 	Replay bool
 	// Native is host-only. A typed adapter must project permitted fields before
@@ -110,7 +115,25 @@ func (e *Executor) executionContext(parent context.Context, p interceptor.Prepar
 
 // Execute dispatches a frozen, authorized native step once. Every possible effect
 // is preceded by a committed marker; every returned result by a committed result.
-func (e *Executor) Execute(ctx context.Context, parent string, p interceptor.PreparedOperation) (Result, error) {
+func (e *Executor) Execute(ctx context.Context, parent string, p interceptor.PreparedOperation) (result Result, executeErr error) {
+	var observed interceptor.Response
+	var primary error
+	defer func() {
+		if executeErr == nil {
+			return
+		}
+		cause := executeErr
+		if primary != nil {
+			cause = errors.Join(primary, executeErr)
+		}
+		if observed.Status >= 400 || observed.Status == 202 || strings.Contains(observed.Code(), "unknown") {
+			cause = diagnostictext.WithFailure(cause, observed.Failure(p.Request().Operation, p.Request().RequestID))
+		} else if primary != nil {
+			cause = interceptor.ResponseError(p.Request().Operation, p.Request().RequestID, observed, cause)
+		}
+		result.Failure = diagnostictext.FailureFromError(cause)
+		executeErr = cause
+	}()
 	step, replay, err := e.steps.Begin(parent, p)
 	if err != nil {
 		return Result{}, err
@@ -125,7 +148,10 @@ func (e *Executor) Execute(ctx context.Context, parent string, p interceptor.Pre
 	}
 	proof, err := e.guard.check(ctx, p, false)
 	if err != nil {
-		return e.finish(step.ID, NotDispatched, nil)
+		primary = err
+		r, failure := e.finish(step.ID, NotDispatched, nil)
+		r.Boundary = "preflight_failure"
+		return r, failure
 	}
 	if err = e.steps.RecordPreflight(step.ID, proof); err != nil {
 		return Result{}, err
@@ -146,17 +172,37 @@ func (e *Executor) Execute(ctx context.Context, parent string, p interceptor.Pre
 		return e.finish(step.ID, NotDispatched, nil)
 	}
 	r, err := e.guard.peer.Execute(ctx, p)
+	observed = r
 	if err != nil {
+		primary = err
+		outcome := Unknown
+		boundary := "unknown_boundary_failure"
 		var call *interceptor.CallError
-		if errors.As(err, &call) && !call.Uncertain {
-			return e.finish(step.ID, NotDispatched, nil)
+		if errors.As(err, &call) {
+			if !call.Uncertain {
+				outcome = NotDispatched
+			}
+			switch call.Kind {
+			case "lost_reply", "transport_unavailable":
+				boundary = "communication_failure"
+			case "invalid_response", "response_invalid", "response_too_large":
+				boundary = "native_response_invalid"
+			}
 		}
-		return e.finish(step.ID, Unknown, nil)
+		if ctx.Err() != nil {
+			boundary = ""
+		} // Attempt/campaign cancellation is reported by its owner.
+		result, failure := e.finish(step.ID, outcome, nil)
+		result.Boundary = boundary
+		return result, failure
 	}
 	raw := r.Bytes()
 	verified, err := interceptor.ParseResponse(raw)
 	if err != nil {
-		return e.finish(step.ID, Unknown, nil)
+		primary = err
+		result, failure := e.finish(step.ID, Unknown, nil)
+		result.Boundary = "native_response_invalid"
+		return result, failure
 	}
 	// These native responses cannot prove a known effect, regardless of adapter
 	// interpretation. Interceptor marks 5xx as unknown in its durable store.
@@ -165,7 +211,10 @@ func (e *Executor) Execute(ctx context.Context, parent string, p interceptor.Pre
 	}
 	outcome, err := e.adapter.Interpret(p, verified)
 	if err != nil || outcome != Succeeded && outcome != Failed && outcome != Unknown {
-		return e.finish(step.ID, Unknown, raw)
+		primary = err
+		result, failure := e.finish(step.ID, Unknown, raw)
+		result.Boundary = "native_response_invalid"
+		return result, failure
 	}
 	absent := p.Request().Operation == "injection.delete" && verified.Status == 404 && verified.Code() == "not_found"
 	if outcome == Succeeded && !absent && (verified.Status != 200 && verified.Status != 201 && verified.Status != 204) {
@@ -212,22 +261,20 @@ func (e *Executor) Reconcile(ctx context.Context, id string, query interceptor.P
 	defer cancel()
 	if _, err = e.guard.check(ctx, query, true); err != nil {
 		if save := e.steps.ResolveReconciliation(id, nil); save != nil {
-			return interceptor.OperationRecord{}, save
+			return interceptor.OperationRecord{}, errors.Join(err, save)
 		}
 		return interceptor.OperationRecord{}, err
 	}
-	response, err := e.guard.peer.Execute(ctx, query)
-	raw := response.Bytes()
-	if err != nil {
-		raw = nil
-	} else if response, err = interceptor.ParseResponse(raw); err != nil {
-		raw = nil
-	}
-	if save := e.steps.ResolveReconciliation(id, raw); save != nil {
-		return interceptor.OperationRecord{}, save
-	}
-	if err != nil {
-		return interceptor.OperationRecord{}, ErrUnknown
-	}
-	return interceptor.DecodeOperationRecord(response, original)
+	return interceptor.Call(query.Request().Operation, query.Request().RequestID,
+		func() (interceptor.Response, error) { return e.guard.peer.Execute(ctx, query) },
+		func(r interceptor.Response) error {
+			var raw []byte
+			if _, err := r.Validate(); err == nil {
+				raw = r.Bytes()
+			}
+			return e.steps.ResolveReconciliation(id, raw)
+		},
+		func(r interceptor.Response) (interceptor.OperationRecord, error) {
+			return interceptor.DecodeOperationRecord(r, original)
+		})
 }

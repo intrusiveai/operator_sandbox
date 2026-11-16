@@ -1,0 +1,430 @@
+[
+  {
+    "name": "direct 32768 allowance 32768",
+    "operation": "engine.attempt_execute",
+    "body": {
+      "origin": "exploratory",
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "utf8",
+        "text": ""
+      }
+    },
+    "valid": true,
+    "limits": {
+      "direct_input_bytes": 32768,
+      "assessment_bytes": 1048576,
+      "artifact_bytes": 16777216,
+      "artifact_part_bytes": 262144,
+      "observation_chunk_bytes": 262144,
+      "snapshot_page_items": 100
+    },
+    "repeat": 32768,
+    "field_path": "/input"
+  },
+  {
+    "name": "direct 32769 allowance 32768",
+    "operation": "engine.attempt_execute",
+    "body": {
+      "origin": "exploratory",
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "utf8",
+        "text": ""
+      }
+    },
+    "valid": false,
+    "limits": {
+      "direct_input_bytes": 32768,
+      "assessment_bytes": 1048576,
+      "artifact_bytes": 16777216,
+      "artifact_part_bytes": 262144,
+      "observation_chunk_bytes": 262144,
+      "snapshot_page_items": 100
+    },
+    "repeat": 32769,
+    "field_path": "/input"
+  },
+  {
+    "name": "direct 65536 allowance 65536",
+    "operation": "engine.attempt_execute",
+    "body": {
+      "origin": "exploratory",
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "utf8",
+        "text": ""
+      }
+    },
+    "valid": true,
+    "limits": {
+      "direct_input_bytes": 65536,
+      "assessment_bytes": 1048576,
+      "artifact_bytes": 16777216,
+      "artifact_part_bytes": 262144,
+      "observation_chunk_bytes": 262144,
+      "snapshot_page_items": 100
+    },
+    "repeat": 65536,
+    "field_path": "/input"
+  },
+  {
+    "name": "direct 65537 allowance 65536",
+    "operation": "engine.attempt_execute",
+    "body": {
+      "origin": "exploratory",
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "utf8",
+        "text": ""
+      }
+    },
+    "valid": false,
+    "limits": {
+      "direct_input_bytes": 65536,
+      "assessment_bytes": 1048576,
+      "artifact_bytes": 16777216,
+      "artifact_part_bytes": 262144,
+      "observation_chunk_bytes": 262144,
+      "snapshot_page_items": 100
+    },
+    "repeat": 65537,
+    "field_path": "/input"
+  },
+  {
+    "name": "direct 8 allowance 8",
+    "operation": "engine.attempt_execute",
+    "body": {
+      "origin": "exploratory",
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "utf8",
+        "text": ""
+      }
+    },
+    "valid": true,
+    "limits": {
+      "direct_input_bytes": 8,
+      "assessment_bytes": 1048576,
+      "artifact_bytes": 16777216,
+      "artifact_part_bytes": 262144,
+      "observation_chunk_bytes": 262144,
+      "snapshot_page_items": 100
+    },
+    "repeat": 8,
+    "field_path": "/input"
+  },
+  {
+    "name": "direct 9 allowance 8",
+    "operation": "engine.attempt_execute",
+    "body": {
+      "origin": "exploratory",
+      "operation_id": "invoke",
+      "input": {
+        "encoding": "utf8",
+        "text": ""
+      }
+    },
+    "valid": false,
+    "limits": {
+      "direct_input_bytes": 8,
+      "assessment_bytes": 1048576,
+      "artifact_bytes": 16777216,
+      "artifact_part_bytes": 262144,
+      "observation_chunk_bytes": 262144,
+      "snapshot_page_items": 100
+    },
+    "repeat": 9,
+    "field_path": "/input"
+  },
+  {
+    "name": "receipt is not a descriptor",
+    "operation": "engine.attempt_execute",
+    "body": {
+      "origin": "exploratory",
+      "operation_id": "invoke",
+      "input": {
+        "artifact_receipt": "retained-1"
+      }
+    },
+    "valid": true,
+    "limits": {
+      "direct_input_bytes": 1,
+      "assessment_bytes": 1048576,
+      "artifact_bytes": 16777216,
+      "artifact_part_bytes": 262144,
+      "observation_chunk_bytes": 262144,
+      "snapshot_page_items": 100
+    },
+    "repeat": null,
+    "field_path": ""
+  },
+  {
+    "name": "read 262145 allowance 524288",
+    "operation": "engine.observation_read",
+    "body": {
+      "receipt_id": "attempt-1",
+      "entry_id": "output",
+      "offset": 0,
+      "max_bytes": 262145
+    },
+    "valid": true,
+    "limits": {
+      "direct_input_bytes": 32768,
+      "assessment_bytes": 1048576,
+      "artifact_bytes": 16777216,
+      "artifact_part_bytes": 262144,
+      "observation_chunk_bytes": 524288,
+      "snapshot_page_items": 100
+    },
+    "repeat": null,
+    "field_path": "/max_bytes"
+  },
+  {
+    "name": "read 524289 allowance 524288",
+    "operation": "engine.observation_read",
+    "body": {
+      "receipt_id": "attempt-1",
+      "entry_id": "output",
+      "offset": 0,
+      "max_bytes": 524289
+    },
+    "valid": false,
+    "limits": {
+      "direct_input_bytes": 32768,
+      "assessment_bytes": 1048576,
+      "artifact_bytes": 16777216,
+      "artifact_part_bytes": 262144,
+      "observation_chunk_bytes": 524288,
+      "snapshot_page_items": 100
+    },
+    "repeat": null,
+    "field_path": "/max_bytes"
+  },
+  {
+    "name": "read 1024 allowance 1024",
+    "operation": "engine.observation_read",
+    "body": {
+      "receipt_id": "attempt-1",
+      "entry_id": "output",
+      "offset": 0,
+      "max_bytes": 1024
+    },
+    "valid": true,
+    "limits": {
+      "direct_input_bytes": 32768,
+      "assessment_bytes": 1048576,
+      "artifact_bytes": 16777216,
+      "artifact_part_bytes": 262144,
+      "observation_chunk_bytes": 1024,
+      "snapshot_page_items": 100
+    },
+    "repeat": null,
+    "field_path": "/max_bytes"
+  },
+  {
+    "name": "read 1025 allowance 1024",
+    "operation": "engine.observation_read",
+    "body": {
+      "receipt_id": "attempt-1",
+      "entry_id": "output",
+      "offset": 0,
+      "max_bytes": 1025
+    },
+    "valid": false,
+    "limits": {
+      "direct_input_bytes": 32768,
+      "assessment_bytes": 1048576,
+      "artifact_bytes": 16777216,
+      "artifact_part_bytes": 262144,
+      "observation_chunk_bytes": 1024,
+      "snapshot_page_items": 100
+    },
+    "repeat": null,
+    "field_path": "/max_bytes"
+  },
+  {
+    "name": "page 2",
+    "operation": "engine.snapshot_list",
+    "body": {
+      "limit": 2
+    },
+    "valid": true,
+    "limits": {
+      "direct_input_bytes": 32768,
+      "assessment_bytes": 1048576,
+      "artifact_bytes": 16777216,
+      "artifact_part_bytes": 262144,
+      "observation_chunk_bytes": 262144,
+      "snapshot_page_items": 2
+    },
+    "repeat": null,
+    "field_path": "/limit"
+  },
+  {
+    "name": "page 3",
+    "operation": "engine.snapshot_list",
+    "body": {
+      "limit": 3
+    },
+    "valid": false,
+    "limits": {
+      "direct_input_bytes": 32768,
+      "assessment_bytes": 1048576,
+      "artifact_bytes": 16777216,
+      "artifact_part_bytes": 262144,
+      "observation_chunk_bytes": 262144,
+      "snapshot_page_items": 2
+    },
+    "repeat": null,
+    "field_path": "/limit"
+  },
+  {
+    "name": "omitted page uses configured allowance",
+    "operation": "engine.snapshot_list",
+    "body": {},
+    "valid": true,
+    "limits": {
+      "direct_input_bytes": 32768,
+      "assessment_bytes": 1048576,
+      "artifact_bytes": 16777216,
+      "artifact_part_bytes": 262144,
+      "observation_chunk_bytes": 262144,
+      "snapshot_page_items": 2
+    },
+    "repeat": null,
+    "field_path": ""
+  },
+  {
+    "name": "part 4",
+    "operation": "engine.artifact_put_part",
+    "body": {
+      "upload_id": "upload-1",
+      "offset": 0,
+      "content": "eHh4eA=="
+    },
+    "valid": true,
+    "limits": {
+      "direct_input_bytes": 32768,
+      "assessment_bytes": 1048576,
+      "artifact_bytes": 16777216,
+      "artifact_part_bytes": 4,
+      "observation_chunk_bytes": 262144,
+      "snapshot_page_items": 100
+    },
+    "repeat": null,
+    "field_path": "/content"
+  },
+  {
+    "name": "part 5",
+    "operation": "engine.artifact_put_part",
+    "body": {
+      "upload_id": "upload-1",
+      "offset": 0,
+      "content": "eHh4eHg="
+    },
+    "valid": false,
+    "limits": {
+      "direct_input_bytes": 32768,
+      "assessment_bytes": 1048576,
+      "artifact_bytes": 16777216,
+      "artifact_part_bytes": 4,
+      "observation_chunk_bytes": 262144,
+      "snapshot_page_items": 100
+    },
+    "repeat": null,
+    "field_path": "/content"
+  },
+  {
+    "name": "artifact 4",
+    "operation": "engine.artifact_begin",
+    "body": {
+      "purpose": "payload",
+      "artifact": {
+        "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "size_bytes": 4,
+        "media_type": "text/plain",
+        "canonicalization": "raw"
+      }
+    },
+    "valid": true,
+    "limits": {
+      "direct_input_bytes": 32768,
+      "assessment_bytes": 1048576,
+      "artifact_bytes": 4,
+      "artifact_part_bytes": 262144,
+      "observation_chunk_bytes": 262144,
+      "snapshot_page_items": 100
+    },
+    "repeat": null,
+    "field_path": "/artifact/size_bytes"
+  },
+  {
+    "name": "artifact 5",
+    "operation": "engine.artifact_begin",
+    "body": {
+      "purpose": "payload",
+      "artifact": {
+        "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "size_bytes": 5,
+        "media_type": "text/plain",
+        "canonicalization": "raw"
+      }
+    },
+    "valid": false,
+    "limits": {
+      "direct_input_bytes": 32768,
+      "assessment_bytes": 1048576,
+      "artifact_bytes": 4,
+      "artifact_part_bytes": 262144,
+      "observation_chunk_bytes": 262144,
+      "snapshot_page_items": 100
+    },
+    "repeat": null,
+    "field_path": "/artifact/size_bytes"
+  },
+  {
+    "name": "assessment allowance 1024",
+    "operation": "engine.finish",
+    "body": {
+      "finish_reason": "budget-limit",
+      "assessment": {
+        "summary": "No attempt.",
+        "objectives": []
+      }
+    },
+    "valid": true,
+    "limits": {
+      "direct_input_bytes": 32768,
+      "assessment_bytes": 1024,
+      "artifact_bytes": 16777216,
+      "artifact_part_bytes": 262144,
+      "observation_chunk_bytes": 262144,
+      "snapshot_page_items": 100
+    },
+    "repeat": null,
+    "field_path": "/assessment"
+  },
+  {
+    "name": "assessment allowance 1",
+    "operation": "engine.finish",
+    "body": {
+      "finish_reason": "budget-limit",
+      "assessment": {
+        "summary": "No attempt.",
+        "objectives": []
+      }
+    },
+    "valid": false,
+    "limits": {
+      "direct_input_bytes": 32768,
+      "assessment_bytes": 1,
+      "artifact_bytes": 16777216,
+      "artifact_part_bytes": 262144,
+      "observation_chunk_bytes": 262144,
+      "snapshot_page_items": 100
+    },
+    "repeat": null,
+    "field_path": "/assessment"
+  }
+]

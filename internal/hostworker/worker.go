@@ -15,6 +15,7 @@ import (
 
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/campaignservice"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 	"github.com/intrusiveai/operator_sandbox/internal/hostlifetime"
 	"github.com/intrusiveai/operator_sandbox/internal/imagerelease"
@@ -56,6 +57,7 @@ type Worker struct {
 }
 
 type Result struct {
+	FailureTrigger       *campaign.FailureTrigger       `json:"failure_trigger,omitempty"`
 	HarnessExit          *campaign.HarnessExit          `json:"harness_exit,omitempty"`
 	ConclusionDiagnostic *campaign.ConclusionDiagnostic `json:"conclusion_diagnostic,omitempty"`
 	WorkflowDiagnostic   *campaign.WorkflowDiagnostic   `json:"workflow_diagnostic,omitempty"`
@@ -167,10 +169,11 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 			// and before removal makes the exit status unavailable.
 			runErr = errors.Join(runErr, err)
 			result.StopAccepted = service.StopAccepted()
+			result.FailureTrigger = service.FailureTrigger()
 			result.ModelDiagnostic = service.ModelFailure()
 			result.ConclusionDiagnostic = service.ConclusionFailure()
 			result.WorkflowDiagnostic = service.WorkflowFailure()
-			if result.ModelDiagnostic != nil {
+			if result.FailureTrigger != nil && result.FailureTrigger.Kind == "model" && result.ModelDiagnostic != nil {
 				runErr = errors.Join(modelprovider.FailureError(*result.ModelDiagnostic), runErr)
 			}
 		} else if result.Binding.DockerContainerID != "" {
@@ -199,7 +202,7 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 				h.AssessmentCommitted = service.AssessmentCommitted()
 			}
 			h.Forced = result.Termination.Outcome.KillAttempted
-			h.WorkerCause = workerCause(runErr)
+			h.WorkerCause = workerCause(fence.Err())
 			h.Outcome = "failed"
 			if !h.ExitObserved {
 				h.Outcome = "unconfirmed"
@@ -208,16 +211,18 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 				runErr = err // retain any independent finalization failure
 				h.Outcome = "succeeded"
 			}
-			if result.ModelDiagnostic != nil {
+			if result.FailureTrigger != nil && result.FailureTrigger.Kind == "model" && result.ModelDiagnostic != nil {
 				h.Outcome = "failed"
 				h.Cause = result.ModelDiagnostic.Summary()
 			}
-			if result.WorkflowDiagnostic != nil && result.WorkflowDiagnostic.Stopping != "" {
+			if result.FailureTrigger != nil && result.FailureTrigger.Kind == "workflow" && result.WorkflowDiagnostic != nil && result.WorkflowDiagnostic.OperationID == result.FailureTrigger.OperationID {
 				h.Outcome = "failed"
 				h.Cause = result.WorkflowDiagnostic.Message()
 			}
 			if h.Cause == "" && h.ExitObserved && h.ExitCode != 0 {
-				h.Cause, _ = modelprovider.SafeDiagnosticText(h.Stderr, 180)
+				if !h.Forced {
+					h.Cause, _ = modelprovider.SafeDiagnosticText(h.Stderr, 180)
+				}
 			}
 			if len(h.Cause) > 256 {
 				h.Cause, _ = modelprovider.SafeDiagnosticText(h.Cause, 256)
@@ -238,7 +243,25 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 			exitRetained = saveErr == nil
 			runErr = errors.Join(runErr, saveErr)
 		}
-		_ = c.Channel.Close()
+		retainCleanup := func(operation string, cause error) {
+			if cause == nil {
+				return
+			}
+			var failures []diagnostictext.Failure
+			if result.Terminal.Failures != nil {
+				failures = append(failures, (*result.Terminal.Failures)...)
+			}
+			if len(failures) < 16 {
+				if f := diagnostictext.FailureFromError(diagnostictext.Context(cause, "Operator", operation, "")); f != nil {
+					failures = append(failures, *f)
+				}
+			}
+			result.Terminal.Failures = &failures
+		}
+		if closeErr := c.Channel.Close(); closeErr != nil {
+			retainCleanup("transport.close", closeErr)
+			runErr = errors.Join(runErr, closeErr)
+		}
 		// Unknown create may have left a stopped container retaining these mounts.
 		// Unknown termination may still have live execution. Preserve both explicitly.
 		safe := !created || result.Termination.Outcome.Confirmed
@@ -247,6 +270,7 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 				result.ContainerCleanup = "removed"
 			} else {
 				result.ContainerCleanup = "unconfirmed"
+				retainCleanup("container.remove", err)
 				runErr = errors.Join(runErr, err)
 			}
 		}
@@ -254,15 +278,19 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 			if err = c.Channel.CleanupAfterExit(true); err == nil {
 				result.TransportCleanup = "removed"
 			} else {
+				retainCleanup("transport.remove", err)
 				runErr = errors.Join(runErr, err)
 			}
 			if err = c.Tree.Discard(); err == nil {
 				result.InputCleanup = "removed"
 			} else {
+				retainCleanup("inputs.remove", err)
 				runErr = errors.Join(runErr, err)
 			}
 		}
-		runErr = errors.Join(runErr, w.plan.Discard())
+		planErr := w.plan.Discard()
+		retainCleanup("launch-policy.remove", planErr)
+		runErr = errors.Join(runErr, planErr)
 		runErr = errors.Join(runErr, ctx.Err())
 		if result.HarnessExit != nil {
 			result.HarnessExit.CleanupComplete = cleanupCompleted(result)
@@ -276,18 +304,20 @@ func (w *Worker) Run(ctx context.Context) (result Result, runErr error) {
 			result.WorkflowDiagnostic.AssessmentAccepted = result.Terminal.AssessmentState == "committed"
 			result.WorkflowDiagnostic.CleanupCompleted = cleanupCompleted(result)
 		}
-		if result.WorkflowDiagnostic != nil && (runErr != nil && !result.StopAccepted || result.WorkflowDiagnostic.Stopping != "") {
+		if result.FailureTrigger != nil && result.FailureTrigger.Kind == "workflow" && result.WorkflowDiagnostic != nil && result.WorkflowDiagnostic.OperationID == result.FailureTrigger.OperationID && (runErr != nil && !result.StopAccepted || result.WorkflowDiagnostic.Stopping != "") {
 			runErr = errors.Join(*result.WorkflowDiagnostic, runErr)
 		}
 		if runErr != nil && result.ConclusionDiagnostic != nil && !result.StopAccepted {
-			runErr = errors.Join(*result.ConclusionDiagnostic, runErr)
+			runErr = errors.Join(runErr, *result.ConclusionDiagnostic)
 		}
 		raw, _ := json.Marshal(result)
 		metadata, _ := json.Marshal(struct {
+			FailureTrigger     *campaign.FailureTrigger       `json:"failure_trigger,omitempty"`
+			Cleanup            campaign.CleanupDiagnostic     `json:"cleanup_actions"`
 			ExecutionAdmission string                         `json:"execution_admission"`
 			Diagnostic         *campaign.ConclusionDiagnostic `json:"diagnostic,omitempty"`
 			HarnessExit        *campaign.HarnessExit          `json:"harness_exit,omitempty"`
-		}{"closed", result.ConclusionDiagnostic, result.HarnessExit})
+		}{result.FailureTrigger, result.CleanupDiagnostic(), "closed", result.ConclusionDiagnostic, result.HarnessExit})
 		entry := campaign.Entry{RunRevision: writer.Revision(), Kind: "launch.terminal", Metadata: metadata, Content: []campaign.Content{{Role: "launch-result", MediaType: "application/json", Bytes: raw}}}
 		var recordErr error
 		if terminalReserved {
@@ -530,4 +560,10 @@ func (w *Worker) Discard() error {
 		return ErrWorker
 	}
 	return w.plan.Discard()
+}
+
+// CleanupDiagnostic is the same bounded projection used by the saved completion
+// and CLI; per-session native evidence outcomes remain in Terminal.Evidence.
+func (r Result) CleanupDiagnostic() campaign.CleanupDiagnostic {
+	return campaign.CleanupDiagnostic{Failures: r.Terminal.Failures, Container: r.ContainerCleanup, Transport: r.TransportCleanup, Inputs: r.InputCleanup, Closure: r.Terminal.Closure, Injections: r.Terminal.CleanupState, TargetStop: r.Terminal.TargetStop}
 }

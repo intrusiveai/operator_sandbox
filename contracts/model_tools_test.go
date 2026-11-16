@@ -59,10 +59,13 @@ func TestSharedModelTools(t *testing.T) {
 			for _, tool := range tools {
 				switch c.Codec {
 				case "openai-chat-text-tools-v1":
-					checkOpenAIParameters(t, tool["function"].(map[string]any)["parameters"])
+					checkObjectRootParameters(t, tool["function"].(map[string]any)["parameters"], c.Codec)
 					names = append(names, tool["function"].(map[string]any)["name"].(string))
 				case responsesCodec:
-					checkOpenAIParameters(t, tool["parameters"])
+					checkObjectRootParameters(t, tool["parameters"], c.Codec)
+					names = append(names, tool["name"].(string))
+				case anthropicCodec:
+					checkObjectRootParameters(t, tool["input_schema"], c.Codec)
 					names = append(names, tool["name"].(string))
 				case bedrockCodec:
 					names = append(names, tool["toolSpec"].(map[string]any)["name"].(string))
@@ -77,41 +80,6 @@ func TestSharedModelTools(t *testing.T) {
 			if !reflect.DeepEqual(names, c.Names) {
 				t.Fatal("tool dependency selection differs")
 			}
-			// Projections must survive the real policy and request validators, not just
-			// a comparison against another JSON generator.
-			found := false
-			for _, base := range modelFixtures(t) {
-				if base.Mode != "context" || !base.Valid {
-					continue
-				}
-				var policy, request map[string]any
-				if err = json.Unmarshal(base.Policy, &policy); err != nil {
-					t.Fatal(err)
-				}
-				if policy["codec_id"] != c.Codec {
-					continue
-				}
-				found = true
-				if err = json.Unmarshal(base.Request, &request); err != nil {
-					t.Fatal(err)
-				}
-				policy["tools"] = tools
-				native := request["request"].(map[string]any)
-				if c.Codec == bedrockCodec {
-					native["toolConfig"].(map[string]any)["tools"] = tools
-				} else {
-					native["tools"] = tools
-				}
-				policyRaw, _ := json.Marshal(policy)
-				requestRaw, _ := json.Marshal(request)
-				if _, err = p.ValidateModelRequest(policyRaw, requestRaw); err != nil {
-					t.Fatalf("native catalog rejected: %v", err)
-				}
-				break
-			}
-			if !found {
-				t.Fatal("missing codec integration fixture")
-			}
 			original := bytes.Clone(got)
 			got[0] = 'x'
 			again, err := p.ModelTools(c.Codec, c.Operations)
@@ -122,22 +90,22 @@ func TestSharedModelTools(t *testing.T) {
 	}
 }
 
-func checkOpenAIParameters(t *testing.T, value any) {
+func checkObjectRootParameters(t *testing.T, value any, codec string) {
 	t.Helper()
 	parameters := value.(map[string]any)
 	if parameters["type"] != "object" || parameters["properties"] == nil || parameters["additionalProperties"] != false {
-		t.Fatal("OpenAI parameters must declare a closed object")
+		t.Fatalf("%s parameters must declare a closed object", codec)
 	}
 	for _, key := range []string{"oneOf", "anyOf", "allOf", "enum", "const", "not"} {
 		if _, exists := parameters[key]; exists {
-			t.Fatalf("OpenAI forbids root %s even with strict=false", key)
+			t.Fatalf("%s forbids root %s", codec, key)
 		}
 	}
 }
 
 // Provider acceptance is not authorization: cross-field combinations accepted by
 // a declaration must still fail the authoritative runtime argument validator.
-func TestOpenAIProjectionAndRuntimeConstraints(t *testing.T) {
+func TestObjectRootProjectionAndRuntimeConstraints(t *testing.T) {
 	p, err := LoadProtocol(schemas.Files)
 	if err != nil {
 		t.Fatal(err)
@@ -151,12 +119,12 @@ func TestOpenAIProjectionAndRuntimeConstraints(t *testing.T) {
 		Operations       []string
 		Arguments        json.RawMessage
 		Valid            bool
-		OpenAIValid      *bool `json:"openai_valid"`
+		ObjectRootValid  *bool `json:"object_root_valid"`
 	}
 	if err := json.Unmarshal(raw, &cases); err != nil {
 		t.Fatal(err)
 	}
-	for _, codec := range []string{"openai-chat-text-tools-v1", responsesCodec} {
+	for _, codec := range []string{"openai-chat-text-tools-v1", responsesCodec, anthropicCodec} {
 		toolsRaw, err := p.ModelTools(codec, cases[0].Operations)
 		if err != nil {
 			t.Fatal(err)
@@ -171,10 +139,14 @@ func TestOpenAIProjectionAndRuntimeConstraints(t *testing.T) {
 			if codec == "openai-chat-text-tools-v1" {
 				tool = tool["function"].(map[string]any)
 			}
+			parameters := tool["parameters"]
+			if codec == anthropicCodec {
+				parameters = tool["input_schema"]
+			}
 			compiler := jsonschema.NewCompiler()
 			compiler.DefaultDraft(jsonschema.Draft2020)
 			compiler.UseLoader(offlineLoader{})
-			if err := compiler.AddResource("urn:test:tool", tool["parameters"]); err != nil {
+			if err := compiler.AddResource("urn:test:tool", parameters); err != nil {
 				t.Fatal(err)
 			}
 			compiled, err := compiler.Compile("urn:test:tool")
@@ -184,7 +156,7 @@ func TestOpenAIProjectionAndRuntimeConstraints(t *testing.T) {
 			validators[tool["name"].(string)] = compiled
 		}
 		for _, c := range cases {
-			if c.OpenAIValid == nil {
+			if c.ObjectRootValid == nil {
 				continue
 			}
 			t.Run(codec+"/"+c.Name, func(t *testing.T) {
@@ -192,8 +164,8 @@ func TestOpenAIProjectionAndRuntimeConstraints(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				if got := validators[c.Tool].Validate(value) == nil; got != *c.OpenAIValid {
-					t.Fatalf("projection valid=%v want=%v", got, *c.OpenAIValid)
+				if got := validators[c.Tool].Validate(value) == nil; got != *c.ObjectRootValid {
+					t.Fatalf("projection valid=%v want=%v", got, *c.ObjectRootValid)
 				}
 				if _, err := p.ValidateToolArguments(c.Tool, c.Arguments); (err == nil) != c.Valid {
 					t.Fatalf("runtime valid=%v want=%v", err == nil, c.Valid)

@@ -91,6 +91,13 @@ func (s *Service) artifactOperation(q stateRequest, raw []byte) (stateReply, err
 		if json.Unmarshal(q.Body, &declaration) != nil {
 			return stateReply{}, ErrService
 		}
+		limit := s.sizes.Artifact
+		if declaration.Purpose == "conclusion" {
+			limit = min(limit, s.sizes.Assessment)
+		}
+		if declaration.Artifact.SizeBytes > limit {
+			return artifactCapacityDenied("LIMIT_EXCEEDED", declaration.Artifact.SizeBytes, limit, 1), nil
+		}
 		remaining := s.remaining()
 		availableBytes, availableObjects := remaining["artifact_bytes"], remaining["artifact_objects"]
 		if declaration.Purpose != "conclusion" && !s.artifacts.conclusionAllocated {
@@ -102,12 +109,12 @@ func (s *Service) artifactOperation(q stateRequest, raw []byte) (stateReply, err
 			}
 			_ = json.Unmarshal(s.writer.Manifest().RemainingLimits, &limits)
 			if limits.Objects > initialObjects {
-				availableBytes -= min(int64(1<<20), limits.Bytes-initialBytes)
+				availableBytes -= min(s.sizes.Assessment, limits.Bytes-initialBytes)
 				availableObjects--
 			}
 		}
 		if availableObjects < 1 || declaration.Artifact.SizeBytes > availableBytes {
-			return stateDenied("ARTIFACT_BUDGET_EXCEEDED"), nil
+			return artifactCapacityDenied("ARTIFACT_BUDGET_EXCEEDED", declaration.Artifact.SizeBytes, max(int64(0), availableBytes), max(int64(0), availableObjects)), nil
 		}
 		// Same bytes cannot acquire an ambiguous descriptor in the attempt resolver.
 		initial, err := s.config.Prepared.InputsFor(s.target())
@@ -115,11 +122,11 @@ func (s *Service) artifactOperation(q stateRequest, raw []byte) (stateReply, err
 			return stateReply{}, err
 		}
 		if a, ok := initial.Artifacts[declaration.Artifact.Digest]; ok && a.Descriptor != declaration.Artifact {
-			return stateDenied("INVALID_ARGUMENTS"), nil
+			return stateDenied("INVALID_ARGUMENTS", contracts.ArgumentError{Reason: "invalid_resolution_context"}), nil
 		}
 		for _, u := range s.artifacts.uploads {
 			if u.Artifact.Digest == declaration.Artifact.Digest && u.Artifact != declaration.Artifact {
-				return stateDenied("INVALID_ARGUMENTS"), nil
+				return stateDenied("INVALID_ARGUMENTS", contracts.ArgumentError{Reason: "invalid_resolution_context"}), nil
 			}
 		}
 		canonical, err := contracts.Canonicalize(raw, contracts.OrdinaryLimit)
@@ -236,4 +243,21 @@ func (s *Service) addArtifacts(raw []byte, in *attemptadapter.Inputs) error {
 		in.Artifacts[desc.Digest] = attemptadapter.Artifact{CampaignID: s.writer.Manifest().CampaignID, Descriptor: u.Artifact, Bytes: content}
 	}
 	return nil
+}
+
+func artifactCapacityDenied(code string, requested, availableBytes, availableObjects int64) stateReply {
+	correction, disposition := "No artifact object or byte allowance remains. Reuse committed artifacts or finish with retained evidence; no artifact was created.", "gap-and-continue"
+	if availableObjects > 0 && availableBytes > 0 {
+		correction, disposition = "Reduce the artifact size to the available byte allowance or reuse a committed artifact. No artifact was created; correction is safe.", "correct-and-resubmit"
+	}
+	facts := contracts.FailureFacts{"requested_bytes": requested, "available_bytes": availableBytes, "available_objects": availableObjects}
+	issue := contracts.ArgumentError{Reason: "artifact_capacity", FieldPath: "/artifact/size_bytes", Correction: correction, Facts: &facts}
+	r := stateDenied(code, issue)
+	r.Error.Disposition = disposition
+	var d map[string]any
+	_ = json.Unmarshal(r.Error.Diagnostic, &d)
+	d["resubmission_safe"] = disposition == "correct-and-resubmit"
+	d["facts"] = facts
+	r.Error.Diagnostic = marshal(d)
+	return r
 }

@@ -3,10 +3,15 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
   push:
-    branches: [main, 'candidate-v*']
+    branches: ['candidate-v*']
   workflow_dispatch:
 permissions:
   contents: read
+# Only active PR checks supersede each other. Candidate runs and promotion have
+# unique groups here; release mutations remain serialized by their job groups.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.action != 'closed' && format('pr-{0}', github.event.number) || format('run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' }}
 jobs:
   context:
     runs-on: ubuntu-24.04
@@ -39,22 +44,37 @@ jobs:
           cache-dependency-path: go.sum
       - name: Prepare locked dependencies
         run: make setup
+      - name: Fast pull-request checks
+        if: needs.context.outputs.mode == 'verify'
+        run: make test-pr
       - name: Verify shared contracts and host behavior
+        if: needs.context.outputs.mode == 'publish'
         run: |
           make test
           go vet ./...
           go test -race ./internal/hostrelease ./internal/contractstore ./internal/supervisor
   candidates:
-    needs: [context, verify]
-    # main verifies merged code; it never rebuilds the promoted release.
-    if: github.ref != 'refs/heads/main'
-    runs-on: ubuntu-24.04
+    needs: [context, verify, interceptor-contract]
+    # Build artifacts only for a candidate update, after the complete test gate.
+    if: needs.context.outputs.mode == 'publish'
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
-        platform: [linux/amd64, linux/arm64, darwin/amd64, darwin/arm64]
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+          - platform: darwin/amd64
+            runner: macos-15-intel
+          - platform: darwin/arm64
+            runner: macos-15
     steps:
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.13.15'
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -70,12 +90,14 @@ jobs:
           TARGET_PLATFORM: ${{ matrix.platform }}
           RELEASE_VERSION: ${{ needs.context.outputs.version }}
         run: |
-          python3 scripts/build_host_release.py --version "$RELEASE_VERSION" --platform "$TARGET_PLATFORM" --output dist/first
-          python3 scripts/build_host_release.py --version "$RELEASE_VERSION" --platform "$TARGET_PLATFORM" --output dist/second
-          diff -r dist/first dist/second
+          python3 scripts/build_host_release.py --version "$RELEASE_VERSION" --platform "$TARGET_PLATFORM" \
+            --output dist/first --reproduce-output dist/second
       - name: Exercise native installed package
-        if: matrix.platform == 'linux/amd64'
-        run: python3 scripts/test_installed_release.py --candidate dist/first/linux-amd64
+        env:
+          TARGET_PLATFORM: ${{ matrix.platform }}
+        run: |
+          python3 scripts/test_installed_release.py --candidate "dist/first/${TARGET_PLATFORM/\//-}"
+          python3 scripts/check_onepassword_binary.py "dist/first/${TARGET_PLATFORM/\//-}/bin/operatorctl"
       - name: Preserve candidate file modes
         run: tar -C dist/first -cf dist/host-candidate.tar .
       - name: Retain host candidate
@@ -85,8 +107,58 @@ jobs:
           path: dist/host-candidate.tar
           if-no-files-found: error
           retention-days: 14
-  publish:
+  packaged-contract:
     needs: [context, candidates]
+    if: needs.context.outputs.mode == 'publish'
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-amd64
+            runner: ubuntu-24.04
+            artifact: 0
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+            artifact: 1
+          - platform: darwin-amd64
+            runner: macos-15-intel
+            artifact: 2
+          - platform: darwin-arm64
+            runner: macos-15
+            artifact: 3
+    steps:
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.13.15'
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verify native archived executable identities offline
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ARTIFACT: ${{ matrix.artifact }}
+          TARGET_PLATFORM: ${{ matrix.platform }}
+        run: |
+          gh run download "$GITHUB_RUN_ID" --name "host-candidate-$ARTIFACT" --dir dist/download
+          mkdir -p dist/candidates
+          tar -xf dist/download/host-candidate.tar -C dist/candidates
+          python3 scripts/verify_host_contract.py --candidate "dist/candidates/$TARGET_PLATFORM" --output "dist/contract-verification/$TARGET_PLATFORM.json"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: host-contract-${{ matrix.artifact }}
+          path: dist/contract-verification/*.json
+          if-no-files-found: error
+          retention-days: 90
+  publish:
+    outputs:
+      published: ${{ steps.publication.outputs.published }}
+    needs: [context, candidates, packaged-contract]
     if: >-
       needs.context.outputs.mode == 'publish' &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
@@ -99,6 +171,7 @@ jobs:
     concurrency:
       group: operator-release-v${{ needs.context.outputs.version }}
       cancel-in-progress: false
+      queue: max
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -112,6 +185,7 @@ jobs:
           for index in 0 1 2 3; do
             gh run download "$GITHUB_RUN_ID" --name "host-candidate-$index" --dir "dist/download-$index"
             tar -xf "dist/download-$index/host-candidate.tar" -C dist/candidates
+            gh run download "$GITHUB_RUN_ID" --name "host-contract-$index" --dir dist/candidates/contract-verification
           done
       - name: Publish rolling prerelease
         id: publication
@@ -130,6 +204,34 @@ jobs:
           RELEASE_TAG: v${{ needs.context.outputs.version }}
           RELEASE_SOURCE: ${{ needs.context.outputs.source }}
         run: python3 scripts/publish_host_release.py catalog-sync --tag "$RELEASE_TAG" --source "$RELEASE_SOURCE"
+  interceptor-contract:
+    needs: context
+    if: needs.context.outputs.mode == 'verify' || needs.context.outputs.mode == 'publish'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.26.5'
+          cache: true
+          cache-dependency-path: go.sum
+      - name: Compare selected Interceptor OpenAPI against Operator integration
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/interceptor_contract.py verify --fetch --output dist/interceptor-contract/result.json
+      - name: Retain source-bound contract comparison
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: interceptor-contract-comparison
+          path: dist/interceptor-contract/result.json
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 90
   promote:
     needs: context
     if: >-
@@ -147,6 +249,7 @@ jobs:
     concurrency:
       group: operator-release-v${{ needs.context.outputs.version }}
       cancel-in-progress: false
+      queue: max
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

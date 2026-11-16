@@ -24,12 +24,16 @@ def _part(encoded):
         value = base64.b64decode(encoded, validate=True)
     except (ValueError, binascii.Error):
         raise ContractError("contract message consistency check failed") from None
-    _require(len(value) <= 262144 and base64.b64encode(value).decode("ascii") == encoded)
+    _require(len(value) <= 1 << 20 and base64.b64encode(value).decode("ascii") == encoded)
     return value
 
 
+SNAPSHOT_DESCRIPTION_LIMIT = 4096
+
 def _description(body):
-    _require(len(body.get("description", "").encode("utf-8")) <= 4096)
+    if len(body.get("description", "").encode("utf-8")) > SNAPSHOT_DESCRIPTION_LIMIT:
+        correction = f"Snapshot description must be at most {SNAPSHOT_DESCRIPTION_LIMIT} UTF-8 bytes. Shorten description and resubmit; no snapshot was created."
+        raise ContractError(correction, reason="snapshot_description_size", field_path="/description", correction=correction)
 
 
 def _conclusion_artifact(body):
@@ -50,6 +54,14 @@ def _metadata(snapshot, campaign):
 
 class Protocol:
     """Not an admission controller: sequencing, durable effects and policy remain host work."""
+
+    @classmethod
+    def from_interface(cls, raw, expected):
+        """Load approved interface bytes independently of a producer source commit."""
+        from .interface import interface_resources
+        loaded = cls._from_resources(interface_resources(raw, expected))
+        loaded._package_identity = dict(expected)
+        return loaded
 
     def __init__(self, directory: Path):
         self._catalog = Catalog(directory)
@@ -92,27 +104,15 @@ class Protocol:
     def validate_lane_message(self, lane, raw):
         return transport.validate_lane_message(self, lane, raw)
 
-    def validate_model_request(self, policy, request):
-        return model.validate_model_request(self,policy,request)
-
-    def model_policy_from_context(self, context, tools, prompt):
-        return model.model_policy_from_context(self,context,tools,prompt)
+    def validate_model_request(self, request):
+        return model.validate_model_request(self,request)
 
     def validate_model_exchange(self, policy, request, result):
         return model.validate_model_exchange(self,policy,request,result)
 
-    def model_disposition(self, result):
-        return model.model_disposition(self,result)
-
-    def chat_continuation(self, result, tool_results):
-        return model.chat_continuation(self,result,tool_results)
-
-    def anthropic_continuation(self, result, tool_results):
-        return model.anthropic.continuation(self,result,tool_results)
-
-    def model_tools(self, codec, operations):
+    def model_tools(self, codec, operations, surfaces=None):
         from .model_tools import model_tools
-        return model_tools(self, codec, operations)
+        return model_tools(self, codec, operations, surfaces)
 
     def resolve_direct_input(self, value):
         from .simple import resolve_direct_input
@@ -122,26 +122,13 @@ class Protocol:
         from .simple import normalize_assessment
         return normalize_assessment(self, raw, binding, finish)
 
+    def normalize_tool_arguments(self, name, raw, context):
+        from .tool_normalization import normalize_tool_arguments
+        return normalize_tool_arguments(self, name, raw, context)
+
     def validate_tool_arguments(self, name, raw):
         from .model_tools import validate_tool_arguments
         return validate_tool_arguments(self, name, raw)
-
-    def responses_continuation(self, result_raw, results):
-        from .model_responses import continuation
-        return continuation(self, result_raw, results)
-
-    def gemini_continuation(self, result_raw, results):
-        from .model_gemini import continuation
-        return continuation(self, result_raw, results)
-
-    def bedrock_continuation(self, result, tool_results):
-        return model.bedrock.continuation(self,result,tool_results)
-
-    def model_output_limit(self, request):
-        return model.model_output_limit(self,request)
-
-    def model_usage(self, result):
-        return model.model_usage(self,result)
 
     def encode_frame(self, lane, raw):
         return transport.encode_frame(self, lane, raw)
@@ -228,6 +215,10 @@ class Protocol:
         message=self._catalog.validate('urn:operator:schema:engine-request-envelope:v1alpha1',raw)
         return message
 
+    def validate_request_sizes(self, raw, sizes):
+        from .sizes import validate_request_sizes
+        return validate_request_sizes(self, raw, sizes)
+
     def validate_request(self, raw: bytes):
         message = self.validate_request_envelope(raw)
         operation = self._operations.get(message["operation"])
@@ -241,8 +232,13 @@ class Protocol:
             validate_attempt_origin(body)
         self._check_registered(operation, "request_schema", body)
         name = operation["name"]
-        if name == "engine.model_generate":
-            model.native_request(body)
+        if name == "engine.diagnostic_report":
+            stopping=body.get('stopping',{})
+            if stopping.get('condition')=='no-progress-limit' and stopping['observed_count']<stopping['configured_limit']:
+                raise ContractError('Invalid no-progress accounting.',reason='invalid_progress_accounting',field_path='/stopping/observed_count',correction='No-progress exhaustion requires observed_count to reach configured_limit; report the actual counter.')
+            budget = stopping.get('budget')
+            if budget is not None and not (budget['consumed'] <= budget['total_allowance'] and budget['remaining'] == budget['total_allowance'] - budget['consumed'] and budget['remaining'] < budget['next_request_reservation']):
+                raise ContractError('Invalid model-token accounting.', reason='invalid_budget_accounting', field_path='/stopping/budget', correction='Model tokens require consumed + remaining = total_allowance and remaining < next_request_reservation; use actual token accounting, not another budget counter.')
         elif name == "engine.record_append":
             check_record(body)
         elif name == "engine.attempt_execute":
@@ -268,7 +264,6 @@ class Protocol:
             _require(message["error"]["code"] in operation["error_codes"])
         else:
             self._check_registered(operation, "result_schema", message["result"])
-            if operation['name']=='engine.model_generate': model.native_response(message['result'])
         return message
 
     def validate_response(self, request: bytes, response: bytes):
@@ -281,9 +276,7 @@ class Protocol:
             return message
         self.validate_request(request)
         result, body, name = message["result"], req["body"], req["operation"]
-        if name == "engine.model_generate":
-            model.check_correlation(body,result)
-        elif name == "engine.record_append":
+        if name == "engine.record_append":
             _require(result["record_kind"] == body["record_kind"])
             for field in ("campaign_id", "launch_id"):
                 _require(result["attribution"][field] == req[field])

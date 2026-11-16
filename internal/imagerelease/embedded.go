@@ -6,11 +6,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"reflect"
 	"unicode/utf8"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 )
 
@@ -19,7 +19,7 @@ const PromptPath = "/opt/operator/engine/share/default-system-prompt.txt"
 const LoaderPath = "/opt/operator/engine/lib/attack_harness/skill_loader.py"
 const ToolCatalogPath = "/opt/operator/engine/share/tool-catalog.json"
 
-var ErrEmbedded = errors.New("embedded engine metadata does not match pinned image and installed contract")
+var ErrEmbedded = diagnostictext.New("embedded engine metadata does not match pinned image and installed contract")
 var embeddedCodecs = []string{"anthropic-messages-text-tools-v1", "bedrock-converse-text-tools-v1", "gemini-text-tools-v1", "openai-chat-text-tools-v1", "openai-responses-text-tools-v1"}
 
 type fileIdentity struct {

@@ -21,6 +21,9 @@ import (
 )
 
 type observationReceipt struct {
+	FailureTrigger       *campaign.FailureTrigger       `json:"failure_trigger,omitempty"`
+	FailureSummary       string                         `json:"failure_summary,omitempty"`
+	CleanupActions       campaign.CleanupDiagnostic     `json:"cleanup_actions,omitempty,omitzero"`
 	HarnessExit          *campaign.HarnessExit          `json:"harness_exit,omitempty"`
 	ConclusionDiagnostic *campaign.ConclusionDiagnostic `json:"conclusion_diagnostic,omitempty"`
 	WorkflowDiagnostic   *campaign.WorkflowDiagnostic   `json:"workflow_diagnostic,omitempty"`
@@ -129,6 +132,21 @@ func observeCampaign(ctx context.Context, action string, args []string, stdout, 
 		}
 		snapshot, err := campaign.Observe(ctx, *root, *id, func(e campaign.Event) error {
 			result.Revision, result.LastKind = e.RunRevision, e.Kind
+			if e.Kind == "model.exchange" || e.Kind == "workflow.diagnostic" || e.Kind == "launch.terminal" {
+				var metadata struct {
+					FailureTrigger *campaign.FailureTrigger   `json:"failure_trigger"`
+					Cleanup        campaign.CleanupDiagnostic `json:"cleanup_actions"`
+				}
+				if json.Unmarshal(e.Metadata, &metadata) == nil {
+					if result.FailureTrigger == nil && metadata.FailureTrigger != nil && metadata.FailureTrigger.Valid() {
+						result.FailureTrigger = metadata.FailureTrigger
+					}
+					if e.Kind == "launch.terminal" && metadata.Cleanup.Valid() {
+						result.CleanupActions = metadata.Cleanup
+					}
+				}
+			}
+
 			if e.Kind == "workflow.diagnostic" {
 				var metadata map[string]json.RawMessage
 				if json.Unmarshal(e.Metadata, &metadata) == nil {
@@ -189,8 +207,20 @@ func observeCampaign(ctx context.Context, action string, args []string, stdout, 
 		}
 		result.Verified = err == nil
 		result.More = action == "logs" && result.NextAfter < result.Sequence
-		// Preparation can fail before a journal exists. Report the immutable job
-		// record without implying that execution is healthy or evidence verified.
+		// Resolve attribution from recorded facts, never diagnostic category precedence.
+		if trigger := result.FailureTrigger; trigger != nil {
+			if trigger.Kind == "model" && result.ModelDiagnostic != nil && result.ModelDiagnostic.OperationID == trigger.OperationID {
+				result.FailureSummary = result.ModelDiagnostic.Summary()
+			}
+			if trigger.Kind == "workflow" && result.WorkflowDiagnostic != nil && result.WorkflowDiagnostic.OperationID == trigger.OperationID {
+				result.FailureSummary = result.WorkflowDiagnostic.Message()
+			}
+		} else if result.ModelDiagnostic != nil {
+			result.FailureSummary = "Observed failure; causal order was not retained. " + result.ModelDiagnostic.Summary()
+		}
+
+		// Preparation can fail before a journal exists; the immutable start record
+		// remains readable without implying execution or verified evidence.
 		if err != nil && errors.Is(err, os.ErrNotExist) && start != nil && start.Accepted == nil {
 			if _, statErr := os.Lstat(filepath.Join(*root, "campaigns", *id)); errors.Is(statErr, os.ErrNotExist) {
 				err = nil

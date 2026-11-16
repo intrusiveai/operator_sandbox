@@ -1,7 +1,6 @@
 package contracts
 
 import (
-	"errors"
 	"io/fs"
 	"path"
 	"sort"
@@ -10,8 +9,8 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v6"
 )
 
-var ErrSchema = errors.New("contract schema validation failed")
-var ErrCatalog = errors.New("invalid installed contract catalog")
+var ErrSchema = newPublicError("contract schema validation failed")
+var ErrCatalog = newPublicError("invalid installed contract catalog")
 
 type offlineLoader struct{}
 
@@ -104,8 +103,7 @@ func (c *Catalog) Validate(id string, raw []byte, maximum int) (any, error) {
 		return nil, err
 	}
 	if err = schema.Validate(value); err != nil {
-		path, _ := SafeArgumentPath(conclusionSchemaPath(err))
-		return nil, &ArgumentError{Reason: "invalid_structure", FieldPath: path, Correction: "Supply the required fields with the documented types and no unknown fields.", Cause: ErrSchema}
+		return nil, c.schemaArgumentIssue(err)
 	}
 	return value, nil
 }

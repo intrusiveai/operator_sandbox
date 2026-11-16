@@ -87,7 +87,7 @@ func Prepare(p Plan) (*Prepared, error) {
 				return nil, ErrPlan
 			}
 		}
-		modes := map[string][]string{"aws-secrets-manager": {"web-identity", "container-role", "instance-role", "named-profile", "aws-environment"}, "azure-key-vault": {"workload-identity", "managed-identity", "azure-cli", "azure-client-secret"}, "gcp-secret-manager": {"external-account", "metadata-identity", "google-adc"}, "hashicorp-vault": {"token-sink", "proxy"}}
+		modes := map[string][]string{"aws-secrets-manager": {"web-identity", "container-role", "instance-role", "named-profile", "aws-environment"}, "azure-key-vault": {"workload-identity", "managed-identity", "azure-cli", "azure-client-secret"}, "gcp-secret-manager": {"external-account", "metadata-identity", "google-adc"}, "hashicorp-vault": {"token-sink", "proxy"}, "onepassword": {"onepassword-desktop", "onepassword-service-account"}}
 		if !contains(modes[q.backend], p.DeclaredAuthMode) {
 			return nil, ErrPlan
 		}
@@ -96,6 +96,13 @@ func Prepare(p Plan) (*Prepared, error) {
 				local := store.Authentication != "" && store.Authentication != "workload-identity"
 				declaredLocal := contains([]string{"google-adc", "azure-cli", "azure-client-secret"}, p.DeclaredAuthMode)
 				if local != declaredLocal || (local && store.Authentication != p.DeclaredAuthMode) {
+					return nil, ErrPlan
+				}
+			}
+		}
+		if q.backend == "onepassword" {
+			for _, store := range q.config.Profiles {
+				if store.ID == ref.StoreProfileID && store.Authentication != p.DeclaredAuthMode {
 					return nil, ErrPlan
 				}
 			}

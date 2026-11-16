@@ -209,3 +209,74 @@ accepted assessment summary as Harness interpretation. Event references identify
 sequence numbers in the digest-bound source parts listed in execution-bundle.json.
 Missing assessment content MUST NOT prevent reporting execution facts. No report
 MUST claim that an external QA recipe passed.
+
+Model-token reservation failures retain a `budget` object in workflow diagnostics:
+`kind`, `total_allowance`, `consumed`, `remaining`, `next_request_reservation`.
+The report MUST put this stopping cause in the opening summary and preserve all
+five fields in exported events and completion diagnostics. Values are validated
+Harness-reported accounting, not a claim that the cloud provider rejected a quota.
+Remaining tokens may be positive but less than the reservation needed for another
+request. Prior tool rejections remain separate history and MUST NOT replace this
+cause. No final assessment, exit outcome, and cleanup outcome remain separate facts.
+
+## Target failures and cleanup reconciliation
+
+Reports MUST retain `workflow_diagnostics[].target_failure` and associate it with
+`attempts[].target_failure`. These host-selected facts identify the target/native
+operation, attempt, turn when available, native step, HTTP status, native code
+when available, bounded error detail and omission reason, and the digest of the
+original native response. A native target-turn error MUST remain primary over a
+subsequent forced Harness exit. Only an explicit native deadline error establishes
+`target_turn_timeout`; elapsed time alone MUST NOT establish it. The shared
+Harness wire format and effective feedback visibility MUST remain unchanged.
+
+`cleanup_resolutions` MUST report per-session currently verified archive
+availability, historical collection outcomes, and independently verified
+`session_stopped` evidence. The report MUST identify the event sequence, timestamp,
+digest and archive for a confirmed native stop. Only a session-bound, hash-verified
+control event from `sandboxd` with `sandbox_control` provenance qualifies. Reports
+MUST reverify retained archive provenance, including older archives whose saved
+receipts lack the lifecycle projection. Missing or invalid evidence MUST NOT
+confirm a stop.
+
+The existing cleanup/closure/stop fields and Harness cleanup flag describe the
+termination/recovery record; they MUST NOT be silently rewritten from later
+collection success. Markdown MUST label that history and separately show resolved
+collection and native-stop facts. Neither a complete archive nor a stopped session
+proves injection deletion or ownership closure. Earlier report generations and
+execution journals MUST remain unchanged.
+
+Exported `evidence.collection-result` metadata MUST preserve the selected native
+HTTP status, safe native rejection code and any omission reason. Older
+`export_rejected` records without these details MUST explicitly say the details
+were not retained, rather than infer a cause from a later successful collection.
+
+## Failure attribution
+
+Reports and exports distinguish the affected interaction from the observed cause.
+`model_failures` are Attack Harness provider requests made by Operator. Target
+application errors, Interceptor rejections, failed Interceptor communication and
+Operator validation failures are reported at their observed boundary. A failed
+target turn does not prove a failure of the target's own model provider.
+
+The `failure_trigger` in diagnostic events and retained launch results references the first known terminal
+operation diagnostic. Reports lead with that diagnostic when available; they do
+not select a cause by ranking model, target and Harness error categories. Older
+records without a trigger still expose observed failures but cannot establish
+causal order. Corrected submission errors remain history. Forced Harness exit and
+cleanup actions are reported separately, with links to retained journal evidence.
+
+Model timeout evidence includes the effective deadline and its source. Credential
+failures expose approved logical identifiers, backend and failed step, not locators
+or values. Unknown diagnostic sources/reasons stay explicitly unknown. CLI,
+inspection, campaign completion and exports use the same selected diagnostic facts.
+
+
+Workflow diagnostics retain the producer's bounded, credential-filtered explanation,
+correction and scalar failure facts. Harness reports remain attributed assertions;
+they do not establish host dispatch or cleanup. Unsupported-field corrections quote
+names as data and derive allowed fields, descriptions and required status from the
+installed schema. Inspection, completion receipts and exports preserve these details
+rather than replacing them with a reason-to-message lookup. Missing legacy details
+remain explicitly unavailable. Credential resolution failures include their typed
+backend code, HTTP status and category when observed; raw backend strings are omitted.

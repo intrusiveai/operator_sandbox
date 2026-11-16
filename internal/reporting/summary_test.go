@@ -5,6 +5,7 @@ package reporting
 import (
 	"encoding/json"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"strings"
 	"testing"
 )
@@ -61,5 +62,71 @@ func TestReportDistinguishesExitCleanupRecoveryAndMissingFacts(t *testing.T) {
 				t.Fatal(report)
 			}
 		})
+	}
+}
+
+func TestCollectionSuccessDoesNotConfirmOtherCleanup(t *testing.T) {
+	r := Result{CampaignID: "campaign-1", TargetStop: "unconfirmed", TargetClosure: "unconfirmed", InjectionCleanup: "unconfirmed", CleanupResolutions: []CleanupResolution{{SessionID: "session-1", Collection: "complete", History: []campaign.EvidenceOutcome{{SessionID: "session-1", State: "missing", Reason: "export_rejected"}, {SessionID: "session-1", State: "complete"}}}}}
+	text := string(markdown(r, "sha256:test"))
+	for _, want := range []string{"Currently verified evidence collection: complete", "native rejection details were not retained", "No verified native session_stopped event", "injection cleanup: unconfirmed"} {
+		if !strings.Contains(text, want) {
+			t.Fatal(want, text)
+		}
+	}
+	if strings.Contains(text, "Target stop confirmed") {
+		t.Fatal("collection fabricated lifecycle evidence")
+	}
+}
+
+func TestReportUsesRecordedTriggerNotCategoryPrecedence(t *testing.T) {
+	model := modelprovider.Diagnostic{Provider: "openai-chat", Model: "same-model-as-target", OperationID: "model-2"}.WithFailure("timeout", "deadline_exceeded")
+	workflow := campaign.NewWorkflowDiagnostic("target-1", "unknown", "delivery", "target_outcome_unknown", "", "", "")
+	for _, trigger := range []string{"model", "workflow", "missing"} {
+		t.Run(trigger, func(t *testing.T) {
+			r := Result{CampaignID: "campaign-1", ModelFailures: []modelprovider.Diagnostic{model}, WorkflowDiagnostics: []campaign.WorkflowDiagnostic{workflow}, HarnessExit: &campaign.HarnessExit{Outcome: "failed", ExitObserved: true, ExitCode: 137, Forced: true}, CleanupActions: campaign.CleanupDiagnostic{Container: "removed", Transport: "removed", Inputs: "retained", Closure: "unconfirmed", Injections: "unconfirmed", TargetStop: "unconfirmed"}}
+			if trigger != "missing" {
+				op := "model-2"
+				if trigger == "workflow" {
+					op = "target-1"
+				}
+				r.FailureTrigger = &campaign.FailureTrigger{Kind: trigger, OperationID: op}
+			}
+			text := string(markdown(r, "sha256:test"))
+			if !strings.Contains(text, "Attack Harness model request") || !strings.Contains(text, "Operator forced termination") || !strings.Contains(text, "input removal retained") || !strings.Contains(text, "failure origin unknown") {
+				t.Fatal(text)
+			}
+			if trigger == "missing" {
+				if !strings.Contains(text, "causal order was not retained") || strings.Contains(text, "Initiating operation failure") {
+					t.Fatal(text)
+				}
+			} else {
+				summary := text[strings.Index(text, "## Summary"):strings.Index(text, "## Execution outcome")]
+				want := model.Summary()
+				if trigger == "workflow" {
+					want = workflow.Message()
+				}
+				if strings.Index(summary, want) < 0 || strings.Index(summary, want) > strings.Index(summary, "Attack Harness exited") {
+					t.Fatal("exit displaced known cause", summary)
+				}
+			}
+		})
+	}
+}
+
+func TestCredentialFailureProjectionAndReport(t *testing.T) {
+	metadata := map[string]json.RawMessage{}
+	values := map[string]any{"credential_id": "key", "profile_id": "profile", "backend": "azure-key-vault", "outcome": "failed", "code": "resolution_failed", "cache_hit": false, "step": "secret-read", "category": "permission-denied", "backend_code": "Forbidden", "http_status": 403}
+	for k, v := range values {
+		metadata[k], _ = json.Marshal(v)
+	}
+	c, projected := projectCredential(9, "2026-11-09T00:00:00Z", metadata)
+	if c.Category != "permission-denied" || c.BackendCode != "Forbidden" || c.HTTPStatus != 403 || string(projected["http_status"]) != "403" {
+		t.Fatal(c, projected)
+	}
+	report := string(markdown(Result{CampaignID: "campaign-1", CredentialResolutions: []CredentialResolution{c}}, "sha256:test"))
+	for _, part := range []string{"permission-denied", "Forbidden", "403", "secret-read"} {
+		if !strings.Contains(report, part) {
+			t.Fatal("missing", part)
+		}
 	}
 }

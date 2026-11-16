@@ -9,6 +9,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
+	"os"
 	"reflect"
 	"slices"
 	"sort"
@@ -16,9 +18,10 @@ import (
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
-var ErrProvenance = errors.New("native evidence provenance is invalid or unsupported")
+var ErrProvenance = diagnostictext.New("native evidence provenance is invalid or unsupported")
 
 const evidenceJSONLimit = 64 << 20
 const evidenceRecordLimit = 100000
@@ -38,16 +41,26 @@ type EvidenceIdentity struct {
 	ParentCheckpointDigest string `json:"parent_checkpoint_digest,omitempty"`
 }
 
+// SessionStopEvidence confirms only the native session stop, not injection deletion
+// or ownership closure. Sequence/hash identify the exact verified lifecycle event.
+type SessionStopEvidence struct {
+	EventSequence uint64    `json:"event_sequence"`
+	EventDigest   string    `json:"event_digest"`
+	ObservedAt    time.Time `json:"observed_at"`
+}
+
 type ProvenanceReceipt struct {
-	Identity     EvidenceIdentity `json:"identity"`
-	Transfer     EvidenceReceipt  `json:"transfer"`
-	BundleDigest string           `json:"bundle_digest"`
-	EventHead    string           `json:"event_head"`
-	StateHead    string           `json:"state_head"`
-	EventCount   int              `json:"event_count"`
-	StateCount   int              `json:"state_count"`
-	State        string           `json:"state"` // complete or partial; never an execution-success claim
-	Gaps         []string         `json:"gaps"`
+	SessionStopped *SessionStopEvidence `json:"session_stopped,omitempty"`
+	Database       *DatabaseEvidence    `json:"database,omitempty"`
+	Identity       EvidenceIdentity     `json:"identity"`
+	Transfer       EvidenceReceipt      `json:"transfer"`
+	BundleDigest   string               `json:"bundle_digest"`
+	EventHead      string               `json:"event_head"`
+	StateHead      string               `json:"state_head"`
+	EventCount     int                  `json:"event_count"`
+	StateCount     int                  `json:"state_count"`
+	State          string               `json:"state"` // complete or partial; never an execution-success claim
+	Gaps           []string             `json:"gaps"`
 }
 
 // VerifiedEvidence can only be constructed by semantic verification. It remains
@@ -59,7 +72,17 @@ type VerifiedEvidence struct {
 
 func (v *VerifiedEvidence) Receipt() ProvenanceReceipt {
 	r := v.receipt
+	if r.SessionStopped != nil {
+		copy := *r.SessionStopped
+		r.SessionStopped = &copy
+	}
 	r.Gaps = slices.Clone(r.Gaps)
+	if r.Database != nil {
+		copy := *r.Database
+		copy.Events = slices.Clone(copy.Events)
+		copy.Oracles = slices.Clone(copy.Oracles)
+		r.Database = &copy
+	}
 	return r
 }
 func (v *VerifiedEvidence) Reader() (io.Reader, error) { return v.archive.download.Reader() }
@@ -149,6 +172,16 @@ func (a *EvidenceArchive) VerifyProvenance(ctx context.Context, id EvidenceIdent
 		return nil, ErrProvenance
 	}
 	for _, o := range report.Oracles {
+		if o.Kind == "database_query_match" && identifier.MatchString(o.ID) {
+			if v.database == nil {
+				v.database = &DatabaseEvidence{Events: []DatabaseEvent{}, Oracles: []DatabaseOracle{}}
+			}
+			if len(v.database.Oracles) < 128 {
+				v.database.Oracles = append(v.database.Oracles, DatabaseOracle{o.ID, o.Fired, o.FirstEventSeq, o.FirstEventDigest})
+			} else {
+				v.database.Truncated = true
+			}
+		}
 		if o.FirstEventSeq >= uint64(len(v.eventHashes)) || o.FirstEventDigest != "" && (o.FirstEventSeq == 0 || o.FirstEventDigest != v.eventHashes[o.FirstEventSeq]) {
 			return nil, ErrProvenance
 		}
@@ -190,7 +223,7 @@ func (a *EvidenceArchive) VerifyProvenance(ctx context.Context, id EvidenceIdent
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
-	return &VerifiedEvidence{a, ProvenanceReceipt{id, receipt, wantDigest, v.eventHashes[len(v.eventHashes)-1], v.stateHashes[len(v.stateHashes)-1], len(v.eventHashes) - 1, len(v.stateHashes) - 1, state, gaps}}, nil
+	return &VerifiedEvidence{a, ProvenanceReceipt{v.stopped, v.database, id, receipt, wantDigest, v.eventHashes[len(v.eventHashes)-1], v.stateHashes[len(v.stateHashes)-1], len(v.eventHashes) - 1, len(v.stateHashes) - 1, state, gaps}}, nil
 }
 func nativeHash(v any) string {
 	raw, err := json.Marshal(v)
@@ -204,45 +237,74 @@ func equalNative(a, b any) bool {
 	y, _ := json.Marshal(b)
 	return bytes.Equal(x, y)
 }
-func (a *EvidenceArchive) readNative(name string, out any) ([]byte, error) {
+func (a *EvidenceArchive) readNative(name string, out any) (data []byte, result error) {
+	defer func() {
+		if result != nil {
+			result = evidenceLocation(name, 0, result)
+		}
+	}()
 	e, ok := a.members[name]
-	if !ok || e.Bytes > evidenceJSONLimit {
-		return nil, ErrProvenance
+	if !ok {
+		return nil, evidenceRule("member", "required archive member is missing")
+	}
+	if e.Bytes > evidenceJSONLimit {
+		return nil, evidenceRule("bytes", fmt.Sprintf("%d exceeds metadata limit %d", e.Bytes, evidenceJSONLimit))
 	}
 	r, err := a.Reader(name)
 	if err != nil {
-		return nil, ErrProvenance
+		return nil, err
 	}
 	raw, err := io.ReadAll(r)
-	if err != nil || rawDigest(raw) != e.SHA256 || strictEvidence(raw, out) != nil {
-		return nil, ErrProvenance
+	if err != nil {
+		return nil, err
+	}
+	if rawDigest(raw) != e.SHA256 {
+		return nil, evidenceRule("sha256", "member bytes differ from the inspected archive")
+	}
+	if err := strictEvidence(raw, out); err != nil {
+		return nil, err
 	}
 	return raw, nil
 }
 func strictEvidence(raw []byte, out any) error {
 	value, err := contracts.Decode(raw, evidenceJSONLimit)
-	if err != nil || !evidenceShape(value, reflect.TypeOf(out).Elem()) {
-		return ErrProvenance
+	if err != nil {
+		return evidenceLocation("JSON", 0, err)
+	}
+	if err := evidenceShape(value, reflect.TypeOf(out).Elem(), ""); err != nil {
+		return err
 	}
 	d := json.NewDecoder(bytes.NewReader(raw))
 	d.DisallowUnknownFields()
-	if d.Decode(out) != nil {
-		return ErrProvenance
+	if err := d.Decode(out); err != nil {
+		// Decoder errors may contain submitted values. Retain type/offset facts,
+		// not the unrestricted error text (e.g. a malformed timestamp string).
+		var mismatch *json.UnmarshalTypeError
+		if errors.As(err, &mismatch) {
+			return &provenanceError{location: evidenceLabel(mismatch.Field), detail: fmt.Sprintf("expected %s at byte %d", mismatch.Type, mismatch.Offset), cause: err}
+		}
+		return &provenanceError{detail: "JSON value cannot be decoded into its declared native type", cause: err}
 	}
 	return nil
 }
-func evidenceShape(v any, t reflect.Type) bool {
+func evidenceShape(v any, t reflect.Type, field string) error {
 	if t == reflect.TypeFor[json.RawMessage]() || t == reflect.TypeFor[time.Time]() {
-		return true
+		return nil
 	}
 	if t.Kind() == reflect.Pointer {
-		return v == nil || evidenceShape(v, t.Elem())
+		if v == nil {
+			if t.Elem().Kind() == reflect.String {
+				return evidenceRule(field, "expected a string; omit optional fields rather than supplying null")
+			}
+			return nil
+		}
+		return evidenceShape(v, t.Elem(), field)
 	}
 	switch t.Kind() {
 	case reflect.Struct:
 		m, ok := v.(map[string]any)
 		if !ok {
-			return false
+			return evidenceRule(field, "expected an object")
 		}
 		known := map[string]bool{}
 		for i := 0; i < t.NumField(); i++ {
@@ -253,49 +315,61 @@ func evidenceShape(v any, t reflect.Type) bool {
 			tag := strings.Split(f.Tag.Get("json"), ",")
 			name := tag[0]
 			known[name] = true
+			child := field + "/" + name
 			x, present := m[name]
 			if !present {
 				if !slices.Contains(tag, "omitempty") {
-					return false
+					return evidenceRule(child, "required field is missing")
 				}
 				continue
 			}
-			if !evidenceShape(x, f.Type) {
-				return false
+			if err := evidenceShape(x, f.Type, child); err != nil {
+				return err
 			}
 		}
-		for name := range m {
+		for _, name := range slices.Sorted(maps.Keys(m)) {
 			if !known[name] {
-				return false
+				return evidenceRule(field+"/"+name, "unknown field; expected fields: "+strings.Join(slices.Sorted(maps.Keys(known)), ", "))
 			}
 		}
 	case reflect.Slice:
 		if v == nil {
-			return true
+			return nil
 		}
 		items, ok := v.([]any)
 		if !ok {
-			return false
+			return evidenceRule(field, "expected an array")
 		}
-		for _, x := range items {
-			if !evidenceShape(x, t.Elem()) {
-				return false
+		for i, x := range items {
+			if err := evidenceShape(x, t.Elem(), fmt.Sprintf("%s/%d", field, i)); err != nil {
+				return err
 			}
 		}
 	case reflect.Map:
 		m, ok := v.(map[string]any)
 		if !ok {
-			return false
+			return evidenceRule(field, "expected an object")
 		}
-		for _, x := range m {
-			if !evidenceShape(x, t.Elem()) {
-				return false
+		for _, key := range slices.Sorted(maps.Keys(m)) {
+			if err := evidenceShape(m[key], t.Elem(), field+"/"+key); err != nil {
+				return err
 			}
 		}
 	default:
 		if v == nil {
-			return false
+			return evidenceRule(field, "null is not permitted")
 		}
 	}
-	return true
+	return nil
+}
+
+// VerifyEvidenceFile rechecks saved archive bytes with the same verifier used on
+// download. The caller owns the read-only file; this does not copy or remove it.
+func VerifyEvidenceFile(ctx context.Context, file *os.File, receipt EvidenceReceipt, id EvidenceIdentity) (*VerifiedEvidence, error) {
+	d := &EvidenceDownload{file: file, receipt: receipt}
+	a, err := d.InspectArchive(ctx, DefaultArchiveLimits(receipt.LocalMaxBytes))
+	if err != nil {
+		return nil, err
+	}
+	return a.VerifyProvenance(ctx, id)
 }

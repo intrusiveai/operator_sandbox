@@ -14,6 +14,7 @@ import (
 
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
+	"github.com/intrusiveai/operator_sandbox/internal/hostrun"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/nativerecovery"
 )
@@ -26,9 +27,7 @@ func collectCampaignEvidence(ctx context.Context, args []string, stdout, stderr 
 		if e != nil {
 			return nativerecovery.EvidenceReport{}, e
 		}
-		peer := interceptor.New()
-		defer peer.Close()
-		return nativerecovery.CollectEvidence(ctx, root, id, docker, peer)
+		return nativerecovery.CollectEvidence(ctx, root, id, docker, nil)
 	})
 }
 func collectCampaignEvidenceWith(ctx context.Context, args []string, stdout, stderr io.Writer, defaults hostconfig.Paths, collect evidenceCollector) int {
@@ -87,6 +86,10 @@ func collectCampaignEvidenceWith(ctx context.Context, args []string, stdout, std
 	}
 	if e != nil {
 		fmt.Fprintln(stderr, "evidence collection could not be verified; retained execution records are unchanged")
+		var compatibility *interceptor.CompatibilityError
+		if errors.As(e, &compatibility) {
+			fmt.Fprintln(stderr, hostrun.PreparationDetails(hostrun.PreparationFailure("Interceptor compatibility check", e)).Message)
+		}
 		return 1
 	}
 	if !result.Complete() {

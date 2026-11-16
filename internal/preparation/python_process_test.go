@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,10 +19,8 @@ import (
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/campaignservice"
-	"github.com/intrusiveai/operator_sandbox/internal/contractpublish"
-	"github.com/intrusiveai/operator_sandbox/internal/contractstore"
 	"github.com/intrusiveai/operator_sandbox/internal/hostworker"
-	"github.com/intrusiveai/operator_sandbox/internal/httpstarget"
+	"github.com/intrusiveai/operator_sandbox/internal/httptarget"
 	"github.com/intrusiveai/operator_sandbox/internal/preparation"
 	"github.com/intrusiveai/operator_sandbox/internal/skills"
 	"github.com/intrusiveai/operator_sandbox/internal/staging"
@@ -65,12 +64,15 @@ func processResponse(calls []any) []byte {
 }
 
 type processCase struct {
+	nativePeer        campaignservice.Peer
+	timeout           time.Duration
 	modelProvider     campaignservice.ModelProvider
 	transport, prompt string
 	native            func(*peer)
 	block             bool
 	spoolMaxBytes     int64
 	large, skill      bool
+	settings          func(*preparation.LaunchConfig)
 	change            func(*preparation.Input)
 	reply             func(int, map[string]any) ([]byte, error)
 }
@@ -102,19 +104,14 @@ func newProcessRun(t *testing.T, tc processCase) *processRun {
 	if v := os.Getenv("OPERATOR_TEST_HARNESS_SOURCE"); v != "" {
 		harness = v
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	timeout := tc.timeout
+	if timeout == 0 {
+		timeout = 60 * time.Second
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	t.Cleanup(cancel)
-	pkg := filepath.Join(t.TempDir(), "contracts")
-	report, err := contractpublish.Build(ctx, operator, pkg, "0.2.0")
-	if err != nil {
-		t.Fatal(err)
-	}
-	installed, err := contractstore.Load(ctx, pkg, report.Package)
-	if err != nil {
-		t.Fatal(err)
-	}
-	in := fixture(t)
-	in.Protocol = installed.Protocol()
+	pkg, protocol := processContract(t)
+	in := fixtureWithProtocol(t, protocol)
 	var bundle map[string]any
 	_ = json.Unmarshal(in.Bundle, &bundle)
 	count := 1
@@ -168,6 +165,9 @@ func newProcessRun(t *testing.T, tc processCase) *processRun {
 			t.Fatal(e)
 		}
 	}
+	if tc.settings != nil {
+		tc.settings(&cfg)
+	}
 	launch, err := target.BuildLaunch(cfg)
 	if err != nil {
 		t.Fatal(err)
@@ -213,12 +213,15 @@ func newProcessRun(t *testing.T, tc processCase) *processRun {
 		provider.reply = func(int, map[string]any) ([]byte, error) { return processResponse(nil), nil }
 	}
 	rt := &runtime{killed: make(chan struct{})}
-	serviceConfig := campaignservice.Config{Prepared: stored, Peer: native, Runtime: rt, Docker: binding, StateRoot: root, Deadline: time.Now().Add(time.Minute), Model: &campaignservice.ModelConfig{Provider: provider, ProfileDigest: cfg.Model.Digest(), Tools: launch.ModelTools, MaximumPromptTokens: 10000}}
+	serviceConfig := campaignservice.Config{Prepared: stored, Peer: native, Runtime: rt, Docker: binding, StateRoot: root, Deadline: time.Now().Add(timeout), Model: &campaignservice.ModelConfig{Policy: launch.ModelPolicy, Provider: provider, ProfileDigest: cfg.Model.Digest(), Tools: launch.ModelTools, MaximumPromptTokens: 10000}}
+	if tc.nativePeer != nil {
+		serviceConfig.Peer = tc.nativePeer
+	}
 	if tc.modelProvider != nil {
 		serviceConfig.Model.Provider = tc.modelProvider
 	}
-	if in.Profile.HTTPS() != nil {
-		serviceConfig.HTTPS, err = httpstarget.New(in.Profile.HTTPS(), nil, 5*time.Second)
+	if in.Profile.HTTP() != nil {
+		serviceConfig.HTTP, err = httptarget.New(in.Profile.HTTP(), nil, 5*time.Second)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -234,7 +237,7 @@ func newProcessRun(t *testing.T, tc processCase) *processRun {
 	if tc.transport == "fifo" {
 		create = transport.NewFIFO
 	}
-	channel, err := create(ipc, transport.Config{Protocol: in.Protocol, CampaignID: m.CampaignID, LaunchID: m.LaunchID, Fence: writer.Fence(), CampaignDeadline: time.Now().Add(time.Minute), SpoolMaxBytes: tc.spoolMaxBytes})
+	channel, err := create(ipc, transport.Config{OperationTimeouts: operationpolicy.FromContext(launch.Inputs.EngineContext), Protocol: in.Protocol, CampaignID: m.CampaignID, LaunchID: m.LaunchID, Fence: writer.Fence(), CampaignDeadline: time.Now().Add(timeout), SpoolMaxBytes: tc.spoolMaxBytes})
 	if err != nil {
 		t.Fatal(err)
 	}

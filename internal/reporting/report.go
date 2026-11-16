@@ -14,10 +14,13 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/feedback"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/nativerecovery"
 )
@@ -32,25 +35,51 @@ type Receipt struct {
 	Complete         bool   `json:"journal_intact"`
 }
 type Attempt struct {
-	RequestID       string             `json:"request_id"`
-	AttemptID       string             `json:"attempt_id"`
-	Index           int64              `json:"attempt_index"`
-	Revision        int64              `json:"run_revision"`
-	State           string             `json:"state"`
-	Dispatched      bool               `json:"dispatched"`
-	Origin          string             `json:"origin,omitempty"`
-	Operation       string             `json:"operation_id,omitempty"`
-	ReceiptID       string             `json:"receipt_id,omitempty"`
-	RequestEvidence string             `json:"request_evidence,omitempty"`
-	ResultEvidence  string             `json:"result_evidence,omitempty"`
-	ScenarioID      string             `json:"scenario_id,omitempty"`
-	ObjectiveIDs    []string           `json:"objective_ids"`
-	TargetContact   string             `json:"target_contact"`
-	Invocation      string             `json:"invocation_state"`
-	Cleanup         string             `json:"cleanup_state"`
-	Feedback        *feedback.Manifest `json:"feedback,omitempty"`
+	TargetFailure   *campaign.TargetFailure `json:"target_failure,omitempty"`
+	RequestID       string                  `json:"request_id"`
+	AttemptID       string                  `json:"attempt_id"`
+	Index           int64                   `json:"attempt_index"`
+	Revision        int64                   `json:"run_revision"`
+	State           string                  `json:"state"`
+	Dispatched      bool                    `json:"dispatched"`
+	Origin          string                  `json:"origin,omitempty"`
+	Operation       string                  `json:"operation_id,omitempty"`
+	ReceiptID       string                  `json:"receipt_id,omitempty"`
+	RequestEvidence string                  `json:"request_evidence,omitempty"`
+	ResultEvidence  string                  `json:"result_evidence,omitempty"`
+	ScenarioID      string                  `json:"scenario_id,omitempty"`
+	ObjectiveIDs    []string                `json:"objective_ids"`
+	TargetContact   string                  `json:"target_contact"`
+	Invocation      string                  `json:"invocation_state"`
+	Cleanup         string                  `json:"cleanup_state"`
+	Feedback        *feedback.Manifest      `json:"feedback,omitempty"`
+}
+type ModelRequestMeasurement struct {
+	Event       int64                       `json:"event"`
+	OperationID string                      `json:"operation_id"`
+	Sizes       contracts.ModelRequestSizes `json:"request_sizes"`
+	Limits      *contracts.ContextLimits    `json:"context_limits,omitempty"`
+}
+type ModelContextUsage struct {
+	Event       int64                   `json:"event"`
+	OperationID string                  `json:"operation_id"`
+	Budget      contracts.ContextBudget `json:"context_budget"`
+}
+type CleanupResolution struct {
+	SessionID   string                           `json:"session_id"`
+	Collection  string                           `json:"collection_state"`
+	History     []campaign.EvidenceOutcome       `json:"collection_history"`
+	Stop        *interceptor.SessionStopEvidence `json:"target_stop_evidence,omitempty"`
+	StopArchive string                           `json:"target_stop_archive,omitempty"`
 }
 type Result struct {
+	RecoveryFailures      []diagnostictext.Failure        `json:"recovery_failures,omitempty"`
+	CleanupActions        campaign.CleanupDiagnostic      `json:"cleanup_actions,omitempty,omitzero"`
+	FailureTrigger        *campaign.FailureTrigger        `json:"failure_trigger,omitempty"`
+	CleanupResolutions    []CleanupResolution             `json:"cleanup_resolutions,omitempty"`
+	ModelRequests         []ModelRequestMeasurement       `json:"model_request_sizes,omitempty"`
+	ModelContexts         []ModelContextUsage             `json:"model_context_usage,omitempty"`
+	DatabaseEvidence      []DatabaseSummary               `json:"database_evidence,omitempty"`
 	RequestedObjectives   []RequestedObjective            `json:"requested_objectives"`
 	RequestedScenarios    []RequestedScenario             `json:"requested_scenarios"`
 	Observations          []ObservationSummary            `json:"observations"`
@@ -196,7 +225,7 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 		if event.Kind == "campaign.launch-inputs-retained" {
 			launchInputsRetained = true
 		}
-		if event.Kind == "https.dispatch-intent" {
+		if event.Kind == "http.dispatch-intent" {
 			var id string
 			if json.Unmarshal(metadata["operation_id"], &id) != nil || routeFacts.operations == nil {
 				return campaign.ErrCorrupt
@@ -214,6 +243,39 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 				keep[key] = value
 			}
 		}
+		if event.Kind == "evidence.collection-result" {
+			var v campaign.EvidenceOutcome
+			if json.Unmarshal(event.Metadata, &v) == nil && v.ValidDiagnostic() {
+				for _, key := range []string{"session_id", "state", "reason", "native_http_status", "native_code", "native_detail_omission", "failure", "cleanup_failure", "archive_digest", "local_max_bytes", "native_max_bytes", "recorded"} {
+					if value, ok := metadata[key]; ok {
+						keep[key] = value
+					}
+				}
+			}
+		}
+		if event.Kind == "interceptor.compatibility" {
+			var expected, actual, at string
+			if json.Unmarshal(metadata["expected"], &expected) == nil && json.Unmarshal(metadata["actual"], &actual) == nil && interceptor.ValidContractVersion(expected) && actual == expected && json.Unmarshal(metadata["checked_at"], &at) == nil {
+				if _, err := time.Parse(time.RFC3339Nano, at); err == nil {
+					for _, key := range []string{"expected", "actual", "checked_at"} {
+						keep[key] = metadata[key]
+					}
+					var wantHash, gotHash string
+					if json.Unmarshal(metadata["expected_sha256"], &wantHash) == nil && json.Unmarshal(metadata["actual_sha256"], &gotHash) == nil && interceptor.ValidContractSHA256(wantHash) && gotHash == wantHash {
+						keep["expected_sha256"], keep["actual_sha256"] = metadata["expected_sha256"], metadata["actual_sha256"]
+					}
+				}
+			}
+		}
+		if event.Kind == "model.exchange" || event.Kind == "workflow.diagnostic" || event.Kind == "launch.terminal" {
+			var trigger campaign.FailureTrigger
+			if json.Unmarshal(metadata["failure_trigger"], &trigger) == nil && trigger.Valid() {
+				keep["failure_trigger"], _ = json.Marshal(trigger)
+				if result.FailureTrigger == nil {
+					result.FailureTrigger = &trigger
+				}
+			}
+		}
 		if event.Kind == "credential.resolution" {
 			audit, fields := projectCredential(event.Sequence, event.RecordedAt, metadata)
 			result.CredentialResolutions = append(result.CredentialResolutions, audit)
@@ -228,6 +290,11 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 			}
 		}
 		if event.Kind == "launch.terminal" {
+			var cleanup campaign.CleanupDiagnostic
+			if json.Unmarshal(metadata["cleanup_actions"], &cleanup) == nil && cleanup.Valid() {
+				keep["cleanup_actions"], _ = json.Marshal(cleanup)
+				result.CleanupActions = cleanup
+			}
 			var h campaign.HarnessExit
 			if json.Unmarshal(metadata["harness_exit"], &h) == nil && h.Valid() {
 				result.HarnessExit = &h
@@ -236,9 +303,14 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 			}
 		}
 		if event.Kind == "workflow.diagnostic" {
+			if selections := campaign.DecodeObservationSelections(metadata["observation_selections"]); len(selections) > 0 {
+				keep["observation_selections"], _ = json.Marshal(selections)
+			}
 			if d := campaign.DecodeWorkflowDiagnostic(metadata["diagnostic"]); d != nil {
 				keep["diagnostic"], _ = json.Marshal(d)
-				result.WorkflowDiagnostics = append(result.WorkflowDiagnostics, *d)
+				if d.Reason != "observation_selection" {
+					result.WorkflowDiagnostics = append(result.WorkflowDiagnostics, *d)
+				}
 				if d.Stage == "arguments" && d.Stopping == "" && len(result.Rejections) < 128 {
 					result.Rejections = append(result.Rejections, SubmissionRejection{Event: event.Sequence, OperationID: d.OperationID, Code: "INVALID_ARGUMENTS", Message: d.Message()})
 				}
@@ -251,6 +323,24 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 			}
 		}
 		if event.Kind == "model.intent" || event.Kind == "model.exchange" || event.Kind == "model.usage" {
+			if sizes := contracts.DecodeModelRequestSizes(metadata["request_sizes"]); sizes != nil {
+				var op string
+				if json.Unmarshal(metadata["operation_id"], &op) == nil && safeContextOperation(op) {
+					keep["request_sizes"], _ = json.Marshal(sizes)
+					limits := contracts.DecodeContextLimits(metadata["context_limits"])
+					if limits != nil {
+						keep["context_limits"], _ = json.Marshal(limits)
+					}
+					result.ModelRequests = append(result.ModelRequests, ModelRequestMeasurement{event.Sequence, op, *sizes, limits})
+				}
+			}
+			if budget := contracts.DecodeContextBudget(metadata["context_budget"]); budget != nil {
+				var op string
+				if json.Unmarshal(metadata["operation_id"], &op) == nil && safeContextOperation(op) {
+					keep["context_budget"], _ = json.Marshal(budget)
+					result.ModelContexts = append(result.ModelContexts, ModelContextUsage{event.Sequence, op, *budget})
+				}
+			}
 			for _, key := range []string{"reserved_tokens", "elapsed_ms"} {
 				var n int64
 				if json.Unmarshal(metadata[key], &n) == nil && n >= 0 && n <= contracts.MaxSafeInteger {
@@ -451,20 +541,31 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 						seen = seen || rejection.OperationID == response.OperationID
 					}
 					if !seen {
-						result.Rejections = append(result.Rejections, SubmissionRejection{Event: event.Sequence, OperationID: response.OperationID, Code: response.Error.Code, Message: excerpt([]byte(response.Error.Message), 512), Evidence: item.Path})
+						message := excerpt([]byte(response.Error.Message), 512)
+						if d := campaign.WorkflowFromWire(response.OperationID, response.Error.Diagnostic); d != nil {
+							message = d.Message()
+						}
+						result.Rejections = append(result.Rejections, SubmissionRejection{Event: event.Sequence, OperationID: response.OperationID, Code: response.Error.Code, Message: message, Evidence: item.Path})
 					}
 				}
 			}
 			if event.Kind == "service.terminal-result" && desc.Role == "response" {
 				var r struct {
-					Diagnostic json.RawMessage `json:"conclusion_diagnostic"`
-					Workflow   json.RawMessage `json:"workflow_diagnostic"`
-					Closure    string          `json:"closure"`
-					Cleanup    string          `json:"cleanup_state"`
-					Stop       string          `json:"target_stop"`
+					Failures   *[]diagnostictext.Failure `json:"failures"`
+					Diagnostic json.RawMessage           `json:"conclusion_diagnostic"`
+					Workflow   json.RawMessage           `json:"workflow_diagnostic"`
+					Closure    string                    `json:"closure"`
+					Cleanup    string                    `json:"cleanup_state"`
+					Stop       string                    `json:"target_stop"`
 				}
 				if json.Unmarshal(raw, &r) == nil {
 					result.TargetClosure, result.InjectionCleanup, result.TargetStop = r.Closure, r.Cleanup, r.Stop
+					actions := campaign.CleanupDiagnostic{Closure: r.Closure, Injections: r.Cleanup, TargetStop: r.Stop, Failures: r.Failures}
+					if actions.Valid() {
+						result.CleanupActions = actions
+						keep["cleanup_actions"], _ = json.Marshal(actions)
+						projected.Metadata, _ = json.Marshal(keep)
+					}
 					if len(result.WorkflowDiagnostics) == 0 {
 						if d := campaign.DecodeWorkflowDiagnostic(r.Workflow); d != nil {
 							result.WorkflowDiagnostics = append(result.WorkflowDiagnostics, *d)
@@ -479,12 +580,33 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 			}
 			if event.Kind == "launch.terminal" && desc.Role == "launch-result" {
 				var r struct {
-					HarnessExit *campaign.HarnessExit `json:"harness_exit"`
-					Cleanup     string                `json:"container_cleanup"`
-					Workflow    json.RawMessage       `json:"workflow_diagnostic"`
+					FailureTrigger *campaign.FailureTrigger `json:"failure_trigger"`
+					HarnessExit    *campaign.HarnessExit    `json:"harness_exit"`
+					Cleanup        string                   `json:"container_cleanup"`
+					Workflow       json.RawMessage          `json:"workflow_diagnostic"`
+				}
+				var actions struct {
+					Container string `json:"container_cleanup"`
+					Transport string `json:"transport_cleanup"`
+					Inputs    string `json:"input_cleanup"`
+					Terminal  struct {
+						Failures   *[]diagnostictext.Failure `json:"failures"`
+						Closure    string
+						Injections string `json:"cleanup_state"`
+						TargetStop string `json:"target_stop"`
+					} `json:"terminal"`
+				}
+				if json.Unmarshal(raw, &actions) == nil {
+					d := campaign.CleanupDiagnostic{Failures: actions.Terminal.Failures, Container: actions.Container, Transport: actions.Transport, Inputs: actions.Inputs, Closure: actions.Terminal.Closure, Injections: actions.Terminal.Injections, TargetStop: actions.Terminal.TargetStop}
+					if d.Valid() {
+						result.CleanupActions = d
+					}
 				}
 				if json.Unmarshal(raw, &r) == nil {
 					result.Execution = "closed"
+					if r.FailureTrigger != nil && r.FailureTrigger.Valid() {
+						result.FailureTrigger = r.FailureTrigger
+					}
 					result.ContainerCleanup = r.Cleanup
 					if r.HarnessExit != nil && r.HarnessExit.Valid() {
 						result.HarnessExit = r.HarnessExit
@@ -542,7 +664,7 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 	result.JournalIntact = scanErr == nil && inspect.JournalIntact
 	result.TargetAdapter = inspect.Manifest.Target.Adapter
 	result.NativeProfile = inspect.Manifest.Target.NativeFeedbackProfile
-	if result.TargetAdapter == "https/v1" {
+	if result.TargetAdapter == "http/v1" {
 		result.Assurance = "declared-observer"
 		result.NativeProfile = ""
 		result.TargetClosure = "not-applicable"
@@ -607,11 +729,21 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 	}
 	archives := []campaign.NativeEvidence{}
 	for i := range sessions {
+		resolution := CleanupResolution{SessionID: sessions[i].Identity.SessionID, Collection: "unconfirmed"}
 		complete := false
 		for j := range sessions[i].Archives {
 			archive := &sessions[i].Archives[j]
 			if archive.Verified {
 				archives = append(archives, archive.Record)
+				if resolution.Collection != "complete" {
+					resolution.Collection = archive.Record.Provenance.State
+				}
+				if stop := archive.Record.Provenance.SessionStopped; stop != nil && (resolution.Stop == nil || stop.ObservedAt.After(resolution.Stop.ObservedAt)) {
+					resolution.Stop, resolution.StopArchive = stop, "evidence/"+archive.Record.Provenance.Transfer.SHA256[7:]+".tar"
+				}
+				if d := archive.Record.Provenance.Database; d != nil {
+					result.DatabaseEvidence = append(result.DatabaseEvidence, DatabaseSummary{sessions[i].Identity.SessionID, "evidence/" + archive.Record.Provenance.Transfer.SHA256[7:] + ".tar", *d})
+				}
 				if archive.Record.Provenance.State == "complete" {
 					complete = true
 				}
@@ -627,6 +759,15 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 				v.ArchivePath = "evidence/" + v.ArchiveDigest[7:] + ".tar"
 			}
 		}
+		resolution.History = sessions[i].Outcomes
+		result.CleanupResolutions = append(result.CleanupResolutions, resolution)
+	}
+	for i := range result.Attempts {
+		for _, d := range result.WorkflowDiagnostics {
+			if d.TargetFailure != nil && d.OperationID == result.Attempts[i].RequestID {
+				result.Attempts[i].TargetFailure = d.TargetFailure
+			}
+		}
 	}
 	recovery, e := a.RecoveryResult()
 	if e != nil {
@@ -638,6 +779,17 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 			result.Gaps = append(result.Gaps, "cleanup_audit_unverified")
 		} else {
 			result.TargetClosure, result.InjectionCleanup, result.TargetStop = v.Closure, v.Cleanup, v.TargetStop
+			if len(v.Failures) > 16 {
+				result.Gaps = append(result.Gaps, "cleanup_failures_unverified")
+			} else {
+				for _, failure := range v.Failures {
+					if failure.Valid() {
+						result.RecoveryFailures = append(result.RecoveryFailures, failure)
+					} else {
+						result.Gaps = append(result.Gaps, "cleanup_failures_unverified")
+					}
+				}
+			}
 		}
 	}
 	termination, e := campaign.ReadTerminationResult(root, id)
@@ -732,14 +884,34 @@ func markdown(r Result, digest string) []byte {
 	var b strings.Builder
 	fmt.Fprintf(&b, "# Campaign report\n\nCampaign: `%s`\n\nResult: `%s`\n\n", r.CampaignID, digest)
 	writeEvidenceSummary(&b, r)
-	fmt.Fprintf(&b, "| Recorded fact | Value |\n| --- | --- |\n| Journal intact | %t |\n| Verified events | %d |\n| Execution | %s |\n| Container cleanup | %s |\n| Target closure | %s |\n| Injection cleanup | %s |\n| Target stop | %s |\n| Attempts | %d |\n| Harness claim records | %d |\n", r.JournalIntact, r.VerifiedEvents, r.Execution, r.ContainerCleanup, r.TargetClosure, r.InjectionCleanup, r.TargetStop, len(r.Attempts), r.HarnessClaims)
+	fmt.Fprintf(&b, "| Recorded fact | Value |\n| --- | --- |\n| Journal intact | %t |\n| Verified events | %d |\n| Execution | %s |\n| Container cleanup | %s |\n| Target closure (termination/recovery record) | %s |\n| Injection cleanup (termination/recovery record) | %s |\n| Target stop (termination/recovery record) | %s |\n| Attempts | %d |\n| Harness claim records | %d |\n", r.JournalIntact, r.VerifiedEvents, r.Execution, r.ContainerCleanup, r.TargetClosure, r.InjectionCleanup, r.TargetStop, len(r.Attempts), r.HarnessClaims)
 	b.WriteString("\nAttempt completion is not proof of exploitation. Delivery, target responses and scoped oracle observations remain source evidence. Harness conclusions are claims; missing oracle evidence is unknown. No model interpretation is performed.\n")
+	if len(r.ModelRequests) > 0 {
+		b.WriteString("\n## Model request size\n\nNative JSON bytes before transport adaptation; these are not token counts. Other includes framing and remaining settings.\n\n| Event | Operation | Instructions | Tools | Conversation | Other | Total |\n| --- | --- | --- | --- | --- | --- | --- |\n")
+		for _, m := range r.ModelRequests {
+			s := m.Sizes
+			fmt.Fprintf(&b, "| %d | `%s` | %d | %d | %d | %d | %d |\n", m.Event, m.OperationID, s.Instructions, s.Tools, s.Conversation, s.Other, s.Total)
+		}
+	}
+	for _, m := range r.ModelRequests {
+		if m.Limits != nil {
+			fmt.Fprintf(&b, "\nLocal allowances (event %d): prompt %d, completion %d, warning threshold %d tokens.\n", m.Event, m.Limits.MaximumPromptTokens, m.Limits.MaximumCompletionTokens, m.Limits.WarningThresholdTokens)
+			break
+		}
+	}
+	if len(r.ModelContexts) > 0 {
+		b.WriteString("\n## Model context usage\n\nCounts describe completed calls, not guaranteed headroom for the next request. Reservations are not consumption.\n\n| Event | Operation | Input | Output | Total | Remaining prompt | Warning | Reserved | Remaining campaign tokens / turns |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n")
+		for _, c := range r.ModelContexts {
+			u := c.Budget
+			fmt.Fprintf(&b, "| %d | `%s` | %d | %d | %d | %d | %t | %d | %d / %d |\n", c.Event, c.OperationID, u.InputTokens, u.OutputTokens, u.TotalTokens, u.RemainingPromptTokens, u.NearPromptLimit, u.ReservedTokens, u.RemainingModelTokens, u.RemainingModelTurns)
+		}
+	}
 	if len(r.ModelFailures) > 0 {
 		b.WriteString("\n## Model request failure\n\n")
 		for _, d := range r.ModelFailures {
 			fmt.Fprintf(&b, "Operation `%s`; category `%s`:\n\n", d.OperationID, d.Category)
 			// Indented code keeps provider text from creating Markdown links/HTML.
-			for _, line := range strings.Split(d.Summary()+"\n"+d.ProviderDetailsText(), "\n") {
+			for _, line := range strings.Split(d.Summary()+"\n"+d.ValidationDetailsText()+"\n"+d.UsageDetailsText()+"\n"+d.ProviderDetailsText(), "\n") {
 				fmt.Fprintf(&b, "    %s\n", line)
 			}
 			if d.RequestID != "" {
@@ -747,6 +919,7 @@ func markdown(r Result, digest string) []byte {
 			}
 		}
 		b.WriteString("\nReserved tokens are an allowance held against the budget, not confirmed consumption. See cumulative_usage in result-manifest.json.\n")
+		b.WriteString("\nFor a local usage rejection, usage_allowance retains validated provider counts. The reservation remains charged; that rejected call is not settled into accepted usage totals.\n")
 	}
 	if r.HarnessExit != nil {
 		fmt.Fprintf(&b, "\n## Harness exit\n\n    %s\n\nWorker cause: %s. Details: %s. Cleanup complete: %t.\n", r.HarnessExit.Summary(), r.HarnessExit.WorkerCause, r.HarnessExit.Details, r.HarnessExit.CleanupComplete)
@@ -754,7 +927,7 @@ func markdown(r Result, digest string) []byte {
 	if len(r.WorkflowDiagnostics) > 0 {
 		b.WriteString("\n## Workflow diagnostics\n\n")
 		for _, d := range r.WorkflowDiagnostics {
-			fmt.Fprintf(&b, "- %s (%s; operation %s)\n", d.Message(), d.Source, d.OperationID)
+			dataBlock(&b, fmt.Sprintf("%s (%s; operation %s)", d.Message(), d.Source, d.OperationID))
 		}
 	}
 	if len(r.ConclusionRejections) > 0 {
@@ -770,4 +943,16 @@ func markdown(r Result, digest string) []byte {
 		}
 	}
 	return []byte(b.String())
+}
+
+func safeContextOperation(s string) bool {
+	if len(s) < 1 || len(s) > 128 {
+		return false
+	}
+	for _, r := range s {
+		if !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_' || r == '.' || r == ':') {
+			return false
+		}
+	}
+	return true
 }

@@ -296,3 +296,58 @@ func TestReportExplainsExplorationAndPermittedOutput(t *testing.T) {
 		t.Fatal("wrong artifact")
 	}
 }
+
+func TestInterceptorCompatibilityHashesSurviveExport(t *testing.T) {
+	root, w, _, _, _ := lateFixture(t)
+	hash := strings.Repeat("a", 64)
+	for _, mode := range []string{"current", "legacy", "invalid"} {
+		metadata := map[string]any{"expected": "0.2.0", "actual": "0.2.0", "checked_at": "2026-11-06T00:00:00Z"}
+		if mode != "legacy" {
+			metadata["expected_sha256"], metadata["actual_sha256"] = hash, hash
+		}
+		if mode == "invalid" {
+			metadata["actual_sha256"] = "SENSITIVE-invalid-hash"
+		}
+		if _, err := w.Append(campaign.Entry{RunRevision: 1, Kind: "interceptor.compatibility", Metadata: encode(metadata)}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	w.Close()
+	destination := filepath.Join(t.TempDir(), "export")
+	if _, err := reporting.Generate(context.Background(), root, "campaign-1", destination); err != nil {
+		t.Fatal(err)
+	}
+	parts, err := filepath.Glob(filepath.Join(destination, "events", "*.jsonl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	count, hashes := 0, 0
+	for _, part := range parts {
+		raw := read(t, part)
+		if strings.Contains(string(raw), "SENSITIVE") {
+			t.Fatal("unvalidated hash exported")
+		}
+		for _, line := range strings.Split(strings.TrimSpace(string(raw)), "\n") {
+			var event struct {
+				Kind     string
+				Metadata map[string]any
+			}
+			if json.Unmarshal([]byte(line), &event) != nil {
+				t.Fatal("event")
+			}
+			if event.Kind != "interceptor.compatibility" {
+				continue
+			}
+			count++
+			if v, ok := event.Metadata["expected_sha256"]; ok {
+				hashes++
+				if v != hash || event.Metadata["actual_sha256"] != hash {
+					t.Fatal(event)
+				}
+			}
+		}
+	}
+	if count != 3 || hashes != 1 {
+		t.Fatal("compatibility audit projection", count, hashes)
+	}
+}

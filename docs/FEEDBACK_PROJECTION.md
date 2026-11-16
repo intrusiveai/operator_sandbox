@@ -42,3 +42,19 @@ a Go overlay against Interceptor's `internal/adaptive` package at commit
 changes; the capture's adaptive contract/digest sources were unchanged. The
 fixture includes a native event sequence above the shared safe-integer limit.
 The overlay creates no Interceptor repository changes.
+
+## PostgreSQL outcomes
+
+Database oracle feedback is available between attempts when both the native
+session and effective Harness profile permit `oracle-assisted` feedback. Select
+`oracle_outcome`, or omit selection to use all permitted kinds. Operator preserves
+`database_query_match` as a normalized detector kind and returns only a positive
+observed fact plus its opaque detector handle. It does not expose sealed SQL or
+private result rows.
+
+Read category availability as well as entries: `oracle_evaluation_unavailable`
+is not a negative verdict, and partial categories may contain valid results from
+other oracles. An empty complete category does not prove attack failure. Reads
+refer to a completed turn's recorded boundary and do not change after subsequent
+writes or restore. Session-wide native report results have a different boundary;
+neither observed association nor a positive oracle proves injection causality.

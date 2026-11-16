@@ -86,7 +86,7 @@ func Build(ctx context.Context, source, output, version string) (contractstore.R
 			if e = add("source/"+rel, raw); e != nil {
 				return e
 			}
-			if path.Dir(rel) == "schemas" && (strings.HasSuffix(rel, ".schema.json") || entry.Name() == "catalog.json" || entry.Name() == "operations.json") {
+			if path.Dir(rel) == "schemas" && (strings.HasSuffix(rel, ".schema.json") || entry.Name() == "catalog.json" || entry.Name() == "operations.json" || entry.Name() == contracts.InterfaceDocument) {
 				// The publisher binary and checkout must agree on schema bytes.
 				// Runtime qualification of source implementations remains separate.
 				embedded, e := schemas.Files.ReadFile(entry.Name())
@@ -229,7 +229,7 @@ func Build(ctx context.Context, source, output, version string) (contractstore.R
 func selected(name string) bool {
 	if strings.HasPrefix(name, "schemas/") {
 		if path.Dir(name) == "schemas" {
-			return strings.HasSuffix(name, ".schema.json") || strings.HasSuffix(name, ".md") || name == "schemas/catalog.json" || name == "schemas/operations.json" || name == "schemas/embed.go"
+			return strings.HasSuffix(name, ".schema.json") || strings.HasSuffix(name, ".md") || name == "schemas/catalog.json" || name == "schemas/operations.json" || name == "schemas/asyncapi.json" || name == "schemas/embed.go"
 		}
 		return strings.HasPrefix(name, "schemas/fixtures/") && (strings.HasSuffix(name, ".json") || strings.HasSuffix(name, ".md") || strings.HasSuffix(name, ".txt"))
 	}

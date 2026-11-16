@@ -4,15 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/feedback"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/nativeexec"
+	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 )
 
 // BrokerConfig is installed host wiring. Prepare resolves verified artifacts,
@@ -20,17 +24,22 @@ import (
 // Cleanup must check current native capability/policy before supplying its target.
 // These callbacks never come from a guest or a submitted scenario bundle.
 type BrokerConfig struct {
-	Catalog        *contracts.Catalog
-	Protocol       *contracts.Protocol
-	Writer         *campaign.Writer
-	Attempts       *campaign.Attempts
-	Deadline       time.Time
-	Admitted       func() bool
-	ResolveAttempt func(context.Context, string, []byte) ([]byte, error)
-	Rejection      func(string, error) (json.RawMessage, string, string, error)
-	Prepare        func(context.Context, []byte, time.Time) (*Plan, *nativeexec.Guard, error)
-	Cleanup        func(context.Context, time.Time) (CleanupTarget, error)
-	ReadKinds      func() []string
+	IntegrationDiagnostic func(error, string) error
+	OperationTimeouts     map[string]int64
+	TargetDiagnostic      func(string, string, *campaign.TargetFailure) error
+	TimeoutDiagnostic     func(string, string, []byte) error
+	Catalog               *contracts.Catalog
+	Protocol              *contracts.Protocol
+	Writer                *campaign.Writer
+	Attempts              *campaign.Attempts
+	Deadline              time.Time
+	AttemptAllowanceMS    int64
+	Admitted              func() bool
+	ResolveAttempt        func(context.Context, string, []byte) ([]byte, error)
+	Rejection             func(string, error) (json.RawMessage, string, string, error)
+	Prepare               func(context.Context, []byte, time.Time) (*Plan, *nativeexec.Guard, error)
+	Cleanup               func(context.Context, time.Time) (CleanupTarget, error)
+	ReadKinds             func() []string
 }
 type CleanupTarget struct {
 	Guard           *nativeexec.Guard
@@ -43,9 +52,10 @@ type Broker struct {
 	manifest campaign.RunManifest
 }
 
-var ErrOperation = errors.New("operation belongs to another host broker route")
+var ErrOperation = diagnostictext.New("operation belongs to another host broker route")
 
 type wireRequest struct {
+	CallID    string          `json:"call_id"`
 	Campaign  string          `json:"campaign_id"`
 	Launch    string          `json:"launch_id"`
 	Revision  int64           `json:"run_revision"`
@@ -70,6 +80,19 @@ type reply struct {
 func denied(code string) reply {
 	return reply{Error: &Fault{Code: code, Message: "The operation was not admitted.", Effect: "none", Disposition: "correct-and-resubmit"}}
 }
+
+// rejection carries the facts from the failed check; it never infers a cause
+// from a generic error code.
+func rejection(code, path, correction, disposition string, facts *contracts.FailureFacts) reply {
+	d, _ := json.Marshal(map[string]any{"source": "operator", "stage": "admission", "reason": strings.ToLower(code), "field_path": path, "message": contracts.ShortCorrection(correction), "correction": correction, "facts": facts, "execution_occurred": "no", "resubmission_safe": disposition == "correct-and-resubmit"})
+	if facts == nil {
+		var obj map[string]any
+		_ = json.Unmarshal(d, &obj)
+		delete(obj, "facts")
+		d, _ = json.Marshal(obj)
+	}
+	return reply{Error: &Fault{Code: code, InstancePath: path, Message: contracts.ShortCorrection(correction), Diagnostic: d, Effect: "none", Disposition: disposition}}
+}
 func terminal(code, effect string) reply {
 	return reply{Error: &Fault{Code: code, Message: "Campaign execution is closed.", Effect: effect, Disposition: "terminate"}}
 }
@@ -77,6 +100,11 @@ func NewBroker(c BrokerConfig) (*Broker, error) {
 	if c.Catalog == nil || c.Protocol == nil || c.Writer == nil || c.Attempts == nil || !c.Attempts.BelongsTo(c.Writer) || c.Admitted == nil || c.Prepare == nil || c.Cleanup == nil || c.ReadKinds == nil || !c.Deadline.After(time.Now()) {
 		return nil, ErrAttempt
 	}
+	timeouts, err := operationpolicy.Resolve(c.OperationTimeouts)
+	if err != nil {
+		return nil, err
+	}
+	c.OperationTimeouts = timeouts
 	return &Broker{config: c, manifest: c.Writer.Manifest()}, nil
 }
 func (b *Broker) stop(err error) error { b.config.Writer.Fence().Stop(err); return err }
@@ -132,12 +160,7 @@ func (b *Broker) Handle(ctx context.Context, raw []byte, responseSequence int64)
 		return nil, err
 	}
 	// Clamp before converting milliseconds to a duration; wire integers can be large.
-	ceiling := int64(30000)
-	for _, op := range b.config.Protocol.Operations() {
-		if op.Name == q.Operation {
-			ceiling = op.TimeoutMS
-		}
-	}
+	ceiling := b.config.OperationTimeouts[q.Operation]
 	deadline := time.Now().Add(time.Duration(min(q.Timeout, ceiling)) * time.Millisecond)
 	if b.config.Deadline.Before(deadline) {
 		deadline = b.config.Deadline
@@ -161,7 +184,7 @@ func (b *Broker) Handle(ctx context.Context, raw []byte, responseSequence int64)
 	if err != nil {
 		return nil, err
 	}
-	if ctx.Err() != nil {
+	if ctx.Err() != nil && !(q.Operation == "engine.attempt_execute" && len(r.Result) > 0) {
 		return nil, b.stop(ctx.Err())
 	}
 	return b.envelope(raw, responseSequence, r)
@@ -179,6 +202,7 @@ func (b *Broker) reject(q wireRequest, code string) (reply, error) {
 	return r, b.auditDenial(q, r)
 }
 func (b *Broker) attempt(ctx context.Context, q wireRequest, deadline time.Time) (reply, error) {
+	started := time.Now()
 	if _, _, lookupErr := b.config.Attempts.Tools().Lookup(q.ID); lookupErr == nil {
 		return b.saveRejectedAttempt(q, reply{})
 	}
@@ -274,8 +298,21 @@ func (b *Broker) attempt(ctx context.Context, q wireRequest, deadline time.Time)
 		}
 		return reject("INVALID_ARGUMENTS")
 	}
-	if plan == nil || (guard == nil && plan.https == nil) || plan.RequestID() != q.ID || plan.deadline.After(deadline) || !plan.deadline.After(time.Now()) || plan.binding.SessionID != saved.Target.SessionID || plan.binding.RunRevision != uint64(q.Revision) {
+	if plan == nil || (guard == nil && plan.httpTarget == nil) || plan.RequestID() != q.ID || plan.deadline.After(deadline) || !plan.deadline.After(time.Now()) || plan.binding.SessionID != saved.Target.SessionID || plan.binding.RunRevision != uint64(q.Revision) {
 		return reply{}, b.stop(ErrAttempt)
+	}
+	plan.started = started
+	plan.allowanceMS = b.config.AttemptAllowanceMS
+	if plan.allowanceMS == 0 {
+		plan.allowanceMS = q.Timeout
+	}
+	plan.deadlineSource = "attempt"
+	requestMS := min(q.Timeout, b.config.OperationTimeouts[q.Operation])
+	if requestMS <= plan.allowanceMS {
+		plan.deadlineSource = "request"
+	}
+	if !b.config.Deadline.After(plan.deadline) {
+		plan.deadlineSource = "campaign"
 	}
 	if fresh, err := a.Admit(q.ID, plan.RecordJSON()); err != nil {
 		if errors.Is(err, contracts.ErrLimit) {
@@ -295,12 +332,12 @@ func (b *Broker) attempt(ctx context.Context, q wireRequest, deadline time.Time)
 	}
 	var result Result
 	var runErr error
-	if plan.https != nil {
-		meta, _ := json.Marshal(map[string]any{"request_id": q.ID, "attempt_id": plan.request.AttemptID, "operation_id": plan.request.Invocation.OperationID, "mapping_digest": plan.https.mapping.Digest()})
-		if _, err = b.config.Writer.Append(campaign.Entry{RunRevision: q.Revision, Kind: "https.dispatch-intent", Metadata: meta}); err != nil {
+	if plan.httpTarget != nil {
+		meta, _ := json.Marshal(map[string]any{"request_id": q.ID, "attempt_id": plan.request.AttemptID, "operation_id": plan.request.Invocation.OperationID, "mapping_digest": plan.httpTarget.mapping.Digest()})
+		if _, err = b.config.Writer.Append(campaign.Entry{RunRevision: q.Revision, Kind: "http.dispatch-intent", Metadata: meta}); err != nil {
 			return reply{}, b.stop(err)
 		}
-		result, runErr = plan.runHTTPS(ctx, a)
+		result, runErr = plan.runHTTP(ctx, a)
 	} else {
 		execution, e := plan.NewExecution(a, guard)
 		if e != nil {
@@ -308,8 +345,23 @@ func (b *Broker) attempt(ctx context.Context, q wireRequest, deadline time.Time)
 		}
 		result, runErr = execution.Run(ctx)
 	}
+	if result.Integration != nil && b.config.IntegrationDiagnostic != nil {
+		if err := b.config.IntegrationDiagnostic(*result.Integration, q.ID); err != nil {
+			return reply{}, errors.Join(runErr, err)
+		}
+	}
+	if result.Failure != nil && b.config.TargetDiagnostic != nil {
+		if err := b.config.TargetDiagnostic(q.ID, q.CallID, result.Failure); err != nil {
+			return reply{}, errors.Join(runErr, err)
+		}
+	}
 	if len(result.GuestJSON) == 0 {
 		return reply{}, b.stop(runErr)
+	}
+	if b.config.TimeoutDiagnostic != nil {
+		if err := b.config.TimeoutDiagnostic(q.ID, q.CallID, result.GuestJSON); err != nil {
+			return reply{}, errors.Join(runErr, err)
+		}
 	}
 	var outcome struct {
 		Status string `json:"status"`
@@ -427,10 +479,10 @@ func (b *Broker) readRecord(q wireRequest) (*feedback.Retained, campaign.Publica
 		if b.config.Writer.Fence().Err() != nil {
 			return nil, index, terminal("OBSERVATION_INTEGRITY_FAILED", "none")
 		}
-		return nil, index, denied("OBSERVATION_NOT_FOUND")
+		return nil, index, rejection("OBSERVATION_NOT_FOUND", "/entry_id", "The requested observation is not retained under this execution receipt. Select an observation returned by a completed attempt; do not replay the target to repair a reference.", "correct-and-resubmit", nil)
 	}
 	if len(index.Feedback) == 0 {
-		return nil, index, denied("OBSERVATION_NOT_FOUND")
+		return nil, index, rejection("OBSERVATION_NOT_FOUND", "/entry_id", "The requested observation is not retained under this execution receipt. Select an observation returned by a completed attempt; do not replay the target to repair a reference.", "correct-and-resubmit", nil)
 	}
 	record, err := feedback.OpenRecord(b.config.Catalog, index.Feedback)
 	if err != nil {
@@ -440,22 +492,33 @@ func (b *Broker) readRecord(q wireRequest) (*feedback.Retained, campaign.Publica
 	for _, entry := range record.Entries() {
 		if entry.ID == read.Entry {
 			if !slices.Contains(b.config.ReadKinds(), entry.Kind) {
-				return nil, index, denied("OBSERVATION_NOT_PERMITTED")
+				return nil, index, rejection("OBSERVATION_NOT_PERMITTED", "/entry_id", "This observation category is forbidden by the campaign feedback policy. Use permitted observations or report the evidence gap; repeating the request cannot grant access.", "gap-and-continue", nil)
 			}
 			if entry.Artifact != nil && read.Offset > entry.Artifact.SizeBytes {
-				return nil, index, denied("OBSERVATION_RANGE_INVALID")
+				return nil, index, rejection("OBSERVATION_RANGE_INVALID", "/offset", fmt.Sprintf("Read with offset between 0 and %d bytes inclusive; use the returned continuation for subsequent reads.", entry.Artifact.SizeBytes), "correct-and-resubmit", &contracts.FailureFacts{"maximum_offset": entry.Artifact.SizeBytes, "requested_offset": read.Offset})
 			}
 			return record, index, reply{}
 		}
 	}
-	return nil, index, denied("OBSERVATION_NOT_FOUND")
+	return nil, index, rejection("OBSERVATION_NOT_FOUND", "/entry_id", "The requested observation is not retained under this execution receipt. Select an observation returned by a completed attempt; do not replay the target to repair a reference.", "correct-and-resubmit", nil)
 }
 func (b *Broker) read(q wireRequest) (reply, int64, error) {
 	var read readQuery
 	_ = json.Unmarshal(q.Body, &read)
 	if err := b.config.Attempts.Tools().ReserveRead(q.ID, int64(read.Maximum)); err != nil {
 		if errors.Is(err, campaign.ErrFeedbackBudget) {
-			return denied("FEEDBACK_BUDGET_EXCEEDED"), 0, nil
+			var issue *contracts.ArgumentError
+			if !errors.As(err, &issue) {
+				return reply{}, 0, err
+			}
+			disposition := "gap-and-continue"
+			if issue.Facts != nil {
+				f := *issue.Facts
+				if f["remaining_reads"].(int64) > 0 && f["remaining_bytes"].(int64) > 0 {
+					disposition = "correct-and-resubmit"
+				}
+			}
+			return rejection("FEEDBACK_BUDGET_EXCEEDED", issue.FieldPath, issue.Correction, disposition, issue.Facts), 0, nil
 		}
 		return reply{}, 0, err
 	}

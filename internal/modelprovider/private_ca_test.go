@@ -31,7 +31,7 @@ func TestPrivateCAValidatesNativeModelTLSWithoutWeakeningVerification(t *testing
 	if err != nil || selected.Digest() == base.Digest() {
 		t.Fatal("private CA must be validated and bound to private profile identity", err)
 	}
-	public, err := selected.PublicModel([]byte("[]"))
+	public, err := selected.PublicModel()
 	if err != nil || bytes.Contains(public, []byte("ca_certificates_pem")) || bytes.Contains(public, []byte("BEGIN CERTIFICATE")) {
 		t.Fatal("private trust configuration leaked into guest inputs", err)
 	}

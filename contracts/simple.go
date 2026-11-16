@@ -3,19 +3,32 @@ package contracts
 import (
 	"encoding/base64"
 	"encoding/json"
+	"strconv"
 )
 
-const DirectInputLimit = 32768
+// DirectInputLimit bounds eager decoding/canonicalization inside a 4 MiB frame.
+// The operating allowance is supplied separately in EngineContext.size_limits.
+const DirectInputLimit = 1 << 20
 const DirectInputDepth = 16
 
 // ArgumentError describes a deterministic rule without including submitted prose.
 // Identifiers and dynamic JSON paths must still be sanitized by the output boundary.
 type ArgumentError struct {
+	Facts                         *FailureFacts
 	Reason, FieldPath, Correction string
 	Cause                         error
+	UnsupportedFields             *UnsupportedFields
+	Constraint                    *SchemaConstraint
 }
 
 func (e *ArgumentError) Error() string { return e.Reason + ": " + e.Correction }
+func (e *ArgumentError) DiagnosticMessage() string {
+	path, ok := SafeArgumentPath(e.FieldPath)
+	if !ok {
+		return e.Error() + " [field path omitted: unsafe_or_oversized]"
+	}
+	return "Contract arguments at " + strconv.Quote(path) + ": " + e.Error()
+}
 func (e *ArgumentError) Unwrap() error {
 	if e.Cause != nil {
 		return e.Cause
@@ -70,7 +83,7 @@ func (p *Protocol) ResolveDirectInput(value map[string]any) (ExecutionInput, err
 		result.MediaType = media
 	}
 	if len(result.Bytes) > DirectInputLimit {
-		return result, argumentIssue("direct_input_too_large", "", "Publish this input as an artifact and pass its returned artifact_receipt; direct input is limited to 32768 bytes.")
+		return result, argumentIssue("direct_input_too_large", "", "Publish this input as an artifact and pass its returned artifact_receipt; the decoded input exceeds the 1 MiB wire safety ceiling.")
 	}
 	return result, nil
 }

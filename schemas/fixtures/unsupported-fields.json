@@ -1,0 +1,208 @@
+[
+  {
+    "name": "multiple names and no values",
+    "schema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Content to retain."
+        }
+      },
+      "required": [
+        "value"
+      ]
+    },
+    "bad": {
+      "value": "ok",
+      "reference": "SYNTHETIC_SECRET",
+      "references": "SYNTHETIC_SECRET"
+    },
+    "good": {
+      "value": "ok"
+    },
+    "path": "",
+    "names": [
+      "reference",
+      "references"
+    ],
+    "contains": [
+      "Content to retain.",
+      "Required."
+    ]
+  },
+  {
+    "name": "nested object",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "child": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "type": "string",
+              "description": "Content to retain."
+            }
+          },
+          "required": [
+            "value"
+          ]
+        }
+      }
+    },
+    "bad": {
+      "child": {
+        "value": "ok",
+        "references": "SYNTHETIC_SECRET"
+      }
+    },
+    "good": {
+      "child": {
+        "value": "ok"
+      }
+    },
+    "path": "/child",
+    "names": [
+      "references"
+    ],
+    "contains": [
+      "Content to retain."
+    ]
+  },
+  {
+    "name": "selected alternative",
+    "schema": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "text",
+              "description": "Selected operation."
+            },
+            "text": {
+              "type": "string",
+              "description": "Content for text."
+            }
+          },
+          "required": [
+            "kind",
+            "text"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "image",
+              "description": "Selected operation."
+            },
+            "image": {
+              "type": "string",
+              "description": "Content for image."
+            }
+          },
+          "required": [
+            "kind",
+            "image"
+          ]
+        }
+      ]
+    },
+    "bad": {
+      "kind": "text",
+      "text": "ok",
+      "image": "SYNTHETIC_SECRET"
+    },
+    "good": {
+      "kind": "text",
+      "text": "ok"
+    },
+    "path": "",
+    "names": [
+      "image"
+    ],
+    "contains": [
+      "Content for text."
+    ]
+  },
+  {
+    "name": "permitted patterns",
+    "schema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Content to retain."
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "patternProperties": {
+        "^x-": {
+          "type": "integer",
+          "description": "An extension counter."
+        }
+      }
+    },
+    "bad": {
+      "value": "ok",
+      "x-counter": 1,
+      "unknown": "SYNTHETIC_SECRET"
+    },
+    "good": {
+      "value": "ok",
+      "x-counter": 1
+    },
+    "path": "",
+    "names": [
+      "unknown"
+    ],
+    "contains": [
+      "Names matching pattern",
+      "An extension counter."
+    ]
+  },
+  {
+    "name": "bounded names",
+    "schema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Content to retain."
+        }
+      },
+      "required": [
+        "value"
+      ]
+    },
+    "bad": {
+      "value": "ok",
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz": "SYNTHETIC_SECRET",
+      "Bearer SYNTHETIC_SECRET": 1,
+      "line\nbreak": 1,
+      "quoted\"name": 2
+    },
+    "good": {
+      "value": "ok"
+    },
+    "path": "",
+    "names": [
+      "quoted\"name"
+    ],
+    "contains": [
+      "Omitted 3 field names",
+      "name_size_limit",
+      "sensitive_name",
+      "unsafe_name"
+    ]
+  }
+]

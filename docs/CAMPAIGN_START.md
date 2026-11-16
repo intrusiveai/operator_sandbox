@@ -66,11 +66,37 @@ failure MUST retain these campaign-scoped records for the next startup's
 Failure or cleanup MUST NOT clear the original worker claim or allow retrying the
 same campaign. A lost attach reply remains explicitly unconfirmed.
 
-For `https/v1`, preparation MUST freeze the administrator mapping and verify its
+For `http/v1`, preparation MUST freeze the administrator mapping and verify its
 public capability projection without contacting the target. Execution MUST use
 only the mapped application operations. Native attachment, injection cleanup,
 snapshots, restore and target stop MUST be unavailable; recovery MUST finalize
-local records without sending another application request. See [HTTPS targets](HTTPS_TARGETS.md).
+local records without sending another application request. See [HTTP targets](HTTP_TARGETS.md).
+
+
+## Automatic integration compatibility
+
+Before recording attachment intent, Operator sends `POST /v1/contract-version`
+with `{}` to the same local Interceptor API. Its compiled integration pin comes from
+`internal/interceptor/contract.json`. Both `interceptor_contract_version` and
+`interceptor_contract_sha256` must match exactly. The hash identifies the complete
+OpenAPI file bytes, including formatting. Product versions need not match. No manual
+contract export, configured expected version, CLI fallback or Internet lookup is
+used. The environment capability manifest and policy checks still apply.
+
+A mismatch or unavailable/malformed response fails preparation with stage
+`Interceptor compatibility check`. Inspect the saved run with `operatorctl inspect
+--run RUN` or `operatorctl campaign status --run RUN` to retrieve the same bounded
+cause, expected/observed versions and hashes, and available HTTP status. Install compatible
+product releases, then submit a new campaign; failed campaigns do not resume.
+Foreground and service execution use the same checks and retained diagnostics.
+
+Native cleanup recovery and explicit late evidence collection also check
+compatibility before claiming new native work. A failed check leaves that work
+unconfirmed without consuming its dispatch claim. Retained local evidence remains
+readable, and owned Docker termination remains independent of Interceptor.
+Completed recovery/collection records can be read without the API. Successful
+campaigns record `interceptor.compatibility` with the checked versions, hashes and time.
+
 
 ## Troubleshooting preparation failures
 
@@ -114,6 +140,31 @@ attachment/status, target preparation, and launch persistence. An Interceptor
 rejection reports its validated HTTP status; a lost or invalid response identifies
 that uncertainty. An absent attachment record alone does not prove the cause.
 
+Capability admission failures retain the required reference and the failed rule.
+For example, a target may advertise snapshots while the resolved host policy
+does not permit them. Preparation then reports:
+
+```text
+Campaign preparation failed during target preparation (preparation_failed):
+Operator preparation (target preparation): scenario bundle is incompatible with the selected target: feature:snapshots (host_policy)
+Execution will not resume.
+```
+
+The same message is retained in the start completion and returned by the inspection
+and status commands above. `host_policy` identifies a host policy rejection; it
+does not mean the capability was absent from Interceptor's export.
+
+Preparation forwards producer-owned `DiagnosticMessage()` details through the
+existing diagnostic record. Error producers select public failure facts at the
+failing check; preparation does not require a case for each producer's error
+type. Common redaction and length bounds still apply, with explicit omission
+markers. Product errors used by preparation supply their public descriptions at
+the producer, including capability admission, configuration, credentials,
+image validation, staging, storage, and Interceptor communication. Preparation
+has no list of product error types or sentinels whose messages it permits.
+Arbitrary wrapped error strings remain private; operating-system and context
+errors retain their bounded generic descriptions when no producer detail exists.
+
 Use `--run` for failures before acceptance: there may be no campaign journal for
 `--campaign` to inspect. A `cleanup_failed` diagnostic reports a secondary cleanup
 problem without replacing the primary cause. If saving the completion is
@@ -146,8 +197,8 @@ When preparation succeeds but a model call fails, the worker retains
 output is:
 
 ```text
-Campaign execution failed during model request (http_rejection) (execution_failed):
-openai-chat returned HTTP 401 (invalid_api_key): The provider returned an unsuccessful HTTP status.
+Campaign execution failed during Attack Harness model request (http_rejection) (execution_failed):
+openai-chat rejected an Attack Harness model request (observed HTTP 401) (invalid_api_key): The provider returned an unsuccessful HTTP status.
 Operation: model-generate-0000000000000001
 Model: test-model
 Provider request ID: req_0123456789abcdef0123456789abcdef
@@ -183,6 +234,25 @@ Inspection/status expose `model_diagnostic` from the journal, and
 The immediate start receipt has the same completion diagnostic. Reports expose
 `model_failures`; exported model events retain the selected facts and timing.
 A resolved credential event proves secret retrieval, not provider acceptance.
+
+If a provider returns successfully but exceeds Operator's local allowance, the
+diagnostic retains `usage_exceeds_reservation` and adds numeric `usage_allowance`
+details. For example (illustrative counts, not a recovered campaign):
+
+```text
+Operator rejected model usage against a local token allowance after the provider returned successfully (bedrock-converse); HTTP 200.
+Local allowance exceeded: input tokens exceeded the configured prompt allowance.
+Validated input tokens: 33500; configured prompt allowance: 32768.
+Validated output tokens: 300; requested completion allowance: 4096.
+Validated total tokens: 33800; reserved total: 36864.
+```
+
+The two structured flags identify prompt overflow, total-reservation overflow,
+or both. This is local rejection, not AWS throttling or quota exhaustion. The
+same inspection/export commands above retrieve these details without retaining
+the rejected provider body. A later forced Harness exit remains a consequence;
+it does not replace the model failure. Operator does not increase allowances,
+retry, or resume. Older evidence without the numeric fields cannot recover them.
 
 For `invalid_function_parameters` naming `attempt_execute` or `record_append`,
 confirm both Operator and the Harness image use the corrected shared contract
@@ -321,3 +391,92 @@ exit status, finish acceptance, causal diagnostic, forced termination and cleanu
 outcome. A recovered assessment rejection remains history; it does not explain a
 later nonzero exit. Records from older releases may lack the exit observation and
 cannot establish a zero exit.
+
+### Insufficient tokens to request the next model response
+
+A campaign can stop with tokens remaining when it cannot reserve the configured
+prompt plus completion allowance for its next model request. For example:
+
+```text
+Harness could not request another model response. Model-token allowance: 524288; consumed: 493460; remaining: 30828; required reservation: 36864. No final assessment was committed.
+```
+
+Inspect the retained `workflow_diagnostic.budget` and exported report for these
+facts. They describe local model admission, not provider throttling. Earlier
+correctable tool errors are retained separately. An accepted unavailable finish
+and successful cleanup do not establish a successful assessment. Do not replay
+completed target operations to correct a finish submission. Older archives lacking
+these facts remain readable, but their missing budget reason cannot be recovered
+from an unrelated observed/limit counter.
+
+## Target failure diagnostics
+
+A failed native target turn retains its actual error, independently of Operator's
+attempt deadline and the Harness exit status. For example:
+
+```text
+Campaign execution failed during target delivery (execution_failed):
+The target application turn exceeded its deadline while running support-baseline. Interceptor reported "context deadline exceeded". Campaign execution is closed; the operation will not be replayed.
+Operation: attempt-request-1
+Attempt: attempt-1
+Native operation: application.invoke
+Native step: step-1
+Native response evidence: sha256:...
+Execution will not resume.
+```
+
+Other native errors receive the same treatment; a timeout classification requires
+an explicit native deadline error, not a duration inferred from timestamps. The
+native turn response currently does not supply the configured turn deadline, so
+Operator does not infer or print that allowance. An Operator attempt timeout
+instead identifies the Operator allowance and the stage where it expired.
+
+Foreground and supervised execution retain the same `workflow.target_failure`
+in the start completion diagnostic. `inspect`/`status` expose the journal's
+`workflow_diagnostic`; reports associate the failure with the attempt and identify
+the original private native response by step and digest. Text is quoted, bounded, and filtered using the
+existing credential-pattern rules, with omissions reported. Original responses
+remain private administrator evidence. This native diagnostic is administrator-only; Harness observations continue to
+follow the effective feedback policy and observation selection.
+A forced Harness exit remains a secondary consequence, not a replacement cause.
+
+After cleanup, use the following commands to inspect and export the current facts:
+
+```sh
+operatorctl inspect --campaign CAMPAIGN_ID
+operatorctl campaign evidence collect --campaign CAMPAIGN_ID
+operatorctl report --campaign CAMPAIGN_ID
+operatorctl export --campaign CAMPAIGN_ID --output /absolute/new-export-directory
+```
+
+Explicit collection can resolve an earlier missing archive. The new report keeps
+the original termination history and separately identifies confirmed native
+session stops. Collection success alone does not confirm injection cleanup or
+ownership closure. See [late collection](LATE_EVIDENCE.md).
+
+### Reading execution failures
+
+Failure summaries identify the affected interaction and observed boundary. A
+Harness model-request timeout means Operator stopped waiting for the Harness's
+provider call; it does not establish a target-agent failure. Inspect the retained
+`effective_deadline`, `deadline_source`, operation ID, provider request ID and
+credential-resolution evidence. The model request timeout is configured in
+`operation_timeouts_ms.engine.model_generate`; see [model providers](MODEL_PROVIDERS.md).
+
+Operator records an initiating terminal operation failure separately from later
+shutdown consequences. A forced Harness exit (for example 137), cancellation and
+cleanup failures remain supporting observations. An earlier rejected assessment
+is retained as history, not automatically selected as the cause. When causal
+order or a failure's origin is unknown, the summary says so.
+
+Cleanup diagnostics name the action: Harness container, transport and input
+removal; Interceptor ownership closure, injection cleanup and target stop.
+Evidence collection has its own per-session outcome and native rejection details.
+An unconfirmed action is not a claim that it failed remotely. Later verified
+outcomes remain separate from the original termination history.
+
+`operatorctl doctor` includes a bounded diagnostic for failed checks, preserving
+known Docker operation/access errors and configuration or resource failures.
+It does not resolve credentials, create containers, or establish live provider
+or target compatibility. A successful local-image inspection alone is not
+compatibility qualification.

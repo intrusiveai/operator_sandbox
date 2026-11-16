@@ -11,6 +11,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/attemptadapter"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/modelcodec"
 	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/termination"
 )
@@ -25,6 +26,7 @@ type ModelProvider interface {
 }
 type ModelConfig struct {
 	Provider      ModelProvider
+	Policy        []byte
 	ProfileDigest string
 	Tools         []byte
 	// Qualified upper bound on native input tokens, including tools and message
@@ -32,6 +34,8 @@ type ModelConfig struct {
 	MaximumPromptTokens int64
 }
 type modelState struct {
+	codec         string
+	limits        contracts.ContextLimits
 	policy        []byte
 	turns, tokens int64
 }
@@ -65,15 +69,20 @@ func (s *Service) handleModel(ctx context.Context, raw []byte, seq int64) ([]byt
 	return response, nil
 }
 func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateReply, error) {
-	value, err := s.target().Protocol().ValidateModelRequest(s.model.policy, q.Body)
+	relay, err := s.target().Protocol().ValidateModelRequest(q.Body)
 	if err != nil {
 		return stateDenied("POLICY_DENIED"), nil
 	}
-	native := value["request"].(map[string]any)
-	completion, err := s.target().Protocol().ModelOutputLimit(q.Body)
+	request, err := modelcodec.Build(s.model.policy, q.Body)
 	if err != nil {
-		return stateDenied("POLICY_DENIED"), nil
+		return stateReply{}, err
 	}
+	nativeValue, err := contracts.Decode(request, contracts.OrdinaryLimit)
+	if err != nil {
+		return stateReply{}, err
+	}
+	native := nativeValue.(map[string]any)
+	completion := s.model.limits.MaximumCompletionTokens
 	reserve := s.config.Model.MaximumPromptTokens + completion
 	remaining := s.remaining()
 	var loop struct {
@@ -92,8 +101,11 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 	}
 	started := time.Now()
 	reservation := "model:" + contracts.RawDigest([]byte(q.ID))[7:]
-	request := marshal(native)
-	meta := marshal(map[string]any{"operation_id": q.ID, "profile_digest": s.config.Model.ProfileDigest, "model_turns": s.model.turns + 1, "model_tokens": s.model.tokens + reserve, "reserved_tokens": reserve, "started_at": started.UTC().Format(time.RFC3339Nano)})
+	sizes, err := modelcodec.MeasureModelRequest(s.model.codec, request)
+	if err != nil {
+		return stateReply{}, err
+	}
+	meta := marshal(map[string]any{"operation_id": q.ID, "profile_digest": s.config.Model.ProfileDigest, "model_turns": s.model.turns + 1, "model_tokens": s.model.tokens + reserve, "reserved_tokens": reserve, "started_at": started.UTC().Format(time.RFC3339Nano), "request_sizes": sizes, "context_limits": s.model.limits})
 	if _, err = s.writer.AppendReserving(campaign.Entry{RunRevision: q.Revision, Kind: "model.intent", Metadata: meta, Content: []campaign.Content{{Role: "provider-request", MediaType: "application/json", Bytes: request}}}, reservation, campaign.MaxContentBytes+2*(campaign.MaxEventBytes+1)); err != nil {
 		return stateReply{}, err
 	}
@@ -102,7 +114,12 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 	var response []byte
 	var observed modelprovider.Diagnostic
 	var callErr error
+	evidence := modelprovider.ResponseEvidence{Omission: "provider_evidence_unavailable"}
 	if provider, ok := s.config.Model.Provider.(interface {
+		GenerateWithEvidence(context.Context, []byte) ([]byte, modelprovider.Diagnostic, modelprovider.ResponseEvidence, error)
+	}); ok {
+		response, observed, evidence, callErr = provider.GenerateWithEvidence(ctx, request)
+	} else if provider, ok := s.config.Model.Provider.(interface {
 		GenerateWithMetadata(context.Context, []byte) ([]byte, modelprovider.Diagnostic, error)
 	}); ok {
 		response, observed, callErr = provider.GenerateWithMetadata(ctx, request)
@@ -112,6 +129,7 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 			observed = *d
 		}
 	}
+	observed = observed.WithDeadline(ctx)
 	observed.OperationID = q.ID
 	// Missing transport metadata is not invented for injected/legacy providers.
 	if observed.Model == "" {
@@ -128,6 +146,8 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 		}
 		if observed.Category == "http_rejection" {
 			outcome = "http-rejected"
+		} else if observed.Category == "response_validation" {
+			outcome = "invalid-response"
 		}
 	} else if len(response) > campaign.MaxContentBytes {
 		outcome = "invalid-response"
@@ -142,25 +162,46 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 		}
 		observed = observed.WithFailure(category, "read_failed")
 	}
-	result := map[string]any{"codec_id": value["codec_id"], "profile_id": value["profile_id"], "profile_digest": value["profile_digest"], "receipt_id": "model-" + termination.NewRequestID(), "response": json.RawMessage(response)}
+	result := map[string]any{"receipt_id": "model-" + termination.NewRequestID(), "response": json.RawMessage(response)}
 	body := marshal(result)
+	var budget contracts.ContextBudget
 	var total int64
 	var toolCalls int64
 	if failureCode == "" {
-		if _, err = s.target().Protocol().ValidateModelExchange(s.model.policy, q.Body, body); err != nil {
-			reason = "contract_invalid"
-			failureCode, effect = "INTERNAL_ERROR", "known"
-		} else if usage, usageErr := s.target().Protocol().ModelUsage(body); usageErr != nil {
-			reason = "usage_invalid"
+		parsed, parseErr := modelcodec.Parse(s.model.codec, response)
+		usage := parsed.Metrics
+		if parseErr != nil {
+			observed = observed.WithValidation(parseErr)
+			reason = observed.Reason
 			failureCode, effect = "INTERNAL_ERROR", "known"
 		} else if !usage.Known {
 			reason = "usage_unknown"
 			failureCode, effect = "OUTCOME_UNKNOWN", "unknown"
 		} else if usage.InputTokens > s.config.Model.MaximumPromptTokens || usage.TotalTokens > reserve {
+			observed = observed.WithUsageRejection(usage, s.config.Model.MaximumPromptTokens, completion, reserve)
 			reason = "usage_exceeds_reservation"
+			failureCode, effect = "INTERNAL_ERROR", "known"
+		} else if usage.OutputTokens > completion {
+			observed = observed.WithValidation(&contracts.ModelValidationError{Stage: "adapter", Reason: "completion_allowance_exceeded", FieldPath: "/response/usage"})
+			reason = observed.Reason
+			failureCode, effect = "INTERNAL_ERROR", "known"
+		} else if relay["purpose"] == "compaction" && usage.ToolCalls > 0 {
+			observed = observed.WithValidation(&contracts.ModelValidationError{Stage: "adapter", Reason: "tools_not_requested", FieldPath: "/response"})
+			reason = observed.Reason
 			failureCode, effect = "INTERNAL_ERROR", "known"
 		} else {
 			total, toolCalls = usage.TotalTokens, usage.ToolCalls
+			budget, err = contracts.NewContextBudget(s.model.limits, usage, completion, remaining["model_tokens"]-total, remaining["model_turns"]-1)
+			if err == nil {
+				result["context_budget"] = budget
+				body = marshal(result)
+				_, err = s.target().Protocol().ValidateModelExchange(s.model.policy, q.Body, body)
+			}
+			if err != nil {
+				observed = observed.WithValidation(err)
+				reason = observed.Reason
+				failureCode, effect = "INTERNAL_ERROR", "known"
+			}
 		}
 	}
 	if reason != "" {
@@ -168,22 +209,53 @@ func (s *Service) modelOperation(ctx context.Context, q stateRequest) (stateRepl
 		outcome = "invalid-response"
 	}
 	metadata := map[string]any{"operation_id": q.ID, "outcome": outcome, "elapsed_ms": time.Since(started).Milliseconds(), "reserved_tokens": reserve}
+	if failureCode == "" {
+		metadata["context_budget"] = budget
+	}
 	var primary error
 	if failureCode != "" {
 		if !observed.Valid() {
 			observed = modelprovider.Diagnostic{OperationID: q.ID}.WithFailure("unknown", "provider_failed")
 		}
-		s.modelDiagnostic.CompareAndSwap(nil, &observed)
-		metadata["diagnostic"] = observed
-		primary = modelprovider.FailureError(observed)
-		// Never store unvalidated or failed provider bodies, including echoed secrets.
+		// Rejected bytes use a separate content role and can never enter the
+		// successful result or be delivered to Harness. Headers are excluded.
 		response = nil
+		if len(evidence.Body) > 0 && len(evidence.Body) <= campaign.MaxContentBytes {
+			response = evidence.Body
+			observed.RejectedResponse = modelprovider.RejectedResponse{State: "retained", Digest: contracts.RawDigest(response), SizeBytes: int64(len(response)), Redacted: evidence.Redacted}
+		} else {
+			omission := evidence.Omission
+			if len(evidence.Body) > campaign.MaxContentBytes {
+				omission = "response_too_large"
+			}
+			if omission == "" {
+				omission = "provider_evidence_unavailable"
+			}
+			observed.RejectedResponse = modelprovider.RejectedResponse{State: "omitted", Omission: omission}
+		}
+		s.modelDiagnostic.CompareAndSwap(nil, &observed)
+		s.recordFailureTrigger("model", q.ID)
+		metadata["diagnostic"] = observed
+		if trigger := s.FailureTrigger(); trigger != nil && trigger.OperationID == q.ID {
+			metadata["failure_trigger"] = trigger
+		}
+		primary = modelprovider.FailureError(observed)
 	}
 	entry := campaign.Entry{RunRevision: q.Revision, Kind: "model.exchange", Metadata: marshal(metadata)}
 	if len(response) > 0 {
-		entry.Content = []campaign.Content{{Role: "provider-response", MediaType: "application/json", Bytes: response}}
+		role := "provider-response"
+		if failureCode != "" {
+			role = "provider-response-rejected-untrusted"
+		}
+		entry.Content = []campaign.Content{{Role: role, MediaType: "application/json", Bytes: response}}
 	}
 	if _, err = s.writer.AppendStored(entry, reservation, true); err != nil {
+		if primary != nil {
+			failed := observed
+			failed.RejectedResponse = modelprovider.RejectedResponse{State: "unconfirmed", Omission: "retention_failed"}
+			s.modelDiagnostic.CompareAndSwap(&observed, &failed)
+			primary = modelprovider.FailureError(failed)
+		}
 		return stateReply{}, errors.Join(primary, err)
 	}
 	if failureCode != "" {

@@ -47,13 +47,15 @@ func TestSharedAttemptOrigin(t *testing.T) {
 				}
 			}
 			c.Body["operation_id"] = "invoke"
-			c.Body["input"] = map[string]any{"encoding": "json", "value": map[string]any{}}
+			c.Body["json"] = map[string]any{}
 			b, _ := json.Marshal(c.Body)
 			_, err = p.ValidateToolArguments("attempt_execute", b)
 			// Bundle membership is a host/runtime-context rule, not a static schema rule.
 			if (err == nil) != (c.Valid || c.Reason == "unknown_scenario") {
 				t.Fatal("tool validation", err)
 			}
+			delete(c.Body, "json")
+			c.Body["input"] = map[string]any{"encoding": "json", "value": map[string]any{}}
 			envelope := map[string]any{"api_version": "operator.dev/engine-pipe/v1alpha1", "kind": "request", "seq": 0, "campaign_id": "campaign-1", "launch_id": "launch-1", "run_revision": 1, "call_id": "call-1", "operation_id": "submission-1", "operation": "engine.attempt_execute", "timeout_ms": 30000, "body": c.Body}
 			wire, _ := json.Marshal(envelope)
 			_, err = p.ValidateRequest(wire)

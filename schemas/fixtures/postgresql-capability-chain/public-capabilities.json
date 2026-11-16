@@ -1,0 +1,221 @@
+{
+  "schema_version": "operator.dev/target-capability-manifest/v1alpha1",
+  "source": {
+    "adapter": "interceptor/v1",
+    "schema_version": "interceptor.dev/capability-manifest/v1alpha3",
+    "capability_source_digest": "sha256:36ffaa718abba75bbd260ada3b5c88e195c8abb43da1f78dd2c25913aa23a8b9",
+    "raw_digest": "sha256:d05b67b8b9a2cd95918be7fff7fc3d8a93a433b1ea9f67eb932e5ddcb29d4716"
+  },
+  "capabilities": {
+    "target_id": "delivery-example",
+    "adapter": "interceptor/v1",
+    "operations": [
+      {
+        "ref": "operation:ask",
+        "operation_id": "ask",
+        "delivery_status": "described",
+        "maximum_input_bytes": 65536,
+        "delivery": {
+          "description": "Invoke the seeded PostgreSQL support application",
+          "input": {
+            "media_type": "application/json",
+            "encoding": "json",
+            "max_bytes": 65536,
+            "basis": "synthetic",
+            "schema": {
+              "additionalProperties": false,
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "message"
+              ],
+              "type": "object"
+            }
+          },
+          "output": {
+            "media_type": "application/json",
+            "encoding": "json",
+            "max_bytes": 65536,
+            "basis": "unknown"
+          }
+        }
+      }
+    ],
+    "actions": [
+      {
+        "ref": "action:injection:database_response",
+        "action_type": "interceptor.injection/v1alpha1",
+        "surface": "database_response",
+        "scopes": [
+          "once",
+          "standing"
+        ],
+        "placements": [
+          "append",
+          "insert",
+          "merge",
+          "prepend",
+          "replace"
+        ],
+        "selector_fields": [
+          "call_ordinal",
+          "request_body_contain",
+          "request_body_equal",
+          "request_body_json_pointer",
+          "service"
+        ],
+        "carriers": [
+          "postgresql_result"
+        ]
+      },
+      {
+        "ref": "action:injection:environment_state",
+        "action_type": "interceptor.injection/v1alpha1",
+        "surface": "environment_state",
+        "scopes": [
+          "next_turn",
+          "once",
+          "standing"
+        ],
+        "placements": [
+          "append",
+          "insert",
+          "merge",
+          "prepend",
+          "replace"
+        ],
+        "selector_fields": [
+          "collection",
+          "file_namespace",
+          "key",
+          "path",
+          "relative_path",
+          "service",
+          "turn_id"
+        ],
+        "carriers": [
+          "managed_service_state",
+          "mutable_file"
+        ]
+      },
+      {
+        "ref": "action:injection:model_tool_result",
+        "action_type": "interceptor.injection/v1alpha1",
+        "surface": "model_tool_result",
+        "scopes": [
+          "next_turn",
+          "once",
+          "standing"
+        ],
+        "placements": [
+          "append",
+          "insert",
+          "merge",
+          "prepend",
+          "replace"
+        ],
+        "selector_fields": [
+          "arguments_contain",
+          "arguments_equal",
+          "arguments_json_pointer",
+          "call_ordinal",
+          "tool_name",
+          "turn_id"
+        ],
+        "carriers": [
+          "model_client_tool_result"
+        ]
+      }
+    ],
+    "services": [
+      {
+        "ref": "service:database",
+        "service_id": "database",
+        "injection_surfaces": [
+          "database_response",
+          "environment_state"
+        ],
+        "kind": "postgresql",
+        "role": "environment",
+        "transports": [
+          "postgresql+tls"
+        ],
+        "creatable_collections": [
+          {
+            "collection": "refunds",
+            "max_resources": 10
+          }
+        ],
+        "database_tables": [
+          {
+            "id": "documents",
+            "keys": [
+              "id"
+            ],
+            "fields": [
+              "body",
+              "metadata",
+              "embedding",
+              "author_id"
+            ],
+            "allow_create": false
+          },
+          {
+            "id": "refunds",
+            "keys": [
+              "id"
+            ],
+            "fields": [
+              "amount"
+            ],
+            "allow_create": true,
+            "max_records": 10
+          }
+        ]
+      }
+    ],
+    "file_namespaces": [],
+    "evidence_classes": [
+      {
+        "ref": "evidence:injection_delivery",
+        "feedback_kind": "injection_delivery",
+        "profiles": [
+          "oracle-assisted"
+        ]
+      },
+      {
+        "ref": "evidence:operation_error",
+        "feedback_kind": "operation_error",
+        "profiles": [
+          "oracle-assisted"
+        ]
+      },
+      {
+        "ref": "evidence:oracle_outcome",
+        "feedback_kind": "oracle_outcome",
+        "profiles": [
+          "oracle-assisted"
+        ]
+      },
+      {
+        "ref": "evidence:target_output",
+        "feedback_kind": "target_output",
+        "profiles": [
+          "black-box",
+          "oracle-assisted"
+        ]
+      }
+    ],
+    "features": [
+      "feature:snapshots"
+    ],
+    "feedback_profiles": [
+      "black-box",
+      "oracle-assisted"
+    ]
+  },
+  "capability_projection_digest": "sha256:78ec285a2f108ce09d667b296457134eb93000b4e961fb9d19812138c4d62d1d"
+}

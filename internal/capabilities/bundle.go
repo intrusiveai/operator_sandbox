@@ -3,12 +3,12 @@ package capabilities
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
-var ErrBundle = errors.New("invalid scenario bundle semantics")
+var ErrBundle = diagnostictext.New("invalid scenario bundle semantics")
 
 // Bundle is structurally and semantically checked, but not yet compatible with a
 // target. Artifact descriptors are checked here; actual bytes require staging.

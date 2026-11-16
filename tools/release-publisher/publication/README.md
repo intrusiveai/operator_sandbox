@@ -53,18 +53,55 @@ bash scripts/publish-catalog.sh /absolute/path/release-index-entry.json operator
 # Or interceptor_sandbox / attack_harness, matching this repository.
 ```
 
-Generate the entry from actual published artifacts. Operator and Attack Harness
-must include `contract_package_version`, the exact `major.minor.patch` version
-of the embedded shared package (no `v`, ranges, suffixes, whitespace, or leading
-zeroes; maximum 128 characters). Verify that every released platform agrees with
-the package/verified manifest before generating the entry. Interceptor omits it.
-The website shows this version beneath each Operator and Attack Harness release.
-Those products must use the same shared contract version; their product versions
-may differ. This metadata does not replace product qualification.
+Generate the entry from actual published artifacts:
+
+| Product | Required contract metadata |
+| --- | --- |
+| Operator | `contract_package_version` and `interceptor_contract_version` |
+| Attack Harness | `contract_package_version` |
+| Interceptor | `interceptor_contract_version` |
+
+The first field describes the Operator / Attack Harness contract; the second
+describes the Interceptor-owned Interceptor / Operator contract. Omit fields for
+unrelated relationships. Both use exact `major.minor.patch` versions without `v`,
+ranges, suffixes, whitespace, or leading zeroes (maximum 128 characters).
+The contracts and product releases have independent versions.
+
+Each release job validates its own product. Interceptor-only executable, local API, and
+consumer-fixture tests belong to Interceptor; Operator's pin/metadata and
+integration tests belong to Operator. Do not transfer those checks into the other
+product's release gates or require its validation workflow. The shared publisher
+suite exercises synthetic catalogs for all products without their source or
+release artifacts; it remains applicable to each publisher copy.
+
+Verify each value against the released artifact or verified build manifest.
+For Interceptor, `interceptor contract --json`, `interceptor version --json`,
+the local API response, and release metadata must agree on one authoritative
+`interceptor_contract_version`.
+Before candidate publication, verify both commands offline without Docker or a
+target on every packaged Linux/macOS CLI on compatible runners, and verify
+agreement with all packaged Linux companions. Retain evidence tied to archive
+checksums and source revision; checking a source file or only a companion does
+not verify the shipped CLI. Preserve existing integrity and qualification gates.
+Update the contract and its version when supported capabilities, interfaces, or
+guarantees change; retain the version when that agreement is unchanged.
+
+Operator records its integration's single pinned Interceptor contract version.
+Campaign startup sends `POST /v1/contract-version` with `{}` to the Interceptor
+API instance it will use. It reads `body.interceptor_contract_version` and requires
+exact equality with the pin before attachment or campaign target operations.
+Missing, malformed, unreadable, or mismatched versions, unavailable endpoints,
+and failed requests stop execution with an actionable error. There is no CLI
+invocation/fallback, range matching, negotiation, full-contract comparison, or
+Internet catalog lookup. The endpoint uses Interceptor's existing local listener,
+needs no session identifier or prior version, and is read-only. Sandbox creation
+by `interceptor run` stays unchanged. CLI version/export commands remain offline
+inspection and release-verification tools. Environment capability and policy
+checks remain separate. The website indicators communicate release metadata.
 
 Candidates use `["rc"]`; qualified releases use `["release"]`. Promotion of an existing version retains
 all artifact URLs, filenames, platforms, and digests, or the exact image reference
-and digest, plus `contract_package_version`. A rebuilt candidate may change the
+and digest, plus every applicable contract version. A rebuilt candidate may change the
 contract only alongside changed artifact identities; qualify the new bytes.
 New versions prepend; updates keep their position. Final entries
 cannot change artifact identity or recorded contract version, or lose the release

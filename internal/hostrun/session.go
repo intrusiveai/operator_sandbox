@@ -7,6 +7,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
+	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -19,32 +21,34 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
 	"github.com/intrusiveai/operator_sandbox/internal/hostlifetime"
 	"github.com/intrusiveai/operator_sandbox/internal/hostworker"
-	"github.com/intrusiveai/operator_sandbox/internal/httpstarget"
+	"github.com/intrusiveai/operator_sandbox/internal/httptarget"
 	"github.com/intrusiveai/operator_sandbox/internal/imagerelease"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/preparation"
 	"github.com/intrusiveai/operator_sandbox/internal/staging"
 	"github.com/intrusiveai/operator_sandbox/internal/startup"
 	"github.com/intrusiveai/operator_sandbox/internal/transport"
 )
 
-var ErrSession = errors.New("campaign launch session is invalid or already consumed")
+var ErrSession = diagnostictext.New("campaign launch session is invalid or already consumed")
 
 type Config struct {
-	HTTPS            *httpstarget.Client
-	StateRoot        string
-	Target           *preparation.Target
-	Launch           preparation.LaunchConfig
-	Requirements     imagerelease.Requirements
-	Peer             campaignservice.Peer
-	Docker           hostworker.Docker
-	Provider         campaignservice.ModelProvider
-	MinimumFreeBytes int64
-	SpoolMaxBytes    int64
-	EvidenceMaxBytes int64
-	StartRequestID   string
-	Gate             *startup.Gate // Ownership transfers after successful Claim, including later failures.
-	Recovery         []startup.Prior
-	Lifetime         *hostlifetime.Manager
+	InterceptorCheckedAt time.Time
+	HTTP                 *httptarget.Client
+	StateRoot            string
+	Target               *preparation.Target
+	Launch               preparation.LaunchConfig
+	Requirements         imagerelease.Requirements
+	Peer                 campaignservice.Peer
+	Docker               hostworker.Docker
+	Provider             campaignservice.ModelProvider
+	MinimumFreeBytes     int64
+	SpoolMaxBytes        int64
+	EvidenceMaxBytes     int64
+	StartRequestID       string
+	Gate                 *startup.Gate // Ownership transfers after successful Claim, including later failures.
+	Recovery             []startup.Prior
+	Lifetime             *hostlifetime.Manager
 }
 
 type Receipt struct {
@@ -83,7 +87,7 @@ func Prepare(ctx context.Context, c Config) (session *Session, err error) {
 			err = preparationCleanup("campaign launch preparation", err, s.discard())
 		}
 	}()
-	if c.Gate == nil || c.Target == nil || c.Docker == nil || (c.Peer == nil && c.HTTPS == nil) || c.Provider == nil || c.Launch.Model == nil || !filepath.IsAbs(c.StateRoot) || !campaign.ValidStopRequest(c.StartRequestID, "start") || c.Requirements.HostPlatform != runtime.GOOS+"/"+runtime.GOARCH {
+	if c.Gate == nil || c.Target == nil || c.Docker == nil || (c.Peer == nil && c.HTTP == nil) || c.Provider == nil || c.Launch.Model == nil || !filepath.IsAbs(c.StateRoot) || !campaign.ValidStopRequest(c.StartRequestID, "start") || c.Requirements.HostPlatform != runtime.GOOS+"/"+runtime.GOARCH {
 		return nil, ErrSession
 	}
 	if c.MinimumFreeBytes == 0 {
@@ -141,6 +145,13 @@ func Prepare(ctx context.Context, c Config) (session *Session, err error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if !c.InterceptorCheckedAt.IsZero() {
+		raw, _ := json.Marshal(map[string]any{"expected": interceptor.SupportedContractVersion, "actual": interceptor.SupportedContractVersion, "expected_sha256": interceptor.SupportedContractSHA256, "actual_sha256": interceptor.SupportedContractSHA256, "checked_at": c.InterceptorCheckedAt.UTC().Format(time.RFC3339Nano)})
+		if _, err = s.writer.Append(campaign.Entry{RunRevision: launch.Manifest.InitialRevision, Kind: "interceptor.compatibility", Metadata: raw}); err != nil {
+			return nil, err
+		}
+	}
 	// Each recovery result stays bounded by the ordinary event metadata ceiling.
 	for _, prior := range c.Recovery {
 		raw, e := json.Marshal(prior)
@@ -151,7 +162,7 @@ func Prepare(ctx context.Context, c Config) (session *Session, err error) {
 			return nil, err
 		}
 	}
-	transportConfig := transport.Config{Protocol: c.Target.Protocol(), CampaignID: launch.Manifest.CampaignID, LaunchID: launch.Manifest.LaunchID, Fence: s.writer.Fence(), CampaignDeadline: deadline, SpoolMaxBytes: c.SpoolMaxBytes}
+	transportConfig := transport.Config{OperationTimeouts: operationpolicy.FromContext(launch.Inputs.EngineContext), Protocol: c.Target.Protocol(), CampaignID: launch.Manifest.CampaignID, LaunchID: launch.Manifest.LaunchID, Fence: s.writer.Fence(), CampaignDeadline: deadline, SpoolMaxBytes: c.SpoolMaxBytes}
 	path := filepath.Join(campaignDir, "runtime/transport")
 	if launch.Manifest.Transport == "fifo" {
 		s.channel, err = transport.NewFIFO(path, transportConfig)
@@ -162,8 +173,8 @@ func Prepare(ctx context.Context, c Config) (session *Session, err error) {
 		return nil, err
 	}
 	s.worker, err = hostworker.New(ctx, hostworker.Config{
-		Service: campaignservice.Config{Prepared: stored, Peer: c.Peer, HTTPS: c.HTTPS, StateRoot: c.StateRoot, Deadline: deadline,
-			Model:    &campaignservice.ModelConfig{Provider: c.Provider, ProfileDigest: launch.Manifest.ModelProfileDigest, Tools: launch.ModelTools, MaximumPromptTokens: c.Launch.Model.Settings().MaximumPromptTokens},
+		Service: campaignservice.Config{Prepared: stored, Peer: c.Peer, HTTP: c.HTTP, StateRoot: c.StateRoot, Deadline: deadline,
+			Model:    &campaignservice.ModelConfig{Policy: launch.ModelPolicy, Provider: c.Provider, ProfileDigest: launch.Manifest.ModelProfileDigest, Tools: launch.ModelTools, MaximumPromptTokens: c.Launch.Model.Settings().MaximumPromptTokens},
 			Evidence: &campaignservice.EvidenceConfig{MaxArchiveBytes: c.EvidenceMaxBytes, Timeout: 2 * time.Minute, TotalTimeout: 5 * time.Minute}},
 		Docker: c.Docker, Image: c.Launch.Image, Requirements: c.Requirements, Tree: s.tree, Channel: s.channel, Inputs: launch.Inputs, PolicyDirectory: filepath.Join(campaignDir, "launch/policies"), StartRequestID: c.StartRequestID, Lifetime: c.Lifetime,
 	})

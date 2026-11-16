@@ -180,7 +180,7 @@ with EOF; offset beyond it is a range error. Unavailability returns no bytes and
 EOF false. Only a valid response from the still-live host can describe optional
 unavailability; transport loss/protocol corruption retains terminal semantics.
 
-Bound ordinary frames to 4 MiB and raw chunks to 256 KiB. Initial campaign read
+Bound ordinary frames to 4 MiB. Raw chunks MUST obey the configured `size_limits.observation_chunk_bytes` allowance (wire safety ceiling 1 MiB). Initial campaign read
 ceilings are 1 GiB of returned raw bytes and 8,192 read requests, narrowed by policy
 and disclosed in EngineContext/remaining limits. Charge repeated reads as reads,
 never as new target attempts; do not reset counters on target restore. Limits
@@ -239,11 +239,11 @@ This contract resolves HC-02/HC-03 design choices. SDK generation, broker/harnes
 implementation and end-to-end qualification remain HC-01/HC-06 deliverables.
 
 
-## HTTPS observer feedback
+## HTTP observer feedback
 
-The `https/v1` adapter MUST publish receipt-scoped feedback using these same
+The `http/v1` adapter MUST publish receipt-scoped feedback using these same
 selection, visibility, byte-limit and chunk-read rules. Its entries MUST use
-`source: https` and `assurance: declared-observer`. Its boundary MUST be
+`source: http` and `assurance: declared-observer`. Its boundary MUST be
 `request-ended`, meaning the bounded request has ended, including uncertain
 outcomes; it MUST NOT imply successful remote execution.
 
@@ -254,8 +254,48 @@ explicitly unavailable; response-limit failures MUST mark truncation. An
 observation retention allowance too small for the selected bytes MUST yield
 `capture_limit`, never an apparently complete empty response.
 
-The retained host receipt MUST identify `source_adapter: https/v1`, use local
+The retained host receipt MUST identify `source_adapter: http/v1`, use local
 execution attribution and omit a native receipt identity. Native receipt checks
-remain mandatory for Interceptor records. HTTPS receipts MUST NOT contain
+remain mandatory for Interceptor records. HTTP receipts MUST NOT contain
 injection-delivery or oracle entries. Recovery MUST retain uncertainty and MUST
 NOT issue a replacement request to reconstruct missing feedback.
+
+## Recorded database oracle outcomes
+
+`oracle_outcome` supports `database_query_match` through the existing
+`oracle-assisted` profile and selection rules. Operator translates native
+`oracle_id`, `oracle_kind`, `fired: true` to its opaque session-bound `detector_id`,
+`detector_kind`, `fired: true`. Only those selected fields are exposed. SQL, private
+results, definitions, and credentials are excluded. Effective black-box and
+diagnostic profiles still withhold these outcomes even from an oracle-assisted
+native session.
+
+Live results cover recorded application observations bound to the requested turn
+and attempt through its completion boundary. Receipt reads do not query current
+database state. They remain immutable after later writes or restore; cumulative
+session history, seed state, Harness mutations, and other or later turns cannot
+substitute for the requested observations. An observed condition is not proof that
+the injection caused it. No positive observation is not proof of attack failure.
+
+Preserve `oracle_evaluation_unavailable` for incomplete/unavailable evaluation and
+`no_positive_attributed_result_not_proof_of_failure` for complete empty results.
+A partial category can retain valid results from independent oracles.
+`state_oracles_require_post_run_evidence` applies only to other unsupported state
+oracles when reported by Interceptor. Unknown reasons use bounded safe fallbacks.
+
+## Application model-response delivery
+
+For `injection_delivery`, native facts carrying `surface: model_response` and
+`direction: model_to_application` MUST retain both fields when projected, with
+`injection_id` replaced by the existing campaign-bound `action_id`. The permitted
+states are `applied`, `failed`, `response_written`, and `write_failed`, with native
+`scope: turn|attempt`. A generic `unknown` delivery fact remains unknown.
+
+`applied` establishes mutation, not delivery. `response_written` establishes only
+that Interceptor wrote the response bytes; it does not prove target SDK acceptance,
+argument parsing, tool execution or objective success. `write_failed` does not
+prove that no bytes arrived. These facts require diagnostic or oracle-assisted
+visibility and MUST NOT leak into black-box feedback. Independent permitted
+observations establish subsequent application behavior. Original/delivered native
+response references remain independently integrity-verified administrator evidence;
+this does not grant Harness access to either response body.

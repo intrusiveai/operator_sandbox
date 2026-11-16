@@ -2,7 +2,7 @@
 
 This contract defines the closed [package manifest](contract-package.schema.json) and
 matching Go/Python construction, verification and loading APIs. It implements the
-package-content identity required by [SHARED_CONTRACT.md](SHARED_CONTRACT.md).
+package integrity and separate interface identity required by [SHARED_CONTRACT.md](SHARED_CONTRACT.md).
 The [publication tooling contract](../docs/CONTRACT_PUBLICATION.md) specifies the
 reproducible source/package builder and required generated-package validation.
 
@@ -12,17 +12,19 @@ The package root contains `package.json`, with these required fields:
 
 | Field | Content |
 |---|---|
-| `api_version` | `operator.dev/contract-package/v1alpha1`. |
+| `api_version` | `operator.dev/contract-package/v2`. |
 | `package_version` | Stable `major.minor.patch`, matching the existing contract package version field. |
 | `files` | Sorted complete payload inventory: `path`, `size_bytes`, raw SHA-256 `digest`. |
 | `catalog` | `path: catalog.json` and its canonical `object_digest`. |
 | `operations` | `path: operations.json` and its canonical `object_digest`. |
 | `semantic_profiles` | Sorted entries containing `profile_id`, payload `path` and raw file `digest`. |
 
-The package digest is `sha256(jcs-v1(complete manifest))`. The manifest has no
-self-digest field. Formatting changes in `package.json` do not change this object
-identity; changes to any inventoried file's raw bytes do, even whitespace changes
-inside schema or registry files. The builder emits canonical manifest bytes.
+The compatibility digest is SHA-256 of the exact `asyncapi.json` bytes, with
+version from `info.version`. The package manifest has no self-digest field and
+independently inventories installed bytes. Changes to code, tests or explanatory
+documentation update that inventory without changing compatibility. The builder
+emits canonical manifest bytes. It rejects schemas or registry resources whose
+projections differ from the approved AsyncAPI document.
 
 `package.json` and the reserved top-level `signatures` subtree are excluded from
 the payload inventory. Neither is an unverified payload escape hatch: verifier
@@ -38,6 +40,7 @@ matching the existing offline loader. Supporting resources may use subdirectorie
 
 ```text
 package.json
+asyncapi.json
 catalog.json
 operations.json
 *.schema.json
@@ -55,7 +58,8 @@ IDs use the existing ASCII ID syntax and must be unique and sorted.
 The manifest binds at least `jcs-v1`, `manifest-paths-v1` and `harness-loop-v1` to
 explicit nonempty semantic-profile resources. Every profile's path must occur in
 the inventory with the same raw digest. Additional named profiles are permitted
-and bound by the package identity. They are content identities, not an executable
+and checked by the inventory. Normative semantic rules are in the AsyncAPI
+`x-operator-semantics` extension; these documentation files are explanatory. They are content identities, not an executable
 plugin registry or a runtime negotiation mechanism. Package verification does not
 determine whether arbitrary profile prose correctly describes implementation.
 
@@ -93,8 +97,10 @@ no release version, perform no network calls and publish nothing.
 Verification performs these checks in order:
 
 1. Validate the manifest with the already-installed schema and inventory rules.
-2. Match both its version and canonical digest to the expected pin supplied by the
-   trusted caller. No fallback to another package version or digest is allowed.
+2. Match manifest version, AsyncAPI `info.version` and exact document hash to the
+   independent expected pin. Require every catalog schema and registry entry to
+   equal its projection in that document. No fallback to legacy manifest hashes
+   or another identity is allowed.
 3. Require exactly the declared payloads, checking every size and raw digest.
 4. Check canonical catalog/registry identities and ensure catalog entries resolve
    only to unique inventoried schema files.
@@ -130,13 +136,13 @@ permissions/no-follow reads, capability admission and runtime gates remain separ
 The verifier is not a substitute for those checks or for release qualification.
 
 The [release contract lock](../release/contract-lock.json) selects the exact
-package source and identity. Both products MUST verify that independent pin
+interface version and exact document hash. Both products MUST verify that independent pin
 before loading its contents. Tests use explicitly identified fixture versions
 and semantic resources; fixture identities do not select a production package.
 
 ## Tests and regeneration
 
-[package-integrity.json](fixtures/package-integrity.json) contains 39 shared cases
+[package-integrity.json](fixtures/package-integrity.json) contains 40 shared cases
 for manifest structure, expected pins, payload tampering, missing/extra files,
 reserved/unsafe/colliding paths, semantic bindings and size bounds. Its small
 payload is a byte-integrity fixture, not an executable contract release.

@@ -28,7 +28,7 @@ The initial profile is closed JSON:
     "allowed_kinds": ["target_output"],
     "max_attempt_bytes": 1048576
   },
-  "operation_timeout_ms": 30000
+  "operation_timeout_ms": 90000
 }
 ```
 
@@ -142,3 +142,41 @@ stopped or permit execution recovery. Startup MUST reconcile persisted Docker
 bindings and unresolved launch outcomes before accepting another campaign.
 Administrative termination, status and evidence inspection MUST remain usable
 without acquiring the execution lease.
+
+### Attempt timeouts
+
+`operation_timeout_ms` accepts positive milliseconds up to the global
+`target.max_operation_timeout_ms` ceiling (default 120,000; configurable up to
+1,800,000, the maximum supported campaign lifetime) and bounds the complete attempt,
+including setup, target execution and observation collection. For multi-step
+agents, use 90,000 ms with a separately configured 60-second Interceptor target
+turn. Harness uses the startup-supplied `operation_timeouts_ms` wait (120,000 ms by default for attempts). Shorter requests and remaining
+campaign time always take precedence; individual native calls do not reset the
+attempt budget.
+
+If the target succeeds but observation collection times out, inspection and the
+report identify the timed-out operation and keep the successful invocation fact.
+The campaign still fails because the required evidence is incomplete. No target
+retry occurs. A result marked `published` was written to the transport; it does
+not prove Harness consumption or completed cleanup.
+
+## Capability availability and permissions
+
+A bundle may require an advertised `service:<id>` or `file_namespace:<id>` even
+when `scopes.routes` is empty. These references establish that the target has the
+resource; they do not authorize Harness to read or modify it. Injection actions
+still require an explicit, valid route with the permitted selector, scope and
+placement. PostgreSQL response routes cannot use `insert_array`, matching
+Interceptor's native response-injection restrictions.
+
+Snapshot-capable Interceptor targets resolve `feature:snapshots` automatically.
+The same resolved feature controls required-bundle admission and the snapshot and
+restore tools. `limits.max_snapshot_admissions` and `limits.max_snapshot_bytes`
+control new creation separately; zero or exhausted creation allowances do not
+remove checkpoint listing, inspection or restoration. Those operations still
+require campaign ownership, compatibility, readiness and their own budgets.
+
+`feedback.allowed_kinds` is a permission ceiling, not a demand that the target
+provide every listed kind. Operator intersects it with the target's available
+evidence and applies the effective feedback profile. A bundle explicitly requiring
+unavailable evidence is rejected; optional requests are recorded as gaps.

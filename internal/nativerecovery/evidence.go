@@ -11,12 +11,14 @@ import (
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/nativeevidence"
 )
 
 type EvidencePeer interface {
+	CheckContract(context.Context) error
 	nativeevidence.Peer
 	Status(context.Context, string) (interceptor.Status, error)
 }
@@ -59,6 +61,11 @@ func CollectEvidence(ctx context.Context, root, id string, docker EvidenceDocker
 		if err == nil {
 			return
 		}
+		var compatibility *interceptor.CompatibilityError
+		if errors.As(err, &compatibility) {
+			out.Reason = "interceptor_" + compatibility.Reason
+			return
+		}
 		switch {
 		case errors.Is(err, campaign.ErrActive):
 			out.Reason = "execution_not_inactive"
@@ -75,7 +82,7 @@ func CollectEvidence(ctx context.Context, root, id string, docker EvidenceDocker
 	if e := ctx.Err(); e != nil {
 		return out, e
 	}
-	if docker == nil || peer == nil {
+	if docker == nil {
 		return out, campaign.ErrInvalid
 	}
 	lease, e := campaign.AcquireHostLease(root)
@@ -93,12 +100,20 @@ func CollectEvidence(ctx context.Context, root, id string, docker EvidenceDocker
 		return out, e
 	}
 	out.ManifestDigest = f.digest
-	if f.manifest.Target.Adapter == "https/v1" {
+	if f.manifest.Target.Adapter == "http/v1" {
 		out.Reason = "unsupported_target_adapter"
 		return out, nil
 	}
 	if !f.prepared {
 		return out, campaign.ErrInvalid
+	}
+	if peer == nil {
+		client, err := interceptor.NewConfigured(f.connection)
+		if err != nil {
+			return out, err
+		}
+		defer client.Close()
+		peer = client
 	}
 	evidence, e := loadEvidenceFacts(ctx, a, f)
 	if e != nil {
@@ -240,7 +255,7 @@ func loadEvidenceFacts(ctx context.Context, a *campaign.NativeRecovery, f facts)
 	return out, err
 }
 func validEvidenceOutcome(v campaign.EvidenceOutcome, t nativeevidence.Target, p campaign.EvidencePolicy) bool {
-	if v.SessionID != t.Identity.SessionID || !v.Recorded || v.LocalMaxBytes != p.MaxArchiveBytes || v.NativeMaxBytes != t.NativeMaxBytes {
+	if !v.ValidDiagnostic() || v.SessionID != t.Identity.SessionID || !v.Recorded || v.LocalMaxBytes != p.MaxArchiveBytes || v.NativeMaxBytes != t.NativeMaxBytes {
 		return false
 	}
 	switch v.State {
@@ -263,6 +278,16 @@ func collectEvidenceSession(ctx context.Context, a *campaign.NativeRecovery, f f
 		out.ArchiveDigest = record.Provenance.Transfer.SHA256
 		out.Recorded = true
 		return verifyEvidenceOutcome(ctx, a, record, out), nil
+	}
+	previous, e := a.ReadEvidence(out.SessionID, digest)
+	if e != nil {
+		return out, e
+	}
+	if previous == nil || campaign.EvidenceRetryable(previous.Outcome) {
+		if e = peer.CheckContract(ctx); e != nil {
+			out.Reason = "interceptor_compatibility_failed"
+			return out, e
+		}
 	}
 	fresh, saved, e := a.BeginEvidence(out.SessionID, digest)
 	if e != nil {
@@ -314,6 +339,7 @@ func collectEvidenceSession(ctx context.Context, a *campaign.NativeRecovery, f f
 	status, e := peer.Status(ctx, f.manifest.CampaignID)
 	if e != nil || status.InstanceID != f.instance || status.CampaignID != f.manifest.CampaignID || !status.StoreAvailable {
 		out.Reason = "native_identity_unconfirmed"
+		out.Failure = diagnostictext.FailureFromError(interceptor.StatusError(status, e, "evidence-status"))
 		return out, nil
 	}
 	if b, ok := status.Sessions[out.SessionID]; !ok || b.SessionID != out.SessionID {

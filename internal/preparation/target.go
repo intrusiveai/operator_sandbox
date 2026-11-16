@@ -6,19 +6,20 @@ package preparation
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/attemptadapter"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/capabilities"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/targetprofile"
 )
 
-var ErrPreparation = errors.New("campaign preparation does not match trusted target inputs")
+var ErrPreparation = diagnostictext.New("campaign preparation does not match trusted target inputs")
 
 type Input struct {
 	CampaignID, WorkerInstanceID string
@@ -58,16 +59,16 @@ func Build(in Input) (*Target, error) {
 	}
 	var live *capabilities.Live
 	var err error
-	if in.Profile.HTTPS() != nil {
-		live, err = capabilities.BindHTTPS(in.Protocol.Catalog(), in.Profile.HTTPS(), in.Profile.Settings().TargetID, in.CampaignID, in.WorkerInstanceID)
-		in.InstanceID = "https-local"
+	if in.Profile.HTTP() != nil {
+		live, err = capabilities.BindHTTP(in.Protocol.Catalog(), in.Profile.HTTP(), in.Profile.Settings().TargetID, in.CampaignID, in.WorkerInstanceID)
+		in.InstanceID = "http-local"
 	} else {
 		live, err = capabilities.BindLive(in.Protocol.Catalog(), in.Attachment, in.Status, in.InstanceID, in.Profile.Settings().TargetID)
 	}
 	if err != nil {
 		return nil, err
 	}
-	if in.Profile.HTTPS() == nil && in.Attachment.Session.Revision == 0 {
+	if in.Profile.HTTP() == nil && in.Attachment.Session.Revision == 0 {
 		return nil, ErrPreparation
 	}
 	policy, err := in.Profile.Resolve(live)
@@ -85,6 +86,9 @@ func Build(in Input) (*Target, error) {
 	t := &Target{protocol: in.Protocol, profile: in.Profile, live: live, compatibility: compat, policy: policy, bundle: bundle, authoring: in.Authoring, instance: in.InstanceID, artifacts: map[string]attemptadapter.Artifact{}}
 	t.references, err = prepareReferences(in.Protocol, t.bundle.JSON(), in.References)
 	if err != nil {
+		return nil, err
+	}
+	if err = t.addContextReferences(); err != nil {
 		return nil, err
 	}
 	t.nativeEvidence = interceptor.EvidenceIdentity{CampaignID: in.Attachment.CampaignID, SessionID: in.Attachment.Session.ID, EnvironmentDigest: in.Attachment.Session.EnvironmentDigest, ApplicationDigest: in.Attachment.Session.AppDigest, CapabilityDigest: in.Attachment.Session.CapabilityManifestDigest, FeedbackProfile: in.Attachment.Session.FeedbackProfile}
@@ -134,6 +138,12 @@ func (t *Target) InstanceID() string              { return t.instance }
 func (t *Target) HostPolicyJSON() []byte          { return bytes.Clone(t.hostPolicy) }
 func (t *Target) BundleJSON() []byte              { return t.bundle.JSON() }
 func (t *Target) ReadKinds() []string             { return t.compatibility.AllowedKinds() }
+
+// AllowsOperationFeatures applies the frozen policy's feature prerequisites.
+func (t *Target) AllowsOperationFeatures(operation string) bool {
+	return t.policy.CapabilityPolicy().AllowsOperationFeatures(operation)
+}
+
 func (t *Target) Binding() campaign.TargetBinding {
 	b := t.live.Binding()
 	return campaign.TargetBinding{Adapter: t.live.Export().Adapter(), SessionID: b.SessionID, WorkerInstanceID: b.WorkerInstanceID, NativeFeedbackProfile: t.live.NativeProfile(), CapabilitySourceDigest: t.live.Export().SourceDigest(), CapabilityProjectionDigest: t.live.Export().ProjectionDigest()}
@@ -158,6 +168,14 @@ func (t *Target) Context(template []byte) ([]byte, error) {
 	reg := t.protocol.RegistryDigests()
 	c["contract"] = map[string]any{"version": pin.Version, "digest": pin.Digest, "catalog_digest": reg["catalog_digest"], "operations_digest": reg["operations_digest"]}
 	c["target"] = json.RawMessage(t.live.Export().PublicJSON())
+	surfaces := []string{}
+	for _, ref := range t.policy.CapabilityPolicy().SelectableActionRefs {
+		if strings.HasPrefix(ref, "action:injection:") {
+			surfaces = append(surfaces, strings.TrimPrefix(ref, "action:injection:"))
+		}
+	}
+	sort.Strings(surfaces)
+	c["model"].(map[string]any)["tool_selection"] = map[string]any{"injection_surfaces": surfaces}
 	c["references"] = t.references.entries
 	c["artifact_bindings"] = t.references.bindings
 	c["omissions"] = t.references.omissions
@@ -204,9 +222,6 @@ func (t *Target) Persist(w *campaign.Writer, context []byte) (*Stored, error) {
 	}
 	c, _ := t.protocol.ValidateEngineContext(context)
 	if c["launch_id"] != m.LaunchID {
-		return nil, ErrPreparation
-	}
-	if c["model"].(map[string]any)["profile_digest"] != m.ModelProfileDigest {
 		return nil, ErrPreparation
 	}
 	release := c["release"].(map[string]any)

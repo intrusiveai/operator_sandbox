@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -73,17 +74,17 @@ func TestSimpleInputRejectionAndRetentionBeforeDispatch(t *testing.T) {
 	}
 }
 
-func TestRuntimeDiagnosticDropsSubmittedProse(t *testing.T) {
+func TestRuntimeDiagnosticRedactsCredentialText(t *testing.T) {
 	var root string
 	s, _, _, w, launch := serviceWithSettings(t, 0, []string{"engine.diagnostic_report"}, func(c *campaignservice.Config) { root = c.StateRoot })
 	if e := s.Admit(context.Background(), launch); e != nil {
 		t.Fatal(e)
 	}
-	secret := "synthetic-credential-never-retain-XYZ"
-	body := map[string]any{"tool_name": "attempt_execute", "diagnostic": map[string]any{"source": "harness-local", "stage": "arguments", "reason": "invalid_structure", "message": secret, "identifier": secret, "correction": secret, "field_path": "/input", "execution_occurred": "no", "resubmission_safe": true}, "stopping": map[string]any{"condition": "invalid-call-limit", "observed_count": 5, "configured_limit": 5}}
+	secret := "Bearer synthetic-credential-never-retain-XYZ"
+	body := map[string]any{"diagnostic": map[string]any{"source": "harness-local", "stage": "termination", "reason": "invalid_call_limit", "message": secret, "identifier": secret, "correction": secret, "execution_occurred": "no", "resubmission_safe": false}, "stopping": map[string]any{"condition": "invalid-call-limit", "observed_count": 5, "configured_limit": 5}}
 	raw, e := s.Handle(context.Background(), stateWire("engine.diagnostic_report", "runtime-diagnostic", 1, body), 0)
 	stateResult(t, raw, e)
-	if d := s.WorkflowFailure(); d == nil || d.Reason != "invalid_structure" || !d.Omitted {
+	if d := s.WorkflowFailure(); d == nil || d.Reason != "invalid_call_limit" || d.Stage != "termination" || d.Stopping != "invalid-call-limit" || d.Observed != 5 || d.Limit != 5 || d.Tool != "" || d.CallID != "" || d.FieldPath != "" || !d.Omitted {
 		t.Fatal(d)
 	}
 	_, e = s.Shutdown(context.Background())
@@ -235,6 +236,49 @@ func TestExplicitOriginRejectCorrectAndDoNotReplay(t *testing.T) {
 			if n != 1 {
 				t.Fatalf("dispatch count %d", n)
 			}
+		})
+	}
+}
+
+func TestConfiguredInputSizeAdmission(t *testing.T) {
+	for _, allowance := range []int64{32, 65536} {
+		t.Run(fmt.Sprint(allowance), func(t *testing.T) {
+			s, p, _, _, launch := serviceWithTemplate(t, 0, []string{"engine.attempt_execute"}, nil, func(v map[string]any) {
+				v["size_limits"].(map[string]any)["direct_input_bytes"] = allowance
+			})
+			if err := s.Admit(context.Background(), launch); err != nil {
+				t.Fatal(err)
+			}
+			body := map[string]any{"origin": "exploratory", "operation_id": "invoke", "input": map[string]any{"encoding": "json", "value": map[string]any{"query": strings.Repeat("x", 40000)}}}
+			raw, err := s.Handle(context.Background(), stateWire("engine.attempt_execute", "input-policy", 1, body), 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if allowance == 32 {
+				if !strings.Contains(string(raw), "configured_size_exceeded") || !strings.Contains(string(raw), "/input") {
+					t.Fatal(string(raw))
+				}
+				for _, op := range p.calls {
+					if op == "application.invoke" {
+						t.Fatal("size rejection dispatched")
+					}
+				}
+				body["input"].(map[string]any)["value"] = map[string]any{"query": "ok"}
+				raw, err = s.Handle(context.Background(), stateWire("engine.attempt_execute", "corrected-input-policy", 1, body), 1)
+			}
+			if err != nil || !strings.Contains(string(raw), `"invocation_state":"succeeded"`) {
+				t.Fatal(string(raw), err)
+			}
+			n := 0
+			for _, op := range p.calls {
+				if op == "application.invoke" {
+					n++
+				}
+			}
+			if n != 1 {
+				t.Fatal("duplicate invocation", n)
+			}
+			s.Shutdown(context.Background())
 		})
 	}
 }

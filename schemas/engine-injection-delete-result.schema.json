@@ -44,7 +44,8 @@
       "enum": [
         "deleted",
         "already_absent"
-      ]
+      ],
+      "description": "Whether evidence supports this objective or hypothesis, is inconclusive, or it was not tested."
     }
   }
 }

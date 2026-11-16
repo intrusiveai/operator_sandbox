@@ -41,7 +41,7 @@ func RetainedEvidence(ctx context.Context, a *campaign.NativeRecovery) ([]Retain
 	if e != nil {
 		return nil, e
 	}
-	if f.manifest.Target.Adapter == "https/v1" {
+	if f.manifest.Target.Adapter == "http/v1" {
 		return []RetainedSession{}, nil
 	}
 	facts, e := loadEvidenceFacts(ctx, a, f)
@@ -62,7 +62,11 @@ func RetainedEvidence(ctx context.Context, a *campaign.NativeRecovery) ([]Retain
 			if record.Provenance.Identity != target.Identity || !retainedDigest.MatchString(record.Provenance.Transfer.SHA256) {
 				return campaign.ErrCorrupt
 			}
-			verified := a.VerifyRetainedEvidence(ctx, record) == nil
+			current, err := a.RetainedProvenance(ctx, record)
+			verified := err == nil
+			if verified {
+				record.Provenance = current
+			}
 			v.Archives = append(v.Archives, RetainedArchive{source, record, verified})
 			return nil
 		}

@@ -12,7 +12,7 @@ host manifest. The shared contract version remains in package and catalog metada
 it MUST NOT be added to the filename.
 
 `operatorctl release manifest` MUST bind the host version, platform, source commit,
-Go toolchain, exact shared-contract pin and every payload file's name, size, mode
+Go toolchain, exact shared-contract pin, compiled `interceptor_contract_version` and `interceptor_contract_sha256`, and every payload file's name, size, mode
 and SHA-256 digest. The four platforms are `linux/amd64`, `linux/arm64`,
 `darwin/amd64` and `darwin/arm64`. Host release versions MUST be three numeric
 components. Candidate builds MUST NOT imply native qualification.
@@ -33,6 +33,15 @@ prefixed entries MUST be rejected. Extraction MUST
 reject links, special files, duplicate paths, executable data files, traversal,
 unsupported entries and truncated/oversized archives. Bounds are 8,192 payload
 files, 128 MiB per file and 256 MiB total, with separately bounded metadata.
+
+Every archived native executable MUST report both contract identities through
+`operatorctl version`; package verification MUST compare them with its manifest
+and candidate inventory on each matching host. Historical manifests without the
+Interceptor identity fields remain readable as unknown; new candidates MUST include both.
+Catalog publication MUST include `contract_package_version` and
+`interceptor_contract_version`. Stable promotion MUST require a successful source-bound OpenAPI comparison
+against the approved Interceptor contract version and exact document hash.
+Campaign tests MUST NOT establish integration compatibility. See the [release guide](../.github/maintainers/CANDIDATE_RELEASES.md#integration-qualification-before-stable-promotion).
 
 ## Installation and updates
 
@@ -57,7 +66,10 @@ GitHub release. Check the archive checksum, then extract it into a private stagi
 directory. The installer MUST validate the internal manifest and every file before
 activation. For upgrades from v0.1.0, use the newly extracted `operatorctl` shown
 below: the older installer does not recognize the product-prefixed archive layout.
-Installers from v0.1.1 onward MAY install subsequent archives directly.
+Use the newly extracted installer for upgrades as well: an older strict manifest
+decoder may not recognize newly added metadata, including
+`interceptor_contract_version`. The new installer preserves existing state and
+configuration while accepting historical manifests with an unknown integration pin.
 
 For Linux AMD64, with both downloaded files in the current directory (replace
 `0.1.3` with the product version being installed):
@@ -136,11 +148,27 @@ it MUST NOT execute with silently substituted inputs or resume an earlier campai
 ## Reproducible candidates and publication
 
 `python3 scripts/build_host_release.py --version 0.1.3 --output dist/candidate`
-MUST build all four host platforms from a clean committed checkout with Go 1.26.5,
-CGO disabled, fixed architecture baselines, trimmed paths and VCS/time-independent
+MUST build the current native host platform from a clean committed checkout with Go 1.26.5,
+CGO enabled, the native C compiler, fixed architecture baselines, trimmed paths and VCS/time-independent
 build flags. `go mod download` is the explicit dependency-preparation step; the
 builder MUST verify module sums and disable dependency network access during build.
-`--platform` MAY select a subset for development. Build output MUST be a new directory.
+`--platform` MAY explicitly select the current native OS/architecture only. CI uses matching Linux/macOS AMD64/ARM64 runners. Build output MUST be a new directory.
+
+CI MUST use `--output dist/first --reproduce-output dist/second` to validate
+contracts once per native platform, independently rebuild the candidate, and
+compare all output paths, bytes and file modes. A validation failure MUST stop
+before the rebuild; a difference MUST block publication. Standalone builds MUST
+still validate contracts. The rebuild MUST still reconstruct the contract and
+check its pinned identity; only the already-passed test suites are omitted.
+
+Build commands MUST report their start, elapsed time and outcome. Test/compiler
+output MUST stream while those commands execute. Each Go build has a ten-minute
+limit, each contract test suite a five-minute limit (Go's internal test deadline
+is four minutes), and other builder commands a two-minute limit. Native compiler
+and binary-inspection commands retain their existing 30-second limits. A timeout
+MUST identify the command and terminate its process group. The workflow retains
+its 40-minute overall candidate job limit. Timing logs MUST NOT enter release
+payloads or alter deterministic artifact bytes.
 
 The builder MUST reproduce `release/contract-lock.json`, using the existing contract
 publisher and exact matching schema bytes. The host executable MUST embed this
@@ -233,3 +261,13 @@ selected version, usability of the old binary and explicit downgrade enforcement
 Linux account/service provisioning MUST use command fixtures in ordinary tests;
 actual native Linux provisioning and all four production runtime tuples still
 require external qualification.
+
+## Shared interface identity
+
+The native builder checks `schemas/asyncapi.json` against the approved version and
+exact byte hash in `release/contract-lock.json`, then verifies the installed
+schemas/registry against that document. It includes `contract/asyncapi.json` in
+every release. `contract_package_version` remains the catalog field name for that
+interface version. Product source, implementation package inventories and SBOMs
+remain build provenance and integrity data, not counterpart compatibility gates.
+See [contract conformance](CONTRACT_CONFORMANCE.md).

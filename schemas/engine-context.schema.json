@@ -156,13 +156,10 @@
       "additionalProperties": false,
       "properties": {
         "codec_id": {
-          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
-        },
-        "profile_id": {
-          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/id"
-        },
-        "profile_digest": {
-          "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/digest"
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Configured provider conversation format; unsupported formats are rejected by the product adapter."
         },
         "model_id": {
           "type": "string",
@@ -185,153 +182,40 @@
           "minItems": 2,
           "uniqueItems": true
         },
-        "codec_settings": {
-          "oneOf": [
-            {
-              "$ref": "urn:operator:schema:openai-chat-common:v1alpha1#/$defs/settings"
-            },
-            {
-              "$ref": "urn:operator:schema:anthropic-messages-common:v1alpha1#/$defs/settings"
-            },
-            {
-              "$ref": "urn:operator:schema:bedrock-converse-common:v1alpha1#/$defs/settings"
-            },
-            {
-              "$ref": "urn:operator:schema:gemini-common:v1alpha1#/$defs/settings"
-            },
-            {
-              "$ref": "urn:operator:schema:openai-responses-common:v1alpha1#/$defs/settings"
+        "context_limits": {
+          "$ref": "urn:operator:schema:model-context-limits:v1alpha1"
+        },
+        "tool_selection": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "injection_surfaces": {
+              "type": "array",
+              "maxItems": 5,
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "database_response",
+                  "environment_state",
+                  "mcp_tool_result",
+                  "model_tool_result",
+                  "service_response",
+                  "model_response"
+                ]
+              }
             }
+          },
+          "required": [
+            "injection_surfaces"
           ]
         }
       },
       "required": [
         "codec_id",
-        "profile_id",
-        "profile_digest",
         "model_id",
-        "features"
-      ],
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "codec_id": {
-                "const": "openai-chat-text-tools-v1"
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "codec_settings"
-            ],
-            "properties": {
-              "codec_settings": {
-                "$ref": "urn:operator:schema:openai-chat-common:v1alpha1#/$defs/settings"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "codec_id": {
-                "const": "anthropic-messages-text-tools-v1"
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "codec_settings"
-            ],
-            "properties": {
-              "codec_settings": {
-                "$ref": "urn:operator:schema:anthropic-messages-common:v1alpha1#/$defs/settings"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "codec_id": {
-                "const": "bedrock-converse-text-tools-v1"
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "codec_settings"
-            ],
-            "properties": {
-              "codec_settings": {
-                "$ref": "urn:operator:schema:bedrock-converse-common:v1alpha1#/$defs/settings"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "codec_id": {
-                "const": "gemini-text-tools-v1"
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "codec_settings"
-            ],
-            "properties": {
-              "codec_settings": {
-                "$ref": "urn:operator:schema:gemini-common:v1alpha1#/$defs/settings"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "codec_id": {
-                "const": "openai-responses-text-tools-v1"
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "codec_settings"
-            ],
-            "properties": {
-              "codec_settings": {
-                "$ref": "urn:operator:schema:openai-responses-common:v1alpha1#/$defs/settings"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "codec_id": {
-                "not": {
-                  "enum": [
-                    "openai-chat-text-tools-v1",
-                    "anthropic-messages-text-tools-v1",
-                    "bedrock-converse-text-tools-v1",
-                    "gemini-text-tools-v1",
-                    "openai-responses-text-tools-v1"
-                  ]
-                }
-              }
-            }
-          },
-          "then": {
-            "not": {
-              "required": [
-                "codec_settings"
-              ]
-            }
-          }
-        }
+        "features",
+        "context_limits",
+        "tool_selection"
       ]
     },
     "operations": {
@@ -367,6 +251,62 @@
     },
     "remaining_limits": {
       "$ref": "urn:operator:schema:remaining-limits:v1alpha1"
+    },
+    "operation_timeouts_ms": {
+      "type": "object",
+      "minProperties": 0,
+      "maxProperties": 64,
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 9007199254740991
+      },
+      "description": "Frozen host-configured request waits, with exactly one entry for each advertised operation. No operational durations are fixed in the operation registry."
+    },
+    "size_limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "direct_input_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "assessment_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "artifact_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        },
+        "artifact_part_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "observation_chunk_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "snapshot_page_items": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "direct_input_bytes",
+        "assessment_bytes",
+        "artifact_bytes",
+        "artifact_part_bytes",
+        "observation_chunk_bytes",
+        "snapshot_page_items"
+      ],
+      "description": "Host-configured operating sizes. Maxima are implementation safety ceilings; defaults are host policy, not contract values."
     }
   },
   "required": [
@@ -388,6 +328,8 @@
     "model",
     "operations",
     "limits",
-    "remaining_limits"
+    "remaining_limits",
+    "operation_timeouts_ms",
+    "size_limits"
   ]
 }

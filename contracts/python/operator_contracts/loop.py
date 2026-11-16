@@ -136,7 +136,7 @@ class HarnessLoop:
         if outcome == 'invalid':
             s['invalid_tool_calls'] += 1
             s['consecutive_invalid_tool_calls'] += 1
-        elif outcome in ('success', 'restored') and name != 'record_append':
+        elif outcome in ('success', 'restored') and name not in ('record_append','record_hypothesis','record_progress','record_lineage','record_coverage'):
             s['consecutive_invalid_tool_calls'] = 0
         s['active_tool'] = ''
         if outcome == 'restored':

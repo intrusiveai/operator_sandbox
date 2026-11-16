@@ -1,0 +1,467 @@
+[
+  {
+    "name": "run001",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 1,
+      "call_id": "call-1",
+      "operation_id": "diagnostic-1",
+      "operation": "engine.diagnostic_report",
+      "timeout_ms": 30000,
+      "body": {
+        "diagnostic": {
+          "source": "harness-local",
+          "stage": "termination",
+          "reason": "model_reservation_unavailable",
+          "message": "Cannot reserve next request.",
+          "execution_occurred": "no",
+          "resubmission_safe": false
+        },
+        "stopping": {
+          "condition": "budget-limit",
+          "budget": {
+            "kind": "model-tokens",
+            "total_allowance": 524288,
+            "consumed": 493460,
+            "remaining": 30828,
+            "next_request_reservation": 36864
+          }
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "run002",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 1,
+      "call_id": "call-1",
+      "operation_id": "diagnostic-1",
+      "operation": "engine.diagnostic_report",
+      "timeout_ms": 30000,
+      "body": {
+        "diagnostic": {
+          "source": "harness-local",
+          "stage": "termination",
+          "reason": "model_reservation_unavailable",
+          "message": "Cannot reserve next request.",
+          "execution_occurred": "no",
+          "resubmission_safe": false
+        },
+        "stopping": {
+          "condition": "budget-limit",
+          "budget": {
+            "kind": "model-tokens",
+            "total_allowance": 524288,
+            "consumed": 502198,
+            "remaining": 22090,
+            "next_request_reservation": 36864
+          }
+        }
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "inconsistent remaining",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 1,
+      "call_id": "call-1",
+      "operation_id": "diagnostic-1",
+      "operation": "engine.diagnostic_report",
+      "timeout_ms": 30000,
+      "body": {
+        "diagnostic": {
+          "source": "harness-local",
+          "stage": "termination",
+          "reason": "model_reservation_unavailable",
+          "message": "Cannot reserve next request.",
+          "execution_occurred": "no",
+          "resubmission_safe": false
+        },
+        "stopping": {
+          "condition": "budget-limit",
+          "budget": {
+            "kind": "model-tokens",
+            "total_allowance": 524288,
+            "consumed": 493460,
+            "remaining": 1,
+            "next_request_reservation": 36864
+          }
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "still fundable",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 1,
+      "call_id": "call-1",
+      "operation_id": "diagnostic-1",
+      "operation": "engine.diagnostic_report",
+      "timeout_ms": 30000,
+      "body": {
+        "diagnostic": {
+          "source": "harness-local",
+          "stage": "termination",
+          "reason": "model_reservation_unavailable",
+          "message": "Cannot reserve next request.",
+          "execution_occurred": "no",
+          "resubmission_safe": false
+        },
+        "stopping": {
+          "condition": "budget-limit",
+          "budget": {
+            "kind": "model-tokens",
+            "total_allowance": 524288,
+            "consumed": 493460,
+            "remaining": 30828,
+            "next_request_reservation": 30828
+          }
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "negative",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 1,
+      "call_id": "call-1",
+      "operation_id": "diagnostic-1",
+      "operation": "engine.diagnostic_report",
+      "timeout_ms": 30000,
+      "body": {
+        "diagnostic": {
+          "source": "harness-local",
+          "stage": "termination",
+          "reason": "model_reservation_unavailable",
+          "message": "Cannot reserve next request.",
+          "execution_occurred": "no",
+          "resubmission_safe": false
+        },
+        "stopping": {
+          "condition": "budget-limit",
+          "budget": {
+            "kind": "model-tokens",
+            "total_allowance": 524288,
+            "consumed": -1,
+            "remaining": 30828,
+            "next_request_reservation": 36864
+          }
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "wrong kind",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 1,
+      "call_id": "call-1",
+      "operation_id": "diagnostic-1",
+      "operation": "engine.diagnostic_report",
+      "timeout_ms": 30000,
+      "body": {
+        "diagnostic": {
+          "source": "harness-local",
+          "stage": "termination",
+          "reason": "model_reservation_unavailable",
+          "message": "Cannot reserve next request.",
+          "execution_occurred": "no",
+          "resubmission_safe": false
+        },
+        "stopping": {
+          "condition": "budget-limit",
+          "budget": {
+            "kind": "evidence-bytes",
+            "total_allowance": 524288,
+            "consumed": 493460,
+            "remaining": 30828,
+            "next_request_reservation": 36864
+          }
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "fractional",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 1,
+      "call_id": "call-1",
+      "operation_id": "diagnostic-1",
+      "operation": "engine.diagnostic_report",
+      "timeout_ms": 30000,
+      "body": {
+        "diagnostic": {
+          "source": "harness-local",
+          "stage": "termination",
+          "reason": "model_reservation_unavailable",
+          "message": "Cannot reserve next request.",
+          "execution_occurred": "no",
+          "resubmission_safe": false
+        },
+        "stopping": {
+          "condition": "budget-limit",
+          "budget": {
+            "kind": "model-tokens",
+            "total_allowance": 524288,
+            "consumed": 493460,
+            "remaining": 30828.5,
+            "next_request_reservation": 36864
+          }
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "unsafe integer",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 1,
+      "call_id": "call-1",
+      "operation_id": "diagnostic-1",
+      "operation": "engine.diagnostic_report",
+      "timeout_ms": 30000,
+      "body": {
+        "diagnostic": {
+          "source": "harness-local",
+          "stage": "termination",
+          "reason": "model_reservation_unavailable",
+          "message": "Cannot reserve next request.",
+          "execution_occurred": "no",
+          "resubmission_safe": false
+        },
+        "stopping": {
+          "condition": "budget-limit",
+          "budget": {
+            "kind": "model-tokens",
+            "total_allowance": 9007199254740992,
+            "consumed": 493460,
+            "remaining": 30828,
+            "next_request_reservation": 36864
+          }
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "missing fact",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 1,
+      "call_id": "call-1",
+      "operation_id": "diagnostic-1",
+      "operation": "engine.diagnostic_report",
+      "timeout_ms": 30000,
+      "body": {
+        "diagnostic": {
+          "source": "harness-local",
+          "stage": "termination",
+          "reason": "model_reservation_unavailable",
+          "message": "Cannot reserve next request.",
+          "execution_occurred": "no",
+          "resubmission_safe": false
+        },
+        "stopping": {
+          "condition": "budget-limit",
+          "budget": {
+            "kind": "model-tokens",
+            "total_allowance": 524288,
+            "consumed": 493460,
+            "next_request_reservation": 36864
+          }
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "mixed unrelated counters",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 1,
+      "call_id": "call-1",
+      "operation_id": "diagnostic-1",
+      "operation": "engine.diagnostic_report",
+      "timeout_ms": 30000,
+      "body": {
+        "diagnostic": {
+          "source": "harness-local",
+          "stage": "termination",
+          "reason": "model_reservation_unavailable",
+          "message": "Cannot reserve next request.",
+          "execution_occurred": "no",
+          "resubmission_safe": false
+        },
+        "stopping": {
+          "condition": "budget-limit",
+          "budget": {
+            "kind": "model-tokens",
+            "total_allowance": 524288,
+            "consumed": 493460,
+            "remaining": 30828,
+            "next_request_reservation": 36864
+          },
+          "observed_count": 50354,
+          "configured_limit": 268435456
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "prior error not terminal cause",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 1,
+      "call_id": "call-1",
+      "operation_id": "diagnostic-1",
+      "operation": "engine.diagnostic_report",
+      "timeout_ms": 30000,
+      "body": {
+        "diagnostic": {
+          "source": "harness-local",
+          "stage": "termination",
+          "reason": "evidence_not_inspected",
+          "message": "Cannot reserve next request.",
+          "execution_occurred": "no",
+          "resubmission_safe": false
+        },
+        "stopping": {
+          "condition": "budget-limit",
+          "budget": {
+            "kind": "model-tokens",
+            "total_allowance": 524288,
+            "consumed": 493460,
+            "remaining": 30828,
+            "next_request_reservation": 36864
+          }
+        }
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "prior tool not stopping tool",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 1,
+      "call_id": "call-1",
+      "operation_id": "diagnostic-1",
+      "operation": "engine.diagnostic_report",
+      "timeout_ms": 30000,
+      "body": {
+        "diagnostic": {
+          "source": "harness-local",
+          "stage": "termination",
+          "reason": "model_reservation_unavailable",
+          "message": "Cannot reserve next request.",
+          "execution_occurred": "no",
+          "resubmission_safe": false
+        },
+        "stopping": {
+          "condition": "budget-limit",
+          "budget": {
+            "kind": "model-tokens",
+            "total_allowance": 524288,
+            "consumed": 493460,
+            "remaining": 30828,
+            "next_request_reservation": 36864
+          }
+        },
+        "tool_name": "finish"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "missing entire budget",
+    "request": {
+      "api_version": "operator.dev/engine-pipe/v1alpha1",
+      "kind": "request",
+      "seq": 0,
+      "campaign_id": "campaign-1",
+      "launch_id": "launch-1",
+      "run_revision": 1,
+      "call_id": "call-1",
+      "operation_id": "diagnostic-1",
+      "operation": "engine.diagnostic_report",
+      "timeout_ms": 30000,
+      "body": {
+        "diagnostic": {
+          "source": "harness-local",
+          "stage": "termination",
+          "reason": "model_reservation_unavailable",
+          "message": "Cannot reserve next request.",
+          "execution_occurred": "no",
+          "resubmission_safe": false
+        },
+        "stopping": {
+          "condition": "budget-limit",
+          "observed_count": 50354,
+          "configured_limit": 268435456
+        }
+      }
+    },
+    "valid": false
+  }
+]

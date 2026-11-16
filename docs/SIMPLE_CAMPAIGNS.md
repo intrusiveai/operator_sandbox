@@ -31,7 +31,7 @@ Inspect the final campaign receipt/report for cleanup and evidence availability.
 ## Correctable failures and stopping reasons
 
 Argument errors identify the rule and field. For example, missing direct/artifact
-input reports `/input`; input above 32,768 decoded bytes directs the caller to
+input reports `/input`; input above the configured `size_limits.direct_input_bytes` allowance directs the caller to
 artifact publication. A corrected submission uses a new operation ID. Duplicate
 delivery of the original operation reuses its result; changed content under that
 ID conflicts. A rejection before dispatch has no execution receipt.

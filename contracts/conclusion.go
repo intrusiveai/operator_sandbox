@@ -19,7 +19,8 @@ func (p *Protocol) ValidateConclusion(raw []byte) (map[string]any, error) {
 		return nil, &ConclusionError{Reason: "invalid_structure", Cause: err}
 	}
 	if err := schema.Validate(value); err != nil {
-		return nil, &ConclusionError{Reason: "invalid_structure", FieldPath: conclusionSchemaPath(err), Cause: ErrSchema}
+		issue := p.catalog.schemaArgumentIssue(err)
+		return nil, &ConclusionError{Reason: "invalid_structure", FieldPath: issue.FieldPath, Cause: issue}
 	}
 	c := value.(map[string]any)
 	if path, ok := assessmentRangeError(c, ""); !ok {

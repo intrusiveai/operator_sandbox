@@ -92,7 +92,7 @@ func (p *Protocol) ValidateInputTree(raw []byte) (map[string]any, error) {
 		role := e["role"].(string)
 		roles[role]++
 		total += number(e["size_bytes"])
-		if role == "reference" && e["path"] != "artifacts/sha256-"+strings.TrimPrefix(e["digest"].(string), "sha256:") {
+		if role == "reference" && e["path"] != "artifacts/sha256-"+strings.TrimPrefix(e["digest"].(string), "sha256:") && e["path"] != "context/"+strings.TrimPrefix(e["digest"].(string), "sha256:")+".json" {
 			return nil, ErrProtocol
 		}
 	}

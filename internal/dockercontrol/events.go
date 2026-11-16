@@ -5,7 +5,6 @@ package dockercontrol
 import (
 	"bufio"
 	"context"
-	"errors"
 	"io"
 	"os"
 	"os/exec"
@@ -14,11 +13,12 @@ import (
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
-var ErrExited = errors.New("Docker reported container exit")
+var ErrExited = diagnostictext.New("Docker reported container exit")
 
-var ErrEvents = errors.New("Docker event stream lost or target execution interrupted")
+var ErrEvents = diagnostictext.New("Docker event stream lost or target execution interrupted")
 
 // WatchEvents is a single subscription, never reconnected. since precedes create,
 // so an exit racing subscription setup is replayed. The caller must independently

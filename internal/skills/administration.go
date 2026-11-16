@@ -11,6 +11,7 @@ import (
 	"syscall"
 
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 )
 
 // Directory flock keeps removal and publication exclusive while readers capture
@@ -31,7 +32,7 @@ func storeLease(store string, exclusive bool) (*os.File, error) {
 	}
 	if err = syscall.Flock(int(f.Fd()), mode|syscall.LOCK_NB); err != nil {
 		f.Close()
-		return nil, errors.New("skill store busy")
+		return nil, diagnostictext.New("skill store busy")
 	}
 	return f, nil
 }

@@ -10,6 +10,7 @@ import (
 )
 
 type attachmentPeer interface {
+	CheckContract(context.Context) error
 	Attach(context.Context, string, string, bool) (interceptor.Attachment, error)
 	Status(context.Context, string) (interceptor.Status, error)
 }
@@ -17,11 +18,15 @@ type attachmentPeer interface {
 // attachRecorded runs under the installation lease. No target preparation may
 // consume an attachment until both its binding and instance are durable.
 func attachRecorded(ctx context.Context, root string, intent campaign.AttachmentIntent, peer attachmentPeer) (attached interceptor.Attachment, status interceptor.Status, err error) {
-	stage := "Interceptor attachment intent recording"
+	stage := "Interceptor compatibility check"
 	defer func() { err = PreparationFailure(stage, err) }()
 	if err = ctx.Err(); err != nil {
 		return
 	}
+	if err = peer.CheckContract(ctx); err != nil {
+		return
+	}
+	stage = "Interceptor attachment intent recording"
 	record, err := campaign.CreateAttachment(root, intent)
 	if err != nil {
 		return

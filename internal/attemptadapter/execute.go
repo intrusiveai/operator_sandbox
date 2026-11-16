@@ -9,9 +9,11 @@ import (
 	"reflect"
 	"slices"
 	"sync"
+	"time"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/feedback"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/nativeexec"
@@ -19,8 +21,10 @@ import (
 
 type InjectionHandle = campaign.InjectionHandle
 type Result struct {
+	Integration *diagnostictext.Failure
 	// These values must be committed together with receipt contents before any
 	// harness reply. Native steps are already durable; this is not publication.
+	Failure    *campaign.TargetFailure
 	GuestJSON  []byte
 	Receipt    *feedback.Receipt
 	Injections []InjectionHandle
@@ -35,6 +39,7 @@ type Execution struct {
 	adapter  *stepAdapter
 }
 type stepAdapter struct {
+	failure *campaign.TargetFailure
 	plan    *Plan
 	active  interceptor.PreparedOperation
 	command command
@@ -78,6 +83,12 @@ func (a *stepAdapter) Interpret(p interceptor.PreparedOperation, r interceptor.R
 		return nativeexec.Unknown, ErrResult
 	}
 	if r.Status >= 400 && r.Status < 500 {
+		f := a.nativeFailure(p, r, "native_rejection")
+		f.Code = r.Code()
+		detail := r.Failure(p.Request().Operation, p.Request().RequestID)
+		f.Integration = &detail
+		f.SetDetail(detail.Message)
+		a.failure = f
 		return nativeexec.Failed, nil
 	}
 	q := p.Request()
@@ -110,6 +121,14 @@ func (a *stepAdapter) Interpret(p interceptor.PreparedOperation, r interceptor.R
 			valid = false
 		}
 		if valid && actual.Status == "error" {
+			f := a.nativeFailure(p, r, "target_turn_failed")
+			f.TurnID = actual.ID
+			f.SetDetail(actual.Error)
+			// Classification requires the native turn's explicit error, never elapsed time.
+			if actual.Error == context.DeadlineExceeded.Error() {
+				f.Category = "target_turn_timeout"
+			}
+			a.failure = f
 			return nativeexec.Failed, nil
 		}
 	case "observation.read":
@@ -162,10 +181,12 @@ func (e *Execution) Run(ctx context.Context) (result Result, runErr error) {
 	cleanup := "not-needed"
 	contact := "none"
 	lastOutcome := ""
+	nativeOperation := "artifact.register"
+	observationState := "not-started"
 	result.Injections = []InjectionHandle{}
 	result.StepIDs = []string{}
 	defer func() {
-		if runErr != nil {
+		if runErr != nil && e.attempts.NativeSteps().Fence().Err() == nil {
 			e.attempts.NativeSteps().Fence().Stop(runErr)
 		}
 		status, retry, code, message := "completed", "do-not-retry", "", ""
@@ -186,6 +207,16 @@ func (e *Execution) Run(ctx context.Context) (result Result, runErr error) {
 			stage = "complete"
 		}
 		body := map[string]any{"api_version": "operator.dev/engine-attempt-result/v1alpha2", "kind": "EngineAttemptResult", "request_id": p.request.RequestID, "attempt_id": p.request.AttemptID, "receipt_id": receiptID, "status": status, "stage": stage, "target_contact": contact, "invocation_state": invocation, "cleanup_state": cleanup, "retry_disposition": retry, "errors": []any{}}
+		if runErr != nil && result.Failure == nil && (ctx.Err() == context.DeadlineExceeded || ctx.Err() == nil && !time.Now().Before(p.deadline)) {
+			timing := campaign.AttemptTimeout{NativeOperation: nativeOperation, AllowanceMS: p.allowanceMS, ElapsedMS: time.Since(p.started).Milliseconds(), DeadlineSource: p.deadlineSource, Observation: observationState}
+			if timing.Valid() {
+				body["timeout"] = timing
+				message = timing.Message(invocation)
+				if stage == "observation" && invocation == "succeeded" {
+					code = "OBSERVATION_UNAVAILABLE"
+				}
+			}
+		}
 		if code != "" {
 			body["errors"] = []any{map[string]string{"code": code, "instance_path": "", "message": message}}
 		}
@@ -204,17 +235,47 @@ func (e *Execution) Run(ctx context.Context) (result Result, runErr error) {
 		result.GuestJSON = raw
 	}()
 	send := func(c command) (interceptor.Response, error) {
+		nativeOperation = c.Operation
 		lastOutcome = ""
 		index++
 		id := opaque("step", p.context.CampaignID, p.request.AttemptID, fmt.Sprint(index))
-		q := interceptor.OperationRequest{RequestID: id, OperationID: id, Operation: c.Operation, CampaignID: p.context.CampaignID, SessionID: p.binding.SessionID, WorkerInstanceID: p.binding.WorkerInstanceID, RunRevision: p.binding.RunRevision, ExpectedSessionRevision: revision, AttemptID: p.request.AttemptID, AttemptContextDigest: p.context.Digest, Deadline: p.deadline}
+		deadline := p.deadline
+		if native := time.Now().Add(interceptor.MaxOperationTimeout); native.Before(deadline) {
+			deadline = native
+		}
+		q := interceptor.OperationRequest{RequestID: id, OperationID: id, Operation: c.Operation, CampaignID: p.context.CampaignID, SessionID: p.binding.SessionID, WorkerInstanceID: p.binding.WorkerInstanceID, RunRevision: p.binding.RunRevision, ExpectedSessionRevision: revision, AttemptID: p.request.AttemptID, AttemptContextDigest: p.context.Digest, Deadline: deadline}
 		prepared, err := interceptor.PrepareOperation(q, c.Body)
 		if err != nil {
 			return interceptor.Response{}, err
 		}
-		e.adapter.active, e.adapter.command = prepared, c
+		e.adapter.active, e.adapter.command, e.adapter.failure = prepared, c, nil
 		r, err := e.executor.Execute(ctx, p.request.RequestID, prepared)
 		lastOutcome = r.Step.Outcome
+		if r.Boundary != "" && r.Step.ID != "" && context.Cause(ctx) != context.DeadlineExceeded && time.Now().Before(p.deadline) {
+			f := campaign.TargetFailure{NativeOperation: c.Operation, Operation: p.request.Invocation.OperationID, AttemptID: p.request.AttemptID, StepID: r.Step.ID, Category: r.Boundary, Omission: "not_provided"}
+			if r.Native != nil {
+				f.HTTPStatus = r.Native.Status
+				f.ResponseDigest = contracts.RawDigest(r.Native.Bytes())
+			}
+			if f.Valid() {
+				result.Failure = &f
+			}
+		}
+		if e.adapter.failure != nil && lastOutcome == string(nativeexec.Failed) && r.Native != nil {
+			f := *e.adapter.failure
+			f.StepID = r.Step.ID
+			f.ResponseDigest = contracts.RawDigest(r.Native.Bytes())
+			if f.Valid() {
+				result.Failure = &f
+			}
+		}
+		if r.Failure != nil && time.Now().Before(p.deadline) {
+			if result.Failure == nil {
+				result.Failure = &campaign.TargetFailure{NativeOperation: c.Operation, Operation: p.request.Invocation.OperationID, AttemptID: p.request.AttemptID, StepID: r.Step.ID, Category: "unknown_boundary_failure", Omission: "not_provided"}
+			}
+			result.Failure.Integration = r.Failure
+		}
+
 		if r.Step.ID != "" {
 			result.StepIDs = append(result.StepIDs, r.Step.ID)
 		}
@@ -263,6 +324,7 @@ func (e *Execution) Run(ctx context.Context) (result Result, runErr error) {
 		}
 	}
 	stage = "observation"
+	observationState = "incomplete"
 	source := feedback.Source{CampaignID: p.context.CampaignID, SessionID: p.binding.SessionID, AttemptID: p.request.AttemptID, AttemptContextDigest: p.context.Digest, TurnID: turn.ID, RunRevision: p.binding.RunRevision, SessionRevision: revision}
 	e.adapter.source = source
 	e.adapter.turn = turn
@@ -323,6 +385,7 @@ func (e *Execution) Run(ctx context.Context) (result Result, runErr error) {
 	if err != nil {
 		return result, err
 	}
+	observationState = "complete"
 	if p.request.Cleanup.Delete && len(p.cleanup) > 0 {
 		stage = "cleanup"
 		for i, cmd := range p.cleanup {
@@ -338,4 +401,8 @@ func (e *Execution) Run(ctx context.Context) (result Result, runErr error) {
 		cleanup = "completed"
 	}
 	return result, nil
+}
+
+func (a *stepAdapter) nativeFailure(p interceptor.PreparedOperation, r interceptor.Response, category string) *campaign.TargetFailure {
+	return &campaign.TargetFailure{NativeOperation: p.Request().Operation, Operation: a.plan.request.Invocation.OperationID, AttemptID: p.Request().AttemptID, HTTPStatus: r.Status, Category: category, Omission: "not_provided"}
 }

@@ -36,12 +36,12 @@ func modelDraft(receipts []string, record string) map[string]any {
 	if record != "" {
 		refs = append(refs, record)
 	}
-	return map[string]any{"status": "completed", "finish_reason": "objectives-addressed", "summary": "Observed bounded application responses; no internal effect is asserted.", "objectives": []any{map[string]any{"objective_id": "objective-marker", "outcome": "inconclusive", "summary": "Variants completed with external response evidence only.", "attempt_receipt_refs": receipts, "record_refs": refs}}, "hypotheses": []any{}, "claims": []any{}, "coverage": []any{map[string]any{"objective_id": "objective-marker", "status": "tested", "reason": "Compared two serial variants.", "attempt_receipt_refs": receipts}}, "uncertainties": []any{}, "record_refs": refs}
+	return map[string]any{"status": "completed", "finish_reason": "objectives-addressed", "summary": "Observed bounded application responses; no internal effect is asserted.", "objectives": []any{map[string]any{"objective_id": "objective-marker", "outcome": "inconclusive", "summary": "Variants completed with external response evidence only.", "attempts": receipts, "records": refs}}, "hypotheses": []any{}, "claims": []any{}, "coverage": []any{map[string]any{"objective_id": "objective-marker", "status": "tested", "reason": "Compared two serial variants.", "attempts": receipts}}, "uncertainties": []any{}, "records": refs}
 }
 func processAttempt(origin, record string, raw []byte, parent string) map[string]any {
 	var value any
 	_ = json.Unmarshal(raw, &value)
-	q := map[string]any{"origin": origin, "operation_id": "invoke", "input": map[string]any{"encoding": "json", "value": value}, "rationale": "Compare a bounded input variant against observed feedback."}
+	q := map[string]any{"origin": origin, "operation_id": "invoke", "json": value, "rationale": "Compare a bounded input variant against observed feedback."}
 	if record != "" {
 		q["strategy_provenance_ref"] = record
 	}
@@ -49,22 +49,23 @@ func processAttempt(origin, record string, raw []byte, parent string) map[string
 		q["scenario_id"] = "scenario-marker"
 	}
 	if parent != "" {
-		q["parent_attempt_receipt_id"] = parent
+		q["parent"] = parent
 	}
 	return q
 }
-func finishDraft(draft map[string]any) map[string]any {
-	reason := draft["finish_reason"]
-	delete(draft, "finish_reason")
-	return map[string]any{"finish_reason": reason, "assessment": draft}
-}
+func finishDraft(draft map[string]any) map[string]any { return draft }
+
 func publishCall(id, query string) any {
-	return modelCall(id, "artifact_publish", map[string]any{"purpose": "payload", "media_type": "application/json", "content": map[string]any{"encoding": "json", "value": map[string]any{"query": query}}})
+	return modelCall(id, "artifact_publish", map[string]any{"purpose": "payload", "media_type": "application/json", "json": map[string]any{"query": query}})
 }
 
 func TestPythonProcessCampaigns(t *testing.T) {
 	for _, transport := range []string{"fifo", "spool"} {
 		for _, mode := range []string{"objectives-only", "scenario", "exploratory", "https"} {
+			// Run every semantic case once and the scenario/evidence/finish workflow on both transports.
+			if transport == "spool" && mode != "scenario" {
+				continue
+			}
 			t.Run(transport+"/"+mode, func(t *testing.T) {
 				origin := "exploratory"
 				if mode == "scenario" {
@@ -81,13 +82,17 @@ func TestPythonProcessCampaigns(t *testing.T) {
 						if origin == "scenario" {
 							provenance["scenario_id"] = "scenario-marker"
 						}
-						calls = append(calls, modelCall("hypothesis", "record_append", map[string]any{"record_kind": "hypothesis", "record": map[string]any{"hypothesis_id": "hypothesis-marker", "objective_refs": []string{"objective-marker"}, "provenance": provenance, "statement": "A changed input may affect the response.", "assumptions": []string{}, "predicted_observations": []string{"A permitted response."}, "record_refs": []string{}}}), publishCall("payload-1", "baseline"))
+						// Record kind is selected by the model tool, not an argument.
+						provenance["objective_refs"] = []string{"objective-marker"}
+						provenance["statement"] = "A changed input may affect the response."
+						provenance["predicted_observations"] = []string{"A permitted response."}
+						calls = append(calls, modelCall("hypothesis", "record_hypothesis", provenance), publishCall("payload-1", "baseline"))
 						var task map[string]any
 						_ = json.Unmarshal([]byte(q["messages"].([]any)[1].(map[string]any)["content"].(string)), &task)
 						for _, v := range task["reference_handles"].([]any) {
 							e := v.(map[string]any)
 							if e["role"] == "reference" {
-								calls = append(calls, modelCall("reference", "reference_read", map[string]any{"reference_id": e["entry_id"], "offset": 0, "max_bytes": 4096}))
+								calls = append(calls, modelCall("reference", "reference_read", map[string]any{"reference": e["entry_id"], "offset": 0, "max_bytes": 4096}))
 								break
 							}
 						}
@@ -96,7 +101,7 @@ func TestPythonProcessCampaigns(t *testing.T) {
 						if e != nil {
 							return nil, e
 						}
-						record, _ = h["receipt_id"].(string)
+						record, _ = h["record"].(string)
 						if record == "" {
 							return nil, fmt.Errorf("hypothesis rejected: %v", h)
 						}
@@ -118,11 +123,11 @@ func TestPythonProcessCampaigns(t *testing.T) {
 							return nil, fmt.Errorf("attempt failed: %v", a)
 						}
 						attempts = append(attempts, a)
-						entries := a["feedback"].(map[string]any)["entries"].([]any)
+						entries := a["observations"].([]any)
 						if len(entries) != 1 {
 							return nil, fmt.Errorf("feedback missing: %v", a)
 						}
-						calls = append(calls, modelCall("read-"+id, "observation_read", map[string]any{"receipt_id": a["receipt_id"], "entry_id": entries[0].(map[string]any)["entry_id"], "offset": 0, "max_bytes": 4096}))
+						calls = append(calls, modelCall("read-"+id, "observation_read", map[string]any{"observation": entries[0].(map[string]any)["observation"], "offset": 0, "max_bytes": 4096}))
 					case 4, 6:
 						id := "read-attempt-1"
 						if turn == 6 {
@@ -132,15 +137,15 @@ func TestPythonProcessCampaigns(t *testing.T) {
 						if e != nil {
 							return nil, e
 						}
-						raw, e := base64.StdEncoding.DecodeString(fmt.Sprint(o["content"]))
+						raw, e := modelContent(o)
 						if e != nil || string(raw) != `{"answer":"test"}` {
 							return nil, fmt.Errorf("wrong observation bytes: %v", o)
 						}
 						reads++
 						if turn == 4 {
-							calls = append(calls, publishCall("payload-2", "refined"), modelCall("attempt-2", "attempt_execute", processAttempt(origin, record, []byte(`{"query":"refined"}`), attempts[0]["receipt_id"].(string))))
+							calls = append(calls, publishCall("payload-2", "refined"), modelCall("attempt-2", "attempt_execute", processAttempt(origin, record, []byte(`{"query":"refined"}`), attempts[0]["execution"].(string))))
 						} else {
-							calls = append(calls, modelCall("finish", "finish", finishDraft(modelDraft([]string{attempts[0]["receipt_id"].(string), attempts[1]["receipt_id"].(string)}, record))))
+							calls = append(calls, modelCall("finish", "finish", finishDraft(modelDraft([]string{attempts[0]["execution"].(string), attempts[1]["execution"].(string)}, record))))
 						}
 					default:
 						return nil, fmt.Errorf("unexpected model turn %d", turn)
@@ -154,7 +159,7 @@ func TestPythonProcessCampaigns(t *testing.T) {
 				}
 				r := newProcessRun(t, processCase{transport: transport, prompt: "default", reply: reply, change: func(in *preparation.Input) {
 					if server != nil {
-						httpsInput(t, in, server)
+						httpInput(t, in, server)
 					}
 					if mode == "objectives-only" {
 						var b map[string]any
@@ -178,7 +183,11 @@ func TestPythonProcessCampaigns(t *testing.T) {
 				if e := r.writer.Close(); e != nil {
 					t.Fatal(e)
 				}
-				receipt, e := reporting.Generate(ctx, r.root, "campaign-1", "")
+				// Reporting is a separate administrator operation, not part of the
+				// cleanup deadline already consumed above.
+				reportCtx, reportCancel := context.WithTimeout(context.Background(), 15*time.Second)
+				defer reportCancel()
+				receipt, e := reporting.Generate(reportCtx, r.root, "campaign-1", "")
 				if e != nil {
 					t.Fatal(e)
 				}
@@ -187,7 +196,7 @@ func TestPythonProcessCampaigns(t *testing.T) {
 					t.Fatal(report)
 				}
 				if mode == "https" && report.Assurance != "declared-observer" {
-					t.Fatal("HTTPS assurance", report.Assurance)
+					t.Fatal("HTTP assurance", report.Assurance)
 				}
 				if slices.Contains(r.native.calls, "injection.arm") {
 					t.Fatal("unexpected injection")
@@ -195,4 +204,15 @@ func TestPythonProcessCampaigns(t *testing.T) {
 			})
 		}
 	}
+}
+
+func modelContent(value map[string]any) ([]byte, error) {
+	text, ok := value["content"].(string)
+	if !ok {
+		return nil, fmt.Errorf("missing content")
+	}
+	if value["encoding"] == "utf8" {
+		return []byte(text), nil
+	}
+	return base64.StdEncoding.DecodeString(text)
 }

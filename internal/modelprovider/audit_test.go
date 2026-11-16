@@ -51,6 +51,8 @@ func TestAuditFailurePreventsProviderDispatch(t *testing.T) {
 	client.http.Transport = transport
 	if _, err := client.Generate(context.Background(), nativeRequest("openai-chat-text-tools-v1")); err == nil || transport.calls != 0 || writes != 1 {
 		t.Fatal("unaudited provider dispatch", transport.calls, writes, err)
+	} else if d := Details(err); d == nil || d.Credential.Step != "audit-retention" || d.Credential.Backend != "gcp-secret-manager" || d.Category != "credential_preparation" {
+		t.Fatalf("lost credential boundary: %+v", d)
 	}
 	fail = false
 	if _, err := client.Generate(context.Background(), nativeRequest("openai-chat-text-tools-v1")); err == nil || transport.calls != 1 || writes != 2 {

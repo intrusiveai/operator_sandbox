@@ -4,15 +4,15 @@ package campaign
 
 import (
 	"encoding/json"
-	"errors"
 	"slices"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
-var ErrConflict = errors.New("operation identity conflicts with saved command")
-var ErrFeedbackBudget = errors.New("campaign feedback allowance exhausted")
+var ErrConflict = diagnostictext.New("operation identity conflicts with saved command")
+var ErrFeedbackBudget = diagnostictext.New("campaign feedback allowance exhausted")
 
 // Tools shares the attempt ledger's lock, namespace, target binding and limits.
 // It cannot create attempt admissions or resume work from a recovered journal.
@@ -177,7 +177,7 @@ func (t *Tools) ReserveRead(id string, maximum int64) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	r, ok := a.tools[id]
-	if !ok || r.Operation != "engine.observation_read" || r.Result != nil || r.ReadCharged || maximum < 1 || maximum > 262144 {
+	if !ok || r.Operation != "engine.observation_read" || r.Result != nil || r.ReadCharged || maximum < 1 || maximum > 1<<20 {
 		return ErrInvalid
 	}
 	if err := a.ready(); err != nil {
@@ -192,8 +192,15 @@ func (t *Tools) ReserveRead(id string, maximum int64) error {
 	for _, tool := range a.tools {
 		pending += tool.ReadReserved
 	}
-	if a.readRequests >= limits.Reads || maximum > limits.Bytes-a.readBytes-pending {
-		return ErrFeedbackBudget
+	remainingReads, remainingBytes := max(int64(0), limits.Reads-a.readRequests), max(int64(0), limits.Bytes-a.readBytes-pending)
+	if remainingReads == 0 || maximum > remainingBytes {
+		correction := "No evidence-read requests remain. Use already inspected evidence or report the gap; repeating the read cannot succeed."
+		if remainingReads > 0 && remainingBytes == 0 {
+			correction = "No evidence-read bytes remain. Use already inspected evidence or report the gap; repeating the read cannot succeed."
+		} else if remainingReads > 0 && remainingBytes > 0 {
+			correction = "Request no more than the remaining evidence bytes, or use already inspected evidence. No evidence was read."
+		}
+		return (&contracts.ArgumentError{Reason: "evidence_read_budget", FieldPath: "/max_bytes", Correction: correction, Cause: ErrFeedbackBudget}).WithFacts(contracts.FailureFacts{"requested_bytes": maximum, "remaining_bytes": remainingBytes, "remaining_reads": remainingReads})
 	}
 	r.ReadReserved = maximum
 	r.ReadCharged = true

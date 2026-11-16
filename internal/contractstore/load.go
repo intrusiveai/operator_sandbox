@@ -18,15 +18,16 @@ import (
 	"syscall"
 
 	"github.com/intrusiveai/operator_sandbox/contracts"
+	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
 	"github.com/intrusiveai/operator_sandbox/schemas"
 )
 
 var (
-	ErrPath         = errors.New("contract package directory must be an absolute clean host path")
-	ErrInstallation = errors.New("contract package filesystem must contain exactly the declared regular files and directories, owned by the service user or root and not writable by group or others")
-	ErrManifest     = errors.New("invalid installed contract package manifest")
-	ErrPin          = errors.New("installed contract package does not match the trusted expected version and digest")
-	ErrIntegrity    = errors.New("installed contract payload verification or offline schema loading failed")
+	ErrPath         = diagnostictext.New("contract package directory must be an absolute clean host path")
+	ErrInstallation = diagnostictext.New("contract package filesystem must contain exactly the declared regular files and directories, owned by the service user or root and not writable by group or others")
+	ErrManifest     = diagnostictext.New("invalid installed contract package manifest")
+	ErrPin          = diagnostictext.New("installed contract package does not match the trusted expected version and digest")
+	ErrIntegrity    = diagnostictext.New("installed contract payload verification or offline schema loading failed")
 )
 
 const ReportVersion = "operator.dev/contract-check/v1alpha1"
@@ -86,7 +87,7 @@ func inventory(m map[string]any, manifest []byte) *entry {
 }
 
 // Load reads a content-only installation: package.json and exactly its inventoried
-// payloads/parent directories. It authenticates the manifest against expected
+// payloads/parent directories. It verifies the interface identity against expected
 // before reading any payload, then verifies and compiles the frozen bytes offline.
 // No package-derived code is executed. A valid expected pin is not inferred from
 // the incoming package. Directory ancestors are trusted installation paths.
@@ -122,8 +123,9 @@ func Load(ctx context.Context, directory string, expected contracts.PackageIdent
 	if err != nil {
 		return nil, ErrManifest
 	}
-	digest, err := contracts.CanonicalDigest(manifest, contracts.PackageManifestLimit)
-	if err != nil || m["package_version"] != expected.Version || digest != expected.Digest {
+	document, err := readFile(ctx, root, contracts.InterfaceDocument, contracts.PackageFileLimit, -1)
+	identity, identityErr := contracts.InterfaceIdentity(document)
+	if err != nil || identityErr != nil || m["package_version"] != expected.Version || identity != expected {
 		return nil, ErrPin
 	}
 	if err := ctx.Err(); err != nil {

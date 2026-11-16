@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"testing"
 	"time"
 
@@ -122,7 +123,7 @@ func TestPythonProcessHostCrashRetainsUnknownWork(t *testing.T) {
 		t.Fatal(e)
 	}
 	again, e := nativerecovery.Run(ctx, identity.Root, "campaign-1", true, native)
-	if e != nil || first != again {
+	if e != nil || !reflect.DeepEqual(first, again) {
 		t.Fatal(first, again, e)
 	}
 	for _, op := range native.calls {

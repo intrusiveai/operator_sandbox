@@ -8,6 +8,7 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
+	"github.com/intrusiveai/operator_sandbox/contracts"
 	"io"
 	"os"
 	"path/filepath"
@@ -22,7 +23,16 @@ func candidate(t *testing.T) (string, Manifest) {
 	t.Helper()
 	root := t.TempDir()
 	source, _ := filepath.Abs("../..")
-	report, err := contractpublish.Build(context.Background(), source, filepath.Join(root, "contract"), "0.0.0")
+	rawInterface, err := os.ReadFile(filepath.Join(source, "schemas", contracts.InterfaceDocument))
+	if err != nil {
+		t.Fatal(err)
+	}
+	identity, err := contracts.InterfaceIdentity(rawInterface)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	report, err := contractpublish.Build(context.Background(), source, filepath.Join(root, "contract"), identity.Version)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +53,7 @@ func candidate(t *testing.T) (string, Manifest) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	m := Manifest{ManifestVersion, "0.1.0", runtime.GOOS + "/" + runtime.GOARCH, strings.Repeat("a", 40), "go1.26.5", report.Package, files}
+	m := Manifest{ManifestVersion, "0.1.0", runtime.GOOS + "/" + runtime.GOARCH, strings.Repeat("a", 40), "go1.26.5", report.Package, files, strings.Repeat("a", 64), "0.1.0"}
 	raw, err := json.Marshal(m)
 	if err != nil {
 		t.Fatal(err)
@@ -176,6 +186,9 @@ func TestExtractRejectsMixedAndUnsafeProductLayouts(t *testing.T) {
 func TestManifestRejectsAmbiguousInventory(t *testing.T) {
 	_, m := candidate(t)
 	tests := []func(*Manifest){
+		func(m *Manifest) { m.InterceptorContractVersion = "v0.1.0" },
+		func(m *Manifest) { m.InterceptorContractSHA256 = "sha256:" + strings.Repeat("a", 64) },
+		func(m *Manifest) { m.InterceptorContractVersion = "" },
 		func(m *Manifest) { m.Platform = "windows/amd64" }, func(m *Manifest) { m.Version = "01.2.3" },
 		func(m *Manifest) { m.Files[0].Path = "../escape" }, func(m *Manifest) { m.Files[0].Mode = 04755 },
 		func(m *Manifest) { m.Files[0].Size = MaxFileBytes + 1 }, func(m *Manifest) { m.Files[0].Digest = "sha256:bad" },
@@ -189,6 +202,18 @@ func TestManifestRejectsAmbiguousInventory(t *testing.T) {
 		if _, err := DecodeManifest(raw); err == nil {
 			t.Fatal("accepted invalid manifest")
 		}
+	}
+	historical := m
+	historical.InterceptorContractSHA256 = ""
+	versionOnly, _ := json.Marshal(historical)
+	if _, err := DecodeManifest(versionOnly); err != nil {
+		t.Fatal("historical version-only metadata", err)
+	}
+	historical.InterceptorContractVersion = ""
+	old, _ := json.Marshal(historical)
+	decoded, err := DecodeManifest(old)
+	if err != nil || decoded.InterceptorContractVersion != "" || decoded.InterceptorContractSHA256 != "" {
+		t.Fatal("historical metadata must remain unknown", err)
 	}
 	raw, _ := json.Marshal(m)
 	raw = append([]byte(`{"version":"0.1.0",`), raw[1:]...)

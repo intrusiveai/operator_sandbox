@@ -50,7 +50,7 @@ The broker MUST preserve cumulative admission/read accounting and duplicate rule
 `ServeOrdinary` MUST have one owner per service. It receives the guest's
 `ordinary-out` lane and sends replies through `ordinary-in`, starting host sequence
 numbers at zero. It MUST carry the transport's original absolute operation deadline
-into dispatch and tighten it by the private profile's operation timeout. Physical
+into dispatch and tighten attempts by the private profile's complete-attempt timeout. Physical
 FIFO/spool pumping and control consumption MUST run
 independently; an ordinary request MUST NOT block urgent termination. The launcher
 MUST open transport admission only after service admission succeeds. Spool cleanup
@@ -112,3 +112,51 @@ Finalization now collects each verified native source/replacement session after
 cleanup. The [evidence service](EVIDENCE_SERVICE.md) defines saved selection,
 verification, retention, limits and per-session outcomes. Collection and publication
 are independent of Docker termination and do not reopen execution.
+
+Attempt timeout diagnostics retain request/attempt identity, native operation,
+allowance, elapsed time, limiting deadline, invocation outcome, observation state
+and transport publication state. The primary Operator diagnostic precedes Harness
+exit details in reports. A timeout permits only the existing reply to drain for
+at most two seconds, within the original request/campaign limit; execution
+admission is already closed. Cancellation and independent failures bypass this
+grace. Native terminal cleanup retains its independent bounded deadline.
+
+## Integration failure diagnostics
+
+Native failures retain the affected integration, operation and request, along with
+available HTTP status, native error code, bounded error message, remote request ID
+and response digest. Codes supplied by Interceptor do not need a corresponding
+Operator message-table entry. Unknown effects remain unknown even when Interceptor
+provides a useful error description.
+
+For example, a rejected snapshot can report `snapshot.create`, HTTP 409,
+`snapshot_failed`, and the native permission-denied explanation. When this causes
+Operator to stop execution, that diagnostic is the initiating failure; a subsequent
+forced Harness exit is supporting evidence. Correctable snapshot query rejections
+remain operation history, not a shutdown cause.
+
+Inspect a retained campaign with:
+
+```sh
+operatorctl inspect --campaign <campaign-id>
+operatorctl report --campaign <campaign-id>
+operatorctl export --campaign <campaign-id> --output <new-directory>
+```
+
+The workflow diagnostic in the journal, exported events, result manifest and
+Markdown report contains the selected facts. Raw native responses can remain
+host-only. Diagnostic export does not make them available to Harness or change
+feedback policy. Omission fields explain redaction, size bounds or unavailable
+safe descriptions. A response digest identifies observed bytes; a retention
+failure is reported explicitly when those bytes could not be saved.
+
+Cleanup lists failures by action separately from the initiating failure, including
+ownership closure, injection deletion, target stop and host resource removal.
+Later recovery and evidence collection retain separate results; successful evidence
+collection does not prove that every cleanup action succeeded. Older records may
+lack these details and cannot establish an unrecorded cause retrospectively.
+
+The same host diagnostic path also carries HTTPS target failure facts. Model
+providers retain their dedicated usage, validation and request diagnostics.
+See [integration error handling](../specs/integration-error-handling.md) for the
+implementation contract and extension rules.

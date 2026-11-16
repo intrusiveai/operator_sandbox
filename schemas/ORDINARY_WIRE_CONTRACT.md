@@ -1,5 +1,10 @@
 # Ordinary wire protocol
 
+The machine-readable interface is [asyncapi.json](asyncapi.json). Compatibility
+uses its version and exact byte hash; the existing lanes and message envelopes
+remain unchanged. See [conformance](../docs/CONTRACT_CONFORMANCE.md).
+
+
 This document fixes the wire field choices for the ordinary operations implemented
 in the shared validation library. It supplements [SHARED_CONTRACT.md](SHARED_CONTRACT.md).
 
@@ -11,7 +16,7 @@ read, typed record append, snapshot create/list/inspect, restore, finish, local 
 and model generation. The [model codec contract](MODEL_CODEC_CONTRACT.md) fixes
 the model exchange's native subset and trusted profile binding. Each entry identifies
 request/result/error schemas, allowed error codes, lifecycle states, finalization
-restrictions, timeout ceiling, encoded request/result ceilings, effect kind and
+restrictions, encoded request/result ceilings, effect kind and
 receipt policy. Native Interceptor operation names and schemas stay in its adapter.
 
 Receipt policy `durable` requires saving the operation result before replying,
@@ -40,10 +45,10 @@ The response echoes the request's campaign, launch, revision, call ID, operation
 ID and operation name. The body operation_id selects a target capability. Operator assigns internal
 attempt request_id from the envelope operation_id; call_id remains exchange correlation.
 
-The host clamps the requested timeout to the registry ceiling and remaining campaign
-time. An otherwise valid longer requested timeout is not a new authorization or an
-encoding error. Snapshot creation/restore have 300-second ceilings; other operations
-in this stage have 30-second ceilings. Every deadline is host-monotonic.
+The host clamps the requested timeout to the frozen EngineContext operation wait
+and remaining campaign time. Attempts additionally use their complete-attempt
+profile allowance. See [operating limits](OPERATING_LIMITS_CONTRACT.md). An otherwise
+valid longer requested wait does not grant extra time. Every deadline is host-monotonic.
 
 Only admitted execution permits normal work. Finalization admits artifact operations
 for a large assessment draft, local diagnostic reports and finish. For part/commit, determine purpose from the host's saved upload
@@ -187,3 +192,53 @@ invalid arguments receives a retained, correlated error, not an execution receip
 Successful responses require a fully valid request; error responses may correlate
 to an invalid body. Malformed JSON, invalid envelope identities and unknown routes
 remain transport violations. See SIMPLE_CAMPAIGN_CONTRACT.md for the ordinary workflow.
+
+### Database setup actions
+
+`database_response` is an optional simulation surface on a declared PostgreSQL
+service. Its selector requires `service` and `call_ordinal`, and may narrow the
+captured `{query, parameters, result}` request with `request_body_pointer`,
+`request_body_equal`, or `request_body_contain`. It does not accept HTTP selectors,
+model tool names, or a turn selector. Scopes are `once` and `standing`. Placement
+selects `/rows/<row>/<column>` and optional JSON members; the host permits only
+installed pointers and native validation preserves column types and row shape.
+
+Database state uses `environment_state`/`fidelity`, a declared table policy ID as
+`collection`, and a JSON-encoded object string as `key`, for example
+`"{\"id\":\"document-one\"}"`. Composite keys must include exactly the declared
+key columns with non-null scalar values. Equivalent JSON keys compare by value;
+invalid supplied keys are not repaired. Existing-row writes require a permitted
+writable-field pointer. Root `replace` requires explicit creation permission,
+matching payload keys, and only declared fields; it never upserts. Removing an
+injection does not undo committed state. Restore a checkpoint to reset saved data.
+
+Both surfaces retain existing input limits, artifact ownership, origin, budgets,
+no-replay rules, and the ordinary one-finish workflow. A database setup policy
+rejection uses `database_setup_denied` with the setup field path and confirms that
+execution did not occur. No arbitrary SQL tool or direct database credential is
+provided to the Harness.
+
+## Application model-response injection
+
+`model_response` is an optional simulation surface for successful, parseable,
+non-streaming generation responses delivered to the **target application**. It
+MUST NOT affect Harness generation or tool results sent to a model. The selector
+MUST supply an advertised `model_codec` and `call_ordinal`; it MAY constrain a
+supervisor-observed `turn_id` and original application request-body predicates.
+It MUST NOT supply tool, service, HTTP, database or filesystem selectors. Scopes
+are `once` and `standing`; `next_turn` is not supported.
+
+The placement root is the complete response body. Existing replace, text,
+array-insert and object-merge rules and administrator pointer/merge-field limits
+apply. Payloads MUST be valid bounded JSON but MAY intentionally violate the
+application codec's response schema, including tool names, argument shapes and
+invalid JSON inside argument strings. Operator MUST NOT repair or validate them
+as responses to Harness generation. Raw invalid JSON, embeddings, streaming,
+HTTP status/header mutation and upstream request mutation are outside this surface.
+
+Capability availability does not grant authorization: an installed route MUST
+select the exact application codec, scopes and placements. Native definitions
+remain bound to the attempt and its retained payload. Existing deletion, retained
+injection, snapshot, restore, admission and no-replay rules apply. Interceptor
+owns request-admission selection and ordinal state; Operator MUST NOT recompute
+ordinals or replay an invocation to obtain delivery evidence.

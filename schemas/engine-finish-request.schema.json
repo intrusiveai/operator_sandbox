@@ -5,7 +5,8 @@
   "additionalProperties": false,
   "properties": {
     "finish_reason": {
-      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/finish_reason"
+      "$ref": "urn:operator:schema:wire-common:v1alpha1#/$defs/finish_reason",
+      "description": "Reason the Harness is finishing execution."
     },
     "assessment": {
       "$ref": "urn:operator:schema:assessment:v1alpha1"
@@ -26,8 +27,10 @@
             "invalid-call-limit",
             "deadline",
             "provider-failure",
-            "target-failure"
-          ]
+            "target-failure",
+            "no-progress-limit"
+          ],
+          "description": "Explanation of the coverage status."
         }
       },
       "required": [

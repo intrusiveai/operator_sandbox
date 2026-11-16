@@ -17,12 +17,17 @@ import (
 
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/contractstore"
+	"github.com/intrusiveai/operator_sandbox/internal/credentials"
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
+	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/termination"
 )
 
 func main() {
+	if len(os.Args) == 2 && os.Args[1] == credentials.OnePasswordChildCommand {
+		os.Exit(credentials.ServeOnePasswordChild(context.Background(), os.Stdin, os.Stdout, "Operator Sandbox", operatorVersion))
+	}
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 	code := run(ctx, os.Args[1:], os.Stdout, os.Stderr)
 	cancel()
@@ -81,7 +86,7 @@ func runWithDefaults(ctx context.Context, args []string, stdout, stderr io.Write
 		return workerCommand(ctx, args[1:], stdout, stderr)
 	}
 	if len(args) == 1 && args[0] == "version" {
-		if json.NewEncoder(stdout).Encode(map[string]string{"api_version": "operator.dev/version/v1alpha1", "version": operatorVersion, "source_commit": releaseSourceCommit, "contract_version": contractstore.SupportedVersion, "contract_digest": contractstore.SupportedDigest}) != nil {
+		if json.NewEncoder(stdout).Encode(map[string]string{"api_version": "operator.dev/version/v1alpha1", "version": operatorVersion, "source_commit": releaseSourceCommit, "contract_version": contractstore.SupportedVersion, "contract_digest": contractstore.SupportedDigest, "interceptor_contract_version": interceptor.SupportedContractVersion, "interceptor_contract_sha256": interceptor.SupportedContractSHA256}) != nil {
 			return 1
 		}
 		return 0

@@ -16,8 +16,16 @@ import (
 )
 
 type attachTestPeer struct {
+	check  func() error
 	attach func() (interceptor.Attachment, error)
 	status func() (interceptor.Status, error)
+}
+
+func (p attachTestPeer) CheckContract(context.Context) error {
+	if p.check != nil {
+		return p.check()
+	}
+	return nil
 }
 
 func (p attachTestPeer) Attach(context.Context, string, string, bool) (interceptor.Attachment, error) {
@@ -82,7 +90,7 @@ func TestRecordedAttachOrdersDurabilityBeforeEffects(t *testing.T) {
 				t.Fatal(e)
 			}
 			if fault != "none" {
-				expectedStage := map[string]string{"attach reply": "Interceptor attachment", "binding write": "Interceptor attachment binding recording", "status reply": "Interceptor status lookup", "status drift": "Interceptor attachment verification", "terminal status": "Interceptor attachment verification", "instance write": "Interceptor attachment verification", "cancelled": "Interceptor attachment intent recording"}[fault]
+				expectedStage := map[string]string{"attach reply": "Interceptor attachment", "binding write": "Interceptor attachment binding recording", "status reply": "Interceptor status lookup", "status drift": "Interceptor attachment verification", "terminal status": "Interceptor attachment verification", "instance write": "Interceptor attachment verification", "cancelled": "Interceptor compatibility check"}[fault]
 				d := PreparationDetails(e)
 				if d == nil || d.Stage != expectedStage {
 					t.Fatal("wrong preparation stage", d, e)
@@ -105,5 +113,23 @@ func TestRecordedAttachOrdersDurabilityBeforeEffects(t *testing.T) {
 				t.Fatal("replayed native attach")
 			}
 		})
+	}
+}
+
+func TestCompatibilityBeforeAttachmentIntent(t *testing.T) {
+	root := t.TempDir()
+	p := attachTestPeer{check: func() error {
+		return &interceptor.CompatibilityError{Reason: "version_mismatch", Expected: "0.1.0", Actual: "0.2.0", HTTPStatus: 200}
+	}, attach: func() (interceptor.Attachment, error) {
+		t.Fatal("attached incompatible server")
+		return interceptor.Attachment{}, nil
+	}}
+	_, _, err := attachRecorded(context.Background(), root, campaign.AttachmentIntent{}, p)
+	d := PreparationDetails(err)
+	if d == nil || d.Stage != "Interceptor compatibility check" || !d.Valid() || d.Interceptor.Actual != "0.2.0" {
+		t.Fatal(err, d)
+	}
+	if _, err = os.Stat(filepath.Join(root, "attachments")); !os.IsNotExist(err) {
+		t.Fatal("created intent before compatibility", err)
 	}
 }

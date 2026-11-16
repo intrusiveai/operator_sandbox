@@ -6,6 +6,12 @@ facts, protected evidence, budget counters or final campaign status. Shared Go/P
 validators and broker/harness process tests implement these rules. Native runtime
 qualification remains a separate release gate.
 
+Model tools use flattened records and typed handles defined in
+[MODEL_TOOL_CATALOG.md](MODEL_TOOL_CATALOG.md). The shared
+[normalizer](MODEL_TOOL_NORMALIZATION.md) generates IDs, resolves local and
+historical references and derives receipt lists. The shapes below are canonical
+host messages, not the model's arguments. They retain independent host validation.
+
 ## Typed records
 
 `engine.record_append` takes exactly `record_kind` and `record` using the
@@ -75,7 +81,7 @@ launch records and final revision:
 | `skill_set_digest` | Raw bytes of SkillSetManifest, including the empty set. |
 | `image_digest` | Full Docker image ID pinned for this launch. |
 | `release_record_digest` | Raw bytes of the validated embedded compatibility file. |
-| `contract_package_version`, `contract_package_digest` | Installed stable major.minor.patch version and canonical package-manifest digest. |
+| `contract_package_version`, `contract_package_digest` | Installed stable major.minor.patch version and exact AsyncAPI document hash. |
 
 These copies grant no authority. Raw-file digests do not replace separately recorded
 canonical object digests. Restores keep initial input identities and change the

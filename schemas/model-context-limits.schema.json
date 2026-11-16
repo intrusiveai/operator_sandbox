@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:operator:schema:model-context-limits:v1alpha1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "maximum_prompt_tokens": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "maximum_completion_tokens": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "warning_threshold_tokens": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    }
+  },
+  "required": [
+    "maximum_prompt_tokens",
+    "maximum_completion_tokens",
+    "warning_threshold_tokens"
+  ]
+}

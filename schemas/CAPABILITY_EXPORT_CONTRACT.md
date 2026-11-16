@@ -35,6 +35,13 @@ not last-writer-wins. Delivery examples preserve order, and embedded schemas and
 example JSON preserve their values; do not sort arrays inside those documents.
 Within services, sort endpoints by `id` and creatable collections by `collection`;
 reject duplicate identifiers within each enclosing service.
+Preserve endpoint `methods`, `paths`, `keys`, and `mutable_fields` with their
+native omission semantics. `http-route-set` allowlists are independent exact
+selectors, with empty/omitted lists unrestricted at the capability layer.
+`state-collection` lists existing record keys and writable top-level fields;
+its delivery schemas describe whole records. These fields remain available in
+compact-context detail references. Concrete host authorization is still required;
+discovery does not permit wildcard selection, creation, or immutable-field writes.
 Absent optional fields stay absent. Normalize native null collections to empty
 arrays only in the public projection, never when verifying the native source.
 No volatile session, worker, revision, readiness, active profile or remaining
@@ -179,11 +186,11 @@ Native runtime policy/route checks and Go/Python structural, semantic and JCS
 validation remain required in addition to the fixture mapper.
 
 
-## HTTPS adapter projection
+## HTTP adapter projection
 
-For `https/v1`, Operator MUST derive capabilities from the private mapping defined
-in [HTTPS targets](../docs/HTTPS_TARGETS.md). The source companion MUST use
-`operator.dev/https-capabilities/v1alpha1` and contain only the logical target ID,
+For `http/v1`, Operator MUST derive capabilities from the private mapping defined
+in [HTTP targets](../docs/HTTP_TARGETS.md). The source companion MUST use
+`operator.dev/http-capabilities/v1alpha1` and contain only the logical target ID,
 canonical private mapping digest and sorted operation delivery declarations.
 Its source digest MUST be SHA-256 of its canonical bytes. Public operation input
 media types and byte bounds MUST match the mapping; action, service, filesystem
@@ -196,9 +203,39 @@ operation errors advertised. Private URLs, headers, fixed request data,
 credentials and CA configuration MUST NOT be exported. Import MUST reproduce and
 compare the exact public projection. Campaign startup MUST independently
 rederive execution capabilities from the frozen private mapping. The shared
-[HTTPS fixture](fixtures/https-capability-chain.json) MUST pass Go/Python checks.
+[HTTP fixture](fixtures/http-capability-chain.json) MUST pass Go/Python checks.
 
 The host's existing source-companion storage fields MAY retain their native
 names for compatibility; consumers MUST interpret provenance using `adapter`.
-An HTTPS execution binding's opaque session field identifies local campaign
+An HTTP execution binding's opaque session field identifies local campaign
 attribution only. It MUST NOT imply a remote session, readiness lease or reset.
+
+## Managed PostgreSQL services
+
+The native decoder accepts the `code` application adapter with an explicitly
+reviewed operation delivery contract. PostgreSQL services use kind `postgresql`,
+transport `postgresql+tls`, and the `database_response` surface. The public service
+projection retains `database_tables`, sorted by policy ID: each policy contains
+`id`, ordered `keys`, ordered writable `fields`, `allow_create`, and optional
+`max_records`. Creation-enabled policies require a positive bounded record limit.
+Key and writable-field names are disjoint. These fields describe eligibility;
+installed route policy still authorizes every concrete injection. No database
+credentials, management addresses, or sealed oracle SQL are projected.
+
+The decoder accepts native oracle type `database_query_match`. Permitted live
+outcomes use the existing `oracle_outcome` evidence class. Capability publication
+does not grant access to that evidence or bypass effective-profile narrowing.
+
+The shared `fixtures/postgresql-capability-chain/` files bind a native PostgreSQL
+code-adapter export to its public projection and submitted ScenarioBundle. Go and
+Python conformance checks MUST agree on this projection and its admission.
+
+## Application model responses
+
+A `model_response` action MUST preserve the native `model_codecs` list and
+`placement_root: response-body`. Codec names describe the target application's
+model API, not its upstream provider configuration or Harness's configured model.
+They MUST survive compact target-context projection. The source digest MUST use
+Interceptor's typed field ordering and omission rules, including the new profile
+fields. Other surfaces MUST NOT acquire these fields or gain model-response
+permission through a service reference.

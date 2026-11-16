@@ -125,7 +125,7 @@ func TestNativeDockerFinishExit(t *testing.T) {
 				t.Fatal(e)
 			}
 			approved, req := localCompatibility(t, input.Protocol)
-			record := imagerelease.Record{APIVersion: imagerelease.CompatibilityVersion, MinimumOperatorVersion: "0.1.0", ContractPackageVersion: req.Contract.Version, ContractPackageDigest: req.Contract.Digest, RuntimeProfile: req.RuntimeProfile, Platform: image.ImagePlatform}
+			record := imagerelease.Record{APIVersion: imagerelease.CompatibilityVersion, ContractPackageVersion: req.Contract.Version, ContractPackageDigest: req.Contract.Digest, RuntimeProfile: req.RuntimeProfile, Platform: image.ImagePlatform}
 			approved.Image = image
 			approved.Release, e = imagerelease.Validate(encode(record), image.ImageID, req)
 			if e != nil {
@@ -151,7 +151,7 @@ func TestNativeDockerFinishExit(t *testing.T) {
 			}
 			parent := t.TempDir()
 			os.Chmod(parent, 0700)
-			tree, e := staging.Create(ctx, input.Protocol, parent, staging.Manifests{InputTree: launch.InputTree, SkillSet: launch.SkillSet, Skills: launch.Skills}, map[string][]byte{"input/run-context.json": launch.EngineContext, "input/scenario-bundle.json": launch.ScenarioBundle, "input/system-prompt.txt": launch.Prompt})
+			tree, e := staging.Create(ctx, input.Protocol, parent, staging.Manifests{InputTree: launch.InputTree, SkillSet: launch.SkillSet, Skills: launch.Skills}, stagedContextContents(target, launch))
 			if e != nil {
 				t.Fatal(e)
 			}

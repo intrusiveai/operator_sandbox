@@ -105,11 +105,6 @@
               "diagnostic"
             ]
           },
-          "timeout_ms": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 300000
-          },
           "max_request_bytes": {
             "type": "integer",
             "minimum": 1,
@@ -145,7 +140,6 @@
           "error_codes",
           "lifecycle_states",
           "finalization_rule",
-          "timeout_ms",
           "max_request_bytes",
           "max_result_bytes",
           "effect",

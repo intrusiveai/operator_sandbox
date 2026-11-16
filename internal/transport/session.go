@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/intrusiveai/operator_sandbox/internal/operationpolicy"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -66,6 +67,7 @@ func earlier(a, b time.Time) time.Time {
 }
 
 type Config struct {
+	OperationTimeouts    map[string]int64
 	Protocol             *contracts.Protocol
 	CampaignID, LaunchID string
 	Fence                *campaign.Fence
@@ -116,6 +118,11 @@ type Session struct {
 
 func newSession(c Config) (*Session, error) {
 	now := time.Now()
+	configured, err := operationpolicy.Resolve(c.OperationTimeouts)
+	if err != nil {
+		return nil, err
+	}
+	c.OperationTimeouts = configured
 	if c.Protocol == nil || c.Fence == nil || !c.CampaignDeadline.After(now) || c.CampaignDeadline.After(now.Add(30*time.Minute)) || c.SpoolMaxBytes < 0 {
 		return nil, ErrProtocol
 	}
@@ -151,7 +158,7 @@ func (s *Session) bound(now time.Time) time.Time {
 	return d
 }
 func (s *Session) check(now time.Time) error {
-	if err := s.config.Fence.Err(); err != nil {
+	if err := s.config.Fence.Err(); err != nil && !s.config.Fence.Reporting() {
 		return err
 	}
 	if s.closed {
@@ -255,7 +262,7 @@ func (s *Session) accept(i int, raw []byte, now time.Time) error {
 	if len(s.queues[i]) >= slots(i) {
 		return ErrQueueFull
 	}
-	if i == 1 && (s.phase != "admitted" || s.active != nil) {
+	if i == 1 && (s.phase != "admitted" || s.active != nil || s.config.Fence.Err() != nil) {
 		return ErrProtocol
 	}
 	if err := s.state.Accept(lanes[i], raw); err != nil {
@@ -276,11 +283,7 @@ func (s *Session) accept(i int, raw []byte, now time.Time) error {
 			return ErrProtocol
 		}
 		limitMS := integer(m["timeout_ms"])
-		for _, op := range s.config.Protocol.Operations() {
-			if op.Name == m["operation"] {
-				limitMS = min(limitMS, op.TimeoutMS)
-			}
-		}
+		limitMS = min(limitMS, s.config.OperationTimeouts[m["operation"].(string)])
 		limit := time.Duration(limitMS) * time.Millisecond
 		s.active = &operation{request: bytes.Clone(raw), deadline: earlier(now.Add(limit), s.config.CampaignDeadline)}
 	}

@@ -30,7 +30,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -113,6 +118,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -157,7 +173,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -241,6 +262,17 @@
           "cachedContentTokenCount": 30,
           "trafficType": "TRAFFIC_TYPE_UNSPECIFIED"
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -285,7 +317,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -369,6 +406,17 @@
           "cachedContentTokenCount": 30,
           "trafficType": "ON_DEMAND"
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -413,7 +461,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -497,6 +550,17 @@
           "cachedContentTokenCount": 30,
           "trafficType": "PROVISIONED_THROUGHPUT"
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -541,7 +605,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -625,6 +694,17 @@
           "cachedContentTokenCount": 30,
           "trafficType": "ON_DEMAND_PRIORITY"
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -669,7 +749,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -753,6 +838,17 @@
           "cachedContentTokenCount": 30,
           "trafficType": "ON_DEMAND_FLEX"
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -765,363 +861,6 @@
       "total_tokens": 160,
       "tool_calls": 0
     }
-  },
-  {
-    "name": "gemini: invalid traffic metadata unknown",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30,
-          "trafficType": "unknown"
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: invalid traffic metadata None",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30,
-          "trafficType": null
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: invalid traffic metadata 1",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30,
-          "trafficType": 1
-        }
-      }
-    },
-    "valid": false
   },
   {
     "name": "gemini: multiple same-name tools without IDs",
@@ -1154,7 +893,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -1246,6 +990,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -1290,7 +1045,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -1384,6 +1144,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -1421,7 +1192,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -1504,6 +1280,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -1527,7 +1314,12 @@
         "thinkingBudget": -1,
         "includeThoughts": true
       },
-      "tools": []
+      "tools": [],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -1596,101 +1388,22 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
     "disposition": "text",
     "output_limit": 2048
-  },
-  {
-    "name": "gemini: required empty tools",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": []
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "ANY"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
   },
   {
     "name": "gemini: missing whole usage",
@@ -1964,7 +1677,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -2050,6 +1768,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -2087,7 +1816,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -2175,6 +1909,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -2212,7 +1957,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -2297,6 +2047,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -2334,7 +2095,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -2420,6 +2186,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -2457,7 +2234,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -2543,6 +2325,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -2580,7 +2373,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -2666,6 +2464,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -2703,7 +2512,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -2789,6 +2603,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -2826,7 +2651,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -2912,6 +2742,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -2949,7 +2790,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -3035,6 +2881,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -3072,7 +2929,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -3158,6 +3020,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -3195,7 +3068,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -3281,6 +3159,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -3318,7 +3207,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -3404,6 +3298,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -3441,7 +3346,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -3527,6 +3437,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -3564,7 +3485,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -3650,6 +3576,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -3687,7 +3624,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -3773,6 +3715,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -3810,7 +3763,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -3896,6 +3854,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -3933,7 +3902,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -4019,6 +3993,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -4056,7 +4041,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -4131,6 +4121,17 @@
             }
           ]
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 0,
+        "total_tokens": 100,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99900,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -4143,2262 +4144,6 @@
       "total_tokens": 100,
       "tool_calls": 0
     }
-  },
-  {
-    "name": "gemini: empty unexplained result",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: block with candidates",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        },
-        "promptFeedback": {
-          "blockReason": "SAFETY"
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: missing version on completed result",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: different model version",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "other",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: changed profile",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "other",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "other",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: changed prompt",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Changed"
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: changed thinking",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": 0,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: conflicting thinking controls",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true,
-            "thinkingLevel": "HIGH"
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: changed tool definition",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "Changed",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: duplicate tool definitions",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              },
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: server tools",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          },
-          {
-            "googleSearch": {}
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: body model override",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        },
-        "model": "other"
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: extra candidate",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          },
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: partial usage",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: thinking exceeds output allowance",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 2048,
-          "totalTokenCount": 2168,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: inconsistent totals",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 120,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: cached tokens exceed input",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 101
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: usage overflow",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 9007199254740991,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: unexpected hosted tool usage",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 161,
-          "cachedContentTokenCount": 30,
-          "toolUsePromptTokenCount": 1
-        }
-      }
-    },
-    "valid": false
   },
   {
     "name": "gemini: text usage details",
@@ -6431,7 +4176,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -6532,369 +4282,22 @@
             }
           ]
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
     "disposition": "text",
     "output_limit": 2048
-  },
-  {
-    "name": "gemini: wrong usage details",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30,
-          "promptTokensDetails": [
-            {
-              "modality": "TEXT",
-              "tokenCount": 99
-            }
-          ]
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: unsupported media",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                },
-                {
-                  "inlineData": {
-                    "mimeType": "image/png",
-                    "data": "eA=="
-                  }
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: no candidate content at STOP",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
   },
   {
     "name": "gemini: filtered without candidate content",
@@ -6927,7 +4330,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -7002,761 +4410,22 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
     "disposition": "filtered",
     "output_limit": 2048
-  },
-  {
-    "name": "gemini: calls suppressed",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "NONE"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "functionCall": {
-                    "name": "snapshot_list",
-                    "args": {}
-                  }
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: call marked as thought",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "functionCall": {
-                    "name": "snapshot_list",
-                    "args": {}
-                  },
-                  "thought": true
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: duplicate native IDs",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "functionCall": {
-                    "name": "snapshot_list",
-                    "args": {},
-                    "id": "c1"
-                  }
-                },
-                {
-                  "functionCall": {
-                    "name": "snapshot_list",
-                    "args": {},
-                    "id": "c1"
-                  }
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: initial model message",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "model",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: unfinished tool batch",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          },
-          {
-            "role": "model",
-            "parts": [
-              {
-                "functionCall": {
-                  "name": "snapshot_list",
-                  "args": {}
-                }
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: orphan result",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          },
-          {
-            "role": "user",
-            "parts": [
-              {
-                "functionResponse": {
-                  "name": "snapshot_list",
-                  "response": {
-                    "output": "x"
-                  }
-                }
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
   },
   {
     "name": "gemini: lossless positional continuation",
@@ -7789,7 +4458,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -7891,6 +4565,17 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
@@ -7907,623 +4592,6 @@
       }
     ],
     "segment_json": "[{\"parts\":[{\"text\":\"Reasoning summary.\",\"thought\":true,\"thoughtSignature\":\"c2ln\"},{\"functionCall\":{\"args\":{},\"name\":\"snapshot_list\"},\"thoughtSignature\":\"c2lnMg==\"},{\"functionCall\":{\"args\":{},\"id\":\"c2\",\"name\":\"snapshot_list\"}},{\"thoughtSignature\":\"c2lnMw==\"}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"snapshot_list\",\"response\":{\"output\":\"{\\\"snapshots\\\":[]}\"}}},{\"functionResponse\":{\"id\":\"c2\",\"name\":\"snapshot_list\",\"response\":{\"output\":\"{\\\"code\\\":\\\"TARGET_REVISION_CHANGED\\\"}\"}}}],\"role\":\"user\"}]"
-  },
-  {
-    "name": "gemini: missing continuation",
-    "mode": "gemini-continuation",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Reasoning summary.",
-                  "thought": true,
-                  "thoughtSignature": "c2ln"
-                },
-                {
-                  "functionCall": {
-                    "name": "snapshot_list",
-                    "args": {}
-                  },
-                  "thoughtSignature": "c2lnMg=="
-                },
-                {
-                  "functionCall": {
-                    "name": "snapshot_list",
-                    "args": {},
-                    "id": "c2"
-                  }
-                },
-                {
-                  "thoughtSignature": "c2lnMw=="
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false,
-    "disposition": "text",
-    "output_limit": 2048,
-    "gemini_tool_results": [
-      {
-        "part_index": 1,
-        "content": "{\"snapshots\":[]}"
-      }
-    ],
-    "segment_json": "[{\"parts\":[{\"text\":\"Reasoning summary.\",\"thought\":true,\"thoughtSignature\":\"c2ln\"},{\"functionCall\":{\"args\":{},\"name\":\"snapshot_list\"},\"thoughtSignature\":\"c2lnMg==\"},{\"functionCall\":{\"args\":{},\"id\":\"c2\",\"name\":\"snapshot_list\"}},{\"thoughtSignature\":\"c2lnMw==\"}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"snapshot_list\",\"response\":{\"output\":\"{\\\"snapshots\\\":[]}\"}}},{\"functionResponse\":{\"id\":\"c2\",\"name\":\"snapshot_list\",\"response\":{\"output\":\"{\\\"code\\\":\\\"TARGET_REVISION_CHANGED\\\"}\"}}}],\"role\":\"user\"}]"
-  },
-  {
-    "name": "gemini: reordered continuation",
-    "mode": "gemini-continuation",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Reasoning summary.",
-                  "thought": true,
-                  "thoughtSignature": "c2ln"
-                },
-                {
-                  "functionCall": {
-                    "name": "snapshot_list",
-                    "args": {}
-                  },
-                  "thoughtSignature": "c2lnMg=="
-                },
-                {
-                  "functionCall": {
-                    "name": "snapshot_list",
-                    "args": {},
-                    "id": "c2"
-                  }
-                },
-                {
-                  "thoughtSignature": "c2lnMw=="
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false,
-    "disposition": "text",
-    "output_limit": 2048,
-    "gemini_tool_results": [
-      {
-        "part_index": 2,
-        "content": "{\"code\":\"TARGET_REVISION_CHANGED\"}"
-      },
-      {
-        "part_index": 1,
-        "content": "{\"snapshots\":[]}"
-      }
-    ],
-    "segment_json": "[{\"parts\":[{\"text\":\"Reasoning summary.\",\"thought\":true,\"thoughtSignature\":\"c2ln\"},{\"functionCall\":{\"args\":{},\"name\":\"snapshot_list\"},\"thoughtSignature\":\"c2lnMg==\"},{\"functionCall\":{\"args\":{},\"id\":\"c2\",\"name\":\"snapshot_list\"}},{\"thoughtSignature\":\"c2lnMw==\"}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"snapshot_list\",\"response\":{\"output\":\"{\\\"snapshots\\\":[]}\"}}},{\"functionResponse\":{\"id\":\"c2\",\"name\":\"snapshot_list\",\"response\":{\"output\":\"{\\\"code\\\":\\\"TARGET_REVISION_CHANGED\\\"}\"}}}],\"role\":\"user\"}]"
-  },
-  {
-    "name": "gemini: wrong index continuation",
-    "mode": "gemini-continuation",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Reasoning summary.",
-                  "thought": true,
-                  "thoughtSignature": "c2ln"
-                },
-                {
-                  "functionCall": {
-                    "name": "snapshot_list",
-                    "args": {}
-                  },
-                  "thoughtSignature": "c2lnMg=="
-                },
-                {
-                  "functionCall": {
-                    "name": "snapshot_list",
-                    "args": {},
-                    "id": "c2"
-                  }
-                },
-                {
-                  "thoughtSignature": "c2lnMw=="
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false,
-    "disposition": "text",
-    "output_limit": 2048,
-    "gemini_tool_results": [
-      {
-        "part_index": 0,
-        "content": "x"
-      },
-      {
-        "part_index": 2,
-        "content": "{\"code\":\"TARGET_REVISION_CHANGED\"}"
-      }
-    ],
-    "segment_json": "[{\"parts\":[{\"text\":\"Reasoning summary.\",\"thought\":true,\"thoughtSignature\":\"c2ln\"},{\"functionCall\":{\"args\":{},\"name\":\"snapshot_list\"},\"thoughtSignature\":\"c2lnMg==\"},{\"functionCall\":{\"args\":{},\"id\":\"c2\",\"name\":\"snapshot_list\"}},{\"thoughtSignature\":\"c2lnMw==\"}],\"role\":\"model\"},{\"parts\":[{\"functionResponse\":{\"name\":\"snapshot_list\",\"response\":{\"output\":\"{\\\"snapshots\\\":[]}\"}}},{\"functionResponse\":{\"id\":\"c2\",\"name\":\"snapshot_list\",\"response\":{\"output\":\"{\\\"code\\\":\\\"TARGET_REVISION_CHANGED\\\"}\"}}}],\"role\":\"user\"}]"
-  },
-  {
-    "name": "gemini: historical explicit ID reuse",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          },
-          {
-            "role": "model",
-            "parts": [
-              {
-                "text": "Reasoning summary.",
-                "thought": true,
-                "thoughtSignature": "c2ln"
-              },
-              {
-                "functionCall": {
-                  "name": "snapshot_list",
-                  "args": {}
-                },
-                "thoughtSignature": "c2lnMg=="
-              },
-              {
-                "functionCall": {
-                  "name": "snapshot_list",
-                  "args": {},
-                  "id": "c2"
-                }
-              },
-              {
-                "thoughtSignature": "c2lnMw=="
-              }
-            ]
-          },
-          {
-            "role": "user",
-            "parts": [
-              {
-                "functionResponse": {
-                  "name": "snapshot_list",
-                  "response": {
-                    "output": "{\"snapshots\":[]}"
-                  }
-                }
-              },
-              {
-                "functionResponse": {
-                  "name": "snapshot_list",
-                  "id": "c2",
-                  "response": {
-                    "output": "{\"code\":\"TARGET_REVISION_CHANGED\"}"
-                  }
-                }
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "functionCall": {
-                    "name": "snapshot_list",
-                    "args": {},
-                    "id": "c2"
-                  }
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
   },
   {
     "name": "gemini: historical anonymous calls are distinct turns",
@@ -8556,7 +4624,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -8691,345 +4764,22 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
     "disposition": "tool-calls",
     "output_limit": 2048
-  },
-  {
-    "name": "gemini: historical result ID mismatch",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          },
-          {
-            "role": "model",
-            "parts": [
-              {
-                "text": "Reasoning summary.",
-                "thought": true,
-                "thoughtSignature": "c2ln"
-              },
-              {
-                "functionCall": {
-                  "name": "snapshot_list",
-                  "args": {}
-                },
-                "thoughtSignature": "c2lnMg=="
-              },
-              {
-                "functionCall": {
-                  "name": "snapshot_list",
-                  "args": {},
-                  "id": "c2"
-                }
-              },
-              {
-                "thoughtSignature": "c2lnMw=="
-              }
-            ]
-          },
-          {
-            "role": "user",
-            "parts": [
-              {
-                "functionResponse": {
-                  "name": "snapshot_list",
-                  "response": {
-                    "output": "{\"snapshots\":[]}"
-                  }
-                }
-              },
-              {
-                "functionResponse": {
-                  "name": "snapshot_list",
-                  "id": "wrong",
-                  "response": {
-                    "output": "{\"code\":\"TARGET_REVISION_CHANGED\"}"
-                  }
-                }
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
-  },
-  {
-    "name": "gemini: historical result name mismatch",
-    "mode": "bound",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          },
-          {
-            "role": "model",
-            "parts": [
-              {
-                "text": "Reasoning summary.",
-                "thought": true,
-                "thoughtSignature": "c2ln"
-              },
-              {
-                "functionCall": {
-                  "name": "snapshot_list",
-                  "args": {}
-                },
-                "thoughtSignature": "c2lnMg=="
-              },
-              {
-                "functionCall": {
-                  "name": "snapshot_list",
-                  "args": {},
-                  "id": "c2"
-                }
-              },
-              {
-                "thoughtSignature": "c2lnMw=="
-              }
-            ]
-          },
-          {
-            "role": "user",
-            "parts": [
-              {
-                "functionResponse": {
-                  "name": "wrong",
-                  "response": {
-                    "output": "{\"snapshots\":[]}"
-                  }
-                }
-              },
-              {
-                "functionResponse": {
-                  "name": "snapshot_list",
-                  "id": "c2",
-                  "response": {
-                    "output": "{\"code\":\"TARGET_REVISION_CHANGED\"}"
-                  }
-                }
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "text": "Ready."
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
   },
   {
     "name": "gemini: ordinary wire exchange",
@@ -9062,7 +4812,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -9145,140 +4900,22 @@
           "totalTokenCount": 160,
           "cachedContentTokenCount": 30
         }
+      },
+      "context_budget": {
+        "input_tokens": 100,
+        "output_tokens": 60,
+        "total_tokens": 160,
+        "requested_completion_tokens": 2048,
+        "reserved_tokens": 34816,
+        "remaining_prompt_tokens": 32668,
+        "near_prompt_limit": false,
+        "remaining_model_tokens": 99840,
+        "remaining_model_turns": 9
       }
     },
     "valid": true,
     "disposition": "text",
     "output_limit": 2048
-  },
-  {
-    "name": "gemini: ordinary wire ID rejection",
-    "mode": "wire",
-    "policy": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request_model": "fixture-gemini",
-      "response_models": [
-        "fixture-gemini-001"
-      ],
-      "prompt": "Frozen instructions.",
-      "max_output_tokens": 2048,
-      "thinking_config": {
-        "thinkingBudget": -1,
-        "includeThoughts": true
-      },
-      "tools": [
-        {
-          "functionDeclarations": [
-            {
-              "name": "snapshot_list",
-              "description": "List snapshots.",
-              "parametersJsonSchema": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "request": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "request": {
-        "systemInstruction": {
-          "parts": [
-            {
-              "text": "Frozen instructions."
-            }
-          ]
-        },
-        "contents": [
-          {
-            "role": "user",
-            "parts": [
-              {
-                "text": "Inspect the target."
-              }
-            ]
-          }
-        ],
-        "generationConfig": {
-          "maxOutputTokens": 2048,
-          "candidateCount": 1,
-          "thinkingConfig": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          }
-        },
-        "tools": [
-          {
-            "functionDeclarations": [
-              {
-                "name": "snapshot_list",
-                "description": "List snapshots.",
-                "parametersJsonSchema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": false
-                }
-              }
-            ]
-          }
-        ],
-        "toolConfig": {
-          "functionCallingConfig": {
-            "mode": "AUTO"
-          }
-        }
-      }
-    },
-    "result": {
-      "codec_id": "gemini-text-tools-v1",
-      "profile_id": "fixture-gemini",
-      "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "receipt_id": "receipt-1",
-      "response": {
-        "candidates": [
-          {
-            "index": 0,
-            "content": {
-              "role": "model",
-              "parts": [
-                {
-                  "functionCall": {
-                    "name": "snapshot_list",
-                    "args": {},
-                    "id": "c1"
-                  }
-                },
-                {
-                  "functionCall": {
-                    "name": "snapshot_list",
-                    "args": {},
-                    "id": "c1"
-                  }
-                }
-              ]
-            },
-            "finishReason": "STOP"
-          }
-        ],
-        "modelVersion": "fixture-gemini-001",
-        "responseId": "native-1",
-        "usageMetadata": {
-          "promptTokenCount": 100,
-          "candidatesTokenCount": 20,
-          "thoughtsTokenCount": 40,
-          "totalTokenCount": 160,
-          "cachedContentTokenCount": 30
-        }
-      }
-    },
-    "valid": false
   },
   {
     "name": "gemini: startup policy",
@@ -9311,7 +4948,12 @@
             }
           ]
         }
-      ]
+      ],
+      "context_limits": {
+        "maximum_prompt_tokens": 32768,
+        "maximum_completion_tokens": 2048,
+        "warning_threshold_tokens": 26214
+      }
     },
     "request": {
       "codec_id": "gemini-text-tools-v1",
@@ -9783,23 +5425,18 @@
       },
       "model": {
         "codec_id": "gemini-text-tools-v1",
-        "profile_id": "fixture-gemini",
-        "profile_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
         "model_id": "fixture-gemini",
         "features": [
           "text",
           "function-tools"
         ],
-        "codec_settings": {
-          "max_output_tokens": 2048,
-          "thinking_config": {
-            "thinkingBudget": -1,
-            "includeThoughts": true
-          },
-          "response_models": [
-            "fixture-gemini-001"
-          ],
-          "tools_digest": "sha256:ecf55e192c4a20875a203a4fa95305e5dc2bc9939e25aa3902df9574c6f407ce"
+        "tool_selection": {
+          "injection_surfaces": []
+        },
+        "context_limits": {
+          "maximum_prompt_tokens": 32768,
+          "maximum_completion_tokens": 2048,
+          "warning_threshold_tokens": 26214
         }
       },
       "operations": [
@@ -9851,6 +5488,29 @@
         "snapshot_bytes": 1,
         "observation_reads": 1,
         "observation_bytes": 1
+      },
+      "operation_timeouts_ms": {
+        "engine.artifact_begin": 30000,
+        "engine.artifact_commit": 30000,
+        "engine.artifact_put_part": 30000,
+        "engine.attempt_execute": 120000,
+        "engine.finish": 30000,
+        "engine.injection_delete": 30000,
+        "engine.model_generate": 120000,
+        "engine.observation_read": 30000,
+        "engine.record_append": 30000,
+        "engine.restore_request": 300000,
+        "engine.snapshot_inspect": 30000,
+        "engine.snapshot_list": 30000,
+        "engine.snapshot_request": 300000
+      },
+      "size_limits": {
+        "direct_input_bytes": 32768,
+        "assessment_bytes": 1048576,
+        "artifact_bytes": 16777216,
+        "artifact_part_bytes": 262144,
+        "observation_chunk_bytes": 262144,
+        "snapshot_page_items": 100
       }
     },
     "tools": [

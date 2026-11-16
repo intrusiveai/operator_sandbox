@@ -52,7 +52,7 @@ func (g *Guard) check(ctx context.Context, p interceptor.PreparedOperation, repo
 	}
 	status, err := g.peer.Status(ctx, q.CampaignID)
 	if err != nil || status.InstanceID != g.instance || status.CampaignID != q.CampaignID {
-		return nil, ErrBinding
+		return nil, errors.Join(interceptor.StatusError(status, err, q.RequestID), ErrBinding)
 	}
 	if reporting {
 		binding, ok := status.Sessions[q.SessionID]
@@ -61,10 +61,10 @@ func (g *Guard) check(ctx context.Context, p interceptor.PreparedOperation, repo
 		}
 	} else {
 		if !status.Ready() || !status.Matches(g.instance, g.binding) {
-			return nil, ErrBinding
+			return nil, errors.Join(interceptor.StatusError(status, nil, q.RequestID), ErrBinding)
 		}
 		if err = g.runtime.CheckRunning(ctx, g.docker); err != nil {
-			return nil, ErrBinding
+			return nil, errors.Join(err, ErrBinding)
 		}
 	}
 	if ctx.Err() != nil {

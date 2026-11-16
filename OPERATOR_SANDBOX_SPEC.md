@@ -26,12 +26,23 @@ single authority for the pipe envelope, identities, startup/manifest exchange,
 deadlines, errors, restore results and completion. Operator owns its versioned
 `operator-contracts` package; both ends pin its version and content digest.
 The [release contract lock](release/contract-lock.json) identifies the exact
-package source, version and content digest. The schemas, Go/Python validators and
-shared fixtures define the integration contract.
+AsyncAPI interface version and exact document hash. The self-contained
+[AsyncAPI contract](schemas/asyncapi.json), Go/Python validators and shared
+[conformance checks](docs/CONTRACT_CONFORMANCE.md) define the integration.
+Implementation source, package inventory and ordinary documentation are excluded
+from compatibility identity.
 
 The [host transport implementation](docs/HOST_TRANSPORT.md) supplies FIFO/spool
 I/O, bounded queues, deadlines and confirmed-exit transport cleanup, coordinated
 with Docker, startup verification and the durable broker.
+
+PostgreSQL/pgvector targets MUST follow the
+[database integration contract](specs/postgresql-integration.md). Operator MUST
+retain the compact input/observation/finish workflow, enforce the native table
+policy and host-authorized injection routes, preserve live oracle feedback
+visibility, and verify database backup blobs in native evidence. Interceptor
+owns database execution and coordinated restoration. See the
+[administrator guide](docs/POSTGRESQL.md) for profile examples and report semantics.
 
 ## 2. Principal requirements and boundaries
 
@@ -56,7 +67,7 @@ with Docker, startup verification and the durable broker.
 8. A failed, stopped or completed campaign cannot resume execution. Journals
    support reporting and bounded cleanup. Healthy planned target restores may
    advance target revisions while preserving the live harness and cumulative budgets.
-9. Interceptor is the primary target adapter. Preserve a declarative HTTPS
+9. Interceptor is the primary target adapter. Preserve a declarative HTTP
    adapter for operation without Interceptor, with explicitly weaker evidence
    where only external responses are observable.
 10. Guest releases are prebuilt, verified and immutable. Run preparation packages
@@ -84,8 +95,8 @@ flowchart LR
   B --> M[Host model relay clients]
   M --> P[Configured model providers]
   B --> T[Target Integration Edge]
-  T --> I[Interceptor integrated localhost API]
-  T --> E[Declared HTTPS target]
+  T --> I[Interceptor configured API endpoint]
+  T --> E[Declared HTTP target]
   B --> A[Host journal recorder]
   C --> A
   CLI --> D[Direct Docker termination]
@@ -184,7 +195,7 @@ Initial resource ceilings:
 | Cumulative reference/skill/feedback reads / no-progress model turns | 256 MiB / 10; configurable; see shared execution rules |
 | Campaign model tokens | 250,000 input + output tokens |
 | In-flight model requests / target invocations | 1 / 1; initially one ordinary engine request overall |
-| Model request wall time | At most 120 seconds, also bounded by remaining campaign time |
+| Model request wall time | `operation_timeouts_ms.engine.model_generate`, bounded by the request deadline and remaining campaign time; 120 seconds is the host default, not an additional provider ceiling |
 | Individual artifact / cumulative artifacts | 16 MiB / 1 GiB |
 | Campaign snapshot creation admissions / cumulative committed snapshot bytes | 20 / 1 GiB (1,073,741,824 bytes); configurable independently of artifact ceilings |
 | Confinement/readiness / input initialization | 60 seconds each |
@@ -317,7 +328,7 @@ Before accepting a new campaign, Operator MUST resolve the selected native-platf
 image locally and pin its platform-specific Docker `Id` separately from its verified immutable lookup reference. It MUST inspect
 `/opt/operator/engine/share/compatibility.json` from that exact image under the
 [local compatibility contract](schemas/ENGINE_RELEASE_CONTRACT.md). It MUST check
-minimum Operator version, exact installed shared-contract version/digest, native
+exact installed AsyncAPI contract version/hash, native
 platform and runtime profile, and verify the embedded manifest and resources.
 Compatibility admission MUST use local image bytes without publisher verification,
 release-service requests or an approval cache. Missing or incompatible metadata
@@ -443,22 +454,23 @@ dynamic import, generic HTTP client, file-path-based dispatch, shell, `exec`,
 `eval`, subprocess, package installer or arbitrary MCP server is exposed.
 Generated payload text is data even when it contains source code.
 
-Model-visible tools may include bounded reads of staged references by manifest
-ID and structured payload/artifact construction, alongside the logical engine
-operations below. They have no general host filesystem access. A convenience
+The model-visible catalog is [MODEL_TOOL_CATALOG.md](schemas/MODEL_TOOL_CATALOG.md).
+It uses flat content fields and short typed resource handles; shared Go/Python
+[normalization](schemas/MODEL_TOOL_NORMALIZATION.md) expands them into the canonical
+logical operations below. Models do not assemble descriptors or receipt lists. They have no general host filesystem access. A convenience
 artifact tool can wrap begin/part/commit without exposing file paths. Model
 generation is an internal loop operation, not a model's recursive tool.
 
 | Logical engine operation | Allowed purpose |
 |---|---|
-| `engine.model_generate` | One bounded provider-native non-streaming request through the selected host profile. |
+| `engine.model_generate` | Opaque conversation with generation/compaction purpose; Operator constructs the non-streaming request from its private profile. |
 | `engine.artifact_begin`, `engine.artifact_put_part`, `engine.artifact_commit` | Upload bytes with size/media/digest declaration; obtain a host-verified committed receipt. |
 | `engine.injection_delete` | Remove one known injection by attempt receipt/action ID in the current target; confirmed absence is successful cleanup. |
 | `engine.attempt_execute` | Submit a permitted target operation with direct bounded input or an artifact receipt; Operator retains input and assigns bookkeeping, then returns outcome, execution receipt and permitted feedback. |
 | `engine.observation_read` | Read bounded, already-filtered feedback bytes by attempt receipt and entry ID; no general artifact-store access. |
 | `engine.record_append` | Optional historical hypotheses, progress, lineage, coverage and evidence references; guest assertions are labeled. |
 | `engine.finish` | Submit one bounded assessment or an explicit unavailable reason; Operator validates, retains, closes execution and starts cleanup. |
-| `engine.diagnostic_report` | Retain bounded Harness-local rejection and stopping facts; runtime-only, not a model tool. |
+| `engine.diagnostic_report` | Retain bounded Harness-local rejection, stopping and observation-selection facts; runtime-only, not a model tool. |
 | `engine.restore_request` | Restore an explicit checkpoint; Operator validates and executes the transition without restarting the harness. |
 | `engine.snapshot_request` | Create a checkpoint with optional `label` and `description`; Operator supplies the campaign ID. |
 | `engine.snapshot_list`, `engine.snapshot_inspect` | Read permitted campaign checkpoint metadata, including campaign ID and description, across retained source sessions. |
@@ -494,7 +506,7 @@ connections still validate TLS.
 Use the accepted `operator.dev/engine-pipe/v1alpha1` envelope. Linux prefixes
 each strict UTF-8 JSON object with a four-byte unsigned big-endian length; macOS
 publishes one complete JSON object per file. Maximum ordinary JSON size is
-4 MiB encoded; control is 64 KiB. Artifact parts contain at most 256 KiB raw bytes, with encoded
+4 MiB encoded; control is 64 KiB. Artifact parts obey `size_limits.artifact_part_bytes`, with a 1 MiB decoded wire ceiling, with encoded
 overhead counted. Commands/results carry protocol version, consecutive per-direction
 sequence, request correlation, bounded operation payload and deadline. Durable
 operation identity is distinct from a transport request ID.
@@ -672,7 +684,7 @@ Use the current [attempt request](schemas/engine-attempt-request.schema.json),
 [feedback contract](schemas/FEEDBACK_CONTRACT.md), with strict validation and
 native selector semantics. These container request/result schemas use v1alpha2
 for this integration. Limits are
-256 KiB attempt arguments, 512 KiB local tool envelopes, 16 setup actions,
+4 MiB encoded ordinary/tool envelopes, configured direct-input and transfer byte allowances within wire safety ceilings, 16 setup actions,
 32 diagnostics, 64 observation references, 128-character ASCII IDs and maximum
 parser nesting 32, subject to narrower policy. A model-facing schema projection
 does not replace complete local and host validation.
@@ -704,7 +716,7 @@ are outside this collection boundary and may appear only in later assessment.
 
 `engine.observation_read` takes `receipt_id`, `entry_id`, byte `offset` and
 `max_bytes`; it returns bounded base64 bytes, actual length/range, EOF, stored
-artifact identity, availability and truncation. Maximum raw chunk is 256 KiB,
+artifact identity, availability and truncation. Raw chunks obey the configured `size_limits.observation_chunk_bytes` allowance (1 MiB wire ceiling),
 within the 4 MiB ordinary frame. Initial campaign ceilings are 1 GiB returned
 bytes and 8,192 reads, narrowed by policy and never reset on restore. Return
 explicit unavailable/range/budget errors; do not hide feedback loss or replay
@@ -728,14 +740,18 @@ semantics.
 
 ### 8.2 Interceptor integration
 
-For the MVP, Operator and Interceptor run on the **same trusted host**.
-`interceptor run` starts one target container and its integrated host API at
-`http://127.0.0.1:8080`. No separate gateway, integration authentication, TLS,
-remote runner or provisioner is required. Only one Interceptor instance is
-supported at a time. All host users with loopback access are trusted; campaign
-IDs correlate work and are not credentials. Model-provider credentials remain
-host-only. The harness remains network-disabled and reaches Interceptor only
-through Operator's existing typed pipe/broker boundary.
+Operator MUST use the administrator-selected Interceptor HTTP or HTTPS endpoint
+from the private target profile, with explicit protocol, address and port.
+Omitting the connection object selects `http://127.0.0.1:8080`.
+HTTPS MUST verify server identity using system trust and optional embedded
+administrator CA certificates. See [connection configuration](docs/INTERCEPTOR_CLIENT.md#transport).
+This setting configures the client, not an Interceptor listener or a new gateway.
+No integration authentication, remote provisioner or guest network access is
+introduced. The selected endpoint and network MUST be trusted by the administrator;
+campaign IDs correlate work and are not credentials. Model-provider credentials
+remain host-only. The Harness reaches Interceptor through Operator's typed broker.
+Operator MUST freeze the endpoint in attachment/preparation records and reuse it
+for owned cleanup and subsequent evidence collection.
 
 The normative [local integration contract](../interceptor_sandbox/docs/local-api.md)
 defines attachment, lifecycle, errors, idempotency and evidence. Initial sealed
@@ -743,12 +759,16 @@ environment/image preparation and provider configuration remain explicit
 Interceptor CLI setup before Operator attaches. Operator does not provision
 remote targets or supply arbitrary image names, host paths or commands.
 
-The initial [native client implementation](docs/INTERCEPTOR_CLIENT.md) provides
-fixed-loopback attachment/status, exact native operation bytes and typed admission
-closure. Persist effect requests before dispatch, interpret native results separately
-from transport success, and reconcile uncertain outcomes without automatic retries.
-Lifecycle, capability/feedback adapters and campaign-worker integration remain
-required before live execution. This client does not alter the shared harness API.
+The [native client](docs/INTERCEPTOR_CLIENT.md) uses requests to the frozen administrator endpoint,
+exact native operation bytes and typed admission closure. Before attachment intent,
+Operator MUST query `POST /v1/contract-version` and exactly match its compiled
+Interceptor integration pin in [internal/interceptor/contract.json](internal/interceptor/contract.json). A mismatch or failed discovery MUST prevent
+attachment and retain an actionable preparation diagnostic. Fresh native recovery
+and evidence collection clients MUST check before claiming new work; retained
+inspection and independent Docker termination MUST remain available.
+The integration version is independent of the environment capability manifest
+and the Operator–Harness package. A match MUST NOT relax instance, capability,
+binding, or authorization checks. See [integration requirements](specs/interceptor-contract-integration.md).
 
 Before guest launch, Operator posts its campaign ID, actual `worker_instance_id`
 and explicit final-stop choice to `/v1/attach`. Interceptor associates this campaign
@@ -831,14 +851,25 @@ status could not be durably saved, not that execution remains available. Planned
 healthy restore remains transitioning until replacement readiness and does not
 produce an independent-failure record.
 
+A validated failed native target response MUST retain the specific native cause,
+failed target/native operation, attempt and native step identities, and the
+original response evidence reference. Administrator diagnostics, completion
+receipts, inspection, terminal output and reports MUST carry the same bounded,
+credential-filtered cause. An explicit target-turn deadline error MUST be
+distinguished from an Operator attempt timeout or a model-provider failure;
+Operator MUST NOT infer a deadline or its configured duration from elapsed time.
+Other target errors MUST retain their specific descriptions through the same
+path. Forced Harness termination MUST remain secondary. Native diagnostic detail
+MUST NOT bypass the effective Harness feedback policy.
+
 The host service owns the API, provider bridge and target lifecycle. There is no
 separate gateway replacement/recovery protocol in this MVP. Service, worker,
 guest or target failure is terminal for execution; preserve uncertainty, stop
 the harness and perform bounded reachable cleanup. A new process cannot adopt
-or resume a failed campaign. This adapter uses a single same-host instance and
-loopback communication without Operator–Interceptor authentication.
+or resume a failed campaign. This adapter binds one verified Interceptor instance per campaign at the saved
+endpoint, without Operator–Interceptor authentication.
 
-**Compatibility gate:** native codecs, supervisor campaign access, localhost lifecycle
+**Compatibility gate:** native codecs, supervisor campaign access, endpoint lifecycle
 and integration tests live in Interceptor. Qualify the exact source/image/resource
 pins and supported runtime for a release. Existing sessions without the v1alpha2
 marker require fresh sessions; no in-place lease migration is provided.
@@ -866,13 +897,13 @@ access to campaign data based on the worker or revision that created it. Healthy
 target restore preserves the live harness; a failed harness is never reconstructed
 from saved conversation or journals.
 
-### 8.3 Declarative HTTPS adapter
+### 8.3 Declarative HTTP adapter
 
-The [HTTPS mapping and execution contract](docs/HTTPS_TARGETS.md) defines the
-implemented `https/v1` profile, public capabilities, authentication and limits.
+The [HTTP mapping and execution contract](docs/HTTP_TARGETS.md) defines the
+implemented `http/v1` profile, public capabilities, authentication and limits.
 
 Preserve target independence through an administrator-installed, versioned
-declarative mapping to fixed HTTPS destinations and application operations.
+declarative mapping to fixed HTTP or HTTPS destinations and application operations.
 Operator MUST validate the mapping before admission, freeze its selected contents
 for the campaign and bind its content digest into the campaign inputs. Later
 administrator edits MUST apply only to new campaigns. Mapping files MUST remain
@@ -931,8 +962,11 @@ original target binding and do not charge or execute again.
 
 For model calls, also retain the exact engine-visible and canonical provider-bound
 request bodies, bounded validated successful provider response and exact normalized
-successful guest response, codec/profile/model, usage and timing. Failed or invalid
-provider bodies MUST be replaced by a bounded selected diagnostic, as defined in
+successful guest response, codec/profile/model, usage and timing. A complete bounded
+HTTP-200 response rejected by validation MUST be retained as credential-redacted,
+private administrator evidence marked rejected and untrusted. It MUST NOT become
+usable model output. Retain the stable validation rule, stage and safe field path,
+and explicit reasons for unavailable evidence or omitted paths, as defined in
 [model failure diagnostics](docs/MODEL_SERVICE.md#model-failure-diagnostics).
 Foreground output, failed start completion, inspection and report/export MUST
 expose the same selected failure facts. HTTP rejections MUST include bounded,
@@ -1325,7 +1359,12 @@ an adaptive loop. Existing terminal stop/completion rules remain unchanged.
 
 Expose `engine.snapshot_request`, `engine.snapshot_list`,
 `engine.snapshot_inspect` and `engine.restore_request` when both target capability
-and policy permit them. The harness can discover checkpoints and decide whether
+and policy permit them. The policy resolver MUST derive `feature:snapshots` from
+Operator's verified projection of the target's implemented snapshot capability.
+Bundle admission, tool selection and execution MUST use this same resolved
+permission. Creation allowances MUST be enforced separately; zero or exhausted
+creation allowance MUST NOT by itself forbid listing, inspecting or restoring
+existing checkpoints. The harness can discover checkpoints and decide whether
 to revisit a baseline or switch branches without losing its current context.
 
 | Tool | Arguments and result |
@@ -1620,6 +1659,15 @@ Interceptor service's API ceiling. Retained-evidence import does not start a
 target or replay a campaign; subsequent report generations reference the newly
 verified evidence while preserving earlier generations.
 
+Reports MUST preserve initial cleanup/collection history and separately show
+later verified archive availability and authoritative session-stop evidence.
+Successful later collection MUST resolve evidence-collection status without
+implying ownership closure or injection cleanup. A confirmed session stop MUST
+identify its verified native lifecycle event and source archive. Native export
+rejections MUST retain their bounded HTTP status and safe native reason code;
+missing historical reasons MUST remain explicitly unknown. See
+[report reconciliation](docs/REPORTING.md#target-failures-and-cleanup-reconciliation).
+
 Cleanup finishes independently of model/report availability. Report regeneration
 and later evidence collection use retained records, never another attack. Preserve
 previous generations and exact supplied input provenance subject to retention.
@@ -1628,6 +1676,16 @@ guest work is marked absent. Unknown or unavailable evidence is never reconstruc
 from an external interpretation of a report.
 
 ## 13. Distribution, configuration and contract versioning
+
+Operator's Interceptor integration MUST be compared against an explicitly selected
+OpenAPI contract before release. The approved version and SHA-256 of the complete
+contract bytes MUST be committed in `internal/interceptor/contract.json` and
+embedded in the executable. Candidate CI MUST verify this approval against its
+selected immutable source and the integration implementation. A campaign run or
+an Interceptor executable/archive hash MUST NOT establish compatibility. Runtime
+admission MUST compare both values returned by `/v1/contract-version` before
+attachment. See [Interceptor integration](specs/interceptor-contract-integration.md)
+for adoption, comparison coverage, diagnostics and promotion requirements.
 
 Publish Linux and macOS host distributions for amd64 and arm64, with reproducible toolchain pins,
 release checksums/SBOMs and offline installation with a complete compatible artifact
@@ -1718,7 +1776,7 @@ No worker/daemon recovery resumes failed campaign execution.
 
 The [shared contract](schemas/SHARED_CONTRACT.md) contains closed schemas, an
 offline catalog/registry, semantic validators and shared Go/Python vectors.
-The [release lock](release/contract-lock.json) pins package `0.2.1`. Raw byte
+The [release lock](release/contract-lock.json) records the approved package version and exact document hash. Raw byte
 digests, canonical-object digests, OCI digests and native Interceptor digests are
 separate identities and MUST use their specified recipes.
 
@@ -1728,7 +1786,7 @@ separate identities and MUST use their specified recipes.
   startup, direct input, evidence inspection, finish and error handling.
 - [Interceptor client](docs/INTERCEPTOR_CLIENT.md): native operation translation,
   lifecycle and evidence retention.
-- [HTTPS targets](docs/HTTPS_TARGETS.md): trusted declarative target mappings.
+- [HTTP targets](docs/HTTP_TARGETS.md): trusted declarative target mappings.
 - [Reporting](docs/REPORTING.md): retained facts, assessment interpretation,
   execution coverage and evidence exports.
 - [Host distribution](docs/HOST_DISTRIBUTION.md): installation, updates and
@@ -1760,10 +1818,10 @@ configuration and behavior actually exercised.
 | OC-AC-015 | Default/replace/append prompt bytes and manifest digests match golden vectors; edits after acceptance, hostile replacements and skill loading do not alter authority. |
 | OC-AC-016 | Complete submitted bundle/reference provenance survives preparation, omission/compaction is explicit and no protected host/target content enters guest context. |
 | OC-AC-017 | Attempt translation matches fixed native goldens; invalid payload/media/selector/lineage gets no target contact; unknown outcomes are not retried as corrected submissions. |
-| OC-AC-018 | Qualified native Interceptor revision proves same-host loopback-only integrated startup, campaign binding, v1alpha2 campaign access/closure/attribution, delivery provenance and protected evidence for every native session. |
+| OC-AC-018 | Qualified native Interceptor revision proves configured-endpoint integrated startup, campaign binding, v1alpha2 campaign access/closure/attribution, delivery provenance and protected evidence for every native session. |
 | OC-AC-019 | Attached sessions are not stopped by default; explicit optional stop, pending evidence, late collection and bounded residual cleanup preserve unrelated sessions. |
 | OC-AC-020 | Successful restore ends the model-tool batch with correlated not-executed results for all later calls and a complete next-model context (shared Section 9.1). Healthy restore stops the old target before replacement, returns a fresh session/revision once, deduplicates lost-response retries, rejects stale-session mutations and preserves the same harness process/channels/conversation/scratch and cumulative charges; known preflight rejection keeps the old binding usable, while post-closure failure or uncertainty is terminal. |
-| OC-AC-021 | HTTPS mapping rejects arbitrary destinations/redirects/headers and unsupported setup/state operations; reports retain its actual evidence assurance. |
+| OC-AC-021 | HTTP mapping rejects arbitrary destinations/redirects/headers and unsupported setup/state operations; reports retain its actual evidence assurance. |
 | OC-AC-022 | User-authored and generator-authored bundles use one strict validator; objectives-only input works without fabricated scenarios or generator metadata. Missing required capabilities/references fail before launch; optional gaps and requested-policy narrowing are explicit. No submission can select runtime credentials, tools or destinations. |
 | OC-AC-023 | Report retries/late evidence never execute attacks; reports separate observed facts, guest claims, inference, incomplete audit and cleanup uncertainty. |
 | OC-AC-024 | Release/skill updates, skill removal/reinstallation, retention and offline installation preserve pinned active inputs, executable release file digests, skill content digests and referenced evidence. Bundle edits require a new immutable input identity and cannot modify an active campaign. |
@@ -1780,3 +1838,19 @@ configuration and behavior actually exercised.
 [Host profiles](HOST_RUNTIME_PROFILES.md) define supported versions, Docker/seccomp
 controls and spool rules. Runtime capability checks enforce required behavior
 without an OS/Docker version certification allowlist.
+
+### Evidence pagination, assessment correction and model-token stopping facts
+
+Operator's shared Go/Python contract MUST expose the pagination/citation conventions
+and minimal finish guidance in `schemas/MODEL_TOOL_NORMALIZATION.md` and
+`schemas/MODEL_TOOL_CATALOG.md`. Partial reads MUST NOT authorize unread citations.
+Malformed finish inputs MUST produce bounded field-specific expected-type,
+required-field or enum corrections; correcting a finish MUST NOT replay attempts.
+
+The `engine.diagnostic_report` model-token stopping form defined in
+`schemas/SHARED_CONTRACT.md` MUST survive native journaling, completion records,
+inspection, evidence export, and the CLI/Markdown failure summary. A failed next
+reservation MUST identify allowance, consumed, remaining and required reservation;
+it MUST NOT reuse evidence-byte counters or an earlier recoverable tool error as
+the terminal cause. Unavailable assessment acceptance does not establish campaign
+success, regardless of a zero Harness exit. Owned cleanup remains mandatory.

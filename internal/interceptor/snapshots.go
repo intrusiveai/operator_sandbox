@@ -140,7 +140,9 @@ type SnapshotPage struct {
 // ListSnapshots reads one page, including retained source sessions after restore.
 // Pagination is not frozen; no automatic traversal or deduplication hides changes.
 // Membership/compatibility with the host's saved lineage remains a broker check.
-func (c *Client) ListSnapshots(ctx context.Context, q SnapshotListRequest) (SnapshotPage, error) {
+func (c *Client) ListSnapshots(ctx context.Context, q SnapshotListRequest) (result SnapshotPage, err error) {
+	var observed Response
+	defer func() { err = ResponseError("/v1/snapshots/list", "", observed, err) }()
 	if q.APIVersion == "" {
 		q.APIVersion = LifecycleVersion
 	}
@@ -154,6 +156,7 @@ func (c *Client) ListSnapshots(ctx context.Context, q SnapshotListRequest) (Snap
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 	r, err := c.postBounded(ctx, "/v1/snapshots/list", raw, MaxSnapshotResponse)
+	observed = r
 	if err = success(r, err); err != nil {
 		return SnapshotPage{}, err
 	}
@@ -206,7 +209,9 @@ func checkpointLess(a, b Checkpoint) bool {
 // InspectSnapshot returns original hash-covered metadata. Legacy missing campaign
 // and description fields remain missing; read scoping comes from the native API's
 // source-session association, not an invented hash-covered campaign field.
-func (c *Client) InspectSnapshot(ctx context.Context, campaign, source, checkpoint string) (Checkpoint, error) {
+func (c *Client) InspectSnapshot(ctx context.Context, campaign, source, checkpoint string) (result Checkpoint, err error) {
+	var observed Response
+	defer func() { err = ResponseError("/v1/snapshots/inspect", "", observed, err) }()
 	if !identifier.MatchString(campaign) || !identifier.MatchString(source) || !checkpointID(checkpoint) {
 		return Checkpoint{}, ErrRequest
 	}
@@ -214,6 +219,7 @@ func (c *Client) InspectSnapshot(ctx context.Context, campaign, source, checkpoi
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 	r, err := c.postBounded(ctx, "/v1/snapshots/inspect", raw, MaxSnapshotResponse)
+	observed = r
 	if err = success(r, err); err != nil {
 		return Checkpoint{}, err
 	}

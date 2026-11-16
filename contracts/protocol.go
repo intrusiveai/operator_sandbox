@@ -3,17 +3,19 @@ package contracts
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"io/fs"
 	"sort"
 	"strconv"
+	"sync"
 	"time"
 )
 
 // ErrProtocol reports an inconsistent message without exposing submitted values.
-var ErrProtocol = errors.New("contract message consistency check failed")
+var ErrProtocol = newPublicError("contract message consistency check failed")
 
 const SpoolAckLimit = 1024
+
+const snapshotDescriptionLimit = 4096
 
 // Operation is installed dispatch metadata, not authority supplied by the guest.
 type Operation struct {
@@ -24,7 +26,6 @@ type Operation struct {
 	ErrorCodes       []string `json:"error_codes"`
 	LifecycleStates  []string `json:"lifecycle_states"`
 	FinalizationRule string   `json:"finalization_rule"`
-	TimeoutMS        int64    `json:"timeout_ms"`
 	MaxRequestBytes  int      `json:"max_request_bytes"`
 	MaxResultBytes   int      `json:"max_result_bytes"`
 	Effect           string   `json:"effect"`
@@ -38,6 +39,7 @@ type Protocol struct {
 	operations       map[string]Operation
 	operationsDigest string
 	packageIdentity  *PackageIdentity
+	toolGuides       func() (map[string][]byte, error)
 }
 
 // Catalog is the frozen catalog compiled with this protocol's installed bytes.
@@ -68,6 +70,7 @@ func LoadProtocol(files fs.FS) (*Protocol, error) {
 		return nil, ErrCatalog
 	}
 	result := &Protocol{catalog: catalog, operations: map[string]Operation{}}
+	result.toolGuides = sync.OnceValues(result.loadToolGuides)
 	result.operationsDigest, err = objectDigest(value, OrdinaryLimit)
 	if err != nil {
 		return nil, ErrCatalog
@@ -81,7 +84,6 @@ func LoadProtocol(files fs.FS) (*Protocol, error) {
 			ResultSchema:     fields["result_schema"].(string),
 			ErrorSchema:      fields["error_schema"].(string),
 			FinalizationRule: fields["finalization_rule"].(string),
-			TimeoutMS:        number(fields["timeout_ms"]),
 			MaxRequestBytes:  int(number(fields["max_request_bytes"])),
 			MaxResultBytes:   int(number(fields["max_result_bytes"])),
 			Effect:           fields["effect"].(string),
@@ -154,14 +156,15 @@ func (p *Protocol) ValidateRequest(raw []byte) (map[string]any, error) {
 	}
 	// Validate against the installed registry as well as the generated envelope.
 	if err = p.catalog.schemas[op.RequestSchema].Validate(message["body"]); err != nil {
-		path, _ := SafeArgumentPath(conclusionSchemaPath(err))
-		return nil, &ArgumentError{Reason: "invalid_structure", FieldPath: path, Correction: "Supply the required fields with the documented types and no unknown fields.", Cause: ErrSchema}
+		return nil, p.catalog.schemaArgumentIssue(err)
 	}
 	body := message["body"].(map[string]any)
 	valid := true
 	switch op.Name {
-	case "engine.model_generate":
-		valid = nativeRequestOK(body)
+	case "engine.diagnostic_report":
+		if err := validateDiagnosticBudget(body); err != nil {
+			return nil, err
+		}
 	case "engine.record_append":
 		valid = recordOK(body)
 	case "engine.attempt_execute":
@@ -177,7 +180,9 @@ func (p *Protocol) ValidateRequest(raw []byte) (map[string]any, error) {
 		data, ok := part(body["content"])
 		valid = ok && len(data) > 0 && number(body["offset"])+int64(len(data)) <= 16<<20
 	case "engine.snapshot_request":
-		valid = descriptionOK(body)
+		if err := checkSnapshotDescription(body); err != nil {
+			return nil, err
+		}
 	}
 	if !valid {
 		return nil, ErrProtocol
@@ -212,8 +217,10 @@ func (p *Protocol) ValidateResponse(request, response []byte) (map[string]any, e
 	body := req["body"].(map[string]any)
 	valid := true
 	switch op.Name {
-	case "engine.model_generate":
-		valid = modelCorrelationOK(body, result)
+	case "engine.diagnostic_report":
+		if err := validateDiagnosticBudget(body); err != nil {
+			return nil, err
+		}
 	case "engine.record_append":
 		attribution := result["attribution"].(map[string]any)
 		valid = same(result["record_kind"], body["record_kind"]) && same(attribution["campaign_id"], req["campaign_id"]) && same(attribution["launch_id"], req["launch_id"])
@@ -288,12 +295,19 @@ func optionalText(object map[string]any, key string) string {
 	return ""
 }
 func descriptionOK(object map[string]any) bool {
-	return len(optionalText(object, "description")) <= 4096
+	return len(optionalText(object, "description")) <= snapshotDescriptionLimit
 }
+func checkSnapshotDescription(object map[string]any) error {
+	if !descriptionOK(object) {
+		return argumentIssue("snapshot_description_size", "/description", "Snapshot description must be at most "+strconv.Itoa(snapshotDescriptionLimit)+" UTF-8 bytes. Shorten description and resubmit; no snapshot was created.")
+	}
+	return nil
+}
+
 func part(value any) ([]byte, bool) {
 	encoded := value.(string)
 	decoded, err := base64.StdEncoding.Strict().DecodeString(encoded)
-	return decoded, err == nil && len(decoded) <= 262144 && base64.StdEncoding.EncodeToString(decoded) == encoded
+	return decoded, err == nil && len(decoded) <= 1<<20 && base64.StdEncoding.EncodeToString(decoded) == encoded
 }
 func sameArtifact(left, right any) bool {
 	l, r := left.(map[string]any), right.(map[string]any)
@@ -371,9 +385,6 @@ func (p *Protocol) validateResponseEnvelope(raw []byte) (map[string]any, error) 
 	}
 	if p.catalog.schemas[op.ResultSchema].Validate(message["result"]) != nil {
 		return nil, ErrSchema
-	}
-	if op.Name == "engine.model_generate" && !nativeResponseOK(message["result"].(map[string]any)) {
-		return nil, ErrProtocol
 	}
 	return message, nil
 }

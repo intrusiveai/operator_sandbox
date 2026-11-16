@@ -19,8 +19,8 @@ it attaches a read-only observer. `--timeout` bounds service acceptance
 (default 135 seconds, maximum ten minutes); `--wait-timeout` bounds the optional
 completion observer (default 35 minutes, maximum 24 hours).
 
-Both `interceptor/v1` and `https/v1` target profiles MUST use this workflow.
-For HTTPS profile creation and capability export, see [HTTPS targets](HTTPS_TARGETS.md).
+Both `interceptor/v1` and `http/v1` target profiles MUST use this workflow.
+For HTTP profile creation and capability export, see [HTTP targets](HTTP_TARGETS.md).
 
 A new output MUST follow normal submission publication. An existing output MUST
 be fully revalidated and match the newly supplied inputs and explicit profile

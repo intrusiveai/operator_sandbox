@@ -129,6 +129,7 @@ type Definition struct {
 }
 
 type Selector struct {
+	ModelCodec         string            `json:"model_codec,omitempty"`
 	ToolName           string            `json:"tool_name"`
 	CallOrdinal        string            `json:"call_ordinal"`
 	ArgumentsPointer   string            `json:"arguments_pointer,omitempty"`
@@ -171,6 +172,7 @@ type TurnRequest struct {
 }
 
 type Turn struct {
+	EvidencePartial      bool              `json:"evidence_partial,omitempty"`
 	OutputContractStatus string            `json:"output_contract_status,omitempty"`
 	ID                   string            `json:"id"`
 	Operation            string            `json:"operation,omitempty"`
