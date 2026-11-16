@@ -41,7 +41,7 @@ func RetainedEvidence(ctx context.Context, a *campaign.NativeRecovery) ([]Retain
 	if e != nil {
 		return nil, e
 	}
-	if f.manifest.Target.Adapter == "https/v1" {
+	if f.manifest.Target.Adapter == "http/v1" {
 		return []RetainedSession{}, nil
 	}
 	facts, e := loadEvidenceFacts(ctx, a, f)

@@ -67,7 +67,7 @@ owns database execution and coordinated restoration. See the
 8. A failed, stopped or completed campaign cannot resume execution. Journals
    support reporting and bounded cleanup. Healthy planned target restores may
    advance target revisions while preserving the live harness and cumulative budgets.
-9. Interceptor is the primary target adapter. Preserve a declarative HTTPS
+9. Interceptor is the primary target adapter. Preserve a declarative HTTP
    adapter for operation without Interceptor, with explicitly weaker evidence
    where only external responses are observable.
 10. Guest releases are prebuilt, verified and immutable. Run preparation packages
@@ -95,8 +95,8 @@ flowchart LR
   B --> M[Host model relay clients]
   M --> P[Configured model providers]
   B --> T[Target Integration Edge]
-  T --> I[Interceptor integrated localhost API]
-  T --> E[Declared HTTPS target]
+  T --> I[Interceptor configured API endpoint]
+  T --> E[Declared HTTP target]
   B --> A[Host journal recorder]
   C --> A
   CLI --> D[Direct Docker termination]
@@ -740,14 +740,18 @@ semantics.
 
 ### 8.2 Interceptor integration
 
-For the MVP, Operator and Interceptor run on the **same trusted host**.
-`interceptor run` starts one target container and its integrated host API at
-`http://127.0.0.1:8080`. No separate gateway, integration authentication, TLS,
-remote runner or provisioner is required. Only one Interceptor instance is
-supported at a time. All host users with loopback access are trusted; campaign
-IDs correlate work and are not credentials. Model-provider credentials remain
-host-only. The harness remains network-disabled and reaches Interceptor only
-through Operator's existing typed pipe/broker boundary.
+Operator MUST use the administrator-selected Interceptor HTTP or HTTPS endpoint
+from the private target profile, with explicit protocol, address and port.
+Omitting the connection object selects `http://127.0.0.1:8080`.
+HTTPS MUST verify server identity using system trust and optional embedded
+administrator CA certificates. See [connection configuration](docs/INTERCEPTOR_CLIENT.md#transport).
+This setting configures the client, not an Interceptor listener or a new gateway.
+No integration authentication, remote provisioner or guest network access is
+introduced. The selected endpoint and network MUST be trusted by the administrator;
+campaign IDs correlate work and are not credentials. Model-provider credentials
+remain host-only. The Harness reaches Interceptor through Operator's typed broker.
+Operator MUST freeze the endpoint in attachment/preparation records and reuse it
+for owned cleanup and subsequent evidence collection.
 
 The normative [local integration contract](../interceptor_sandbox/docs/local-api.md)
 defines attachment, lifecycle, errors, idempotency and evidence. Initial sealed
@@ -755,7 +759,7 @@ environment/image preparation and provider configuration remain explicit
 Interceptor CLI setup before Operator attaches. Operator does not provision
 remote targets or supply arbitrary image names, host paths or commands.
 
-The [native client](docs/INTERCEPTOR_CLIENT.md) uses fixed-loopback requests,
+The [native client](docs/INTERCEPTOR_CLIENT.md) uses requests to the frozen administrator endpoint,
 exact native operation bytes and typed admission closure. Before attachment intent,
 Operator MUST query `POST /v1/contract-version` and exactly match its compiled
 Interceptor integration pin in [internal/interceptor/contract.json](internal/interceptor/contract.json). A mismatch or failed discovery MUST prevent
@@ -862,10 +866,10 @@ The host service owns the API, provider bridge and target lifecycle. There is no
 separate gateway replacement/recovery protocol in this MVP. Service, worker,
 guest or target failure is terminal for execution; preserve uncertainty, stop
 the harness and perform bounded reachable cleanup. A new process cannot adopt
-or resume a failed campaign. This adapter uses a single same-host instance and
-loopback communication without Operator–Interceptor authentication.
+or resume a failed campaign. This adapter binds one verified Interceptor instance per campaign at the saved
+endpoint, without Operator–Interceptor authentication.
 
-**Compatibility gate:** native codecs, supervisor campaign access, localhost lifecycle
+**Compatibility gate:** native codecs, supervisor campaign access, endpoint lifecycle
 and integration tests live in Interceptor. Qualify the exact source/image/resource
 pins and supported runtime for a release. Existing sessions without the v1alpha2
 marker require fresh sessions; no in-place lease migration is provided.
@@ -893,13 +897,13 @@ access to campaign data based on the worker or revision that created it. Healthy
 target restore preserves the live harness; a failed harness is never reconstructed
 from saved conversation or journals.
 
-### 8.3 Declarative HTTPS adapter
+### 8.3 Declarative HTTP adapter
 
-The [HTTPS mapping and execution contract](docs/HTTPS_TARGETS.md) defines the
-implemented `https/v1` profile, public capabilities, authentication and limits.
+The [HTTP mapping and execution contract](docs/HTTP_TARGETS.md) defines the
+implemented `http/v1` profile, public capabilities, authentication and limits.
 
 Preserve target independence through an administrator-installed, versioned
-declarative mapping to fixed HTTPS destinations and application operations.
+declarative mapping to fixed HTTP or HTTPS destinations and application operations.
 Operator MUST validate the mapping before admission, freeze its selected contents
 for the campaign and bind its content digest into the campaign inputs. Later
 administrator edits MUST apply only to new campaigns. Mapping files MUST remain
@@ -1782,7 +1786,7 @@ separate identities and MUST use their specified recipes.
   startup, direct input, evidence inspection, finish and error handling.
 - [Interceptor client](docs/INTERCEPTOR_CLIENT.md): native operation translation,
   lifecycle and evidence retention.
-- [HTTPS targets](docs/HTTPS_TARGETS.md): trusted declarative target mappings.
+- [HTTP targets](docs/HTTP_TARGETS.md): trusted declarative target mappings.
 - [Reporting](docs/REPORTING.md): retained facts, assessment interpretation,
   execution coverage and evidence exports.
 - [Host distribution](docs/HOST_DISTRIBUTION.md): installation, updates and
@@ -1814,10 +1818,10 @@ configuration and behavior actually exercised.
 | OC-AC-015 | Default/replace/append prompt bytes and manifest digests match golden vectors; edits after acceptance, hostile replacements and skill loading do not alter authority. |
 | OC-AC-016 | Complete submitted bundle/reference provenance survives preparation, omission/compaction is explicit and no protected host/target content enters guest context. |
 | OC-AC-017 | Attempt translation matches fixed native goldens; invalid payload/media/selector/lineage gets no target contact; unknown outcomes are not retried as corrected submissions. |
-| OC-AC-018 | Qualified native Interceptor revision proves same-host loopback-only integrated startup, campaign binding, v1alpha2 campaign access/closure/attribution, delivery provenance and protected evidence for every native session. |
+| OC-AC-018 | Qualified native Interceptor revision proves configured-endpoint integrated startup, campaign binding, v1alpha2 campaign access/closure/attribution, delivery provenance and protected evidence for every native session. |
 | OC-AC-019 | Attached sessions are not stopped by default; explicit optional stop, pending evidence, late collection and bounded residual cleanup preserve unrelated sessions. |
 | OC-AC-020 | Successful restore ends the model-tool batch with correlated not-executed results for all later calls and a complete next-model context (shared Section 9.1). Healthy restore stops the old target before replacement, returns a fresh session/revision once, deduplicates lost-response retries, rejects stale-session mutations and preserves the same harness process/channels/conversation/scratch and cumulative charges; known preflight rejection keeps the old binding usable, while post-closure failure or uncertainty is terminal. |
-| OC-AC-021 | HTTPS mapping rejects arbitrary destinations/redirects/headers and unsupported setup/state operations; reports retain its actual evidence assurance. |
+| OC-AC-021 | HTTP mapping rejects arbitrary destinations/redirects/headers and unsupported setup/state operations; reports retain its actual evidence assurance. |
 | OC-AC-022 | User-authored and generator-authored bundles use one strict validator; objectives-only input works without fabricated scenarios or generator metadata. Missing required capabilities/references fail before launch; optional gaps and requested-policy narrowing are explicit. No submission can select runtime credentials, tools or destinations. |
 | OC-AC-023 | Report retries/late evidence never execute attacks; reports separate observed facts, guest claims, inference, incomplete audit and cleanup uncertainty. |
 | OC-AC-024 | Release/skill updates, skill removal/reinstallation, retention and offline installation preserve pinned active inputs, executable release file digests, skill content digests and referenced evidence. Bundle edits require a new immutable input identity and cannot modify an active campaign. |

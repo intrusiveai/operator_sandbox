@@ -24,9 +24,9 @@ class ContractsTest(unittest.TestCase):
                     with self.assertRaises(ContractError): check()
         self.assertEqual(catalog.ids(), sorted(json.loads((ROOT / "schemas/catalog.json").read_text())))
 
-    def test_https_capability_export(self):
+    def test_http_capability_export(self):
         catalog = Catalog(ROOT / "schemas")
-        fixture = json.loads((ROOT / "schemas/fixtures/https-capability-chain.json").read_text())
+        fixture = json.loads((ROOT / "schemas/fixtures/http-capability-chain.json").read_text())
         export = fixture["public"]
         schema = "urn:operator:schema:target-capability-manifest:v1alpha1"
         catalog.validate(schema, json.dumps(export).encode())

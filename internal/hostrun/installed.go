@@ -19,7 +19,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
 	"github.com/intrusiveai/operator_sandbox/internal/hostworker"
-	"github.com/intrusiveai/operator_sandbox/internal/httpstarget"
+	"github.com/intrusiveai/operator_sandbox/internal/httptarget"
 	"github.com/intrusiveai/operator_sandbox/internal/imagerelease"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
@@ -224,7 +224,7 @@ func LoadInputs(ctx context.Context, configPath string, defaults hostconfig.Path
 			return nil, ErrSession
 		}
 	}
-	if m := profile.HTTPS(); m != nil {
+	if m := profile.HTTP(); m != nil {
 		id := m.Settings().Authentication.CredentialID
 		if id != "" {
 			found := false
@@ -299,9 +299,7 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 		}
 	}
 	stage = "prior Interceptor attachment recovery"
-	recoveryPeer := interceptor.New()
-	recovered, err = gate.FinalizeNative(ctx, recoveryPeer)
-	recoveryPeer.Close()
+	recovered, err = gate.FinalizeNative(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -347,7 +345,12 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 	if err != nil {
 		return nil, preparationCleanup(stage, err, resolver.Close())
 	}
-	native := interceptor.New()
+	stage = "Interceptor connection configuration"
+	native, err := interceptor.NewConfigured(profile.Settings().Interceptor)
+	if err != nil {
+		provider.Close()
+		return nil, preparationCleanup(stage, err, resolver.Close())
+	}
 	cleanup := func() error { native.Close(); provider.Close(); return resolver.Close() }
 	success := false
 	defer func() {
@@ -359,12 +362,12 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 	bundle, authoring, references := submitted.Inputs()
 	var interceptorCheckedAt time.Time
 	var target *preparation.Target
-	var https *httpstarget.Client
-	if profile.HTTPS() != nil {
-		stage = "HTTPS target initialization"
+	var httpTarget *httptarget.Client
+	if profile.HTTP() != nil {
+		stage = "HTTP(S) target initialization"
 		allowance := profile.Settings().OperationTimeoutMS
 		allowance = min(allowance, c.OperationTimeouts["engine.attempt_execute"])
-		https, err = httpstarget.New(profile.HTTPS(), audited, time.Duration(allowance)*time.Millisecond)
+		httpTarget, err = httptarget.New(profile.HTTP(), audited, time.Duration(allowance)*time.Millisecond)
 		if err != nil {
 			return nil, err
 		}
@@ -373,7 +376,8 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 	} else {
 		stage = "Interceptor attachment"
 		attached, status, e := attachRecorded(ctx, c.State.Root, campaign.AttachmentIntent{
-			CampaignID: selected.CampaignID, LaunchID: selected.LaunchID, StartRequestID: selected.StartRequestID, WorkerInstanceID: selected.WorkerInstanceID, InputsFingerprint: i.Fingerprint(), AllowTargetStop: profile.Settings().AllowTargetStop, MinimumFreeBytes: c.Journal.MinimumFreeBytes}, native)
+			Interceptor: profile.Settings().Interceptor,
+			CampaignID:  selected.CampaignID, LaunchID: selected.LaunchID, StartRequestID: selected.StartRequestID, WorkerInstanceID: selected.WorkerInstanceID, InputsFingerprint: i.Fingerprint(), AllowTargetStop: profile.Settings().AllowTargetStop, MinimumFreeBytes: c.Journal.MinimumFreeBytes}, native)
 		if e != nil {
 			return nil, e
 		}
@@ -387,7 +391,7 @@ func (i *InstalledInputs) Open(ctx context.Context, operatorVersion string) (res
 	stage = "campaign launch preparation"
 	session, err := Prepare(ctx, Config{StateRoot: c.State.Root, Target: target, InterceptorCheckedAt: interceptorCheckedAt,
 		Launch:       preparation.LaunchConfig{Sizes: c.Sizes, OperationTimeouts: c.OperationTimeouts, LaunchID: selected.LaunchID, ContainerID: selected.ContainerID, CreatedAt: time.Now().UTC().Truncate(time.Second), Image: image, Embedded: embedded, Model: model, Skills: selectedSkills, Limits: c.Limits, Retention: campaign.Retention{Mode: "manual-purge", MaxJournalBytes: c.Journal.MaxBytes, MaxSegmentBytes: c.Journal.SegmentBytes}, PromptMode: selected.PromptMode, Replacement: replacement, Appends: appends},
-		Requirements: requirements, Peer: native, HTTPS: https, Docker: docker, Provider: provider, MinimumFreeBytes: c.Journal.MinimumFreeBytes, SpoolMaxBytes: c.Spool.MaxBytes, EvidenceMaxBytes: c.Evidence.MaxArchiveBytes, StartRequestID: selected.StartRequestID, Gate: gate, Recovery: recovered})
+		Requirements: requirements, Peer: native, HTTP: httpTarget, Docker: docker, Provider: provider, MinimumFreeBytes: c.Journal.MinimumFreeBytes, SpoolMaxBytes: c.Spool.MaxBytes, EvidenceMaxBytes: c.Evidence.MaxArchiveBytes, StartRequestID: selected.StartRequestID, Gate: gate, Recovery: recovered})
 	if err != nil {
 		return nil, err
 	}

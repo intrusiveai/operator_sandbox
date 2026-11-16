@@ -39,11 +39,12 @@ type Outcome struct {
 func encoded(v any) []byte { raw, _ := json.Marshal(v); return raw }
 
 // Run requires the installation lease and a completed Docker absence check.
+// A nil peer uses the connection frozen in the verified campaign records.
 // One automatic pass is durably claimed; repeated starts only read its outcome.
 // Unknown restore bindings or prior cleanup dispatches never authorize replay.
 func Run(ctx context.Context, root, id string, containerAbsent bool, peer Peer) (out Outcome, err error) {
 	out = Outcome{CampaignID: id, State: "unconfirmed", Reason: "evidence_unavailable", Closure: "unconfirmed", Cleanup: "unconfirmed", TargetStop: "not-permitted"}
-	if !containerAbsent || peer == nil {
+	if !containerAbsent {
 		return out, campaign.ErrInvalid
 	}
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
@@ -69,7 +70,7 @@ func Run(ctx context.Context, root, id string, containerAbsent bool, peer Peer) 
 		out.ManifestDigest = f.digest
 		return out, nil
 	}
-	if f.manifest.Target.Adapter == "https/v1" {
+	if f.manifest.Target.Adapter == "http/v1" {
 		out.State = "finalized"
 		out.Reason = "local_execution_ended"
 		out.Closure = "not-applicable"
@@ -92,6 +93,14 @@ func Run(ctx context.Context, root, id string, containerAbsent bool, peer Peer) 
 			return old, nil
 		}
 		return out, a.Finish(out)
+	}
+	if peer == nil {
+		client, err := interceptor.NewConfigured(f.connection)
+		if err != nil {
+			return out, err
+		}
+		defer client.Close()
+		peer = client
 	}
 	return finalize(ctx, a, f, peer, out)
 }

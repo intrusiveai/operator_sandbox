@@ -128,7 +128,7 @@
             "observation.read",
             "observation.content.read",
             "injection.delete",
-            "https.invoke"
+            "http.invoke"
           ]
         },
         "attempt_allowance_ms": {

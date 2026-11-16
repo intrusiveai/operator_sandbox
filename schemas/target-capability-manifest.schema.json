@@ -15,7 +15,7 @@
         "adapter": {
           "enum": [
             "interceptor/v1",
-            "https/v1"
+            "http/v1"
           ]
         },
         "schema_version": {
@@ -61,7 +61,7 @@
         "adapter": {
           "enum": [
             "interceptor/v1",
-            "https/v1"
+            "http/v1"
           ]
         },
         "operations": {
@@ -1042,7 +1042,7 @@
           "source": {
             "properties": {
               "adapter": {
-                "const": "https/v1"
+                "const": "http/v1"
               }
             }
           }
@@ -1053,7 +1053,7 @@
           "capabilities": {
             "properties": {
               "adapter": {
-                "const": "https/v1"
+                "const": "http/v1"
               },
               "actions": {
                 "maxItems": 0

@@ -1,5 +1,5 @@
-// Package httpstarget implements administrator-owned declarative HTTPS operations.
-package httpstarget
+// Package httptarget implements administrator-owned declarative HTTP operations.
+package httptarget
 
 import (
 	"bytes"
@@ -18,13 +18,13 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
-const Adapter = "https/v1"
-const Version = "operator.dev/https-mapping/v1alpha1"
+const Adapter = "http/v1"
+const Version = "operator.dev/http-mapping/v1alpha1"
 const Limit = 64 << 10
 
-var ErrMapping = diagnostictext.New("invalid administrator HTTPS mapping")
-var ErrInput = diagnostictext.New("HTTPS input does not match the configured operation")
-var ErrResponse = diagnostictext.New("HTTPS response does not match the configured selection")
+var ErrMapping = diagnostictext.New("invalid administrator HTTP mapping")
+var ErrInput = diagnostictext.New("HTTP input does not match the configured operation")
+var ErrResponse = diagnostictext.New("HTTP response does not match the configured selection")
 var id = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$`)
 var header = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9-]{0,63}$`)
 
@@ -73,7 +73,7 @@ func Parse(raw []byte) (*Mapping, error) {
 		return nil, ErrMapping
 	}
 	u, e := url.Parse(s.Origin)
-	if e != nil || u.Scheme != "https" || u.Hostname() == "" || u.User != nil || u.Path != "" || u.RawQuery != "" || u.ForceQuery || u.Fragment != "" || u.Opaque != "" || len(s.Origin) > 2048 || strings.ContainsAny(u.Host, "%\\\r\n") {
+	if e != nil || (u.Scheme != "https" && u.Scheme != "http") || u.Hostname() == "" || u.User != nil || u.Path != "" || u.RawQuery != "" || u.ForceQuery || u.Fragment != "" || u.Opaque != "" || len(s.Origin) > 2048 || strings.ContainsAny(u.Host, "%\\\r\n") {
 		return nil, ErrMapping
 	}
 	if port := u.Port(); port != "" {
@@ -81,6 +81,9 @@ func Parse(raw []byte) (*Mapping, error) {
 		if e != nil || n < 1 || n > 65535 {
 			return nil, ErrMapping
 		}
+	}
+	if u.Scheme == "http" && s.CACertificatesPEM != "" {
+		return nil, ErrMapping
 	}
 	for _, raw := range s.AllowedPrivateCIDRs {
 		prefix, e := netip.ParsePrefix(raw)

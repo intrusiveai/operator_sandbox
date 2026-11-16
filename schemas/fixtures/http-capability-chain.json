@@ -1,6 +1,6 @@
 {
   "mapping": {
-    "api_version": "operator.dev/https-mapping/v1alpha1",
+    "api_version": "operator.dev/http-mapping/v1alpha1",
     "origin": "https://agent.example.com",
     "allowed_private_cidrs": [],
     "authentication": {
@@ -35,15 +35,15 @@
     ]
   },
   "source": {
-    "api_version": "operator.dev/https-capabilities/v1alpha1",
+    "api_version": "operator.dev/http-capabilities/v1alpha1",
     "target_id": "https-agent",
-    "mapping_digest": "sha256:d0b571b504587f490e823d9f014bce7bbb7c5a0e679591fed1311e69f9377276",
+    "mapping_digest": "sha256:7684d18c7d66c16be19fad20c81c46791fd1e9bbef2d367ebad2bd02466ac788",
     "operations": [
       {
         "id": "chat",
         "maximum_input_bytes": 65536,
         "delivery": {
-          "description": "Administrator-declared HTTPS application operation.",
+          "description": "Administrator-declared HTTP application operation.",
           "input": {
             "media_type": "text/plain",
             "encoding": "utf8",
@@ -63,14 +63,14 @@
   "public": {
     "schema_version": "operator.dev/target-capability-manifest/v1alpha1",
     "source": {
-      "adapter": "https/v1",
-      "schema_version": "operator.dev/https-capabilities/v1alpha1",
-      "capability_source_digest": "sha256:55030fa0abfe6cfec22ae6e49f4d88c3790d500fa6053d1f3d903b247f9c9fae",
-      "raw_digest": "sha256:55030fa0abfe6cfec22ae6e49f4d88c3790d500fa6053d1f3d903b247f9c9fae"
+      "adapter": "http/v1",
+      "schema_version": "operator.dev/http-capabilities/v1alpha1",
+      "capability_source_digest": "sha256:9c56ee385285e38ffe5739bf254b7cd1ac322f102a03ee4a9cc3909fd2224238",
+      "raw_digest": "sha256:9c56ee385285e38ffe5739bf254b7cd1ac322f102a03ee4a9cc3909fd2224238"
     },
     "capabilities": {
       "target_id": "https-agent",
-      "adapter": "https/v1",
+      "adapter": "http/v1",
       "operations": [
         {
           "ref": "operation:chat",
@@ -78,7 +78,7 @@
           "maximum_input_bytes": 65536,
           "delivery_status": "described",
           "delivery": {
-            "description": "Administrator-declared HTTPS application operation.",
+            "description": "Administrator-declared HTTP application operation.",
             "input": {
               "media_type": "text/plain",
               "encoding": "utf8",
@@ -120,6 +120,6 @@
         }
       ]
     },
-    "capability_projection_digest": "sha256:fc3e4f0213e6bd6f7b6e00bba3b30c61e0caafdf887d3766b78e356ec8381e58"
+    "capability_projection_digest": "sha256:ec271e3784ddf47337958abaf2df6ab68fdf276445e5a33e487cb96926aabced"
   }
 }

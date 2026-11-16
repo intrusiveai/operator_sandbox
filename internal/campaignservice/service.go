@@ -17,7 +17,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/attemptadapter"
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/diagnostictext"
-	"github.com/intrusiveai/operator_sandbox/internal/httpstarget"
+	"github.com/intrusiveai/operator_sandbox/internal/httptarget"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/modelprovider"
 	"github.com/intrusiveai/operator_sandbox/internal/nativeexec"
@@ -43,7 +43,7 @@ type Runtime interface {
 	termination.Killer
 }
 type Config struct {
-	HTTPS     *httpstarget.Client
+	HTTP      *httptarget.Client
 	Prepared  *preparation.Stored
 	Peer      Peer
 	Runtime   Runtime
@@ -62,7 +62,7 @@ type Service struct {
 	modelDiagnostic      atomic.Pointer[modelprovider.Diagnostic]
 	conclusionDiagnostic atomic.Pointer[campaign.ConclusionDiagnostic]
 	workflowDiagnostic   atomic.Pointer[campaign.WorkflowDiagnostic]
-	httpsParent          *attemptadapter.Parent
+	httpParent           *attemptadapter.Parent
 	config               Config
 	writer               *campaign.Writer
 	attempts             *campaign.Attempts
@@ -110,7 +110,7 @@ type TerminalResult struct {
 }
 
 func New(ctx context.Context, c Config) (*Service, error) {
-	if c.Prepared == nil || (c.Peer == nil && c.HTTPS == nil) || c.Runtime == nil || c.StateRoot == "" || ctx.Err() != nil {
+	if c.Prepared == nil || (c.Peer == nil && c.HTTP == nil) || c.Runtime == nil || c.StateRoot == "" || ctx.Err() != nil {
 		return nil, ErrService
 	}
 	if c.Evidence == nil {
@@ -122,11 +122,11 @@ func New(ctx context.Context, c Config) (*Service, error) {
 	if c.Evidence.MaxArchiveBytes < 1 || c.Evidence.MaxArchiveBytes > contracts.MaxSafeInteger || c.Evidence.Timeout <= 0 || c.Evidence.Timeout > 5*time.Minute || c.Evidence.TotalTimeout <= 0 || c.Evidence.TotalTimeout > 30*time.Minute {
 		return nil, ErrService
 	}
-	if m := c.Prepared.Target().Profile().HTTPS(); m != nil {
-		if c.HTTPS == nil || c.HTTPS.MappingDigest() != m.Digest() {
+	if m := c.Prepared.Target().Profile().HTTP(); m != nil {
+		if c.HTTP == nil || c.HTTP.MappingDigest() != m.Digest() {
 			return nil, ErrService
 		}
-	} else if c.HTTPS != nil {
+	} else if c.HTTP != nil {
 		return nil, ErrService
 	}
 	w := c.Prepared.Writer()
@@ -210,7 +210,7 @@ func New(ctx context.Context, c Config) (*Service, error) {
 		w.Fence().Stop(err)
 		return nil, err
 	}
-	if c.HTTPS == nil {
+	if c.HTTP == nil {
 		if err = s.rememberEvidenceTarget(c.Prepared.Target(), nil); err != nil {
 			w.Fence().Stop(err)
 			return nil, err
@@ -228,7 +228,7 @@ func New(ctx context.Context, c Config) (*Service, error) {
 		s.timer.Stop()
 		s.shutdownOnce.Do(func() { go s.finish() })
 	}()
-	if c.HTTPS == nil {
+	if c.HTTP == nil {
 		go s.watchTarget()
 	}
 	return s, nil
@@ -352,7 +352,7 @@ func boundedResponse(r interceptor.Response) []byte {
 func (s *Service) prepare(ctx context.Context, raw []byte, deadline time.Time) (*attemptadapter.Plan, *nativeexec.Guard, error) {
 	var view interceptor.SessionStatus
 	var err error
-	if s.config.HTTPS == nil {
+	if s.config.HTTP == nil {
 		view, err = s.inspect(ctx, false)
 	} else {
 		err = s.config.Runtime.CheckRunning(ctx, s.config.Docker)
@@ -385,13 +385,13 @@ func (s *Service) prepare(ctx context.Context, raw []byte, deadline time.Time) (
 	in.CreatedAt = time.Now()
 	in.Deadline = deadline
 	// The caller supplies the original whole-attempt deadline, including preparation.
-	if s.config.HTTPS != nil {
-		p, e := attemptadapter.CompileHTTPS(s.target().Protocol().Catalog(), raw, in, s.target().Profile().HTTPS(), s.config.HTTPS)
+	if s.config.HTTP != nil {
+		p, e := attemptadapter.CompileHTTP(s.target().Protocol().Catalog(), raw, in, s.target().Profile().HTTP(), s.config.HTTP)
 		if e != nil {
 			return nil, nil, e
 		}
-		parent := p.HTTPSParent()
-		s.httpsParent = &parent
+		parent := p.HTTPParent()
+		s.httpParent = &parent
 		return p, nil, nil
 	}
 	p, err := attemptadapter.Compile(s.target().Protocol().Catalog(), raw, in)
@@ -465,7 +465,7 @@ func (s *Service) Admit(ctx context.Context, in campaign.LaunchInputs) error {
 		s.model.limits = context.Model.ContextLimits
 		s.model.policy = policy
 	}
-	if s.config.HTTPS == nil {
+	if s.config.HTTP == nil {
 		if _, err := s.inspect(ctx, false); err != nil {
 			s.Stop(err)
 			return err

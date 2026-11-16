@@ -58,3 +58,23 @@ func TestInstallationTimeoutCeiling(t *testing.T) {
 		t.Fatal("configured increase rejected")
 	}
 }
+
+func TestInterceptorConnectionIsValidatedAndFrozen(t *testing.T) {
+	with := func(connection string) []byte {
+		return bytes.Replace(example, []byte(`"adapter":"interceptor/v1"`), []byte(`"adapter":"interceptor/v1","interceptor":`+connection), 1)
+	}
+	p, err := Parse(with(`{"protocol":"https","address":"interceptor.internal","port":8443}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings := p.Settings()
+	settings.Interceptor.Address = "changed.invalid"
+	if p.Settings().Interceptor.Address != "interceptor.internal" || !bytes.Contains(p.RetainedJSON(), []byte(`"port":8443`)) {
+		t.Fatal("connection not frozen")
+	}
+	for _, raw := range []string{`{}`, `{"protocol":"http","address":"host"}`, `{"protocol":"ftp","address":"host","port":8080}`, `{"protocol":"http","address":"host","port":8080,"url":"ignored"}`} {
+		if _, err := Parse(with(raw)); err == nil {
+			t.Fatal("invalid connection accepted")
+		}
+	}
+}

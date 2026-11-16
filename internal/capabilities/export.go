@@ -21,7 +21,7 @@ var (
 // are private so callers cannot alter provenance after successful verification.
 type Export struct {
 	native           nativeManifest
-	https            *httpsDeclaration
+	httpTarget       *httpDeclaration
 	raw, public      []byte
 	projection       map[string]any
 	projectionDigest string
@@ -30,7 +30,7 @@ type Export struct {
 func (e *Export) NativeJSON() []byte { return bytes.Clone(e.raw) }
 func (e *Export) PublicJSON() []byte { return bytes.Clone(e.public) }
 func (e *Export) SourceDigest() string {
-	if e.https != nil {
+	if e.httpTarget != nil {
 		return contracts.RawDigest(e.raw)
 	}
 	return e.native.Digest
@@ -154,8 +154,8 @@ func Import(catalog *contracts.Catalog, public, native []byte, targetID string) 
 	_ = json.Unmarshal(public, &source)
 	var e *Export
 	var err error
-	if source.Source.Adapter == "https/v1" {
-		e, err = fromHTTPSDeclaration(catalog, native, targetID)
+	if source.Source.Adapter == "http/v1" {
+		e, err = fromHTTPDeclaration(catalog, native, targetID)
 	} else {
 		e, err = FromNative(catalog, native, targetID)
 	}

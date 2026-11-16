@@ -298,7 +298,7 @@ func (b *Broker) attempt(ctx context.Context, q wireRequest, deadline time.Time)
 		}
 		return reject("INVALID_ARGUMENTS")
 	}
-	if plan == nil || (guard == nil && plan.https == nil) || plan.RequestID() != q.ID || plan.deadline.After(deadline) || !plan.deadline.After(time.Now()) || plan.binding.SessionID != saved.Target.SessionID || plan.binding.RunRevision != uint64(q.Revision) {
+	if plan == nil || (guard == nil && plan.httpTarget == nil) || plan.RequestID() != q.ID || plan.deadline.After(deadline) || !plan.deadline.After(time.Now()) || plan.binding.SessionID != saved.Target.SessionID || plan.binding.RunRevision != uint64(q.Revision) {
 		return reply{}, b.stop(ErrAttempt)
 	}
 	plan.started = started
@@ -332,12 +332,12 @@ func (b *Broker) attempt(ctx context.Context, q wireRequest, deadline time.Time)
 	}
 	var result Result
 	var runErr error
-	if plan.https != nil {
-		meta, _ := json.Marshal(map[string]any{"request_id": q.ID, "attempt_id": plan.request.AttemptID, "operation_id": plan.request.Invocation.OperationID, "mapping_digest": plan.https.mapping.Digest()})
-		if _, err = b.config.Writer.Append(campaign.Entry{RunRevision: q.Revision, Kind: "https.dispatch-intent", Metadata: meta}); err != nil {
+	if plan.httpTarget != nil {
+		meta, _ := json.Marshal(map[string]any{"request_id": q.ID, "attempt_id": plan.request.AttemptID, "operation_id": plan.request.Invocation.OperationID, "mapping_digest": plan.httpTarget.mapping.Digest()})
+		if _, err = b.config.Writer.Append(campaign.Entry{RunRevision: q.Revision, Kind: "http.dispatch-intent", Metadata: meta}); err != nil {
 			return reply{}, b.stop(err)
 		}
-		result, runErr = plan.runHTTPS(ctx, a)
+		result, runErr = plan.runHTTP(ctx, a)
 	} else {
 		execution, e := plan.NewExecution(a, guard)
 		if e != nil {

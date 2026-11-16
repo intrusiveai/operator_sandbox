@@ -225,7 +225,7 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 		if event.Kind == "campaign.launch-inputs-retained" {
 			launchInputsRetained = true
 		}
-		if event.Kind == "https.dispatch-intent" {
+		if event.Kind == "http.dispatch-intent" {
 			var id string
 			if json.Unmarshal(metadata["operation_id"], &id) != nil || routeFacts.operations == nil {
 				return campaign.ErrCorrupt
@@ -664,7 +664,7 @@ func Generate(ctx context.Context, root, id, output string) (Receipt, error) {
 	result.JournalIntact = scanErr == nil && inspect.JournalIntact
 	result.TargetAdapter = inspect.Manifest.Target.Adapter
 	result.NativeProfile = inspect.Manifest.Target.NativeFeedbackProfile
-	if result.TargetAdapter == "https/v1" {
+	if result.TargetAdapter == "http/v1" {
 		result.Assurance = "declared-observer"
 		result.NativeProfile = ""
 		result.TargetClosure = "not-applicable"

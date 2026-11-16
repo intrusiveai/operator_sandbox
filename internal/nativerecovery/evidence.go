@@ -82,7 +82,7 @@ func CollectEvidence(ctx context.Context, root, id string, docker EvidenceDocker
 	if e := ctx.Err(); e != nil {
 		return out, e
 	}
-	if docker == nil || peer == nil {
+	if docker == nil {
 		return out, campaign.ErrInvalid
 	}
 	lease, e := campaign.AcquireHostLease(root)
@@ -100,12 +100,20 @@ func CollectEvidence(ctx context.Context, root, id string, docker EvidenceDocker
 		return out, e
 	}
 	out.ManifestDigest = f.digest
-	if f.manifest.Target.Adapter == "https/v1" {
+	if f.manifest.Target.Adapter == "http/v1" {
 		out.Reason = "unsupported_target_adapter"
 		return out, nil
 	}
 	if !f.prepared {
 		return out, campaign.ErrInvalid
+	}
+	if peer == nil {
+		client, err := interceptor.NewConfigured(f.connection)
+		if err != nil {
+			return out, err
+		}
+		defer client.Close()
+		peer = client
 	}
 	evidence, e := loadEvidenceFacts(ctx, a, f)
 	if e != nil {

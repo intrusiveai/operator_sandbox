@@ -58,10 +58,13 @@ func (d *lateDocker) CheckInactive(_ context.Context, b campaign.DockerBinding) 
 	}
 	return dockercontrol.Inactivity{Confirmed: !d.active, State: "absent"}
 }
-func lateFixture(t *testing.T) (string, *campaign.Writer, *latePeer, campaign.EvidencePolicy, nativeevidence.Target) {
+func lateFixture(t *testing.T, changes ...func(*preparation.Input)) (string, *campaign.Writer, *latePeer, campaign.EvidencePolicy, nativeevidence.Target) {
 	t.Helper()
 	in := fixture(t)
 	nativeEvidenceInput(&in)
+	for _, change := range changes {
+		change(&in)
+	}
 	target, e := preparation.Build(in)
 	if e != nil {
 		t.Fatal(e)

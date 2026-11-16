@@ -1,9 +1,9 @@
-# Declarative HTTPS targets
+# Declarative HTTP targets
 
 ## Mapping contract
 
-An administrator-owned target profile with adapter `https/v1` MUST contain an
-inline `https` mapping with `api_version: operator.dev/https-mapping/v1alpha1`.
+An administrator-owned target profile with adapter `http/v1` MUST contain an
+inline `http` mapping with `api_version: operator.dev/http-mapping/v1alpha1`.
 Operator MUST freeze its canonical bytes and digest before campaign execution.
 Only the administrator MAY select destinations, authentication, input placement,
 response selection, network policy and bounds. The mapping MUST NOT enter
@@ -12,24 +12,26 @@ use a redacted policy and the private mapping's digest.
 
 ## Administrator workflow
 
-Start from [the example profile](../examples/https-target-profile.json), edit its
-target ID, destination, operation mapping and limits, and keep it private:
+Start from [the example profile](../examples/http-target-profile.json), edit its
+target ID, destination, operation mapping and limits, and keep it private.
+Use `origin: "http://127.0.0.1:9000"` with `allowed_private_cidrs: ["127.0.0.1/32"]`
+for a local HTTP service, or an explicit HTTPS origin for a TLS service:
 
 ```sh
-mkdir -p ./https-environment
-cp ./examples/https-target-profile.json ./https-environment/target-profile.json
-chmod 600 ./https-environment/target-profile.json
+mkdir -p ./http-environment
+cp ./examples/http-target-profile.json ./http-environment/target-profile.json
+chmod 600 ./http-environment/target-profile.json
 operatorctl capabilities export \
-  --target-profile ./https-environment/target-profile.json \
-  --output ./https-environment/capabilities.json
+  --target-profile ./http-environment/target-profile.json \
+  --output ./http-environment/capabilities.json
 operatorctl submit --bundle ./scenario-bundle.json \
-  --environment ./https-environment --output ./runs/https-example
-operatorctl campaign start --run ./runs/https-example
+  --environment ./http-environment --output ./runs/http-example
+operatorctl campaign start --run ./runs/http-example
 ```
 
 The submission MUST use the exported target ID and typed capability references.
 Exports include a hash-named source companion; administrators MUST keep it beside
-the public JSON. HTTPS export MUST derive capabilities offline from the private
+the public JSON. HTTP export MUST derive capabilities offline from the private
 profile without contacting the application or requiring a native export.
 Authenticated mappings MUST name a credential ID in Operator's private credential
 configuration. The existing `operatorctl run` convenience workflow MAY replace
@@ -42,9 +44,9 @@ The mapping MUST contain these fields:
 
 | Field | Contract |
 |---|---|
-| `origin` | Fixed HTTPS scheme, hostname/IP and optional port; no userinfo, path, query or fragment. |
+| `origin` | Explicit `http` or `https` scheme, hostname/IP and optional port; no userinfo, path, query or fragment. |
 | `allowed_private_cidrs` | Explicit canonical subnets within RFC1918, IPv6 unique-local, or loopback ranges; at most 32. Omission/empty authorizes no private addresses. |
-| `ca_certificates_pem` | Optional administrator-installed CA certificates, embedded to freeze trust bytes; added to ordinary system trust. |
+| `ca_certificates_pem` | Optional administrator-installed CA certificates for HTTPS, embedded to freeze trust bytes; added to ordinary system trust. Invalid for HTTP. |
 | `authentication` | `mode`: `none`, `bearer`, or `api-key`. The latter two require an existing host `credential_id`; API key additionally requires a fixed `header`. |
 | `operations` | 1–64 uniquely identified operations as defined below. |
 
@@ -83,7 +85,9 @@ NOT enter journals, reports or harness inputs.
 ## Destination and execution contract
 
 Operator MUST validate every resolved address and connect directly to a validated
-IP while verifying TLS against the configured hostname (TLS 1.2 or newer).
+IP. HTTPS MUST verify TLS against the configured hostname (TLS 1.2 or newer).
+HTTP MUST use the same address validation and pinned-IP dialing without TLS.
+The configured scheme MUST NOT be upgraded, downgraded or inferred.
 If any DNS answer is forbidden, execution MUST fail before transmission.
 Public unicast addresses are permitted; private/loopback addresses require an
 explicit CIDR. Link-local, multicast, unspecified, special-use and known platform
@@ -100,7 +104,7 @@ from uncertain outcomes after transmission might have begun. A response-size
 failure or malformed response after dispatch MUST NOT imply the target did not
 execute. Only selected bounded feedback and fixed diagnostic codes MAY be retained.
 Shared attempt results MUST use the existing shared error vocabulary; detailed
-`HTTPS_*` codes MUST appear only in permitted `operation_error` feedback. A
+`HTTP_*` codes MUST appear only in permitted `operation_error` feedback. A
 failed or uncertain dispatched attempt MUST close execution and MUST NOT trigger
 an automatic retry. HTTP response acceptance records application-level observation,
 not proof that a remote side effect succeeded or failed.
@@ -113,13 +117,13 @@ capabilities. Exports MUST bind a deterministic public companion declaration to
 the administrator mapping digest while omitting endpoints and authentication.
 Execution MUST rederive this projection from the selected private mapping.
 
-HTTPS campaigns MUST use existing admission/index allocation, artifact verification,
+HTTP campaigns MUST use existing admission/index allocation, artifact verification,
 idempotent result replay, observation chunk reads, cancellation and reporting.
 Injection setup/cleanup, snapshots, restore and native target stop MUST be unavailable.
 Local execution identities MUST NOT be presented as native remote sessions.
 Reports MUST state `declared-observer` assurance and MUST NOT imply native oracle
 evidence, target reset or remote closure. Recovery MUST stop the harness and
-finalize local records without repeating an HTTPS request.
+finalize local records without repeating an HTTP request.
 
 ## Validation
 
@@ -129,3 +133,17 @@ CA validation, proxy/redirect rejection, response ceilings, audited credentials,
 timeouts, cancellation, uncertain effects, duplicate suppression, feedback narrowing
 and retained report assurance. Real target and native host qualification remain
 separate from local TLS-fixture tests.
+
+## Component compatibility
+
+The direct adapter is `http/v1` for both HTTP and HTTPS. Its profile field is
+`http`, its mapping version is `operator.dev/http-mapping/v1alpha1`, and public
+source declarations use `operator.dev/http-capabilities/v1alpha1`. Regenerate
+capability exports and submit new campaigns after changing these profile fields;
+Operator does not translate the former HTTPS-only identifiers.
+
+Use matching Operator and Attack Harness interface identities from
+[the contract lock](../release/contract-lock.json). Harness consumes the generated
+capability schema and `http.invoke` timeout-operation identifier from that
+contract. Model-facing invocation and evidence-read arguments are unchanged;
+only administrators choose the destination and scheme.

@@ -2,7 +2,7 @@
   "api_version": "operator.dev/target-profile/v1alpha1",
   "id": "https-agent",
   "target_id": "https-agent",
-  "adapter": "https/v1",
+  "adapter": "http/v1",
   "allow_target_stop": false,
   "scopes": {
     "operation_ids": ["chat"],
@@ -16,8 +16,8 @@
     "max_attempt_bytes": 1048576
   },
   "operation_timeout_ms": 30000,
-  "https": {
-    "api_version": "operator.dev/https-mapping/v1alpha1",
+  "http": {
+    "api_version": "operator.dev/http-mapping/v1alpha1",
     "origin": "https://agent.example.com",
     "allowed_private_cidrs": [],
     "authentication": {"mode": "none"},

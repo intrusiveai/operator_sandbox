@@ -8,7 +8,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 )
 
-func TestHTTPSFeedbackPolicyAndAvailability(t *testing.T) {
+func TestHTTPFeedbackPolicyAndAvailability(t *testing.T) {
 	for _, tc := range []struct {
 		name, profile       string
 		selection           *interceptor.ObservationSelection
@@ -32,7 +32,7 @@ func TestHTTPSFeedbackPolicyAndAvailability(t *testing.T) {
 				t.Fatal(err)
 			}
 			s, _ := view(p)
-			r, err := HTTPS(catalog(t), p, s, "receipt", []byte("reply"), "text/plain", "HTTPS_STATUS_FAILED", tc.complete, tc.truncated, tc.maximum)
+			r, err := HTTP(catalog(t), p, s, "receipt", []byte("reply"), "text/plain", "HTTP_STATUS_FAILED", tc.complete, tc.truncated, tc.maximum)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -44,7 +44,7 @@ func TestHTTPSFeedbackPolicyAndAvailability(t *testing.T) {
 			if tc.entries > 0 && (m.Entries[0].Availability != tc.availability || m.Entries[0].Truncated != tc.truncated) {
 				t.Fatal(m)
 			}
-			if tc.profile == "black-box" && bytes.Contains(r.RecordJSON(), []byte("HTTPS_STATUS_FAILED")) {
+			if tc.profile == "black-box" && bytes.Contains(r.RecordJSON(), []byte("HTTP_STATUS_FAILED")) {
 				t.Fatal("withheld error leaked")
 			}
 			var record Record

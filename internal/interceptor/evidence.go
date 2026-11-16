@@ -170,7 +170,7 @@ func (c *Client) DownloadEvidence(ctx context.Context, q EvidenceRequest, direct
 		}
 	}()
 	raw, _ := json.Marshal(map[string]string{"api_version": LifecycleVersion, "campaign_id": q.CampaignID, "session_id": q.SessionID})
-	request, err := http.NewRequestWithContext(ctx, http.MethodPost, Address+"/v1/evidence", io.NopCloser(bytes.NewReader(raw)))
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL()+"/v1/evidence", io.NopCloser(bytes.NewReader(raw)))
 	if err != nil {
 		return nil, ErrRequest
 	}

@@ -59,7 +59,7 @@ This specification changes host diagnostics, not either shared integration contr
   Interceptor lifecycle calls and host container, transport and input cleanup.
   Recovery results and later evidence collection MUST retain their own failures
   without rewriting original execution history.
-- HTTPS target failures MUST use the common diagnostic path with their logical
+- HTTP/HTTPS target failures MUST use the common diagnostic path with their logical
   operation, observed HTTP status, failure stage and safe credential-preparation
   cause when available. Unrestricted target bodies and transport errors MUST
   remain private. Model-provider diagnostics MUST retain their existing richer

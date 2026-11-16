@@ -159,7 +159,7 @@ func TestPythonProcessCampaigns(t *testing.T) {
 				}
 				r := newProcessRun(t, processCase{transport: transport, prompt: "default", reply: reply, change: func(in *preparation.Input) {
 					if server != nil {
-						httpsInput(t, in, server)
+						httpInput(t, in, server)
 					}
 					if mode == "objectives-only" {
 						var b map[string]any
@@ -196,7 +196,7 @@ func TestPythonProcessCampaigns(t *testing.T) {
 					t.Fatal(report)
 				}
 				if mode == "https" && report.Assurance != "declared-observer" {
-					t.Fatal("HTTPS assurance", report.Assurance)
+					t.Fatal("HTTP assurance", report.Assurance)
 				}
 				if slices.Contains(r.native.calls, "injection.arm") {
 					t.Fatal("unexpected injection")

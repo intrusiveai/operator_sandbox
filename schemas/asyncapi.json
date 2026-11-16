@@ -4367,7 +4367,7 @@
                     "observation.read",
                     "observation.content.read",
                     "injection.delete",
-                    "https.invoke"
+                    "http.invoke"
                   ]
                 },
                 "observation_collection": {
@@ -22984,7 +22984,7 @@
                   "source": {
                     "properties": {
                       "adapter": {
-                        "const": "https/v1"
+                        "const": "http/v1"
                       }
                     }
                   }
@@ -22998,7 +22998,7 @@
                         "maxItems": 0
                       },
                       "adapter": {
-                        "const": "https/v1"
+                        "const": "http/v1"
                       },
                       "features": {
                         "maxItems": 0
@@ -23197,7 +23197,7 @@
                 "adapter": {
                   "enum": [
                     "interceptor/v1",
-                    "https/v1"
+                    "http/v1"
                   ]
                 },
                 "evidence_classes": {
@@ -23864,7 +23864,7 @@
                 "adapter": {
                   "enum": [
                     "interceptor/v1",
-                    "https/v1"
+                    "http/v1"
                   ]
                 },
                 "capability_source_digest": {
@@ -24266,7 +24266,7 @@
   "defaultContentType": "application/json",
   "info": {
     "title": "Operator–Attack Harness interface",
-    "version": "0.12.1"
+    "version": "0.13.0"
   },
   "operations": {
     "control-in": {

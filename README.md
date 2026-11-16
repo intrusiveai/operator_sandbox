@@ -9,12 +9,12 @@ choose what to try next.
 Operator manages the campaign: it controls access to the target and model provider,
 enforces limits, and keeps journals, evidence, and reports for review. It supports
 prompt-injection testing through [Interceptor Sandbox](https://github.com/intrusiveai/interceptor_sandbox)
-and testing HTTP-accessible applications through a configured HTTPS adapter.
+and testing HTTP-accessible applications through a configured HTTP adapter.
 
 ## How it works
 
-1. **Connect a target.** Use Interceptor Sandbox on the same host, or configure an
-   HTTPS target. A target profile defines the permitted interactions, and a
+1. **Connect a target.** Configure an Interceptor Sandbox endpoint, or a direct
+   HTTP/HTTPS target. A target profile defines the permitted interactions, and a
    capability export describes what the target supports.
 2. **Describe the campaign.** Submit a JSON bundle containing objectives, optional
    scenarios, and any supporting artifacts. You can write bundles yourself or
@@ -54,7 +54,7 @@ Prepare the following configuration:
   configure [host authentication](docs/HOST_AUTHENTICATION.md). Credentials stay
   on the host.
 - **Target:** configure [Interceptor integration](docs/CAMPAIGN_PREPARATION.md) or
-  a [declarative HTTPS target](docs/HTTPS_TARGETS.md).
+  a [declarative HTTP target](docs/HTTP_TARGETS.md).
 
 The installation creates a private configuration file. Its default location is
 `/etc/operator/config.yaml` on Linux and

@@ -102,7 +102,7 @@ func (t *Target) BuildLaunch(c LaunchConfig) (*Launch, error) {
 	}
 	operations := []string{}
 	for _, op := range t.protocol.Operations() {
-		if !t.AllowsOperationFeatures(op.Name) || t.profile.HTTPS() != nil && op.Name == "engine.injection_delete" {
+		if !t.AllowsOperationFeatures(op.Name) || t.profile.HTTP() != nil && op.Name == "engine.injection_delete" {
 			continue
 		}
 		operations = append(operations, op.Name)

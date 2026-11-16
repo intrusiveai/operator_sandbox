@@ -20,7 +20,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/campaign"
 	"github.com/intrusiveai/operator_sandbox/internal/campaignservice"
 	"github.com/intrusiveai/operator_sandbox/internal/hostworker"
-	"github.com/intrusiveai/operator_sandbox/internal/httpstarget"
+	"github.com/intrusiveai/operator_sandbox/internal/httptarget"
 	"github.com/intrusiveai/operator_sandbox/internal/preparation"
 	"github.com/intrusiveai/operator_sandbox/internal/skills"
 	"github.com/intrusiveai/operator_sandbox/internal/staging"
@@ -220,8 +220,8 @@ func newProcessRun(t *testing.T, tc processCase) *processRun {
 	if tc.modelProvider != nil {
 		serviceConfig.Model.Provider = tc.modelProvider
 	}
-	if in.Profile.HTTPS() != nil {
-		serviceConfig.HTTPS, err = httpstarget.New(in.Profile.HTTPS(), nil, 5*time.Second)
+	if in.Profile.HTTP() != nil {
+		serviceConfig.HTTP, err = httptarget.New(in.Profile.HTTP(), nil, 5*time.Second)
 		if err != nil {
 			t.Fatal(err)
 		}

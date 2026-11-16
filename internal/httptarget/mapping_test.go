@@ -1,4 +1,4 @@
-package httpstarget
+package httptarget
 
 import (
 	"encoding/json"
@@ -57,20 +57,20 @@ func TestMapping(t *testing.T) {
 }
 func TestMappingValidation(t *testing.T) {
 	cases := map[string]func(*Settings){
-		"http":              func(s *Settings) { s.Origin = "http://example.com" },
-		"userinfo":          func(s *Settings) { s.Origin = "https://user:password@example.com" },
-		"origin-path":       func(s *Settings) { s.Origin += "/path" },
-		"origin-query":      func(s *Settings) { s.Origin += "?secret=x" },
-		"path-template":     func(s *Settings) { s.Operations[0].Path = "/../other" },
-		"path-query":        func(s *Settings) { s.Operations[0].Path = "/chat?token=x" },
-		"fixed-collision":   func(s *Settings) { s.Operations[0].Input.Fixed["input"] = map[string]any{"text": "fixed"} },
-		"header-authority":  func(s *Settings) { s.Authentication = Authentication{"api-key", "credential", "Host"} },
-		"cookie":            func(s *Settings) { s.Authentication = Authentication{"api-key", "credential", "Cookie"} },
-		"unused-credential": func(s *Settings) { s.Authentication.CredentialID = "extra" },
-		"broad-cidr":        func(s *Settings) { s.AllowedPrivateCIDRs = []string{"0.0.0.0/0"} },
-		"link-local-cidr":   func(s *Settings) { s.AllowedPrivateCIDRs = []string{"169.254.0.0/16"} },
-		"unbounded":         func(s *Settings) { s.Operations[0].MaximumResponseBytes = 0 },
-		"duplicate":         func(s *Settings) { s.Operations = append(s.Operations, s.Operations[0]) },
+		"unsupported-protocol": func(s *Settings) { s.Origin = "ftp://example.com" },
+		"userinfo":             func(s *Settings) { s.Origin = "https://user:password@example.com" },
+		"origin-path":          func(s *Settings) { s.Origin += "/path" },
+		"origin-query":         func(s *Settings) { s.Origin += "?secret=x" },
+		"path-template":        func(s *Settings) { s.Operations[0].Path = "/../other" },
+		"path-query":           func(s *Settings) { s.Operations[0].Path = "/chat?token=x" },
+		"fixed-collision":      func(s *Settings) { s.Operations[0].Input.Fixed["input"] = map[string]any{"text": "fixed"} },
+		"header-authority":     func(s *Settings) { s.Authentication = Authentication{"api-key", "credential", "Host"} },
+		"cookie":               func(s *Settings) { s.Authentication = Authentication{"api-key", "credential", "Cookie"} },
+		"unused-credential":    func(s *Settings) { s.Authentication.CredentialID = "extra" },
+		"broad-cidr":           func(s *Settings) { s.AllowedPrivateCIDRs = []string{"0.0.0.0/0"} },
+		"link-local-cidr":      func(s *Settings) { s.AllowedPrivateCIDRs = []string{"169.254.0.0/16"} },
+		"unbounded":            func(s *Settings) { s.Operations[0].MaximumResponseBytes = 0 },
+		"duplicate":            func(s *Settings) { s.Operations = append(s.Operations, s.Operations[0]) },
 	}
 	for name, change := range cases {
 		t.Run(name, func(t *testing.T) {
