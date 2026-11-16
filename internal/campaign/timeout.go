@@ -17,7 +17,7 @@ type AttemptTimeout struct {
 }
 
 func (d AttemptTimeout) Valid() bool {
-	return slices.Contains([]string{"session.status", "artifact.register", "attempt.register", "injection.arm", "application.invoke", "observation.read", "observation.content.read", "injection.delete", "https.invoke"}, d.NativeOperation) && d.AllowanceMS > 0 && d.AllowanceMS <= 1800000 && d.ElapsedMS >= 0 && d.ElapsedMS <= contracts.MaxSafeInteger && slices.Contains([]string{"attempt", "request", "campaign"}, d.DeadlineSource) && slices.Contains([]string{"not-started", "incomplete", "complete"}, d.Observation)
+	return slices.Contains([]string{"session.status", "artifact.register", "attempt.register", "injection.arm", "application.invoke", "observation.read", "observation.content.read", "injection.delete", "http.invoke"}, d.NativeOperation) && d.AllowanceMS > 0 && d.AllowanceMS <= 1800000 && d.ElapsedMS >= 0 && d.ElapsedMS <= contracts.MaxSafeInteger && slices.Contains([]string{"attempt", "request", "campaign"}, d.DeadlineSource) && slices.Contains([]string{"not-started", "incomplete", "complete"}, d.Observation)
 }
 func (d AttemptTimeout) Message(invocation string) string {
 	stage := "target execution"

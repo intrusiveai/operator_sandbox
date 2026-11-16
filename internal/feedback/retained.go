@@ -33,10 +33,10 @@ func OpenRecord(catalog *contracts.Catalog, raw []byte) (*Retained, error) {
 			return nil, ErrFeedback
 		}
 	}
-	if r.SourceAdapter != "" && r.SourceAdapter != "https/v1" {
+	if r.SourceAdapter != "" && r.SourceAdapter != "http/v1" {
 		return nil, ErrFeedback
 	}
-	if r.SourceAdapter == "https/v1" && r.NativeReceiptID != "" {
+	if r.SourceAdapter == "http/v1" && r.NativeReceiptID != "" {
 		return nil, ErrFeedback
 	}
 	if r.NativeReceiptID != "" && r.NativeReceiptID != interceptor.FeedbackReceiptID(r.Source.SessionID, r.Source.TurnID) {
@@ -56,7 +56,7 @@ func OpenRecord(catalog *contracts.Catalog, raw []byte) (*Retained, error) {
 	}
 	seen := map[string]bool{}
 	for _, e := range m.Entries {
-		if r.SourceAdapter == "https/v1" && (e.Source != "https" || e.Assurance != "declared-observer" || (e.Kind != "target_output" && e.Kind != "operation_error")) {
+		if r.SourceAdapter == "http/v1" && (e.Source != "http" || e.Assurance != "declared-observer" || (e.Kind != "target_output" && e.Kind != "operation_error")) {
 			return nil, ErrFeedback
 		}
 		if seen[e.ID] || !idPattern.MatchString(r.Entries[e.ID]) || !permitted(m.Profile, e.Kind) || !slices.Contains([]string{"available", "partial", "unavailable"}, states[e.Kind]) || e.Availability == "unavailable" && e.Artifact != nil {
@@ -64,7 +64,7 @@ func OpenRecord(catalog *contracts.Catalog, raw []byte) (*Retained, error) {
 		}
 		seen[e.ID] = true
 	}
-	if len(seen) != len(r.Entries) || len(seen) > 0 && r.NativeReceiptID == "" && r.SourceAdapter != "https/v1" {
+	if len(seen) != len(r.Entries) || len(seen) > 0 && r.NativeReceiptID == "" && r.SourceAdapter != "http/v1" {
 		return nil, ErrFeedback
 	}
 	return &Retained{r, m}, nil

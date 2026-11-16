@@ -54,7 +54,7 @@ func (s *Service) finish() {
 		raw, _ := json.Marshal(result)
 		_ = s.log("service.terminal-result", nil, raw, true, true)
 	}()
-	if s.config.HTTPS != nil {
+	if s.config.HTTP != nil {
 		result.Closure = "not-applicable"
 		result.CleanupState = "not-needed"
 		result.TargetStop = "not-applicable"

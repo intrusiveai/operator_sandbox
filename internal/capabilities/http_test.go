@@ -4,14 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/intrusiveai/operator_sandbox/contracts"
-	"github.com/intrusiveai/operator_sandbox/internal/httpstarget"
+	"github.com/intrusiveai/operator_sandbox/internal/httptarget"
 	"github.com/intrusiveai/operator_sandbox/schemas"
 	"os"
 	"testing"
 )
 
-func TestHTTPSProjectionFixture(t *testing.T) {
-	raw, e := os.ReadFile("../../schemas/fixtures/https-capability-chain.json")
+func TestHTTPProjectionFixture(t *testing.T) {
+	raw, e := os.ReadFile("../../schemas/fixtures/http-capability-chain.json")
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -23,11 +23,11 @@ func TestHTTPSProjectionFixture(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	m, e := httpstarget.Parse(f.Mapping)
+	m, e := httptarget.Parse(f.Mapping)
 	if e != nil {
 		t.Fatal(e)
 	}
-	export, e := FromHTTPS(p.Catalog(), m, "https-agent")
+	export, e := FromHTTP(p.Catalog(), m, "https-agent")
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -44,7 +44,7 @@ func TestHTTPSProjectionFixture(t *testing.T) {
 	if bytes.Contains(export.PublicJSON(), []byte("agent.example.com")) || bytes.Contains(export.NativeJSON(), []byte("/chat")) {
 		t.Fatal("private endpoint leaked")
 	}
-	bad := bytes.Replace(export.PublicJSON(), []byte(`"adapter":"https/v1"`), []byte(`"adapter":"interceptor/v1"`), 1)
+	bad := bytes.Replace(export.PublicJSON(), []byte(`"adapter":"http/v1"`), []byte(`"adapter":"interceptor/v1"`), 1)
 	if _, e = p.Catalog().Validate(contracts.TargetCapabilityManifestSchema, bad, contracts.OrdinaryLimit); e == nil {
 		t.Fatal("mixed adapter identities")
 	}

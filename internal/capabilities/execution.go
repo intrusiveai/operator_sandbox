@@ -24,8 +24,8 @@ func (e *Export) ExecutionFacts() ExecutionFacts {
 		InjectionProfiles: e.native.InjectionProfiles, Services: e.native.Services,
 		FileNamespaces: e.native.FileNamespaces,
 	}
-	if e.https != nil {
-		source = ExecutionFacts{Operations: e.https.Operations}
+	if e.httpTarget != nil {
+		source = ExecutionFacts{Operations: e.httpTarget.Operations}
 	}
 	// Use the verified projection's availability decisions for both adapters.
 	source.Features = e.projection["features"].([]string)

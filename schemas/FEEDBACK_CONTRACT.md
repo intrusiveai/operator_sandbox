@@ -239,11 +239,11 @@ This contract resolves HC-02/HC-03 design choices. SDK generation, broker/harnes
 implementation and end-to-end qualification remain HC-01/HC-06 deliverables.
 
 
-## HTTPS observer feedback
+## HTTP observer feedback
 
-The `https/v1` adapter MUST publish receipt-scoped feedback using these same
+The `http/v1` adapter MUST publish receipt-scoped feedback using these same
 selection, visibility, byte-limit and chunk-read rules. Its entries MUST use
-`source: https` and `assurance: declared-observer`. Its boundary MUST be
+`source: http` and `assurance: declared-observer`. Its boundary MUST be
 `request-ended`, meaning the bounded request has ended, including uncertain
 outcomes; it MUST NOT imply successful remote execution.
 
@@ -254,9 +254,9 @@ explicitly unavailable; response-limit failures MUST mark truncation. An
 observation retention allowance too small for the selected bytes MUST yield
 `capture_limit`, never an apparently complete empty response.
 
-The retained host receipt MUST identify `source_adapter: https/v1`, use local
+The retained host receipt MUST identify `source_adapter: http/v1`, use local
 execution attribution and omit a native receipt identity. Native receipt checks
-remain mandatory for Interceptor records. HTTPS receipts MUST NOT contain
+remain mandatory for Interceptor records. HTTP receipts MUST NOT contain
 injection-delivery or oracle entries. Recovery MUST retain uncertainty and MUST
 NOT issue a replacement request to reconstruct missing feedback.
 

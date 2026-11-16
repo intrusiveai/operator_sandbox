@@ -61,13 +61,13 @@ func TestCapabilityExportAndEnvironmentSubmission(t *testing.T) {
 	}
 }
 
-func TestHTTPSCapabilityExportFromPrivateProfile(t *testing.T) {
+func TestHTTPCapabilityExportFromPrivateProfile(t *testing.T) {
 	dir, pin := installedContract(t)
 	paths := configPaths(t)
 	writeConfig(t, paths.ConfigFile, fmt.Sprintf("engine: {image: test}\ncontract: {directory: %q, version: %q, digest: %q}\n", dir, pin.Version, pin.Digest))
 	env := t.TempDir()
 	profile := filepath.Join(env, "target-profile.json")
-	raw, err := os.ReadFile("../../examples/https-target-profile.json")
+	raw, err := os.ReadFile("../../examples/http-target-profile.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +89,7 @@ func TestHTTPSCapabilityExportFromPrivateProfile(t *testing.T) {
 	}
 	_ = json.Unmarshal(raw, &settings)
 	exported, err := capabilities.LoadExport(context.Background(), c, public, settings.TargetID)
-	if err != nil || exported.Adapter() != "https/v1" {
+	if err != nil || exported.Adapter() != "http/v1" {
 		t.Fatal(exported, err)
 	}
 	if bytes.Contains(exported.PublicJSON(), []byte("agent.example.com")) || bytes.Contains(exported.NativeJSON(), []byte("authentication")) {

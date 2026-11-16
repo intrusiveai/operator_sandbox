@@ -85,10 +85,10 @@ produce only the existing allowlisted public projection. It MUST support
 `--capabilities FILE` with its companion. `--native` MUST be exclusive with
 `--environment` and `--capabilities`. The native source remains host-side.
 
-For `https/v1`, export MUST derive the public projection and its source companion
+For `http/v1`, export MUST derive the public projection and its source companion
 from the private profile, or verify/re-export an existing public export with its
-companion. `--native` MUST be rejected with an HTTPS profile. See
-[HTTPS targets](HTTPS_TARGETS.md) for the complete administrator workflow.
+companion. `--native` MUST be rejected with an HTTP profile. See
+[HTTP targets](HTTP_TARGETS.md) for the complete administrator workflow.
 
 Publication MUST write and sync the companion before the new public file, sync
 the parent directory and never overwrite a public export. An existing companion

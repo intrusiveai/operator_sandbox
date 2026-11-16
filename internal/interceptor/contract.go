@@ -74,7 +74,7 @@ func (e *CompatibilityError) Error() string {
 		"invalid_version":      "Interceptor returned a missing or malformed contract version; install a compatible release",
 		"invalid_response":     "Interceptor compatibility response failed validation",
 		"http_rejection":       "Interceptor rejected the compatibility query",
-		"transport_failure":    "cannot reach the local Interceptor compatibility endpoint; check that Interceptor is running",
+		"transport_failure":    "cannot reach the configured Interceptor compatibility endpoint; check the connection settings and that Interceptor is running",
 		"timeout":              "Interceptor compatibility query timed out",
 		"canceled":             "Interceptor compatibility query was canceled",
 	}[e.Reason]

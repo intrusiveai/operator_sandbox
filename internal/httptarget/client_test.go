@@ -1,6 +1,6 @@
 //go:build linux || darwin
 
-package httpstarget
+package httptarget
 
 import (
 	"context"
@@ -69,7 +69,7 @@ func TestTLSFailureAndRedirection(t *testing.T) {
 		http.Redirect(w, r, other.URL, http.StatusTemporaryRedirect)
 	})
 	out := c.Execute(context.Background(), "chat", []byte("x"), "text/plain")
-	if out.Code != "HTTPS_REDIRECT_REJECTED" || redirected.Load() != 0 {
+	if out.Code != "HTTP_REDIRECT_REJECTED" || redirected.Load() != 0 {
 		t.Fatal(out)
 	}
 	s := c.mapping.Settings()
@@ -79,7 +79,7 @@ func TestTLSFailureAndRedirection(t *testing.T) {
 		t.Fatal(e)
 	}
 	out = untrusted.Execute(context.Background(), "chat", []byte("x"), "text/plain")
-	if out.Contact != "none" || out.Code != "HTTPS_TRANSPORT_FAILED" {
+	if out.Contact != "none" || out.Code != "HTTP_TRANSPORT_FAILED" {
 		t.Fatal(out)
 	}
 }
@@ -174,7 +174,7 @@ func TestCredentialFailurePreventsContactAndDisclosure(t *testing.T) {
 			return credentials.Resolution{Value: value}, nil
 		})
 		out := c.Execute(context.Background(), "chat", []byte("x"), "text/plain")
-		if calls.Load() != 0 || out.Contact != "none" || len(out.Content) != 0 || !strings.HasPrefix(out.Code, "HTTPS_CREDENTIAL_") {
+		if calls.Load() != 0 || out.Contact != "none" || len(out.Content) != 0 || !strings.HasPrefix(out.Code, "HTTP_CREDENTIAL_") {
 			t.Fatal(out)
 		}
 	}
@@ -185,7 +185,7 @@ func TestCanceledBeforeRequestDoesNotContactTarget(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	out := c.Execute(ctx, "chat", []byte("x"), "text/plain")
-	if out.Contact != "none" || out.Code != "HTTPS_CANCELED" || calls.Load() != 0 {
+	if out.Contact != "none" || out.Code != "HTTP_CANCELED" || calls.Load() != 0 {
 		t.Fatal(out)
 	}
 }
@@ -194,5 +194,46 @@ func TestInvalidCustomCA(t *testing.T) {
 	s.CACertificatesPEM = "invalid certificate"
 	if _, e := New(parsed(t, s), nil, time.Second); e == nil {
 		t.Fatal("invalid CA accepted")
+	}
+}
+
+func TestPlainHTTPAdmissionAndExecution(t *testing.T) {
+	var calls atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls.Add(1)
+		if r.URL.Path != "/chat" || r.Method != "POST" {
+			t.Error("wrong operation")
+		}
+		w.Write([]byte(`{"answer":{"text":"done"}}`))
+	}))
+	defer srv.Close()
+	s := fixture()
+	s.Origin = srv.URL
+	s.AllowedPrivateCIDRs = []string{"127.0.0.1/32"}
+	c, err := New(parsed(t, s), nil, time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("HTTP_PROXY", "http://127.0.0.1:1")
+	out := c.Execute(context.Background(), "chat", []byte("input"), "text/plain")
+	if out.Status != "completed" || string(out.Content) != "done" || calls.Load() != 1 {
+		t.Fatal(out, calls.Load())
+	}
+	// Plain HTTP must not take net/http's default dial path around the CIDR check.
+	s.AllowedPrivateCIDRs = nil
+	c.mapping = parsed(t, s)
+	out = c.Execute(context.Background(), "chat", []byte("input"), "text/plain")
+	if out.Contact != "none" || calls.Load() != 1 {
+		t.Fatal(out, calls.Load())
+	}
+	// Every DNS result is checked, including prohibited addresses in a mixed answer.
+	s.AllowedPrivateCIDRs = []string{"127.0.0.1/32"}
+	c.mapping = parsed(t, s)
+	c.lookup = func(context.Context, string, string) ([]netip.Addr, error) {
+		return []netip.Addr{netip.MustParseAddr("127.0.0.1"), netip.MustParseAddr("169.254.169.254")}, nil
+	}
+	out = c.Execute(context.Background(), "chat", []byte("input"), "text/plain")
+	if out.Contact != "none" || calls.Load() != 1 {
+		t.Fatal(out, calls.Load())
 	}
 }

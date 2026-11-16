@@ -17,19 +17,22 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/campaignservice"
 	"github.com/intrusiveai/operator_sandbox/internal/capabilities"
 	"github.com/intrusiveai/operator_sandbox/internal/feedback"
-	"github.com/intrusiveai/operator_sandbox/internal/httpstarget"
+	"github.com/intrusiveai/operator_sandbox/internal/httptarget"
 	"github.com/intrusiveai/operator_sandbox/internal/nativerecovery"
 	"github.com/intrusiveai/operator_sandbox/internal/preparation"
 	"github.com/intrusiveai/operator_sandbox/internal/reporting"
 	"github.com/intrusiveai/operator_sandbox/internal/targetprofile"
 )
 
-func httpsInput(t *testing.T, in *preparation.Input, srv *httptest.Server) {
+func httpInput(t *testing.T, in *preparation.Input, srv *httptest.Server) {
 	t.Helper()
-	mapping := httpstarget.Settings{APIVersion: httpstarget.Version, Origin: srv.URL, AllowedPrivateCIDRs: []string{"127.0.0.1/32"}, CACertificatesPEM: string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: srv.Certificate().Raw})), Authentication: httpstarget.Authentication{Mode: "none"}, Operations: []httpstarget.Operation{{ID: "invoke", Method: "POST", Path: "/chat", Input: httpstarget.Input{Format: "json", MediaType: "application/json"}, Response: httpstarget.Response{Format: "json", Field: []string{"answer"}}, MaximumInputBytes: 1024, MaximumRequestBytes: 2048, MaximumResponseBytes: 4096}}}
+	mapping := httptarget.Settings{APIVersion: httptarget.Version, Origin: srv.URL, AllowedPrivateCIDRs: []string{"127.0.0.1/32"}, Authentication: httptarget.Authentication{Mode: "none"}, Operations: []httptarget.Operation{{ID: "invoke", Method: "POST", Path: "/chat", Input: httptarget.Input{Format: "json", MediaType: "application/json"}, Response: httptarget.Response{Format: "json", Field: []string{"answer"}}, MaximumInputBytes: 1024, MaximumRequestBytes: 2048, MaximumResponseBytes: 4096}}}
+	if cert := srv.Certificate(); cert != nil {
+		mapping.CACertificatesPEM = string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw}))
+	}
 	settings := in.Profile.Settings()
-	settings.Adapter = httpstarget.Adapter
-	settings.HTTPS = encode(mapping)
+	settings.Adapter = httptarget.Adapter
+	settings.HTTP = encode(mapping)
 	var err error
 	in.Profile, err = targetprofile.Parse(encode(settings))
 	if err != nil {
@@ -37,7 +40,7 @@ func httpsInput(t *testing.T, in *preparation.Input, srv *httptest.Server) {
 	}
 	in.CampaignID = "campaign-1"
 	in.WorkerInstanceID = "worker-1"
-	in.Authoring, err = capabilities.FromHTTPS(in.Protocol.Catalog(), in.Profile.HTTPS(), settings.TargetID)
+	in.Authoring, err = capabilities.FromHTTP(in.Protocol.Catalog(), in.Profile.HTTP(), settings.TargetID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,15 +52,26 @@ func httpsInput(t *testing.T, in *preparation.Input, srv *httptest.Server) {
 	scenario["guidance"].(map[string]any)["action_refs"] = []string{}
 	in.Bundle = encode(bundle)
 }
-func httpsWire(p *peer, index int, release string) []byte {
+func httpWire(p *peer, index int, release string) []byte {
 	var q map[string]any
 	_ = json.Unmarshal(attemptWire(p, 1, index, release), &q)
 	delete(q["body"].(map[string]any), "observation_selection")
 	return encode(q)
 }
-func TestHTTPSCampaignExecutionFeedbackAndReport(t *testing.T) {
+func TestHTTPCampaignExecutionFeedbackAndReport(t *testing.T) {
+	for _, secure := range []bool{false, true} {
+		t.Run(map[bool]string{false: "http", true: "https"}[secure], func(t *testing.T) { httpCampaignExecutionFeedbackAndReport(t, secure) })
+	}
+}
+
+func httpCampaignExecutionFeedbackAndReport(t *testing.T, secure bool) {
+	t.Helper()
 	var calls atomic.Int32
-	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	newServer := httptest.NewServer
+	if secure {
+		newServer = httptest.NewTLSServer
+	}
+	srv := newServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls.Add(1)
 		_, _ = w.Write([]byte(`{"answer":"observed reply","private":"excluded"}`))
 	}))
@@ -66,7 +80,7 @@ func TestHTTPSCampaignExecutionFeedbackAndReport(t *testing.T) {
 	s, p, _, w, launch := serviceWithTemplate(t, 0, []string{"engine.attempt_execute", "engine.observation_read"}, func(c *campaignservice.Config) {
 		root = c.StateRoot
 		var e error
-		c.HTTPS, e = httpstarget.New(c.Prepared.Target().Profile().HTTPS(), nil, time.Second)
+		c.HTTP, e = httptarget.New(c.Prepared.Target().Profile().HTTP(), nil, time.Second)
 		if e != nil {
 			t.Fatal(e)
 		}
@@ -74,7 +88,7 @@ func TestHTTPSCampaignExecutionFeedbackAndReport(t *testing.T) {
 	}, func(v map[string]any) {
 		v["limits"].(map[string]any)["campaign"].(map[string]any)["observation_bytes"] = 1024
 		v["remaining_limits"].(map[string]any)["observation_bytes"] = 1024
-	}, func(in *preparation.Input) { httpsInput(t, in, srv) })
+	}, func(in *preparation.Input) { httpInput(t, in, srv) })
 	if bytes.Contains(launch.HostPolicy, []byte(srv.URL)) || bytes.Contains(launch.EngineContext, []byte("CERTIFICATE")) {
 		t.Fatal("private configuration exposed")
 	}
@@ -83,7 +97,7 @@ func TestHTTPSCampaignExecutionFeedbackAndReport(t *testing.T) {
 	}
 	var receiptID, entryID string
 	for i := 1; i <= 2; i++ {
-		q := httpsWire(p, i, w.Manifest().ReleaseRecordDigest)
+		q := httpWire(p, i, w.Manifest().ReleaseRecordDigest)
 		raw, e := s.Handle(context.Background(), q, int64(i))
 		if e != nil {
 			t.Fatal(e)
@@ -144,13 +158,13 @@ func TestHTTPSCampaignExecutionFeedbackAndReport(t *testing.T) {
 	if report.Assurance != "declared-observer" || len(report.UntestedOperations) > 0 || slices.Contains(report.Gaps, "native_evidence_unavailable") {
 		t.Fatal(report)
 	}
-
 }
-func TestHTTPSProductionLaunchOmitsUnsupportedTools(t *testing.T) {
+
+func TestHTTPProductionLaunchOmitsUnsupportedTools(t *testing.T) {
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { t.Error("startup contacted target") }))
 	defer srv.Close()
 	in := fixture(t)
-	httpsInput(t, &in, srv)
+	httpInput(t, &in, srv)
 	target, e := preparation.Build(in)
 	if e != nil {
 		t.Fatal(e)
@@ -170,7 +184,7 @@ func TestHTTPSProductionLaunchOmitsUnsupportedTools(t *testing.T) {
 	}
 }
 
-func TestHTTPSFailuresCloseExecutionAndRetainOutcome(t *testing.T) {
+func TestHTTPFailuresCloseExecutionAndRetainOutcome(t *testing.T) {
 	for _, mode := range []string{"status", "disconnect", "oversize", "cancel"} {
 		t.Run(mode, func(t *testing.T) {
 			var calls atomic.Int32
@@ -200,16 +214,16 @@ func TestHTTPSFailuresCloseExecutionAndRetainOutcome(t *testing.T) {
 			s, p, r, w, launch := serviceWithSettings(t, 0, []string{"engine.attempt_execute"}, func(c *campaignservice.Config) {
 				root = c.StateRoot
 				var e error
-				c.HTTPS, e = httpstarget.New(c.Prepared.Target().Profile().HTTPS(), nil, time.Second)
+				c.HTTP, e = httptarget.New(c.Prepared.Target().Profile().HTTP(), nil, time.Second)
 				if e != nil {
 					t.Fatal(e)
 				}
 				c.Peer = nil
-			}, func(in *preparation.Input) { httpsInput(t, in, srv) })
+			}, func(in *preparation.Input) { httpInput(t, in, srv) })
 			if e := s.Admit(context.Background(), launch); e != nil {
 				t.Fatal(e)
 			}
-			q := httpsWire(p, 1, w.Manifest().ReleaseRecordDigest)
+			q := httpWire(p, 1, w.Manifest().ReleaseRecordDigest)
 			// Terminal failures may cancel delivery of the response to the guest;
 			// the journal must still contain the final correlated outcome.
 			_, _ = s.Handle(requestContext, q, 1)
@@ -240,8 +254,8 @@ func TestHTTPSFailuresCloseExecutionAndRetainOutcome(t *testing.T) {
 			report := reportResult(t, root, receipt)
 			if mode == "status" {
 				d := s.WorkflowFailure()
-				if d == nil || d.Integration == nil || d.Integration.Component != "HTTPS target" || d.Integration.HTTPStatus != 500 || d.Integration.Category != "http_rejection" {
-					t.Fatalf("lost HTTPS cause: %+v", d)
+				if d == nil || d.Integration == nil || d.Integration.Component != "HTTP target" || d.Integration.HTTPStatus != 500 || d.Integration.Category != "http_rejection" {
+					t.Fatalf("lost HTTP cause: %+v", d)
 				}
 				found := false
 				for _, saved := range report.WorkflowDiagnostics {
@@ -250,7 +264,7 @@ func TestHTTPSFailuresCloseExecutionAndRetainOutcome(t *testing.T) {
 					}
 				}
 				if !found {
-					t.Fatal("export lost HTTPS failure facts")
+					t.Fatal("export lost HTTP failure facts")
 				}
 			}
 			if len(report.Attempts) != 1 {
@@ -266,11 +280,11 @@ func TestHTTPSFailuresCloseExecutionAndRetainOutcome(t *testing.T) {
 		})
 	}
 }
-func TestHTTPSInterruptedPreparationRecoveryNeverContactsNative(t *testing.T) {
+func TestHTTPInterruptedPreparationRecoveryNeverContactsNative(t *testing.T) {
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { t.Error("recovery contacted target") }))
 	defer srv.Close()
 	in := fixture(t)
-	httpsInput(t, &in, srv)
+	httpInput(t, &in, srv)
 	target, e := preparation.Build(in)
 	if e != nil {
 		t.Fatal(e)

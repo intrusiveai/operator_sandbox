@@ -27,9 +27,7 @@ func collectCampaignEvidence(ctx context.Context, args []string, stdout, stderr 
 		if e != nil {
 			return nativerecovery.EvidenceReport{}, e
 		}
-		peer := interceptor.New()
-		defer peer.Close()
-		return nativerecovery.CollectEvidence(ctx, root, id, docker, peer)
+		return nativerecovery.CollectEvidence(ctx, root, id, docker, nil)
 	})
 }
 func collectCampaignEvidenceWith(ctx context.Context, args []string, stdout, stderr io.Writer, defaults hostconfig.Paths, collect evidenceCollector) int {

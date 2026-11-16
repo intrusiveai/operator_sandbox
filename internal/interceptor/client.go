@@ -7,7 +7,6 @@ import (
 	"errors"
 	"io"
 	"mime"
-	"net"
 	"net/http"
 	"time"
 
@@ -73,20 +72,16 @@ func (r Response) Code() string {
 	return code
 }
 
-type Client struct{ http *http.Client }
+type Client struct {
+	http   *http.Client
+	origin string
+}
 
-// New has no endpoint/credential/route configuration. Disable proxies, redirects,
-// compression and connection reuse; POST bodies cannot be automatically replayed.
+// New preserves the default loopback HTTP endpoint. Production calls use the
+// frozen target profile through NewConfigured.
 func New() *Client {
-	dial := &net.Dialer{Timeout: 5 * time.Second}
-	transport := &http.Transport{Proxy: nil, DisableCompression: true, DisableKeepAlives: true, MaxResponseHeaderBytes: 16 << 10,
-		DialContext: func(ctx context.Context, network, address string) (net.Conn, error) {
-			if network != "tcp" || address != "127.0.0.1:8080" {
-				return nil, diagnostictext.New("nonlocal Interceptor destination")
-			}
-			return dial.DialContext(ctx, "tcp4", address)
-		}}
-	return &Client{http: &http.Client{Transport: transport, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}}
+	c, _ := NewConfigured(nil)
+	return c
 }
 func (c *Client) Close() {
 	if c != nil && c.http != nil {
@@ -119,7 +114,7 @@ func (c *Client) postBounded(ctx context.Context, route string, raw []byte, resp
 		return Response{}, &CallError{Kind: "canceled_before_dispatch"}
 	}
 	// NopCloser prevents net/http from adding GetBody (and therefore replaying it).
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, Address+route, io.NopCloser(bytes.NewReader(raw)))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL()+route, io.NopCloser(bytes.NewReader(raw)))
 	if err != nil {
 		return Response{}, &CallError{Kind: "invalid_request"}
 	}

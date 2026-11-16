@@ -17,6 +17,7 @@ import (
 var identifier = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$`)
 
 type facts struct {
+	connection                                                *interceptor.Connection
 	manifest                                                  campaign.RunManifest
 	digest, instance, environment, application                string
 	binding                                                   interceptor.Binding
@@ -174,11 +175,11 @@ func loadFacts(ctx context.Context, a *campaign.NativeRecovery) (facts, error) {
 	if err != nil || d != report.Manifest.HostPolicyDigest || target != report.Manifest.Target || !identifier.MatchString(f.instance) {
 		return f, campaign.ErrCorrupt
 	}
-	if report.Manifest.Target.Adapter == "https/v1" {
+	if report.Manifest.Target.Adapter == "http/v1" {
 		var retained struct {
 			Profile struct {
 				Adapter       string `json:"adapter"`
-				MappingDigest string `json:"https_mapping_digest"`
+				MappingDigest string `json:"http_mapping_digest"`
 				AllowStop     bool   `json:"allow_target_stop"`
 			} `json:"target_profile"`
 		}
@@ -186,7 +187,7 @@ func loadFacts(ctx context.Context, a *campaign.NativeRecovery) (facts, error) {
 			Version       string `json:"api_version"`
 			MappingDigest string `json:"mapping_digest"`
 		}
-		if json.Unmarshal(hostPolicy, &retained) != nil || json.Unmarshal(jsonSource, &source) != nil || retained.Profile.Adapter != "https/v1" || retained.Profile.AllowStop || source.Version != "operator.dev/https-capabilities/v1alpha1" || source.MappingDigest != retained.Profile.MappingDigest || contracts.RawDigest(jsonSource) != target.CapabilitySourceDigest {
+		if json.Unmarshal(hostPolicy, &retained) != nil || json.Unmarshal(jsonSource, &source) != nil || retained.Profile.Adapter != "http/v1" || retained.Profile.AllowStop || source.Version != "operator.dev/http-capabilities/v1alpha1" || source.MappingDigest != retained.Profile.MappingDigest || contracts.RawDigest(jsonSource) != target.CapabilitySourceDigest {
 			return f, campaign.ErrCorrupt
 		}
 		return f, nil
@@ -206,6 +207,7 @@ func loadFacts(ctx context.Context, a *campaign.NativeRecovery) (facts, error) {
 	if err != nil {
 		return f, err
 	}
+	f.connection = p.Settings().Interceptor
 	f.allowStop = p.Settings().AllowTargetStop
 	f.environment, f.application = source.Environment, source.Application
 	for _, state := range deletions {

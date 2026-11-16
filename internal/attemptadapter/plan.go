@@ -87,7 +87,7 @@ type Plan struct {
 	started                        time.Time
 	allowanceMS                    int64
 	deadlineSource                 string
-	https                          *httpsExecution
+	httpTarget                     *httpExecution
 	catalog                        *contracts.Catalog
 	request                        request
 	context                        interceptor.AttemptContext
@@ -112,7 +112,7 @@ func (p *Plan) ContextDigest() string    { return p.context.Digest }
 func Compile(catalog *contracts.Catalog, raw []byte, in Inputs) (*Plan, error) {
 	return compile(catalog, raw, in, nil)
 }
-func compile(catalog *contracts.Catalog, raw []byte, in Inputs, external *httpsExecution) (*Plan, error) {
+func compile(catalog *contracts.Catalog, raw []byte, in Inputs, external *httpExecution) (*Plan, error) {
 	if catalog == nil || in.Live == nil || in.Compatibility == nil || in.Policy == nil || in.SessionRevision == 0 || in.CreatedAt.IsZero() || !in.Deadline.After(in.CreatedAt) || in.Deadline.Sub(in.CreatedAt) > 30*time.Minute || !digestID.MatchString(in.ReleaseDigest) || in.FeedbackBytes < 0 || in.FeedbackBytes > 64*feedback.MaxArtifact {
 		return nil, ErrAttempt
 	}
@@ -152,7 +152,7 @@ func compile(catalog *contracts.Catalog, raw []byte, in Inputs, external *httpsE
 		return nil, err
 	}
 	p := &Plan{catalog: catalog, request: r, binding: in.Live.Binding(), policy: policy, actions: map[string]string{}, deadline: in.Deadline.UTC(), revision: in.SessionRevision, feedbackBytes: in.FeedbackBytes}
-	p.https = external
+	p.httpTarget = external
 	p.rawRequest = bytes.Clone(raw)
 	p.sourceDigest, p.projectionDigest = in.Live.Export().SourceDigest(), in.Live.Export().ProjectionDigest()
 	artifactBytes := map[string][]byte{}
@@ -194,7 +194,7 @@ func compile(catalog *contracts.Catalog, raw []byte, in Inputs, external *httpsE
 	}
 	p.context.Digest = interceptor.AttemptContextDigest(p.context)
 	if external != nil {
-		return compileHTTPSPlan(p, in, artifactBytes)
+		return compileHTTPPlan(p, in, artifactBytes)
 	}
 	if err = p.add("attempt.register", p.context, false); err != nil {
 		return nil, err

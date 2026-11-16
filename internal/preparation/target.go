@@ -59,16 +59,16 @@ func Build(in Input) (*Target, error) {
 	}
 	var live *capabilities.Live
 	var err error
-	if in.Profile.HTTPS() != nil {
-		live, err = capabilities.BindHTTPS(in.Protocol.Catalog(), in.Profile.HTTPS(), in.Profile.Settings().TargetID, in.CampaignID, in.WorkerInstanceID)
-		in.InstanceID = "https-local"
+	if in.Profile.HTTP() != nil {
+		live, err = capabilities.BindHTTP(in.Protocol.Catalog(), in.Profile.HTTP(), in.Profile.Settings().TargetID, in.CampaignID, in.WorkerInstanceID)
+		in.InstanceID = "http-local"
 	} else {
 		live, err = capabilities.BindLive(in.Protocol.Catalog(), in.Attachment, in.Status, in.InstanceID, in.Profile.Settings().TargetID)
 	}
 	if err != nil {
 		return nil, err
 	}
-	if in.Profile.HTTPS() == nil && in.Attachment.Session.Revision == 0 {
+	if in.Profile.HTTP() == nil && in.Attachment.Session.Revision == 0 {
 		return nil, ErrPreparation
 	}
 	policy, err := in.Profile.Resolve(live)

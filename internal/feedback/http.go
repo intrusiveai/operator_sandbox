@@ -7,13 +7,13 @@ import (
 	"slices"
 )
 
-// HTTPS projects host-observed application feedback without a native receipt or
+// HTTP projects host-observed application feedback without a native receipt or
 // any claim of remote oracle authority. Empty content may be an available result.
-func HTTPS(c *contracts.Catalog, p *Policy, s Source, id string, content []byte, media, code string, complete, truncated bool, maximum int64) (*Receipt, error) {
+func HTTP(c *contracts.Catalog, p *Policy, s Source, id string, content []byte, media, code string, complete, truncated bool, maximum int64) (*Receipt, error) {
 	if c == nil || p == nil || maximum < 0 || maximum > 64*MaxArtifact {
 		return nil, ErrFeedback
 	}
-	r := &Receipt{source: s, id: id, sourceAdapter: "https/v1", entries: []retained{}}
+	r := &Receipt{source: s, id: id, sourceAdapter: "http/v1", entries: []retained{}}
 	m := Manifest{p.effective, "complete", "request-ended", p.categories(), []Entry{}}
 
 	for i := range m.Categories {
@@ -41,7 +41,7 @@ func HTTPS(c *contracts.Catalog, p *Policy, s Source, id string, content []byte,
 			cat.Reason = "unsupported_by_adapter"
 			continue
 		}
-		e := Entry{ID: handle("entry", id, cat.Kind), Kind: cat.Kind, Visibility: "harness_visible", Source: "https", Assurance: "declared-observer", Availability: "unavailable", Reason: "content_unavailable", Truncated: truncated && cat.Kind == "target_output"}
+		e := Entry{ID: handle("entry", id, cat.Kind), Kind: cat.Kind, Visibility: "harness_visible", Source: "http", Assurance: "declared-observer", Availability: "unavailable", Reason: "content_unavailable", Truncated: truncated && cat.Kind == "target_output"}
 		if available && int64(len(raw)) <= maximum {
 			maximum -= int64(len(raw))
 			e.Availability = "available"

@@ -66,11 +66,11 @@ failure MUST retain these campaign-scoped records for the next startup's
 Failure or cleanup MUST NOT clear the original worker claim or allow retrying the
 same campaign. A lost attach reply remains explicitly unconfirmed.
 
-For `https/v1`, preparation MUST freeze the administrator mapping and verify its
+For `http/v1`, preparation MUST freeze the administrator mapping and verify its
 public capability projection without contacting the target. Execution MUST use
 only the mapped application operations. Native attachment, injection cleanup,
 snapshots, restore and target stop MUST be unavailable; recovery MUST finalize
-local records without sending another application request. See [HTTPS targets](HTTPS_TARGETS.md).
+local records without sending another application request. See [HTTP targets](HTTP_TARGETS.md).
 
 
 ## Automatic integration compatibility

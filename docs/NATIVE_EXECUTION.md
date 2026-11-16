@@ -57,7 +57,7 @@ these journal methods signal its fence but do not themselves terminate Docker.
 
 ## Executor and live guard
 
-`internal/nativeexec` joins that journal to the fixed-loopback Interceptor client.
+`internal/nativeexec` joins that journal to the administrator-configured Interceptor client.
 `NewGuard` freezes the native process/session/revision pin and exact Docker binding.
 Before each fresh effect it checks Interceptor readiness and the original process
 instance, then uses `dockercontrol.CheckRunning` to verify the harness's daemon,

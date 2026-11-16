@@ -44,10 +44,37 @@ campaigns record `interceptor.compatibility` with the checked versions, hashes a
 
 ## Transport
 
-`interceptor.New()` connects only to `http://127.0.0.1:8080`, using a literal IPv4
-loopback dial. There is no configurable URL, DNS lookup, proxy, authentication or
-TLS setting. Methods select fixed routes. Campaigns and guest requests cannot
-provide destinations, headers or credentials.
+The administrator selects the connection in the private target profile:
+
+```json
+"interceptor": {
+  "protocol": "https",
+  "address": "interceptor.example.internal",
+  "port": 8443
+}
+```
+
+`protocol` MUST be `http` or `https`: these are the transports supported by
+Interceptor's API. `address` MUST be a DNS hostname or an IPv4/IPv6 literal
+(without brackets, a port, URL, path, userinfo or zone). `port` MUST be 1–65535.
+An explicit object MUST supply all three fields. Omitting the object uses
+`http://127.0.0.1:8080`. This configures Operator's client; the selected Interceptor
+API listener must already be reachable there.
+
+HTTPS MUST verify the server's hostname and certificate using system trust and
+TLS 1.2 or newer. Optional `ca_certificates_pem` adds administrator CA certificates
+(up to 32 KiB), frozen inline; it is invalid for plain HTTP. HTTP provides no TLS
+protection. No integration authentication or new server is introduced. The
+administrator MUST select a trusted endpoint and network.
+
+Methods select fixed API routes. Harness requests cannot choose the endpoint,
+headers or credentials. Ambient proxies and redirects remain disabled.
+`NewConfigured` freezes the connection used for compatibility, attachment, native
+operations and evidence downloads. The private profile is fingerprinted at start;
+attachment intent and prepared campaign records MUST retain the selected
+connection. Recovery and later evidence collection MUST use those saved settings,
+not the current installation profile. Exact instance/session and contract checks
+continue to apply at the selected endpoint.
 
 Requests use POST and JSON, with `Accept-Encoding: identity`. Redirects and encoded
 responses are rejected. Response headers are bounded to 16 KiB. This initial client
@@ -278,7 +305,7 @@ attached instance's status. Limits accept 1 through 9007199254740991 bytes; the
 configured local default is 4 GiB. The deadline includes server archive generation
 and download and is shortened by an earlier caller-context deadline. It is not
 the harness control-frame deadline. There are no automatic retries or range/resume
-requests. The existing fixed-loopback, no-proxy, no-redirect transport applies.
+requests. The configured, no-proxy, no-redirect transport applies.
 
 Successful transfer requires HTTP 200, `application/x-tar`, one `Content-Length`,
 one `X-Content-SHA256` and one `X-Evidence-Max-Bytes` matching the saved native

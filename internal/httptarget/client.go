@@ -1,6 +1,6 @@
 //go:build linux || darwin
 
-package httpstarget
+package httptarget
 
 import (
 	"bytes"
@@ -67,14 +67,14 @@ func (c trackedConn) Write(p []byte) (int, error) { c.sent.Store(true); return c
 // Execute sends at most one application request. Errors are fixed codes; the
 // transport's raw errors and response headers never escape this boundary.
 func (c *Client) Execute(ctx context.Context, id string, payload []byte, media string) (out Outcome) {
-	out = Outcome{Status: "failed", Contact: "none", Code: "HTTPS_INPUT_INVALID"}
+	out = Outcome{Status: "failed", Contact: "none", Code: "HTTP_INPUT_INVALID"}
 	var cause error
 	stage := "input_validation"
 	defer func() {
 		if out.Status == "completed" {
 			return
 		}
-		f := diagnostictext.Failure{Component: "HTTPS target", Operation: id, Category: stage, Code: out.Code, HTTPStatus: out.HTTPStatus}
+		f := diagnostictext.Failure{Component: "HTTP target", Operation: id, Category: stage, Code: out.Code, HTTPStatus: out.HTTPStatus}
 		if cause != nil {
 			f.Message, _ = diagnostictext.FromError(cause)
 		}
@@ -98,13 +98,13 @@ func (c *Client) Execute(ctx context.Context, id string, payload []byte, media s
 		resolved, e := c.secrets.Resolve(ctx, auth.CredentialID)
 		cause = e
 		if e != nil || len(resolved.Value) == 0 || len(resolved.Value) > 8192 {
-			out.Code = "HTTPS_CREDENTIAL_FAILED"
+			out.Code = "HTTP_CREDENTIAL_FAILED"
 			return out
 		}
 		token = resolved.Value
 		for _, r := range token {
 			if r < 33 || r > 126 {
-				out.Code = "HTTPS_CREDENTIAL_INVALID"
+				out.Code = "HTTP_CREDENTIAL_INVALID"
 				return out
 			}
 		}
@@ -125,31 +125,51 @@ func (c *Client) Execute(ctx context.Context, id string, payload []byte, media s
 	}
 	u, _ := url.Parse(c.mapping.settings.Origin)
 	var sent atomic.Bool
+	port := u.Port()
+	if port == "" {
+		if u.Scheme == "https" {
+			port = "443"
+		} else {
+			port = "80"
+		}
+	}
+	authority := net.JoinHostPort(u.Hostname(), port)
+	// Both schemes share DNS and destination admission. Dial only the approved
+	// address; never let the HTTP transport perform another lookup or use a proxy.
+	approvedDial := func(ctx context.Context, network, address string) (net.Conn, error) {
+		if network != "tcp" || address != authority {
+			return nil, ErrMapping
+		}
+		addresses, err := c.lookup(ctx, "ip", u.Hostname())
+		if err != nil || len(addresses) == 0 || len(addresses) > 64 {
+			return nil, ErrMapping
+		}
+		for _, a := range addresses {
+			if !c.mapping.AllowsAddress(a) {
+				return nil, ErrMapping
+			}
+		}
+		return c.dial(ctx, "tcp", net.JoinHostPort(addresses[0].Unmap().String(), port))
+	}
 	transport := &http.Transport{
 		Proxy: nil, DisableKeepAlives: true, DisableCompression: true, MaxResponseHeaderBytes: 32 << 10,
 		TLSNextProto: map[string]func(string, *tls.Conn) http.RoundTripper{},
+		DialContext: func(ctx context.Context, network, address string) (net.Conn, error) {
+			conn, err := approvedDial(ctx, network, address)
+			if err != nil {
+				return nil, err
+			}
+			return trackedConn{conn, &sent}, nil
+		},
 		DialTLSContext: func(ctx context.Context, network, address string) (net.Conn, error) {
-			host, port, e := net.SplitHostPort(address)
-			if e != nil || host != u.Hostname() {
-				return nil, ErrMapping
+			conn, err := approvedDial(ctx, network, address)
+			if err != nil {
+				return nil, err
 			}
-			addresses, e := c.lookup(ctx, "ip", host)
-			if e != nil || len(addresses) == 0 || len(addresses) > 64 {
-				return nil, ErrMapping
-			}
-			for _, a := range addresses {
-				if !c.mapping.AllowsAddress(a) {
-					return nil, ErrMapping
-				}
-			}
-			conn, e := c.dial(ctx, "tcp", net.JoinHostPort(addresses[0].Unmap().String(), port))
-			if e != nil {
-				return nil, e
-			}
-			secure := tls.Client(conn, &tls.Config{ServerName: host, RootCAs: c.roots, MinVersion: tls.VersionTLS12, NextProtos: []string{"http/1.1"}})
-			if e = secure.HandshakeContext(ctx); e != nil {
+			secure := tls.Client(conn, &tls.Config{ServerName: u.Hostname(), RootCAs: c.roots, MinVersion: tls.VersionTLS12, NextProtos: []string{"http/1.1"}})
+			if err = secure.HandshakeContext(ctx); err != nil {
 				conn.Close()
-				return nil, e
+				return nil, err
 			}
 			return trackedConn{secure, &sent}, nil
 		},
@@ -160,13 +180,13 @@ func (c *Client) Execute(ctx context.Context, id string, payload []byte, media s
 	resp, e := client.Do(req)
 	cause = e
 	if e != nil {
-		out.Code = "HTTPS_TRANSPORT_FAILED"
+		out.Code = "HTTP_TRANSPORT_FAILED"
 		if sent.Load() {
 			out.Status = "unknown"
 			out.Contact = "unknown"
 		}
 		if ctx.Err() != nil {
-			out.Code = "HTTPS_CANCELED"
+			out.Code = "HTTP_CANCELED"
 			stage = "canceled"
 			if ctx.Err() == context.DeadlineExceeded {
 				stage = "deadline_exceeded"
@@ -179,16 +199,16 @@ func (c *Client) Execute(ctx context.Context, id string, payload []byte, media s
 	out.HTTPStatus = resp.StatusCode
 	stage = "http_rejection"
 	if resp.StatusCode >= 300 && resp.StatusCode <= 399 {
-		out.Code = "HTTPS_REDIRECT_REJECTED"
+		out.Code = "HTTP_REDIRECT_REJECTED"
 		return out
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		out.Code = "HTTPS_STATUS_FAILED"
+		out.Code = "HTTP_STATUS_FAILED"
 		return out
 	}
 	stage = "response_validation"
 	if encoding := resp.Header.Get("Content-Encoding"); encoding != "" && !strings.EqualFold(encoding, "identity") {
-		out.Code = "HTTPS_ENCODING_UNSUPPORTED"
+		out.Code = "HTTP_ENCODING_UNSUPPORTED"
 		return out
 	}
 	stage = "response_reading"
@@ -196,25 +216,25 @@ func (c *Client) Execute(ctx context.Context, id string, payload []byte, media s
 	if e != nil {
 		out.Status = "unknown"
 		out.Contact = "unknown"
-		out.Code = "HTTPS_RESPONSE_INTERRUPTED"
+		out.Code = "HTTP_RESPONSE_INTERRUPTED"
 		return out
 	}
 	if int64(len(raw)) > op.MaximumResponseBytes {
-		out.Code = "HTTPS_RESPONSE_LIMIT"
+		out.Code = "HTTP_RESPONSE_LIMIT"
 		out.Truncated = true
 		return out
 	}
 	stage = "response_validation"
 	raw, media, e = SelectResponse(op, raw)
 	if e != nil {
-		out.Code = "HTTPS_RESPONSE_INVALID"
+		out.Code = "HTTP_RESPONSE_INVALID"
 		return out
 	}
 	// An application echoing the authentication value must not disclose it through
 	// selected feedback. Refuse the whole output instead of changing its bytes.
 	encodedToken, _ := json.Marshal(token)
 	if token != "" && (bytes.Contains(raw, []byte(token)) || bytes.Contains(raw, encodedToken[1:len(encodedToken)-1])) {
-		out.Code = "HTTPS_CREDENTIAL_REFLECTED"
+		out.Code = "HTTP_CREDENTIAL_REFLECTED"
 		return out
 	}
 	out.Status = "completed"

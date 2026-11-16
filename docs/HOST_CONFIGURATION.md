@@ -211,3 +211,16 @@ retain both facts. The diagnostic identifies the request, attempt, native operat
 allowance, elapsed time and whether the terminal result was published to Harness.
 Publication is not proof that Harness consumed it. Owned cleanup runs independently
 of the expired attempt budget and its outcome is reported separately.
+
+### Target connection settings
+
+`target.profile_file` selects the private target profile (or select one during
+submission). For `interceptor/v1`, its optional `interceptor` object sets
+`protocol`, `address`, and `port`; see [Interceptor transport](INTERCEPTOR_CLIENT.md#transport).
+The default is HTTP on 127.0.0.1:8080. The endpoint is retained for campaign cleanup
+and later evidence collection, so changing the current profile does not redirect
+an existing campaign.
+
+For `http/v1`, the profile's `http.origin` contains the explicit HTTP/HTTPS scheme,
+hostname/address and optional port. See [direct HTTP targets](HTTP_TARGETS.md).
+Neither target destination is a model-tool argument.

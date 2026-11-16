@@ -186,11 +186,11 @@ Native runtime policy/route checks and Go/Python structural, semantic and JCS
 validation remain required in addition to the fixture mapper.
 
 
-## HTTPS adapter projection
+## HTTP adapter projection
 
-For `https/v1`, Operator MUST derive capabilities from the private mapping defined
-in [HTTPS targets](../docs/HTTPS_TARGETS.md). The source companion MUST use
-`operator.dev/https-capabilities/v1alpha1` and contain only the logical target ID,
+For `http/v1`, Operator MUST derive capabilities from the private mapping defined
+in [HTTP targets](../docs/HTTP_TARGETS.md). The source companion MUST use
+`operator.dev/http-capabilities/v1alpha1` and contain only the logical target ID,
 canonical private mapping digest and sorted operation delivery declarations.
 Its source digest MUST be SHA-256 of its canonical bytes. Public operation input
 media types and byte bounds MUST match the mapping; action, service, filesystem
@@ -203,11 +203,11 @@ operation errors advertised. Private URLs, headers, fixed request data,
 credentials and CA configuration MUST NOT be exported. Import MUST reproduce and
 compare the exact public projection. Campaign startup MUST independently
 rederive execution capabilities from the frozen private mapping. The shared
-[HTTPS fixture](fixtures/https-capability-chain.json) MUST pass Go/Python checks.
+[HTTP fixture](fixtures/http-capability-chain.json) MUST pass Go/Python checks.
 
 The host's existing source-companion storage fields MAY retain their native
 names for compatibility; consumers MUST interpret provenance using `adapter`.
-An HTTPS execution binding's opaque session field identifies local campaign
+An HTTP execution binding's opaque session field identifies local campaign
 attribution only. It MUST NOT imply a remote session, readiness lease or reset.
 
 ## Managed PostgreSQL services

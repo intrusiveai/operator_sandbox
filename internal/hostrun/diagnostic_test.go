@@ -19,7 +19,7 @@ import (
 	"github.com/intrusiveai/operator_sandbox/internal/credentials"
 	"github.com/intrusiveai/operator_sandbox/internal/dockercontrol"
 	"github.com/intrusiveai/operator_sandbox/internal/hostconfig"
-	"github.com/intrusiveai/operator_sandbox/internal/httpstarget"
+	"github.com/intrusiveai/operator_sandbox/internal/httptarget"
 	"github.com/intrusiveai/operator_sandbox/internal/imagerelease"
 	"github.com/intrusiveai/operator_sandbox/internal/interceptor"
 	"github.com/intrusiveai/operator_sandbox/internal/skills"
@@ -110,7 +110,7 @@ func TestPreparationProducerCoverage(t *testing.T) {
 	for _, cause := range []error{
 		capabilities.ErrNative, capabilities.ErrProjection, capabilities.ErrBinding,
 		capabilities.ErrBundle, capabilities.ErrCompatibility, capabilities.ErrPolicy,
-		attemptadapter.ErrPolicy, targetprofile.ErrProfile, httpstarget.ErrMapping,
+		attemptadapter.ErrPolicy, targetprofile.ErrProfile, httptarget.ErrMapping,
 		hostconfig.ErrInvalid, contractstore.ErrIntegrity, submission.ErrSubmission,
 		skills.ErrSkill, staging.ErrInputs, startup.ErrUnresolved, imagerelease.ErrEmbedded,
 		credentials.ErrAudit,
