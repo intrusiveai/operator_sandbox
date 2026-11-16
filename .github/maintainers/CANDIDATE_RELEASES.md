@@ -192,8 +192,9 @@ GitHub describes these controls in [ruleset setup](https://docs.github.com/en/re
    These are the reviewed production values; confirm them against the deployed
    service before saving. Do not add a record-publisher role or AWS access keys.
 
-Only the local catalog job obtains temporary AWS credentials through GitHub
-OIDC. The environment belongs to
+Only the local catalog job obtains the publisher's temporary AWS credentials
+through GitHub OIDC. GitHub-managed dependency jobs also request OIDC tokens,
+without using the publisher role. The production environment belongs to
 `intrusiveai/operator_sandbox`, not `intrusiveai-engineering/releases`.
 See GitHub's [environment setup instructions](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments).
 
@@ -201,7 +202,9 @@ See GitHub's [environment setup instructions](https://docs.github.com/en/actions
 
 OIDC lets GitHub obtain temporary AWS credentials. AWS checks a subject string
 identifying the repository, environment, tag, and workflow file. The default
-GitHub subject does not satisfy the new trust policy.
+GitHub subject does not satisfy the publisher trust policy. Use this section for
+Operator's repository configuration; it supersedes the mandatory `environment`
+template in the pinned publisher bundle's historical README.
 
 1. Inventory workflows requesting `id-token: write` and coordinate any other
    cloud roles before changing the subject. In this checkout, run:
@@ -211,7 +214,9 @@ GitHub subject does not satisfy the new trust policy.
    ```
 
    This setting affects **every OIDC job in this repository**, not just releases.
-   All such jobs must declare an environment for the new subject to be issued.
+   Include GitHub-managed Dependabot and Dependency Graph jobs in this inventory;
+   they are not defined in the repository's workflow files and have no environment.
+   Requiring an `environment` claim prevents those jobs from starting.
 2. Sign in to `gh` with repository administrator access. Run this read-only
    command and retain its output with your configuration change record:
 
@@ -219,29 +224,59 @@ GitHub subject does not satisfy the new trust policy.
    gh api repos/intrusiveai/operator_sandbox/actions/oidc/customization/sub
    ```
 
-3. After the administrator confirms the IAM migration in step 5, run:
+3. Compare the publisher subject with the deployed IAM trust policy from step 5.
+   Keep its production environment, numeric repository/owner identities,
+   `sts.amazonaws.com` audience, release-tag and workflow-file restrictions.
+   Then replace `environment` with `context`, preserving the existing
+   immutable-subject setting:
 
    ```sh
-   gh api --method PUT \
-     repos/intrusiveai/operator_sandbox/actions/oidc/customization/sub \
-     --input - <<'JSON'
-   {"use_default":false,"include_claim_keys":["repository_id","repository_owner_id","environment","ref","workflow_ref"]}
-   JSON
+   set -o pipefail
+   gh api repos/intrusiveai/operator_sandbox/actions/oidc/customization/sub |
+     jq '{use_default:false,
+          include_claim_keys:["repository_id","repository_owner_id","context","ref","workflow_ref"]}
+         + (if has("use_immutable_subject") then
+              {use_immutable_subject:.use_immutable_subject} else {} end)' |
+     gh api --method PUT \
+       repos/intrusiveai/operator_sandbox/actions/oidc/customization/sub --input -
    ```
 
    Keep the exact key order. Use `workflow_ref`, not `job_workflow_ref`: the
-   publisher is an ordinary job, not a reusable workflow.
+   publisher is an ordinary job, not a reusable workflow. `context` expands to
+   `environment:production` for the publisher, or the applicable branch/PR
+   context for jobs without an environment. This permits dependency jobs to
+   obtain tokens without granting them access to the publisher role.
 4. Repeat the GET command from step 2 and confirm `use_default` is `false` and
-   the five keys appear in the specified order. For tag `v0.0.1`, the subject
+   the five keys appear in the specified order, with `context` in place of
+   `environment`. Confirm `use_immutable_subject` was preserved. For tag `v0.0.1`,
+   the custom-claim portion of the subject
    expected by the role is:
 
    ```text
    repository_id:1383999597:repository_owner_id:296295422:environment:production:ref:refs/tags/v0.0.1:workflow_ref:intrusiveai/operator_sandbox/.github/workflows/publish-catalog.yml@refs/tags/v0.0.1
    ```
 
+   Verify the complete emitted subject against IAM, including any repository
+   prefix if present; do not infer token contents from the settings response's
+   `sub_claim_prefix` alone. Do not change immutable-subject formats or broaden
+   role trust to make a mismatch pass.
+5. Verify a fresh dependency job starts. Failed GitHub-managed runs cannot be
+   retried with `gh run rerun`. For security updates, open **Security and quality →
+   Dependabot → affected alert** and use **Try again** or **Create Dependabot
+   security update**, if offered. For version updates, use **Insights → Dependency
+   graph → Dependabot → Recent update jobs → Check for updates**. If those controls
+   are unavailable, wait for a fresh automatic job. Old failures remain in history;
+   a successful settings update alone does not establish a successful job.
+6. Confirm publisher authentication separately with a nonpublishing role-assumption
+   check or the next authorized release publication. Do not dispatch the catalog
+   publisher merely to test authentication. Until then, distinguish review of the
+   settings and IAM trust from a verified live OIDC exchange.
+
 The subject binds the workflow file and ref, not its contents. Protect release
 tags and review publisher/workflow changes before approving production jobs.
 See GitHub's [repository OIDC configuration API](https://docs.github.com/en/rest/actions/oidc#set-the-customization-template-for-an-oidc-subject-claim-for-a-repository).
+See also [subject customization](https://docs.github.com/en/actions/reference/security/oidc#customizing-the-subject-claims-for-an-organization-or-repository)
+and [Dependabot retry instructions](https://docs.github.com/en/enterprise-cloud%40latest/code-security/how-tos/secure-your-supply-chain/manage-your-dependency-security/re-run-dependabot-jobs).
 
 ### 7. Confirm setup with the first candidate
 
